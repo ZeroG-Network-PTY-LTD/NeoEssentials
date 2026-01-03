@@ -1,17 +1,13 @@
 package com.zerog.neoessentials.teleportation;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.zerog.neoessentials.util.PlayerDataStore;
 import com.zerog.neoessentials.util.PlayerDataMigration;
-import com.zerog.neoessentials.util.ResourceUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +45,6 @@ public class HomeManager {
 
     // In-memory cache for quick lookups (UUID -> homes map)
     private final Map<UUID, Map<String, TeleportLocation>> playerHomes = new ConcurrentHashMap<>();
-    private final Gson gson = new Gson();
 
     // Configuration
     private int maxHomesPerPlayer = 5;
@@ -79,10 +74,8 @@ public class HomeManager {
                 break;
             }
         }
-        if (permMax > configMax) {
-            return permMax;
-        }
-        return configMax;
+        // Return the higher value between permission-based and config-based limits
+        return Math.max(permMax, configMax);
     }
     private boolean allowOverworldOnly = false;
     private boolean allowCrossDimensionHomes = true;
@@ -229,7 +222,7 @@ public class HomeManager {
             // Check limit atomically
             boolean isNew = !homes.containsKey(homeName);
             if (isNew && homes.size() >= allowedHomes) {
-                result[0] = false; // Limit exceeded
+                // Limit exceeded - result[0] stays false
                 return homes;
             }
             
@@ -325,10 +318,7 @@ public class HomeManager {
      * Get or load homes for a player (lazy loading from PlayerDataStore)
      */
     private Map<String, TeleportLocation> getOrLoadPlayerHomes(UUID playerId) {
-        return playerHomes.computeIfAbsent(playerId, id -> {
-            // Load from PlayerDataStore if not in cache
-            return loadPlayerHomes(id);
-        });
+        return playerHomes.computeIfAbsent(playerId, this::loadPlayerHomes);
     }
 
     /**

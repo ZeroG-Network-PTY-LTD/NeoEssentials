@@ -284,14 +284,33 @@ public class AfkManager {
                 setAfkStatus(uuid, true, "Inactive");
             }
 
-            // Check if AFK player should be kicked
-            if (kickAfkPlayers && data.isAfk() && (currentTime - data.getAfkStartTime()) > afkKickTimeoutMs) {
-                try {
-                    String kickMsg = this.afkKickMessage != null && !this.afkKickMessage.isEmpty() ? this.afkKickMessage : "Kicked for being AFK too long";
-                    player.connection.disconnect(Component.literal(kickMsg));
-                    LOGGER.info("Kicked player {} for being AFK too long", player.getName().getString());
-                } catch (Exception e) {
-                    LOGGER.error("Error kicking AFK player", e);
+            // Check if AFK player should be kicked (only if kick timeout is > 0 and feature is enabled)
+            if (kickAfkPlayers && afkKickTimeoutMs > 0 && data.isAfk()) {
+                long afkDuration = currentTime - data.getAfkStartTime();
+
+                // Warn player 60 seconds before kick
+                if (afkDuration > (afkKickTimeoutMs - 60000) && afkDuration < afkKickTimeoutMs) {
+                    long secondsUntilKick = (afkKickTimeoutMs - afkDuration) / 1000;
+                    if (secondsUntilKick > 0 && secondsUntilKick <= 60) {
+                        player.sendSystemMessage(Component.literal(
+                            String.format("§c§lWARNING: §eYou will be kicked for AFK in %d seconds! Move to stay connected.", secondsUntilKick)
+                        ));
+                        LOGGER.warn("Player {} will be kicked for AFK in {} seconds", player.getName().getString(), secondsUntilKick);
+                    }
+                }
+
+                // Kick if timeout exceeded
+                if (afkDuration > afkKickTimeoutMs) {
+                    try {
+                        String kickMsg = this.afkKickMessage != null && !this.afkKickMessage.isEmpty()
+                            ? this.afkKickMessage
+                            : "§cKicked for being AFK too long.\n§7You were inactive for " + (afkDuration / 60000) + " minutes.";
+                        player.connection.disconnect(Component.literal(kickMsg));
+                        LOGGER.info("Kicked player {} for being AFK too long (AFK for {} minutes)",
+                            player.getName().getString(), afkDuration / 60000);
+                    } catch (Exception e) {
+                        LOGGER.error("Error kicking AFK player {}", player.getName().getString(), e);
+                    }
                 }
             }
         }
@@ -321,7 +340,7 @@ public class AfkManager {
         }
         
         // Support both 'timeout' (seconds) and 'timeoutMinutes' (minutes) for compatibility
-        if (afkConfig != null && afkConfig.has("timeout")) {
+        if (afkConfig.has("timeout")) {
             long timeoutSeconds = afkConfig.get("timeout").getAsLong();
             this.afkTimeoutMs = timeoutSeconds > 0 ? timeoutSeconds * 1000L : 300000L;
         } else if (afkConfig.has("timeoutMinutes")) {
@@ -347,17 +366,36 @@ public class AfkManager {
         } else {
             this.broadcastReturnMessages = this.broadcastAfkMessages;
         }
-        this.kickAfkPlayers = afkConfig.has("kickAfkPlayers") && 
+
+        // AFK kick settings - DISABLED by default to prevent unexpected kicks
+        // Only enable if explicitly set to true in config
+        this.kickAfkPlayers = afkConfig.has("kickAfkPlayers") &&
             afkConfig.get("kickAfkPlayers").getAsBoolean();
+
+        LOGGER.info("AFK kick feature: {}", this.kickAfkPlayers ? "ENABLED" : "DISABLED");
+
         // Support both 'kickTimeout' (seconds) and 'kickTimeoutMinutes' (minutes) for compatibility
         if (afkConfig.has("kickTimeout")) {
             long kickTimeoutSeconds = afkConfig.get("kickTimeout").getAsLong();
             this.afkKickTimeoutMs = kickTimeoutSeconds > 0 ? kickTimeoutSeconds * 1000 : 0;
+            if (this.kickAfkPlayers && kickTimeoutSeconds > 0) {
+                LOGGER.info("AFK kick timeout: {} seconds ({} minutes)", kickTimeoutSeconds, kickTimeoutSeconds / 60);
+            }
         } else if (afkConfig.has("kickTimeoutMinutes")) {
             long kickTimeoutMinutes = afkConfig.get("kickTimeoutMinutes").getAsLong();
             this.afkKickTimeoutMs = kickTimeoutMinutes > 0 ? kickTimeoutMinutes * 60000 : 0;
+            if (this.kickAfkPlayers && kickTimeoutMinutes > 0) {
+                LOGGER.info("AFK kick timeout: {} minutes", kickTimeoutMinutes);
+            }
         } else {
-            this.afkKickTimeoutMs = 1800000; // Default 30 minutes
+            // Default 30 minutes, but only matters if kickAfkPlayers is enabled
+            this.afkKickTimeoutMs = 1800000;
+        }
+
+        // Warn if kick is enabled with 0 timeout (would kick immediately!)
+        if (this.kickAfkPlayers && this.afkKickTimeoutMs == 0) {
+            LOGGER.error("AFK kick is ENABLED but timeout is 0! This would kick players immediately. Setting to 30 minutes default.");
+            this.afkKickTimeoutMs = 1800000; // Force 30 minutes minimum
         }
         this.afkMessage = afkConfig.has("afkMessage") ? 
             afkConfig.get("afkMessage").getAsString() : "{player} is now AFK";
@@ -477,8 +515,12 @@ public class AfkManager {
      */
     private void saveAfkData() {
         try {
-            if (!afkDataFile.getParentFile().exists()) {
-                afkDataFile.getParentFile().mkdirs();
+            File parentDir = afkDataFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                if (!parentDir.mkdirs()) {
+                    LOGGER.error("Failed to create AFK data directory: {}", parentDir.getAbsolutePath());
+                    return;
+                }
             }
             
             JsonObject data = new JsonObject();

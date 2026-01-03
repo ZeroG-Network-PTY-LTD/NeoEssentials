@@ -6,6 +6,7 @@ import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.ResourceUtil;
 import com.zerog.neoessentials.util.MessageUtil;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
@@ -166,7 +167,7 @@ public class SpawnManager {
         }
         
         // Check if spawn location is still safe
-        if (requireSafeLocation && !spawnLocation.isSafe()) {
+        if (spawnLocation != null && requireSafeLocation && !spawnLocation.isSafe()) {
             TeleportLocation safeLocation = spawnLocation.findSafeLocation();
             if (safeLocation == null) {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe"));
@@ -202,7 +203,12 @@ public class SpawnManager {
      */
     private void teleportToWorldSpawn(ServerPlayer player) {
         try {
-            ServerLevel overworld = player.getServer().overworld();
+            MinecraftServer server = player.getServer();
+            if (server == null) {
+                LOGGER.error("Cannot teleport to world spawn - server is null");
+                return;
+            }
+            ServerLevel overworld = server.overworld();
             BlockPos worldSpawn = overworld.getSharedSpawnPos();
             TeleportLocation fallbackLocation = new TeleportLocation(
                 overworld, 

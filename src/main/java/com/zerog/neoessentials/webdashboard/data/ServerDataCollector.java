@@ -171,28 +171,14 @@ public class ServerDataCollector {
                 JsonObject worldChunk = new JsonObject();
                 worldChunk.addProperty("dimension", level.dimension().location().toString());
 
-                // Count ONLY fully loaded chunks by checking visible chunk count
-                int loadedChunks = 0;
+                // Count ACTUAL loaded chunks from the chunk source
+                int loadedChunks;
                 try {
                     var chunkSource = level.getChunkSource();
-                    // Use the visible chunk count which represents actually loaded chunks
+                    // Get the actual number of loaded chunks from the chunk map
                     loadedChunks = chunkSource.chunkMap.size();
-
-                    // If that's 0 and we have players, something is wrong - use a more accurate count
-                    if (loadedChunks == 0 && server.getPlayerCount() > 0) {
-                        // Try counting by player view distance
-                        int viewDistance = server.getPlayerList().getViewDistance();
-                        int playersInDim = 0;
-                        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                            if (player.level().dimension().location().toString().equals(level.dimension().location().toString())) {
-                                playersInDim++;
-                            }
-                        }
-                        // Approximate: each player loads roughly (viewDistance * 2)^2 chunks
-                        if (playersInDim > 0) {
-                            loadedChunks = playersInDim * (viewDistance * 2) * (viewDistance * 2);
-                        }
-                    }
+                    LOGGER.debug("Actual loaded chunks for {}: {}",
+                        level.dimension().location(), loadedChunks);
                 } catch (Exception e) {
                     LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
                     loadedChunks = 0;
@@ -321,7 +307,7 @@ public class ServerDataCollector {
         // Log total players first
         LOGGER.info("Total players online: {}", server.getPlayerList().getPlayers().size());
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-            LOGGER.info("  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().location().toString());
+                LOGGER.info("  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().location());
         }
         
         server.getAllLevels().forEach(level -> {
@@ -347,25 +333,17 @@ public class ServerDataCollector {
             world.addProperty("playersInWorld", playersInDimension);
             LOGGER.info("  Final player count for {}: {}", dimensionKey, playersInDimension);
             
-            // Count only chunks within simulation distance of players
-            int loadedChunks = 0;
-            if (playersInDimension > 0) {
-                try {
-                    // Count chunks based on player positions and simulation distance
-                    int simulationDistance = server.getPlayerList().getSimulationDistance();
-                    int chunksPerPlayer = (simulationDistance * 2 + 1) * (simulationDistance * 2 + 1);
-                    
-                    // Estimate: each player loads approximately chunks in simulation distance
-                    loadedChunks = playersInDimension * chunksPerPlayer;
-                    
-                    LOGGER.info("  Estimated loaded chunks for {} ({} players × {} sim distance): {}", 
-                        dimensionKey, playersInDimension, simulationDistance, loadedChunks);
-                } catch (Exception e) {
-                    LOGGER.warn("  Failed to count chunks for {}: {}", dimensionKey, e.getMessage());
-                    loadedChunks = 0;
-                }
-            } else {
-                LOGGER.info("  No players in {}, setting chunks to 0", dimensionKey);
+            // Count ACTUAL loaded chunks from the chunk source
+            int loadedChunks;
+            try {
+                var chunkSource = level.getChunkSource();
+                // Get the actual number of loaded chunks from the chunk map
+                loadedChunks = chunkSource.chunkMap.size();
+
+                LOGGER.info("  Actual loaded chunks for {}: {}", dimensionKey, loadedChunks);
+            } catch (Exception e) {
+                LOGGER.warn("  Failed to count chunks for {}: {}", dimensionKey, e.getMessage());
+                loadedChunks = 0;
             }
             world.addProperty("loadedChunks", loadedChunks);
             
@@ -423,6 +401,7 @@ public class ServerDataCollector {
             JsonObject gameRules = new JsonObject();
             net.minecraft.world.level.GameRules.visitGameRuleTypes(new net.minecraft.world.level.GameRules.GameRuleTypeVisitor() {
                 @Override
+                @SuppressWarnings("NullableProblems")
                 public <T extends net.minecraft.world.level.GameRules.Value<T>> void visit(
                     net.minecraft.world.level.GameRules.Key<T> key, 
                     net.minecraft.world.level.GameRules.Type<T> type
