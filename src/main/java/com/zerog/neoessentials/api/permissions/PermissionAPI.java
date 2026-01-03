@@ -56,16 +56,22 @@ public class PermissionAPI {
             return false;
         }
         
-        // Only allow ops to bypass permissions if enabled in config
+        // If using external permissions (LuckPerms, FTB Ranks), prioritize them FIRST
+        if (externalAdapter != null) {
+            boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
+            LOGGER.debug("External permission check for {}: {} = {}", uuid, permission, hasExternalPerm);
+            return hasExternalPerm;
+        }
+        
+        // Fallback to internal system: check ops bypass first
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
             if (isPlayerOpped(uuid)) {
+                LOGGER.debug("Player {} bypassing permission check (is op)", uuid);
                 return true;
             }
         }
         
-        if (externalAdapter != null) {
-            return externalAdapter.hasPermission(uuid, permission);
-        }
+        // Finally check internal permission manager
         if (manager == null) {
             LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null - returning false");
             return false;
