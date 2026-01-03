@@ -114,7 +114,7 @@ public class DirectTeleportCommands {
                 }
                 return source.hasPermission(2); // Console/command block fallback
             })
-            .executes(context -> teleportAllPlayers(context))
+            .executes(DirectTeleportCommands::teleportAllPlayers)
         );
     }
     
