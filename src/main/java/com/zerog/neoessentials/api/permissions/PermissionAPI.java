@@ -34,6 +34,7 @@ public class PermissionAPI {
     /**
      * Returns the current external permission adapter, or null if using built-in.
      */
+    @SuppressWarnings("unused") // Public API method
     public static ExternalPermissionAdapter getExternalAdapter() {
         return externalAdapter;
     }
@@ -93,9 +94,12 @@ public class PermissionAPI {
                 }
                 
                 // If player is offline, check the ops file
-                com.mojang.authlib.GameProfile profile = server.getProfileCache().get(uuid).orElse(null);
-                if (profile != null) {
-                    return server.getPlayerList().isOp(profile);
+                var profileCache = server.getProfileCache();
+                if (profileCache != null) {
+                    com.mojang.authlib.GameProfile profile = profileCache.get(uuid).orElse(null);
+                    if (profile != null) {
+                        return server.getPlayerList().isOp(profile);
+                    }
                 }
             }
         } catch (Exception e) {
