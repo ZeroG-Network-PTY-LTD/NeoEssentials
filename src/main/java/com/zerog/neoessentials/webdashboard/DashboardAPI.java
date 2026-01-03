@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
  * - Authentication & Authorization system
  * - Real-time data collection and processing
  * - WebSocket support for live updates
- *
  * Design Philosophy:
  * - Separation of concerns: API layer separate from UI
  * - Security-first: All endpoints require authentication
@@ -146,9 +145,10 @@ public class DashboardAPI {
                     token = authHeader.substring(7);
                 }
                 
-                // Validate token
-                //noinspection ConstantConditions - null check is intentional for safety
-                if (token == null || !AuthHandler.validateToken(token)) {
+                // Validate token - intentional null check for safety
+                @SuppressWarnings("ConstantConditions")
+                boolean isValid = token != null && AuthHandler.validateToken(token);
+                if (!isValid) {
                     // Unauthorized
                     LOGGER.info("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
                     String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";

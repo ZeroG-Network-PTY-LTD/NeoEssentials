@@ -14,7 +14,6 @@ import java.text.DecimalFormat;
 /**
  * Server Data Collector
  * Collects all server-related data for the Dashboard API
- *
  * Endpoints served:
  * - Server Profiles (version, mods, config)
  * - Server Statistics (TPS, memory, CPU)
