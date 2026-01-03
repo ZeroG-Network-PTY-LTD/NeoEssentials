@@ -501,15 +501,9 @@ public class PermissionRegistry {
     public void syncWithLuckPerms() {
         try {
             // Check if we're using LuckPerms
-            com.zerog.neoessentials.api.permissions.PermissionAPI permissionAPI =
-                new com.zerog.neoessentials.api.permissions.PermissionAPI();
-
             var externalAdapter = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter();
 
-            if (externalAdapter instanceof com.zerog.neoessentials.permissions.LuckPermsAdapter) {
-                com.zerog.neoessentials.permissions.LuckPermsAdapter luckPermsAdapter =
-                    (com.zerog.neoessentials.permissions.LuckPermsAdapter) externalAdapter;
-
+            if (externalAdapter instanceof com.zerog.neoessentials.permissions.LuckPermsAdapter luckPermsAdapter) {
                 LOGGER.info("Syncing {} permissions with LuckPerms...", registeredPermissions.size());
                 luckPermsAdapter.registerPermissions(registeredPermissions);
 
@@ -534,6 +528,7 @@ public class PermissionRegistry {
      *
      * @return YAML-formatted string for LuckPerms import
      */
+    @SuppressWarnings("unused") // Public API method for LuckPerms integration
     public String exportForLuckPerms() {
         StringBuilder yaml = new StringBuilder();
         yaml.append("# NeoEssentials Permissions for LuckPerms\n");
