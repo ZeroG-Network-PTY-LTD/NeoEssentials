@@ -372,6 +372,7 @@ public class PermissionRegistry {
     /**
      * Get summary of registered permissions by category
      */
+    @SuppressWarnings("unused") // Public API method
     public Map<PermissionCategory, Integer> getPermissionSummary() {
         Map<PermissionCategory, Integer> summary = new EnumMap<>(PermissionCategory.class);
         
@@ -422,45 +423,15 @@ public class PermissionRegistry {
         if (parts.length >= 2) {
             String category = parts[1].toLowerCase();
             
-            switch (category) {
-                case "economy":
-                case "eco":
-                case "balance":
-                case "pay":
-                case "money":
-                    return PermissionCategory.ECONOMY;
-                case "teleport":
-                case "tp":
-                case "tpa":
-                case "home":
-                case "warp":
-                case "spawn":
-                    return PermissionCategory.TELEPORT;
-                case "chat":
-                case "msg":
-                case "message":
-                case "reply":
-                case "socialspy":
-                case "mute":
-                case "ignore":
-                    return PermissionCategory.CHAT;
-                case "kit":
-                case "kits":
-                    return PermissionCategory.KITS;
-                case "item":
-                case "items":
-                case "give":
-                case "enchant":
-                case "repair":
-                    return PermissionCategory.ITEMS;
-                case "admin":
-                case "reload":
-                case "permissions":
-                case "debug":
-                    return PermissionCategory.ADMIN;
-                default:
-                    return PermissionCategory.MISC;
-            }
+            return switch (category) {
+                case "economy", "eco", "balance", "pay", "money" -> PermissionCategory.ECONOMY;
+                case "teleport", "tp", "tpa", "home", "warp", "spawn" -> PermissionCategory.TELEPORT;
+                case "chat", "msg", "message", "reply", "socialspy", "mute", "ignore" -> PermissionCategory.CHAT;
+                case "kit", "kits" -> PermissionCategory.KITS;
+                case "item", "items", "give", "enchant", "repair" -> PermissionCategory.ITEMS;
+                case "admin", "reload", "permissions", "debug" -> PermissionCategory.ADMIN;
+                default -> PermissionCategory.MISC;
+            };
         }
         
         return PermissionCategory.CORE;
