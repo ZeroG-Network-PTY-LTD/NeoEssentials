@@ -143,7 +143,7 @@ public class DirectTeleportCommands {
     private static void registerTopCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("top")
             .requires(source -> source.hasPermission(0))
-            .executes(context -> teleportToTop(context))
+            .executes(DirectTeleportCommands::teleportToTop)
         );
     }
     
@@ -157,7 +157,7 @@ public class DirectTeleportCommands {
                 }
                 return source.hasPermission(2); // Console/command block fallback
             })
-            .executes(context -> jumpToTargetBlock(context))
+            .executes(DirectTeleportCommands::jumpToTargetBlock)
         );
     }
     
@@ -169,14 +169,14 @@ public class DirectTeleportCommands {
                 }
                 return source.hasPermission(2); // Console/command block fallback
             })
-            .executes(context -> jumpToTargetBlock(context))
+            .executes(DirectTeleportCommands::jumpToTargetBlock)
         );
     }
     
     private static void registerTprCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tpr")
             .requires(source -> source.hasPermission(0))
-            .executes(context -> randomTeleport(context))
+            .executes(DirectTeleportCommands::randomTeleport)
         );
     }
     
@@ -247,8 +247,13 @@ public class DirectTeleportCommands {
     private static int teleportAllPlayers(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            Collection<ServerPlayer> players = player.getServer().getPlayerList().getPlayers();
-            
+            net.minecraft.server.MinecraftServer server = player.getServer();
+            if (server == null) {
+                context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed", "Server not available"));
+                return 0;
+            }
+            Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
+
             int count = 0;
             for (ServerPlayer target : players) {
                 if (target != player) {

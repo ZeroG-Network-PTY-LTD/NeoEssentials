@@ -36,7 +36,7 @@ public class AfkActivityHandler {
     /**
      * Activity pattern tracker for a player
      */
-    private static class ActivityPattern {
+    public static class ActivityPattern {
         private final Map<String, Integer> actionCounts = new ConcurrentHashMap<>();
         private final Map<String, Long> lastActionTime = new ConcurrentHashMap<>();
         private int suspiciousScore = 0;
@@ -160,6 +160,7 @@ public class AfkActivityHandler {
     /**
      * Get the activity pattern for a player (for debugging/admin purposes)
      */
+    @SuppressWarnings("unused") // Public API method for admin/debugging
     public static ActivityPattern getActivityPattern(UUID playerUuid) {
         return activityPatterns.get(playerUuid);
     }
@@ -167,6 +168,7 @@ public class AfkActivityHandler {
     /**
      * Check if a player has suspicious activity patterns
      */
+    @SuppressWarnings("unused") // Public API method for admin/debugging
     public static boolean isSuspiciousActivity(UUID playerUuid) {
         ActivityPattern pattern = activityPatterns.get(playerUuid);
         return pattern != null && pattern.isSuspicious();
@@ -175,6 +177,7 @@ public class AfkActivityHandler {
     /**
      * Clear activity patterns (for shutdown)
      */
+    @SuppressWarnings("unused") // Public API method for cleanup
     public static void clearPatterns() {
         activityPatterns.clear();
     }
@@ -182,6 +185,7 @@ public class AfkActivityHandler {
     /**
      * Get current activity pattern statistics
      */
+    @SuppressWarnings("unused") // Public API method for statistics
     public static Map<UUID, ActivityPattern> getActivityPatterns() {
         return new ConcurrentHashMap<>(activityPatterns);
     }

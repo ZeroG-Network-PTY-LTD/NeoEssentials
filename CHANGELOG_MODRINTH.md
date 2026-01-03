@@ -1,4 +1,236 @@
-# NeoEssentials v1.0.2.3 - Major Update
+# NeoEssentials v1.0.2.3 - Quality & Performance Update
+
+**Build #596** | January 4, 2026 | MC 1.21.1 & 1.21.4 | NeoForge 21.1.179+ / 21.4.156+
+
+---
+
+## 🎯 Highlights
+
+**Major quality update** with critical fixes and LuckPerms integration!
+
+---
+
+## 🆕 New Features
+
+### 🔐 LuckPerms Auto-Sync
+Your NeoEssentials permissions now automatically appear in LuckPerms!
+
+**What you get:**
+- ✨ Autocomplete in `/lp` commands
+- ✨ Permissions visible in web editor
+- ✨ 85+ permissions auto-registered
+- ✨ Export to YAML format
+
+**Try it:**
+```bash
+/lp user PlayerName permission set neoessentials.<TAB>
+# All permissions now autocomplete! 🎉
+```
+
+### 📡 `/tpo` Command
+Teleport to offline player's last location!
+
+```bash
+/tpo OfflinePlayerName
+```
+
+Perfect for:
+- Finding player bases
+- Investigating grief
+- Admin duties
+
+---
+
+## 🐛 Major Fixes
+
+### Build #575 - Kit System Crash
+❌ **Error:** `NoSuchMethodError` on Minecraft 1.21.4  
+✅ **Fixed:** Updated to new Registry API  
+🎯 **Result:** Server starts successfully with kits
+
+### Build #580 - Log Spam Eliminated
+❌ **Problem:** Thousands of WARN logs per minute  
+✅ **Fixed:** Removed duplicate event handlers  
+🎯 **Result:** 50% less event processing, clean logs
+
+### Build #585 - Permission Nodes
+❌ **Missing:** 15 utility command permissions  
+✅ **Added:** All portable workstations + utilities  
+🎯 **Result:** Full LuckPerms integration
+
+### Build #590 - TPA System
+❌ **Crash:** `/tpahere` NullPointerException  
+✅ **Fixed:** ConcurrentHashMap null handling  
+🎯 **Result:** All teleport requests working
+
+### Build #595 - Debug Logging
+❌ **Duplicate:** Two debug config options  
+✅ **Merged:** Single `logging.enableDebugLogging`  
+🎯 **Result:** Consistent debug control
+
+---
+
+## 📋 Complete Changes
+
+### Added ✨
+- `/tpo` command for offline teleports
+- LuckPerms automatic permission sync
+- 15 missing permission nodes:
+  - `neoessentials.anvil`
+  - `neoessentials.crafting`
+  - `neoessentials.stonecutting`
+  - `neoessentials.smithing`
+  - `neoessentials.fletching`
+  - `neoessentials.realname`
+  - `neoessentials.whois`
+  - `neoessentials.seen`
+  - `neoessentials.sign`
+  - `neoessentials.rules`
+  - `neoessentials.suicide`
+  - `neoessentials.ping`
+  - And more!
+
+### Fixed 🔧
+- Kit system crash (MC 1.21.4 Registry API)
+- `/tpahere` NullPointerException
+- Dashboard port config ignored
+- Duplicate event handlers (log spam)
+- Ops bypassing LuckPerms
+- 27 code analysis warnings
+- Debug logging consolidation
+
+### Improved 📈
+- 50% event processing reduction
+- Modern Java features (switch expressions, pattern matching)
+- Zero compilation warnings
+- Enhanced error handling
+- Thread-safe field declarations
+
+---
+
+## 🎮 Quick Start
+
+### Using New Features
+
+**LuckPerms Integration:**
+```bash
+# Autocomplete now works!
+/lp user Steve permission set neoessentials.<TAB>
+
+# Grant portable workstations
+/lp group default permission set neoessentials.stonecutting
+/lp group default permission set neoessentials.anvil
+
+# Use web editor - NeoEssentials permissions now visible!
+/lp editor
+```
+
+**Offline Teleport:**
+```bash
+# Teleport to where an offline player last was
+/tpo BuilderBob
+```
+
+**Clean Logs:**
+```json
+// config.json
+{
+  "logging": {
+    "enableDebugLogging": false  // Clean production logs
+  }
+}
+```
+
+---
+
+## ⚙️ Technical
+
+**Performance:**
+- 50% reduction in AFK event processing
+- Eliminated duplicate handler registration
+- Optimized permission checking order
+
+**Code Quality:**
+- 0 compilation warnings
+- 1000+ lines improved
+- 15+ files updated
+- Modern Java 16+ features
+
+**Compatibility:**
+- Minecraft 1.21.1 ✅
+- Minecraft 1.21.4 ✅
+- NeoForge 21.1.179+ ✅
+- NeoForge 21.4.156+ ✅
+- LuckPerms (optional) ✅
+
+---
+
+## 📦 Installation
+
+1. Download latest version
+2. Stop server
+3. Replace old jar
+4. Start server
+5. **Done!** Auto-migrates config
+
+No breaking changes - fully backward compatible!
+
+---
+
+## 📚 Documentation
+
+**New Guides Created:**
+- Debug Logging Consolidation
+- Enhanced Handler Fix
+- Teleportation System Guide
+- TPA/TPAHERE Implementation
+- LuckPerms Integration
+- Permission Registry Guide
+- Missing Permissions Fix
+
+All available in GitHub repository!
+
+---
+
+## 🔗 Useful Links
+
+- **Issues:** Report bugs on GitHub
+- **Wiki:** Full command reference
+- **Discord:** Community support
+- **Source:** Available on GitHub
+
+---
+
+## 🎉 What's Next?
+
+**Planned for v1.0.2.4:**
+- Additional performance optimizations
+- More system audits
+- Enhanced features
+
+---
+
+## ⭐ Support the Project
+
+Enjoying NeoEssentials? Consider:
+- ⭐ Starring on GitHub
+- 📝 Writing a review
+- 🐛 Reporting bugs
+- 💡 Suggesting features
+
+---
+
+## 📊 Stats
+
+- **Build:** #596
+- **Date:** January 4, 2026
+- **Changes:** 1000+ lines
+- **Fixes:** 27 warnings + 8 bugs
+- **New Features:** 3 major
+
+---
+
+# NeoEssentials v1.0.2.2 - Major Update
 
 **Build #524** | November 10, 2025 | Minecraft 1.21.1 | NeoForge 21.1.179+
 

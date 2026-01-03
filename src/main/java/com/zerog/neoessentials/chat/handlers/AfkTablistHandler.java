@@ -70,6 +70,7 @@ public class AfkTablistHandler {
     /**
      * Update all online players' tablist names (called when AFK status changes)
      */
+    @SuppressWarnings("unused") // Public API method for admin/reload
     public static void updateAllPlayersTablistNames() {
         try {
             net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
