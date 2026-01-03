@@ -40,12 +40,12 @@ public class TeleportRequestManager {
     private boolean allowTpaHere = true;
     private boolean allowTpaAll = true;
     private int maxPendingRequests;
-    private int cooldownBetweenRequestsSeconds;
-    private boolean allowMultipleRequests;
-    private boolean enableRequestNotifications;
-    private boolean autoAcceptFromFriends;
+    private final int cooldownBetweenRequestsSeconds;
+    private final boolean allowMultipleRequests;
+    private final boolean enableRequestNotifications;
+    private final boolean autoAcceptFromFriends;
     private boolean enableTeleportSafety;
-    private boolean logTeleportRequests;
+    private final boolean logTeleportRequests;
     private final Map<UUID, Long> lastRequestTimestamps = new ConcurrentHashMap<>();
     
     private TeleportRequestManager() {
@@ -208,6 +208,7 @@ public class TeleportRequestManager {
     /**
      * Add a friend for a player (for demonstration/testing)
      */
+    @SuppressWarnings("unused") // Public API method - reserved for future friends system
     public void addFriend(UUID playerId, UUID friendId) {
         friendsMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet()).add(friendId);
     }
@@ -215,6 +216,7 @@ public class TeleportRequestManager {
     /**
      * Remove a friend for a player
      */
+    @SuppressWarnings("unused") // Public API method - reserved for future friends system
     public void removeFriend(UUID playerId, UUID friendId) {
         Set<UUID> friends = friendsMap.get(playerId);
         if (friends != null) {
@@ -436,6 +438,7 @@ public class TeleportRequestManager {
     /**
      * Check if player has pending request
      */
+    @SuppressWarnings("unused") // Public API method
     public boolean hasPendingRequest(ServerPlayer player) {
         return pendingRequests.containsKey(player.getUUID());
     }
@@ -443,6 +446,7 @@ public class TeleportRequestManager {
     /**
      * Check if player has sent request
      */
+    @SuppressWarnings("unused") // Public API method
     public boolean hasSentRequest(ServerPlayer player) {
         return sentRequests.containsKey(player.getUUID());
     }
@@ -450,6 +454,7 @@ public class TeleportRequestManager {
     /**
      * Get pending request info
      */
+    @SuppressWarnings("unused") // Public API method
     public String getPendingRequestInfo(ServerPlayer player) {
         TeleportRequest request = pendingRequests.get(player.getUUID());
         if (request == null) {
@@ -464,19 +469,29 @@ public class TeleportRequestManager {
     }
     
     // Configuration getters/setters
+    @SuppressWarnings("unused") // Public API method
     public int getRequestTimeoutSeconds() { return requestTimeoutSeconds; }
+    @SuppressWarnings("unused") // Public API method
     public void setRequestTimeoutSeconds(int timeout) { this.requestTimeoutSeconds = Math.max(10, timeout); }
     
+    @SuppressWarnings("unused") // Public API method
     public int getTeleportDelay() { return teleportDelay; }
+    @SuppressWarnings("unused") // Public API method
     public void setTeleportDelay(int delay) { this.teleportDelay = Math.max(0, delay); }
     
+    @SuppressWarnings("unused") // Public API method
     public boolean isAllowTpaHere() { return allowTpaHere; }
+    @SuppressWarnings("unused") // Public API method
     public void setAllowTpaHere(boolean allow) { this.allowTpaHere = allow; }
     
+    @SuppressWarnings("unused") // Public API method
     public boolean isAllowTpaAll() { return allowTpaAll; }
+    @SuppressWarnings("unused") // Public API method
     public void setAllowTpaAll(boolean allow) { this.allowTpaAll = allow; }
     
+    @SuppressWarnings("unused") // Public API method
     public int getMaxPendingRequests() { return maxPendingRequests; }
+    @SuppressWarnings("unused") // Public API method
     public void setMaxPendingRequests(int max) { this.maxPendingRequests = Math.max(1, max); }
     
     /**

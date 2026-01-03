@@ -305,6 +305,26 @@ public class PermissionRegistry {
         register("neoessentials.afk", "Use AFK system", PermissionCategory.MISC, true);
         register("neoessentials.afk.exempt", "Exempt from AFK kick", PermissionCategory.MISC, false);
         
+        // Portable workstations
+        register("neoessentials.anvil", "Open portable anvil", PermissionCategory.MISC, true);
+        register("neoessentials.crafting", "Open portable crafting table", PermissionCategory.MISC, true);
+        register("neoessentials.fletching", "Open portable fletching table", PermissionCategory.MISC, true);
+        register("neoessentials.smithing", "Open portable smithing table", PermissionCategory.MISC, true);
+        register("neoessentials.stonecutting", "Open portable stonecutter", PermissionCategory.MISC, true);
+
+        // Utility commands
+        register("neoessentials.realname", "Find player by nickname", PermissionCategory.MISC, true);
+        register("neoessentials.whois", "View player information", PermissionCategory.MISC, true);
+        register("neoessentials.whois.detailed", "View detailed player information", PermissionCategory.MISC, false);
+        register("neoessentials.seen", "Check when player was last seen", PermissionCategory.MISC, true);
+        register("neoessentials.sign", "Edit sign text", PermissionCategory.MISC, true);
+        register("neoessentials.sign.colors", "Use colors in signs", PermissionCategory.MISC, false);
+        register("neoessentials.rules", "View server rules", PermissionCategory.MISC, true);
+        register("neoessentials.rules.admin", "Manage server rules", PermissionCategory.ADMIN, false);
+        register("neoessentials.suicide", "Use suicide command", PermissionCategory.MISC, true);
+        register("neoessentials.ping", "Check own ping", PermissionCategory.MISC, true);
+        register("neoessentials.ping.others", "Check others' ping", PermissionCategory.MISC, false);
+
         // Permission system
         register("neoessentials.permissions.admin", "Permission system administration", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.reload", "Reload permissions", PermissionCategory.ADMIN, false);
