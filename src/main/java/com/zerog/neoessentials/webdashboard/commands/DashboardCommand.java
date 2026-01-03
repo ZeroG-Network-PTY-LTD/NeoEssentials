@@ -10,7 +10,7 @@ import com.zerog.neoessentials.webdashboard.WebDashboardServer;
 import com.zerog.neoessentials.webdashboard.security.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
-// import net.minecraft.commands.Commands; // Unused after dashboard disable
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -40,23 +40,25 @@ public class DashboardCommand {
     private static final String PERM_TEMPPASS = "neoessentials.dashboard.temppass";
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Dashboard command registration disabled
-        // dispatcher.register(Commands.literal("dashboard")
-        //     .requires(source -> source.hasPermission(2)) // Allow if operator, then check specific permissions
-        //     .then(Commands.literal("start")
-        //         .executes(DashboardCommand::startDashboard))
-        //     .then(Commands.literal("stop")
-        //         .executes(DashboardCommand::stopDashboard))
-        //     .then(Commands.literal("status")
-        //         .executes(DashboardCommand::statusDashboard))
-        //     .then(Commands.literal("port")
-        //         .then(Commands.argument("port", IntegerArgumentType.integer(1024, 65535))
-        //             .executes(DashboardCommand::changeDashboardPort)))
-        //     .then(Commands.literal("temppass")
-        //         .then(Commands.argument("username", net.minecraft.commands.arguments.EntityArgument.player())
-        //             .executes(DashboardCommand::generateTempPassword)))
-        //     .executes(DashboardCommand::helpDashboard)
-        // );
+        dispatcher.register(Commands.literal("dashboard")
+            .requires(source -> {
+                // Allow from console (permission level 4) OR players with permission level 2+
+                return source.hasPermission(2);
+            })
+            .then(Commands.literal("start")
+                .executes(DashboardCommand::startDashboard))
+            .then(Commands.literal("stop")
+                .executes(DashboardCommand::stopDashboard))
+            .then(Commands.literal("status")
+                .executes(DashboardCommand::statusDashboard))
+            .then(Commands.literal("port")
+                .then(Commands.argument("port", IntegerArgumentType.integer(1024, 65535))
+                    .executes(DashboardCommand::changeDashboardPort)))
+            .then(Commands.literal("temppass")
+                .then(Commands.argument("username", net.minecraft.commands.arguments.EntityArgument.player())
+                    .executes(DashboardCommand::generateTempPassword)))
+            .executes(DashboardCommand::helpDashboard)
+        );
     }
     
     /**
@@ -66,13 +68,17 @@ public class DashboardCommand {
     private static int startDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        // Check permission
-        PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
-        if (!permResult.hasPermission()) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
-            return 0;
+        // Check permission - allow console to bypass permission check
+        if (source.getEntity() != null) {
+            // This is a player, check permissions
+            PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
+            if (!permResult.hasPermission()) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                return 0;
+            }
         }
-        
+        // Console automatically has permission
+
         // Check if web dashboard is enabled in config
         com.zerog.neoessentials.config.ConfigManager configManager = 
             com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -94,9 +100,9 @@ public class DashboardCommand {
         try {
             server.start();
             
-            int port = server.getPort();
-            String url = "http://localhost:" + port;
-            
+            // Get the configured URL (either custom URL or hostname:port)
+            String url = configManager.getWebDashboardUrl();
+
             Component message = Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_header") + "\n")
                 .withStyle(ChatFormatting.GREEN)
                 .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_title") + "\n")
@@ -116,6 +122,15 @@ public class DashboardCommand {
                     .withStyle(ChatFormatting.GREEN));
             
             source.sendSuccess(() -> message, true);
+
+            // Show hint if using default localhost
+            String hostname = configManager.getWebDashboardHostname();
+            String customUrl = configManager.getWebDashboardCustomUrl();
+            if (customUrl.isEmpty() && hostname.equals("localhost")) {
+                source.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.url_hint"))
+                    .withStyle(ChatFormatting.GRAY));
+            }
+
             return 1;
             
         } catch (Exception e) {
@@ -131,13 +146,17 @@ public class DashboardCommand {
     private static int stopDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        // Check permission
-        PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
-        if (!permResult.hasPermission()) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
-            return 0;
+        // Check permission - allow console to bypass permission check
+        if (source.getEntity() != null) {
+            // This is a player, check permissions
+            PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
+            if (!permResult.hasPermission()) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                return 0;
+            }
         }
-        
+        // Console automatically has permission
+
         WebDashboardServer server = WebDashboardServer.getInstance();
         
         if (!server.isRunning()) {
@@ -157,18 +176,25 @@ public class DashboardCommand {
     private static int statusDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        // Check permission
-        PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_STATUS);
-        if (!permResult.hasPermission()) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
-            return 0;
+        // Check permission - allow console to bypass permission check
+        if (source.getEntity() != null) {
+            // This is a player, check permissions
+            PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_STATUS);
+            if (!permResult.hasPermission()) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                return 0;
+            }
         }
-        
+        // Console automatically has permission
+
         WebDashboardServer server = WebDashboardServer.getInstance();
         
         if (server.isRunning()) {
-            String url = "http://localhost:" + server.getPort();
-            
+            // Get the configured URL (either custom URL or hostname:port)
+            com.zerog.neoessentials.config.ConfigManager configManager =
+                com.zerog.neoessentials.config.ConfigManager.getInstance();
+            String url = configManager.getWebDashboardUrl();
+
             Component message = Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_label"))
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_running"))
@@ -201,13 +227,17 @@ public class DashboardCommand {
     private static int changeDashboardPort(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        // Check permission
-        PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
-        if (!permResult.hasPermission()) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
-            return 0;
+        // Check permission - allow console to bypass permission check
+        if (source.getEntity() != null) {
+            // This is a player, check permissions
+            PermissionResult permResult = PermissionValidator.validatePermission(source, PERM_ADMIN);
+            if (!permResult.hasPermission()) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                return 0;
+            }
         }
-        
+        // Console automatically has permission
+
         int newPort = IntegerArgumentType.getInteger(context, "port");
         
         source.sendSuccess(() -> MessageUtil.warning("commands.neoessentials.dashboard.port_future"), false);

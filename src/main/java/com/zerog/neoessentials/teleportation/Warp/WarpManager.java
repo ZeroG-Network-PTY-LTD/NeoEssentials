@@ -66,18 +66,28 @@ public class WarpManager {
     private boolean allowCrossDimensionWarps = true;
 
     private WarpManager() {
-        // Load config values
+        loadConfig();
+        loadWarps();
+        loadPlayerWarps();
+    }
+
+    /**
+     * Load configuration values from config file
+     */
+    private void loadConfig() {
         try {
             ConfigManager configManager = ConfigManager.getInstance();
-            boolean safe = true;
             if (configManager != null) {
                 JsonObject config = configManager.getConfig(ConfigManager.MAIN_CONFIG);
                 if (config.has("teleportation")) {
                     JsonObject tp = config.getAsJsonObject("teleportation");
+
+                    // Load warp settings
                     if (tp.has("warpSettings")) {
                         JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+
                         if (warpSettings.has("enableWarpSafety")) {
-                            safe = warpSettings.get("enableWarpSafety").getAsBoolean();
+                            requireSafeLocations = warpSettings.get("enableWarpSafety").getAsBoolean();
                         }
                         if (warpSettings.has("allowPlayerWarps")) {
                             allowPlayerWarps = warpSettings.get("allowPlayerWarps").getAsBoolean();
@@ -98,14 +108,23 @@ public class WarpManager {
                             } catch (Exception ignored) {}
                         }
                     }
+
+                    // Load general teleportation settings that apply to warps
+                    if (tp.has("generalSettings")) {
+                        JsonObject generalSettings = tp.getAsJsonObject("generalSettings");
+                        if (generalSettings.has("teleportDelay")) {
+                            try {
+                                teleportDelay = generalSettings.get("teleportDelay").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                    }
                 }
             }
-            this.requireSafeLocations = safe;
+            LOGGER.debug("Warp config loaded: requireSafe={}, maxWarps={}, delay={}",
+                requireSafeLocations, maxWarps, teleportDelay);
         } catch (Exception e) {
-            LOGGER.warn("Failed to load warp config, defaulting to safe: {}", e.getMessage());
+            LOGGER.warn("Failed to load warp config, using defaults: {}", e.getMessage());
         }
-        loadWarps();
-        loadPlayerWarps();
     }
 
     // --- Player Warps API ---
@@ -713,6 +732,7 @@ public class WarpManager {
      */
     public void reload() {
         LOGGER.info("Reloading warp system...");
+        loadConfig();
         warps.clear();
         playerWarps.clear();
         loadWarps();

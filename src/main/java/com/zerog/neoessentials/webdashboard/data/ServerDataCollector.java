@@ -37,47 +37,71 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/profile
      */
     public JsonObject getServerProfile() {
+        LOGGER.info("=== Collecting Server Profile Data ===");
         JsonObject profile = new JsonObject();
         
-        profile.addProperty("serverName", server.getServerModName());
-        profile.addProperty("motd", server.getMotd());
-        profile.addProperty("minecraftVersion", server.getServerVersion());
-        
-        // Get NeoForge version dynamically from mod list
-        String neoforgeVersion = "Unknown";
         try {
-            var neoforgeModOpt = net.neoforged.fml.ModList.get().getModContainerById("neoforge");
-            if (neoforgeModOpt.isPresent()) {
-                neoforgeVersion = "NeoForge " + neoforgeModOpt.get().getModInfo().getVersion().toString();
+            profile.addProperty("serverName", server.getServerModName());
+            LOGGER.debug("Server name: {}", server.getServerModName());
+            
+            profile.addProperty("motd", server.getMotd());
+            profile.addProperty("minecraftVersion", server.getServerVersion());
+            LOGGER.debug("Minecraft version: {}", server.getServerVersion());
+            
+            // Get NeoForge version dynamically from mod list
+            String neoforgeVersion = "Unknown";
+            try {
+                var neoforgeModOpt = net.neoforged.fml.ModList.get().getModContainerById("neoforge");
+                if (neoforgeModOpt.isPresent()) {
+                    neoforgeVersion = "NeoForge " + neoforgeModOpt.get().getModInfo().getVersion().toString();
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Could not determine NeoForge version: {}", e.getMessage());
+                neoforgeVersion = "NeoForge (version unavailable)";
             }
+            profile.addProperty("modVersion", neoforgeVersion);
+            profile.addProperty("neoforgeVersion", neoforgeVersion);
+            
+            profile.addProperty("gameVersion", "1.21.1");
+            profile.addProperty("difficulty", server.getWorldData().getDifficulty().getKey());
+            profile.addProperty("hardcore", server.getWorldData().isHardcore());
+            profile.addProperty("maxPlayers", server.getMaxPlayers());
+            profile.addProperty("pvpEnabled", server.isPvpAllowed());
+            profile.addProperty("onlineMode", server.usesAuthentication());
+            profile.addProperty("commandBlocksEnabled", server.isCommandBlockEnabled());
+            
+            // Installed mods
+            JsonArray mods = new JsonArray();
+            try {
+                net.neoforged.fml.ModList.get().getMods().forEach(modInfo -> {
+                    JsonObject mod = new JsonObject();
+                    mod.addProperty("id", modInfo.getModId());
+                    mod.addProperty("name", modInfo.getDisplayName());
+                    mod.addProperty("version", modInfo.getVersion().toString());
+                    mods.add(mod);
+                });
+                profile.add("mods", mods);
+                profile.addProperty("modCount", mods.size());
+                profile.addProperty("modsLoaded", mods.size()); // For frontend compatibility
+                LOGGER.info("Successfully collected profile data: {} mods loaded", mods.size());
+            } catch (Exception e) {
+                LOGGER.error("Error collecting mod list", e);
+                profile.add("mods", new JsonArray());
+                profile.addProperty("modCount", 0);
+                profile.addProperty("modsLoaded", 0);
+            }
+            
+            LOGGER.info("=== Server Profile Data Collection Complete ===");
+            return profile;
         } catch (Exception e) {
-            neoforgeVersion = "NeoForge (version unavailable)";
+            LOGGER.error("Critical error collecting server profile", e);
+            // Return partial data even on error
+            if (!profile.has("serverName")) profile.addProperty("serverName", "Unknown");
+            if (!profile.has("minecraftVersion")) profile.addProperty("minecraftVersion", "Unknown");
+            if (!profile.has("maxPlayers")) profile.addProperty("maxPlayers", 20);
+            profile.addProperty("error", "Partial data due to error: " + e.getMessage());
+            return profile;
         }
-        profile.addProperty("modVersion", neoforgeVersion);
-        profile.addProperty("neoforgeVersion", neoforgeVersion);
-        
-        profile.addProperty("gameVersion", "1.21.1");
-        profile.addProperty("difficulty", server.getWorldData().getDifficulty().getKey());
-        profile.addProperty("hardcore", server.getWorldData().isHardcore());
-        profile.addProperty("maxPlayers", server.getMaxPlayers());
-        profile.addProperty("pvpEnabled", server.isPvpAllowed());
-        profile.addProperty("onlineMode", server.usesAuthentication());
-        profile.addProperty("commandBlocksEnabled", server.isCommandBlockEnabled());
-        
-        // Installed mods
-        JsonArray mods = new JsonArray();
-        net.neoforged.fml.ModList.get().getMods().forEach(modInfo -> {
-            JsonObject mod = new JsonObject();
-            mod.addProperty("id", modInfo.getModId());
-            mod.addProperty("name", modInfo.getDisplayName());
-            mod.addProperty("version", modInfo.getVersion().toString());
-            mods.add(mod);
-        });
-        profile.add("mods", mods);
-        profile.addProperty("modCount", mods.size());
-        profile.addProperty("modsLoaded", mods.size()); // For frontend compatibility
-        
-        return profile;
     }
     
     /**
@@ -85,92 +109,114 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/statistics
      */
     public JsonObject getServerStatistics() {
+        LOGGER.info("=== Collecting Server Statistics ===");
         JsonObject stats = new JsonObject();
         
-        // TPS (Ticks Per Second)
-        double avgTickTime = server.getAverageTickTimeNanos() / 1_000_000.0; // Convert to ms
-        double tps = Math.min(20.0, 1000.0 / Math.max(50.0, avgTickTime));
-        stats.addProperty("tps", df.format(tps));
-        stats.addProperty("averageTickTime", df.format(avgTickTime));
-        stats.addProperty("tpsPercent", df.format((tps / 20.0) * 100));
-        
-        // Memory statistics
-        Runtime runtime = Runtime.getRuntime();
-        long maxMemory = runtime.maxMemory();
-        long totalMemory = runtime.totalMemory();
-        long freeMemory = runtime.freeMemory();
-        long usedMemory = totalMemory - freeMemory;
-        
-        JsonObject memory = new JsonObject();
-        memory.addProperty("used", formatBytes(usedMemory));
-        memory.addProperty("free", formatBytes(freeMemory));
-        memory.addProperty("allocated", formatBytes(totalMemory));
-        memory.addProperty("max", formatBytes(maxMemory));
-        memory.addProperty("usedMB", usedMemory / (1024 * 1024));
-        memory.addProperty("maxMB", maxMemory / (1024 * 1024));
-        memory.addProperty("usedPercent", df.format((double) usedMemory / maxMemory * 100));
-        stats.add("memory", memory);
-        
-        // CPU statistics
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        JsonObject cpu = new JsonObject();
-        cpu.addProperty("processors", osBean.getAvailableProcessors());
-        cpu.addProperty("loadAverage", df.format(osBean.getSystemLoadAverage()));
-        stats.add("cpu", cpu);
-        
-        // Player statistics
-        stats.addProperty("playersOnline", server.getPlayerCount());
-        stats.addProperty("playersMax", server.getMaxPlayers());
-        
-        // World statistics
-        int worldCount = 0;
-        for (@SuppressWarnings("unused") var level : server.getAllLevels()) {
-            worldCount++;
-        }
-        stats.addProperty("worldsLoaded", worldCount);
-        
-        // Chunk statistics
-        JsonArray worldChunks = new JsonArray();
-        final int[] totalLoadedChunks = {0}; // Use array to allow modification in lambda
-        server.getAllLevels().forEach(level -> {
-            JsonObject worldChunk = new JsonObject();
-            worldChunk.addProperty("dimension", level.dimension().location().toString());
-            
-            // Count ONLY fully loaded chunks by checking visible chunk count
-            int loadedChunks = 0;
-            try {
-                var chunkSource = level.getChunkSource();
-                // Use the visible chunk count which represents actually loaded chunks
-                loadedChunks = chunkSource.chunkMap.size();
-                
-                // If that's 0 and we have players, something is wrong - use a more accurate count
-                if (loadedChunks == 0 && server.getPlayerCount() > 0) {
-                    // Try counting by player view distance
-                    int viewDistance = server.getPlayerList().getViewDistance();
-                    int playersInDim = 0;
-                    for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                        if (player.level().dimension().location().toString().equals(level.dimension().location().toString())) {
-                            playersInDim++;
+        try {
+            // TPS (Ticks Per Second)
+            double avgTickTime = server.getAverageTickTimeNanos() / 1_000_000.0; // Convert to ms
+            double tps = Math.min(20.0, 1000.0 / Math.max(50.0, avgTickTime));
+            stats.addProperty("tps", df.format(tps));
+            stats.addProperty("averageTickTime", df.format(avgTickTime));
+            stats.addProperty("tpsPercent", df.format((tps / 20.0) * 100));
+            LOGGER.debug("TPS: {} ({} ms avg tick time)", df.format(tps), df.format(avgTickTime));
+
+            // Memory statistics
+            Runtime runtime = Runtime.getRuntime();
+            long maxMemory = runtime.maxMemory();
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long usedMemory = totalMemory - freeMemory;
+
+            JsonObject memory = new JsonObject();
+            memory.addProperty("used", formatBytes(usedMemory));
+            memory.addProperty("free", formatBytes(freeMemory));
+            memory.addProperty("allocated", formatBytes(totalMemory));
+            memory.addProperty("max", formatBytes(maxMemory));
+            memory.addProperty("usedMB", usedMemory / (1024 * 1024));
+            memory.addProperty("maxMB", maxMemory / (1024 * 1024));
+            memory.addProperty("usedPercent", df.format((double) usedMemory / maxMemory * 100));
+            stats.add("memory", memory);
+            LOGGER.debug("Memory: {} / {} ({} MB / {} MB)",
+                formatBytes(usedMemory), formatBytes(maxMemory),
+                usedMemory / (1024 * 1024), maxMemory / (1024 * 1024));
+
+            // CPU statistics
+            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+            JsonObject cpu = new JsonObject();
+            cpu.addProperty("processors", osBean.getAvailableProcessors());
+            cpu.addProperty("loadAverage", df.format(osBean.getSystemLoadAverage()));
+            stats.add("cpu", cpu);
+            LOGGER.debug("CPU: {} processors, load avg: {}", osBean.getAvailableProcessors(), df.format(osBean.getSystemLoadAverage()));
+
+            // Player statistics
+            int playerCount = server.getPlayerCount();
+            int maxPlayers = server.getMaxPlayers();
+            stats.addProperty("playersOnline", playerCount);
+            stats.addProperty("playersMax", maxPlayers);
+            LOGGER.debug("Players: {} / {}", playerCount, maxPlayers);
+
+            // World statistics
+            int worldCount = 0;
+            for (@SuppressWarnings("unused") var level : server.getAllLevels()) {
+                worldCount++;
+            }
+            stats.addProperty("worldsLoaded", worldCount);
+            LOGGER.debug("Worlds loaded: {}", worldCount);
+
+            // Chunk statistics
+            JsonArray worldChunks = new JsonArray();
+            final int[] totalLoadedChunks = {0}; // Use array to allow modification in lambda
+            server.getAllLevels().forEach(level -> {
+                JsonObject worldChunk = new JsonObject();
+                worldChunk.addProperty("dimension", level.dimension().location().toString());
+
+                // Count ONLY fully loaded chunks by checking visible chunk count
+                int loadedChunks = 0;
+                try {
+                    var chunkSource = level.getChunkSource();
+                    // Use the visible chunk count which represents actually loaded chunks
+                    loadedChunks = chunkSource.chunkMap.size();
+
+                    // If that's 0 and we have players, something is wrong - use a more accurate count
+                    if (loadedChunks == 0 && server.getPlayerCount() > 0) {
+                        // Try counting by player view distance
+                        int viewDistance = server.getPlayerList().getViewDistance();
+                        int playersInDim = 0;
+                        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                            if (player.level().dimension().location().toString().equals(level.dimension().location().toString())) {
+                                playersInDim++;
+                            }
+                        }
+                        // Approximate: each player loads roughly (viewDistance * 2)^2 chunks
+                        if (playersInDim > 0) {
+                            loadedChunks = playersInDim * (viewDistance * 2) * (viewDistance * 2);
                         }
                     }
-                    // Approximate: each player loads roughly (viewDistance * 2)^2 chunks
-                    if (playersInDim > 0) {
-                        loadedChunks = playersInDim * (viewDistance * 2) * (viewDistance * 2);
-                    }
+                } catch (Exception e) {
+                    LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
+                    loadedChunks = 0;
                 }
-            } catch (Exception e) {
-                LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
-                loadedChunks = 0;
-            }
-            
-            worldChunk.addProperty("loadedChunks", loadedChunks);
-            worldChunks.add(worldChunk);
-            totalLoadedChunks[0] += loadedChunks;
-        });
-        stats.add("chunks", worldChunks);
-        stats.addProperty("totalLoadedChunks", totalLoadedChunks[0]);
-        
-        return stats;
+
+                worldChunk.addProperty("loadedChunks", loadedChunks);
+                worldChunks.add(worldChunk);
+                totalLoadedChunks[0] += loadedChunks;
+            });
+            stats.add("chunks", worldChunks);
+            stats.addProperty("totalLoadedChunks", totalLoadedChunks[0]);
+            LOGGER.debug("Total chunks loaded: {}", totalLoadedChunks[0]);
+
+            LOGGER.info("=== Server Statistics Collection Complete ===");
+            return stats;
+        } catch (Exception e) {
+            LOGGER.error("Error collecting server statistics", e);
+            // Return minimal valid data
+            stats.addProperty("tps", "20.0");
+            stats.addProperty("playersOnline", 0);
+            stats.addProperty("playersMax", 20);
+            stats.addProperty("error", "Error collecting statistics: " + e.getMessage());
+            return stats;
+        }
     }
     
     /**
@@ -178,29 +224,51 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/status
      */
     public JsonObject getServerStatus() {
+        LOGGER.info("=== Collecting Server Status ===");
         JsonObject status = new JsonObject();
         
-        status.addProperty("online", !server.isStopped());
-        status.addProperty("playersOnline", server.getPlayerCount());
-        status.addProperty("playersMax", server.getMaxPlayers());
-        
-        // Uptime
-        long uptimeMillis = ManagementFactory.getRuntimeMXBean().getUptime();
-        status.addProperty("uptimeMillis", uptimeMillis);
-        status.addProperty("uptimeFormatted", formatUptime(uptimeMillis));
-        
-        // TPS
-        double avgTickTime = server.getAverageTickTimeNanos() / 1_000_000.0;
-        double tps = Math.min(20.0, 1000.0 / Math.max(50.0, avgTickTime));
-        status.addProperty("tps", df.format(tps));
-        
-        // Health indicator
-        String health = "healthy";
-        if (tps < 15) health = "struggling";
-        if (tps < 10) health = "critical";
-        status.addProperty("health", health);
-        
-        return status;
+        try {
+            boolean isOnline = !server.isStopped();
+            int playerCount = server.getPlayerCount();
+            int maxPlayers = server.getMaxPlayers();
+
+            status.addProperty("online", isOnline);
+            status.addProperty("playersOnline", playerCount);
+            status.addProperty("playersMax", maxPlayers);
+            LOGGER.debug("Server status: online={}, players={}/{}", isOnline, playerCount, maxPlayers);
+
+            // Uptime
+            long uptimeMillis = ManagementFactory.getRuntimeMXBean().getUptime();
+            status.addProperty("uptimeMillis", uptimeMillis);
+            status.addProperty("uptimeFormatted", formatUptime(uptimeMillis));
+            LOGGER.debug("Uptime: {} ms ({})", uptimeMillis, formatUptime(uptimeMillis));
+
+            // TPS
+            double avgTickTime = server.getAverageTickTimeNanos() / 1_000_000.0;
+            double tps = Math.min(20.0, 1000.0 / Math.max(50.0, avgTickTime));
+            status.addProperty("tps", df.format(tps));
+            LOGGER.debug("TPS: {}", df.format(tps));
+
+            // Health indicator
+            String health = "healthy";
+            if (tps < 15) health = "struggling";
+            if (tps < 10) health = "critical";
+            status.addProperty("health", health);
+            LOGGER.debug("Health: {}", health);
+
+            LOGGER.info("=== Server Status Collection Complete ===");
+            return status;
+        } catch (Exception e) {
+            LOGGER.error("Error collecting server status", e);
+            // Return minimal valid data
+            status.addProperty("online", true); // Assume online if we're collecting data
+            status.addProperty("playersOnline", 0);
+            status.addProperty("playersMax", 20);
+            status.addProperty("tps", "20.0");
+            status.addProperty("health", "unknown");
+            status.addProperty("error", "Error: " + e.getMessage());
+            return status;
+        }
     }
     
     /**
