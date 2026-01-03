@@ -1,5 +1,5 @@
 {
-  "_configVersion": 9,
+  "_configVersion": 10,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -8,8 +8,10 @@
     "teleportationEnabled": true,
     "moderationEnabled": true,
     "chatEnabled": true,
-    "webDashboardEnabled": true,
-    "debugMode": false
+    "webDashboardEnabled": true
+  },
+  "logging": {
+    "enableDebugLogging": false
   },
   "commands": {
     "balance": true,
@@ -531,8 +533,5 @@
     "customNewUsernameMessage": "none",
     "useCustomServerFullMessage": false,
     "hideJoinQuitMessagesAbove": -1
-  },
-  "logging": {
-    "enableDebugLogging": false
   }
 }

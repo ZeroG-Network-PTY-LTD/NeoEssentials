@@ -587,7 +587,7 @@ public class AfkManager {
             if (autoSave) {
                 try {
                     saveAfkData();
-                    LOGGER.debug("AFK data auto-saved");
+                    com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "AFK data auto-saved");
                 } catch (Exception e) {
                     LOGGER.error("Error during AFK data auto-save", e);
                 }

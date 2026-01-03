@@ -69,8 +69,12 @@ public class DirectTeleportCommands {
             registerTprCommand(dispatcher);
         }
         
-        // NOTE: /tpo and /back commands are not yet implemented
-        // They will only be registered when their implementations are ready
+        // /tpo command - teleport to offline player's last known location
+        if (config.isTeleportationEnabled() && config.isCommandEnabled("tpo")) {
+            registerTpoCommand(dispatcher);
+        }
+
+        // NOTE: /back command is registered in MiscTeleportCommands.java
     }
     
     private static void registerTpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -176,6 +180,20 @@ public class DirectTeleportCommands {
         );
     }
     
+    private static void registerTpoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("tpo")
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.admin.tpo");
+                }
+                return source.hasPermission(2); // Console/command blocks need OP 2
+            })
+            .then(Commands.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .executes(context -> teleportToOfflinePlayer(context,
+                    com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player"))))
+        );
+    }
+
     // Command implementations
     private static int teleportToPlayer(CommandContext<CommandSourceStack> context, ServerPlayer player, ServerPlayer target) {
         try {
@@ -358,6 +376,21 @@ public class DirectTeleportCommands {
             return 0;
         } catch (Exception e) {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_failed", e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int teleportToOfflinePlayer(CommandContext<CommandSourceStack> context, String playerName) {
+        try {
+            ServerPlayer executor = context.getSource().getPlayerOrException();
+            DirectTeleportManager manager = DirectTeleportManager.getInstance();
+            boolean success = manager.teleportToOfflinePlayer(executor, playerName);
+            return success ? 1 : 0;
+        } catch (CommandSyntaxException e) {
+            context.getSource().sendFailure(MessageUtil.error("Only players can use this command"));
+            return 0;
+        } catch (Exception e) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.tpo_failed", e.getMessage()));
             return 0;
         }
     }
