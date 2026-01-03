@@ -145,10 +145,8 @@ public class DashboardAPI {
                     token = authHeader.substring(7);
                 }
                 
-                // Validate token - intentional null check for safety
-                @SuppressWarnings("ConstantConditions")
-                boolean isValid = token != null && AuthHandler.validateToken(token);
-                if (!isValid) {
+                // Validate token (validateToken handles null internally)
+                if (!AuthHandler.validateToken(token)) {
                     // Unauthorized
                     LOGGER.info("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
                     String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";
