@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages public warp points accessible to all players
  */
+@SuppressWarnings({"unused", "InvertedCondition"}) // Public API class
 public class WarpManager {
     // Cooldown for setting warps (seconds) and per-player last set timestamps
     private final Map<UUID, Long> lastWarpSetTimestamps = new ConcurrentHashMap<>();
