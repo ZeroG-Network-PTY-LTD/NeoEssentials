@@ -103,20 +103,17 @@ public class TeleportRequestManager {
             }
         }
         
-        // Check if requester already has a sent request - ATOMIC
-        if (sentRequests.putIfAbsent(requesterId, null) != null) {
+        // Check if requester already has a sent request (ConcurrentHashMap doesn't allow null values)
+        if (sentRequests.containsKey(requesterId)) {
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent"));
-            // Remove the null we just inserted
-            sentRequests.remove(requesterId, null);
             return false;
         }
-        
+
         // Enforce allowMultipleRequests: block if requester already has a pending request to this target
         if (!allowMultipleRequests) {
             boolean alreadyRequested = pendingRequests.values().stream()
                 .anyMatch(req -> req != null && req.getRequesterId().equals(requesterId) && req.getTargetId().equals(targetId));
             if (alreadyRequested) {
-                sentRequests.remove(requesterId, null); // Clean up
                 requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.duplicate", target.getName().getString()));
                 return false;
             }
@@ -128,7 +125,6 @@ public class TeleportRequestManager {
             .count();
         
         if (targetPendingCount >= maxPendingRequests) {
-            sentRequests.remove(requesterId, null); // Clean up
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
             return false;
         }
