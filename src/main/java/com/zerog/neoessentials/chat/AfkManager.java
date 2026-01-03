@@ -26,6 +26,7 @@ import com.google.gson.JsonParser;
  * Centralized, thread-safe manager for AFK status and activity tracking.
  * This is the single source of truth for all AFK-related functionality.
  */
+@SuppressWarnings({"unused", "FieldCanBeLocal", "FieldMayBeFinal"}) // Public API class with configuration fields
 public class AfkManager {
     // Configurable auto-save for AFK data
     private boolean autoSave = true;

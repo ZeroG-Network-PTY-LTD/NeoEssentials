@@ -26,13 +26,14 @@ import java.util.concurrent.Executors;
  * - Authentication & Authorization system
  * - Real-time data collection and processing
  * - WebSocket support for live updates
- * 
+ *
  * Design Philosophy:
  * - Separation of concerns: API layer separate from UI
  * - Security-first: All endpoints require authentication
  * - Performance: Efficient data collection and caching
  * - Extensibility: Easy to add new endpoints and features
  */
+@SuppressWarnings("ConstantConditions") // Intentional null checks for safety
 public class DashboardAPI {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAPI.class);
     private static DashboardAPI INSTANCE;

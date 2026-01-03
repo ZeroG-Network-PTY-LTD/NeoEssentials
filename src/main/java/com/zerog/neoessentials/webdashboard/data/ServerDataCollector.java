@@ -14,7 +14,7 @@ import java.text.DecimalFormat;
 /**
  * Server Data Collector
  * Collects all server-related data for the Dashboard API
- * 
+ *
  * Endpoints served:
  * - Server Profiles (version, mods, config)
  * - Server Statistics (TPS, memory, CPU)
@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
  * - Server Health (performance metrics)
  * - Server World Information (worlds, dimensions)
  */
+@SuppressWarnings({"resource", "NullableProblems"}) // Level is not AutoCloseable, anonymous class overrides
 public class ServerDataCollector {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerDataCollector.class);
     private final MinecraftServer server;

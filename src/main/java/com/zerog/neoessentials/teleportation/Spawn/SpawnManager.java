@@ -18,6 +18,7 @@ import java.io.File;
 /**
  * Manages server spawn location with setting and teleportation functionality
  */
+@SuppressWarnings("unused") // Public API class
 public class SpawnManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpawnManager.class);
     private static final String SPAWN_FILE = "spawn.json";

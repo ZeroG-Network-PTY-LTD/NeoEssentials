@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@SuppressWarnings({"unused", "InvertedCondition"}) // Public API class with many getters/setters
 public class ConfigManager {
     /**
      * Returns true if kick actions should be logged (logKickActions in config).
@@ -98,6 +99,7 @@ public class ConfigManager {
      * Returns the maxKickReason from moderation.kickSettings.maxKickReason
      * Defaults to 500 if not set or invalid.
      */
+    @SuppressWarnings("unused") // Public API method
     public static int getMaxKickReasonLength() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
@@ -130,6 +132,7 @@ public class ConfigManager {
      * Returns true if the kick system is enabled (enableKickSystem in config).
      * Defaults to true if not set.
      */
+    @SuppressWarnings("unused") // Public API method
     public static boolean isKickSystemEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
@@ -227,6 +230,7 @@ public class ConfigManager {
      * Returns the freezeReminderInterval (in seconds) from moderation.freezeSettings.freezeReminderInterval
      * Defaults to 30 if not set or invalid.
      */
+    @SuppressWarnings("unused") // Public API method
     public static int getFreezeReminderInterval() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
@@ -245,6 +249,7 @@ public class ConfigManager {
      * Returns true if freeze/unfreeze actions should be logged (logFreezeActions in config).
      * Defaults to true if not set.
      */
+    @SuppressWarnings("unused") // Public API method
     public static boolean isLogFreezeActionsEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
@@ -260,6 +265,7 @@ public class ConfigManager {
      * Returns true if frozen players should remain frozen when they log back in (freezeOnLogin in config).
      * Defaults to true if not set.
      */
+    @SuppressWarnings("unused") // Public API method
     public static boolean isFreezeOnLoginEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {

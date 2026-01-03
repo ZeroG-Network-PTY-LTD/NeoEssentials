@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * └── {uuid3}.json  (Player 3's homes)
  * </pre>
  */
+@SuppressWarnings("unused") // Public API class with many getters/setters
 public class HomeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeManager.class);
     private static final String HOMES_FILE = "homes.json"; // Legacy file (for migration)
