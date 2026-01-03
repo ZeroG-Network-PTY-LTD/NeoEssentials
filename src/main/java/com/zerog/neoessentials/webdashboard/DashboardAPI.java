@@ -134,6 +134,7 @@ public class DashboardAPI {
      * Authentication middleware wrapper
      * Validates token before allowing access to protected endpoints
      */
+    @SuppressWarnings("ConstantConditions") // Null check is intentional for safety
     private HttpHandler withAuth(HttpHandler handler) {
         return exchange -> {
             try {

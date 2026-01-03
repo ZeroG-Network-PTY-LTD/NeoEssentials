@@ -1262,6 +1262,7 @@ public class ConfigManager {
     /**
      * Check if input validation is enabled (security.enableInputValidation)
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isInputValidationEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
         if (config.has("security")) {
@@ -1545,6 +1546,7 @@ public class ConfigManager {
      * Returns true if moderation module is enabled (modules.moderationEnabled).
      * Defaults to true if not set.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isModerationEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("modules")) {
@@ -1671,6 +1673,7 @@ public class ConfigManager {
      * Returns true if kit system is enabled (kits config section exists and module enabled).
      * Defaults to true if not set.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isKitSystemEnabled() {
         return isKitModuleEnabled();
     }

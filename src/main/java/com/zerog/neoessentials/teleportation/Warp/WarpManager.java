@@ -318,6 +318,7 @@ public class WarpManager {
     /**
      * Check if a player is an admin (placeholder, replace with real permission check)
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isAdmin(ServerPlayer player) {
         // Replace with your real admin/permission check
         return player.hasPermissions(4); // Permission level 4 = admin/op
@@ -577,6 +578,7 @@ public class WarpManager {
     /**
      * Check if warp name is valid
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isValidWarpName(String name) {
         if (name == null || name.trim().isEmpty()) {
             return false;
@@ -594,6 +596,7 @@ public class WarpManager {
     /**
      * Check if location is in overworld
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isOverworld(TeleportLocation location) {
         return location.getWorldName().contains("overworld");
     }
