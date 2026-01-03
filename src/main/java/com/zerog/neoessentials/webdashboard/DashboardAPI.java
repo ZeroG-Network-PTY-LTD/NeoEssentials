@@ -39,13 +39,10 @@ public class DashboardAPI {
     
     private HttpServer apiServer;
     private boolean running = false;
-    private final int port;
-    private final String bindAddress;
     private MinecraftServer server;
     
-    private DashboardAPI(int port, String bindAddress) {
-        this.port = port;
-        this.bindAddress = bindAddress;
+    private DashboardAPI() {
+        // Empty constructor - port and bindAddress read from config on each start
     }
     
     /**
@@ -53,10 +50,7 @@ public class DashboardAPI {
      */
     public static DashboardAPI getInstance() {
         if (INSTANCE == null) {
-            ConfigManager config = ConfigManager.getInstance();
-            int port = config.getWebDashboardPort();
-            String bindAddress = config.getWebDashboardBindAddress();
-            INSTANCE = new DashboardAPI(port, bindAddress);
+            INSTANCE = new DashboardAPI();
         }
         return INSTANCE;
     }
@@ -69,6 +63,20 @@ public class DashboardAPI {
         this.server = server;
     }
     
+    /**
+     * Get current port from config
+     */
+    public int getPort() {
+        return ConfigManager.getInstance().getWebDashboardPort();
+    }
+
+    /**
+     * Get current bind address from config
+     */
+    public String getBindAddress() {
+        return ConfigManager.getInstance().getWebDashboardBindAddress();
+    }
+
     /**
      * Start the Dashboard API server
      */
@@ -84,6 +92,12 @@ public class DashboardAPI {
         }
         
         try {
+            // Read port and bind address from config (allows dynamic updates)
+            int port = getPort();
+            String bindAddress = getBindAddress();
+
+            LOGGER.info("Starting Dashboard API on {}:{}", bindAddress, port);
+
             // Create HTTP server
             InetSocketAddress address = new InetSocketAddress(bindAddress, port);
             apiServer = HttpServer.create(address, 0);
@@ -336,19 +350,5 @@ public class DashboardAPI {
      */
     public boolean isRunning() {
         return running;
-    }
-    
-    /**
-     * Get API server port
-     */
-    public int getPort() {
-        return port;
-    }
-    
-    /**
-     * Get API server bind address
-     */
-    public String getBindAddress() {
-        return bindAddress;
     }
 }

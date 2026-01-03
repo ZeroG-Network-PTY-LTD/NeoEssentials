@@ -180,7 +180,12 @@ public class Kit {
                 JsonObject itemJson = element.getAsJsonObject();
                 try {
                     ResourceLocation itemId = ResourceLocation.parse(itemJson.get("item").getAsString());
-                    Item item = BuiltInRegistries.ITEM.get(itemId);
+                    // Use getOptional() for Minecraft 1.21.4+ compatibility
+                    Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+                    if (item == null) {
+                        // Skip unknown items
+                        continue;
+                    }
                     int count = itemJson.has("count") ? itemJson.get("count").getAsInt() : 1;
                     
                     ItemStack stack = new ItemStack(item, count);
