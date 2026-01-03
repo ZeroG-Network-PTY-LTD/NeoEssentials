@@ -170,10 +170,8 @@ public class WarpManager {
         }
 
         // Return the higher value between config and permission
-        if (permMax > configMax) {
-            return permMax;
-        }
-        return configMax;
+        // Return the higher value between permission-based and config-based limits
+        return Math.max(permMax, configMax);
     }
 
     public boolean createPlayerWarp(ServerPlayer player, String warpName, TeleportLocation location) {
@@ -501,7 +499,7 @@ public class WarpManager {
 
         // Enforce maxTeleportDistance if set in config
         int maxDistance = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxTeleportDistance();
-        if (maxDistance > 0 && warp != null) {
+        if (maxDistance > 0) {
             com.zerog.neoessentials.teleportation.TeleportLocation fromLoc = new com.zerog.neoessentials.teleportation.TeleportLocation(player);
             if (fromLoc.getWorldName().equals(warp.getWorldName())) {
                 double dist = fromLoc.distanceTo(warp);

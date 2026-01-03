@@ -145,6 +145,7 @@ public class DashboardAPI {
                 }
                 
                 // Validate token
+                //noinspection ConstantConditions - null check is intentional for safety
                 if (token == null || !AuthHandler.validateToken(token)) {
                     // Unauthorized
                     LOGGER.info("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
@@ -237,21 +238,43 @@ public class DashboardAPI {
                 if (in != null) {
                     byte[] bytes = in.readAllBytes();
                     
+                    // Generate ETag based on content hash for proper cache validation
+                    String etag = "\"" + Integer.toHexString(java.util.Arrays.hashCode(bytes)) + "\"";
+
+                    // Check If-None-Match header (ETag validation)
+                    String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
+                    if (etag.equals(ifNoneMatch)) {
+                        // Content hasn't changed - return 304 Not Modified
+                        exchange.sendResponseHeaders(304, -1);
+                        LOGGER.debug("Served 304 Not Modified for: {} (ETag: {})", path, etag);
+                        return;
+                    }
+
                     // Set content type and CORS headers
                     String contentType = getContentType(path);
                     exchange.getResponseHeaders().set("Content-Type", contentType);
                     exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                    // Aggressive cache busting - force browser to always fetch fresh files
-                    exchange.getResponseHeaders().set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+
+                    // Strong cache-busting headers - force revalidation
+                    exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
                     exchange.getResponseHeaders().set("Pragma", "no-cache");
                     exchange.getResponseHeaders().set("Expires", "0");
                     
+                    // Add ETag for proper cache validation
+                    exchange.getResponseHeaders().set("ETag", etag);
+
+                    // Add Last-Modified header (use build time as baseline)
+                    exchange.getResponseHeaders().set("Last-Modified", "Fri, 03 Jan 2026 00:00:00 GMT");
+
+                    // Add custom header indicating mod version for debugging
+                    exchange.getResponseHeaders().set("X-NeoEssentials-Version", getBuildNumber());
+
                     exchange.sendResponseHeaders(200, bytes.length);
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(bytes);
                     }
                     
-                    LOGGER.debug("Successfully served: {} ({} bytes)", path, bytes.length);
+                    LOGGER.debug("Successfully served: {} ({} bytes, ETag: {})", path, bytes.length, etag);
                 } else {
                     // 404 Not Found
                     LOGGER.warn("File not found: /webdashboard{}", path);
@@ -294,6 +317,20 @@ public class DashboardAPI {
         return "text/plain";
     }
     
+    /**
+     * Get build number for cache-busting headers
+     */
+    private String getBuildNumber() {
+        try (java.io.InputStream in = getClass().getResourceAsStream("/build_number.txt")) {
+            if (in != null) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8).trim();
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not read build number: {}", e.getMessage());
+        }
+        return "unknown";
+    }
+
     /**
      * Check if API server is running
      */

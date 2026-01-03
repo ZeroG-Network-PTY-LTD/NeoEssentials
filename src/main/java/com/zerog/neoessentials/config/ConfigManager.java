@@ -82,6 +82,7 @@ public class ConfigManager {
      * Returns the defaultKickReason from moderation.kickSettings.defaultKickReason
      * Defaults to 'Kicked by an operator' if not set or invalid.
      */
+    @SuppressWarnings("unused") // Public API method
     public static String getDefaultKickReason() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
@@ -584,8 +585,7 @@ public class ConfigManager {
                     try {
                         int val = banSettings.get("checkExpiredBansInterval").getAsInt();
                         if (val <= 0) return 0; // Disabled
-                        if (val < 5) return 5; // Enforce minimum
-                        return val;
+                        return Math.max(val, 5); // Enforce minimum
                     } catch (Exception ignored) {}
                 }
             }
@@ -1201,7 +1201,12 @@ public class ConfigManager {
                 try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
                     if (in != null) {
                         // Ensure parent directories exist
-                        configFile.getParentFile().mkdirs();
+                        File parentDir = configFile.getParentFile();
+                        if (parentDir != null && !parentDir.exists()) {
+                            if (!parentDir.mkdirs()) {
+                                LOGGER.warn("Failed to create parent directories for {}", configFile.getAbsolutePath());
+                            }
+                        }
                         try (OutputStream out = new FileOutputStream(configFile)) {
                             byte[] buffer = new byte[8192];
                             int len;
