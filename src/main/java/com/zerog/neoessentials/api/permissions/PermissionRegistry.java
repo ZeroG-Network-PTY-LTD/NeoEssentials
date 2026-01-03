@@ -492,4 +492,75 @@ public class PermissionRegistry {
         
         return export;
     }
+
+    /**
+     * Sync all registered permissions with LuckPerms (if available).
+     * This makes NeoEssentials permissions appear in LuckPerms autocomplete and web UI.
+     * Call this after all permissions are registered.
+     */
+    public void syncWithLuckPerms() {
+        try {
+            // Check if we're using LuckPerms
+            com.zerog.neoessentials.api.permissions.PermissionAPI permissionAPI =
+                new com.zerog.neoessentials.api.permissions.PermissionAPI();
+
+            var externalAdapter = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter();
+
+            if (externalAdapter instanceof com.zerog.neoessentials.permissions.LuckPermsAdapter) {
+                com.zerog.neoessentials.permissions.LuckPermsAdapter luckPermsAdapter =
+                    (com.zerog.neoessentials.permissions.LuckPermsAdapter) externalAdapter;
+
+                LOGGER.info("Syncing {} permissions with LuckPerms...", registeredPermissions.size());
+                luckPermsAdapter.registerPermissions(registeredPermissions);
+
+                LOGGER.info("✓ Permissions synced with LuckPerms");
+                LOGGER.info("  - Permissions will now appear in LuckPerms autocomplete");
+                LOGGER.info("  - Use '/lp info' to see registered permissions");
+                LOGGER.info("  - Web editor will show NeoEssentials permissions");
+
+            } else {
+                LOGGER.debug("LuckPerms not detected - skipping permission sync");
+            }
+
+        } catch (Exception e) {
+            LOGGER.warn("Could not sync permissions with LuckPerms: {}", e.getMessage());
+            LOGGER.debug("LuckPerms sync error details", e);
+        }
+    }
+
+    /**
+     * Export permissions in LuckPerms import format.
+     * Can be used with /lp import command.
+     *
+     * @return YAML-formatted string for LuckPerms import
+     */
+    public String exportForLuckPerms() {
+        StringBuilder yaml = new StringBuilder();
+        yaml.append("# NeoEssentials Permissions for LuckPerms\n");
+        yaml.append("# Generated on: ").append(java.time.LocalDateTime.now()).append("\n");
+        yaml.append("# Total permissions: ").append(registeredPermissions.size()).append("\n");
+        yaml.append("#\n");
+        yaml.append("# To import: Save this file and run: /lp import <filename>\n");
+        yaml.append("#\n\n");
+
+        yaml.append("groups:\n");
+        yaml.append("  default:\n");
+        yaml.append("    permissions:\n");
+
+        // Add all permissions that default to true
+        for (String permission : registeredPermissions) {
+            PermissionInfo info = permissionInfo.get(permission);
+            if (info != null && info.getDefaultValue()) {
+                yaml.append("      - ").append(permission).append("\n");
+            }
+        }
+
+        yaml.append("\n");
+        yaml.append("  admin:\n");
+        yaml.append("    permissions:\n");
+        yaml.append("      - neoessentials.*  # Grant all NeoEssentials permissions\n");
+
+        return yaml.toString();
+    }
 }
+

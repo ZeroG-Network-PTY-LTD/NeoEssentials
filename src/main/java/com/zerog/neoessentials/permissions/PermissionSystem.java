@@ -50,6 +50,10 @@ public class PermissionSystem {
                     initialized = true;
                     LOGGER.info("✓ Permission system initialized with {} (internal fallback: {} groups)",
                         externalAdapter.getName(), manager.getGroups().size());
+
+                    // Sync permissions with LuckPerms for autocomplete/UI
+                    com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance().syncWithLuckPerms();
+
                     LOGGER.info("═══════════════════════════════════════════════════════════");
                     return;
                 }
