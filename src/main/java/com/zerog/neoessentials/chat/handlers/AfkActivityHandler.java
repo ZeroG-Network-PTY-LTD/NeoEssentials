@@ -3,182 +3,187 @@ package com.zerog.neoessentials.chat.handlers;
 import com.zerog.neoessentials.chat.AfkManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
-// Note: Some events not available in this NeoForge version
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Comprehensive activity tracking for AFK detection.
- * Tracks all player interactions that indicate the player is active.
+ * AFK activity detection with smart patterns and anti-abuse measures.
+ * Tracks various player activities to determine genuine activity vs AFK farming.
+ *
+ * This replaces the original simple activity handler with enhanced pattern detection
+ * to prevent log spam from repetitive actions while still tracking legitimate activity.
  */
 @EventBusSubscriber(modid = "neoessentials")
 public class AfkActivityHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkActivityHandler.class);
-    
+
+    // Track player activity patterns to detect AFK farming
+    private static final Map<UUID, ActivityPattern> activityPatterns = new ConcurrentHashMap<>();
+
+    // Configuration
+    private static final int REPETITIVE_ACTION_THRESHOLD = 10; // Same action 10 times
+    private static final long REPETITIVE_TIMEFRAME = 60000; // Within 1 minute
+    private static final int SUSPICIOUS_SCORE_THRESHOLD = 100; // Suspicious activity score
+
     /**
-     * Track chat activity
+     * Activity pattern tracker for a player
      */
-    @SubscribeEvent
-    public static void onPlayerChat(ServerChatEvent event) {
-        if (event.getPlayer() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: chat", player.getName().getString());
+    private static class ActivityPattern {
+        private final Map<String, Integer> actionCounts = new ConcurrentHashMap<>();
+        private final Map<String, Long> lastActionTime = new ConcurrentHashMap<>();
+        private int suspiciousScore = 0;
+        private long lastActivity = System.currentTimeMillis();
+
+        public void recordActivity(String activityType) {
+            long now = System.currentTimeMillis();
+            lastActivity = now;
+
+            // Check for repetitive actions
+            Long lastTime = lastActionTime.get(activityType);
+            if (lastTime != null && (now - lastTime) < REPETITIVE_TIMEFRAME) {
+                int count = actionCounts.getOrDefault(activityType, 0) + 1;
+                actionCounts.put(activityType, count);
+
+                if (count > REPETITIVE_ACTION_THRESHOLD) {
+                    suspiciousScore += 10; // Increase suspicious score
+                    com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Detected repetitive {} activity: {} times", activityType, count);
+                }
+            } else {
+                // Reset count for this activity type
+                actionCounts.put(activityType, 1);
+            }
+
+            lastActionTime.put(activityType, now);
+
+            // Decay suspicious score over time
+            if (suspiciousScore > 0 && (now - lastActivity) > 300000) { // 5 minutes
+                suspiciousScore = Math.max(0, suspiciousScore - 5);
+            }
+        }
+
+        public boolean isSuspicious() {
+            return suspiciousScore > SUSPICIOUS_SCORE_THRESHOLD;
+        }
+
+        public int getSuspiciousScore() {
+            return suspiciousScore;
+        }
+
+        @SuppressWarnings("unused")
+        public long getLastActivity() {
+            return lastActivity;
         }
     }
-    
+
     /**
-     * Track right-click interactions (blocks, items, entities)
+     * Record player activity with pattern detection
      */
+    private static void recordActivity(ServerPlayer player, String activityType) {
+        if (player == null) return;
+
+        UUID uuid = player.getUUID();
+        ActivityPattern pattern = activityPatterns.computeIfAbsent(uuid, k -> new ActivityPattern());
+        pattern.recordActivity(activityType);
+
+        // Only update AFK status if not suspicious
+        if (!pattern.isSuspicious()) {
+            AfkManager.getInstance().updateActivity(uuid);
+            com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Activity tracked for {}: {} (score: {})",
+                player.getName().getString(), activityType, pattern.getSuspiciousScore());
+        } else {
+            // This is diagnostic information - only show when debug logging is enabled
+            // Otherwise it spams the logs when players are farming/building
+            com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Suspicious activity pattern detected for {}: {} (score: {})",
+                player.getName().getString(), activityType, pattern.getSuspiciousScore());
+        }
+    }
+
+    // Event handlers with activity pattern detection
+
     @SubscribeEvent
-    public static void onPlayerRightClick(PlayerInteractEvent.RightClickBlock event) {
+    public static void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: right-click block", player.getName().getString());
+            recordActivity(player, "interact_block");
         }
     }
-    
+
     @SubscribeEvent
     public static void onPlayerRightClickItem(PlayerInteractEvent.RightClickItem event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: right-click item", player.getName().getString());
+            recordActivity(player, "interact_item");
         }
     }
-    
+
     @SubscribeEvent
-    public static void onPlayerRightClickEntity(PlayerInteractEvent.EntityInteract event) {
+    public static void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: right-click entity", player.getName().getString());
+            recordActivity(player, "interact_attack");
         }
     }
-    
-    /**
-     * Track left-click interactions
-     */
-    @SubscribeEvent
-    public static void onPlayerLeftClick(PlayerInteractEvent.LeftClickBlock event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: left-click block", player.getName().getString());
-        }
-    }
-    
-    @SubscribeEvent
-    public static void onPlayerLeftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: left-click empty", player.getName().getString());
-        }
-    }
-    
-    /**
-     * Track block breaking/placing
-     */
-    @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (event.getPlayer() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: block break", player.getName().getString());
-        }
-    }
-    
-    @SubscribeEvent
-    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: block place", player.getName().getString());
-        }
-    }
-    
-    /**
-     * Track item dropping
-     */
+
     @SubscribeEvent
     public static void onItemToss(ItemTossEvent event) {
         if (event.getPlayer() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: item toss", player.getName().getString());
+            recordActivity(player, "item_toss");
         }
     }
-    
-    /**
-     * Track damage taken (indicates player interaction with environment)
-     * Note: LivingHurtEvent not available in this NeoForge version
-     */
-    /*
-    @SubscribeEvent
-    public static void onPlayerHurt(LivingHurtEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: damage taken", player.getName().getString());
-        }
-    }
-    */
-    
-    /**
-     * Handle player logout - notify AFK manager and SeenCommand
-     */
+
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().onPlayerLogout(player.getUUID());
-            // Track last seen time
-            com.zerog.neoessentials.util.commands.SeenCommand.onPlayerLeave(player);
-            LOGGER.debug("Player logout handled for AFK system: {}", player.getName().getString());
+            UUID uuid = player.getUUID();
+            activityPatterns.remove(uuid);
+            AfkManager.getInstance().onPlayerLogout(uuid);
+            com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "AFK tracking cleanup for: {}", player.getName().getString());
         }
     }
-    
-    /**
-     * Handle player login - ensure they start as active and track join time
-     */
+
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            // Track join time
-            com.zerog.neoessentials.util.commands.SeenCommand.onPlayerJoin(player);
-            
-            // Notify player of unread mail
-            int unreadCount = com.zerog.neoessentials.util.commands.MailCommand.getUnreadMailCount(player.getUUID());
-            if (unreadCount > 0) {
-                player.sendSystemMessage(
-                    com.zerog.neoessentials.util.MessageUtil.info(
-                        "commands.neoessentials.mail.login_notification", 
-                        unreadCount
-                    )
-                );
-            }
-            
-            LOGGER.debug("Player login handled for AFK system: {}", player.getName().getString());
+            UUID uuid = player.getUUID();
+            // Reset activity pattern on login
+            activityPatterns.put(uuid, new ActivityPattern());
+            AfkManager.getInstance().updateActivity(uuid);
+            com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "AFK tracking initialized for: {}", player.getName().getString());
         }
     }
-    
+
     /**
-     * Track player change dimension (moving between worlds is activity)
+     * Get the activity pattern for a player (for debugging/admin purposes)
      */
-    @SubscribeEvent
-    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: dimension change", player.getName().getString());
-        }
+    public static ActivityPattern getActivityPattern(UUID playerUuid) {
+        return activityPatterns.get(playerUuid);
     }
-    
+
     /**
-     * Track player respawn (clearly active)
+     * Check if a player has suspicious activity patterns
      */
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            AfkManager.getInstance().updateActivity(player.getUUID());
-            LOGGER.debug("Activity tracked for {}: respawn", player.getName().getString());
-        }
+    public static boolean isSuspiciousActivity(UUID playerUuid) {
+        ActivityPattern pattern = activityPatterns.get(playerUuid);
+        return pattern != null && pattern.isSuspicious();
+    }
+
+    /**
+     * Clear activity patterns (for shutdown)
+     */
+    public static void clearPatterns() {
+        activityPatterns.clear();
+    }
+
+    /**
+     * Get current activity pattern statistics
+     */
+    public static Map<UUID, ActivityPattern> getActivityPatterns() {
+        return new ConcurrentHashMap<>(activityPatterns);
     }
 }
+

@@ -46,11 +46,11 @@ public class AfkTablistHandler {
                 String prefix = afkManager.getTablistAfkPrefix();
                 String suffix = afkManager.getTablistAfkSuffix();
                 displayName = prefix + originalName + suffix;
-                LOGGER.debug("Setting AFK tablist name for {}: {}", originalName, displayName);
+                com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Setting AFK tablist name for {}: {}", originalName, displayName);
             } else {
                 // Player is not AFK - use original name
                 displayName = originalName;
-                LOGGER.debug("Setting normal tablist name for {}: {}", originalName, displayName);
+                com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Setting normal tablist name for {}: {}", originalName, displayName);
             }
             
             // Update the player's display name in the tablist
