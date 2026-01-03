@@ -99,7 +99,13 @@ public class HomeManager {
             PlayerDataMigration.migrateToPlayerData(HOMES_FILE, "homes");
         }
 
-        // Load config values
+        loadConfig();
+    }
+
+    /**
+     * Load configuration values from config file
+     */
+    private void loadConfig() {
         try {
             com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
             boolean safe = true;
@@ -152,7 +158,6 @@ public class HomeManager {
         } catch (Exception e) {
             LOGGER.warn("Failed to load home config, using defaults: {}", e.getMessage());
         }
-        loadHomes();
     }
     
     /**
@@ -651,6 +656,9 @@ public class HomeManager {
      */
     public void reload() {
         LOGGER.info("Reloading home system...");
+
+        // Reload config values
+        loadConfig();
 
         // Flush any pending saves before clearing cache
         playerDataStore.flushAll();

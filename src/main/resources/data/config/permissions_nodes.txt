@@ -290,11 +290,24 @@ neoessentials.permissions.* - All permission system permissions
 # ❌ neoessentials.economy.paytoggle  → ✅ neoessentials.economy.pay.toggle
 
 ## ═══════════════════════════════════════════════════════════
+## WEB DASHBOARD PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.dashboard - Basic dashboard access (default: false)
+neoessentials.dashboard.view - View dashboard interface (default: false)
+neoessentials.dashboard.status - View dashboard status (default: false)
+neoessentials.dashboard.admin - Full dashboard administration (default: false)
+neoessentials.dashboard.admin.restart - Restart server via dashboard (default: false)
+neoessentials.dashboard.admin.stop - Stop server via dashboard (default: false)
+neoessentials.dashboard.admin.reload - Reload configs via dashboard (default: false)
+neoessentials.dashboard.admin.save - Save all worlds via dashboard (default: false)
+neoessentials.dashboard.temppass - Generate temporary passwords (default: false)
+
+## ═══════════════════════════════════════════════════════════
 ## ADDITIONAL INFORMATION
 ## ═══════════════════════════════════════════════════════════
 
-# Total Registered Permissions: 87+
-# Permission Categories: 8 (Core, Economy, Teleport, Kits, Items, Chat, Misc, Admin)
+# Total Registered Permissions: 96+
+# Permission Categories: 9 (Core, Economy, Teleport, Kits, Items, Chat, Misc, Admin, Dashboard)
 # Supports: LuckPerms, FTB Ranks, Internal Permission System
 # Validation: Automatic validation on server startup
 # Caching: Configurable permission caching with expiry

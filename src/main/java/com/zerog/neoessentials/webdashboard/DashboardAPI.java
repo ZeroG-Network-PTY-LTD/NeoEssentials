@@ -3,6 +3,7 @@ package com.zerog.neoessentials.webdashboard;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.webdashboard.api.endpoints.AdminEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.GameEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.LoggingEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
@@ -97,9 +98,14 @@ public class DashboardAPI {
             apiServer.start();
             running = true;
             
+            // Get the friendly URL from config
+            ConfigManager config = ConfigManager.getInstance();
+            String dashboardUrl = config.getWebDashboardUrl();
+
             LOGGER.info("Dashboard API started successfully on {}:{}", bindAddress, port);
-            LOGGER.info("API Endpoints available at http://{}:{}/api/", bindAddress, port);
-            
+            LOGGER.info("Access the dashboard at: {}", dashboardUrl);
+            LOGGER.info("API Endpoints available at: {}/api/", dashboardUrl);
+
         } catch (IOException e) {
             LOGGER.error("Failed to start Dashboard API server", e);
             running = false;
@@ -194,14 +200,16 @@ public class DashboardAPI {
         apiServer.createContext("/api/server", withAuth(new ServerEndpoint(server)));
         apiServer.createContext("/api/game", withAuth(new GameEndpoint(server)));
         apiServer.createContext("/api/logging", withAuth(new LoggingEndpoint()));
-        
+        apiServer.createContext("/api/admin", withAuth(new AdminEndpoint(server)));
+
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
         LOGGER.info("  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online) [AUTH REQUIRED]");
         LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history) [AUTH REQUIRED]");
         LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
         LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
-        
+        LOGGER.info("  - /api/admin/* (restart, stop, reload, save) [AUTH REQUIRED - ADMIN ONLY]");
+
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {
             if (testStream != null) {

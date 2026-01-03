@@ -1492,12 +1492,27 @@ public class ConfigManager {
     }
 
     /**
-     * Loads all config files. This is a no-op method for backwards compatibility.
-     * Configs are loaded on-demand via getConfig().
+     * Clears the config cache, forcing all configs to be reloaded from disk on next access.
+     * This is thread-safe and will acquire a write lock.
+     */
+    public void clearCache() {
+        lock.writeLock().lock();
+        try {
+            configCache.clear();
+            LOGGER.info("Configuration cache cleared - configs will be reloaded from disk");
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Loads all config files by clearing the cache and forcing a reload.
+     * This ensures that any changes made to config files on disk are picked up.
      */
     public static void loadAll() {
-        // Configs are loaded on-demand, no need to preload
-        getInstance();
+        getInstance().clearCache();
+        // Ensure all required configs exist
+        getInstance().ensureDefaultConfigs();
     }
 
     /**
@@ -1921,6 +1936,57 @@ public class ConfigManager {
             }
         }
         return 8081;
+    }
+
+    /**
+     * Returns the web dashboard hostname from webDashboard.hostname.
+     * Defaults to "localhost" if not set.
+     */
+    public String getWebDashboardHostname() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("hostname")) {
+                String hostname = dashboard.get("hostname").getAsString();
+                if (hostname != null && !hostname.trim().isEmpty()) return hostname;
+            }
+        }
+        return "localhost";
+    }
+
+    /**
+     * Returns the custom web dashboard URL from webDashboard.customUrl.
+     * Returns empty string if not set.
+     */
+    public String getWebDashboardCustomUrl() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("customUrl")) {
+                String customUrl = dashboard.get("customUrl").getAsString();
+                if (customUrl != null && !customUrl.trim().isEmpty()) return customUrl.trim();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Builds the dashboard URL based on configuration.
+     * If customUrl is set, returns that. Otherwise builds URL from hostname and port.
+     *
+     * @return The dashboard URL to display to users
+     */
+    public String getWebDashboardUrl() {
+        String customUrl = getWebDashboardCustomUrl();
+        if (!customUrl.isEmpty()) {
+            return customUrl;
+        }
+
+        String hostname = getWebDashboardHostname();
+        int port = getWebDashboardPort();
+
+        // Build URL with hostname and port
+        return "http://" + hostname + ":" + port;
     }
 
     /**

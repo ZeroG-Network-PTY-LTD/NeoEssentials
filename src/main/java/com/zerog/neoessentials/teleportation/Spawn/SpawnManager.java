@@ -39,7 +39,14 @@ public class SpawnManager {
     private boolean allowSetSpawnInEnd = false;
 
     private SpawnManager() {
-        // Load config values
+        loadConfig();
+        loadSpawn();
+    }
+
+    /**
+     * Load configuration values from config file
+     */
+    private void loadConfig() {
         try {
             com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
             boolean safe = true;
@@ -59,7 +66,6 @@ public class SpawnManager {
         } catch (Exception e) {
             LOGGER.warn("Failed to load spawn safety config, defaulting to safe: {}", e.getMessage());
         }
-        loadSpawn();
     }
     
     /**
@@ -363,6 +369,7 @@ public class SpawnManager {
      */
     public void reload() {
         LOGGER.info("Reloading spawn system...");
+        loadConfig();
         spawnLocation = null;
         loadSpawn();
         LOGGER.info("Spawn system reloaded: {}", hasSpawn() ? "Spawn loaded" : "No spawn set");
