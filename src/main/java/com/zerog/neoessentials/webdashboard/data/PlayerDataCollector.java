@@ -338,6 +338,7 @@ public class PlayerDataCollector {
         
         status.addProperty("online", player != null);
         if (player != null) {
+            // Online player
             status.addProperty("username", player.getName().getString());
             status.addProperty("ping", player.connection.latency());
             
@@ -371,6 +372,45 @@ public class PlayerDataCollector {
                     status.addProperty("afkReason", afkReason);
                 }
             }
+        } else {
+            // Offline player - load last known status from NBT
+            CompoundTag playerData = loadOfflinePlayerData(playerUuid);
+            if (playerData != null) {
+                // Health and vital stats from saved data
+                if (playerData.contains("Health")) {
+                    float health = playerData.getFloat("Health");
+                    status.addProperty("health", health);
+                    status.addProperty("maxHealth", 20.0f);
+                    status.addProperty("healthPercent", (health / 20.0f) * 100);
+                }
+
+                if (playerData.contains("foodLevel")) {
+                    status.addProperty("foodLevel", playerData.getInt("foodLevel"));
+                }
+                if (playerData.contains("foodSaturationLevel")) {
+                    status.addProperty("saturation", playerData.getFloat("foodSaturationLevel"));
+                }
+                if (playerData.contains("AbsorptionAmount")) {
+                    status.addProperty("absorptionAmount", playerData.getFloat("AbsorptionAmount"));
+                }
+
+                // Armor value - offline players don't have this easily available
+                status.addProperty("armorValue", 0);
+
+                // Experience
+                if (playerData.contains("XpLevel")) {
+                    status.addProperty("experienceLevel", playerData.getInt("XpLevel"));
+                }
+                if (playerData.contains("XpP")) {
+                    status.addProperty("experienceProgress", playerData.getFloat("XpP"));
+                }
+                if (playerData.contains("XpTotal")) {
+                    status.addProperty("totalExperience", playerData.getInt("XpTotal"));
+                }
+
+                // AFK is always false for offline players
+                status.addProperty("afk", false);
+            }
         }
         
         return status;
@@ -385,6 +425,7 @@ public class PlayerDataCollector {
         ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         
         if (player != null) {
+            // Online player
             health.addProperty("health", player.getHealth());
             health.addProperty("maxHealth", player.getMaxHealth());
             health.addProperty("healthPercent", (player.getHealth() / player.getMaxHealth()) * 100);
@@ -395,6 +436,44 @@ public class PlayerDataCollector {
             health.addProperty("absorptionAmount", player.getAbsorptionAmount());
             health.addProperty("air", player.getAirSupply());
             health.addProperty("maxAir", player.getMaxAirSupply());
+        } else {
+            // Offline player - load from NBT
+            CompoundTag playerData = loadOfflinePlayerData(playerUuid);
+            if (playerData != null) {
+                // Health
+                if (playerData.contains("Health")) {
+                    float playerHealth = playerData.getFloat("Health");
+                    health.addProperty("health", playerHealth);
+                    health.addProperty("maxHealth", 20.0f); // Default max health
+                    health.addProperty("healthPercent", (playerHealth / 20.0f) * 100);
+                }
+
+                // Food level
+                if (playerData.contains("foodLevel")) {
+                    health.addProperty("foodLevel", playerData.getInt("foodLevel"));
+                }
+                if (playerData.contains("foodSaturationLevel")) {
+                    health.addProperty("saturation", playerData.getFloat("foodSaturationLevel"));
+                }
+                if (playerData.contains("foodExhaustionLevel")) {
+                    health.addProperty("exhaustion", playerData.getFloat("foodExhaustionLevel"));
+                }
+
+                // Air
+                if (playerData.contains("Air")) {
+                    health.addProperty("air", playerData.getShort("Air"));
+                    health.addProperty("maxAir", 300); // Default max air
+                }
+
+                // Absorption amount
+                if (playerData.contains("AbsorptionAmount")) {
+                    health.addProperty("absorptionAmount", playerData.getFloat("AbsorptionAmount"));
+                }
+
+                // Armor value - need to calculate from inventory
+                // For offline players, this is complex, so we'll skip it for now
+                health.addProperty("armor", 0);
+            }
         }
         
         return health;
@@ -409,10 +488,27 @@ public class PlayerDataCollector {
         ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         
         if (player != null) {
+            // Online player
             xp.addProperty("level", player.experienceLevel);
             xp.addProperty("progress", player.experienceProgress);
             xp.addProperty("totalXp", player.totalExperience);
             xp.addProperty("xpToNextLevel", player.getXpNeededForNextLevel());
+        } else {
+            // Offline player - load from NBT
+            CompoundTag playerData = loadOfflinePlayerData(playerUuid);
+            if (playerData != null) {
+                if (playerData.contains("XpLevel")) {
+                    xp.addProperty("level", playerData.getInt("XpLevel"));
+                }
+                if (playerData.contains("XpP")) {
+                    xp.addProperty("progress", playerData.getFloat("XpP"));
+                }
+                if (playerData.contains("XpTotal")) {
+                    xp.addProperty("totalXp", playerData.getInt("XpTotal"));
+                }
+                // Can't calculate xpToNextLevel without server logic for offline players
+                xp.addProperty("xpToNextLevel", 0);
+            }
         }
         
         return xp;
@@ -427,6 +523,7 @@ public class PlayerDataCollector {
         ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         
         if (player != null) {
+            // Online player - get current location
             BlockPos pos = player.blockPosition();
             location.addProperty("x", pos.getX());
             location.addProperty("y", pos.getY());
@@ -440,6 +537,44 @@ public class PlayerDataCollector {
             location.addProperty("dimension", getDimensionName(level));
             location.addProperty("world", level.dimension().location().toString());
             location.addProperty("biome", getBiomeName(level, pos));
+        } else {
+            // Offline player - load from NBT
+            CompoundTag playerData = loadOfflinePlayerData(playerUuid);
+            if (playerData != null && playerData.contains("Pos")) {
+                // Position is stored as ListTag of 3 doubles
+                var posList = playerData.getList("Pos", 6); // 6 = DoubleTag
+                if (posList.size() >= 3) {
+                    double x = posList.getDouble(0);
+                    double y = posList.getDouble(1);
+                    double z = posList.getDouble(2);
+
+                    location.addProperty("x", (int) Math.floor(x));
+                    location.addProperty("y", (int) Math.floor(y));
+                    location.addProperty("z", (int) Math.floor(z));
+                    location.addProperty("exactX", x);
+                    location.addProperty("exactY", y);
+                    location.addProperty("exactZ", z);
+                }
+
+                // Rotation
+                if (playerData.contains("Rotation")) {
+                    var rotList = playerData.getList("Rotation", 5); // 5 = FloatTag
+                    if (rotList.size() >= 2) {
+                        location.addProperty("yaw", rotList.getFloat(0));
+                        location.addProperty("pitch", rotList.getFloat(1));
+                    }
+                }
+
+                // Dimension
+                if (playerData.contains("Dimension")) {
+                    String dimension = playerData.getString("Dimension");
+                    location.addProperty("dimension", dimension);
+                    location.addProperty("world", dimension);
+                }
+
+                // Note: Biome requires world to be loaded, so we can't get it for offline players
+                location.addProperty("biome", "Unknown (Offline)");
+            }
         }
         
         return location;
