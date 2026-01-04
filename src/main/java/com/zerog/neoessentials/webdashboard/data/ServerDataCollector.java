@@ -171,13 +171,14 @@ public class ServerDataCollector {
                 JsonObject worldChunk = new JsonObject();
                 worldChunk.addProperty("dimension", level.dimension().location().toString());
 
-                // Count ACTUAL loaded chunks from the chunk source
+                // Count ACTUAL loaded chunks (not cached chunks)
                 int loadedChunks;
                 try {
                     var chunkSource = level.getChunkSource();
-                    // Get the actual number of loaded chunks from the chunk map
-                    loadedChunks = chunkSource.chunkMap.size();
-                    LOGGER.debug("Actual loaded chunks for {}: {}",
+                    // Use getLoadedChunksCount() which returns ONLY actively loaded chunks
+                    // NOT chunkMap.size() which includes all cached chunks
+                    loadedChunks = chunkSource.getLoadedChunksCount();
+                    LOGGER.debug("Loaded chunks for {}: {}",
                         level.dimension().location(), loadedChunks);
                 } catch (Exception e) {
                     LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
@@ -333,14 +334,15 @@ public class ServerDataCollector {
             world.addProperty("playersInWorld", playersInDimension);
             LOGGER.info("  Final player count for {}: {}", dimensionKey, playersInDimension);
             
-            // Count ACTUAL loaded chunks from the chunk source
+            // Count ACTUAL loaded chunks (not cached chunks)
             int loadedChunks;
             try {
                 var chunkSource = level.getChunkSource();
-                // Get the actual number of loaded chunks from the chunk map
-                loadedChunks = chunkSource.chunkMap.size();
+                // Use getLoadedChunksCount() which returns ONLY actively loaded chunks
+                // NOT chunkMap.size() which includes all cached/unloaded chunks
+                loadedChunks = chunkSource.getLoadedChunksCount();
 
-                LOGGER.info("  Actual loaded chunks for {}: {}", dimensionKey, loadedChunks);
+                LOGGER.info("  Loaded chunks for {}: {}", dimensionKey, loadedChunks);
             } catch (Exception e) {
                 LOGGER.warn("  Failed to count chunks for {}: {}", dimensionKey, e.getMessage());
                 loadedChunks = 0;

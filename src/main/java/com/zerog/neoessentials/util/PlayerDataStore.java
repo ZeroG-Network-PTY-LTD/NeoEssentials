@@ -20,10 +20,14 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Instead of storing all player data in one massive file, this system uses:</p>
  * <pre>
- * config/neoessentials/playerdata/
- * ├── {uuid1}.json  (Player 1's data)
- * ├── {uuid2}.json  (Player 2's data)
- * └── {uuid3}.json  (Player 3's data)
+ * neoessentials/playerdata/
+ * ├── homes/
+ * │   ├── {uuid1}.json  (Player 1's homes)
+ * │   ├── {uuid2}.json  (Player 2's homes)
+ * │   └── {uuid3}.json  (Player 3's homes)
+ * ├── economy/
+ * │   └── ...
+ * └── other-data-types/
  * </pre>
  *
  * <p>Benefits:</p>
@@ -33,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>Easy to find - one file per player</li>
  *   <li>Corruption resistant - one player's corrupt data doesn't affect others</li>
  *   <li>Memory efficient - can unload inactive player data</li>
+ *   <li>Easy backup - all data in neoessentials/ folder in server root</li>
  * </ul>
  *
  * <p>Thread-safe with atomic file operations.</p>
@@ -60,7 +65,7 @@ public class PlayerDataStore {
      */
     public PlayerDataStore(String dataType) {
         this.dataType = dataType;
-        this.dataDirectory = new File(ResourceUtil.CONFIG_DIR, "playerdata/" + dataType);
+        this.dataDirectory = new File(ResourceUtil.DATA_DIR, "playerdata/" + dataType);
 
         // Ensure directory exists
         if (!dataDirectory.exists()) {

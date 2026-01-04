@@ -41,7 +41,7 @@ public class NeoEssentialsManager {
     // Service APIs
     private EconomyService economyService;
 
-    private static final String PLAYERDATA_DIR = com.zerog.neoessentials.util.ResourceUtil.CONFIG_DIR + "playerdata/";
+    private static final String PLAYERDATA_DIR = com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "playerdata/";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     /**

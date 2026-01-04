@@ -69,17 +69,43 @@ public class PlayerDataCollector {
             profile.addProperty("uuid", playerUuid.toString());
             profile.addProperty("online", false);
             
-            // Try to get username from cache
+            String username = null;
+
+            // Try to get username from cache first
             net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
             if (cache != null) {
                 java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(playerUuid);
-                if (profileOpt.isPresent()) {
-                    profile.addProperty("username", profileOpt.get().getName());
+                if (profileOpt.isPresent() && profileOpt.get().getName() != null) {
+                    username = profileOpt.get().getName();
                 }
             }
-            
-            // Try to load game mode from player data file
+
+            // Try to load player data and get username from there
             CompoundTag playerData = loadOfflinePlayerData(playerUuid);
+
+            // If cache didn't work, try to get username from NBT
+            if (username == null && playerData != null) {
+                if (playerData.contains("bukkit")) {
+                    CompoundTag bukkitData = playerData.getCompound("bukkit");
+                    if (bukkitData.contains("lastKnownName")) {
+                        username = bukkitData.getString("lastKnownName");
+                    }
+                }
+                // Some servers store it differently
+                if (username == null && playerData.contains("lastKnownName")) {
+                    username = playerData.getString("lastKnownName");
+                }
+            }
+
+            if (username != null) {
+                profile.addProperty("username", username);
+                profile.addProperty("displayName", username);
+            } else {
+                profile.addProperty("username", "Unknown");
+                profile.addProperty("displayName", "Unknown Player");
+            }
+
+            // Try to load game mode from player data file
             if (playerData != null) {
                 int gameModeId = playerData.getInt("playerGameType");
                 String gameMode = switch (gameModeId) {
@@ -90,6 +116,23 @@ public class PlayerDataCollector {
                     default -> "unknown";
                 };
                 profile.addProperty("gameMode", gameMode);
+
+                // Add last seen timestamp if available
+                try {
+                    net.minecraft.server.level.ServerLevel overworld = server.overworld();
+                    if (overworld != null) {
+                        java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
+                        java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid.toString() + ".dat");
+                        if (java.nio.file.Files.exists(playerDataFile)) {
+                            long lastModified = java.nio.file.Files.getLastModifiedTime(playerDataFile).toMillis();
+                            profile.addProperty("lastSeen", lastModified);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.debug("Could not get last seen time for {}: {}", playerUuid, e.getMessage());
+                }
+            } else {
+                profile.addProperty("gameMode", "unknown");
             }
         }
         
@@ -232,10 +275,21 @@ public class PlayerDataCollector {
      */
     private CompoundTag loadOfflinePlayerData(UUID playerUuid) {
         try {
-            java.nio.file.Path playerDataFile = server.getServerDirectory().resolve("world/playerdata/" + playerUuid.toString() + ".dat");
-            
-            if (java.nio.file.Files.exists(playerDataFile)) {
-                return NbtIo.readCompressed(playerDataFile, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            // Try to get the proper world storage path from the overworld
+            net.minecraft.server.level.ServerLevel overworld = server.overworld();
+            if (overworld != null) {
+                java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
+                java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid.toString() + ".dat");
+
+                LOGGER.debug("Loading offline player data from: {}", playerDataFile);
+
+                if (java.nio.file.Files.exists(playerDataFile)) {
+                    return NbtIo.readCompressed(playerDataFile, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                } else {
+                    LOGGER.debug("Player data file not found: {}", playerDataFile);
+                }
+            } else {
+                LOGGER.warn("Could not get overworld for player data loading");
             }
         } catch (IOException e) {
             LOGGER.error("Failed to load offline player data for UUID: {}", playerUuid, e);
@@ -471,7 +525,19 @@ public class PlayerDataCollector {
         
         // Get offline players from playerdata directory
         try {
-            java.nio.file.Path playerDataDir = server.getServerDirectory().resolve("world/playerdata");
+            // Get the proper player data directory from the overworld
+            net.minecraft.server.level.ServerLevel overworld = server.overworld();
+            if (overworld == null) {
+                LOGGER.warn("Could not get overworld for offline player loading");
+                response.add("players", onlinePlayers);
+                response.add("offlinePlayers", offlinePlayers);
+                response.addProperty("count", onlinePlayers.size());
+                response.addProperty("offlineCount", 0);
+                response.addProperty("max", server.getMaxPlayers());
+                return response;
+            }
+
+            java.nio.file.Path playerDataDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
             LOGGER.info("Looking for offline players in: {}", playerDataDir);
             
             if (java.nio.file.Files.exists(playerDataDir)) {
@@ -493,31 +559,55 @@ public class PlayerDataCollector {
                             
                             // Check if player is not online
                             if (server.getPlayerList().getPlayer(uuid) == null) {
-                                // Get profile from cache
+                                String username = null;
+
+                                // Try to get profile from cache first
                                 if (cache != null) {
                                     java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(uuid);
-                                    if (profileOpt.isPresent()) {
-                                        com.mojang.authlib.GameProfile profile = profileOpt.get();
-                                        if (profile.getName() != null && !onlineUsernames.contains(profile.getName())) {
-                                            JsonObject playerObj = new JsonObject();
-                                            playerObj.addProperty("uuid", uuid.toString());
-                                            playerObj.addProperty("username", profile.getName());
-                                            
-                                            // Get last modified time of player data file
-                                            try {
-                                                long lastModified = java.nio.file.Files.getLastModifiedTime(path).toMillis();
-                                                playerObj.addProperty("lastSeen", formatLastSeenTimestamp(lastModified));
-                                            } catch (Exception e) {
-                                                playerObj.addProperty("lastSeen", "Unknown");
-                                            }
-                                            
-                                            offlinePlayers.add(playerObj);
-                                        }
+                                    if (profileOpt.isPresent() && profileOpt.get().getName() != null) {
+                                        username = profileOpt.get().getName();
                                     }
+                                }
+
+                                // If cache didn't work, try to load from NBT data
+                                if (username == null) {
+                                    try {
+                                        CompoundTag playerData = NbtIo.readCompressed(path, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                                        if (playerData != null && playerData.contains("bukkit")) {
+                                            CompoundTag bukkitData = playerData.getCompound("bukkit");
+                                            if (bukkitData.contains("lastKnownName")) {
+                                                username = bukkitData.getString("lastKnownName");
+                                            }
+                                        }
+                                        // Some servers store it differently
+                                        if (username == null && playerData != null && playerData.contains("lastKnownName")) {
+                                            username = playerData.getString("lastKnownName");
+                                        }
+                                    } catch (Exception e) {
+                                        LOGGER.debug("Could not load username from NBT for {}: {}", uuid, e.getMessage());
+                                    }
+                                }
+
+                                // Only add if we have a username and it's not already online
+                                if (username != null && !onlineUsernames.contains(username)) {
+                                    JsonObject playerObj = new JsonObject();
+                                    playerObj.addProperty("uuid", uuid.toString());
+                                    playerObj.addProperty("username", username);
+
+                                    // Get last modified time of player data file
+                                    try {
+                                        long lastModified = java.nio.file.Files.getLastModifiedTime(path).toMillis();
+                                        playerObj.addProperty("lastSeen", formatLastSeenTimestamp(lastModified));
+                                    } catch (Exception e) {
+                                        playerObj.addProperty("lastSeen", "Unknown");
+                                    }
+
+                                    offlinePlayers.add(playerObj);
                                 }
                             }
                         } catch (Exception e) {
                             // Skip invalid files
+                            LOGGER.debug("Skipping invalid player data file: {}", path.getFileName());
                         }
                     });
                     

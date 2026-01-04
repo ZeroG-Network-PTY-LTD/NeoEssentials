@@ -182,6 +182,9 @@ public class SpawnManager {
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
         }
         
+        // Save current location for /back command
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
         // Perform teleportation
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
         TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, requireSafeLocation).thenAccept(result -> {
@@ -271,7 +274,7 @@ public class SpawnManager {
      */
     private void loadSpawn() {
         try {
-            File file = ResourceUtil.getConfigFile(SPAWN_FILE);
+            File file = ResourceUtil.getDataFile(SPAWN_FILE);
             if (!file.exists()) {
                 LOGGER.info("No spawn file found, using world spawn");
                 return;
@@ -338,9 +341,9 @@ public class SpawnManager {
             config.addProperty("allowSetSpawnInEnd", allowSetSpawnInEnd);
             root.add("config", config);
             
-            ResourceUtil.ensureConfigDirectory();
-            File file = ResourceUtil.getConfigFile(SPAWN_FILE);
-            java.nio.file.Files.writeString(file.toPath(), 
+            ResourceUtil.ensureDataDirectory();
+            File file = ResourceUtil.getDataFile(SPAWN_FILE);
+            java.nio.file.Files.writeString(file.toPath(),
                 new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root));
             
         } catch (Exception e) {

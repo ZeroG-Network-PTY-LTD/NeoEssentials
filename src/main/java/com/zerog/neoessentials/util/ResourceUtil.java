@@ -12,9 +12,13 @@ import java.nio.file.Paths;
 public class ResourceUtil {
     
     // Standard Minecraft server directory structure
+    // CONFIG_DIR: For actual configuration files (read-only after initial setup)
     public static final String CONFIG_DIR = "config/neoessentials/";
-    public static final String DATA_DIR = "neoessentials/"; // Server runtime data
-    
+
+    // DATA_DIR: For all runtime data (player data, homes, warps, moderation, etc.)
+    // This is in the server root for easy access and backup
+    public static final String DATA_DIR = "neoessentials/";
+
     // JAR resource paths (internal mod resources)
     public static final String JAR_CONFIG_PATH = "/data/config/neoessentials/";
     public static final String JAR_LANG_PATH = "/data/lang/";

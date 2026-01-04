@@ -17,8 +17,8 @@ import java.util.UUID;
  */
 public class PermissionsEXAdapter implements ExternalPermissionAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsEXAdapter.class);
-    private static final String PEX_PERMISSIONS_FILE = "config/neoessentials/pex-permissions.txt";
-    
+    private static final String PEX_PERMISSIONS_FILE = com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "pex-permissions.txt";
+
     public PermissionsEXAdapter() {
         // Export permissions on initialization
         exportPermissionsForPEX();
@@ -79,10 +79,10 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             Set<String> allPermissions = registry.getAllPermissions();
             Set<String> discoveredPermissions = scanner.getDiscoveredPermissions();
             
-            // Create config directory if it doesn't exist
-            File configDir = new File("config/neoessentials");
-            if (!configDir.exists()) {
-                configDir.mkdirs();
+            // Create data directory if it doesn't exist
+            File dataDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR);
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
             }
             
             // Write permissions to file

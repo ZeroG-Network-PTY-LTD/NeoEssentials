@@ -529,6 +529,9 @@ public class WarpManager {
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.warp.moved_to_safety", warpName));
         }
         
+        // Save current location for /back command
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
         // Perform teleportation
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
         TeleportUtil.teleportPlayer(player, warp, delayTicks, true).thenAccept(result -> {
@@ -606,7 +609,7 @@ public class WarpManager {
      */
     private void loadWarps() {
         try {
-            File file = ResourceUtil.getConfigFile(WARPS_FILE);
+            File file = ResourceUtil.getDataFile(WARPS_FILE);
             if (!file.exists()) {
                 LOGGER.info("No warps file found, starting with empty warps");
                 return;
@@ -687,8 +690,8 @@ public class WarpManager {
             config.addProperty("caseSensitiveNames", caseSensitiveNames);
             root.add("config", config);
             
-            ResourceUtil.ensureConfigDirectory();
-            File file = ResourceUtil.getConfigFile(WARPS_FILE);
+            ResourceUtil.ensureDataDirectory();
+            File file = ResourceUtil.getDataFile(WARPS_FILE);
             java.nio.file.Files.writeString(file.toPath(), gson.toJson(root));
             
         } catch (Exception e) {

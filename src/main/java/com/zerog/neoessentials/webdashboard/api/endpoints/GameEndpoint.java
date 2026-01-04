@@ -90,33 +90,58 @@ public class GameEndpoint implements HttpHandler {
             }
             
         } catch (IOException e) {
-            LOGGER.error("IOException handling request: {} {}", method, path, e);
-            try {
-                String errorResponse = String.format("{\"error\":\"IO Error: %s\"}", e.getMessage());
-                sendResponse(exchange, 500, errorResponse);
-            } catch (IOException e2) {
-                LOGGER.error("Failed to send error response", e2);
+            // IOException often means client disconnected - don't try to send error response
+            String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            if (errorMsg.contains("stream is closed") || errorMsg.contains("Broken pipe") || errorMsg.contains("Connection reset")) {
+                LOGGER.warn("Client disconnected during request: {} {} - {}", method, path, errorMsg);
+            } else {
+                LOGGER.error("IOException handling request: {} {}", method, path, e);
+                // Only try to send error response if stream is likely still open
+                try {
+                    String errorResponse = String.format("{\"error\":\"IO Error: %s\"}", errorMsg);
+                    sendResponse(exchange, 500, errorResponse);
+                } catch (IOException e2) {
+                    LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Unexpected error handling request: {} {}", method, path, e);
             try {
-                String errorResponse = String.format("{\"error\":\"%s\"}", e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error");
+                String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error";
+                String errorResponse = String.format("{\"error\":\"%s\"}", errorMsg);
                 sendResponse(exchange, 500, errorResponse);
             } catch (IOException e2) {
-                LOGGER.error("Failed to send error response", e2);
+                LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
             }
         } finally {
-            exchange.close();
+            // Safely close exchange - don't log error if already closed
+            try {
+                exchange.close();
+            } catch (Exception e) {
+                // Ignore - exchange may already be closed
+            }
         }
     }
     
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
-        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.sendResponseHeaders(statusCode, bytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
+        // Check if response has already been sent or stream is closed
+        try {
+            byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(statusCode, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+                os.flush(); // Ensure data is sent
+            }
+        } catch (IOException e) {
+            // Re-throw but with context
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            if (msg.contains("stream is closed") || msg.contains("Broken pipe") || msg.contains("Connection reset")) {
+                // Client disconnected - this is expected during heavy operations or restarts
+                throw new IOException("Client disconnected: " + msg, e);
+            }
+            throw e;
         }
     }
 }
