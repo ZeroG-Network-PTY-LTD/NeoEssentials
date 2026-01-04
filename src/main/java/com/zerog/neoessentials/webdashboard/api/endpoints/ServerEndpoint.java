@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.webdashboard.data.ServerDataCollector;
+import com.zerog.neoessentials.webdashboard.data.ServerAssetCollector;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +23,12 @@ public class ServerEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerEndpoint.class);
     private final MinecraftServer server;
     private final ServerDataCollector serverCollector;
-    
+    private final ServerAssetCollector assetCollector;
+
     public ServerEndpoint(MinecraftServer server) {
         this.server = server;
         this.serverCollector = new ServerDataCollector(server);
+        this.assetCollector = new ServerAssetCollector(server);
     }
     
     @Override
@@ -47,6 +50,11 @@ public class ServerEndpoint implements HttpHandler {
                 try {
                     LOGGER.info("Collecting data for endpoint: {}", path);
                     // Parse path to determine which endpoint
+                    if (path.startsWith("/api/server/assets/")) {
+                        // Get specific namespace assets
+                        String namespace = path.substring("/api/server/assets/".length());
+                        return assetCollector.getNamespaceAssets(namespace);
+                    }
                     return switch (path) {
                         case "/api/server/profile" -> serverCollector.getServerProfile();
                         case "/api/server/performance" -> serverCollector.getServerPerformance();
@@ -55,6 +63,7 @@ public class ServerEndpoint implements HttpHandler {
                         case "/api/server/health" -> serverCollector.getServerHealth();
                         case "/api/server/worlds" -> serverCollector.getServerWorlds();
                         case "/api/server/config" -> serverCollector.getServerConfig();
+                        case "/api/server/assets" -> assetCollector.getAllAssets();
                         default -> {
                             JsonObject error = new JsonObject();
                             error.addProperty("error", "Endpoint not found");

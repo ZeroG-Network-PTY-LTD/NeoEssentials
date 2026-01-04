@@ -34,6 +34,10 @@ public class BanManager {
     // Scheduler for periodic expired-ban cleanup
     private final java.util.concurrent.ScheduledExecutorService banCleanupScheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
     private java.util.concurrent.ScheduledFuture<?> cleanupTaskFuture;
+
+    // Static shutdown flag to persist across instances
+    private static volatile boolean isShuttingDown = false;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BanManager.class);
     private static BanManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -105,16 +109,20 @@ public class BanManager {
         this.ipBanFile = new File(moderationDir, "ip_bans.json");
         loadBans();
 
-        // Start periodic expired-ban cleanup if enabled
-        int interval = com.zerog.neoessentials.config.ConfigManager.getInstance().getCheckExpiredBansInterval();
-        if (interval > 0) {
-            cleanupTaskFuture = banCleanupScheduler.scheduleAtFixedRate(
-                this::cleanupExpiredTempBans,
-                interval, interval, java.util.concurrent.TimeUnit.SECONDS
-            );
-            LOGGER.info("Scheduled expired temp ban cleanup every {} seconds.", interval);
+        // Start periodic expired-ban cleanup if enabled (but not if shutting down)
+        if (!isShuttingDown) {
+            int interval = com.zerog.neoessentials.config.ConfigManager.getInstance().getCheckExpiredBansInterval();
+            if (interval > 0) {
+                cleanupTaskFuture = banCleanupScheduler.scheduleAtFixedRate(
+                    this::cleanupExpiredTempBans,
+                    interval, interval, java.util.concurrent.TimeUnit.SECONDS
+                );
+                LOGGER.info("Scheduled expired temp ban cleanup every {} seconds.", interval);
+            } else {
+                LOGGER.info("Expired temp ban cleanup scheduler is disabled (interval <= 0).");
+            }
         } else {
-            LOGGER.info("Expired temp ban cleanup scheduler is disabled (interval <= 0).");
+            LOGGER.debug("BanManager created during shutdown - scheduler not started");
         }
     }
     
@@ -150,6 +158,7 @@ public class BanManager {
      * Call this on server/plugin shutdown to stop the scheduler cleanly.
      */
     public void shutdownScheduler() {
+        isShuttingDown = true;
         if (cleanupTaskFuture != null) cleanupTaskFuture.cancel(false);
         banCleanupScheduler.shutdown();
         try {
