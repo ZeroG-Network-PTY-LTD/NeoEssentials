@@ -309,6 +309,7 @@ public class PermissionRegistry {
         register("neoessentials.anvil", "Open portable anvil", PermissionCategory.MISC, true);
         register("neoessentials.crafting", "Open portable crafting table", PermissionCategory.MISC, true);
         register("neoessentials.fletching", "Open portable fletching table", PermissionCategory.MISC, true);
+        register("neoessentials.grindstone", "Open portable grindstone", PermissionCategory.MISC, true);
         register("neoessentials.smithing", "Open portable smithing table", PermissionCategory.MISC, true);
         register("neoessentials.stonecutting", "Open portable stonecutter", PermissionCategory.MISC, true);
 
