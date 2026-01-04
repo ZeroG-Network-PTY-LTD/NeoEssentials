@@ -80,6 +80,7 @@ public class NeoEssentialsManager {
      * Sets the economy service.
      * @param service EconomyService implementation
      */
+    @SuppressWarnings("unused") // Public API method
     public void setEconomyService(EconomyService service) {
         this.economyService = service;
     }
@@ -96,9 +97,11 @@ public class NeoEssentialsManager {
      * Player data for homes, warps, teleportation, and non-economy settings.
      * Note: Economy data (balance, pay toggles) is handled by EconomyManager separately.
      */
+    @SuppressWarnings("unused") // Public API class with intentional getters/setters
     public static class PlayerData {
         public Map<String, Object> homes = new ConcurrentHashMap<>();
         public Map<String, Object> warps = new ConcurrentHashMap<>();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // Used for future mail system
         public Map<String, Object> mail = new ConcurrentHashMap<>();
         
         // Non-economy toggles and settings
@@ -112,9 +115,9 @@ public class NeoEssentialsManager {
         private boolean msgToggle = true;
         
         // Social features
-        private java.util.List<String> ignoreList = new java.util.ArrayList<>();
-        
-        // Getters and setters
+        private final java.util.List<String> ignoreList = new java.util.ArrayList<>();
+
+        // Getters and setters - Public API
         public boolean isVanishMode() { return vanishMode; }
         public void setVanishMode(boolean vanish) { this.vanishMode = vanish; }
         
@@ -138,6 +141,7 @@ public class NeoEssentialsManager {
         public void removeFromIgnoreList(String player) { ignoreList.remove(player); }
     }
 
+    @SuppressWarnings("unused") // Public API method
     public void savePlayerData(UUID playerId) {
         PlayerData data = playerDataMap.get(playerId);
         if (data == null) return;
@@ -153,6 +157,7 @@ public class NeoEssentialsManager {
         }
     }
 
+    @SuppressWarnings("unused") // Public API method
     public void loadPlayerData(UUID playerId) {
         try {
             Path dir = Paths.get(PLAYERDATA_DIR);
@@ -167,27 +172,31 @@ public class NeoEssentialsManager {
         }
     }
 
+    @SuppressWarnings("unused") // Public API method
     public void saveAllPlayerData() {
         for (UUID uuid : playerDataMap.keySet()) {
             savePlayerData(uuid);
         }
     }
 
+    @SuppressWarnings("unused") // Public API method
     public void loadAllPlayerData() {
         try {
             Path dir = Paths.get(PLAYERDATA_DIR);
             if (!Files.exists(dir)) return;
-            Files.list(dir).filter(p -> p.toString().endsWith(".json")).forEach(p -> {
-                try (Reader reader = new FileReader(p.toFile())) {
-                    PlayerData data = GSON.fromJson(reader, PlayerData.class);
-                    String fileName = p.getFileName().toString();
-                    String uuidStr = fileName.substring(0, fileName.length() - 5); // remove .json
-                    UUID uuid = UUID.fromString(uuidStr);
-                    playerDataMap.put(uuid, data);
-                } catch (Exception e) {
-                    LOGGER.error("Failed to load individual player data file", e);
-                }
-            });
+            try (var stream = Files.list(dir)) {
+                stream.filter(p -> p.toString().endsWith(".json")).forEach(p -> {
+                    try (Reader reader = new FileReader(p.toFile())) {
+                        PlayerData data = GSON.fromJson(reader, PlayerData.class);
+                        String fileName = p.getFileName().toString();
+                        String uuidStr = fileName.substring(0, fileName.length() - 5); // remove .json
+                        UUID uuid = UUID.fromString(uuidStr);
+                        playerDataMap.put(uuid, data);
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to load individual player data file", e);
+                    }
+                });
+            }
         } catch (IOException e) {
             LOGGER.error("Failed to load all player data", e);
         }
