@@ -339,6 +339,11 @@ body {
     gap: 16px;
 }
 
+/* Sidebar toggle button - hidden on desktop, visible on mobile */
+#sidebarToggle {
+    display: none;
+}
+
 .page-title {
     font-size: 20px;
     font-weight: 700;
@@ -908,6 +913,11 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* Show sidebar toggle button on mobile */
+    #sidebarToggle {
+        display: flex;
+    }
+
     .sidebar {
         transform: translateX(-100%);
     }
