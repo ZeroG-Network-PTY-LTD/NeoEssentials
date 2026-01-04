@@ -410,6 +410,9 @@ public class HomeManager {
 
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
         }
+        
+        // Save current location for /back command
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
         // Perform teleportation
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks

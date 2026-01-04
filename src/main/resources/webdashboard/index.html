@@ -67,6 +67,10 @@
                     <span class="nav-icon">📜</span>
                     <span class="nav-text">Events</span>
                 </a>
+                <a href="#" class="nav-item admin-only" data-page="admin" style="display: none;">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Admin Controls</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -253,6 +257,78 @@
                                     <div class="empty-state">
                                         <span class="empty-icon">📜</span>
                                         <p>No recent events</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admin Controls Section -->
+                        <div class="card card-full admin-only" data-page="admin" style="display: none;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="title-icon">⚙️</span>
+                                    Server Administration
+                                </h3>
+                                <span class="card-badge">Admin Only</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="admin-controls-grid">
+                                    <!-- Restart Server Card -->
+                                    <div class="admin-control-card danger">
+                                        <div class="admin-control-icon">🔄</div>
+                                        <div class="admin-control-content">
+                                            <h4>Restart Server</h4>
+                                            <p>Gracefully restart the Minecraft server with 5-second countdown</p>
+                                            <button class="btn btn-danger" id="restartServerBtn">
+                                                <span>🔄</span> Restart Server
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stop Server Card -->
+                                    <div class="admin-control-card danger">
+                                        <div class="admin-control-icon">🛑</div>
+                                        <div class="admin-control-content">
+                                            <h4>Stop Server</h4>
+                                            <p>Gracefully shutdown the server with 5-second countdown</p>
+                                            <button class="btn btn-danger" id="stopServerBtn">
+                                                <span>🛑</span> Stop Server
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reload Configs Card -->
+                                    <div class="admin-control-card warning">
+                                        <div class="admin-control-icon">🔃</div>
+                                        <div class="admin-control-content">
+                                            <h4>Reload Configurations</h4>
+                                            <p>Reload all mod configurations without restarting</p>
+                                            <button class="btn btn-warning" id="reloadConfigsBtn">
+                                                <span>🔃</span> Reload Configs
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Save All Worlds Card -->
+                                    <div class="admin-control-card success">
+                                        <div class="admin-control-icon">💾</div>
+                                        <div class="admin-control-content">
+                                            <h4>Save All Worlds</h4>
+                                            <p>Force save all loaded world chunks</p>
+                                            <button class="btn btn-success" id="saveWorldsBtn">
+                                                <span>💾</span> Save Worlds
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Admin Action Log -->
+                                <div class="admin-log-section">
+                                    <h4 class="admin-log-title">
+                                        <span>📋</span> Action Log
+                                    </h4>
+                                    <div class="admin-log-messages" id="adminLogMessages">
+                                        <div class="admin-log-empty">No recent actions</div>
                                     </div>
                                 </div>
                             </div>

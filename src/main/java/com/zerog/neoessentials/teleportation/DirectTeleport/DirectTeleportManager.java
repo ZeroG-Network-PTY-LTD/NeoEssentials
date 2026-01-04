@@ -61,6 +61,9 @@ public class DirectTeleportManager {
     public CompletableFuture<TeleportUtil.TeleportResult> teleportPlayerToPlayer(ServerPlayer executor, 
                                                                                 ServerPlayer player, 
                                                                                 ServerPlayer target) {
+        // Save current location for /back command (for the player being teleported)
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
         TeleportLocation targetLocation = new TeleportLocation(target);
         
         return TeleportUtil.teleportPlayer(player, targetLocation, teleportDelay * 20, !bypassSafetyChecks)
@@ -109,6 +112,9 @@ public class DirectTeleportManager {
     public CompletableFuture<TeleportUtil.TeleportResult> teleportPlayerToCoordinates(ServerPlayer executor,
                                                                                      ServerPlayer player,
                                                                                      double x, double y, double z) {
+        // Save current location for /back command (for the player being teleported)
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
         TeleportLocation targetLocation = new TeleportLocation(
             player.serverLevel().dimension().location().toString(), x, y, z, 0f, 0f, 
             executor.getName().getString());
@@ -175,6 +181,9 @@ public class DirectTeleportManager {
         CompletableFuture<Void>[] futures = players.stream()
             .filter(player -> !player.getUUID().equals(executor.getUUID())) // Exclude executor
             .map(player -> {
+                // Save current location for /back command
+                com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
                 return TeleportUtil.teleportPlayer(player, targetLocation, teleportDelay * 20, !bypassSafetyChecks)
                     .thenAccept(result -> {
                         if (result.isSuccess()) {
@@ -274,6 +283,9 @@ public class DirectTeleportManager {
                 return false;
             }
             
+            // Save current location for /back command
+            com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(executor);
+
             // Perform teleportation
             TeleportUtil.teleportPlayer(executor, offlineLocation, teleportDelay * 20, !bypassSafetyChecks)
                 .thenAccept(result -> {

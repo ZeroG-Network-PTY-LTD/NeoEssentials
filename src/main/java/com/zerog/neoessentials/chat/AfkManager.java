@@ -50,8 +50,8 @@ public class AfkManager {
     private final ScheduledExecutorService afkCheckExecutor = Executors.newSingleThreadScheduledExecutor();
     
     // Data persistence
-    private final File afkDataFile = new File("config/neoessentials/afk_data.json");
-    
+    private final File afkDataFile = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "afk_data.json");
+
     // AFK configuration (will be loaded from config)
     private long afkTimeoutMs = 300000; // 5 minutes default
     private boolean autoAfkEnabled = true;

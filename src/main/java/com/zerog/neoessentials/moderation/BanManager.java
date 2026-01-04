@@ -94,7 +94,7 @@ public class BanManager {
     
     private BanManager() {
         // Create moderation directory if it doesn't exist
-        File moderationDir = new File("config/neoessentials/moderation");
+        File moderationDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation");
         if (!moderationDir.exists()) {
             moderationDir.mkdirs();
         }

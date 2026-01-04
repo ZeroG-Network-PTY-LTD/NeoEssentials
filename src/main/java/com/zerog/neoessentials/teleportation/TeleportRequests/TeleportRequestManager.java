@@ -342,6 +342,10 @@ public class TeleportRequestManager {
             teleporter = target;
             destination = requester;
         }
+
+        // Save current location for /back command
+        com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(teleporter);
+
         TeleportLocation targetLocation = new TeleportLocation(destination);
         // Enforce teleport safety if enabled
         if (enableTeleportSafety && !targetLocation.isSafe()) {

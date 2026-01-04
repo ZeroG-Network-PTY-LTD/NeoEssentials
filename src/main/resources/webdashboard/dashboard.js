@@ -128,8 +128,22 @@ function showDashboard() {
         usernameDisplay.textContent = username;
     }
     
+    // Show admin controls if user is admin
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    const adminElements = document.querySelectorAll('.admin-only');
+    adminElements.forEach(element => {
+        if (isAdmin) {
+            element.classList.add('visible');
+            element.style.display = ''; // Remove inline display:none
+        } else {
+            element.classList.remove('visible');
+            element.style.display = 'none';
+        }
+    });
+
     console.log('Dashboard authenticated, starting data refresh...');
-    
+    console.log('Admin mode:', isAdmin);
+
     // Start auto-refresh timer
     startAutoRefresh();
     
@@ -229,6 +243,27 @@ function setupEventListeners() {
         logoutBtn.addEventListener('click', async () => {
             await handleLogout();
         });
+    }
+
+    // Admin Control Buttons
+    const restartServerBtn = document.getElementById('restartServerBtn');
+    if (restartServerBtn) {
+        restartServerBtn.addEventListener('click', () => handleRestartServer());
+    }
+
+    const stopServerBtn = document.getElementById('stopServerBtn');
+    if (stopServerBtn) {
+        stopServerBtn.addEventListener('click', () => handleStopServer());
+    }
+
+    const reloadConfigsBtn = document.getElementById('reloadConfigsBtn');
+    if (reloadConfigsBtn) {
+        reloadConfigsBtn.addEventListener('click', () => handleReloadConfigs());
+    }
+
+    const saveWorldsBtn = document.getElementById('saveWorldsBtn');
+    if (saveWorldsBtn) {
+        saveWorldsBtn.addEventListener('click', () => handleSaveWorlds());
     }
 }
 
@@ -1195,7 +1230,204 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ========================================
+// Admin Control Functions
+// ========================================
+
+function addAdminLog(message, type = 'info') {
+    const logMessages = document.getElementById('adminLogMessages');
+    if (!logMessages) return;
+
+    // Remove empty state if present
+    const emptyState = logMessages.querySelector('.admin-log-empty');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = `admin-log-message ${type}`;
+    logEntry.innerHTML = `
+        <div class="admin-log-time">${timestamp}</div>
+        <div class="admin-log-text">${escapeHtml(message)}</div>
+    `;
+
+    logMessages.insertBefore(logEntry, logMessages.firstChild);
+
+    // Keep only last 10 log entries
+    while (logMessages.children.length > 10) {
+        logMessages.removeChild(logMessages.lastChild);
+    }
+}
+
+async function handleRestartServer() {
+    if (!confirm('⚠️ WARNING: This will restart the Minecraft server!\n\nPlayers will be disconnected in 5 seconds.\n\nAre you sure?')) {
+        return;
+    }
+
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/restart`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            addAdminLog('Server restart initiated - restarting in 5 seconds...', 'success');
+            alert('✅ Server restart initiated!\n\nServer will restart in 5 seconds.\nYou may lose connection to this dashboard.');
+        } else {
+            addAdminLog(`Restart failed: ${data.error || 'Unknown error'}`, 'error');
+            alert('❌ Failed to restart server: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error restarting server:', error);
+        addAdminLog(`Restart request failed: ${error.message}`, 'error');
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function handleStopServer() {
+    if (!confirm('🛑 CRITICAL WARNING: This will STOP the Minecraft server!\n\nThe server will shutdown completely.\nPlayers will be disconnected in 5 seconds.\n\nYou will need server console access to restart it.\n\nAre you absolutely sure?')) {
+        return;
+    }
+
+    // Double confirmation for stop
+    if (!confirm('🛑 FINAL CONFIRMATION:\n\nStopping the server will require manual restart from server console or control panel.\n\nProceed with shutdown?')) {
+        return;
+    }
+
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/stop`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            addAdminLog('Server shutdown initiated - stopping in 5 seconds...', 'warning');
+            alert('⚠️ Server shutdown initiated!\n\nServer will stop in 5 seconds.\nYou will lose connection to this dashboard.');
+        } else {
+            addAdminLog(`Shutdown failed: ${data.error || 'Unknown error'}`, 'error');
+            alert('❌ Failed to stop server: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error stopping server:', error);
+        addAdminLog(`Stop request failed: ${error.message}`, 'error');
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function handleReloadConfigs() {
+    if (!confirm('🔃 Reload all configurations?\n\nThis will reload:\n- Config files\n- Translations\n- Permissions\n\nServer will NOT restart.\n\nContinue?')) {
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('reloadConfigsBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> Reloading...';
+        }
+
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/reload`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔃</span> Reload Configs';
+        }
+
+        if (data.success) {
+            const successCount = data.successCount || 0;
+            const totalCount = data.totalCount || 0;
+            const failedCount = totalCount - successCount;
+
+            addAdminLog(`Configs reloaded: ${successCount}/${totalCount} successful${failedCount > 0 ? `, ${failedCount} failed` : ''}`, failedCount > 0 ? 'warning' : 'success');
+
+            let message = `✅ Configuration reload complete!\n\n${successCount}/${totalCount} configs reloaded successfully.`;
+            if (failedCount > 0) {
+                message += `\n\n⚠️ ${failedCount} config(s) failed to reload.`;
+            }
+            alert(message);
+        } else {
+            addAdminLog(`Reload failed: ${data.error || 'Unknown error'}`, 'error');
+            alert('❌ Failed to reload configs: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error reloading configs:', error);
+        addAdminLog(`Reload request failed: ${error.message}`, 'error');
+
+        const btn = document.getElementById('reloadConfigsBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔃</span> Reload Configs';
+        }
+
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function handleSaveWorlds() {
+    try {
+        const btn = document.getElementById('saveWorldsBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> Saving...';
+        }
+
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/save`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>💾</span> Save Worlds';
+        }
+
+        if (data.success) {
+            addAdminLog('All worlds saved successfully', 'success');
+            alert('✅ All worlds saved!\n\nAll loaded chunks have been saved to disk.');
+        } else {
+            addAdminLog(`Save failed: ${data.error || 'Unknown error'}`, 'error');
+            alert('❌ Failed to save worlds: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving worlds:', error);
+        addAdminLog(`Save request failed: ${error.message}`, 'error');
+
+        const btn = document.getElementById('saveWorldsBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<span>💾</span> Save Worlds';
+        }
+
+        alert('❌ Error: ' + error.message);
+    }
+}
+
 console.log('NeoEssentials Dashboard v2.1 loaded successfully - Build 417');
 console.log('Auto-refresh interval: ' + (REFRESH_INTERVAL / 1000) + ' seconds');
 console.log('Press Ctrl+R or F5 to manually refresh data');
 console.log('Player modal functions loaded:', typeof window.openPlayerModal === 'function', typeof window.closePlayerModal === 'function');
+console.log('Admin control functions loaded:', typeof handleRestartServer === 'function');

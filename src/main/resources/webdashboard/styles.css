@@ -1383,3 +1383,174 @@ body {
         max-height: 95vh;
     }
 }
+
+/* ========================================
+   Admin Controls Styles
+   ======================================== */
+
+.admin-only {
+    display: none !important;
+}
+
+.admin-only.visible {
+    display: block !important;
+}
+
+.admin-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-control-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    transition: var(--transition);
+}
+
+.admin-control-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.admin-control-card.danger {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.02);
+}
+
+.admin-control-card.warning {
+    border-color: rgba(245, 158, 11, 0.2);
+    background: rgba(245, 158, 11, 0.02);
+}
+
+.admin-control-card.success {
+    border-color: rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.02);
+}
+
+.admin-control-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.admin-control-content {
+    flex: 1;
+}
+
+.admin-control-content h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.admin-control-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+}
+
+.admin-control-content .btn {
+    width: 100%;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: var(--warning-light);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: var(--success-light);
+}
+
+/* Admin Log Section */
+.admin-log-section {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.admin-log-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-log-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.admin-log-empty {
+    text-align: center;
+    color: var(--text-tertiary);
+    padding: 2rem 1rem;
+    font-size: 0.875rem;
+}
+
+.admin-log-message {
+    background: var(--bg-primary);
+    border-left: 3px solid var(--primary);
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.admin-log-message.success {
+    border-left-color: var(--success);
+}
+
+.admin-log-message.error {
+    border-left-color: var(--danger);
+}
+
+.admin-log-message.warning {
+    border-left-color: var(--warning);
+}
+
+.admin-log-time {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.admin-log-text {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .admin-controls-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
