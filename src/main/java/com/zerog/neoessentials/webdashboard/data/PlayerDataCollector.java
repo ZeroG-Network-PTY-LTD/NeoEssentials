@@ -23,7 +23,7 @@ import java.io.IOException;
 /**
  * Player Data Collector
  * Collects all player-related data for the Dashboard API
- * 
+ * <p>
  * Endpoints served:
  * - Player Profiles (name, UUID, join date, play time)
  * - Player Statistics (kills, deaths, blocks broken/placed)
@@ -120,13 +120,11 @@ public class PlayerDataCollector {
                 // Add last seen timestamp if available
                 try {
                     net.minecraft.server.level.ServerLevel overworld = server.overworld();
-                    if (overworld != null) {
-                        java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
-                        java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid.toString() + ".dat");
-                        if (java.nio.file.Files.exists(playerDataFile)) {
-                            long lastModified = java.nio.file.Files.getLastModifiedTime(playerDataFile).toMillis();
-                            profile.addProperty("lastSeen", lastModified);
-                        }
+                    java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
+                    java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid + ".dat");
+                    if (java.nio.file.Files.exists(playerDataFile)) {
+                        long lastModified = java.nio.file.Files.getLastModifiedTime(playerDataFile).toMillis();
+                        profile.addProperty("lastSeen", lastModified);
                     }
                 } catch (Exception e) {
                     LOGGER.debug("Could not get last seen time for {}: {}", playerUuid, e.getMessage());
@@ -247,15 +245,11 @@ public class PlayerDataCollector {
             }
             
             // Armor
-            player.getInventory().armor.forEach(itemStack -> {
-                armor.add(serializeItemStack(itemStack));
-            });
-            
+            player.getInventory().armor.forEach(itemStack -> armor.add(serializeItemStack(itemStack)));
+
             // Offhand
-            player.getInventory().offhand.forEach(itemStack -> {
-                offhand.add(serializeItemStack(itemStack));
-            });
-            
+            player.getInventory().offhand.forEach(itemStack -> offhand.add(serializeItemStack(itemStack)));
+
             inventory.add("main", mainInventory);
             inventory.add("armor", armor);
             inventory.add("offhand", offhand);
@@ -277,19 +271,15 @@ public class PlayerDataCollector {
         try {
             // Try to get the proper world storage path from the overworld
             net.minecraft.server.level.ServerLevel overworld = server.overworld();
-            if (overworld != null) {
-                java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
-                java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid.toString() + ".dat");
+            java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
+            java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid + ".dat");
 
-                LOGGER.debug("Loading offline player data from: {}", playerDataFile);
+            LOGGER.debug("Loading offline player data from: {}", playerDataFile);
 
-                if (java.nio.file.Files.exists(playerDataFile)) {
-                    return NbtIo.readCompressed(playerDataFile, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
-                } else {
-                    LOGGER.debug("Player data file not found: {}", playerDataFile);
-                }
+            if (java.nio.file.Files.exists(playerDataFile)) {
+                return NbtIo.readCompressed(playerDataFile, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             } else {
-                LOGGER.warn("Could not get overworld for player data loading");
+                LOGGER.debug("Player data file not found: {}", playerDataFile);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to load offline player data for UUID: {}", playerUuid, e);
@@ -312,11 +302,8 @@ public class PlayerDataCollector {
             for (int i = 0; i < invList.size(); i++) {
                 CompoundTag itemTag = invList.getCompound(i);
                 byte slot = itemTag.getByte("Slot");
-                
+                // Get ItemStack from tag
                 ItemStack itemStack = ItemStack.parseOptional(server.registryAccess(), itemTag);
-                if (itemStack == null) {
-                    itemStack = ItemStack.EMPTY;
-                }
                 JsonObject item = serializeItemStack(itemStack);
                 item.addProperty("slot", slot);
                 
@@ -384,9 +371,6 @@ public class PlayerDataCollector {
                     status.addProperty("afkReason", afkReason);
                 }
             }
-        } else {
-            // FUTURE: Retrieve last seen time from persistent storage
-            // status.addProperty("lastSeen", getLastSeenTime(playerUuid));
         }
         
         return status;
@@ -452,9 +436,10 @@ public class PlayerDataCollector {
             location.addProperty("exactZ", player.getZ());
             location.addProperty("yaw", player.getYRot());
             location.addProperty("pitch", player.getXRot());
-            location.addProperty("dimension", getDimensionName(player.level()));
-            location.addProperty("world", player.level().dimension().location().toString());
-            location.addProperty("biome", getBiomeName(player.level(), pos));
+            Level level = player.level();
+            location.addProperty("dimension", getDimensionName(level));
+            location.addProperty("world", level.dimension().location().toString());
+            location.addProperty("biome", getBiomeName(level, pos));
         }
         
         return location;
@@ -539,17 +524,8 @@ public class PlayerDataCollector {
         
         // Get offline players from playerdata directory
         try {
-            // Get the proper player data directory from the overworld
+            // Try to get offline players from player data files
             net.minecraft.server.level.ServerLevel overworld = server.overworld();
-            if (overworld == null) {
-                LOGGER.warn("Could not get overworld for offline player loading");
-                response.add("players", onlinePlayers);
-                response.add("offlinePlayers", offlinePlayers);
-                response.addProperty("count", onlinePlayers.size());
-                response.addProperty("offlineCount", 0);
-                response.addProperty("max", server.getMaxPlayers());
-                return response;
-            }
 
             java.nio.file.Path playerDataDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
             LOGGER.info("Looking for offline players in: {}", playerDataDir);
@@ -562,12 +538,12 @@ public class PlayerDataCollector {
                 // Limit to last 50 offline players to avoid performance issues
                 int maxOffline = 50;
                 
-                java.nio.file.Files.list(playerDataDir)
-                    .filter(path -> path.toString().endsWith(".dat"))
-                    .limit(maxOffline)
-                    .forEach(path -> {
-                        try {
-                            String fileName = path.getFileName().toString();
+                try (var stream = java.nio.file.Files.list(playerDataDir)) {
+                    stream.filter(path -> path.toString().endsWith(".dat"))
+                        .limit(maxOffline)
+                        .forEach(path -> {
+                            try {
+                                String fileName = path.getFileName().toString();
                             String uuidStr = fileName.replace(".dat", "");
                             UUID uuid = UUID.fromString(uuidStr);
                             
@@ -587,14 +563,18 @@ public class PlayerDataCollector {
                                 if (username == null) {
                                     try {
                                         CompoundTag playerData = NbtIo.readCompressed(path, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
-                                        if (playerData != null && playerData.contains("bukkit")) {
+                                        @SuppressWarnings("ConstantConditions") // playerData can be null from I/O operations
+                                        boolean hasBukkitData = playerData != null && playerData.contains("bukkit");
+                                        if (hasBukkitData) {
                                             CompoundTag bukkitData = playerData.getCompound("bukkit");
                                             if (bukkitData.contains("lastKnownName")) {
                                                 username = bukkitData.getString("lastKnownName");
                                             }
                                         }
                                         // Some servers store it differently
-                                        if (username == null && playerData != null && playerData.contains("lastKnownName")) {
+                                        @SuppressWarnings("ConstantConditions") // playerData can be null from I/O operations
+                                        boolean hasLastKnownName = username == null && playerData != null && playerData.contains("lastKnownName");
+                                        if (hasLastKnownName) {
                                             username = playerData.getString("lastKnownName");
                                         }
                                     } catch (Exception e) {
@@ -624,7 +604,10 @@ public class PlayerDataCollector {
                             LOGGER.debug("Skipping invalid player data file: {}", path.getFileName());
                         }
                     });
-                    
+                } catch (java.io.IOException ioEx) {
+                    LOGGER.warn("Error reading player data directory: {}", ioEx.getMessage());
+                }
+
                 LOGGER.info("Found {} offline players", offlinePlayers.size());
             } else {
                 LOGGER.warn("Player data directory does not exist: {}", playerDataDir);
