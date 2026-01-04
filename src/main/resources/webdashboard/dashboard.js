@@ -1211,19 +1211,17 @@ function renderInventorySlot(item) {
     const moddedClass = item.modded ? 'modded-item' : '';
     const enchantedClass = item.enchanted ? 'enchanted-item' : '';
 
-    // Escape item data for use in onclick handler
-    const itemDataEscaped = escapeHtml(JSON.stringify(item)).replace(/'/g, '&#39;');
-
     return `
         <div class="inventory-slot ${moddedClass} ${enchantedClass}"
              title="${tooltipText}"
              data-item-id="${escapeHtml(item.id)}"
              data-namespace="${escapeHtml(item.namespace || 'minecraft')}"
+             data-path="${escapeHtml(item.path || '')}"
              data-modded="${item.modded || false}">
             <img src="${textureUrl}"
                  alt="${escapeHtml(itemName)}" 
                  class="inventory-slot-texture"
-                 onerror="handleInventoryTextureError(this, '${itemDataEscaped}')">
+                 onerror="handleInventoryTextureError(this)">
             <div class="inventory-slot-fallback" style="display:none;">
                 ${escapeHtml(itemName.substring(0, 2).toUpperCase())}
             </div>
@@ -1237,16 +1235,20 @@ function renderInventorySlot(item) {
 /**
  * Handle texture loading errors with fallback chain
  */
-function handleInventoryTextureError(imgElement, itemDataJson) {
-    // Parse item data
-    let item;
-    try {
-        item = JSON.parse(itemDataJson);
-    } catch (e) {
-        console.error('Error parsing item data:', e);
+function handleInventoryTextureError(imgElement) {
+    // Get item data from parent slot's data attributes
+    const slot = imgElement.closest('.inventory-slot');
+    if (!slot) {
+        console.error('Could not find inventory slot for failed texture');
         imgElement.style.display = 'none';
         return;
     }
+
+    const item = {
+        namespace: slot.dataset.namespace || 'minecraft',
+        path: slot.dataset.path || '',
+        id: slot.dataset.itemId || ''
+    };
 
     // Hide the failed image
     imgElement.style.display = 'none';
@@ -1266,8 +1268,7 @@ function handleInventoryTextureError(imgElement, itemDataJson) {
     }
 
     // Try alternative texture URL if available and not already tried
-    const slot = imgElement.closest('.inventory-slot');
-    if (slot && !slot.dataset.textureRetried) {
+    if (!slot.dataset.textureRetried) {
         slot.dataset.textureRetried = 'true';
 
         // For vanilla items, try alternative API
