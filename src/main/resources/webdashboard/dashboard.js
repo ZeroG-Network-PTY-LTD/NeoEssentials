@@ -1267,18 +1267,9 @@ function handleInventoryTextureError(imgElement) {
         fallbackDiv.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
     }
 
-    // Try alternative texture URL if available and not already tried
-    if (!slot.dataset.textureRetried) {
-        slot.dataset.textureRetried = 'true';
-
-        // For vanilla items, try alternative API
-        if (item.namespace === 'minecraft' && item.path) {
-            setTimeout(() => {
-                imgElement.src = `https://minecraft-assets.net/items/${item.path}.png`;
-                imgElement.style.display = 'block';
-            }, 100);
-        }
-    }
+    // Note: mc-heads.net is the most reliable API for Minecraft item textures
+    // If it fails, the item likely doesn't exist or the API is down
+    // Showing the placeholder is the best fallback in this case
 }
 
 /**
@@ -1288,34 +1279,20 @@ function handleInventoryTextureError(imgElement) {
 function getItemTextureUrl(item) {
     const namespace = item.namespace || 'minecraft';
     const path = item.path || item.id?.split(':')[1] || 'stone';
-    const isModded = item.modded || namespace !== 'minecraft';
 
-    // Primary API selection based on item type
-    if (!isModded) {
-        // Vanilla Minecraft items - use mc-heads.net (primary)
-        // This API provides high-quality item textures
-        return `https://mc-heads.net/minecraft/item/${path}`;
-    } else {
-        // Modded items - multiple fallback options
+    // PRIORITY 1: Try to load texture from our server's resource packs first
+    // This works for ALL items (vanilla + modded) that the server has loaded
+    const serverTextureUrl = `/api/textures/item/${namespace}/${path}`;
 
-        // Option 1: Check if we have a custom texture server configured
-        // This would be for servers that host their own mod textures
-        const customTextureBase = localStorage.getItem('customTextureServer');
-        if (customTextureBase) {
-            return `${customTextureBase}/item/${namespace}/${path}.png`;
-        }
+    // We return the server URL - if it fails, the onerror handler will show the fallback
+    return serverTextureUrl;
 
-        // Option 2: Try to use known mod texture repositories
-        // Some popular mods may have public texture APIs
-        const knownModTextureUrl = getKnownModTexture(namespace, path);
-        if (knownModTextureUrl) {
-            return knownModTextureUrl;
-        }
-
-        // Option 3: Generate placeholder with mod info
-        // This creates a data URL with the item name as text
-        return generateModdedItemPlaceholder(item);
-    }
+    // Note: We load textures from the server because:
+    // 1. Server has all textures for loaded mods/items
+    // 2. Works for modded items automatically
+    // 3. No external dependencies or API rate limits
+    // 4. Consistent styling across all items
+    // If server texture fails, handleInventoryTextureError shows the placeholder
 }
 
 /**
@@ -1365,13 +1342,23 @@ function generateModdedItemPlaceholder(item) {
     ctx.lineWidth = 2;
     ctx.strokeRect(0, 0, 32, 32);
 
-    // Add first letter of item name
-    ctx.fillStyle = '#2D3436';
-    ctx.font = 'bold 20px Arial';
+    // Add first 2 letters of item name (like the fallback div)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const firstLetter = (item.displayName || item.path || '?').charAt(0).toUpperCase();
-    ctx.fillText(firstLetter, 16, 16);
+
+    // Get display name and take first 2 letters
+    const displayName = item.displayName || item.path || 'Unknown';
+    const letters = displayName.substring(0, 2).toUpperCase();
+
+    // Add text shadow for better visibility
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+
+    ctx.fillText(letters, 16, 16);
 
     // Convert to data URL
     return canvas.toDataURL('image/png');

@@ -8,6 +8,7 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.GameEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.LoggingEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
+import com.zerog.neoessentials.webdashboard.api.endpoints.TextureEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -137,8 +138,9 @@ public class DashboardAPI {
         try {
             LOGGER.info("Stopping Dashboard API server...");
 
-            // Stop accepting new requests and wait up to 5 seconds for existing requests to complete
-            apiServer.stop(5);
+            // Stop accepting new requests and wait up to 2 seconds for existing requests to complete
+            // Reduced from 5 to 2 seconds to speed up server shutdown
+            apiServer.stop(2);
 
             // Note: The executor is managed by the HttpServer and will be shut down with stop()
             // However, we should give it time to complete
@@ -217,6 +219,9 @@ public class DashboardAPI {
         // Register authentication endpoints (no auth required)
         apiServer.createContext("/api/auth", new AuthHandler(server));
         
+        // Register texture endpoint (no auth required - images can't send auth headers)
+        apiServer.createContext("/api/textures", new TextureEndpoint(server));
+
         // Register API endpoint handlers with authentication middleware
         apiServer.createContext("/api/player", withAuth(new PlayerEndpoint(server)));
         apiServer.createContext("/api/server", withAuth(new ServerEndpoint(server)));
@@ -226,8 +231,9 @@ public class DashboardAPI {
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
+        LOGGER.info("  - /api/textures/* (item, block textures from server resource packs)");
         LOGGER.info("  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history, assets) [AUTH REQUIRED]");
         LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
         LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
         LOGGER.info("  - /api/admin/* (restart, stop, reload, save) [AUTH REQUIRED - ADMIN ONLY]");

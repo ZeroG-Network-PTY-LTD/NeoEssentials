@@ -49,6 +49,9 @@ public class AfkManager {
     // Scheduled executor for automatic AFK detection
     private final ScheduledExecutorService afkCheckExecutor = Executors.newSingleThreadScheduledExecutor();
     
+    // Shutdown flag to prevent task submission after shutdown
+    private volatile boolean isShuttingDown = false;
+
     // Data persistence
     private final File afkDataFile = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "afk_data.json");
 
@@ -508,7 +511,17 @@ public class AfkManager {
      * Queue save of AFK data (async)
      */
     private void queueSaveAfkData() {
-        afkCheckExecutor.execute(this::saveAfkData);
+        // Don't queue tasks if we're shutting down
+        if (isShuttingDown || afkCheckExecutor.isShutdown()) {
+            return;
+        }
+
+        try {
+            afkCheckExecutor.execute(this::saveAfkData);
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            // Executor is shutting down, just log and skip
+            LOGGER.debug("Cannot queue AFK data save - executor is shutting down");
+        }
     }
     
     /**
@@ -567,15 +580,27 @@ public class AfkManager {
      * Shutdown the AFK manager
      */
     public void shutdown() {
+        LOGGER.info("Shutting down AFK Manager...");
+        // Set shutdown flag first to prevent new task submissions
+        isShuttingDown = true;
+
         try {
+            // Save data synchronously before shutting down
             saveAfkData();
+
+            // Shutdown executor
             afkCheckExecutor.shutdown();
             if (!afkCheckExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                LOGGER.warn("AFK Manager executor did not terminate gracefully, forcing shutdown...");
                 afkCheckExecutor.shutdownNow();
             }
+            LOGGER.info("AFK Manager shutdown complete");
         } catch (InterruptedException e) {
+            LOGGER.warn("Interrupted while waiting for AFK Manager executor shutdown");
             afkCheckExecutor.shutdownNow();
             Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            LOGGER.error("Error during AFK Manager shutdown", e);
         }
     }
 
