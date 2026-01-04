@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * ChatHandler manages server chat events and applies formatting.
- * 
+ * <p>
  * This handler intercepts chat messages and applies the configured
  * chat format template before broadcasting to other players.
  */
@@ -23,11 +23,10 @@ public class ChatHandler {
     /**
      * Handles server chat events and applies custom formatting.
      * Only applies custom formatting when chat-format is configured,
-     * otherwise preserves vanilla <playername>: message format.
-     * 
-     * @param event The ServerChatEvent containing the chat message and player
+     * otherwise preserves vanilla playername: message format.
      */
-    // Per-player channel state (simple static map for now)
+    // Per-player channel state (will be populated by future /channel command)
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private static final java.util.Map<java.util.UUID, String> playerChannelMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     @SubscribeEvent
@@ -157,9 +156,9 @@ public class ChatHandler {
             }
             String world = null;
             try {
-                if (player.level() != null) {
-                    world = player.level().dimension().location().getPath();
-                }
+                @SuppressWarnings("resource") // Level is not closeable, warning is false positive
+                var level = player.level();
+                world = level.dimension().location().getPath();
             } catch (Exception e) {
                 LOGGER.debug("Could not get world for player {}: {}", playerName, e.getMessage());
             }
@@ -184,9 +183,18 @@ public class ChatHandler {
                         if (localObj.has("radius")) radius = localObj.get("radius").getAsInt();
                     }
                     var playerPos = player.position();
-                    for (ServerPlayer target : player.getServer().getPlayerList().getPlayers()) {
-                        if (target.level().dimension().equals(player.level().dimension()) && target.position().distanceTo(playerPos) <= radius) {
-                            target.sendSystemMessage(formattedMessage);
+                    var server = player.getServer();
+                    @SuppressWarnings("ConstantConditions") // Defensive null check
+                    var playerList = server != null ? server.getPlayerList() : null;
+                    if (playerList != null) {
+                        @SuppressWarnings("resource") // Level is not closeable, warning is false positive
+                        var playerLevel = player.level();
+                        for (ServerPlayer target : playerList.getPlayers()) {
+                            @SuppressWarnings("resource") // Level is not closeable, warning is false positive
+                            var targetLevel = target.level();
+                            if (targetLevel.dimension().equals(playerLevel.dimension()) && target.position().distanceTo(playerPos) <= radius) {
+                                target.sendSystemMessage(formattedMessage);
+                            }
                         }
                     }
                     LOGGER.debug("[Local] {}: {}", playerName, message);
@@ -197,16 +205,26 @@ public class ChatHandler {
                         var staffObj = channelsConfig.getAsJsonObject("staff");
                         if (staffObj.has("permission")) perm = staffObj.get("permission").getAsString();
                     }
-                    for (ServerPlayer target : player.getServer().getPlayerList().getPlayers()) {
-                        if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), perm)) {
-                            target.sendSystemMessage(formattedMessage);
+                    var server = player.getServer();
+                    @SuppressWarnings("ConstantConditions") // Defensive null check
+                    var playerList = server != null ? server.getPlayerList() : null;
+                    if (playerList != null) {
+                        for (ServerPlayer target : playerList.getPlayers()) {
+                            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), perm)) {
+                                target.sendSystemMessage(formattedMessage);
+                            }
                         }
                     }
                     LOGGER.debug("[Staff] {}: {}", playerName, message);
                 } else {
                     // Global: send to all players
-                    for (ServerPlayer target : player.getServer().getPlayerList().getPlayers()) {
-                        target.sendSystemMessage(formattedMessage);
+                    var server = player.getServer();
+                    @SuppressWarnings("ConstantConditions") // Defensive null check
+                    var playerList = server != null ? server.getPlayerList() : null;
+                    if (playerList != null) {
+                        for (ServerPlayer target : playerList.getPlayers()) {
+                            target.sendSystemMessage(formattedMessage);
+                        }
                     }
                     LOGGER.debug("[Global] {}: {}", playerName, message);
                 }

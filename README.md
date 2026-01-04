@@ -1,7 +1,4 @@
-
 # NeoEssentials
-
-![NeoEssentials Logo](docs/images/Logo.png)
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1--1.21.11-brightgreen.svg)](https://www.minecraft.net/)
 [![NeoForge](https://img.shields.io/badge/NeoForge-21.1.179+-blue.svg)](https://neoforged.net/)
@@ -34,19 +31,19 @@ NeoEssentials brings essential server management, player utilities, and advanced
 
 ## 📖 Documentation
 
-Start at [docs/wiki/Home.md](docs/wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
-  - [EconomySystem](docs/wiki/EconomySystem.md)
-  - [ChatSystem](docs/wiki/ChatSystem.md)
-  - [ModerationSystem](docs/wiki/ModerationSystem.md)
-  - [TeleportationSystem](docs/wiki/TeleportationSystem.md)
-  - [KitManagement](docs/wiki/KitManagement.md)
-  - [WebDashboard](docs/wiki/WebDashboard.md)
-  - [PermissionSystem](docs/wiki/PermissionSystem.md)
-  - [ItemManagement](docs/wiki/ItemManagement.md)
-  - [UtilitySystems](docs/wiki/UtilitySystems.md)
-  - [APISystem](docs/wiki/APISystem.md)
-  - [AFKSystem](docs/wiki/AFKSystem.md)
-See [docs/wiki/APISystem.md](docs/wiki/APISystem.md) for API & Placeholder System details, including:
+Start at [docs/Wiki/Home.md](docs/Wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
+  - [EconomySystem](docs/Wiki/EconomySystem.md)
+  - [ChatSystem](docs/Wiki/ChatSystem.md)
+  - [ModerationSystem](docs/Wiki/ModerationSystem.md)
+  - [TeleportationSystem](docs/Wiki/TeleportationSystem.md)
+  - [KitManagement](docs/Wiki/KitManagement.md)
+  - [WebDashboard](docs/Wiki/WebDashboard.md)
+  - [PermissionSystem](docs/Wiki/PermissionSystem.md)
+  - [ItemManagement](docs/Wiki/ItemManagement.md)
+  - [UtilitySystems](docs/Wiki/UtilitySystems.md)
+  - [APISystem](docs/Wiki/APISystem.md)
+  - [AFKSystem](docs/Wiki/AFKSystem.md)
+See [docs/Wiki/APISystem.md](docs/Wiki/APISystem.md) for API & Placeholder System details, including:
   - PlaceholderAPI integration for dynamic text
   - Custom and expansion placeholders
   - Web Dashboard REST API endpoints for server status, player info, logs, config, events, and statistics
@@ -81,15 +78,15 @@ For LuckPerms users:
 
 ## 🎮 Command Reference
 
-See [docs/wiki/Home.md](docs/wiki/Home.md) and individual system docs above for full command lists and config options.
+See [docs/Wiki/Home.md](docs/Wiki/Home.md) and individual system docs above for full command lists and config options.
 
 ## 🔧 Configuration Examples
 
-All features are managed by modular JSON config files. See [docs/wiki/Home.md](docs/wiki/Home.md) and system docs above for details.
+All features are managed by modular JSON config files. See [docs/Wiki/Home.md](docs/Wiki/Home.md) and system docs above for details.
 
 ## 🔗 API Integration for Modders
 
-See [docs/wiki/APISystem.md](docs/wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
+See [docs/Wiki/APISystem.md](docs/Wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
 - Registering custom placeholders
 - Using REST API endpoints for server data
 - Economy API for mod integration
@@ -136,7 +133,7 @@ Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
 - **Bug Reports**: Report issues and bugs through GitHub or Discord
 - **Feature Requests**: Suggest new features and improvements
-- **Documentation**: See [docs/wiki/Home.md](docs/wiki/Home.md) and system docs above
+- **Documentation**: See [docs/Wiki/Home.md](docs/Wiki/Home.md) and system docs above
 
 ## 📄 License
 
