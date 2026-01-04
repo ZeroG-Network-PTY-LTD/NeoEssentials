@@ -47,19 +47,17 @@ public class GameEndpoint implements HttpHandler {
                 try {
                     LOGGER.info("Collecting game data for endpoint: {}", path);
                     // Parse path to determine which endpoint
-                    if (path.equals("/api/game/statistics")) {
-                        return gameCollector.getGameStatistics();
-                    } else if (path.equals("/api/game/events")) {
-                        return gameCollector.getGameEvents(100);
-                    } else if (path.equals("/api/game/activity")) {
-                        return gameCollector.getGameActivity();
-                    } else if (path.equals("/api/game/blocks")) {
-                        return gameCollector.getTopBlocks();
-                    } else {
-                        JsonObject error = new JsonObject();
-                        error.addProperty("error", "Endpoint not found");
-                        return error;
-                    }
+                    return switch (path) {
+                        case "/api/game/statistics" -> gameCollector.getGameStatistics();
+                        case "/api/game/events" -> gameCollector.getGameEvents(100);
+                        case "/api/game/activity" -> gameCollector.getGameActivity();
+                        case "/api/game/blocks" -> gameCollector.getTopBlocks();
+                        default -> {
+                            JsonObject error = new JsonObject();
+                            error.addProperty("error", "Endpoint not found");
+                            yield error;
+                        }
+                    };
                 } catch (Exception e) {
                     LOGGER.error("Error collecting game data for path: {}", path, e);
                     JsonObject error = new JsonObject();

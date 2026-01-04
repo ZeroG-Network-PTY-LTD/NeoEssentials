@@ -96,7 +96,9 @@ public class BanManager {
         // Create moderation directory if it doesn't exist
         File moderationDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation");
         if (!moderationDir.exists()) {
-            moderationDir.mkdirs();
+            if (!moderationDir.mkdirs()) {
+                LOGGER.error("Failed to create moderation directory: {}", moderationDir.getAbsolutePath());
+            }
         }
         
         this.banFile = new File(moderationDir, "player_bans.json");

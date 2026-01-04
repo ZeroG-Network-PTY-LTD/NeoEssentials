@@ -39,19 +39,20 @@ public class LoggingEndpoint implements HttpHandler {
             JsonObject response;
             
             // Parse path to determine which endpoint
-            if (path.equals("/api/logging/requests")) {
-                response = loggingCollector.getRequestLogs(100);
-            } else if (path.equals("/api/logging/errors")) {
-                response = loggingCollector.getErrorLogs(100, "ALL");
-            } else if (path.equals("/api/logging/performance")) {
-                response = loggingCollector.getPerformanceMetrics();
-            } else {
-                sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
-                return;
+            response = switch (path) {
+                case "/api/logging/requests" -> loggingCollector.getRequestLogs(100);
+                case "/api/logging/errors" -> loggingCollector.getErrorLogs(100, "ALL");
+                case "/api/logging/performance" -> loggingCollector.getPerformanceMetrics();
+                default -> {
+                    sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
+                    yield null;
+                }
+            };
+
+            if (response != null) {
+                sendResponse(exchange, 200, response.toString());
             }
-            
-            sendResponse(exchange, 200, response.toString());
-            
+
         } catch (IOException e) {
             // IOException often means client disconnected - don't try to send error response
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
