@@ -36,6 +36,7 @@ public class NeoEssentials {
     private static final String MINECRAFT_VERSION = "1.21.1";
     private static final String NEOFORGE_VERSION = "21.1.179";
     
+    @SuppressWarnings("unused") // modEventBus parameter required by NeoForge @Mod constructor
     public NeoEssentials(IEventBus modEventBus) {
         long startTime = System.currentTimeMillis();
         
@@ -96,7 +97,7 @@ public class NeoEssentials {
     /**
      * Register all system managers with the ManagerRegistry for tracking and diagnostics.
      * This allows for centralized monitoring of all manager lifecycle and initialization status.
-     * 
+     * <p>
      * Note: Only managers with getInstance() singleton pattern are registered for initialization tracking.
      * Other managers are instantiated as needed and don't require centralized tracking.
      */
@@ -313,7 +314,7 @@ public class NeoEssentials {
                 LOGGER.error("Failed to run thread diagnostics", e);
             }
         }
-        
+
         @SubscribeEvent
         public static void onRegisterCommands(RegisterCommandsEvent event) {
             LOGGER.info("Registering NeoEssentials commands...");
