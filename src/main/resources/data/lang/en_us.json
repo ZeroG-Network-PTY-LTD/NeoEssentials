@@ -1,5 +1,5 @@
 {
-  "_langVersion": "4",
+  "_langVersion": "5",
   "_comment_general": "=== General ===",
   "_comment_economy": "=== Economy System ===",
   "commands.neoessentials.balance": "Balance: {0}{1}",
@@ -573,6 +573,9 @@
   "commands.neoessentials.sign.text_truncated": "§7Text was truncated to fit on the sign",
   "commands.neoessentials.sign.updated": "§aSign line {0} updated: §f{1}",
   "commands.neoessentials.sign.usage": "§7Use §e/sign <line> <text>§7 to edit a line, or §e/sign clear§7 to clear all lines",
+  "commands.neoessentials.grindstone.opened": "§aOpened virtual grindstone!",
+  "commands.neoessentials.grindstone.title": "Grindstone",
+  "commands.neoessentials.grindstone.player_only": "§cOnly players can use the grindstone command",
   "commands.neoessentials.smithing.opened": "§aOpened virtual smithing table!",
   "commands.neoessentials.smithing.title": "Smithing Table",
   "commands.neoessentials.stonecutting.opened": "§aOpened virtual stonecutter!",

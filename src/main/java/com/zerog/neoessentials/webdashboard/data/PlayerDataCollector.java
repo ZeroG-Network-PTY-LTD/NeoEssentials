@@ -354,6 +354,20 @@ public class PlayerDataCollector {
             status.addProperty("username", player.getName().getString());
             status.addProperty("ping", player.connection.latency());
             
+            // Health and vital stats (what dashboard expects)
+            status.addProperty("health", player.getHealth());
+            status.addProperty("maxHealth", player.getMaxHealth());
+            status.addProperty("healthPercent", (player.getHealth() / player.getMaxHealth()) * 100);
+            status.addProperty("foodLevel", player.getFoodData().getFoodLevel());
+            status.addProperty("saturation", player.getFoodData().getSaturationLevel());
+            status.addProperty("armorValue", player.getArmorValue());
+            status.addProperty("absorptionAmount", player.getAbsorptionAmount());
+            
+            // Experience
+            status.addProperty("experienceLevel", player.experienceLevel);
+            status.addProperty("experienceProgress", player.experienceProgress);
+            status.addProperty("totalExperience", player.totalExperience);
+            
             // AFK status integration
             com.zerog.neoessentials.chat.AfkManager afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
             boolean isAfk = afkManager.isAfk(playerUuid);

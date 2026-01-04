@@ -498,6 +498,7 @@ public class NeoEssentials {
         registry.registerCommand("getpos", "Get your current position");
         registry.registerCommand("coords", "Get your current position (alias)");
         registry.registerCommand("whereami", "Get your current position (alias)");
+        registry.registerCommand("grindstone", "Open portable grindstone");
         registry.registerCommand("helpop", "Request help from staff");
         registry.registerCommand("ac", "Request help from staff (alias)");
         registry.registerCommand("amsg", "Request help from staff (alias)");
@@ -534,6 +535,7 @@ public class NeoEssentials {
         com.zerog.neoessentials.util.commands.DepthCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.FletchingCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.GetPosCommand.register(dispatcher);
+        com.zerog.neoessentials.util.commands.GrindstoneCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.HelpopCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.ListCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.MailCommand.register(dispatcher);
