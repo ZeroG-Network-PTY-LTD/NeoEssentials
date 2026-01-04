@@ -13,4 +13,5 @@
 - **Chat formatting options**: More options for customizing chat format.
 - **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
 - **Minecraft Assets API support**: Figure out a way to integrate Minecraft Assets API for better resource assests to show in web-dashboards and other places.
+- **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
 
