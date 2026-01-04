@@ -1191,36 +1191,217 @@ function renderInventorySlot(item) {
         return '<div class="inventory-slot empty"></div>';
     }
     
-    const itemName = item.displayName || item.id.split(':')[1]?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
+    // Determine display name (prefer custom name, then display name, then formatted ID)
+    const itemName = item.customName || item.displayName ||
+                     item.id.split(':')[1]?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) ||
+                     'Unknown';
+
     const count = item.count > 1 ? `<div class="inventory-slot-count">${item.count}</div>` : '';
     
-    // Get texture URL based on namespace
+    // Build tooltip text with mod information
+    let tooltipText = escapeHtml(itemName);
+    if (item.count > 1) tooltipText += ` x${item.count}`;
+    if (item.modded && item.modName) tooltipText += `\\n[${item.modName}]`;
+    if (item.enchanted) tooltipText += '\\n✨ Enchanted';
+
+    // Get texture URL
     const textureUrl = getItemTextureUrl(item);
     
+    // Add classes for modded/enchanted items
+    const moddedClass = item.modded ? 'modded-item' : '';
+    const enchantedClass = item.enchanted ? 'enchanted-item' : '';
+
+    // Escape item data for use in onclick handler
+    const itemDataEscaped = escapeHtml(JSON.stringify(item)).replace(/'/g, '&#39;');
+
     return `
-        <div class="inventory-slot" title="${escapeHtml(itemName)} ${item.count > 1 ? 'x' + item.count : ''}">
-            <img src="${textureUrl}" 
+        <div class="inventory-slot ${moddedClass} ${enchantedClass}"
+             title="${tooltipText}"
+             data-item-id="${escapeHtml(item.id)}"
+             data-namespace="${escapeHtml(item.namespace || 'minecraft')}"
+             data-modded="${item.modded || false}">
+            <img src="${textureUrl}"
                  alt="${escapeHtml(itemName)}" 
                  class="inventory-slot-texture"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div class="inventory-slot-item" style="display:none;">${escapeHtml(itemName)}</div>
+                 onerror="handleInventoryTextureError(this, '${itemDataEscaped}')">
+            <div class="inventory-slot-fallback" style="display:none;">
+                ${escapeHtml(itemName.substring(0, 2).toUpperCase())}
+            </div>
             ${count}
+            ${item.enchanted ? '<div class="enchanted-glint"></div>' : ''}
+            ${item.modded ? '<div class="modded-badge" title="Modded Item">M</div>' : ''}
         </div>
     `;
 }
 
+/**
+ * Handle texture loading errors with fallback chain
+ */
+function handleInventoryTextureError(imgElement, itemDataJson) {
+    // Parse item data
+    let item;
+    try {
+        item = JSON.parse(itemDataJson);
+    } catch (e) {
+        console.error('Error parsing item data:', e);
+        imgElement.style.display = 'none';
+        return;
+    }
+
+    // Hide the failed image
+    imgElement.style.display = 'none';
+
+    // Show the fallback text/placeholder
+    const fallbackDiv = imgElement.nextElementSibling;
+    if (fallbackDiv && fallbackDiv.classList.contains('inventory-slot-fallback')) {
+        fallbackDiv.style.display = 'flex';
+        fallbackDiv.style.alignItems = 'center';
+        fallbackDiv.style.justifyContent = 'center';
+        fallbackDiv.style.width = '100%';
+        fallbackDiv.style.height = '100%';
+        fallbackDiv.style.fontSize = '12px';
+        fallbackDiv.style.fontWeight = 'bold';
+        fallbackDiv.style.color = '#fff';
+        fallbackDiv.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+    }
+
+    // Try alternative texture URL if available and not already tried
+    const slot = imgElement.closest('.inventory-slot');
+    if (slot && !slot.dataset.textureRetried) {
+        slot.dataset.textureRetried = 'true';
+
+        // For vanilla items, try alternative API
+        if (item.namespace === 'minecraft' && item.path) {
+            setTimeout(() => {
+                imgElement.src = `https://minecraft-assets.net/items/${item.path}.png`;
+                imgElement.style.display = 'block';
+            }, 100);
+        }
+    }
+}
+
+/**
+ * Get item texture URL with support for multiple asset APIs and modded items
+ * Implements fallback chain for reliability
+ */
 function getItemTextureUrl(item) {
     const namespace = item.namespace || 'minecraft';
-    const path = item.path || item.id.split(':')[1] || 'stone';
-    
-    // For vanilla Minecraft items, use mc-heads.net API which provides item textures
-    if (namespace === 'minecraft') {
+    const path = item.path || item.id?.split(':')[1] || 'stone';
+    const isModded = item.modded || namespace !== 'minecraft';
+
+    // Primary API selection based on item type
+    if (!isModded) {
+        // Vanilla Minecraft items - use mc-heads.net (primary)
+        // This API provides high-quality item textures
         return `https://mc-heads.net/minecraft/item/${path}`;
+    } else {
+        // Modded items - multiple fallback options
+
+        // Option 1: Check if we have a custom texture server configured
+        // This would be for servers that host their own mod textures
+        const customTextureBase = localStorage.getItem('customTextureServer');
+        if (customTextureBase) {
+            return `${customTextureBase}/item/${namespace}/${path}.png`;
+        }
+
+        // Option 2: Try to use known mod texture repositories
+        // Some popular mods may have public texture APIs
+        const knownModTextureUrl = getKnownModTexture(namespace, path);
+        if (knownModTextureUrl) {
+            return knownModTextureUrl;
+        }
+
+        // Option 3: Generate placeholder with mod info
+        // This creates a data URL with the item name as text
+        return generateModdedItemPlaceholder(item);
+    }
+}
+
+/**
+ * Get texture URL for known/popular mods
+ */
+function getKnownModTexture(namespace, path) {
+    // Future: Add mappings for popular mods that have public texture repos
+    // Example structure:
+    const knownMods = {
+        // 'ae2': `https://example.com/ae2/textures/items/${path}.png`,
+        // 'mekanism': `https://example.com/mekanism/textures/items/${path}.png`,
+    };
+
+    return knownMods[namespace];
+}
+
+/**
+ * Generate a placeholder image for modded items
+ * Creates a data URL with item information
+ */
+function generateModdedItemPlaceholder(item) {
+    // Create a canvas to draw a placeholder
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+
+    // Draw a simple colored background based on item type
+    const typeColors = {
+        'sword': '#FF6B6B',
+        'pickaxe': '#4ECDC4',
+        'axe': '#45B7D1',
+        'shovel': '#96CEB4',
+        'food': '#FFEAA7',
+        'armor': '#A29BFE',
+        'block': '#DFE6E9',
+        'potion': '#FD79A8',
+        'default': '#B2BEC3'
+    };
+
+    const bgColor = typeColors[item.type] || typeColors.default;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, 32, 32);
+
+    // Add border
+    ctx.strokeStyle = '#2D3436';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, 32, 32);
+
+    // Add first letter of item name
+    ctx.fillStyle = '#2D3436';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const firstLetter = (item.displayName || item.path || '?').charAt(0).toUpperCase();
+    ctx.fillText(firstLetter, 16, 16);
+
+    // Convert to data URL
+    return canvas.toDataURL('image/png');
+}
+
+/**
+ * Alternative getItemTextureUrl with API fallback chain
+ * This version tries multiple APIs before giving up
+ */
+function getItemTextureUrlWithFallback(item) {
+    const namespace = item.namespace || 'minecraft';
+    const path = item.path || item.id?.split(':')[1] || 'stone';
+
+    // Build fallback chain
+    const urls = [];
+
+    if (namespace === 'minecraft') {
+        // Vanilla items - try multiple APIs
+        urls.push(`https://mc-heads.net/minecraft/item/${path}`);
+        urls.push(`https://minecraft-api.com/api/v1/items/${path}/icon.png`);
+        urls.push(`https://api.minecraftservices.com/minecraft/profile/item/${path}`);
+    } else {
+        // Modded items - custom server or placeholder
+        const customTextureBase = localStorage.getItem('customTextureServer');
+        if (customTextureBase) {
+            urls.push(`${customTextureBase}/item/${namespace}/${path}.png`);
+        }
     }
     
-    // For modded items, try to construct a reasonable fallback
-    // You could add a custom texture endpoint here in the future
-    return `https://mc-heads.net/minecraft/item/barrier`; // Fallback to barrier icon for unknown items
+    // If we have URLs, return the first one (dashboard will handle errors)
+    return urls.length > 0 ? urls[0] : generateModdedItemPlaceholder(item);
 }
 
 // Close modal on escape key

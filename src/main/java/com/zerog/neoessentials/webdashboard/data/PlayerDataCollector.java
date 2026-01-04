@@ -785,23 +785,94 @@ public class PlayerDataCollector {
         JsonObject item = new JsonObject();
         if (!itemStack.isEmpty()) {
             // Get the registry name (e.g., "minecraft:diamond_sword")
-            String registryName = net.minecraft.core.registries.BuiltInRegistries.ITEM
-                .getKey(itemStack.getItem()).toString();
+            net.minecraft.resources.ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(itemStack.getItem());
+            String registryName = itemId.toString();
             
             item.addProperty("id", registryName);
             item.addProperty("count", itemStack.getCount());
             item.addProperty("displayName", itemStack.getDisplayName().getString());
             
             // Add namespace and path separately for easier texture lookup
-            String[] parts = registryName.split(":", 2);
-            if (parts.length == 2) {
-                item.addProperty("namespace", parts[0]);
-                item.addProperty("path", parts[1]);
+            item.addProperty("namespace", itemId.getNamespace());
+            item.addProperty("path", itemId.getPath());
+            
+            // Add item type information for better asset API matching
+            String itemType = determineItemType(itemStack);
+            item.addProperty("type", itemType);
+            
+            // Check if item is from a mod (non-vanilla)
+            boolean isModded = !itemId.getNamespace().equals("minecraft");
+            item.addProperty("modded", isModded);
+            
+            // For modded items, try to get mod name
+            if (isModded) {
+                String modName = getModName(itemId.getNamespace());
+                if (modName != null) {
+                    item.addProperty("modName", modName);
+                }
+            }
+            
+            // Check for enchantments
+            boolean hasEnchantments = itemStack.isEnchanted();
+            item.addProperty("enchanted", hasEnchantments);
+            
+            // Check for custom name - use hover name component
+            net.minecraft.network.chat.Component hoverName = itemStack.getHoverName();
+            net.minecraft.network.chat.Component displayName = itemStack.getDisplayName();
+            if (!hoverName.equals(displayName)) {
+                item.addProperty("customName", hoverName.getString());
             }
             
             // FUTURE: Add NBT data serialization for enchantments, custom names, etc.
         }
         return item;
+    }
+    
+    /**
+     * Determine item type category for better asset matching
+     */
+    @SuppressWarnings("IfCanBeSwitch") // instanceof checks are clearer
+    private String determineItemType(net.minecraft.world.item.ItemStack itemStack) {
+        net.minecraft.world.item.Item item = itemStack.getItem();
+        
+        // Check item categories
+        if (item instanceof net.minecraft.world.item.SwordItem) return "sword";
+        if (item instanceof net.minecraft.world.item.PickaxeItem) return "pickaxe";
+        if (item instanceof net.minecraft.world.item.AxeItem) return "axe";
+        if (item instanceof net.minecraft.world.item.ShovelItem) return "shovel";
+        if (item instanceof net.minecraft.world.item.HoeItem) return "hoe";
+        if (item instanceof net.minecraft.world.item.ArmorItem armorItem) {
+            return "armor_" + armorItem.getType().getName();
+        }
+        if (item instanceof net.minecraft.world.item.BowItem) return "bow";
+        if (item instanceof net.minecraft.world.item.CrossbowItem) return "crossbow";
+        if (item instanceof net.minecraft.world.item.TridentItem) return "trident";
+        if (item instanceof net.minecraft.world.item.ShieldItem) return "shield";
+        if (item instanceof net.minecraft.world.item.BlockItem) return "block";
+        if (item.components().has(net.minecraft.core.component.DataComponents.FOOD)) return "food";
+        if (item instanceof net.minecraft.world.item.PotionItem) return "potion";
+        if (item instanceof net.minecraft.world.item.EnchantedBookItem) return "enchanted_book";
+        
+        return "item"; // Default
+    }
+    
+    /**
+     * Get mod name from namespace (mod ID)
+     */
+    private String getModName(String namespace) {
+        try {
+            // Try to get mod info from NeoForge mod list (use var for wildcard capture)
+            var modContainerOpt = net.neoforged.fml.ModList.get().getModContainerById(namespace);
+
+            if (modContainerOpt.isPresent()) {
+                return modContainerOpt.get().getModInfo().getDisplayName();
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not get mod name for namespace: {}", namespace);
+        }
+        
+        return null;
     }
     
     private String getDimensionName(Level level) {
