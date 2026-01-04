@@ -235,13 +235,82 @@ public class NeoEssentials {
         
         @SubscribeEvent
         public static void onServerStopping(ServerStoppingEvent event) {
-            LOGGER.info("Server stopping - saving NeoEssentials data...");
-            
-            // Save permission data
+            LOGGER.info("════════════════════════════════════════════════════════════════");
+            LOGGER.info("Server stopping - shutting down NeoEssentials systems...");
+            LOGGER.info("════════════════════════════════════════════════════════════════");
+
+            // Shutdown Permission System
             try {
+                LOGGER.info("Shutting down Permission System...");
                 PermissionSystem.shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to save permissions on shutdown", e);
+            }
+
+            // Shutdown Economy Managers (these have executors that need proper shutdown)
+            try {
+                LOGGER.info("Shutting down Economy Manager...");
+                com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Economy Manager", e);
+            }
+
+            try {
+                LOGGER.info("Shutting down Transaction History Manager...");
+                com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Transaction History Manager", e);
+            }
+
+            try {
+                LOGGER.info("Shutting down Pay Toggle Manager...");
+                com.zerog.neoessentials.economy.managers.PayToggleManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Pay Toggle Manager", e);
+            }
+
+            // Shutdown Chat/AFK Managers
+            try {
+                LOGGER.info("Shutting down AFK Manager...");
+                com.zerog.neoessentials.chat.AfkManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown AFK Manager", e);
+            }
+
+            try {
+                LOGGER.info("Shutting down AFK Movement Detector...");
+                com.zerog.neoessentials.chat.handlers.AfkMovementDetector.shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown AFK Movement Detector", e);
+            }
+
+            // Shutdown Moderation Managers
+            try {
+                LOGGER.info("Shutting down Ban Manager scheduler...");
+                com.zerog.neoessentials.moderation.BanManager.getInstance().shutdownScheduler();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Ban Manager", e);
+            }
+
+            // Shutdown Teleport Managers
+            try {
+                LOGGER.info("Shutting down Teleport Request Manager...");
+                com.zerog.neoessentials.teleportation.TeleportRequests.TeleportRequestManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Teleport Request Manager", e);
+            }
+
+            LOGGER.info("════════════════════════════════════════════════════════════════");
+            LOGGER.info("NeoEssentials shutdown complete");
+            LOGGER.info("════════════════════════════════════════════════════════════════");
+
+            // Diagnostic: Check for any remaining threads
+            try {
+                LOGGER.info("Running thread diagnostics...");
+                com.zerog.neoessentials.util.ThreadDiagnostics.logNeoEssentialsThreads();
+                com.zerog.neoessentials.util.ThreadDiagnostics.logNonDaemonThreads();
+            } catch (Exception e) {
+                LOGGER.error("Failed to run thread diagnostics", e);
             }
         }
         

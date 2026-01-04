@@ -135,7 +135,14 @@ public class DashboardAPI {
         }
         
         try {
-            apiServer.stop(2);
+            LOGGER.info("Stopping Dashboard API server...");
+
+            // Stop accepting new requests and wait up to 5 seconds for existing requests to complete
+            apiServer.stop(5);
+
+            // Note: The executor is managed by the HttpServer and will be shut down with stop()
+            // However, we should give it time to complete
+
             running = false;
             LOGGER.info("Dashboard API stopped successfully");
         } catch (Exception e) {
