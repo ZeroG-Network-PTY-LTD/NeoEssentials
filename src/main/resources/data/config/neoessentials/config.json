@@ -1,5 +1,5 @@
 {
-  "_configVersion": 10,
+  "_configVersion": 11,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -487,6 +487,8 @@
     },
     "chat-format-description": "Chat format template. You can use a string (for global format) or an object for per-group/world formats. Keys: 'default', 'group:GROUPNAME', 'world:WORLDNAME', or 'group:GROUP:world:WORLD'. Placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI. Legacy uppercase placeholders like {USERNAME}, {PREFIX}, {SUFFIX} are automatically converted for backwards compatibility. Use '&' for color codes (e.g., &c for red, &6 for gold).",
     "channels": {
+      "enabled": true,
+      "enabled-description": "Master switch for chat channels system. When false, all channels are disabled and players use default global chat. When true, channels work according to their individual settings below.",
       "local": {
         "enabled": true,
         "radius": 100,
@@ -511,7 +513,7 @@
         "default": false
       }
     },
-    "channels-description": "Chat channels: local (radius-based), global (all players), staff (permission-based). Each channel can be enabled/disabled, have a command, prefix, and (for local) a radius. Players can switch default channel or use prefix/command to send to a specific channel.",
+    "channels-description": "Chat channels system: Set 'enabled' to false to disable all channels and use standard global chat. When enabled, players can use local (proximity-based), global (all players), and staff (permission-based) channels. Each channel has its own enabled flag, command, prefix, and settings. For proximity-only servers: set channels.enabled=true, local.enabled=true, global.enabled=false. For global-only servers: set channels.enabled=false OR set local.enabled=false, global.enabled=true.",
     "enable-chat-formatting": true,
     "enable-color-codes": true,
     "muteCommands": [],

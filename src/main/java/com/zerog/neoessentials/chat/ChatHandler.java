@@ -90,8 +90,16 @@ public class ChatHandler {
             com.google.gson.JsonObject mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
             com.google.gson.JsonObject chatConfig = mainConfig.has("chat") ? mainConfig.getAsJsonObject("chat") : new com.google.gson.JsonObject();
             com.google.gson.JsonObject channelsConfig = chatConfig.has("channels") ? chatConfig.getAsJsonObject("channels") : null;
-            if (channelsConfig == null) {
-                LOGGER.warn("No chat channels configured, falling back to global");
+
+            // Check master switch for channels system
+            boolean channelsEnabled = true; // Default to true for backwards compatibility
+            if (channelsConfig != null && channelsConfig.has("enabled")) {
+                channelsEnabled = channelsConfig.get("enabled").getAsBoolean();
+            }
+
+            if (channelsConfig == null || !channelsEnabled) {
+                LOGGER.debug("Chat channels system disabled, using global chat");
+                channelsConfig = null; // Treat as if no channels configured
             }
 
             // Detect channel by prefix or player state
@@ -100,6 +108,9 @@ public class ChatHandler {
             // Check for explicit channel prefix (e.g. ! for global, @ for staff)
             if (channelsConfig != null) {
                 for (String ch : channelsConfig.keySet()) {
+                    // Skip metadata fields
+                    if (ch.equals("enabled") || ch.endsWith("-description")) continue;
+
                     com.google.gson.JsonObject chObj = channelsConfig.getAsJsonObject(ch);
                     if (chObj.has("enabled") && !chObj.get("enabled").getAsBoolean()) continue;
                     String prefix = chObj.has("prefix") ? chObj.get("prefix").getAsString() : "";
@@ -117,6 +128,9 @@ public class ChatHandler {
             // If still not set, use default (local if enabled, else global)
             if (channel == null && channelsConfig != null) {
                 for (String ch : channelsConfig.keySet()) {
+                    // Skip metadata fields
+                    if (ch.equals("enabled") || ch.endsWith("-description")) continue;
+
                     com.google.gson.JsonObject chObj = channelsConfig.getAsJsonObject(ch);
                     if (chObj.has("enabled") && chObj.get("enabled").getAsBoolean() && chObj.has("default") && chObj.get("default").getAsBoolean()) {
                         channel = ch;
