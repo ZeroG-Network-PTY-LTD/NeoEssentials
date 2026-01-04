@@ -47,25 +47,20 @@ public class ServerEndpoint implements HttpHandler {
                 try {
                     LOGGER.info("Collecting data for endpoint: {}", path);
                     // Parse path to determine which endpoint
-                    if (path.equals("/api/server/profile")) {
-                        return serverCollector.getServerProfile();
-                    } else if (path.equals("/api/server/performance")) {
-                        return serverCollector.getServerPerformance();
-                    } else if (path.equals("/api/server/statistics")) {
-                        return serverCollector.getServerStatistics();
-                    } else if (path.equals("/api/server/status")) {
-                        return serverCollector.getServerStatus();
-                    } else if (path.equals("/api/server/health")) {
-                        return serverCollector.getServerHealth();
-                    } else if (path.equals("/api/server/worlds")) {
-                        return serverCollector.getServerWorlds();
-                    } else if (path.equals("/api/server/config")) {
-                        return serverCollector.getServerConfig();
-                    } else {
-                        JsonObject error = new JsonObject();
-                        error.addProperty("error", "Endpoint not found");
-                        return error;
-                    }
+                    return switch (path) {
+                        case "/api/server/profile" -> serverCollector.getServerProfile();
+                        case "/api/server/performance" -> serverCollector.getServerPerformance();
+                        case "/api/server/statistics" -> serverCollector.getServerStatistics();
+                        case "/api/server/status" -> serverCollector.getServerStatus();
+                        case "/api/server/health" -> serverCollector.getServerHealth();
+                        case "/api/server/worlds" -> serverCollector.getServerWorlds();
+                        case "/api/server/config" -> serverCollector.getServerConfig();
+                        default -> {
+                            JsonObject error = new JsonObject();
+                            error.addProperty("error", "Endpoint not found");
+                            yield error;
+                        }
+                    };
                 } catch (Exception e) {
                     LOGGER.error("Error collecting server data for path: {}", path, e);
                     JsonObject error = new JsonObject();

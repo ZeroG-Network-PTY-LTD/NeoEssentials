@@ -82,7 +82,9 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             // Create data directory if it doesn't exist
             File dataDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR);
             if (!dataDir.exists()) {
-                dataDir.mkdirs();
+                if (!dataDir.mkdirs()) {
+                    LOGGER.error("Failed to create data directory: {}", dataDir.getAbsolutePath());
+                }
             }
             
             // Write permissions to file

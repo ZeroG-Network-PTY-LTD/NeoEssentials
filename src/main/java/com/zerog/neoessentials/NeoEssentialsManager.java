@@ -60,6 +60,7 @@ public class NeoEssentialsManager {
      * Registers a command (stub for future expansion).
      * @param command Command object
      */
+    @SuppressWarnings("unused") // Public API method
     public void registerCommand(Object command) {
         // Implementation for registering commands
     }
