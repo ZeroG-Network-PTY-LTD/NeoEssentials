@@ -60,19 +60,27 @@ public class DashboardLifecycleManager {
     public static void onServerStopping(ServerStoppingEvent event) {
         try {
             if (DashboardAPI.getInstance().isRunning()) {
+                LOGGER.info("Server stopping - shutting down Dashboard...");
+
                 // Stop Dashboard API
+                long startTime = System.currentTimeMillis();
                 DashboardAPI.getInstance().stop();
-                
+                long dashboardStopTime = System.currentTimeMillis() - startTime;
+                LOGGER.info("Dashboard API stopped in {}ms", dashboardStopTime);
+
                 // Shutdown data collector
+                startTime = System.currentTimeMillis();
                 DataCollector.getInstance().shutdown();
-                
-                LOGGER.info("Dashboard stopped with server");
+                long collectorStopTime = System.currentTimeMillis() - startTime;
+                LOGGER.info("Data Collector stopped in {}ms", collectorStopTime);
+
+                LOGGER.info("Dashboard shutdown complete (total: {}ms)", dashboardStopTime + collectorStopTime);
             }
         } catch (Exception e) {
             LOGGER.error("Error stopping dashboard", e);
         }
     }
-    
+
     /**
      * Manually start the dashboard
      */

@@ -69,6 +69,7 @@ public class ResourceUtil {
     /**
      * Get InputStream for JAR asset resource
      */
+    @SuppressWarnings("unused") // Public API method
     public static InputStream getJarAssetResource(String filename) {
         return ResourceUtil.class.getResourceAsStream(JAR_ASSETS_PATH + filename);
     }
@@ -79,13 +80,17 @@ public class ResourceUtil {
     public static void ensureDirectoryExists(String dirPath) {
         File dir = new File(dirPath);
         if (!dir.exists()) {
-            dir.mkdirs();
+            if (!dir.mkdirs()) {
+                // Log error if directory creation fails
+                System.err.println("Failed to create directory: " + dirPath);
+            }
         }
     }
     
     /**
      * Ensure the config directory exists
      */
+    @SuppressWarnings("unused") // Public API method
     public static void ensureConfigDirectory() {
         ensureDirectoryExists(CONFIG_DIR);
     }
