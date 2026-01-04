@@ -474,8 +474,6 @@
   "commands.neoessentials.enchant.usage": "Usage: /enchant <enchantment> <level>",
   "commands.neoessentials.enchanthand.usage": "Usage: /enchanthand <enchantment> <level>",
   "commands.neoessentials.error": "An error occurred while executing the command.",
-  "commands.neoessentials.fletching.opened": "§aOpened virtual fletching table!",
-  "commands.neoessentials.fletching.title": "Fletching Table",
   "commands.neoessentials.helpop.log": "§7[HELPOP] {0} at {1}: {2}",
   "commands.neoessentials.helpop.no_staff": "§cNo staff members are currently online to receive your help request",
   "commands.neoessentials.helpop.sent": "§aHelp request sent to {0} staff member(s)",
