@@ -306,6 +306,9 @@ public class NeoEssentials {
             LOGGER.info("════════════════════════════════════════════════════════════════");
 
             // Diagnostic: Check for any remaining threads
+            // DISABLED: Thread diagnostics can potentially interfere with shutdown
+            // Uncomment for debugging if needed
+            /*
             try {
                 LOGGER.info("Running thread diagnostics...");
                 com.zerog.neoessentials.util.ThreadDiagnostics.logNeoEssentialsThreads();
@@ -313,6 +316,7 @@ public class NeoEssentials {
             } catch (Exception e) {
                 LOGGER.error("Failed to run thread diagnostics", e);
             }
+            */
         }
 
         @SubscribeEvent
