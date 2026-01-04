@@ -494,7 +494,6 @@ public class NeoEssentials {
         registry.registerCommand("crafting", "Open portable crafting table");
         registry.registerCommand("craft", "Open portable crafting table (alias)");
         registry.registerCommand("depth", "Show your depth");
-        registry.registerCommand("fletching", "Open portable fletching table");
         registry.registerCommand("getpos", "Get your current position");
         registry.registerCommand("coords", "Get your current position (alias)");
         registry.registerCommand("whereami", "Get your current position (alias)");
@@ -533,7 +532,6 @@ public class NeoEssentials {
         com.zerog.neoessentials.util.commands.CompassCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.CraftingCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.DepthCommand.register(dispatcher);
-        com.zerog.neoessentials.util.commands.FletchingCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.GetPosCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.GrindstoneCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.HelpopCommand.register(dispatcher);
