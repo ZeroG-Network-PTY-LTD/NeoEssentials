@@ -37,7 +37,7 @@ public class DashboardLifecycleManager {
         
         try {
             MinecraftServer server = event.getServer();
-            
+
             // Initialize data collector
             DataCollector.getInstance().initialize(server);
             

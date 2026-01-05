@@ -10,6 +10,7 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import com.zerog.neoessentials.util.ResourceLocationHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -184,7 +185,11 @@ public class Kit {
             for (JsonElement element : itemsArray) {
                 JsonObject itemJson = element.getAsJsonObject();
                 try {
-                    ResourceLocation itemId = ResourceLocation.parse(itemJson.get("item").getAsString());
+                    String itemString = itemJson.get("item").getAsString();
+
+                    // Use helper to create ResourceLocation safely across versions
+                    ResourceLocation itemId = ResourceLocationHelper.parse(itemString);
+
                     // Use getOptional() for Minecraft 1.21.4+ compatibility
                     Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
                     if (item == null) {

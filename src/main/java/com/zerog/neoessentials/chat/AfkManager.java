@@ -47,8 +47,13 @@ public class AfkManager {
     private final Map<UUID, PlayerAfkData> playerData = new ConcurrentHashMap<>();
     
     // Scheduled executor for automatic AFK detection
-    private final ScheduledExecutorService afkCheckExecutor = Executors.newSingleThreadScheduledExecutor();
-    
+    // Use daemon thread to prevent blocking JVM shutdown
+    private final ScheduledExecutorService afkCheckExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "AfkManager-Check");
+        t.setDaemon(true); // CRITICAL: Set as daemon to allow JVM shutdown
+        return t;
+    });
+
     // Shutdown flag to prevent task submission after shutdown
     private volatile boolean isShuttingDown = false;
 

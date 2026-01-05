@@ -113,16 +113,28 @@ public class PermissionAPI {
     }
 
     public static String getPrefix(UUID uuid) {
+        LOGGER.info(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
+
         // Validate input parameters
         if (uuid == null) {
             LOGGER.warn("PermissionAPI.getPrefix: UUID is null");
             return "";
         }
         
+        LOGGER.info(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+
         if (externalAdapter != null) {
+            LOGGER.info(">>> Querying external adapter for prefix...");
             String prefix = externalAdapter.getPrefix(uuid);
-            if (prefix != null) return prefix;
+            LOGGER.info(">>> External adapter returned: [{}]", prefix);
+            if (prefix != null) {
+                LOGGER.info(">>> Returning external prefix: [{}]", prefix);
+                return prefix;
+            }
         }
+
+        LOGGER.info(">>> Falling back to internal permission system");
+
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
             return "";
@@ -142,6 +154,7 @@ public class PermissionAPI {
             return "";
         }
         String prefix = group.getPrefix();
+        LOGGER.info(">>> Internal system prefix: [{}]", prefix);
         return prefix != null ? prefix : "";
     }
 

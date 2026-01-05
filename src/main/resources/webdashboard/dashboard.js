@@ -1233,7 +1233,9 @@ function renderInventorySlot(item) {
 }
 
 /**
- * Handle texture loading errors with fallback chain
+ * Handle texture loading errors - show placeholder
+ * NOTE: All textures should be served from server's TextureCache
+ * If texture fails, it means it wasn't in cache or doesn't exist
  */
 function handleInventoryTextureError(imgElement) {
     // Get item data from parent slot's data attributes
@@ -1253,7 +1255,7 @@ function handleInventoryTextureError(imgElement) {
     // Hide the failed image
     imgElement.style.display = 'none';
 
-    // Show the fallback text/placeholder
+    // Show the placeholder
     const fallbackDiv = imgElement.nextElementSibling;
     if (fallbackDiv && fallbackDiv.classList.contains('inventory-slot-fallback')) {
         fallbackDiv.style.display = 'flex';
@@ -1267,32 +1269,21 @@ function handleInventoryTextureError(imgElement) {
         fallbackDiv.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
     }
 
-    // Note: mc-heads.net is the most reliable API for Minecraft item textures
-    // If it fails, the item likely doesn't exist or the API is down
-    // Showing the placeholder is the best fallback in this case
+    console.debug(`Texture not in server cache: ${item.id}, showing placeholder`);
+}
 }
 
 /**
- * Get item texture URL with support for multiple asset APIs and modded items
- * Implements fallback chain for reliability
+ * Get item texture URL from server's TextureCache
+ * Textures are loaded at server startup from resource packs
  */
 function getItemTextureUrl(item) {
     const namespace = item.namespace || 'minecraft';
     const path = item.path || item.id?.split(':')[1] || 'stone';
 
-    // PRIORITY 1: Try to load texture from our server's resource packs first
-    // This works for ALL items (vanilla + modded) that the server has loaded
-    const serverTextureUrl = `/api/textures/item/${namespace}/${path}`;
-
-    // We return the server URL - if it fails, the onerror handler will show the fallback
-    return serverTextureUrl;
-
-    // Note: We load textures from the server because:
-    // 1. Server has all textures for loaded mods/items
-    // 2. Works for modded items automatically
-    // 3. No external dependencies or API rate limits
-    // 4. Consistent styling across all items
-    // If server texture fails, handleInventoryTextureError shows the placeholder
+    // ALL textures are served from server's pre-loaded TextureCache
+    // If texture not found (404), placeholder will be shown
+    return `/api/textures/item/${namespace}/${path}`;
 }
 
 /**
