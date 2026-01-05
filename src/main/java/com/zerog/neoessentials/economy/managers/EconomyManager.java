@@ -47,7 +47,12 @@ public class EconomyManager {
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
-    private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
+    // Use daemon thread to prevent blocking JVM shutdown
+private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "EconomyManager-Save");
+    t.setDaemon(true);
+    return t;
+});
     private final AtomicBoolean saveQueued = new AtomicBoolean(false);
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 

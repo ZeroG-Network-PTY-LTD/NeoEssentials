@@ -32,7 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BanManager {
     // Scheduler for periodic expired-ban cleanup
-    private final java.util.concurrent.ScheduledExecutorService banCleanupScheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+    // Use daemon threads to prevent blocking JVM shutdown
+    private final java.util.concurrent.ScheduledExecutorService banCleanupScheduler =
+        java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "BanManager-Cleanup");
+            t.setDaemon(true); // CRITICAL: Set as daemon to allow JVM shutdown
+            return t;
+        });
     private java.util.concurrent.ScheduledFuture<?> cleanupTaskFuture;
 
     // Static shutdown flag to persist across instances

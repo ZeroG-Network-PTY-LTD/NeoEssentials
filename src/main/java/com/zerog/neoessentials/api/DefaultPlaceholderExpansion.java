@@ -170,13 +170,22 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      */
     @Nullable
     private String getPlayerPrefix(@Nullable ServerPlayer player) {
-        if (player == null) return null;
-        
+        if (player == null) {
+            LOGGER.warn("getPlayerPrefix called with null player");
+            return null;
+        }
+
+        LOGGER.info(">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
+        LOGGER.info(">>> Player UUID: {}", player.getUUID());
+
         try {
             String prefix = PermissionAPI.getPrefix(player.getUUID());
-            return prefix != null ? prefix : "";
+            LOGGER.info(">>> PermissionAPI returned prefix: [{}]", prefix);
+            String result = prefix != null ? prefix : "";
+            LOGGER.info(">>> Returning prefix: [{}]", result);
+            return result;
         } catch (Exception e) {
-            LOGGER.debug("Error getting prefix for player {}: {}", player.getName().getString(), e.getMessage());
+            LOGGER.error("Error getting prefix for player {}: {}", player.getName().getString(), e.getMessage(), e);
             return "";
         }
     }

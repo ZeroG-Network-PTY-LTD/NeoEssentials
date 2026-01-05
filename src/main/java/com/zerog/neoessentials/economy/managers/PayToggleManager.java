@@ -36,7 +36,12 @@ public class PayToggleManager {
     private final ConcurrentHashMap<UUID, Boolean> paytoggleCache = new ConcurrentHashMap<>();
     private final File togglesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("paytoggles.json");
     private final Gson gson = new Gson();
-    private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
+    // Use daemon thread to prevent blocking JVM shutdown
+private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "PayToggle-Save");
+    t.setDaemon(true);
+    return t;
+});
     private final AtomicBoolean saveQueued = new AtomicBoolean(false);
     @SuppressWarnings("unused") // Reserved for future direct config access
     private final ConfigManager configManager = ConfigManager.getInstance();

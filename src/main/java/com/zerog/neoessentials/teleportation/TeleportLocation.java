@@ -67,7 +67,16 @@ public class TeleportLocation {
      */
     public ServerLevel getLevel() {
         try {
-            ResourceLocation worldKey = ResourceLocation.parse(worldName);
+            ResourceLocation worldKey;
+
+            // Parse ResourceLocation manually to avoid classloading issues
+            if (worldName.contains(":")) {
+                String[] parts = worldName.split(":", 2);
+                worldKey = ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
+            } else {
+                worldKey = ResourceLocation.fromNamespaceAndPath("minecraft", worldName);
+            }
+
             return ServerLifecycleHooks.getCurrentServer().getLevel(
                 net.minecraft.resources.ResourceKey.create(
                     net.minecraft.core.registries.Registries.DIMENSION, 

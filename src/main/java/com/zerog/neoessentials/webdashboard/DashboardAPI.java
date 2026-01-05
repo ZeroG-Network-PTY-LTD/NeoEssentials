@@ -8,7 +8,6 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.GameEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.LoggingEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
-import com.zerog.neoessentials.webdashboard.api.endpoints.TextureEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -39,6 +38,7 @@ public class DashboardAPI {
     private static DashboardAPI INSTANCE;
     
     private HttpServer apiServer;
+    private java.util.concurrent.ExecutorService executor;
     private boolean running = false;
     private MinecraftServer server;
     
@@ -103,9 +103,10 @@ public class DashboardAPI {
             InetSocketAddress address = new InetSocketAddress(bindAddress, port);
             apiServer = HttpServer.create(address, 0);
             
-            // Set up thread pool
-            apiServer.setExecutor(Executors.newFixedThreadPool(10));
-            
+            // Set up thread pool and store reference for proper shutdown
+            executor = Executors.newFixedThreadPool(10);
+            apiServer.setExecutor(executor);
+
             // Register API endpoints
             registerEndpoints();
             
@@ -139,11 +140,26 @@ public class DashboardAPI {
             LOGGER.info("Stopping Dashboard API server...");
 
             // Stop accepting new requests and wait up to 2 seconds for existing requests to complete
-            // Reduced from 5 to 2 seconds to speed up server shutdown
             apiServer.stop(2);
 
-            // Note: The executor is managed by the HttpServer and will be shut down with stop()
-            // However, we should give it time to complete
+            // CRITICAL: Properly shutdown the executor service to prevent thread hang
+            if (executor != null) {
+                executor.shutdown();
+                try {
+                    if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                        LOGGER.warn("Dashboard executor did not terminate gracefully, forcing shutdown...");
+                        executor.shutdownNow();
+                        // Wait a bit more for tasks to respond to being cancelled
+                        if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                            LOGGER.error("Dashboard executor did not terminate after forced shutdown");
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Interrupted while waiting for Dashboard executor shutdown");
+                    executor.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
 
             running = false;
             LOGGER.info("Dashboard API stopped successfully");
@@ -218,9 +234,7 @@ public class DashboardAPI {
     private void registerEndpoints() {
         // Register authentication endpoints (no auth required)
         apiServer.createContext("/api/auth", new AuthHandler(server));
-        
-        // Register texture endpoint (no auth required - images can't send auth headers)
-        apiServer.createContext("/api/textures", new TextureEndpoint(server));
+
 
         // Register API endpoint handlers with authentication middleware
         apiServer.createContext("/api/player", withAuth(new PlayerEndpoint(server)));

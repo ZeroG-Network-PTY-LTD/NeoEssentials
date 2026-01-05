@@ -33,9 +33,9 @@ public class NeoEssentials {
     private static final String MOD_VERSION = "1.0.2.3";
     private static final String MOD_NAME = "NeoEssentials";
     private static final String BUILD_NUMBER = readBuildNumber();
-    private static final String MINECRAFT_VERSION = "1.21.1";
-    private static final String NEOFORGE_VERSION = "21.1.179";
-    
+    private static final String MINECRAFT_VERSION = "1.21.1-1.21.10";
+    private static final String NEOFORGE_VERSION = "21.1.179+";
+
     @SuppressWarnings("unused") // modEventBus parameter required by NeoForge @Mod constructor
     public NeoEssentials(IEventBus modEventBus) {
         long startTime = System.currentTimeMillis();
@@ -557,8 +557,8 @@ public class NeoEssentials {
         
         // ========== WEB DASHBOARD COMMANDS ==========
         registry.registerCommand("dashboard", "Manage web dashboard");
-        com.zerog.neoessentials.webdashboard.commands.DashboardCommand.register(dispatcher);
-        
+        com.zerog.neoessentials.commands.utility.DashboardCommand.register(dispatcher);
+
         // ========== ITEM COMMANDS ==========
         registry.registerCommand("repair", "Repair items");
         registry.registerCommand("fix", "Repair items (alias)");

@@ -32,8 +32,13 @@ public class TeleportRequestManager {
     
     private final Map<UUID, TeleportRequest> pendingRequests = new ConcurrentHashMap<>();
     private final Map<UUID, TeleportRequest> sentRequests = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    
+    // Use daemon threads to prevent blocking JVM shutdown
+private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2, r -> {
+    Thread t = new Thread(r, "TeleportRequest-Scheduler");
+    t.setDaemon(true);
+    return t;
+});
+
     // Configuration
     private int requestTimeoutSeconds;
     private int teleportDelay = 3; // 3 seconds

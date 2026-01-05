@@ -35,7 +35,12 @@ public class TransactionHistoryManager {
     private final Map<UUID, Deque<String>> historyMap = new ConcurrentHashMap<>();
     private final File historyFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
     private final Gson gson = new Gson();
-    private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
+    // Use daemon thread to prevent blocking JVM shutdown
+private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "TransactionHistory-Save");
+    t.setDaemon(true);
+    return t;
+});
     private final AtomicBoolean saveQueued = new AtomicBoolean(false);
 
     private TransactionHistoryManager() {
