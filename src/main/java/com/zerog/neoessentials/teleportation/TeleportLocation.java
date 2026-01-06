@@ -43,7 +43,6 @@ public class TeleportLocation {
              player.getName().getString());
     }
     
-    @SuppressWarnings("resource") // Level is managed by Minecraft
     public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy) {
         this(level.dimension().location().toString(),
              pos.getX() + 0.5,
