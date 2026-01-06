@@ -96,6 +96,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
     private void saveBalancesAtomic() {
         if (!balancesFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
             balancesFile.getParentFile().mkdirs();
         }
         try {
@@ -190,6 +191,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
     private void saveLastActivityAtomic() {
         if (!lastActivityFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
             lastActivityFile.getParentFile().mkdirs();
         }
         try {
@@ -259,8 +261,8 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
         }
         if (!ConfigManager.allowNegativeBalances() && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
-        if (maxBalance != null && amount.compareTo(maxBalance) > 0) amount = maxBalance;
-        
+        if (amount.compareTo(maxBalance) > 0) amount = maxBalance;
+
         BigDecimal finalAmount = amount;
         BigDecimal oldAmount = balancesCache.put(player, finalAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
@@ -296,7 +298,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
                 return current; // Don't modify
             }
             
-            if (maxBalance != null && newAmount.compareTo(maxBalance) > 0) {
+            if (newAmount.compareTo(maxBalance) > 0) {
                 newAmount = maxBalance;
             }
             
@@ -383,6 +385,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
      * Manually optimize the balances cache by cleaning up expired or low-activity entries.
      * This can be called after large batch operations or periodically for memory efficiency.
      */
+    @SuppressWarnings("unused") // Public API method
     public void optimizeCache() {
         // ConcurrentHashMap doesn't need explicit cleanup
         // Account cleanup is handled by cleanupInactiveAccounts
@@ -391,6 +394,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     /**
      * Returns cache statistics for monitoring and tuning.
      */
+    @SuppressWarnings("unused") // Public API method
     public String getCacheStats() {
         return "EconomyManager Cache Size: " + balancesCache.size();
     }
@@ -442,6 +446,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
      * Check if a backup should be created by comparing file version with current version.
      * Only creates backup if file exists and version differs (similar to ConfigManager behavior).
      */
+    @SuppressWarnings("SameParameterValue") // currentVersion is used for future versioning
     private boolean shouldCreateBackup(File file, int currentVersion) {
         if (!file.exists()) {
             return false; // No file to backup

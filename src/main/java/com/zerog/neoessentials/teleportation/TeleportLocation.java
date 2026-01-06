@@ -33,7 +33,9 @@ public class TeleportLocation {
     }
     
     public TeleportLocation(ServerPlayer player) {
-        this(player.level().dimension().location().toString(),
+        @SuppressWarnings("resource") // Level is managed by Minecraft, not closeable here
+        var level = player.level();
+        this(level.dimension().location().toString(),
              player.getX(),
              player.getY(), 
              player.getZ(),
@@ -102,12 +104,11 @@ public class TeleportLocation {
         
         // Check if there's solid ground and air space for player
         BlockPos ground = pos.below();
-        BlockPos feet = pos;
         BlockPos head = pos.above();
         
         // Need solid ground and air for feet/head
         boolean solidGround = !level.getBlockState(ground).isAir() && level.getBlockState(ground).canOcclude();
-        boolean feetFree = level.getBlockState(feet).isAir();
+        boolean feetFree = level.getBlockState(pos).isAir();
         boolean headFree = level.getBlockState(head).isAir();
         
         return solidGround && feetFree && headFree;
@@ -273,9 +274,8 @@ public class TeleportLocation {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof TeleportLocation)) return false;
-        
-        TeleportLocation other = (TeleportLocation) obj;
+        if (!(obj instanceof TeleportLocation other)) return false;
+
         return worldName.equals(other.worldName) &&
                Math.abs(x - other.x) < 0.1 &&
                Math.abs(y - other.y) < 0.1 &&

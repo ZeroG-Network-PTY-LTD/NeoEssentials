@@ -72,7 +72,10 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     private void saveTogglesAtomic() {
-        if (!togglesFile.getParentFile().exists()) togglesFile.getParentFile().mkdirs();
+        if (!togglesFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            togglesFile.getParentFile().mkdirs();
+        }
         try {
             File tempFile = new File(togglesFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
@@ -110,6 +113,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
         queueAsyncSave();
     }
 
+    @SuppressWarnings("unused") // Public API method
     public Map<UUID, Boolean> getAllToggles() {
         return new ConcurrentHashMap<>(paytoggleCache);
     }

@@ -11,6 +11,7 @@ import java.util.Optional;
 /**
  * Utility class for enchantment-related operations
  */
+@SuppressWarnings("unused") // Public API utility class
 public class EnchantmentUtils {
     
     /**
@@ -40,7 +41,7 @@ public class EnchantmentUtils {
             var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
-            return registry.getHolder(key).map(holder -> (Holder<Enchantment>) holder);
+            return registry.getHolder(key).map(holder -> holder);
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -56,7 +57,7 @@ public class EnchantmentUtils {
         try {
             var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, location);
-            return registry.getHolder(key).map(holder -> (Holder<Enchantment>) holder);
+            return registry.getHolder(key).map(holder -> holder);
         } catch (Exception e) {
             return Optional.empty();
         }

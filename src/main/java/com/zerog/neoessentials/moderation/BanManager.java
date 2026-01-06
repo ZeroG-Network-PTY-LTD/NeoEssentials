@@ -424,6 +424,7 @@ public class BanManager {
     /**
      * Get IP ban entry
      */
+    @SuppressWarnings("unused") // Public API method
     public IPBanEntry getIPBanEntry(String ipAddress) {
         return ipBans.get(ipAddress);
     }
@@ -560,8 +561,8 @@ public class BanManager {
         if (days > 0) sb.append(days).append("d ");
         if (hours > 0) sb.append(hours).append("h ");
         if (minutes > 0) sb.append(minutes).append("m ");
-        if (seconds > 0 || sb.length() == 0) sb.append(seconds).append("s");
-        
+        if (seconds > 0 || sb.isEmpty()) sb.append(seconds).append("s");
+
         return sb.toString().trim();
     }
     
