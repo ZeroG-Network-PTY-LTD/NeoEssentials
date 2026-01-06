@@ -395,19 +395,15 @@ public class BanManager {
     /**
      * Check if a player can join the server (not banned)
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public boolean canPlayerJoin(ServerPlayer player) {
-        if (isPlayerBanned(player.getUUID())) {
-            return false;
-        }
-        if (isIPBanned(getPlayerIP(player))) {
-            return false;
-        }
-        return true;
+        return !isPlayerBanned(player.getUUID()) && !isIPBanned(getPlayerIP(player));
     }
     
     /**
      * Get ban entry for a player
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public BanEntry getBanEntry(UUID playerId) {
         BanEntry ban = playerBans.get(playerId);
         if (ban != null && ban.isExpired()) {

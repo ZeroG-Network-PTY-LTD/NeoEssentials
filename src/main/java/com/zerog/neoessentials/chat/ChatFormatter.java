@@ -161,7 +161,7 @@ public class ChatFormatter {
         
         // Handle hex colors: &#RRGGBB -> RGB color
         Matcher hexMatcher = HEX_PATTERN.matcher(text);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (hexMatcher.find()) {
             try {
                 String hex = hexMatcher.group(1);
@@ -187,7 +187,7 @@ public class ChatFormatter {
                 // Handle hex color: §#RRGGBB§
                 if (code == '#' && i + 8 < text.length() && text.charAt(i + 8) == '§') {
                     // Flush current text
-                    if (currentText.length() > 0) {
+                    if (!currentText.isEmpty()) {
                         result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
                         currentText = new StringBuilder();
                     }
@@ -207,7 +207,7 @@ public class ChatFormatter {
                 ChatFormatting formatting = ChatFormatting.getByCode(code);
                 if (formatting != null) {
                     // Flush current text
-                    if (currentText.length() > 0) {
+                    if (!currentText.isEmpty()) {
                         result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
                         currentText = new StringBuilder();
                     }
@@ -231,7 +231,7 @@ public class ChatFormatter {
         }
         
         // Append any remaining text
-        if (currentText.length() > 0) {
+        if (!currentText.isEmpty()) {
             result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
         }
         
@@ -272,6 +272,7 @@ public class ChatFormatter {
     /**
      * Validate if a format template is well-formed.
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public static boolean isValidTemplate(String template) {
         if (template == null || template.trim().isEmpty()) {
             return false;
@@ -291,6 +292,7 @@ public class ChatFormatter {
     /**
      * Get the default chat format template.
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public static String getDefaultFormat() {
         return "{neoessentials_prefix}{neoessentials_displayname}{neoessentials_suffix}: {MESSAGE}";
     }

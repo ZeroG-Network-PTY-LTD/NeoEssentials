@@ -448,7 +448,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
      * Check if a backup should be created by comparing file version with current version.
      * Only creates backup if file exists and version differs (similar to ConfigManager behavior).
      */
-    @SuppressWarnings("SameParameterValue") // currentVersion is used for future versioning
+    @SuppressWarnings("unused") // currentVersion parameter reserved for future versioning logic
     private boolean shouldCreateBackup(File file, int currentVersion) {
         if (!file.exists()) {
             return false; // No file to backup

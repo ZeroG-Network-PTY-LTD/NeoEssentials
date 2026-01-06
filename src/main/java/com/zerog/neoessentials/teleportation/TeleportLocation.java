@@ -32,6 +32,7 @@ public class TeleportLocation {
         this.createdBy = createdBy;
     }
     
+    @SuppressWarnings("resource") // Level is managed by Minecraft, not closeable by us
     public TeleportLocation(ServerPlayer player) {
         this(player.level().dimension().location().toString(),
              player.getX(),
@@ -42,6 +43,7 @@ public class TeleportLocation {
              player.getName().getString());
     }
     
+    @SuppressWarnings("resource") // Level is managed by Minecraft
     public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy) {
         this(level.dimension().location().toString(),
              pos.getX() + 0.5,
@@ -154,6 +156,7 @@ public class TeleportLocation {
     /**
      * Get formatted coordinates string
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public String getCoordinatesString() {
         return String.format("%.1f, %.1f, %.1f", x, y, z);
     }
@@ -206,6 +209,7 @@ public class TeleportLocation {
     /**
      * Convert to storable string format (JSON) for player data
      */
+    @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public String toLocationString() {
         return toJson().toString();
     }
