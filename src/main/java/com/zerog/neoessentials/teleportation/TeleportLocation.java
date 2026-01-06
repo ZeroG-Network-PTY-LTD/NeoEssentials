@@ -33,9 +33,7 @@ public class TeleportLocation {
     }
     
     public TeleportLocation(ServerPlayer player) {
-        @SuppressWarnings("resource") // Level is managed by Minecraft, not closeable here
-        var level = player.level();
-        this(level.dimension().location().toString(),
+        this(player.level().dimension().location().toString(),
              player.getX(),
              player.getY(), 
              player.getZ(),
@@ -79,7 +77,10 @@ public class TeleportLocation {
                 worldKey = ResourceLocation.fromNamespaceAndPath("minecraft", worldName);
             }
 
-            return ServerLifecycleHooks.getCurrentServer().getLevel(
+            var server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return null;
+
+            return server.getLevel(
                 net.minecraft.resources.ResourceKey.create(
                     net.minecraft.core.registries.Registries.DIMENSION, 
                     worldKey
@@ -222,9 +223,8 @@ public class TeleportLocation {
             float pitch = json.has("pitch") ? json.get("pitch").getAsFloat() : 0.0f;
             String createdBy = json.has("createdBy") ? json.get("createdBy").getAsString() : "Unknown";
             
-            TeleportLocation location = new TeleportLocation(world, x, y, z, yaw, pitch, createdBy);
             // Timestamp is set in constructor, but we can preserve the original if present
-            return location;
+            return new TeleportLocation(world, x, y, z, yaw, pitch, createdBy);
         } catch (Exception e) {
             return null;
         }

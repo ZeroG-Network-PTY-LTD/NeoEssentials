@@ -116,11 +116,29 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
             if (user != null) {
                 QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
-                String prefix = user.getCachedData().getMetaData(queryOptions).getPrefix();
+                var metaData = user.getCachedData().getMetaData(queryOptions);
+                String prefix = metaData.getPrefix();
+                String suffix = metaData.getSuffix();
                 String primaryGroup = user.getPrimaryGroup();
+
+                // Get all meta entries to debug
+                var meta = metaData.getMeta();
+
                 LOGGER.info("User: {}", user.getUsername());
                 LOGGER.info("Primary Group: {}", primaryGroup);
                 LOGGER.info("Prefix from LuckPerms: [{}]", prefix);
+                LOGGER.info("Suffix from LuckPerms: [{}]", suffix);
+                LOGGER.info("All Meta Data:");
+                meta.forEach((key, value) -> LOGGER.info("  Meta: {} = {}", key, value));
+
+                // Check if there are prefixes with weights
+                LOGGER.info("Checking for weighted prefixes...");
+                var prefixes = metaData.getPrefixes();
+                LOGGER.info("Number of prefixes: {}", prefixes.size());
+                prefixes.forEach((weight, prefixValue) ->
+                    LOGGER.info("  Prefix weight {}: [{}]", weight, prefixValue)
+                );
+
                 LOGGER.info("=== END LUCKPERMS PREFIX REQUEST ===");
                 return prefix;
             } else {
@@ -158,8 +176,18 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
             if (user != null) {
                 QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
-                String suffix = user.getCachedData().getMetaData(queryOptions).getSuffix();
-                LOGGER.debug("LuckPerms suffix for user {}: {}", uuid, suffix);
+                var metaData = user.getCachedData().getMetaData(queryOptions);
+                String suffix = metaData.getSuffix();
+
+                LOGGER.debug("LuckPerms suffix for user {}: [{}]", uuid, suffix);
+
+                // Check if there are suffixes with weights
+                var suffixes = metaData.getSuffixes();
+                LOGGER.debug("Number of suffixes: {}", suffixes.size());
+                suffixes.forEach((weight, suffixValue) ->
+                    LOGGER.debug("  Suffix weight {}: [{}]", weight, suffixValue)
+                );
+
                 return suffix;
             }
 

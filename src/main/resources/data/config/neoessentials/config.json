@@ -1,5 +1,5 @@
 {
-  "_configVersion": 11,
+  "_configVersion": 12,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,

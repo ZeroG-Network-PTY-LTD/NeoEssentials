@@ -49,7 +49,10 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     private void loadHistory() {
-        if (!historyFile.getParentFile().exists()) historyFile.getParentFile().mkdirs();
+        if (!historyFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            historyFile.getParentFile().mkdirs();
+        }
         if (!historyFile.exists()) return;
         try (FileReader reader = new FileReader(historyFile)) {
             Type type = new TypeToken<Map<String, List<String>>>(){}.getType();

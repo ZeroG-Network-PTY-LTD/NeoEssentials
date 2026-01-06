@@ -113,7 +113,11 @@ public class PermissionAPI {
     }
 
     public static String getPrefix(UUID uuid) {
-        LOGGER.info(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
+        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+
+        if (debugEnabled) {
+            LOGGER.info(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
+        }
 
         // Validate input parameters
         if (uuid == null) {
@@ -121,19 +125,29 @@ public class PermissionAPI {
             return "";
         }
         
-        LOGGER.info(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+        if (debugEnabled) {
+            LOGGER.info(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+        }
 
         if (externalAdapter != null) {
-            LOGGER.info(">>> Querying external adapter for prefix...");
+            if (debugEnabled) {
+                LOGGER.info(">>> Querying external adapter for prefix...");
+            }
             String prefix = externalAdapter.getPrefix(uuid);
-            LOGGER.info(">>> External adapter returned: [{}]", prefix);
+            if (debugEnabled) {
+                LOGGER.info(">>> External adapter returned: [{}]", prefix);
+            }
             if (prefix != null) {
-                LOGGER.info(">>> Returning external prefix: [{}]", prefix);
+                if (debugEnabled) {
+                    LOGGER.info(">>> Returning external prefix: [{}]", prefix);
+                }
                 return prefix;
             }
         }
 
-        LOGGER.info(">>> Falling back to internal permission system");
+        if (debugEnabled) {
+            LOGGER.info(">>> Falling back to internal permission system");
+        }
 
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
