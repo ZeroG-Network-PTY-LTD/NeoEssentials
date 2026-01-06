@@ -308,7 +308,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get the server name (motd or configured name).
      */
-    @Nullable
     private String getServerName(@Nullable ServerPlayer player) {
         try {
             if (player != null && player.getServer() != null) {
@@ -388,7 +387,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      * Get player's AFK status.
      * Returns "AFK" if player is AFK, empty string otherwise.
      */
-    @Nullable
     private String getAfkStatus(@Nullable ServerPlayer player) {
         if (player == null) return "";
         
@@ -406,7 +404,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      * Get how long player has been AFK.
      * Returns formatted time like "5m 30s" or empty if not AFK.
      */
-    @Nullable
     private String getAfkTime(@Nullable ServerPlayer player) {
         if (player == null) return "";
         
