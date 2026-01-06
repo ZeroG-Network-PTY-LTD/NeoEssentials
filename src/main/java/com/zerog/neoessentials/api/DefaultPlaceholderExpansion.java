@@ -125,7 +125,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 case "max_health" -> player != null ? DECIMAL_FORMAT.format(player.getMaxHealth()) : null;
                 case "food" -> player != null ? String.valueOf(player.getFoodData().getFoodLevel()) : null;
                 case "level" -> player != null ? String.valueOf(player.experienceLevel) : null;
-                case "exp" -> player != null ? String.valueOf((int) (player.experienceProgress * 100)) + "%" : null;
+                case "exp" -> player != null ? (int) (player.experienceProgress * 100) + "%" : null;
                 case "gamemode" -> player != null ? player.gameMode.getGameModeForPlayer().getName() : null;
                 
                 // Economy
@@ -175,15 +175,19 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             return null;
         }
 
-        LOGGER.info(">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
-        LOGGER.info(">>> Player UUID: {}", player.getUUID());
+        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+        if (debugEnabled) {
+            LOGGER.info(">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
+            LOGGER.info(">>> Player UUID: {}", player.getUUID());
+        }
 
         try {
             String prefix = PermissionAPI.getPrefix(player.getUUID());
-            LOGGER.info(">>> PermissionAPI returned prefix: [{}]", prefix);
-            String result = prefix != null ? prefix : "";
-            LOGGER.info(">>> Returning prefix: [{}]", result);
-            return result;
+            if (debugEnabled) {
+                LOGGER.info(">>> PermissionAPI returned prefix: [{}]", prefix);
+                LOGGER.info(">>> Returning prefix: [{}]", prefix);
+            }
+            return prefix;
         } catch (Exception e) {
             LOGGER.error("Error getting prefix for player {}: {}", player.getName().getString(), e.getMessage(), e);
             return "";
@@ -198,8 +202,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         if (player == null) return null;
         
         try {
-            String suffix = PermissionAPI.getSuffix(player.getUUID());
-            return suffix != null ? suffix : "";
+            return PermissionAPI.getSuffix(player.getUUID());
         } catch (Exception e) {
             LOGGER.debug("Error getting suffix for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
@@ -238,14 +241,13 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         if (player == null) return null;
         
         try {
+            @SuppressWarnings("resource") // Level is managed by Minecraft
             Level level = player.level();
-            if (level != null) {
-                return level.dimension().location().getPath();
-            }
+            return level.dimension().location().getPath();
         } catch (Exception e) {
             LOGGER.debug("Error getting world name for player {}: {}", player.getName().getString(), e.getMessage());
+            return "unknown";
         }
-        return "unknown";
     }
     
     /**
@@ -256,6 +258,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         if (player == null) return null;
         
         try {
+            @SuppressWarnings("resource") // Level is managed by Minecraft
             var biome = player.level().getBiome(player.blockPosition());
             return biome.unwrapKey().map(key -> key.location().getPath()).orElse("unknown");
         } catch (Exception e) {
@@ -320,7 +323,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get the current online player count.
      */
-    @Nullable
     private String getOnlinePlayerCount(@Nullable ServerPlayer player) {
         try {
             if (player != null && player.getServer() != null) {
@@ -349,7 +351,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get current time in 12-hour format.
      */
-    @Nullable
     private String getCurrentTime() {
         try {
             return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"));
@@ -362,7 +363,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get current time in 24-hour format.
      */
-    @Nullable
     private String getCurrentTime24() {
         try {
             return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
@@ -375,7 +375,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get current date.
      */
-    @Nullable
     private String getCurrentDate() {
         try {
             return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -441,7 +440,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      * Get player's AFK reason.
      * Returns the reason text or empty string if no reason or not AFK.
      */
-    @Nullable
     private String getAfkReason(@Nullable ServerPlayer player) {
         if (player == null) return "";
         

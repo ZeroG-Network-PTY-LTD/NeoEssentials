@@ -56,7 +56,10 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
 
     private void loadToggles() {
-        if (!togglesFile.getParentFile().exists()) togglesFile.getParentFile().mkdirs();
+        if (!togglesFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            togglesFile.getParentFile().mkdirs();
+        }
         if (!togglesFile.exists()) return;
         try (FileReader reader = new FileReader(togglesFile)) {
             Type type = new TypeToken<Map<String, Boolean>>(){}.getType();

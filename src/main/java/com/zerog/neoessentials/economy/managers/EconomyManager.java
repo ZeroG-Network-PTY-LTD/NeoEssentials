@@ -66,6 +66,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
     private void loadBalances() {
         if (!balancesFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
             balancesFile.getParentFile().mkdirs();
         }
         if (!balancesFile.exists()) return;
@@ -161,6 +162,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
     private void loadLastActivity() {
         if (!lastActivityFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
             lastActivityFile.getParentFile().mkdirs();
         }
         if (!lastActivityFile.exists()) return;

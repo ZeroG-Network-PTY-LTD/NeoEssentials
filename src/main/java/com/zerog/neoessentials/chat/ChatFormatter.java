@@ -78,19 +78,26 @@ public class ChatFormatter {
     private static String restrictPlayerMessageColors(String message, ServerPlayer player) {
         UUID uuid = player.getUUID();
         String result = message;
-        
-        LOGGER.info(">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);
-        LOGGER.info(">>> Original message: [{}]", message);
-        
+        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+
+        if (debugEnabled) {
+            LOGGER.info(">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);
+            LOGGER.info(">>> Original message: [{}]", message);
+        }
+
         // First check if color codes are enabled globally in config
         boolean colorCodesEnabled = com.zerog.neoessentials.config.ConfigManager.isColorCodesEnabled();
-        LOGGER.info(">>> Config enable-color-codes: {}", colorCodesEnabled);
-        
+        if (debugEnabled) {
+            LOGGER.info(">>> Config enable-color-codes: {}", colorCodesEnabled);
+        }
+
         if (!colorCodesEnabled) {
             // Strip ALL color codes if disabled in config
             result = HEX_PATTERN.matcher(result).replaceAll("");
             result = AMPERSAND_CODE_PATTERN.matcher(result).replaceAll("");
-            LOGGER.info(">>> Color codes DISABLED in config - Stripped all codes: [{}]", result);
+            if (debugEnabled) {
+                LOGGER.info(">>> Color codes DISABLED in config - Stripped all codes: [{}]", result);
+            }
             return result;
         }
         
@@ -99,30 +106,46 @@ public class ChatFormatter {
         boolean hasColorPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.color");
         boolean hasFormatPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.format");
         
-        LOGGER.info(">>> Permission Check Results:");
-        LOGGER.info(">>>   - neoessentials.chat.color.hex: {}", hasHexPerm);
-        LOGGER.info(">>>   - neoessentials.chat.color: {}", hasColorPerm);
-        LOGGER.info(">>>   - neoessentials.chat.format: {}", hasFormatPerm);
-        
+        if (debugEnabled) {
+            LOGGER.info(">>> Permission Check Results:");
+            LOGGER.info(">>>   - neoessentials.chat.color.hex: {}", hasHexPerm);
+            LOGGER.info(">>>   - neoessentials.chat.color: {}", hasColorPerm);
+            LOGGER.info(">>>   - neoessentials.chat.format: {}", hasFormatPerm);
+        }
+
         if (!hasHexPerm) {
-            String before = result;
-            result = HEX_PATTERN.matcher(result).replaceAll("");
-            LOGGER.info(">>>   Stripped hex codes: [{}] -> [{}]", before, result);
+            if (debugEnabled) {
+                String before = result;
+                result = HEX_PATTERN.matcher(result).replaceAll("");
+                LOGGER.info(">>>   Stripped hex codes: [{}] -> [{}]", before, result);
+            } else {
+                result = HEX_PATTERN.matcher(result).replaceAll("");
+            }
         }
         
         if (!hasColorPerm) {
-            String before = result;
-            result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
-            LOGGER.info(">>>   Stripped color codes: [{}] -> [{}]", before, result);
+            if (debugEnabled) {
+                String before = result;
+                result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
+                LOGGER.info(">>>   Stripped color codes: [{}] -> [{}]", before, result);
+            } else {
+                result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
+            }
         }
         
         if (!hasFormatPerm) {
-            String before = result;
-            result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
-            LOGGER.info(">>>   Stripped format codes: [{}] -> [{}]", before, result);
+            if (debugEnabled) {
+                String before = result;
+                result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
+                LOGGER.info(">>>   Stripped format codes: [{}] -> [{}]", before, result);
+            } else {
+                result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
+            }
         }
         
-        LOGGER.info(">>> Final restricted message: [{}]", result);
+        if (debugEnabled) {
+            LOGGER.info(">>> Final restricted message: [{}]", result);
+        }
         return result;
     }
     
