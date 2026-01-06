@@ -335,7 +335,6 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     /**
      * Get the maximum player count.
      */
-    @Nullable
     private String getMaxPlayerCount(@Nullable ServerPlayer player) {
         try {
             if (player != null && player.getServer() != null) {

@@ -66,7 +66,10 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     private void saveHistoryAtomic() {
-        if (!historyFile.getParentFile().exists()) historyFile.getParentFile().mkdirs();
+        if (!historyFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            historyFile.getParentFile().mkdirs();
+        }
         try {
             File tempFile = new File(historyFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
