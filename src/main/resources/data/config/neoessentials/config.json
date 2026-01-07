@@ -1,5 +1,5 @@
 {
-  "_configVersion": 12,
+  "_configVersion": 13,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -486,6 +486,152 @@
       "world:creative": "&b[C] {neoessentials_username}: {MESSAGE}"
     },
     "chat-format-description": "Chat format template. You can use a string (for global format) or an object for per-group/world formats. Keys: 'default', 'group:GROUPNAME', 'world:WORLDNAME', or 'group:GROUP:world:WORLD'. Placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI. Legacy uppercase placeholders like {USERNAME}, {PREFIX}, {SUFFIX} are automatically converted for backwards compatibility. Use '&' for color codes (e.g., &c for red, &6 for gold).",
+    "enableChatEnhancements": true,
+    "enableChatEnhancements_comment": "Enable Phase 2 chat enhancements (clickable names, mentions, URLs, item links). Set to false to use basic chat formatting only.",
+    "clickablePlayerNames": true,
+    "clickablePlayerNames_comment": "Make player names in chat clickable. Click to message, hover for stats.",
+    "autoLinkUrls": true,
+    "autoLinkUrls_comment": "Automatically detect and make URLs clickable in chat messages.",
+    "allowItemLinks": true,
+    "allowItemLinks_comment": "Allow players to show their held item in chat using [item] placeholder.",
+    "mentions": {
+      "enabled": true,
+      "enabled_comment": "Enable @mention system. Players can mention others with @PlayerName.",
+      "highlightColor": "&e",
+      "highlightColor_comment": "Color code for highlighted mentions (e.g., &e for yellow, &6 for gold).",
+      "playSound": true,
+      "playSound_comment": "Play sound notification when a player is mentioned.",
+      "soundName": "entity.experience_orb.pickup",
+      "soundName_comment": "Sound to play for mentions. Options: entity.experience_orb.pickup, block.note_block.pling, etc.",
+      "soundVolume": 1.0,
+      "soundVolume_comment": "Volume of mention sound (0.0 to 1.0).",
+      "requirePermission": false,
+      "requirePermission_comment": "If true, players need 'neoessentials.chat.mention' permission to mention others.",
+      "permission": "neoessentials.chat.mention"
+    },
+    "badges": {
+      "enabled": true,
+      "enabled_comment": "Enable badge/icon system. Shows rank badges and status icons in chat.",
+      "badgePosition": "before_prefix",
+      "badgePosition_comment": "Where to show badges: 'before_prefix', 'after_prefix', 'before_name', 'after_name'.",
+      "useCustomImages": false,
+      "useCustomImages_comment": "If true, uses custom badge images from config/neoessentials/badges/ folder. Place PNG files named after ranks (e.g., admin.png, vip.png).",
+      "customImageSize": 16,
+      "customImageSize_comment": "Size of custom badge images in pixels (16, 24, or 32). Images will be scaled to this size.",
+      "customImagePath": "config/neoessentials/badges",
+      "customImagePath_comment": "Path to custom badge images folder relative to server root. Place PNG files here named after ranks.",
+      "autoSendResourcePack": false,
+      "autoSendResourcePack_comment": "If true, automatically generates and sends resource pack to players when they join. Requires useCustomImages to be enabled.",
+      "requireResourcePack": false,
+      "requireResourcePack_comment": "If true, players MUST accept the resource pack to join the server. If false, it's optional.",
+      "resourcePackUrl": "",
+      "resourcePackUrl_comment": "Public URL where the resource pack is hosted (e.g., https://yoursite.com/NeoEssentials-Badges.zip). Leave empty to disable auto-send. The mod will generate the pack in config/neoessentials/ - upload it to a web server.",
+      "resourcePackPrompt": "This server uses custom badge images. Please accept the resource pack for the best experience!",
+      "resourcePackPrompt_comment": "Message shown to players when sending the resource pack.",
+      "rankBadges": {
+        "owner": "👑",
+        "admin": "⭐",
+        "moderator": "🛡️",
+        "helper": "🔧",
+        "vip": "💎",
+        "vipplus": "💎💎",
+        "mvp": "🌟",
+        "builder": "🔨",
+        "developer": "💻"
+      },
+      "rankBadges_comment": "Badge emojis for each rank. If useCustomImages is true, the mod looks for <rankname>.png files in the badges folder.",
+      "statusIcons": {
+        "enabled": true,
+        "enabled_comment": "Show status icons (AFK, vanished, etc.) in chat.",
+        "iconPosition": "after_name",
+        "iconPosition_comment": "Where to show status icons: 'before_name', 'after_name', 'after_message'.",
+        "afk": "💤",
+        "vanished": "👻",
+        "streaming": "📺",
+        "muted": "🔇"
+      }
+    },
+    "antiSpam": {
+      "enabled": true,
+      "enabled_comment": "Enable anti-spam filter system.",
+      "capsFilter": {
+        "enabled": true,
+        "enabled_comment": "Filter messages with excessive caps (SHOUTING).",
+        "maxPercentage": 70,
+        "maxPercentage_comment": "Maximum percentage of caps allowed (1-100). Messages above this are filtered.",
+        "action": "lowercase",
+        "action_comment": "Action to take: 'lowercase' (convert to lowercase), 'block' (block message), 'warn' (warn player).",
+        "bypassPermission": "neoessentials.chat.caps.bypass",
+        "minimumLength": 5,
+        "minimumLength_comment": "Minimum message length to check caps (avoid filtering short messages like 'OK')."
+      },
+      "repeatFilter": {
+        "enabled": true,
+        "enabled_comment": "Prevent players from repeating identical messages.",
+        "cooldownSeconds": 5,
+        "cooldownSeconds_comment": "Seconds before same message can be sent again.",
+        "action": "block",
+        "action_comment": "Action to take: 'block' (block message), 'warn' (warn player).",
+        "bypassPermission": "neoessentials.chat.repeat.bypass"
+      },
+      "linkFilter": {
+        "enabled": false,
+        "enabled_comment": "Filter URLs in chat messages.",
+        "action": "allow",
+        "action_comment": "Action: 'allow' (allow all), 'block' (block all), 'whitelist' (only allow whitelisted).",
+        "whitelist": ["minecraft.net", "neoforged.net", "github.com"],
+        "whitelist_comment": "Domains allowed when action is 'whitelist'.",
+        "bypassPermission": "neoessentials.chat.links.bypass"
+      },
+      "spamFilter": {
+        "enabled": true,
+        "enabled_comment": "Rate limit chat messages to prevent spam.",
+        "messagesPerPeriod": 5,
+        "messagesPerPeriod_comment": "Maximum messages allowed per period.",
+        "periodSeconds": 10,
+        "periodSeconds_comment": "Period in seconds to count messages.",
+        "action": "block",
+        "action_comment": "Action: 'block' (block excess messages), 'warn' (warn player).",
+        "bypassPermission": "neoessentials.chat.spam.bypass"
+      }
+    },
+    "formatTemplates": {
+      "enabled": false,
+      "enabled_comment": "Enable pre-built format templates. When enabled, uses 'activeTemplate' instead of 'chat-format'.",
+      "activeTemplate": "default",
+      "activeTemplate_comment": "Active template to use: 'default', 'rpg', 'modern', 'minimal', 'detailed', 'ranked', or 'custom'.",
+      "templates": {
+        "default": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+        "rpg": "&7[Lv.{neoessentials_level}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
+        "modern": "● {neoessentials_prefix}{neoessentials_name} &8› &r{MESSAGE}",
+        "minimal": "{neoessentials_name}: {MESSAGE}",
+        "detailed": "&7[{neoessentials_world}] &r<{neoessentials_prefix}{neoessentials_name}{neoessentials_suffix}&r> {MESSAGE}",
+        "ranked": "&7[{neoessentials_group}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
+        "custom": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}"
+      }
+    },
+    "richText": {
+      "enabled": false,
+      "enabled_comment": "Enable Phase 4 rich text effects (gradients, rainbow). Note: These effects require permissions and can be performance-intensive.",
+      "allowGradients": true,
+      "allowGradients_comment": "Allow gradient text using <gradient:START-END>text</gradient> syntax. Example: <gradient:FF0000-0000FF>Hello</gradient>",
+      "allowRainbow": true,
+      "allowRainbow_comment": "Allow rainbow text using <rainbow>text</rainbow> syntax.",
+      "requirePermission": false,
+      "requirePermission_comment": "If true, players need 'neoessentials.chat.richtext' permission to use rich text effects.",
+      "gradientPermission": "neoessentials.chat.gradient",
+      "rainbowPermission": "neoessentials.chat.rainbow"
+    },
+    "conditionalFormatting": {
+      "enabled": false,
+      "enabled_comment": "Enable Phase 4 conditional formatting. Allows dynamic chat formats based on time, stats, and player state.",
+      "allowTimeConditionals": true,
+      "allowTimeConditionals_comment": "Allow time-based conditions: <if:time=morning>Good morning!</if>. Supported: morning, afternoon, evening, night, day, weekday, weekend.",
+      "allowStatConditionals": true,
+      "allowStatConditionals_comment": "Allow stat-based conditions: <if:health<50>Low health!</if>. Supported: health, level, food, armor, xp with operators <, >, <=, >=, =, !=",
+      "allowStateConditionals": true,
+      "allowStateConditionals_comment": "Allow state-based conditions: <if:afk>AFK</if>. Supported: afk, vanished, flying, creative, survival, spectator, op, sneaking, sprinting, swimming, onfire, wet, underground, nether, end, overworld."
+    },
     "channels": {
       "enabled": true,
       "enabled-description": "Master switch for chat channels system. When false, all channels are disabled and players use default global chat. When true, channels work according to their individual settings below.",

@@ -301,6 +301,28 @@ public class PermissionRegistry {
         register("neoessentials.chat.mutelist", "View mute list", PermissionCategory.CHAT, false);
         register("neoessentials.chat.exempt", "Exempt from muting", PermissionCategory.CHAT, false);
         
+        // Chat formatting and colors
+        register("neoessentials.chat.color", "Use basic color codes in chat (&0-9, &a-f)", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.color.hex", "Use hex colors in chat (&#RRGGBB)", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.format", "Use formatting codes in chat (&k-o, &r)", PermissionCategory.CHAT, false);
+
+        // Chat channels and features
+        register("neoessentials.chat.staff", "Access to staff chat channel", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.mention", "Mention other players with @name", PermissionCategory.CHAT, true);
+        register("neoessentials.chat.mention.all", "Mention everyone with @everyone", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.itemlink", "Show held item in chat with [item]", PermissionCategory.CHAT, true);
+
+        // Chat anti-spam bypasses (Phase 3)
+        register("neoessentials.chat.caps.bypass", "Bypass caps filter", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.repeat.bypass", "Bypass repeat message filter", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.links.bypass", "Bypass link filter", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.spam.bypass", "Bypass spam rate limit", PermissionCategory.CHAT, false);
+
+        // Rich text effects (Phase 4)
+        register("neoessentials.chat.richtext", "Use rich text effects (gradients, rainbow)", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.gradient", "Use gradient text effects", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.rainbow", "Use rainbow text effects", PermissionCategory.CHAT, false);
+
         // AFK system
         register("neoessentials.afk", "Use AFK system", PermissionCategory.MISC, true);
         register("neoessentials.afk.exempt", "Exempt from AFK kick", PermissionCategory.MISC, false);

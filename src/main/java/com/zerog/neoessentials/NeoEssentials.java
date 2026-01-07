@@ -30,7 +30,7 @@ public class NeoEssentials {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentials.class);
     
     // Build and version information
-    private static final String MOD_VERSION = "1.0.2.3";
+    private static final String MOD_VERSION = "1.0.2.4";
     private static final String MOD_NAME = "NeoEssentials";
     private static final String BUILD_NUMBER = readBuildNumber();
     private static final String MINECRAFT_VERSION = "1.21.1-1.21.10";
@@ -185,7 +185,27 @@ public class NeoEssentials {
                 LOGGER.error("✗ CRITICAL: Permission system failed to initialize!", e);
                 ManagerRegistry.getInstance().markFailed("PermissionSystem", e.getMessage());
             }
-            
+
+            // Initialize custom badge images (Phase 3)
+            try {
+                LOGGER.info("⚙ Loading custom badge images...");
+                com.zerog.neoessentials.chat.BadgeManager.getInstance().loadCustomBadgeImages();
+                LOGGER.info("✓ Badge images loaded successfully");
+            } catch (Exception e) {
+                LOGGER.warn("⚠ Failed to load badge images: {}", e.getMessage());
+                // Non-critical, continue
+            }
+
+            // Initialize resource pack system (Phase 3)
+            try {
+                LOGGER.info("⚙ Initializing resource pack system...");
+                com.zerog.neoessentials.resourcepack.ResourcePackManager.getInstance().initialize();
+                LOGGER.info("✓ Resource pack system initialized");
+            } catch (Exception e) {
+                LOGGER.warn("⚠ Failed to initialize resource pack system: {}", e.getMessage());
+                // Non-critical, continue
+            }
+
             // Display manager registry diagnostics
             try {
                 String diagnosticReport = ManagerRegistry.getInstance().generateDiagnosticReport();

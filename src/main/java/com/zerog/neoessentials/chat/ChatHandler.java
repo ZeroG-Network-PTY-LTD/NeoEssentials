@@ -45,6 +45,19 @@ public class ChatHandler {
                 return;
             }
 
+            // Phase 3: Apply anti-spam filters
+            AntiSpamManager.FilterResult filterResult = AntiSpamManager.getInstance().filterMessage(player, rawMessage);
+            if (!filterResult.allowed) {
+                event.setCanceled(true);
+                if (filterResult.denyReason != null) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(filterResult.denyReason));
+                }
+                return;
+            }
+
+            // Use filtered message (may be modified by caps filter)
+            String processedMessage = filterResult.filteredMessage != null ? filterResult.filteredMessage : rawMessage;
+
             // Enforce playerChatPermissions: block chat if player lacks any required permission
             ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
             if (chatManager != null) {
@@ -67,7 +80,7 @@ public class ChatHandler {
 
             // Enforce muteCommands: block chat messages that start with a muted command
             if (chatManager != null) {
-                String trimmed = rawMessage.trim();
+                String trimmed = processedMessage.trim();
                 if (trimmed.startsWith("/")) {
                     String[] split = trimmed.substring(1).split(" ", 2);
                     String command = split[0].toLowerCase();
@@ -102,7 +115,7 @@ public class ChatHandler {
             }
 
             // Detect channel by prefix or player state
-            String message = rawMessage;
+            String message = processedMessage;
             String channel = null;
             // Check for explicit channel prefix (e.g. ! for global, @ for staff)
             if (channelsConfig != null) {

@@ -52,7 +52,8 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("level");
         placeholders.add("exp");
         placeholders.add("gamemode");
-        
+        placeholders.add("ping");
+
         // Economy placeholders
         placeholders.add("balance");
         placeholders.add("balance_formatted");
@@ -127,7 +128,8 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 case "level" -> player != null ? String.valueOf(player.experienceLevel) : null;
                 case "exp" -> player != null ? (int) (player.experienceProgress * 100) + "%" : null;
                 case "gamemode" -> player != null ? player.gameMode.getGameModeForPlayer().getName() : null;
-                
+                case "ping" -> player != null ? String.valueOf(player.connection.latency()) : null;
+
                 // Economy
                 case "balance" -> getBalance(player);
                 case "balance_formatted" -> getFormattedBalance(player);

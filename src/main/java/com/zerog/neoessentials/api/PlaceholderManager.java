@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
  */
 public class PlaceholderManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlaceholderManager.class);
-    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^}]+)\\}");
-    
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^}]+)}");
+
     private static volatile PlaceholderManager instance;
     
     // Thread-safe collections for placeholder storage
@@ -56,6 +56,7 @@ public class PlaceholderManager {
      * @param provider The provider that will resolve this placeholder
      * @return true if registered successfully, false if identifier already exists
      */
+    @SuppressWarnings("ClassEscapesDefinedScope") // PlaceholderProvider is part of public API
     public boolean registerPlaceholder(String identifier, PlaceholderProvider provider) {
         if (identifier == null || identifier.trim().isEmpty()) {
             LOGGER.warn("Attempted to register placeholder with null or empty identifier");
@@ -113,8 +114,8 @@ public class PlaceholderManager {
         }
         
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
-        StringBuffer result = new StringBuffer();
-        
+        StringBuilder result = new StringBuilder();
+
         while (matcher.find()) {
             String fullPlaceholder = matcher.group(0); // {placeholder_name}
             String placeholderContent = matcher.group(1); // placeholder_name
@@ -163,12 +164,7 @@ public class PlaceholderManager {
         if (luckPermsValue != null) return luckPermsValue;
 
         // Try FTB Ranks placeholders
-        String ftbValue = resolveFTBRanksPlaceholder(player, identifier);
-        if (ftbValue != null) return ftbValue;
-
-        // Add more external sources here as needed
-
-        return null;
+        return resolveFTBRanksPlaceholder(player, identifier);
     }
 
     /**
@@ -182,19 +178,13 @@ public class PlaceholderManager {
         try {
             String permMeta = identifier.substring("luckperms_".length());
 
-            switch (permMeta) {
-                case "prefix":
-                    return getLuckPermsPrefix(player);
-                case "suffix":
-                    return getLuckPermsSuffix(player);
-                case "group":
-                case "primary_group":
-                    return getLuckPermsPrimaryGroup(player);
-                case "displayname":
-                    return getLuckPermsDisplayName(player);
-                default:
-                    return null;
-            }
+            return switch (permMeta) {
+                case "prefix" -> getLuckPermsPrefix(player);
+                case "suffix" -> getLuckPermsSuffix(player);
+                case "group", "primary_group" -> getLuckPermsPrimaryGroup(player);
+                case "displayname" -> getLuckPermsDisplayName(player);
+                default -> null;
+            };
         } catch (Exception e) {
             LOGGER.debug("Failed to resolve LuckPerms placeholder '{}': {}", identifier, e.getMessage());
         }
@@ -204,50 +194,30 @@ public class PlaceholderManager {
 
     /**
      * Get LuckPerms prefix from permission system.
+     * Uses PermissionAPI which properly delegates to LuckPerms adapter.
      */
     private String getLuckPermsPrefix(ServerPlayer player) {
         try {
-            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (permManager != null) {
-                var user = permManager.getUser(player.getUUID());
-                if (user != null) {
-                    String groupName = user.getGroup();
-                    if (groupName != null) {
-                        var group = permManager.getGroup(groupName);
-                        if (group != null && group.getPrefix() != null && !group.getPrefix().isEmpty()) {
-                            return group.getPrefix();
-                        }
-                    }
-                }
-            }
+            String prefix = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(player.getUUID());
+            return prefix != null ? prefix : "";
         } catch (Exception e) {
             LOGGER.debug("Error getting LuckPerms prefix: {}", e.getMessage());
+            return "";
         }
-        return "";
     }
 
     /**
      * Get LuckPerms suffix from permission system.
+     * Uses PermissionAPI which properly delegates to LuckPerms adapter.
      */
     private String getLuckPermsSuffix(ServerPlayer player) {
         try {
-            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (permManager != null) {
-                var user = permManager.getUser(player.getUUID());
-                if (user != null) {
-                    String groupName = user.getGroup();
-                    if (groupName != null) {
-                        var group = permManager.getGroup(groupName);
-                        if (group != null && group.getSuffix() != null && !group.getSuffix().isEmpty()) {
-                            return group.getSuffix();
-                        }
-                    }
-                }
-            }
+            String suffix = com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(player.getUUID());
+            return suffix != null ? suffix : "";
         } catch (Exception e) {
             LOGGER.debug("Error getting LuckPerms suffix: {}", e.getMessage());
+            return "";
         }
-        return "";
     }
 
     /**
@@ -290,17 +260,12 @@ public class PlaceholderManager {
         // So we can reuse the same logic with different prefix
         String ftbMeta = identifier.substring("ftbranks_".length());
 
-        switch (ftbMeta) {
-            case "prefix":
-                return getLuckPermsPrefix(player); // Same source
-            case "suffix":
-                return getLuckPermsSuffix(player); // Same source
-            case "rank":
-            case "group":
-                return getLuckPermsPrimaryGroup(player); // Same source
-            default:
-                return null;
-        }
+        return switch (ftbMeta) {
+            case "prefix" -> getLuckPermsPrefix(player); // Same source
+            case "suffix" -> getLuckPermsSuffix(player); // Same source
+            case "rank", "group" -> getLuckPermsPrimaryGroup(player); // Same source
+            default -> null;
+        };
     }
 
     /**
@@ -411,6 +376,7 @@ public class PlaceholderManager {
      * @param expansion The placeholder expansion to register
      * @return true if registered successfully
      */
+    @SuppressWarnings("ClassEscapesDefinedScope") // PlaceholderExpansion is part of public API
     public boolean registerExpansion(PlaceholderExpansion expansion) {
         if (expansion == null) {
             LOGGER.warn("Attempted to register null expansion");
@@ -442,6 +408,7 @@ public class PlaceholderManager {
      * @param expansion The placeholder expansion to unregister
      * @return true if unregistered successfully
      */
+    @SuppressWarnings("ClassEscapesDefinedScope") // PlaceholderExpansion is part of public API
     public boolean unregisterExpansion(PlaceholderExpansion expansion) {
         if (expansion == null) {
             return false;
