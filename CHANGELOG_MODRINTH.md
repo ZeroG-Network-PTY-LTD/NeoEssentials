@@ -131,22 +131,30 @@ All features are **highly configurable**:
 
 ### **Gradient VIP Prefix**
 ```json
-"group:vip": "<gradient:FFD700-FF1493>{prefix}</gradient> {name}: {MESSAGE}"
+{
+  "group:vip": "<gradient:FFD700-FF1493>{prefix}</gradient> {name}: {MESSAGE}"
+}
 ```
 
 ### **Time-Based Greeting**
 ```json
-"default": "<if:time=morning>☀️ </if>{prefix}{name}: {MESSAGE}"
+{
+  "default": "<if:time=morning>☀️ </if>{prefix}{name}: {MESSAGE}"
+}
 ```
 
 ### **Health Warning**
 ```json
-"default": "{prefix}{name} <if:health<50>❤️ </if>: {MESSAGE}"
+{
+  "default": "{prefix}{name} <if:health<50>❤️ </if>: {MESSAGE}"
+}
 ```
 
 ### **Complex Multi-Feature**
 ```json
-"group:admin": "<gradient:FF0000-00FF00>{prefix}</gradient> <if:flying>✈️ </if>{name}: {MESSAGE}"
+{
+  "group:admin": "<gradient:FF0000-00FF00>{prefix}</gradient> <if:flying>✈️ </if>{name}: {MESSAGE}"
+}
 ```
 
 ---

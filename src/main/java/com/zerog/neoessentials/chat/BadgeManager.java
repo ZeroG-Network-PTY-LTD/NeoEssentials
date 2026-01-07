@@ -220,7 +220,11 @@ public class BadgeManager {
 
             // Create directory if it doesn't exist
             if (!badgeDir.exists()) {
-                badgeDir.mkdirs();
+                if (!badgeDir.mkdirs()) {
+                    LOGGER.error("Failed to create badge directory at: {}", badgeDir.getAbsolutePath());
+                    customImagesLoaded = true;
+                    return;
+                }
                 LOGGER.info("Created custom badge images directory at: {}", badgeDir.getAbsolutePath());
                 createReadmeFile(badgeDir);
                 customImagesLoaded = true;
