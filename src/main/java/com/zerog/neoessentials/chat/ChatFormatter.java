@@ -1,11 +1,12 @@
 package com.zerog.neoessentials.chat;
 
-import com.zerog.neoessentials.api.PlaceholderAPI;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.ChatFormatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,11 @@ import java.util.regex.Matcher;
 /**
  * ChatFormatter handles chat message formatting with proper color code support.
  * Supports both legacy (&) and section (§) color codes, plus hex colors (&#RRGGBB).
+ *
+ * Phase 2 Enhancements:
+ * - Clickable URLs (auto-detection)
+ * - @mention system with sound notifications
+ * - [item] links showing held items
  */
 public class ChatFormatter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatFormatter.class);
@@ -26,51 +32,99 @@ public class ChatFormatter {
     private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&([0-9a-f])");
     private static final Pattern FORMAT_CODE_PATTERN = Pattern.compile("&([k-or])");
     
+    // Phase 2: Enhancement patterns
+    @SuppressWarnings("RegExpDuplicateCharacterInClass") // Period in char class is intentional
+    private static final Pattern URL_PATTERN = Pattern.compile(
+        "\\b(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%.]+)\\b",
+        Pattern.CASE_INSENSITIVE
+    );
+    private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]{3,16})\\b");
+    private static final Pattern ITEM_PATTERN = Pattern.compile("\\[item]", Pattern.CASE_INSENSITIVE);
     /**
      * Formats a chat message using the provided template and player context.
      */
     public static Component formatMessage(String template, ServerPlayer player, String message) {
         try {
-            LOGGER.info("=== CHAT FORMATTING DEBUG ===");
-            LOGGER.info("Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
-            LOGGER.info("Original message: [{}]", message);
-            LOGGER.info("Template: [{}]", template);
-            
+            boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+
+            if (debugEnabled) {
+                LOGGER.info("=== CHAT FORMATTING DEBUG ===");
+                LOGGER.info("Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
+                LOGGER.info("Original message: [{}]", message);
+                LOGGER.info("Template: [{}]", template);
+            }
+
             // Normalize placeholders to new format
             String normalizedTemplate = normalizePlaceholders(template);
-            LOGGER.debug("After normalization: {}", normalizedTemplate);
-            
+            if (debugEnabled) {
+                LOGGER.debug("After normalization: {}", normalizedTemplate);
+            }
+
+            // Phase 3: Apply badges and icons to template
+            normalizedTemplate = BadgeManager.getInstance().applyBadgesAndIcons(player, normalizedTemplate);
+            if (debugEnabled) {
+                LOGGER.debug("After badges/icons: {}", normalizedTemplate);
+            }
+
             // Restrict colors in message BEFORE inserting into template
             String restrictedMessage = restrictPlayerMessageColors(message, player);
-            LOGGER.info("After color restriction: [{}]", restrictedMessage);
-            
+            if (debugEnabled) {
+                LOGGER.info("After color restriction: [{}]", restrictedMessage);
+            }
+
             // Directly replace {MESSAGE} before PlaceholderAPI processing
-            // This is simpler than using a temporary placeholder
             String preFormatted = normalizedTemplate.replace("{MESSAGE}", restrictedMessage);
-            LOGGER.info("After message insertion: [{}]", preFormatted);
-            
+            if (debugEnabled) {
+                LOGGER.info("After message insertion: [{}]", preFormatted);
+            }
+
             // Resolve all other placeholders via PlaceholderAPI
-            String formatted = PlaceholderAPI.setPlaceholders(player, preFormatted);
-            LOGGER.info("After placeholder resolution: [{}]", formatted);
-            
+            String formatted = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(player, preFormatted);
+            if (debugEnabled) {
+                LOGGER.info("After placeholder resolution: [{}]", formatted);
+            }
+
+            // Phase 4: Apply conditional formatting
+            formatted = ConditionalFormatter.processConditionals(player, formatted);
+            if (debugEnabled) {
+                LOGGER.info("After conditional formatting: [{}]", formatted);
+            }
+
             // Clean up formatting
             formatted = cleanupFormatting(formatted);
-            LOGGER.info("After cleanup: [{}]", formatted);
-            LOGGER.info("Final formatted message: [{}]", formatted);
-            
-            // Convert to Minecraft component with colors
-            Component result = parseToComponent(formatted);
-            LOGGER.info("=== END CHAT FORMATTING DEBUG ===");
+            if (debugEnabled) {
+                LOGGER.info("After cleanup: [{}]", formatted);
+            }
+
+            // Phase 4: Apply rich text effects (gradients, rainbow)
+            Component richTextResult = RichTextFormatter.processRichText(formatted);
+            if (debugEnabled) {
+                LOGGER.info("After rich text: [{}]", richTextResult.getString());
+            }
+
+            // Apply Phase 2 enhancements if enabled
+            Component result;
+            if (isChatEnhancementsEnabled()) {
+                // Convert component back to string for enhancement processing
+                String richTextString = componentToFormattedString(richTextResult);
+                result = enhanceMessage(richTextString, player, player.getServer());
+            } else {
+                result = richTextResult;
+            }
+
+            if (debugEnabled) {
+                LOGGER.info("=== END CHAT FORMATTING DEBUG ===");
+            }
             return result;
-            
+
         } catch (Exception e) {
-            LOGGER.error("Failed to format chat message for player {}: {}", 
+            LOGGER.error("Failed to format chat message for player {}: {}",
                 player.getName().getString(), e.getMessage(), e);
             // Fallback
             return Component.literal(player.getName().getString() + ": " + message);
         }
     }
-    
+
     /**
      * Restrict color codes in player's message based on config and permissions.
      * Returns the message with disallowed color codes removed.
@@ -152,7 +206,10 @@ public class ChatFormatter {
     /**
      * Parse text with color codes to Minecraft Component.
      * Supports: §/& color codes (0-9, a-f), format codes (k-o, r), and hex (&#RRGGBB)
+     *
+     * Note: This method is kept for fallback scenarios when ChatEnhancer is disabled.
      */
+    @SuppressWarnings("unused") // Used as fallback when enhancements disabled
     private static Component parseToComponent(String text) {
         MutableComponent result = Component.empty();
         
@@ -295,5 +352,335 @@ public class ChatFormatter {
     @SuppressWarnings("unused") // Public API method - may be used by other plugins/mods
     public static String getDefaultFormat() {
         return "{neoessentials_prefix}{neoessentials_displayname}{neoessentials_suffix}: {MESSAGE}";
+    }
+
+    // ============================================================
+    // Phase 2: Interactive Chat Enhancements
+    // ============================================================
+
+    /**
+     * Check if chat enhancements are enabled in config.
+     */
+    private static boolean isChatEnhancementsEnabled() {
+        try {
+            return com.zerog.neoessentials.config.ConfigManager.getInstance()
+                .getConfig("chat").get("enableChatEnhancements").getAsBoolean();
+        } catch (Exception e) {
+            return true; // Default enabled
+        }
+    }
+
+    /**
+     * Enhance a formatted message with interactive components.
+     */
+    private static Component enhanceMessage(String formattedMessage, ServerPlayer player, net.minecraft.server.MinecraftServer server) {
+        try {
+            // Process [item] links first
+            String processed = processItemLinks(formattedMessage, player);
+            // Then build interactive component with URLs and mentions
+            return buildInteractiveComponent(processed, player, server);
+        } catch (Exception e) {
+            LOGGER.error("Error enhancing chat message: {}", e.getMessage(), e);
+            return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(formattedMessage);
+        }
+    }
+
+    /**
+     * Process [item] placeholders and replace with item name.
+     */
+    private static String processItemLinks(String message, ServerPlayer player) {
+        if (!isItemLinksEnabled()) {
+            return message;
+        }
+
+        Matcher matcher = ITEM_PATTERN.matcher(message);
+        StringBuilder result = new StringBuilder();
+
+        while (matcher.find()) {
+            var mainHandItem = player.getMainHandItem();
+            if (!mainHandItem.isEmpty()) {
+                String itemName = mainHandItem.getHoverName().getString();
+                matcher.appendReplacement(result, "§ITEM§" + itemName + "§/ITEM§");
+            } else {
+                matcher.appendReplacement(result, "[Empty Hand]");
+            }
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
+
+    /**
+     * Build interactive component with clickable URLs, mentions, and item links.
+     */
+    private static Component buildInteractiveComponent(String text, ServerPlayer sender, net.minecraft.server.MinecraftServer server) {
+        String processed = text;
+
+        // Process URLs first
+        if (isUrlDetectionEnabled()) {
+            processed = markupUrls(processed);
+        }
+
+        // Then process mentions
+        if (isMentionsEnabled()) {
+            processed = markupMentions(processed, sender, server);
+        }
+
+        // Build final component from marked-up text
+        return buildComponentFromMarkup(processed, sender);
+    }
+
+    /**
+     * Markup URLs for later component creation.
+     */
+    private static String markupUrls(String text) {
+        Matcher matcher = URL_PATTERN.matcher(text);
+        StringBuilder result = new StringBuilder();
+
+        while (matcher.find()) {
+            String url = matcher.group(1);
+            matcher.appendReplacement(result, "§URL§" + url + "§/URL§");
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
+
+    /**
+     * Markup mentions and play sounds.
+     */
+    private static String markupMentions(String text, ServerPlayer sender, net.minecraft.server.MinecraftServer server) {
+        Matcher matcher = MENTION_PATTERN.matcher(text);
+        StringBuilder result = new StringBuilder();
+
+        while (matcher.find()) {
+            String mentionedName = matcher.group(1);
+            ServerPlayer mentioned = server.getPlayerList().getPlayerByName(mentionedName);
+
+            if (mentioned != null) {
+                matcher.appendReplacement(result, "§MENTION§" + mentionedName + "§/MENTION§");
+
+                // Play sound if enabled and not self-mention
+                if (isMentionSoundEnabled() && !mentioned.getUUID().equals(sender.getUUID())) {
+                    playMentionSound(mentioned);
+                }
+            } else {
+                matcher.appendReplacement(result, "@" + mentionedName);
+            }
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
+
+    /**
+     * Build final component from marked-up text.
+     */
+    private static Component buildComponentFromMarkup(String markup, ServerPlayer sender) {
+        MutableComponent result = Component.empty();
+        int index = 0;
+
+        while (index < markup.length()) {
+            // Check for ITEM marker
+            int itemStart = markup.indexOf("§ITEM§", index);
+            if (itemStart == index) {
+                int itemEnd = markup.indexOf("§/ITEM§", itemStart);
+                if (itemEnd != -1) {
+                    String itemName = markup.substring(itemStart + 6, itemEnd);
+                    result.append(createItemComponent(itemName, sender));
+                    index = itemEnd + 7;
+                    continue;
+                }
+            }
+
+            // Check for URL marker
+            int urlStart = markup.indexOf("§URL§", index);
+            if (urlStart == index) {
+                int urlEnd = markup.indexOf("§/URL§", urlStart);
+                if (urlEnd != -1) {
+                    String url = markup.substring(urlStart + 5, urlEnd);
+                    result.append(com.zerog.neoessentials.util.ChatComponentUtil.createClickableUrl(url, url, "Click to open in browser\n" + url));
+                    index = urlEnd + 6;
+                    continue;
+                }
+            }
+
+            // Check for MENTION marker
+            int mentionStart = markup.indexOf("§MENTION§", index);
+            if (mentionStart == index) {
+                int mentionEnd = markup.indexOf("§/MENTION§", mentionStart);
+                if (mentionEnd != -1) {
+                    String playerName = markup.substring(mentionStart + 9, mentionEnd);
+                    result.append(createMentionComponent(playerName));
+                    index = mentionEnd + 10;
+                    continue;
+                }
+            }
+
+            // Find next marker
+            int nextMarker = markup.length();
+            int[] markers = {
+                markup.indexOf("§ITEM§", index),
+                markup.indexOf("§URL§", index),
+                markup.indexOf("§MENTION§", index)
+            };
+
+            for (int m : markers) {
+                if (m != -1 && m < nextMarker) nextMarker = m;
+            }
+
+            // Add plain text segment
+            if (nextMarker > index) {
+                String plainText = markup.substring(index, nextMarker);
+                result.append(com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(plainText));
+                index = nextMarker;
+            } else {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Create item component using ChatComponentUtil as base.
+     */
+    private static Component createItemComponent(String itemName, ServerPlayer player) {
+        var mainHandItem = player.getMainHandItem();
+
+        MutableComponent component = Component.literal("[" + itemName + "]")
+            .withStyle(ChatFormatting.AQUA)
+            .withStyle(ChatFormatting.UNDERLINE);
+
+        if (!mainHandItem.isEmpty()) {
+            component.setStyle(component.getStyle()
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM,
+                    new HoverEvent.ItemStackInfo(mainHandItem)))
+            );
+        }
+
+        return component;
+    }
+
+    /**
+     * Create mention component using consistent styling.
+     */
+    private static Component createMentionComponent(String playerName) {
+        ChatFormatting color = getMentionColor();
+
+        return Component.literal("@" + playerName)
+            .withStyle(color)
+            .withStyle(ChatFormatting.BOLD)
+            .withStyle(style -> style
+                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    Component.literal("Click to message " + playerName).withStyle(ChatFormatting.GRAY)))
+            );
+    }
+
+    /**
+     * Play mention sound to a player.
+     */
+    private static void playMentionSound(ServerPlayer player) {
+        try {
+            float volume = getMentionSoundVolume();
+            player.playNotifySound(
+                net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP,
+                net.minecraft.sounds.SoundSource.PLAYERS,
+                volume,
+                1.0f
+            );
+        } catch (Exception e) {
+            LOGGER.debug("Failed to play mention sound: {}", e.getMessage());
+        }
+    }
+
+    // Config helper methods
+
+    private static boolean isItemLinksEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("allowItemLinks")) {
+                return chatConfig.get("allowItemLinks").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static boolean isUrlDetectionEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("autoLinkUrls")) {
+                return chatConfig.get("autoLinkUrls").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static boolean isMentionsEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("enabled")) {
+                return chatConfig.getAsJsonObject("mentions").get("enabled").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static boolean isMentionSoundEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("playSound")) {
+                return chatConfig.getAsJsonObject("mentions").get("playSound").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static ChatFormatting getMentionColor() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("highlightColor")) {
+                String color = chatConfig.getAsJsonObject("mentions").get("highlightColor").getAsString();
+                if (color.startsWith("&") && color.length() == 2) {
+                    char code = color.charAt(1);
+                    ChatFormatting formatting = ChatFormatting.getByCode(code);
+                    if (formatting != null) return formatting;
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return ChatFormatting.YELLOW;
+    }
+
+    private static float getMentionSoundVolume() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("soundVolume")) {
+                return chatConfig.getAsJsonObject("mentions").get("soundVolume").getAsFloat();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return 1.0f;
+    }
+
+    /**
+     * Convert component back to formatted string for further processing.
+     * This is a simple conversion - for complex components, use getString().
+     */
+    private static String componentToFormattedString(Component component) {
+        // For now, just get the plain string
+        // In future, could preserve formatting codes
+        return component.getString();
     }
 }

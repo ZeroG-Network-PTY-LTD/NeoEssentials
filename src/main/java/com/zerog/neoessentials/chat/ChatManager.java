@@ -151,11 +151,33 @@ public class ChatManager {
 
     /**
      * Returns the chat format for a given group and/or world.
-     * Priority: group+world > group > world > default
+     * Priority: templates (if enabled) > group+world > group > world > default
      * @param group Player's primary group (null if unknown)
      * @param world Player's world (null if unknown)
      */
     public String getChatFormat(String group, String world) {
+        // Phase 3: Check if format templates are enabled
+        try {
+            com.google.gson.JsonObject chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("formatTemplates")) {
+                com.google.gson.JsonObject templates = chatConfig.getAsJsonObject("formatTemplates");
+                if (templates.has("enabled") && templates.get("enabled").getAsBoolean()) {
+                    String activeTemplate = templates.has("activeTemplate") ?
+                        templates.get("activeTemplate").getAsString() : "default";
+
+                    if (templates.has("templates")) {
+                        com.google.gson.JsonObject templateMap = templates.getAsJsonObject("templates");
+                        if (templateMap.has(activeTemplate)) {
+                            return templateMap.get(activeTemplate).getAsString();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore, fall through to normal format selection
+        }
+
+        // Normal format selection
         // Try group+world
         if (group != null && world != null) {
             String key = "group:" + group.toLowerCase() + ":world:" + world.toLowerCase();
