@@ -180,8 +180,9 @@ public class ResourcePackGenerator {
             Files.delete(zipFile);
         }
 
-        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile))) {
-            Files.walk(sourceDir)
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile));
+             var pathStream = Files.walk(sourceDir)) {
+            pathStream
                 .filter(path -> !Files.isDirectory(path))
                 .forEach(path -> {
                     try {
@@ -255,15 +256,17 @@ public class ResourcePackGenerator {
     private static void deleteDirectory(Path dir) {
         try {
             if (Files.exists(dir)) {
-                Files.walk(dir)
-                    .sorted(java.util.Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            // Ignore
-                        }
-                    });
+                try (var pathStream = Files.walk(dir)) {
+                    pathStream
+                        .sorted(java.util.Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (IOException e) {
+                                // Ignore
+                            }
+                        });
+                }
             }
         } catch (IOException e) {
             LOGGER.warn("Failed to cleanup temp directory: {}", e.getMessage());

@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.resourcepack;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -14,11 +13,13 @@ import java.nio.file.Paths;
 
 /**
  * Resource Pack Manager - Automatically sends badge resource pack to players
- *
  * Handles:
  * - Sending resource pack to players on join
  * - Tracking pack application status
  * - Fallback to emoji badges if pack declined
+ *
+ * NOTE: Resource pack auto-send is currently disabled pending full implementation.
+ * The pack generation works, but auto-sending requires additional setup.
  */
 @EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
 public class ResourcePackManager {
@@ -105,24 +106,28 @@ public class ResourcePackManager {
 
     /**
      * Send resource pack to a player.
+     *
+     * NOTE: Currently disabled - requires proper resource pack hosting and NeoForge API update.
+     * For now, admins should use server.properties resource-pack settings.
      */
+    @SuppressWarnings("unused")
     public void sendResourcePack(ServerPlayer player) {
         if (!autoSendEnabled || resourcePackUrl == null) {
             return;
         }
 
         try {
-            boolean required = isPackRequired();
+            // TODO: Implement proper resource pack sending via NeoForge API
+            // The sendTexturePack method doesn't exist in current NeoForge version
+            // Alternative: Use server.properties or wait for API update
 
-            Component prompt = Component.literal(getPackPrompt());
-
+            LOGGER.debug("Resource pack auto-send requested for player: {}", player.getName().getString());
+            LOGGER.warn("Auto-send not yet implemented - please configure server.properties");
+            LOGGER.warn("Add to server.properties:");
+            LOGGER.warn("  resource-pack={}", resourcePackUrl);
             if (resourcePackHash != null) {
-                player.sendTexturePack(resourcePackUrl, resourcePackHash, required, prompt);
-            } else {
-                player.sendTexturePack(resourcePackUrl, "", required, prompt);
+                LOGGER.warn("  resource-pack-sha1={}", resourcePackHash);
             }
-
-            LOGGER.debug("Sent resource pack to player: {}", player.getName().getString());
 
         } catch (Exception e) {
             LOGGER.error("Failed to send resource pack to {}: {}", player.getName().getString(), e.getMessage());
@@ -135,15 +140,18 @@ public class ResourcePackManager {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            // Send resource pack after a short delay
-            player.getServer().execute(() -> {
-                try {
-                    Thread.sleep(1000); // 1 second delay
-                    getInstance().sendResourcePack(player);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
+            var server = player.getServer();
+            if (server != null) {
+                // Send resource pack after a short delay
+                server.execute(() -> {
+                    try {
+                        Thread.sleep(1000); // 1 second delay
+                        getInstance().sendResourcePack(player);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            }
         }
     }
 
@@ -179,6 +187,7 @@ public class ResourcePackManager {
         return false;
     }
 
+    @SuppressWarnings("unused") // For future use when auto-send is implemented
     private boolean isPackRequired() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
@@ -209,6 +218,7 @@ public class ResourcePackManager {
         return null;
     }
 
+    @SuppressWarnings("unused") // For future use when auto-send is implemented
     private String getPackPrompt() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");

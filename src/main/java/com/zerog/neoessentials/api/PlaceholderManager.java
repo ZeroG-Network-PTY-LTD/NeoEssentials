@@ -198,8 +198,7 @@ public class PlaceholderManager {
      */
     private String getLuckPermsPrefix(ServerPlayer player) {
         try {
-            String prefix = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(player.getUUID());
-            return prefix != null ? prefix : "";
+            return com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(player.getUUID());
         } catch (Exception e) {
             LOGGER.debug("Error getting LuckPerms prefix: {}", e.getMessage());
             return "";
@@ -212,8 +211,7 @@ public class PlaceholderManager {
      */
     private String getLuckPermsSuffix(ServerPlayer player) {
         try {
-            String suffix = com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(player.getUUID());
-            return suffix != null ? suffix : "";
+            return com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(player.getUUID());
         } catch (Exception e) {
             LOGGER.debug("Error getting LuckPerms suffix: {}", e.getMessage());
             return "";
