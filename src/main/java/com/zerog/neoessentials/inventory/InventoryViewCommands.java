@@ -21,13 +21,11 @@ import javax.annotation.Nonnull;
 
 /**
  * Commands for viewing and editing other players' inventories
- *
  * Commands:
  * - /invsee player - View another player's inventory (read-only)
  * - /invseeedit player - View and edit another player's inventory
  * - /enderchest player - View another player's ender chest (read-only)
  * - /enderchestedit player - View and edit another player's ender chest
- *
  * Permissions:
  * - neoessentials.invsee - View other players' inventories
  * - neoessentials.invsee.edit - Edit other players' inventories
