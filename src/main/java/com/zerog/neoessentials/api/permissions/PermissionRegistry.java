@@ -307,6 +307,8 @@ public class PermissionRegistry {
         register("neoessentials.chat.format", "Use formatting codes in chat (&k-o, &r)", PermissionCategory.CHAT, false);
 
         // Chat channels and features
+        register("neoessentials.chat.channel.local", "Use local chat channel", PermissionCategory.CHAT, true);
+        register("neoessentials.chat.channel.global", "Use global chat channel", PermissionCategory.CHAT, true);
         register("neoessentials.chat.staff", "Access to staff chat channel", PermissionCategory.CHAT, false);
         register("neoessentials.chat.mention", "Mention other players with @name", PermissionCategory.CHAT, true);
         register("neoessentials.chat.mention.all", "Mention everyone with @everyone", PermissionCategory.CHAT, false);

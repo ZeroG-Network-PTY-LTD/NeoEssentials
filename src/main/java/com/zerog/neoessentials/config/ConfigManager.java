@@ -1126,6 +1126,8 @@ public class ConfigManager {
     /**
      * Retrieve the config object for the given config file name.
      * Loads and caches the config if not already loaded.
+     * Supports split configs - if config.json is requested and split configs are enabled,
+     * returns merged view of all split config files.
      */
     public JsonObject getConfig(String configName) {
         lock.readLock().lock();
@@ -1134,6 +1136,14 @@ public class ConfigManager {
             if (configCache.containsKey(configName)) {
                 return configCache.get(configName);
             }
+
+            // Special handling for config.json when split configs are enabled
+            if (configName.equals(MAIN_CONFIG) && ConfigSplitter.isSplittingEnabled()) {
+                JsonObject merged = ConfigSplitter.mergeSplitConfigs();
+                configCache.put(configName, merged);
+                return merged;
+            }
+
             File file = ResourceUtil.getConfigFile(configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
             JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
@@ -1176,8 +1186,16 @@ public class ConfigManager {
     public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
 
     // Config version tracking - increment when structure changes
-    // private static final String CONFIG_VERSION_KEY = "_configVersion";
-    // private static final int CURRENT_CONFIG_VERSION = 8;
+    private static final String CONFIG_VERSION_KEY = "_configVersion";
+
+    // Expected versions for each config file (must match the version in JAR resources)
+    private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<String, Integer>() {{
+        put(MAIN_CONFIG, 13);
+        put(ECONOMY_CONFIG, 2);
+        put(PERMISSIONS_CONFIG, 5);
+        put(KITS_CONFIG, 1);
+        put(DISCORD_AUTH_CONFIG, 5);
+    }};
 
     private ConfigManager() {
         // On first construction, ensure all required config files exist
@@ -1194,30 +1212,102 @@ public class ConfigManager {
         for (String configName : requiredConfigs) {
             File configFile = ResourceUtil.getConfigFile(configName);
             if (!configFile.exists()) {
-                try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
-                    if (in != null) {
-                        // Ensure parent directories exist
-                        File parentDir = configFile.getParentFile();
-                        if (parentDir != null && !parentDir.exists()) {
-                            if (!parentDir.mkdirs()) {
-                                LOGGER.warn("Failed to create parent directories for {}", configFile.getAbsolutePath());
-                            }
-                        }
-                        try (OutputStream out = new FileOutputStream(configFile)) {
-                            byte[] buffer = new byte[8192];
-                            int len;
-                            while ((len = in.read(buffer)) > 0) {
-                                out.write(buffer, 0, len);
-                            }
-                        }
-                        LOGGER.info("Copied default config {} to {}", configName, configFile.getAbsolutePath());
-                    } else {
-                        LOGGER.warn("Default config resource not found in JAR: {}", configName);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Failed to copy default config {}: {}", configName, e.getMessage());
-                }
+                copyDefaultConfig(configName, configFile);
+            } else {
+                // Config exists - check if it needs updating
+                checkAndUpdateConfigVersion(configName, configFile);
             }
+        }
+    }
+
+    /**
+     * Check if a config file needs updating based on version mismatch.
+     * If the file version is older than expected, backup and replace with new version.
+     */
+    private void checkAndUpdateConfigVersion(String configName, File configFile) {
+        Integer expectedVersion = EXPECTED_CONFIG_VERSIONS.get(configName);
+        if (expectedVersion == null) {
+            return; // No version tracking for this config
+        }
+
+        try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
+            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
+
+            int currentVersion = 0;
+            if (config.has(CONFIG_VERSION_KEY)) {
+                currentVersion = config.get(CONFIG_VERSION_KEY).getAsInt();
+            }
+
+            if (currentVersion < expectedVersion) {
+                LOGGER.warn("Config file {} is outdated (version {} < {}). Backing up and updating...",
+                    configName, currentVersion, expectedVersion);
+
+                // Create backup of old config
+                createConfigBackup(configFile, currentVersion);
+
+                // Replace with new version from JAR
+                copyDefaultConfig(configName, configFile);
+
+                // Clear cache to force reload
+                configCache.remove(configName);
+
+                LOGGER.info("Config file {} has been updated to version {}", configName, expectedVersion);
+            } else if (currentVersion > expectedVersion) {
+                LOGGER.warn("Config file {} has a newer version ({}) than expected ({}). This may cause issues.",
+                    configName, currentVersion, expectedVersion);
+            } else {
+                LOGGER.debug("Config file {} is up to date (version {})", configName, currentVersion);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check version for config {}: {}", configName, e.getMessage());
+        }
+    }
+
+    /**
+     * Create a timestamped backup of a config file.
+     */
+    private void createConfigBackup(File configFile, int oldVersion) {
+        try {
+            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
+            String backupName = configFile.getName().replace(".json",
+                String.format("_v%d_backup_%s.json", oldVersion, timestamp));
+            File backupFile = new File(configFile.getParentFile(), backupName);
+
+            java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            LOGGER.info("Created backup of old config: {}", backupFile.getName());
+        } catch (Exception e) {
+            LOGGER.error("Failed to create backup for {}: {}", configFile.getName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Copy default config from JAR resources to the config directory.
+     */
+    private void copyDefaultConfig(String configName, File configFile) {
+        try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
+            if (in != null) {
+                // Ensure parent directories exist
+                File parentDir = configFile.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    if (!parentDir.mkdirs()) {
+                        LOGGER.warn("Failed to create parent directories for {}", configFile.getAbsolutePath());
+                    }
+                }
+                try (OutputStream out = new FileOutputStream(configFile)) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+                LOGGER.info("Copied default config {} to {}", configName, configFile.getAbsolutePath());
+            } else {
+                LOGGER.warn("Default config resource not found in JAR: {}", configName);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to copy default config {}: {}", configName, e.getMessage());
         }
     }
 

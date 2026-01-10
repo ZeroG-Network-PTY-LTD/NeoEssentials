@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 
 /**
  * Rich Text Formatter - Phase 4
- *
  * Provides advanced text effects:
  * - Gradient text (<gradient:start-end>text</gradient>)
  * - Rainbow text (<rainbow>text</rainbow>)

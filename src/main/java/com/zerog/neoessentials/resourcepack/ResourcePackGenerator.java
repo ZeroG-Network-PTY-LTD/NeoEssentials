@@ -16,7 +16,6 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Resource Pack Generator - Phase 3 Custom Badge Images
- *
  * Automatically generates a resource pack from badge images in config/neoessentials/badges/
  * Creates proper font definitions and pack structure
  */

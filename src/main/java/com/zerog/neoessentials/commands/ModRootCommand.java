@@ -274,6 +274,53 @@ public class ModRootCommand {
         }
     }
 
+    private static int splitConfiguration(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        
+        try {
+            // Check if already using split configs
+            if (com.zerog.neoessentials.config.ConfigSplitter.isSplittingEnabled()) {
+                source.sendSuccess(() -> MessageUtil.warning("Split configs are already enabled!"), false);
+                source.sendSuccess(() -> MessageUtil.info("Config files are already split into smaller files."), false);
+                return 0;
+            }
+            
+            source.sendSuccess(() -> MessageUtil.info("§6========================================"), false);
+            source.sendSuccess(() -> MessageUtil.info("§eMigrating to split configuration files..."), false);
+            source.sendSuccess(() -> MessageUtil.info("§6========================================"), false);
+            
+            // Perform the migration
+            boolean success = com.zerog.neoessentials.config.ConfigSplitter.migrateToSplitConfigs();
+            
+            if (success) {
+                source.sendSuccess(() -> MessageUtil.success("✓ Successfully migrated to split configs!"), false);
+                source.sendSuccess(() -> MessageUtil.info("§aYour config.json has been split into smaller files:"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - main.json (modules, logging, permissions)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - commands.json (command enable/disable)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - chat.json (chat system settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - teleportation.json (teleport settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - moderation.json (ban, jail, freeze, etc.)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - webdashboard.json (web interface settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - items.json (item spawn settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - afk.json (AFK system settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("  - security.json (security settings)"), false);
+                source.sendSuccess(() -> MessageUtil.info("§eOriginal config backed up to: config.json.backup"), false);
+                source.sendSuccess(() -> MessageUtil.info("§aReload configs with: /neoessentials reload"), false);
+                
+                LOGGER.info("Configuration split completed successfully by {}", source.getTextName());
+                return 1;
+            } else {
+                source.sendFailure(MessageUtil.error("Failed to split configuration. Check console for details."));
+                return 0;
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to split configuration: {}", e.getMessage(), e);
+            source.sendFailure(MessageUtil.error("An error occurred while splitting configs: " + e.getMessage()));
+            return 0;
+        }
+    }
+
     private static int dispatchToModCommand(CommandContext<CommandSourceStack> ctx) {
         String commandString = StringArgumentType.getString(ctx, "command");
         CommandSourceStack source = ctx.getSource();

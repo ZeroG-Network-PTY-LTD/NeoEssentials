@@ -25,9 +25,33 @@ public class ChatHandler {
      * Only applies custom formatting when chat-format is configured,
      * otherwise preserves vanilla playername: message format.
      */
-    // Per-player channel state (will be populated by future /channel command)
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    // Per-player channel state
     private static final java.util.Map<java.util.UUID, String> playerChannelMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Set the channel for a specific player
+     */
+    public static void setPlayerChannel(java.util.UUID playerUUID, String channel) {
+        if (channel == null || channel.isEmpty()) {
+            playerChannelMap.remove(playerUUID);
+        } else {
+            playerChannelMap.put(playerUUID, channel);
+        }
+    }
+
+    /**
+     * Get the current channel for a player
+     */
+    public static String getPlayerChannel(java.util.UUID playerUUID) {
+        return playerChannelMap.get(playerUUID);
+    }
+
+    /**
+     * Clear channel for a player (revert to default)
+     */
+    public static void clearPlayerChannel(java.util.UUID playerUUID) {
+        playerChannelMap.remove(playerUUID);
+    }
 
     @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {
@@ -188,58 +212,62 @@ public class ChatHandler {
                 // Format the message using our custom formatter
                 Component formattedMessage = ChatFormatter.formatMessage(chatFormat, player, message);
                 // Route message based on channel
-                if (channel.equals("local")) {
-                    // Local: send to players within radius
-                    int radius = 100;
-                    if (channelsConfig != null && channelsConfig.has("local")) {
-                        var localObj = channelsConfig.getAsJsonObject("local");
-                        if (localObj.has("radius")) radius = localObj.get("radius").getAsInt();
-                    }
-                    var playerPos = player.position();
-                    var server = player.getServer();
-                    @SuppressWarnings("ConstantConditions") // Defensive null check
-                    var playerList = server != null ? server.getPlayerList() : null;
-                    if (playerList != null) {
+                // Get channel config for dynamic routing
+                JsonObject channelObj = null;
+                if (channelsConfig != null && channelsConfig.has(channel)) {
+                    channelObj = channelsConfig.getAsJsonObject(channel);
+                }
+                
+                // Check if channel has radius (proximity-based)
+                boolean hasRadius = channelObj != null && channelObj.has("radius");
+                int radius = hasRadius ? channelObj.get("radius").getAsInt() : 0;
+                
+                // Check if channel has permission requirement
+                String requiredPermission = null;
+                if (channelObj != null && channelObj.has("permission")) {
+                    requiredPermission = channelObj.get("permission").getAsString();
+                }
+                
+                var server = player.getServer();
+                @SuppressWarnings("ConstantConditions") // Defensive null check
+                var playerList = server != null ? server.getPlayerList() : null;
+                
+                if (playerList != null) {
+                    if (hasRadius) {
+                        // Proximity-based channel (local, whisper, shout, etc.)
+                        var playerPos = player.position();
                         @SuppressWarnings("resource") // Level is not closeable, warning is false positive
                         var playerLevel = player.level();
+                        
                         for (ServerPlayer target : playerList.getPlayers()) {
+                            // Check permission first if required
+                            if (requiredPermission != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), requiredPermission)) {
+                                continue;
+                            }
+                            
+                            // Check proximity
                             @SuppressWarnings("resource") // Level is not closeable, warning is false positive
                             var targetLevel = target.level();
                             if (targetLevel.dimension().equals(playerLevel.dimension()) && target.position().distanceTo(playerPos) <= radius) {
                                 target.sendSystemMessage(formattedMessage);
                             }
                         }
-                    }
-                    LOGGER.debug("[Local] {}: {}", playerName, message);
-                } else if (channel.equals("staff")) {
-                    // Staff: send to players with permission
-                    String perm = "neoessentials.chat.staff";
-                    if (channelsConfig != null && channelsConfig.has("staff")) {
-                        var staffObj = channelsConfig.getAsJsonObject("staff");
-                        if (staffObj.has("permission")) perm = staffObj.get("permission").getAsString();
-                    }
-                    var server = player.getServer();
-                    @SuppressWarnings("ConstantConditions") // Defensive null check
-                    var playerList = server != null ? server.getPlayerList() : null;
-                    if (playerList != null) {
+                        LOGGER.debug("[{}] (radius: {}) {}: {}", channel, radius, playerName, message);
+                    } else if (requiredPermission != null) {
+                        // Permission-based channel (staff, admin, donor, etc.)
                         for (ServerPlayer target : playerList.getPlayers()) {
-                            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), perm)) {
+                            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), requiredPermission)) {
                                 target.sendSystemMessage(formattedMessage);
                             }
                         }
-                    }
-                    LOGGER.debug("[Staff] {}: {}", playerName, message);
-                } else {
-                    // Global: send to all players
-                    var server = player.getServer();
-                    @SuppressWarnings("ConstantConditions") // Defensive null check
-                    var playerList = server != null ? server.getPlayerList() : null;
-                    if (playerList != null) {
+                        LOGGER.debug("[{}] (permission: {}) {}: {}", channel, requiredPermission, playerName, message);
+                    } else {
+                        // Global channel (no radius, no permission)
                         for (ServerPlayer target : playerList.getPlayers()) {
                             target.sendSystemMessage(formattedMessage);
                         }
+                        LOGGER.debug("[{}] (global) {}: {}", channel, playerName, message);
                     }
-                    LOGGER.debug("[Global] {}: {}", playerName, message);
                 }
             } // else: do not cancel event, let vanilla formatting happen
 

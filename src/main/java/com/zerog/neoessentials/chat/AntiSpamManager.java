@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 
 /**
  * Anti-Spam Filter Manager - Phase 3
- *
  * Handles:
  * - Caps filter (SHOUTING detection)
  * - Repeat filter (duplicate message prevention)
@@ -26,6 +25,7 @@ public class AntiSpamManager {
     private static volatile AntiSpamManager instance;
 
     // URL pattern for link detection
+    @SuppressWarnings("RegExpDuplicateCharacterInClass") // Period appears in both ._  and %. - intentional for URL matching
     private static final Pattern URL_PATTERN = Pattern.compile(
         "\\b(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%.]+)\\b",
         Pattern.CASE_INSENSITIVE

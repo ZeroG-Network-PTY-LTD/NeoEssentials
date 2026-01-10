@@ -9,13 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ChatManager handles all chat-related configuration, toggles, and logic for NeoEssentials.
- *
  * Responsibilities:
  *   - Loads and provides access to chat config options (join/quit messages, AFK, muting, etc.)
  *   - Provides enable/disable toggles for each chat command
  *   - Exposes permission and mute/ignore logic for chat features
  *   - Can be extended for advanced formatting, localization, and plugin integration
- *
  * Suggestions for future improvements:
  *   - Localize all user-facing messages (see en_us.json)
  *   - Add advanced formatting (hover/click events, color codes)
