@@ -292,7 +292,7 @@ public class ModRootCommand {
         
         try {
             // Check if already using split configs
-            if (com.zerog.neoessentials.config.ConfigSplitter.isSplittingEnabled()) {
+            if (ConfigSplitter.isSplittingEnabled()) {
                 source.sendSuccess(() -> MessageUtil.warning("Split configs are already enabled!"), false);
                 source.sendSuccess(() -> MessageUtil.info("Config files are already split into smaller files."), false);
                 return 0;
@@ -303,8 +303,8 @@ public class ModRootCommand {
             source.sendSuccess(() -> MessageUtil.info("§6========================================"), false);
             
             // Perform the migration
-            boolean success = com.zerog.neoessentials.config.ConfigSplitter.migrateToSplitConfigs();
-            
+            boolean success = ConfigSplitter.migrateToSplitConfigs();
+
             if (success) {
                 source.sendSuccess(() -> MessageUtil.success("✓ Successfully migrated to split configs!"), false);
                 source.sendSuccess(() -> MessageUtil.info("§aYour config.json has been split into smaller files:"), false);
@@ -390,6 +390,7 @@ public class ModRootCommand {
         }
     }
     
+    @SuppressWarnings("SameReturnValue") // Command success - always returns 1
     private static int showAvailableCommands(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         CommandRegistry registry = CommandRegistry.getInstance();
@@ -444,6 +445,7 @@ public class ModRootCommand {
      * @param commandName Command name to check
      * @return true if player has permission
      */
+    @SuppressWarnings("IfCanBeSwitch") // Current if-else structure is clearer for grouped permissions
     private static boolean hasCommandPermission(ServerPlayer player, String commandName) {
         // For economy commands
         if (commandName.equals("balance") || commandName.equals("pay") || commandName.equals("paytoggle") || 
