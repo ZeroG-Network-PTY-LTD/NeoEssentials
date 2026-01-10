@@ -211,19 +211,154 @@ public class ConfigSplitter {
     }
 
     /**
+     * Check if this is a fresh server installation (no configs exist yet)
+     */
+    @SuppressWarnings("unused") // Called from ConfigManager
+    public static boolean isFreshInstall() {
+        File configFile = ResourceUtil.getConfigFile("config.json");
+        File configDir = new File(ResourceUtil.CONFIG_DIR);
+
+        // Fresh install if config directory doesn't exist or is empty
+        if (!configDir.exists() || !configFile.exists()) {
+            return true;
+        }
+
+        // Also check if no split configs exist
+        return !isSplittingEnabled();
+    }
+
+    /**
+     * Auto-split configs for fresh installations
+     * This is called automatically for new servers
+     */
+    @SuppressWarnings("unused") // Called from ConfigManager
+    public static boolean autoSplitForFreshInstall() {
+        File configFile = ResourceUtil.getConfigFile("config.json");
+
+        // If config.json doesn't exist yet, this is truly fresh
+        if (!configFile.exists()) {
+            LOGGER.info("========================================");
+            LOGGER.info("Fresh NeoEssentials installation detected!");
+            LOGGER.info("Automatically creating split configuration files...");
+            LOGGER.info("========================================");
+
+            // Create split configs directly from JAR resources
+            return createSplitConfigsFromJar();
+        }
+
+        return false;
+    }
+
+    /**
+     * Create split configs directly from JAR resources (for fresh installs)
+     */
+    private static boolean createSplitConfigsFromJar() {
+        try {
+            // Create each split config file from JAR
+            Map<String, String> splitFiles = new LinkedHashMap<>() {{
+                put("main.json", "main.json");
+                put("commands.json", "commands.json");
+                put("chat.json", "chat.json");
+                put("security.json", "security.json");
+                put("items.json", "items.json");
+                put("afk.json", "afk.json");
+                put("moderation.json", "moderation.json");
+                put("teleportation.json", "teleportation.json");
+                put("webdashboard.json", "webdashboard.json");
+            }};
+
+            int successCount = 0;
+            for (Map.Entry<String, String> entry : splitFiles.entrySet()) {
+                String fileName = entry.getValue();
+                File targetFile = ResourceUtil.getConfigFile(fileName);
+
+                // Try to load from JAR resources (if they exist)
+                try (InputStream in = ResourceUtil.getJarConfigResource(fileName)) {
+                    if (in != null) {
+                        // Ensure parent directories exist
+                        File parentDir = targetFile.getParentFile();
+                        if (parentDir != null && !parentDir.exists()) {
+                            if (!parentDir.mkdirs()) {
+                                LOGGER.warn("Could not create parent directory for {}", fileName);
+                            }
+                        }
+
+                        try (FileOutputStream out = new FileOutputStream(targetFile)) {
+                            byte[] buffer = new byte[8192];
+                            int len;
+                            while ((len = in.read(buffer)) > 0) {
+                                out.write(buffer, 0, len);
+                            }
+                        }
+                        successCount++;
+                        LOGGER.info("  ✓ Created {}", fileName);
+                    }
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load {} from JAR, will be created later", fileName);
+                }
+            }
+
+            // Create marker file
+            File configDir = new File(ResourceUtil.CONFIG_DIR);
+            File marker = new File(configDir, ".split_configs");
+            if (marker.createNewFile()) {
+                LOGGER.info("✓ Enabled split configs mode");
+            }
+
+            LOGGER.info("========================================");
+            LOGGER.info("Split configuration files created successfully! ({} files)", successCount);
+            LOGGER.info("Your server is configured with easier-to-manage config files.");
+            LOGGER.info("========================================");
+
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to create split configs: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
      * Check if migration is needed and prompt admin
+     * Now only shows for existing servers with monolithic config
      */
     public static void checkAndPromptMigration() {
-        if (!isSplittingEnabled()) {
-            File configFile = ResourceUtil.getConfigFile("config.json");
-            if (configFile.exists()) {
-                LOGGER.info("========================================");
-                LOGGER.info("NOTICE: Large config.json detected!");
-                LOGGER.info("NeoEssentials now supports split configuration files for easier editing.");
-                LOGGER.info("To enable, run: /neoessentials config split");
-                LOGGER.info("This will split config.json into smaller, focused files.");
-                LOGGER.info("========================================");
-            }
+        // Don't prompt if already using split configs
+        if (isSplittingEnabled()) {
+            return;
         }
+
+        File configFile = ResourceUtil.getConfigFile("config.json");
+
+        // Only prompt if we have an existing monolithic config
+        if (configFile.exists()) {
+            LOGGER.info("========================================");
+            LOGGER.info("NOTICE: Large config.json detected!");
+            LOGGER.info("NeoEssentials now supports split configuration files for easier editing.");
+            LOGGER.info("To enable, run: /neoessentials config split");
+            LOGGER.info("This will split config.json into smaller, focused files.");
+            LOGGER.info("========================================");
+
+            // Set flag to notify online admins
+            shouldNotifyAdmins = true;
+        }
+    }
+
+    // Flag to track if we should notify admins about config splitting
+    private static boolean shouldNotifyAdmins = false;
+
+    /**
+     * Check if admins should be notified about config splitting
+     */
+    @SuppressWarnings("unused") // Called from NeoEssentials
+    public static boolean shouldNotifyAdmins() {
+        return shouldNotifyAdmins;
+    }
+
+    /**
+     * Mark that admins have been notified
+     */
+    @SuppressWarnings("unused") // Called from NeoEssentials
+    public static void markAdminsNotified() {
+        shouldNotifyAdmins = false;
     }
 }

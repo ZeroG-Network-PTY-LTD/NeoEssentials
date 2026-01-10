@@ -263,6 +263,51 @@ public class NeoEssentials {
         }
         
         @SubscribeEvent
+        public static void onPlayerLoggedIn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+            // Check if we should notify admins about config splitting
+            if (ConfigSplitter.shouldNotifyAdmins() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                // Check if player has permission (OP or wildcard permission)
+                if (player.hasPermissions(4) ||
+                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "*") ||
+                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.*") ||
+                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*")) {
+
+                    // Mark that we've notified admins (only show once per server start)
+                    ConfigSplitter.markAdminsNotified();
+
+                    // Send notification after a short delay to ensure player is fully connected
+                    net.minecraft.server.MinecraftServer server = player.getServer();
+                    if (server != null) {
+                        server.execute(() -> {
+                            try {
+                                Thread.sleep(2000); // 2 second delay
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§lNeoEssentials Configuration Notice"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your server is using a §elarge config.json§7 file."));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7NeoEssentials can §asplit§7 it into smaller, easier-to-edit files!"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Easier to find settings"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Less chance of syntax errors"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Better organization"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Automatic backup before splitting"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eRun: §b/neoessentials config split §eto enable"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
+                            } catch (InterruptedException e) {
+                                // Ignore
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        @SubscribeEvent
         public static void onServerStopping(ServerStoppingEvent event) {
             LOGGER.info("════════════════════════════════════════════════════════════════");
             LOGGER.info("Server stopping - shutting down NeoEssentials systems...");
