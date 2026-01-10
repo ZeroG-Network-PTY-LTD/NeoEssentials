@@ -178,7 +178,7 @@ public class NeoEssentials {
             
             // Check for config splitting opportunity
             try {
-                com.zerog.neoessentials.config.ConfigSplitter.checkAndPromptMigration();
+                ConfigSplitter.checkAndPromptMigration();
             } catch (Exception e) {
                 LOGGER.debug("Config split check failed: {}", e.getMessage());
             }
