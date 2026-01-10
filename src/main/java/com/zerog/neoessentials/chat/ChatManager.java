@@ -127,24 +127,39 @@ public class ChatManager {
     /**
      * Checks if a player has a specific chat permission.
      */
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean hasChatPermission(String permission) {
         return playerChatPermissions.contains(permission);
     }
 
     // Accessors for chat config options
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean shouldSleepIgnoreAfk() { return sleepIgnoresAfkPlayers; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean shouldSleepIgnoreVanished() { return sleepIgnoresVanishedPlayers; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getAfkListName() { return afkListName; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean shouldBroadcastAfk() { return broadcastAfkMessage; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean showDeathMessages() { return deathMessages; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getVanishingItemsPolicy() { return vanishingItemsPolicy; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getBindingItemsPolicy() { return bindingItemsPolicy; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean shouldSendInfoAfterDeath() { return sendInfoAfterDeath; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean allowSilentJoinQuit() { return allowSilentJoinQuit; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getCustomJoinMessage() { return customJoinMessage; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getCustomQuitMessage() { return customQuitMessage; }
+    @SuppressWarnings("unused") // May be used by external systems
     public String getCustomNewUsernameMessage() { return customNewUsernameMessage; }
+    @SuppressWarnings("unused") // May be used by external systems
     public boolean useCustomServerFullMessage() { return useCustomServerFullMessage; }
+    @SuppressWarnings("unused") // May be used by external systems
     public int getHideJoinQuitMessagesAbove() { return hideJoinQuitMessagesAbove; }
 
     /**
@@ -198,6 +213,7 @@ public class ChatManager {
     /**
      * Returns the default chat format (for config migration/compatibility).
      */
+    @SuppressWarnings("unused") // May be used by external systems
     public String getDefaultChatFormat() {
         return defaultChatFormat;
     }

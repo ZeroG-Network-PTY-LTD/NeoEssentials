@@ -1,6 +1,7 @@
 
 package com.zerog.neoessentials;
 import com.zerog.neoessentials.commands.CommandRegistry;
+import com.zerog.neoessentials.config.ConfigSplitter;
 import com.zerog.neoessentials.core.ManagerRegistry;
 import com.zerog.neoessentials.permissions.PermissionSystem;
 import net.neoforged.fml.common.Mod;

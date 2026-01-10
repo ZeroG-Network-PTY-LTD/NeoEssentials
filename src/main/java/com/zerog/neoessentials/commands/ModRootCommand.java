@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.zerog.neoessentials.config.ConfigSplitter;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -59,10 +60,16 @@ public class ModRootCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("neoe")
-                .requires(source -> hasBaseCommandPermission(source))
+                .requires(ModRootCommand::hasBaseCommandPermission)
                 .then(Commands.literal("reload")
-                    .requires(source -> hasAdminPermission(source))
+                    .requires(ModRootCommand::hasAdminPermission)
                     .executes(ModRootCommand::reloadConfiguration)
+                )
+                .then(Commands.literal("config")
+                    .requires(ModRootCommand::hasAdminPermission)
+                    .then(Commands.literal("split")
+                        .executes(ModRootCommand::splitConfiguration)
+                    )
                 )
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .suggests(ModRootCommand::suggestModCommands)
@@ -72,10 +79,16 @@ public class ModRootCommand {
         );
         dispatcher.register(
             Commands.literal("neoessentials")
-                .requires(source -> hasBaseCommandPermission(source))
+                .requires(ModRootCommand::hasBaseCommandPermission)
                 .then(Commands.literal("reload")
-                    .requires(source -> hasAdminPermission(source))
+                    .requires(ModRootCommand::hasAdminPermission)
                     .executes(ModRootCommand::reloadConfiguration)
+                )
+                .then(Commands.literal("config")
+                    .requires(ModRootCommand::hasAdminPermission)
+                    .then(Commands.literal("split")
+                        .executes(ModRootCommand::splitConfiguration)
+                    )
                 )
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .suggests(ModRootCommand::suggestModCommands)

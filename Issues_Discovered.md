@@ -34,33 +34,35 @@
     - **FIXED:** Staff channel respects permission setting
     - **Details:** Config example:
     ```json
-    "chat": {
+    {
+      "chat": {
         "channels": {
+          "enabled": true,
+          "local": {
             "enabled": true,
-            "local": {
-                "enabled": true,
-                "radius": 100,
-                "command": "l",
-                "aliases": ["local", "lc"],
-                "prefix": "",
-                "default": true
-            },
-            "global": {
-                "enabled": true,
-                "command": "g",
-                "aliases": ["global", "gc"],
-                "prefix": "!",
-                "default": false
-            },
-            "staff": {
-                "enabled": true,
-                "command": "staff",
-                "aliases": ["mod", "admin", "s"],
-                "prefix": "@",
-                "permission": "neoessentials.chat.staff",
-                "default": false
-            }
+            "radius": 100,
+            "command": "l",
+            "aliases": ["local", "lc"],
+            "prefix": "",
+            "default": true
+          },
+          "global": {
+            "enabled": true,
+            "command": "g",
+            "aliases": ["global", "gc"],
+            "prefix": "!",
+            "default": false
+          },
+          "staff": {
+            "enabled": true,
+            "command": "staff",
+            "aliases": ["mod", "admin", "s"],
+            "prefix": "@",
+            "permission": "neoessentials.chat.staff",
+            "default": false
+          }
         }
+      }
     }
     ```
 
