@@ -601,11 +601,19 @@ public class NeoEssentials {
         registry.registerCommand("clearinventory", "Clear inventory");
         registry.registerCommand("ci", "Clear inventory (alias)");
         registry.registerCommand("clear", "Clear inventory (alias)");
+        registry.registerCommand("invsee", "View another player's inventory");
+        registry.registerCommand("inv", "View another player's inventory (alias)");
+        registry.registerCommand("invseeedit", "View and edit another player's inventory");
+        registry.registerCommand("enderchest", "View another player's ender chest");
+        registry.registerCommand("ec", "View another player's ender chest (alias)");
+        registry.registerCommand("enderchestedit", "View and edit another player's ender chest");
+        registry.registerCommand("ecedit", "View and edit another player's ender chest (alias)");
         com.zerog.neoessentials.items.commands.RepairCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.DisposeCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.ClearInventoryCommand.register(dispatcher);
+        com.zerog.neoessentials.inventory.InventoryViewCommands.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

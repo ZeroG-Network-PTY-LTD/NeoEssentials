@@ -1,5 +1,5 @@
 {
-  "_configVersion": 13,
+  "_configVersion": 14,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -100,7 +100,11 @@
     "smithing": true,
     "stonecutting": true,
     "suicide": true,
-    "whois": true
+    "whois": true,
+    "invsee": true,
+    "invseeedit": true,
+    "enderchest": true,
+    "enderchestedit": true
   },
   "webDashboard": {
     "webDashboard_comment": "Web Dashboard configuration - controls the built-in web interface for server monitoring and management",
