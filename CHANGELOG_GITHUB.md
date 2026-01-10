@@ -1,6 +1,6 @@
 # NeoEssentials v1.0.2.4 - Changelog
 
-**Build #TBD** | January 7, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #TBD** | January 10, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
 ---
 
@@ -10,7 +10,88 @@ This massive update brings **four phases** of chat enhancements, transforming Ne
 
 ---
 
+## 🐛 Critical Bug Fixes
+
+### **Chat Channels System Implemented** ✅
+- **FIXED:** Chat channels were configured but not functional - no commands existed!
+- **NEW:** Dynamic channel commands auto-registered from config
+- **NEW:** `/l`, `/local` → Switch to local channel (proximity-based)
+- **NEW:** `/g`, `/global` → Switch to global channel (server-wide)
+- **NEW:** `/staff`, `/mod`, `/admin` → Switch to staff channel (permission-based)
+- **NEW:** Prefix support: `!message` for global, `@message` for staff
+- **NEW:** Command+message combo: `/g Hello everyone!`
+- **NEW:** Per-player channel state tracking
+- Fully customizable via `config.json` → `chat.channels`
+- See `docs/Wiki/ChatChannels.md` for full documentation
+
+**How it works:**
+- Local channel: Only players within radius (default 100 blocks) see messages
+- Global channel: All online players see messages
+- Staff channel: Only players with permission see messages
+- Switch channels with commands or use prefixes for quick access
+
+### **Config Version Migration System** 🔧
+- **FIXED:** Config files not updating when `_configVersion` changes
+- **NEW:** Automatic version detection and migration
+- **NEW:** Creates timestamped backups of old configs before updating
+- **NEW:** Detailed logging of version mismatches
+- Ensures new features and settings are applied automatically
+- No more manual config deletion required!
+
+**How it works:**
+- On startup or `/neoessentials reload`, checks all config file versions
+- Compares with expected versions (config.json v13, economy.json v2, etc.)
+- If outdated: Creates backup → Replaces with new version → Logs the update
+- Backups stored as: `config_v12_backup_2026-01-10_14-30-00.json`
+
+---
+
 ## 🚀 What's New
+
+### 📂 **Config File Splitting System** 🆕
+
+Tired of scrolling through a 685-line config file? Split it into smaller, manageable files!
+
+**Features:**
+- ✅ Split large `config.json` into 9 focused files
+- ✅ One command migration: `/neoessentials config split`
+- ✅ Automatic backup creation
+- ✅ 100% backward compatible
+- ✅ Easy rollback if needed
+- ✅ Individual version control per file
+
+**Split Structure:**
+```
+config/neoessentials/
+├── main.json (50 lines) - Core settings
+├── commands.json (110 lines) - Command toggles
+├── chat.json (200 lines) - Chat system
+├── teleportation.json (120 lines) - Teleport settings
+├── moderation.json (130 lines) - Ban, jail, freeze, etc.
+├── webdashboard.json (80 lines) - Web interface
+├── items.json (30 lines) - Item spawning
+├── afk.json (40 lines) - AFK system
+└── security.json (15 lines) - Security settings
+```
+
+**Benefits:**
+- 📝 Easier to edit - find settings quickly!
+- 🔍 Better organization - one system per file
+- 🛡️ Less errors - smaller files = fewer mistakes
+- 📊 Better git diffs - see exactly what changed
+- ⚡ No performance impact - caching optimized
+
+**How to Use:**
+```
+/neoessentials config split
+```
+
+**Rollback:**
+Original config backed up to `config.json.backup` - easy to revert!
+
+---
+
+## 🚀 What's New (Continued)
 
 ### 💬 **Phase 2: Interactive Chat Enhancements** ✨
 

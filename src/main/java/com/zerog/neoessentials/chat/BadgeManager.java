@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Badge and Icon Manager - Phase 3
- *
  * Handles:
  * - Rank badges (👑⭐🛡️💎)
  * - Status icons (💤👻📺🔇)

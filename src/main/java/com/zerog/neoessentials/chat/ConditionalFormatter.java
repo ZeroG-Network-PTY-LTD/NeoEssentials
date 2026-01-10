@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 /**
  * Conditional Formatting Manager - Phase 4
- *
  * Provides conditional chat formatting based on:
  * - Time of day (<if:time=morning>Good morning!</if>)
  * - Player stats (<if:health<50>Low health!</if>)
@@ -161,6 +160,7 @@ public class ConditionalFormatter {
     /**
      * Check if state condition is met.
      */
+    @SuppressWarnings("resource") // player.level() is not AutoCloseable, false positive
     private static boolean checkStateCondition(ServerPlayer player, String condition) {
         return switch (condition) {
             case "afk" -> isPlayerAfk(player);

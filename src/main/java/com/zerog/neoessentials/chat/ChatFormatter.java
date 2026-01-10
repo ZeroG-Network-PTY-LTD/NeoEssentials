@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 /**
  * ChatFormatter handles chat message formatting with proper color code support.
  * Supports both legacy (&) and section (§) color codes, plus hex colors (&#RRGGBB).
- *
  * Phase 2 Enhancements:
  * - Clickable URLs (auto-detection)
  * - @mention system with sound notifications
@@ -206,7 +205,6 @@ public class ChatFormatter {
     /**
      * Parse text with color codes to Minecraft Component.
      * Supports: §/& color codes (0-9, a-f), format codes (k-o, r), and hex (&#RRGGBB)
-     *
      * Note: This method is kept for fallback scenarios when ChatEnhancer is disabled.
      */
     @SuppressWarnings("unused") // Used as fallback when enhancements disabled

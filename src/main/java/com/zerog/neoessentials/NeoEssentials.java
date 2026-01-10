@@ -175,6 +175,13 @@ public class NeoEssentials {
             LOGGER.info("Server starting - initializing NeoEssentials systems...");
             LOGGER.info("════════════════════════════════════════════════════════════════");
             
+            // Check for config splitting opportunity
+            try {
+                com.zerog.neoessentials.config.ConfigSplitter.checkAndPromptMigration();
+            } catch (Exception e) {
+                LOGGER.debug("Config split check failed: {}", e.getMessage());
+            }
+            
             // Initialize permission system FIRST
             try {
                 LOGGER.info("⚙ Initializing Permission System...");
@@ -491,6 +498,9 @@ public class NeoEssentials {
         com.zerog.neoessentials.chat.command.UnmuteCommand.register(dispatcher);
         com.zerog.neoessentials.chat.command.MuteListCommand.register(dispatcher);
         com.zerog.neoessentials.chat.command.MsgToggleCommand.register(dispatcher);
+
+        // Register channel commands (dynamically from config)
+        com.zerog.neoessentials.chat.commands.ChannelCommands.register(dispatcher);
 
         // ========== PERMISSIONS COMMANDS ==========
         registry.registerCommand("permissions", "Manage permissions");

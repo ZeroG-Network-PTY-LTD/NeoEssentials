@@ -6,7 +6,41 @@ The most advanced chat system for NeoForge is here! This update brings **4 major
 
 ---
 
+## 🐛 Critical Fixes
+
+### Chat Channels System
+**FIXED:** Channels were configured but commands didn't exist!
+- `/l`, `/g`, `/staff` commands now work
+- Prefix support: `!message` (global), `@message` (staff)
+- Local = proximity chat, Global = server-wide, Staff = permission-based
+- Fully functional and documented
+
+### Config Auto-Update System
+**FIXED:** Configs now automatically update when you upgrade the mod!
+- Detects old `_configVersion` values
+- Creates timestamped backups before updating
+- Replaces old configs with new versions
+- No more manual config deletion!
+- All new features work immediately after update
+
+---
+
 ## ✨ New Features
+
+### Config File Splitting
+Split large config.json (685 lines) into 9 manageable files.
+- Command: `/neoessentials config split`
+- Automatic backup creation
+- Easy rollback support
+- 100% backward compatible
+- Per-file version control
+
+**Files created:**
+main.json, commands.json, chat.json, teleportation.json, moderation.json, webdashboard.json, items.json, afk.json, security.json
+
+---
+
+## ✨ New Features (Continued)
 
 ### 💬 Phase 2: Interactive Chat
 - **Clickable URLs** - Auto-detect and link http/https URLs

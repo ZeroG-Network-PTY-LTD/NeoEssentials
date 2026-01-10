@@ -17,7 +17,6 @@ import java.nio.file.Paths;
  * - Sending resource pack to players on join
  * - Tracking pack application status
  * - Fallback to emoji badges if pack declined
- *
  * NOTE: Resource pack auto-send is currently disabled pending full implementation.
  * The pack generation works, but auto-sending requires additional setup.
  */
@@ -106,9 +105,12 @@ public class ResourcePackManager {
 
     /**
      * Send resource pack to a player.
-     *
      * NOTE: Currently disabled - requires proper resource pack hosting and NeoForge API update.
      * For now, admins should use server.properties resource-pack settings.
+     * Implementation plan:
+     * 1. Wait for NeoForge to add proper resource pack API (likely in 1.21.2+)
+     * 2. Or use ClientboundResourcePackPushPacket directly when available
+     * 3. For now, log instructions for manual server.properties setup
      */
     @SuppressWarnings("unused")
     public void sendResourcePack(ServerPlayer player) {
@@ -117,9 +119,9 @@ public class ResourcePackManager {
         }
 
         try {
-            // TODO: Implement proper resource pack sending via NeoForge API
-            // The sendTexturePack method doesn't exist in current NeoForge version
-            // Alternative: Use server.properties or wait for API update
+            // NOTE: The proper API doesn't exist yet in NeoForge 21.11.24-beta
+            // When available, use: player.connection.send(new ClientboundResourcePackPushPacket(...))
+            // For now, provide helpful logging
 
             LOGGER.debug("Resource pack auto-send requested for player: {}", player.getName().getString());
             LOGGER.warn("Auto-send not yet implemented - please configure server.properties");
