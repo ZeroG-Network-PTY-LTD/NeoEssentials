@@ -103,9 +103,11 @@ public class ChannelCommands {
                         String message = StringArgumentType.getString(ctx, "message");
                         ServerPlayer player = ctx.getSource().getPlayerOrException();
 
-                        // Trigger chat event with the message
-                        // This will be handled by ChatHandler which will see the player is now in this channel
-                        player.connection.chat(message, System.currentTimeMillis(), null, false);
+                        // Trigger chat by posting chat event - ChatHandler will process it
+                        net.neoforged.neoforge.event.ServerChatEvent chatEvent =
+                            new net.neoforged.neoforge.event.ServerChatEvent(player, message,
+                                net.minecraft.network.chat.Component.literal(message));
+                        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(chatEvent);
                     }
                     return result;
                 })

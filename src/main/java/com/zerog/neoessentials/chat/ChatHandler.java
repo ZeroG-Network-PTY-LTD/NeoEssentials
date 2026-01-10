@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.chat;
 
+import com.google.gson.JsonObject;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.ChatDebugUtil;
 import net.minecraft.network.chat.Component;
@@ -42,6 +43,7 @@ public class ChatHandler {
     /**
      * Get the current channel for a player
      */
+    @SuppressWarnings("unused") // May be used by external systems
     public static String getPlayerChannel(java.util.UUID playerUUID) {
         return playerChannelMap.get(playerUUID);
     }
@@ -49,6 +51,7 @@ public class ChatHandler {
     /**
      * Clear channel for a player (revert to default)
      */
+    @SuppressWarnings("unused") // May be used by external systems
     public static void clearPlayerChannel(java.util.UUID playerUUID) {
         playerChannelMap.remove(playerUUID);
     }
