@@ -357,6 +357,7 @@ public class BadgeManager {
 
     // Helper methods
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted") // Used correctly with ! operator
     private boolean isBadgesEnabled() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");

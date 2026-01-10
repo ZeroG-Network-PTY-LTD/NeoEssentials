@@ -1189,7 +1189,7 @@ public class ConfigManager {
     private static final String CONFIG_VERSION_KEY = "_configVersion";
 
     // Expected versions for each config file (must match the version in JAR resources)
-    private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<String, Integer>() {{
+    private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
         put(MAIN_CONFIG, 13);
         put(ECONOMY_CONFIG, 2);
         put(PERMISSIONS_CONFIG, 5);

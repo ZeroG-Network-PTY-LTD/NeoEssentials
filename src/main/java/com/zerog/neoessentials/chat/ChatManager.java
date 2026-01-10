@@ -219,6 +219,7 @@ public class ChatManager {
     }
 
     // Chat command enable/disable checks
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted") // Used correctly with ! operator
     public boolean isAfkEnabled() { return isCommandEnabled("afk"); }
     public boolean isIgnoreEnabled() { return isCommandEnabled("ignore"); }
     public boolean isMsgEnabled() { return isCommandEnabled("msg"); }

@@ -104,6 +104,7 @@ public class ChannelCommands {
                         ServerPlayer player = ctx.getSource().getPlayerOrException();
 
                         // Trigger chat by posting chat event - ChatHandler will process it
+                        @SuppressWarnings("deprecation") // Using internal API for chat event posting
                         net.neoforged.neoforge.event.ServerChatEvent chatEvent =
                             new net.neoforged.neoforge.event.ServerChatEvent(player, message,
                                 net.minecraft.network.chat.Component.literal(message));
