@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Manages cloud provider OAuth tokens and authentication status
  * Supports Google Drive, Dropbox, and other cloud storage providers
- *
+ * <p>
  * Future implementation will include:
  * - OAuth 2.0 token management
  * - Token refresh logic
@@ -30,7 +30,7 @@ public class CloudProviderManager {
     private static final File TOKENS_FILE = new File("config/neoessentials/cloud_tokens.json");
 
     private static CloudProviderManager INSTANCE;
-    private Map<String, CloudProviderToken> tokens = new HashMap<>();
+    private final Map<String, CloudProviderToken> tokens = new HashMap<>();
 
     private CloudProviderManager() {
         loadTokens();
@@ -63,7 +63,9 @@ public class CloudProviderManager {
 
     /**
      * Get OAuth token for a provider
+     * This method is reserved for future cloud API integration
      */
+    @SuppressWarnings("unused")
     public String getAccessToken(String providerName) {
         CloudProviderToken token = tokens.get(providerName.toLowerCase());
         if (token == null || token.isExpired()) {
