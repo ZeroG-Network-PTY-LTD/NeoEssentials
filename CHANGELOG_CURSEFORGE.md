@@ -49,6 +49,38 @@ This is **THE BIG ONE**! We've completely transformed the chat system with **4 m
 
 ### 📂 **Split Your Configs!** 🆕
 
+**SMART AUTO-DETECTION!** New servers get optimized configs automatically!
+
+**How it works:**
+- 🆕 **NEW Servers:** Auto-creates split configs (9 smaller files!) → No manual steps!
+- 📋 **EXISTING Servers:** Get in-game notification → Run command when ready!
+- 🔄 **DELETED Configs:** Auto-recovery with split configs!
+
+**In-Game Admin Notification:**
+OPs and admins see this when they log in:
+```
+═══════════════════════════════════════════
+Your server is using a large config.json file.
+NeoEssentials can split it into smaller files!
+
+✓ Easier to find settings
+✓ Less syntax errors
+✓ Better organization
+✓ Automatic backup
+
+Run: /neoessentials config split
+═══════════════════════════════════════════
+```
+
+**Why This is AWESOME:**
+- 🆕 **New servers optimized by default!** (No config headaches!)
+- 📢 **Can't miss it!** In-game notifications for admins!
+- 🔒 **Super safe!** Auto-backup before splitting!
+- 📁 **Way easier!** 9 focused files vs 1 giant file!
+
+**Manual Split** (existing servers):
+Run `/neoessentials config split` to migrate!
+
 **HUGE QOL IMPROVEMENT:** Stop scrolling through a 685-line config file!
 
 One command: `/neoessentials config split`

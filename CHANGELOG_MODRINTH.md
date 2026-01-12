@@ -27,16 +27,35 @@ The most advanced chat system for NeoForge is here! This update brings **4 major
 
 ## ✨ New Features
 
-### Config File Splitting
-Split large config.json (685 lines) into 9 manageable files.
+### Config File Splitting (IMPROVED!)
+**SMART AUTO-DETECTION** - New servers get optimized configs automatically!
+
+**How it works:**
+- **Fresh installs:** Auto-creates 9 split config files (no manual steps!)
+- **Existing servers:** In-game notification to OPs/admins
+- **Deleted configs:** Auto-recovery with split structure
+
+**In-game notification shown to admins:**
+- OPs (level 4)
+- Players with `*` or `neoessentials.*` permission
+- Only shown once per server start
+- Beautiful formatted message with benefits
+
+**Manual migration:**
 - Command: `/neoessentials config split`
 - Automatic backup creation
+- Splits config.json into 9 focused files
 - Easy rollback support
 - 100% backward compatible
-- Per-file version control
 
 **Files created:**
 main.json, commands.json, chat.json, teleportation.json, moderation.json, webdashboard.json, items.json, afk.json, security.json
+
+**Benefits:**
+- Easier to find settings
+- Less syntax errors
+- Better organization
+- Per-file version control
 
 ---
 

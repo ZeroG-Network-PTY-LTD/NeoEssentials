@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +68,16 @@ public class FileManagementHandler implements HttpHandler {
                         handleRead(exchange);
                     } else if (path.endsWith("/download")) {
                         handleDownload(exchange);
+                    } else if (path.endsWith("/listBackups")) {
+                        handleListBackups(exchange);
+                    } else if (path.endsWith("/cloudProviders")) {
+                        handleCloudProviders(exchange);
+                    } else if (path.endsWith("/server/statistics")) {
+                        handleServerStatistics(exchange);
+                    } else if (path.endsWith("/player/statistics")) {
+                        handlePlayerStatistics(exchange);
+                    } else if (path.endsWith("/user/activityLog")) {
+                        handleUserActivityLog(exchange);
                     } else {
                         sendJsonResponse(exchange, 400, createErrorResponse("Invalid GET endpoint"));
                     }
@@ -78,6 +89,12 @@ public class FileManagementHandler implements HttpHandler {
                         handleCreate(exchange);
                     } else if (path.endsWith("/upload")) {
                         handleUpload(exchange);
+                    } else if (path.endsWith("/restore")) {
+                        handleRestore(exchange);
+                    } else if (path.endsWith("/cloudBackup")) {
+                        handleCloudBackup(exchange);
+                    } else if (path.endsWith("/cloudRestore")) {
+                        handleCloudRestore(exchange);
                     } else {
                         sendJsonResponse(exchange, 400, createErrorResponse("Invalid POST endpoint"));
                     }
@@ -390,6 +407,159 @@ public class FileManagementHandler implements HttpHandler {
     }
     
     /**
+     * List backups for a given file
+     * GET /api/files/listBackups?path=config/main.json
+     */
+    private void handleListBackups(HttpExchange exchange) throws IOException {
+        Map<String, String> params = parseQueryParams(exchange.getRequestURI().getQuery());
+        String pathParam = params.getOrDefault("path", "");
+        Path targetPath = resolvePath(pathParam);
+        validatePath(targetPath);
+        String fileName = targetPath.getFileName().toString();
+        Path backupDir = Paths.get("neoessentials", "backups", "files");
+        Files.createDirectories(backupDir);
+        JsonArray backups = new JsonArray();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(backupDir, fileName + ".*.backup")) {
+            for (Path backup : stream) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("name", backup.getFileName().toString());
+                obj.addProperty("path", backup.toString());
+                obj.addProperty("modified", Files.getLastModifiedTime(backup).toMillis());
+                obj.addProperty("size", Files.size(backup));
+                backups.add(obj);
+            }
+        }
+        JsonObject response = new JsonObject();
+        response.add("backups", backups);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * Restore a file from backup
+     * POST /api/files/restore
+     * Body: {"targetPath": "config/main.json", "backupPath": "neoessentials/backups/files/main.json.1234567890.backup"}
+     */
+    private void handleRestore(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
+        if (!request.has("targetPath") || !request.has("backupPath")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing 'targetPath' or 'backupPath' field"));
+            return;
+        }
+        Path targetPath = resolvePath(request.get("targetPath").getAsString());
+        Path backupPath = Paths.get(request.get("backupPath").getAsString());
+        validatePath(targetPath);
+        // Only allow restore from backup directory
+        Path backupDir = Paths.get("neoessentials", "backups", "files").toAbsolutePath();
+        if (!backupPath.toAbsolutePath().startsWith(backupDir)) {
+            sendJsonResponse(exchange, 403, createErrorResponse("Invalid backup path"));
+            return;
+        }
+        // Ensure parent directory exists
+        if (targetPath.getParent() != null) {
+            Files.createDirectories(targetPath.getParent());
+        }
+        Files.copy(backupPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("message", "File restored from backup");
+        response.addProperty("targetPath", targetPath.toString());
+        response.addProperty("backupPath", backupPath.toString());
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * List available cloud providers and their status (stub)
+     * GET /api/files/cloudProviders
+     */
+    private void handleCloudProviders(HttpExchange exchange) throws IOException {
+        JsonArray providers = new JsonArray();
+        JsonObject google = new JsonObject();
+        google.addProperty("name", "Google Drive");
+        google.addProperty("linked", false); // TODO: Implement OAuth status
+        providers.add(google);
+        JsonObject dropbox = new JsonObject();
+        dropbox.addProperty("name", "Dropbox");
+        dropbox.addProperty("linked", false); // TODO: Implement OAuth status
+        providers.add(dropbox);
+        JsonObject response = new JsonObject();
+        response.add("providers", providers);
+        response.addProperty("stub", true);
+        response.addProperty("message", "Cloud provider integration not implemented yet");
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * Initiate backup of a file/folder to a selected cloud provider (stub)
+     * POST /api/files/cloudBackup
+     * Body: {"path": "config/main.json", "provider": "Google Drive"}
+     */
+    private void handleCloudBackup(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("stub", true);
+        response.addProperty("message", "Cloud backup not implemented yet. This will upload the file/folder to the selected provider in the future.");
+        sendJsonResponse(exchange, 501, response);
+    }
+
+    /**
+     * Restore a file/folder from a selected cloud provider (stub)
+     * POST /api/files/cloudRestore
+     * Body: {"path": "config/main.json", "provider": "Google Drive", "cloudPath": "..."}
+     */
+    private void handleCloudRestore(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("stub", true);
+        response.addProperty("message", "Cloud restore not implemented yet. This will download the file/folder from the selected provider in the future.");
+        sendJsonResponse(exchange, 501, response);
+    }
+
+    /**
+     * Stub: Get server-wide statistics (uptime, TPS, RAM, CPU, etc.)
+     * GET /api/files/server/statistics
+     */
+    private void handleServerStatistics(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("stub", true);
+        response.addProperty("message", "Server statistics endpoint not implemented yet.");
+        // Example fields for future implementation
+        response.addProperty("uptime", 0);
+        response.addProperty("tps", 20.0);
+        response.addProperty("ramUsedMB", 0);
+        response.addProperty("ramTotalMB", 0);
+        response.addProperty("cpuUsage", 0.0);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * Stub: Get player statistics (online time, messages sent, economy, etc.)
+     * GET /api/files/player/statistics
+     */
+    private void handlePlayerStatistics(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("stub", true);
+        response.addProperty("message", "Player statistics endpoint not implemented yet.");
+        // Example fields for future implementation
+        response.addProperty("onlineTime", 0);
+        response.addProperty("messagesSent", 0);
+        response.addProperty("balance", 0);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * Stub: Get user activity log for user management improvements
+     * GET /api/files/user/activityLog
+     */
+    private void handleUserActivityLog(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("stub", true);
+        response.addProperty("message", "User activity log endpoint not implemented yet.");
+        // Example: response.add("log", new JsonArray());
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
      * Resolve and normalize path
      */
     private Path resolvePath(String pathParam) {
@@ -446,15 +616,14 @@ public class FileManagementHandler implements HttpHandler {
      * Delete directory recursively
      */
     private void deleteDirectory(Path directory) throws IOException {
-        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
-            
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
