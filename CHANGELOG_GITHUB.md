@@ -50,6 +50,49 @@ This massive update brings **four phases** of chat enhancements, transforming Ne
 
 ### 📂 **Config File Splitting System** 🆕
 
+**NEW SMART BEHAVIOR:**
+- **Fresh Installations:** Auto-splits configs from the start! (New servers get optimized structure by default)
+- **Existing Servers:** Command-based with in-game admin notifications
+- **Deleted Configs:** Auto-recovery with split configs
+
+**How it works:**
+- Detects if server has config.json already
+- **NEW servers:** Automatically creates 9 smaller config files (no manual steps!)
+- **EXISTING servers:** Shows in-game notification to OPs and admin permission holders
+- **DELETED configs:** Treated as fresh install, auto-splits on recovery
+
+**In-Game Admin Notification:**
+When an OP or player with admin permissions logs in, they see:
+```
+═══════════════════════════════════════════════
+NeoEssentials Configuration Notice
+═══════════════════════════════════════════════
+
+Your server is using a large config.json file.
+NeoEssentials can split it into smaller, easier-to-edit files!
+
+✓ Easier to find settings
+✓ Less chance of syntax errors
+✓ Better organization
+✓ Automatic backup before splitting
+
+Run: /neoessentials config split to enable
+
+═══════════════════════════════════════════════
+```
+
+**Who sees notifications:**
+- Players with OP level 4
+- Players with wildcard permission (`*`)
+- Players with `neoessentials.*` permission
+- Players with `neoessentials.admin.*` permission
+- Only shown once per server start (no spam!)
+
+**Manual Migration** (for existing servers):
+- Run `/neoessentials config split` when ready
+- Creates automatic backup before splitting
+- Splits config.json into 9 focused files:
+
 Tired of scrolling through a 685-line config file? Split it into smaller, manageable files!
 
 **Features:**
