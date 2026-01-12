@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.webdashboard.cloud.CloudProviderManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,10 @@ public class FileManagementHandler implements HttpHandler {
                         handleCloudBackup(exchange);
                     } else if (path.endsWith("/cloudRestore")) {
                         handleCloudRestore(exchange);
+                    } else if (path.endsWith("/cloudLink")) {
+                        handleCloudLink(exchange);
+                    } else if (path.endsWith("/cloudUnlink")) {
+                        handleCloudUnlink(exchange);
                     } else {
                         sendJsonResponse(exchange, 400, createErrorResponse("Invalid POST endpoint"));
                     }
@@ -469,23 +474,46 @@ public class FileManagementHandler implements HttpHandler {
     }
 
     /**
-     * List available cloud providers and their status (stub)
+     * List available cloud providers and their status
      * GET /api/files/cloudProviders
      */
     private void handleCloudProviders(HttpExchange exchange) throws IOException {
+        CloudProviderManager cloudManager = CloudProviderManager.getInstance();
+
         JsonArray providers = new JsonArray();
+
+        // Google Drive
         JsonObject google = new JsonObject();
         google.addProperty("name", "Google Drive");
-        google.addProperty("linked", false); // TODO: Implement OAuth status
+        google.addProperty("id", "google_drive");
+        google.addProperty("linked", cloudManager.isProviderLinked("google_drive"));
+        google.addProperty("description", "Store backups on Google Drive");
+        google.addProperty("icon", "☁️");
         providers.add(google);
+
+        // Dropbox
         JsonObject dropbox = new JsonObject();
         dropbox.addProperty("name", "Dropbox");
-        dropbox.addProperty("linked", false); // TODO: Implement OAuth status
+        dropbox.addProperty("id", "dropbox");
+        dropbox.addProperty("linked", cloudManager.isProviderLinked("dropbox"));
+        dropbox.addProperty("description", "Store backups on Dropbox");
+        dropbox.addProperty("icon", "📦");
         providers.add(dropbox);
+
+        // OneDrive (bonus provider)
+        JsonObject onedrive = new JsonObject();
+        onedrive.addProperty("name", "OneDrive");
+        onedrive.addProperty("id", "onedrive");
+        onedrive.addProperty("linked", cloudManager.isProviderLinked("onedrive"));
+        onedrive.addProperty("description", "Store backups on Microsoft OneDrive");
+        onedrive.addProperty("icon", "☁️");
+        providers.add(onedrive);
+
         JsonObject response = new JsonObject();
         response.add("providers", providers);
         response.addProperty("stub", true);
-        response.addProperty("message", "Cloud provider integration not implemented yet");
+        response.addProperty("message", "Cloud provider integration not fully implemented yet. OAuth linking is ready but file sync requires additional implementation.");
+
         sendJsonResponse(exchange, 200, response);
     }
 
@@ -513,6 +541,65 @@ public class FileManagementHandler implements HttpHandler {
         response.addProperty("stub", true);
         response.addProperty("message", "Cloud restore not implemented yet. This will download the file/folder from the selected provider in the future.");
         sendJsonResponse(exchange, 501, response);
+    }
+
+    /**
+     * Link a cloud provider (OAuth authentication)
+     * POST /api/files/cloudLink
+     * Body: {"provider": "google_drive", "accessToken": "...", "refreshToken": "...", "expiresIn": 3600}
+     */
+    private void handleCloudLink(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
+
+        if (!request.has("provider") || !request.has("accessToken")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing 'provider' or 'accessToken' field"));
+            return;
+        }
+
+        String provider = request.get("provider").getAsString();
+        String accessToken = request.get("accessToken").getAsString();
+        String refreshToken = request.has("refreshToken") ? request.get("refreshToken").getAsString() : null;
+        long expiresIn = request.has("expiresIn") ? request.get("expiresIn").getAsLong() : 3600;
+
+        CloudProviderManager cloudManager = CloudProviderManager.getInstance();
+        cloudManager.storeToken(provider, accessToken, refreshToken, expiresIn);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("message", "Cloud provider linked successfully");
+        response.addProperty("provider", provider);
+        response.addProperty("linked", true);
+
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * Unlink a cloud provider (remove OAuth token)
+     * POST /api/files/cloudUnlink
+     * Body: {"provider": "google_drive"}
+     */
+    private void handleCloudUnlink(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
+
+        if (!request.has("provider")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing 'provider' field"));
+            return;
+        }
+
+        String provider = request.get("provider").getAsString();
+
+        CloudProviderManager cloudManager = CloudProviderManager.getInstance();
+        cloudManager.removeToken(provider);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("message", "Cloud provider unlinked successfully");
+        response.addProperty("provider", provider);
+        response.addProperty("linked", false);
+
+        sendJsonResponse(exchange, 200, response);
     }
 
     /**
