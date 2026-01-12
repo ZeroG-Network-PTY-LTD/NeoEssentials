@@ -9,6 +9,7 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.LoggingEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
+import com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -242,6 +243,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/game", withAuth(new GameEndpoint(server)));
         apiServer.createContext("/api/logging", withAuth(new LoggingEndpoint()));
         apiServer.createContext("/api/admin", withAuth(new AdminEndpoint(server)));
+        apiServer.createContext("/api/files", withAuth(new FileManagementHandler()));
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
@@ -251,6 +253,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
         LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
         LOGGER.info("  - /api/admin/* (restart, stop, reload, save) [AUTH REQUIRED - ADMIN ONLY]");
+        LOGGER.info("  - /api/files/* (browse, read, write, create, upload, delete, backup, restore, cloud) [AUTH REQUIRED]");
 
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {

@@ -617,11 +617,13 @@ public class FileManagementHandler implements HttpHandler {
      */
     private void deleteDirectory(Path directory) throws IOException {
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+            @NotNull
             @Override
             public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
+            @NotNull
             @Override
             public FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
