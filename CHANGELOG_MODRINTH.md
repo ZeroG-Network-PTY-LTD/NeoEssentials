@@ -31,12 +31,13 @@ This release fixes critical compatibility issues AND teleportation safety bugs!
 - 🎉 Default behavior unchanged (safe by default for casual players)!
 
 **Affected Config Options:**
-```json
-"enableHomeTeleportSafety": false  // Now works! Allows homes in lava, void, etc.
-"enableWarpSafety": false          // Now works! Allows warps at dangerous locations
-"enableSpawnSafety": false         // Now works! Allows spawn anywhere
-"enableTeleportSafety": false      // Now works! Allows TPA to unsafe locations
 ```
+"enableHomeTeleportSafety": false
+"enableWarpSafety": false
+"enableSpawnSafety": false
+"enableTeleportSafety": false
+```
+*These options now work correctly! Set to `false` to allow teleportation anywhere.*
 
 ### Module Export Conflicts - RESOLVED ✅
 **The Problem:**
