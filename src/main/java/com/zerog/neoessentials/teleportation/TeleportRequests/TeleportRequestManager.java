@@ -352,15 +352,18 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(teleporter);
 
         TeleportLocation targetLocation = new TeleportLocation(destination);
-        // Enforce teleport safety if enabled
-        if (enableTeleportSafety && !targetLocation.isSafe()) {
-            teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location", destination.getName().getString()));
-            destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location_other", teleporter.getName().getString()));
-            if (logTeleportRequests) {
-                LOGGER.warn("Teleport request from {} to {} blocked: unsafe destination", teleporter.getName().getString(), destination.getName().getString());
+        // Enforce teleport safety if enabled (only block if safety is required)
+        if (enableTeleportSafety) {
+            if (!targetLocation.isSafe()) {
+                teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location", destination.getName().getString()));
+                destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location_other", teleporter.getName().getString()));
+                if (logTeleportRequests) {
+                    LOGGER.warn("Teleport request from {} to {} blocked: unsafe destination", teleporter.getName().getString(), destination.getName().getString());
+                }
+                return;
             }
-            return;
         }
+        // If safety is not required, allow teleportation to unsafe locations
         int delayTicks = teleportDelay * 20;
         TeleportUtil.teleportPlayer(teleporter, targetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {

@@ -199,15 +199,18 @@ public class HomeManager {
             return false;
         }
 
-        // Check if location is safe
-        if (requireSafeLocations && !location.isSafe()) {
-            TeleportLocation safeLocation = location.findSafeLocation();
-            if (safeLocation == null) {
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe_location"));
-                return false;
+        // Check if location is safe (only enforce if safety is required)
+        if (requireSafeLocations) {
+            if (!location.isSafe()) {
+                TeleportLocation safeLocation = location.findSafeLocation();
+                if (safeLocation == null) {
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe_location"));
+                    return false;
+                }
+                location = safeLocation;
             }
-            location = safeLocation;
         }
+        // If safety is not required, allow teleportation to unsafe locations
 
         // ATOMIC: Set the home using computeIfAbsent + compute for atomic limit check
         int allowedHomes = getMaxHomesForPlayer(player);
@@ -390,27 +393,30 @@ public class HomeManager {
             return;
         }
 
-        // Check if home location is still safe
-        if (requireSafeLocations && !home.isSafe()) {
-            TeleportLocation safeLocation = home.findSafeLocation();
-            if (safeLocation == null) {
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe", homeName));
-                return;
+        // Check if home location is still safe (only enforce if safety is required)
+        if (requireSafeLocations) {
+            if (!home.isSafe()) {
+                TeleportLocation safeLocation = home.findSafeLocation();
+                if (safeLocation == null) {
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe", homeName));
+                    return;
+                }
+
+                // Update home to safe location atomically
+                playerHomes.computeIfPresent(playerId, (id, homes) -> {
+                    homes.put(homeName, safeLocation);
+                    return homes;
+                });
+
+                // Save to file (per-player storage)
+                savePlayerHomes(playerId);
+                home = safeLocation;
+
+                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
             }
-
-            // Update home to safe location atomically
-            playerHomes.computeIfPresent(playerId, (id, homes) -> {
-                homes.put(homeName, safeLocation);
-                return homes;
-            });
-
-            // Save to file (per-player storage)
-            savePlayerHomes(playerId);
-            home = safeLocation;
-
-            player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
         }
-        
+        // If safety is not required, allow teleportation to unsafe locations
+
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
