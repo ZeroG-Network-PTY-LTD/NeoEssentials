@@ -28,6 +28,9 @@ public class HomeCommands {
     // Track pending delete confirmations: player UUID -> home name
     private static final Map<UUID, String> pendingDeleteConfirmations = new ConcurrentHashMap<>();
     
+    // Track pending sethome overwrite confirmations: player UUID -> home name
+    private static final Map<UUID, String> pendingSetHomeConfirmations = new ConcurrentHashMap<>();
+
     // Permission nodes for home commands (matching PermissionRegistry)
     private static final String PERMISSION_HOME = "neoessentials.teleport.home";
     private static final String PERMISSION_SETHOME = "neoessentials.teleport.home.set";
@@ -213,9 +216,18 @@ public class HomeCommands {
         
         // If home exists, require confirmation
         if (homeManager.getHome(player, homeName) != null) {
+            // Check if already pending confirmation for this home
+            String pending = pendingSetHomeConfirmations.get(player.getUUID());
+            if (pending != null && pending.equals(homeName)) {
+                player.sendSystemMessage(MessageUtil.warning("You have already requested to overwrite home '" + homeName + "'. Use /sethome " + homeName + " confirm to overwrite."));
+                return 0;
+            }
+            // Set pending confirmation
+            pendingSetHomeConfirmations.put(player.getUUID(), homeName);
             player.sendSystemMessage(MessageUtil.warning("Home '" + homeName + "' already exists. Use /sethome " + homeName + " confirm to overwrite."));
             return 0;
         }
+
         if (homeManager.setHome(player, homeName)) {
             return 1;
         }
@@ -230,6 +242,17 @@ public class HomeCommands {
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         
+        // Check if there's a pending confirmation for this home
+        String pending = pendingSetHomeConfirmations.get(player.getUUID());
+        if (pending == null || !pending.equals(homeName)) {
+            player.sendSystemMessage(MessageUtil.error("No pending overwrite confirmation for home '" + homeName + "'. Use /sethome " + homeName + " first."));
+            return 0;
+        }
+
+        // Remove pending confirmation
+        pendingSetHomeConfirmations.remove(player.getUUID());
+
+        // Set the home (this will overwrite the existing one)
         if (homeManager.setHome(player, homeName)) {
             return 1;
         }

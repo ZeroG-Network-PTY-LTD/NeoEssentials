@@ -248,15 +248,43 @@ public class PermissionsCommand {
         
         String groupName = StringArgumentType.getString(ctx, "group");
         String prefix = StringArgumentType.getString(ctx, "prefix");
+
+        // Safety validations
+        if (prefix.length() > 64) {
+            ctx.getSource().sendFailure(MessageUtil.error("Prefix is too long! Maximum length is 64 characters."));
+            return 0;
+        }
+
+        // Validate no dangerous characters (but allow color codes &)
+        if (prefix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
+            ctx.getSource().sendFailure(MessageUtil.error("Prefix contains invalid control characters!"));
+            return 0;
+        }
+
+        // Check for group existence
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
+
+        // Set the prefix
         group.setPrefix(prefix);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting prefix", e); }
-        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
-        return 1;
+
+        // Clear cache to ensure new prefix is used immediately
+        PermissionAPI.getManager().clearCache();
+
+        // Save with proper error handling
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            LOGGER.info("Set prefix '{}' for group '{}'", prefix, groupName);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after setting prefix", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save prefix: " + e.getMessage()));
+            return 0;
+        }
     }
 
     private static int setSuffix(CommandContext<CommandSourceStack> ctx) {
@@ -270,15 +298,43 @@ public class PermissionsCommand {
         
         String groupName = StringArgumentType.getString(ctx, "group");
         String suffix = StringArgumentType.getString(ctx, "suffix");
+
+        // Safety validations
+        if (suffix.length() > 64) {
+            ctx.getSource().sendFailure(MessageUtil.error("Suffix is too long! Maximum length is 64 characters."));
+            return 0;
+        }
+
+        // Validate no dangerous characters (but allow color codes &)
+        if (suffix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
+            ctx.getSource().sendFailure(MessageUtil.error("Suffix contains invalid control characters!"));
+            return 0;
+        }
+
+        // Check for group existence
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
+
+        // Set the suffix
         group.setSuffix(suffix);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting suffix", e); }
-        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
-        return 1;
+
+        // Clear cache to ensure new suffix is used immediately
+        PermissionAPI.getManager().clearCache();
+
+        // Save with proper error handling
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            LOGGER.info("Set suffix '{}' for group '{}'", suffix, groupName);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after setting suffix", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save suffix: " + e.getMessage()));
+            return 0;
+        }
     }
 
     private static int addGroupPermission(CommandContext<CommandSourceStack> ctx) {

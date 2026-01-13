@@ -606,6 +606,7 @@ public class NeoEssentials {
         registry.registerCommand("gmsp", "Change to spectator mode");
         registry.registerCommand("gma", "Change to adventure mode");
         
+        com.zerog.neoessentials.inventory.InventoryViewCommands.register(dispatcher);
         com.zerog.neoessentials.util.commands.AfkCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.AnvilCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.BookCommand.register(dispatcher);
@@ -658,7 +659,6 @@ public class NeoEssentials {
         com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.ClearInventoryCommand.register(dispatcher);
-        com.zerog.neoessentials.inventory.InventoryViewCommands.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
