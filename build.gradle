@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.107'
     id 'idea'
-    id 'com.gradleup.shadow' version '8.3.5'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -126,6 +125,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+    jarJar.extendsFrom implementation
 }
 
 dependencies {
@@ -150,12 +150,14 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
-    implementation 'com.google.code.gson:gson:2.10.1'
-    
-    // Java-WebSocket for WebSocket server - will be shaded into the mod JAR
-    // Using implementation so it's available at compile time and runtime
+    // NOTE: Gson is provided by NeoForge, so we don't include it to avoid module conflicts
+    // NeoForge includes Gson automatically
+
+    // Java-WebSocket for WebSocket server - bundled using JarJar to avoid module conflicts
+    // JarJar will properly isolate this dependency within our mod
     implementation 'org.java-websocket:Java-WebSocket:1.5.7'
-    
+    jarJar(group: 'org.java-websocket', name: 'Java-WebSocket', version: '[1.5.7,1.6.0)')
+
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'
 
@@ -171,30 +173,6 @@ dependencies {
     // runtimeOnly fg.deobf("dev.ftb.mods:ftbranks-neoforge:VERSION")
 }
 
-// Configure Shadow to relocate Java-WebSocket to avoid module conflicts
-shadowJar {
-    configurations = [project.configurations.runtimeClasspath]
-    archiveClassifier.set('')
-
-    // CRITICAL: Relocate Java-WebSocket to our own package to avoid module conflicts
-    relocate 'org.java_websocket', 'com.zerog.neoessentials.shaded.java_websocket'
-
-    // Exclude unnecessary files
-    exclude 'META-INF/MANIFEST.MF'
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-    exclude 'META-INF/maven/**'
-
-    // Only include Java-WebSocket dependency
-    dependencies {
-        include(dependency('org.java-websocket:Java-WebSocket'))
-    }
-}
-
-// Make jar task depend on shadowJar
-jar.dependsOn shadowJar
-jar.enabled = false
 
 // Copy build_number.txt to resources so it's included in the JAR
 tasks.register("copyBuildNumber", Copy) {

@@ -100,10 +100,40 @@ public class DashboardAPI {
 
             LOGGER.info("Starting Dashboard API on {}:{}", bindAddress, port);
 
-            // Create HTTP server
-            InetSocketAddress address = new InetSocketAddress(bindAddress, port);
-            apiServer = HttpServer.create(address, 0);
-            
+            // Create HTTP server with automatic fallback for bind address issues
+            InetSocketAddress address;
+            try {
+                address = new InetSocketAddress(bindAddress, port);
+                apiServer = HttpServer.create(address, 0);
+            } catch (java.net.BindException e) {
+                // If binding to the configured address fails, try fallback
+                LOGGER.warn("Cannot bind to {}:{}. Error: {}", bindAddress, port, e.getMessage());
+
+                if (!"0.0.0.0".equals(bindAddress)) {
+                    LOGGER.info("Attempting fallback to 0.0.0.0:{} (all interfaces)...", port);
+                    try {
+                        address = new InetSocketAddress("0.0.0.0", port);
+                        apiServer = HttpServer.create(address, 0);
+                        LOGGER.info("Successfully bound to fallback address 0.0.0.0:{}", port);
+                        bindAddress = "0.0.0.0"; // Update for logging below
+                    } catch (java.net.BindException e2) {
+                        LOGGER.error("Fallback also failed! Port {} may be in use or system doesn't support network binding.", port);
+                        LOGGER.error("Possible solutions:");
+                        LOGGER.error("  1. Change the port in config/neoessentials/config.json → webDashboard.port");
+                        LOGGER.error("  2. Check if another application is using port {}", port);
+                        LOGGER.error("  3. Verify your server's network configuration");
+                        throw e2;
+                    }
+                } else {
+                    LOGGER.error("Cannot bind to any interface on port {}!", port);
+                    LOGGER.error("Possible solutions:");
+                    LOGGER.error("  1. Change the port in config/neoessentials/config.json → webDashboard.port");
+                    LOGGER.error("  2. Check if another application is using port {}", port);
+                    LOGGER.error("  3. Verify your server's firewall and network settings");
+                    throw e;
+                }
+            }
+
             // Set up thread pool and store reference for proper shutdown
             executor = Executors.newFixedThreadPool(10);
             apiServer.setExecutor(executor);
