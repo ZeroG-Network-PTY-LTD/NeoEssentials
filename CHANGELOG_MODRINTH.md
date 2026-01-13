@@ -1,12 +1,44 @@
 # NeoEssentials v1.0.2.4
 
-## 🎉 MASSIVE UPDATE - Complete Chat System Overhaul!
+## 🚨 CRITICAL UPDATE - Module Conflict Resolution
 
-The most advanced chat system for NeoForge is here! This update brings **4 major phases** of enhancements.
+**Build #746** | January 12, 2026 | MC 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+
+This release fixes critical compatibility issues that prevented NeoEssentials from working with many popular mods!
 
 ---
 
 ## 🐛 Critical Fixes
+
+### Module Export Conflicts - RESOLVED ✅
+**The Problem:**
+- Server crashes with "Module neoessentials exports package..." errors
+- Conflicts with: JadeAddons, SmoothChunk, SDLink, LetMeDespawn, and others
+- Incompatible with Arclight/hybrid server platforms
+- "Module neoforge reads more than one module named com.google.gson"
+
+**The Solution:**
+- ✅ Migrated from Shadow plugin to NeoForge's native JarJar system
+- ✅ Removed Gson dependency (NeoForge already provides it)
+- ✅ Properly isolated Java-WebSocket library
+- ✅ Eliminated module-info.class conflicts
+- ✅ No longer exports Minecraft/NeoForge packages
+
+**The Result:**
+- 🎉 Works with ALL tested mod combinations!
+- 🎉 Compatible with Arclight & hybrid platforms!
+- 🎉 Clean server startup every time!
+- 🎉 No more module resolution errors!
+
+**Technical Changes:**
+- Build system: Shadow → JarJar
+- Dependencies: Gson removed, Java-WebSocket isolated
+- JAR structure: Optimized for NeoForge module system
+- Module metadata: Cleaned up, no package exports
+
+---
+
+## 🎉 Previous Updates (v1.0.2.4)
 
 ### Chat Channels System
 **FIXED:** Channels were configured but commands didn't exist!

@@ -1,16 +1,45 @@
 # NeoEssentials v1.0.2.4 - Changelog
 
-**Build #TBD** | January 10, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #746** | January 12, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
 ---
 
-## 🎉 Major Update - Complete Chat System Overhaul!
+## 🚨 CRITICAL FIX - Module Conflict Resolution
 
-This massive update brings **four phases** of chat enhancements, transforming NeoEssentials into the most advanced chat system for NeoForge!
+This release resolves **critical module export conflicts** that prevented NeoEssentials from loading with many popular mods!
 
 ---
 
 ## 🐛 Critical Bug Fixes
+
+### **Module Export Conflicts - RESOLVED** ✅
+- **FIXED:** Module conflict errors preventing server startup
+  - `Modules neoessentials and minecraft export package...`
+  - `Modules neoforge and neoessentials export package...`
+  - `Module neoforge.coremods reads more than one module named com.google.gson`
+- **FIXED:** Compatibility issues with popular mods:
+  - JadeAddons, SmoothChunk, SDLink, LetMeDespawn, and many others
+- **SOLUTION:** Migrated from Shadow plugin to NeoForge's native JarJar system
+- **SOLUTION:** Removed Gson dependency (NeoForge provides it)
+- **SOLUTION:** Proper dependency isolation for Java-WebSocket library
+- **RESULT:** NeoEssentials now loads cleanly with all tested mod combinations!
+
+**Technical Details:**
+- Replaced Gradle Shadow plugin with NeoForge JarJar bundling
+- Java-WebSocket now properly isolated via JarJar
+- Eliminated module-info.class conflicts
+- No longer exports packages that conflict with Minecraft/NeoForge
+- Compatible with Arclight and other hybrid server platforms
+
+### **Build System Improvements** 🔧
+- Cleaned up Gradle build configuration
+- Removed redundant Shadow plugin dependencies
+- Optimized JAR packaging for faster loading
+- Improved module metadata handling
+
+---
+
+## 🎉 Previous Updates (v1.0.2.4)
 
 ### **Chat Channels System Implemented** ✅
 - **FIXED:** Chat channels were configured but not functional - no commands existed!
