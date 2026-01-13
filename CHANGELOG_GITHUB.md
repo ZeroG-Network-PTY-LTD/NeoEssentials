@@ -1,192 +1,6 @@
 # NeoEssentials v1.0.2.4 - Changelog
 
-**Build #746** | January 12, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
-
----
-
-## 🚨 CRITICAL FIX - Module Conflict Resolution
-
-This release resolves **critical module export conflicts** that prevented NeoEssentials from loading with many popular mods!
-
----
-
-## 🐛 Critical Bug Fixes
-
-### **Module Export Conflicts - RESOLVED** ✅
-- **FIXED:** Module conflict errors preventing server startup
-  - `Modules neoessentials and minecraft export package...`
-  - `Modules neoforge and neoessentials export package...`
-  - `Module neoforge.coremods reads more than one module named com.google.gson`
-- **FIXED:** Compatibility issues with popular mods:
-  - JadeAddons, SmoothChunk, SDLink, LetMeDespawn, and many others
-- **SOLUTION:** Migrated from Shadow plugin to NeoForge's native JarJar system
-- **SOLUTION:** Removed Gson dependency (NeoForge provides it)
-- **SOLUTION:** Proper dependency isolation for Java-WebSocket library
-- **RESULT:** NeoEssentials now loads cleanly with all tested mod combinations!
-
-**Technical Details:**
-- Replaced Gradle Shadow plugin with NeoForge JarJar bundling
-- Java-WebSocket now properly isolated via JarJar
-- Eliminated module-info.class conflicts
-- No longer exports packages that conflict with Minecraft/NeoForge
-- Compatible with Arclight and other hybrid server platforms
-
-### **Build System Improvements** 🔧
-- Cleaned up Gradle build configuration
-- Removed redundant Shadow plugin dependencies
-- Optimized JAR packaging for faster loading
-- Improved module metadata handling
-
----
-
-## 🎉 Previous Updates (v1.0.2.4)
-
-### **Chat Channels System Implemented** ✅
-- **FIXED:** Chat channels were configured but not functional - no commands existed!
-- **NEW:** Dynamic channel commands auto-registered from config
-- **NEW:** `/l`, `/local` → Switch to local channel (proximity-based)
-- **NEW:** `/g`, `/global` → Switch to global channel (server-wide)
-- **NEW:** `/staff`, `/mod`, `/admin` → Switch to staff channel (permission-based)
-- **NEW:** Prefix support: `!message` for global, `@message` for staff
-- **NEW:** Command+message combo: `/g Hello everyone!`
-- **NEW:** Per-player channel state tracking
-- Fully customizable via `config.json` → `chat.channels`
-- See `docs/Wiki/ChatChannels.md` for full documentation
-
-**How it works:**
-- Local channel: Only players within radius (default 100 blocks) see messages
-- Global channel: All online players see messages
-- Staff channel: Only players with permission see messages
-- Switch channels with commands or use prefixes for quick access
-
-### **Config Version Migration System** 🔧
-- **FIXED:** Config files not updating when `_configVersion` changes
-- **NEW:** Automatic version detection and migration
-- **NEW:** Creates timestamped backups of old configs before updating
-- **NEW:** Detailed logging of version mismatches
-- Ensures new features and settings are applied automatically
-- No more manual config deletion required!
-
-**How it works:**
-- On startup or `/neoessentials reload`, checks all config file versions
-- Compares with expected versions (config.json v13, economy.json v2, etc.)
-- If outdated: Creates backup → Replaces with new version → Logs the update
-- Backups stored as: `config_v12_backup_2026-01-10_14-30-00.json`
-
----
-
-## 🚀 What's New
-
-### 📂 **Config File Splitting System** 🆕
-
-**NEW SMART BEHAVIOR:**
-- **Fresh Installations:** Auto-splits configs from the start! (New servers get optimized structure by default)
-- **Existing Servers:** Command-based with in-game admin notifications
-- **Deleted Configs:** Auto-recovery with split configs
-
-**How it works:**
-- Detects if server has config.json already
-- **NEW servers:** Automatically creates 9 smaller config files (no manual steps!)
-- **EXISTING servers:** Shows in-game notification to OPs and admin permission holders
-- **DELETED configs:** Treated as fresh install, auto-splits on recovery
-
-**In-Game Admin Notification:**
-When an OP or player with admin permissions logs in, they see:
-```
-═══════════════════════════════════════════════
-NeoEssentials Configuration Notice
-═══════════════════════════════════════════════
-
-Your server is using a large config.json file.
-NeoEssentials can split it into smaller, easier-to-edit files!
-
-✓ Easier to find settings
-✓ Less chance of syntax errors
-✓ Better organization
-✓ Automatic backup before splitting
-
-Run: /neoessentials config split to enable
-
-═══════════════════════════════════════════════
-```
-
-**Who sees notifications:**
-- Players with OP level 4
-- Players with wildcard permission (`*`)
-- Players with `neoessentials.*` permission
-- Players with `neoessentials.admin.*` permission
-- Only shown once per server start (no spam!)
-
-**Manual Migration** (for existing servers):
-- Run `/neoessentials config split` when ready
-- Creates automatic backup before splitting
-- Splits config.json into 9 focused files:
-
-Tired of scrolling through a 685-line config file? Split it into smaller, manageable files!
-
-**Features:**
-- ✅ Split large `config.json` into 9 focused files
-- ✅ One command migration: `/neoessentials config split`
-- ✅ Automatic backup creation
-- ✅ 100% backward compatible
-- ✅ Easy rollback if needed
-- ✅ Individual version control per file
-
-**Split Structure:**
-```
-config/neoessentials/
-├── main.json (50 lines) - Core settings
-├── commands.json (110 lines) - Command toggles
-├── chat.json (200 lines) - Chat system
-├── teleportation.json (120 lines) - Teleport settings
-├── moderation.json (130 lines) - Ban, jail, freeze, etc.
-├── webdashboard.json (80 lines) - Web interface
-├── items.json (30 lines) - Item spawning
-├── afk.json (40 lines) - AFK system
-└── security.json (15 lines) - Security settings
-```
-
-**Benefits:**
-- 📝 Easier to edit - find settings quickly!
-- 🔍 Better organization - one system per file
-- 🛡️ Less errors - smaller files = fewer mistakes
-- 📊 Better git diffs - see exactly what changed
-- ⚡ No performance impact - caching optimized
-
-**How to Use:**
-```
-/neoessentials config split
-```
-
-**Rollback:**
-Original config backed up to `config.json.backup` - easy to revert!
-
----
-
-## 🚀 What's New (Continued)
-
-### 💬 **Phase 2: Interactive Chat Enhancements** ✨
-
-Modern, interactive chat features that bring your server communication to life!
-
-#### **Clickable URLs** 🔗
-- Auto-detection of `http://` and `https://` links
-- Click to open in browser
-- Blue and underlined styling
-- Hover shows full URL
-
-#### **@Mention System** 📢
-- Type `@PlayerName` to mention online players
-- Bold + yellow highlighting (configurable)
-- Plays sound notification to mentioned player
-- Click to suggest `/msg PlayerName` command
-- Smart: No sound when mentioning yourself
-
-#### **[item] Links** 💎
-- Type `[item]` to display your held item
-- Shows item name with full hover details
-- Displays enchantments, durability, and more
-- Shows "[Empty Hand]" if nothing held
+**Build #750** | January 13, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
 ---
 
@@ -199,13 +13,7 @@ Professional-grade chat management and customization!
 - **Custom Images:** Place PNG files in `config/neoessentials/badges/` folder
 - **Auto-Discovery:** Mod scans and registers badge images automatically
 - **Status Icons:** Dynamic icons based on player state (💤 AFK, 👻 Vanished, 🔇 Muted)
-- **Flexible Positioning:** before_prefix, after_prefix, before_name, after_name
-- **Fallback:** Uses emoji badges if custom images not available
-
-#### **Anti-Spam Protection** 🛡️
-- **Caps Filter:** Converts SHOUTING to lowercase or blocks it
-- **Repeat Filter:** Blocks duplicate messages within cooldown period
-- **Link Filter:** Control URL posting with whitelist/blacklist
+Advanced text effects and dynamic formatting!
 - **Rate Limiting:** Prevents message flooding
 - **Bypass Permissions:** Staff can bypass all filters
 - **Configurable Actions:** block, warn, or lowercase
@@ -417,24 +225,6 @@ neoessentials.chat.rainbow    - Use rainbow text
 ### **New Documentation Files**
 - `PHASE_2_IMPLEMENTATION_COMPLETE.md` - Phase 2 feature guide
 - `PHASE_2_TEST_GUIDE.md` - Testing checklist
-- `PHASE_3_IMPLEMENTATION_COMPLETE.md` - Phase 3 feature guide
-- `PHASE_4_IMPLEMENTATION_COMPLETE.md` - Phase 4 feature guide
-- `CUSTOM_BADGES.md` - Custom badge images setup guide
-- `CUSTOM_BADGE_IMAGES_COMPLETE.md` - Badge system documentation
-- `WARNING_FIXES_COMPLETE.md` - Code cleanup summary
-- `docs/Placeholders.txt` - Complete placeholder reference
-
-### **Updated Documentation**
-- README.md - Updated with new features
-- Permission documentation - All new permissions listed
-- Configuration examples - Comprehensive examples for all features
-
----
-
-## 🔧 Technical Changes
-
-### **New Classes**
-- `RichTextFormatter.java` - Gradient and rainbow text processing
 - `ConditionalFormatter.java` - Time/stat/state-based formatting
 - `AntiSpamManager.java` - Spam protection and filtering
 - `BadgeManager.java` - Badge and icon management
@@ -448,6 +238,12 @@ neoessentials.chat.rainbow    - Use rainbow text
 - `BadgeManager.java` - Custom image loading
 - `PermissionRegistry.java` - Added 11 new permissions
 
+- **Easy Switching:** Change server-wide format with one config setting
+- **Per-Group Override:** Can still use group/world specific formats
+- **Example Templates:**
+  - RPG: `[Lv.30] [Admin] Steve: Hello!`
+  - Modern: `● [VIP] Alex › Hey everyone!`
+  - Minimal: `Steve: Just the basics`
 ### **Processing Pipeline**
 1. Normalize placeholders
 2. Apply badges/icons (Phase 3)
@@ -469,20 +265,12 @@ neoessentials.chat.rainbow    - Use rainbow text
 - **Badges:** Cached lookups, no database queries
 - **Overall:** ~10-15ms total overhead with all features enabled
 
----
-
-## 🎯 Usage Examples
-
-### **Gradient VIP Prefix**
-```json
+### **Improved Debug Logging**
+- Debug mode now controlled by config option
+- Reduced console spam when debug disabled
+- Detailed logging only when `debug-logging: true`
 {
   "chat-format": {
-    "group:vip": "<gradient:FFD700-FF1493>{neoessentials_prefix}</gradient> {neoessentials_name}: {MESSAGE}"
-  }
-}
-```
-Result: VIP prefix with gold→pink gradient
-
 ### **Time-Based Greeting**
 ```json
 {
@@ -494,16 +282,7 @@ Result: VIP prefix with gold→pink gradient
 Result: Sun emoji in morning, moon at night
 
 ### **Health Warning**
-```json
-{
-  "chat-format": {
-    "default": "{prefix}{name} <if:health<50>❤️ </if>: {MESSAGE}"
-  }
-}
-```
-Result: Shows heart icon when health is low
-
-### **Complex Multi-Feature**
+  - Prevented teleportation to Nether ceiling, intentional unsafe builds, etc.
 ```json
 {
   "chat-format": {
@@ -517,8 +296,6 @@ Result: Gradient prefix + flying icon + AFK icon + message
 
 ## ⚠️ Known Issues
 
-- Resource pack auto-send requires NeoForge API update (use server.properties meanwhile)
-- Custom badge images need client-side resource pack to display
 - Some IntelliJ warnings are false positives (Level try-with-resources)
 
 ---
@@ -535,7 +312,6 @@ Result: Gradient prefix + flying icon + AFK icon + message
 ---
 
 ## 📝 Notes
-
 This update represents **months of development** condensed into **four major phases**:
 - **Phase 1:** Core chat system (previous releases)
 - **Phase 2:** Interactive elements (URLs, mentions, items)
@@ -544,36 +320,9 @@ This update represents **months of development** condensed into **four major pha
 
 All phases are **production-ready** and fully tested!
 
----
-
-**Full Changelog:** See individual phase documentation files for detailed feature breakdowns.
-
-**Download:** [GitHub Releases](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases)  
-**Support:** [Discord](https://discord.gg/dUGAQF2Mga)  
-**Wiki:** [GitHub Wiki](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki)
-    "allowItemLinks": true,
-    "mentions": {
-      "enabled": true,
-      "highlightColor": "&e",
-      "playSound": true,
-      "soundName": "entity.experience_orb.pickup",
-      "soundVolume": 1.0
-    }
-  }
-}
-```
-
-#### **Files Added**
-- `ChatEnhancer.java` - Interactive chat processing engine
-
-#### **Files Modified**
+Result: Gradient prefix + flying icon + AFK icon + message
 - `ChatFormatter.java` - Integrated ChatEnhancer
 - `PermissionRegistry.java` - Added 7 new permissions
 - `config.json` - Added Phase 2 configuration section
 
----
-
-## Previous Releases
-
-See the [Releases](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) page for previous version changelogs.
-
+## ⚠️ Known Issues

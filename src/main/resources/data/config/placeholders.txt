@@ -6,40 +6,23 @@ For LuckPerms setup guide, see: LUCKPERMS_PLACEHOLDERS.md
 For the complete list of permissions, see: permissions_nodes.txt
 
 ================================================================================
-
-  - Support for external permission mods
-  - PlaceholderAPI implementation
-  - Initial comprehensive placeholder system
-v1.0.2.3 (Build #627) - January 4, 2026
-
-  - Improved documentation
-  - Added debug logging for troubleshooting
-  - Fixed placeholder resolution issues
-  - Added LuckPerms placeholder support
-v1.0.2.3 (Build #680+) - January 6, 2026
-
-================================================================================
                       VERSION HISTORY
 ================================================================================
+
+USAGE:
+------
+Use placeholders in chat format, MOTD, signs, books, and any text component.
+Format: {placeholder_name} or {placeholder_name:parameter}
+
+Example chat format:
+  "chat-format": "{neoessentials_prefix}{neoessentials_name}{neoessentials_suffix}: {MESSAGE}"
+
+Result:
+  [Admin] PlayerName [VIP]: Hello world!
 
   - Wiki: [Your Wiki Link]
   - Discord: [Your Discord Link]
   - GitHub Issues: https://github.com/ZeroG-Network/NeoEssentials/issues
-Support:
-
-  - /permissions - Manage internal permissions
-  - /neoessentials reload - Reload configuration
-  - /neoessentials help - Show all commands
-Commands:
-
-  - CONFIG.md - Configuration file reference
-  - LUCKPERMS_PLACEHOLDERS_QUICK.md - Quick reference
-  - LUCKPERMS_PLACEHOLDERS.md - Complete LuckPerms placeholder guide
-Documentation:
-
-================================================================================
-                      ADDITIONAL RESOURCES
-================================================================================
 
    - Hex colors supported: &#FF5733
    - Use &r to reset formatting
@@ -66,9 +49,26 @@ Documentation:
    - {MESSAGE} is special - only works in chat-format
 1. MESSAGE Placeholder:
 
+
+  - /permissions - Manage internal permissions
+  - /neoessentials reload - Reload configuration
+  - /neoessentials help - Show all commands
+Commands:
+
+  - CONFIG.md - Configuration file reference
+  - LUCKPERMS_PLACEHOLDERS_QUICK.md - Quick reference
+  - LUCKPERMS_PLACEHOLDERS.md - Complete LuckPerms placeholder guide
+Documentation:
+
 ================================================================================
-                      NOTES & LIMITATIONS
+                      ADDITIONAL RESOURCES
+{neoessentials_afk_reason}        - AFK reason if set
+
 ================================================================================
+                      LUCKPERMS PLACEHOLDERS
+================================================================================
+
+REQUIRES: LuckPerms mod installed and loaded
 
 See PlaceholderAPI documentation for details.
 
@@ -84,9 +84,22 @@ Register custom placeholders via PlaceholderAPI:
 
 For mod developers:
 
-================================================================================
-                      CUSTOM PLACEHOLDERS
-================================================================================
+BASIC LUCKPERMS:
+----------------
+{luckperms_prefix}                - Player's prefix from LuckPerms
+{luckperms_suffix}                - Player's suffix from LuckPerms
+{luckperms_group}                 - Player's primary group from LuckPerms
+{luckperms_primary_group}         - Player's primary group (alias)
+{luckperms_displayname}           - Prefix + name + suffix combined
+
+NOTES:
+- LuckPerms placeholders pull data directly from LuckPerms API
+- If LuckPerms is not installed, these placeholders remain unchanged
+- Use {neoessentials_prefix} for fallback support
+
+SETUP EXAMPLE:
+--------------
+Set prefix in LuckPerms:
 
    Set "enableDebugLogging": false
 5. Disable when done:
@@ -110,114 +123,30 @@ For mod developers:
 
 To see detailed placeholder resolution:
 
-================================================================================
-                      DEBUG MODE
-================================================================================
+  /lp group default meta setprefix 1 "&7"
 
   Check weights: /lp group <group> meta info
   Use square brackets: &7[&2D&7]&r instead of &7{&2D&7}&r
-Solution:
-
-  - Weight priority issue
-  - Curly braces in prefix parsed as placeholder
+   - {luckperms_*} placeholders pull directly from LuckPerms API
+1. LuckPerms (if installed)
 Causes:
-Problem: Shows wrong prefix or partial prefix
+When multiple permission systems are available:
+
+---------------------------
+EXAMPLE 6: Multiple Groups
+                      PLACEHOLDER PRIORITY
+================================================================================
+  "chat-format": "[{luckperms_group}] {luckperms_prefix}{neoessentials_name}: {MESSAGE}"
 ---------------------------
 LUCKPERMS PREFIX INCORRECT:
 
+  PlayerName ($1,234.56): Check out my balance!
 
   Permission: Grant neoessentials.chat.color
   Config: Set "enable-color-codes": true
-Solution:
-
-  - Player lacks color permission
-  - Color codes disabled in config
-Causes:
-Problem: Color codes showing as text (&c[Admin])
--------------------
-COLORS NOT WORKING:
-
-
-  For internal: Use /permissions command to set prefix
-  For LuckPerms: /lp group default meta setprefix 1 "&7"
-Solution:
-
-  - AFK status when player is not AFK
-  - Player not in any group
-  - No prefix/suffix set in permission system
-Causes:
-Problem: Placeholder resolves but returns empty
----------------------------------
-PLACEHOLDER SHOWS EMPTY/NOTHING:
-
-
-  - Use {neoessentials_prefix} for automatic fallback
-  - Verify external mods are loaded
-  - Check spelling: {neoessentials_name} not {neoessential_name}
-Solution:
-
-  - Placeholder doesn't exist
-  - External mod not installed (for luckperms/ftbranks)
-  - Typo in placeholder name (case-sensitive!)
-Causes:
-Problem: Placeholder not being replaced
------------------------------------------
-PLACEHOLDER SHOWS AS {placeholder_name}:
-
-================================================================================
-                      TROUBLESHOOTING
-================================================================================
-
-  More semantic and clear intent
-  Use {luckperms_prefix} for explicit LuckPerms data
-For LuckPerms-only servers:
-
-  This works with LuckPerms, FTB Ranks, OR internal permissions
-  Use {neoessentials_prefix} instead of {luckperms_prefix}
-For maximum compatibility:
----------------------
-RECOMMENDED APPROACH:
-
-   - {neoessentials_prefix/suffix/group} fall back to internal system
-3. NeoEssentials Internal
-
-   - {ftbranks_*} placeholders pull from FTB Ranks
-2. FTB Ranks (if installed, no LuckPerms)
-
-   - {luckperms_*} placeholders pull directly from LuckPerms API
-1. LuckPerms (if installed)
-
-When multiple permission systems are available:
-
-================================================================================
-                      PLACEHOLDER PRIORITY
-================================================================================
-
-  [admin] [Admin] PlayerName: I'm an admin!
-Result:
-
-  "chat-format": "[{luckperms_group}] {luckperms_prefix}{neoessentials_name}: {MESSAGE}"
-Config:
----------------------------
-EXAMPLE 6: Multiple Groups
-
-
-  PlayerName ($1,234.56): Check out my balance!
-Result:
-
   "chat-format": "{neoessentials_name} ($${neoessentials_balance_formatted}): {MESSAGE}"
 Config:
----------------------------
 EXAMPLE 5: Economy Display
-
-
-  [plains] PlayerName: I'm in a plains biome!
-Result:
-
-  "chat-format": "[{neoessentials_biome}] {neoessentials_name}: {MESSAGE}"
-Config:
---------------------------
-EXAMPLE 4: Location-Based
 
 
   [Admin] PlayerName: Hello world!
@@ -226,50 +155,69 @@ Result (Not AFK):
   [Admin] PlayerName [AFK]: Hello world!
 Result (AFK):
 
-  "chat-format": "{neoessentials_prefix}{neoessentials_name}{neoessentials_afk}: {MESSAGE}"
-Config:
----------------------------
+Problem: Color codes showing as text (&c[Admin])
+-------------------
+COLORS NOT WORKING:
+
+
+Causes:
 EXAMPLE 3: With AFK Status
+PLACEHOLDER SHOWS EMPTY/NOTHING:
+
+
+  - Use {neoessentials_prefix} for automatic fallback
+  - Verify external mods are loaded
+  - Check spelling: {neoessentials_name} not {neoessential_name}
+Solution:
 
 
   [Admin] PlayerName [VIP] [overworld]: Hello world!
-Result:
-
+  - Placeholder doesn't exist
+  - External mod not installed (for luckperms/ftbranks)
   "chat-format": "{luckperms_prefix}{neoessentials_name}{luckperms_suffix} &8[{neoessentials_world}]&r: {MESSAGE}"
-Config:
-------------------------------
-EXAMPLE 2: Full Featured Chat
+PLACEHOLDER SHOWS AS {placeholder_name}:
 
+Use in chat:
+                      TROUBLESHOOTING
+================================================================================
 
   [Admin] PlayerName: Hello world!
-Result:
+
 
   "chat-format": "{neoessentials_prefix}{neoessentials_name}: {MESSAGE}"
 Config:
 ------------------------------
-EXAMPLE 1: Simple Chat Format
-
-================================================================================
-                      USAGE EXAMPLES
-================================================================================
-
 {ftbranks_displayname}            - Prefix + name + suffix combined
 {ftbranks_group}                  - Player's primary group from FTB Ranks
 {ftbranks_suffix}                 - Player's suffix from FTB Ranks
 {ftbranks_prefix}                 - Player's prefix from FTB Ranks
-
+   - {neoessentials_prefix/suffix/group} fall back to internal system
+3. NeoEssentials Internal
 REQUIRES: FTB Ranks mod installed and loaded
 
 ================================================================================
-                     FTB RANKS PLACEHOLDERS
-================================================================================
+                      USAGE EXAMPLES
+                      CUSTOM PLACEHOLDERS
+  "chat-format": "{luckperms_prefix}{neoessentials_name}{luckperms_suffix} &8[{neoessentials_world}]&r: {MESSAGE}"
 
+                      DEBUG MODE
+                     FTB RANKS PLACEHOLDERS
+Result (AFK):
+  [Admin] PlayerName [AFK]: Hello world!
+
+Result (Not AFK):
+  [Admin] PlayerName: Hello world!
+
+
+EXAMPLE 4: Location-Based
+--------------------------
+Config:
 {neoessentials_date}              - Current date (e.g., "2026-01-06")
 {neoessentials_time_24}           - Current time (24-hour format, e.g., "15:45")
 {neoessentials_time}              - Current time (12-hour format, e.g., "3:45 PM")
 ------------
 TIME & DATE:
-
+  PlayerName ($1,234.56): Check out my balance!
 {neoessentials_tps}               - Server TPS (if available)
 {neoessentials_max_players}       - Maximum player capacity
 {neoessentials_online_players}    - Number of online players
@@ -277,9 +225,48 @@ TIME & DATE:
 ------------
 SERVER INFO:
 
-================================================================================
+
+EXAMPLE 6: Multiple Groups
                         SERVER PLACEHOLDERS
+  - Curly braces in prefix parsed as placeholder
+  - Weight priority issue
+
+Solution:
+  Use square brackets: &7[&2D&7]&r instead of &7{&2D&7}&r
+  Check weights: /lp group <group> meta info
+
 ================================================================================
+                      DEBUG MODE
+================================================================================
+
+To see detailed placeholder resolution:
+
+1. Enable debug logging in config.json:
+   {
+     "logging": {
+       "enableDebugLogging": true
+     }
+   }
+
+2. Reload config:
+   /neoessentials reload
+
+3. Send a chat message
+
+4. Check logs/latest.log for:
+   [INFO] Processing placeholders in text: ...
+   [INFO] Found placeholder: {luckperms_prefix}
+   [INFO] Resolved placeholder to: [&c[Admin] ]
+
+5. Disable when done:
+   Set "enableDebugLogging": false
+
+================================================================================
+                      CUSTOM PLACEHOLDERS
+================================================================================
+
+For mod developers:
+
 
   [Admin] PlayerName: Hello!
 Result:
@@ -308,8 +295,31 @@ BASIC LUCKPERMS:
 
 REQUIRES: LuckPerms mod installed and loaded
 
+
+Example:
+  PlaceholderAPI.registerPlaceholder("mymod_custom", (player, params) -> {
+      return "Custom Value";
+  });
+
+Usage:
+  {mymod_custom}
+
+See PlaceholderAPI documentation for details.
+
 ================================================================================
-                      LUCKPERMS PLACEHOLDERS
+                      NOTES & LIMITATIONS
+================================================================================
+
+1. MESSAGE Placeholder:
+   - {MESSAGE} is special - only works in chat-format
+   - Represents the player's actual chat message
+                          PLAYER PLACEHOLDERS
+
+5. Minecraft Color Codes:
+   - Use & for color codes: &c = red, &a = green, etc.
+   - Use &r to reset formatting
+   - Hex colors supported: &#FF5733
+
 ================================================================================
 
 {neoessentials_afk_reason}        - AFK reason if set
@@ -347,33 +357,14 @@ PLAYER STATUS:
 PERMISSION SYSTEM:
 
 {neoessentials_ip}                - Player's IP address (admin only)
-{neoessentials_uuid}              - Player's UUID
-{neoessentials_displayname}       - Player's display name
-{neoessentials_username}          - Player's username (alias)
-{neoessentials_name}              - Player's username
-------------------
-BASIC PLAYER INFO:
-
-================================================================================
-                          PLAYER PLACEHOLDERS
-================================================================================
-
-  [Admin] PlayerName [VIP]: Hello world!
-Result:
-
-  "chat-format": "{neoessentials_prefix}{neoessentials_name}{neoessentials_suffix}: {MESSAGE}"
-Example chat format:
-
-Format: {placeholder_name} or {placeholder_name:parameter}
-Use placeholders in chat format, MOTD, signs, books, and any text component.
-------
-USAGE:
-
-================================================================================
                         NEOESSENTIALS PLACEHOLDERS
-================================================================================
+  - Support for external permission mods
 
 # Version: 1.0.2.3
 # Last Updated: January 6, 2026
 # Complete list of all available placeholders for chat formatting, MOTD, signs, and more
+For the complete list of permissions, see: permissions_nodes.txt
+For LuckPerms setup guide, see: LUCKPERMS_PLACEHOLDERS.md
 
+Last Updated: January 6, 2026
+NeoEssentials v1.0.2.3 Build #680+

@@ -1,6 +1,6 @@
 # NeoEssentials v1.0.2.4 - Changelog
 
-**Build #746** | January 12, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #750** | January 13, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
 ---
 
@@ -10,7 +10,108 @@
 
 ---
 
-## 🐛 CRITICAL FIX - Mod Compatibility!
+## 🐛 CRITICAL FIXES
+
+### **Teleportation Safety - NOW WORKS PROPERLY!** ✅
+
+**Were you experiencing these issues?** ❌
+- Can't teleport to Nether ceiling farms?
+- Can't set homes in "unsafe" but intentional locations?
+- Safety config set to `false` but still blocks teleportation?
+
+**ALL FIXED NOW!** ✅
+
+**What was broken:**
+- Safety settings (`enableHomeTeleportSafety`, etc.) didn't work when set to `false`
+- Even with safety disabled, mod blocked teleportation to "unsafe" locations
+- Prevented legitimate use cases like Nether ceiling farms, lava bases, etc.
+
+**What we did:**
+- ✅ Fixed safety check logic in all teleportation systems
+- ✅ When safety is `true`: Finds safe spots or blocks teleportation
+- ✅ When safety is `false`: Allows teleportation ANYWHERE (even lava, void, etc.)
+- ✅ Updated config comments to clarify behavior
+- ✅ Tested with Nether ceiling, void platforms, lava builds
+
+**Config Options that NOW WORK:**
+```json
+"enableHomeTeleportSafety": false  // Allows homes anywhere!
+"enableWarpSafety": false          // Allows warps anywhere!
+"enableSpawnSafety": false         // Allows spawn anywhere!
+"enableTeleportSafety": false      // Allows TPA to unsafe locations!
+```
+
+**Result:** 🎉
+- **Full control over teleportation safety!**
+- **Nether ceiling farms work!**
+- **Intentional unsafe builds work!**
+- **Advanced players have freedom!**
+- **Default behavior unchanged (safe by default)!**
+### 📂 **Split Your Configs!** 🆕
+
+**SMART AUTO-DETECTION!** New servers get optimized configs automatically!
+
+**How it works:**
+- 🆕 **NEW Servers:** Auto-creates split configs (9 smaller files!) → No manual steps!
+- 📋 **EXISTING Servers:** Get in-game notification → Run command when ready!
+- 🔄 **DELETED Configs:** Auto-recovery with split configs!
+
+**In-Game Admin Notification:**
+OPs and admins see this when they log in:
+```
+═══════════════════════════════════════════
+Your server is using a large config.json file.
+NeoEssentials can split it into smaller files!
+
+✓ Easier to find settings
+✓ Less syntax errors
+✓ Better organization
+✓ Automatic backup
+
+Run: /neoessentials config split
+═══════════════════════════════════════════
+```
+
+**Why This is AWESOME:**
+- 🆕 **New servers optimized by default!** (No config headaches!)
+- 📢 **Can't miss it!** In-game notifications for admins!
+- 🔒 **Super safe!** Auto-backup before splitting!
+- 📁 **Way easier!** 9 focused files vs 1 giant file!
+
+**Manual Split** (existing servers):
+Run `/neoessentials config split` to migrate!
+
+**HUGE QOL IMPROVEMENT:** Stop scrolling through a 685-line config file!
+
+One command: `/neoessentials config split`
+
+**Splits into 9 small files:**
+- chat.json (200 lines) - Just chat settings!
+- commands.json (110 lines) - Just command toggles!
+- moderation.json (130 lines) - Just ban/jail/etc!
+- teleportation.json (120 lines) - Just teleport!
+- + 5 more focused files!
+
+**Benefits:**
+- ✅ Find settings WAY faster
+- ✅ Edit one system without affecting others
+- ✅ Less risk of syntax errors
+- ✅ Automatic backup (config.json.backup)
+- ✅ Easy rollback
+- ✅ Works exactly like before (100% compatible!)
+
+**Perfect for:**
+- Servers with custom configs
+- Multiple admins editing configs
+- Version control (git)
+- Anyone tired of huge config files!
+
+**Try it:** `/neoessentials config split`
+
+---
+
+## 🚀 What's New (Continued)
+
 
 ### **Module Conflicts - COMPLETELY RESOLVED!** ✅
 
@@ -21,71 +122,6 @@
 - Had to remove NeoEssentials to make other mods work?
 
 **ALL FIXED NOW!** ✅
-
-**What was broken:**
-- NeoEssentials conflicted with: JadeAddons, SmoothChunk, SDLink, LetMeDespawn, and many more
-- Module export errors prevented server startup
-- Incompatible with Arclight and other hybrid platforms
-
-**What we did:**
-- ✅ Completely rewrote dependency bundling system
-- ✅ Switched to NeoForge's native JarJar (no more Shadow plugin issues!)
-- ✅ Fixed Gson conflicts (NeoForge already includes it!)
-- ✅ Properly isolated Java-WebSocket library
-- ✅ Tested with 50+ popular mod combinations
-
-**Result:** 🎉
-- **Works with ALL tested mods!**
-- **Clean server startup every time!**
-- **Compatible with Arclight & hybrid platforms!**
-- **No more "cannot resolve module" errors!**
-
-**You can now use NeoEssentials with:**
-- Jade & JadeAddons ✅
-- All optimization mods ✅
-- All quality-of-life mods ✅
-- Arclight/Bukkit hybrids ✅
-- Any mod pack! ✅
-
----
-
-## 🎉 Previous Updates (v1.0.2.4)
-
-### **Chat Channels NOW WORK!** ✅
-**HUGE FIX!** Channels were in config but didn't actually work! Now they do!
-
-**What's New:**
-- ✅ `/l` or `/local` → Local chat (only nearby players hear you!)
-- ✅ `/g` or `/global` → Global chat (everyone hears you!)
-- ✅ `/staff` → Staff-only chat (admins/mods only!)
-- ✅ Use `!` prefix for quick global: `!Hello everyone!`
-- ✅ Use `@` prefix for quick staff: `@Need backup at spawn!`
-- ✅ Works exactly as config shows!
-
-**Perfect for:**
-- RP servers (realistic proximity chat!)
-- Survival servers (local + global options!)
-- Staff coordination (private staff channel!)
-
-### **Config Version Migration** 🔧
-**FIXED THE BIGGEST PAIN POINT!** Configs now auto-update when you upgrade!
-
-**Before:** Had to manually delete config files to get new features 😫  
-**Now:** Automatically detects old configs and updates them! 🎉
-
-**What happens:**
-1. Mod checks config versions on startup/reload
-2. Old config? → Auto-backup created
-3. New config copied from mod JAR
-4. Your settings preserved in backup file
-5. All new features work immediately!
-
-**Backups stored as:** `config_v12_backup_2026-01-10_14-30-00.json`
-
----
-
-## 🚀 What's New
-
 ### 📂 **Split Your Configs!** 🆕
 
 **SMART AUTO-DETECTION!** New servers get optimized configs automatically!
@@ -201,13 +237,13 @@ Pre-built chat styles - just pick one!
 
 ### 🌈 Phase 4: Rich Text - Next-Level Formatting!
 
-#### **🎨 Gradient Text**
-Smooth color transitions across text!
-- Syntax: `<gradient:FF0000-0000FF>text</gradient>`
-- Example: `<gradient:FFD700-FF1493>VIP Player</gradient>` (gold to pink!)
-
-#### **🌈 Rainbow Text**
-Vibrant rainbow colors!
+✅ **50+ New Features** across 4 major phases
+✅ **11 New Permissions** for fine-grained control
+✅ **Fully Configurable** - every feature can be toggled
+✅ **Well Documented** - complete guides included
+✅ **High Performance** - optimized for large servers
+✅ **Easy to Use** - works out of the box, customize as needed
+✅ **Future-Proof** - designed for extensibility
 - Syntax: `<rainbow>text</rainbow>`
 - Example: `<rainbow>Rainbow Road!</rainbow>`
 

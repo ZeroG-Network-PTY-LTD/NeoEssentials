@@ -1,14 +1,42 @@
 # NeoEssentials v1.0.2.4
 
-## 🚨 CRITICAL UPDATE - Module Conflict Resolution
+## 🚨 CRITICAL UPDATE - Module Conflict Resolution + Teleportation Fix
 
-**Build #746** | January 12, 2026 | MC 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #750** | January 13, 2026 | MC 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
-This release fixes critical compatibility issues that prevented NeoEssentials from working with many popular mods!
+This release fixes critical compatibility issues AND teleportation safety bugs!
 
 ---
 
 ## 🐛 Critical Fixes
+
+### Unsafe Teleportation System - FIXED ✅
+**The Problem:**
+- Safety config options (`enableHomeTeleportSafety: false`) didn't work
+- Mod blocked teleportation to "unsafe" locations even when safety was disabled
+- Couldn't teleport to Nether ceiling, lava bases, intentional unsafe builds
+- All teleportation types affected (homes, warps, spawn, TPA)
+
+**The Solution:**
+- ✅ Fixed safety check logic in HomeManager, WarpManager, SpawnManager
+- ✅ When safety `true`: Finds safe alternatives or blocks if none exist
+- ✅ When safety `false`: Allows teleportation ANYWHERE (even dangerous spots)
+- ✅ Updated all config comments to clearly explain behavior
+- ✅ Tested with Nether ceiling, void platforms, lava builds
+
+**The Result:**
+- 🎉 Full control over teleportation safety!
+- 🎉 Advanced players can disable safety for legitimate use cases!
+- 🎉 Nether ceiling farms work when safety is disabled!
+- 🎉 Default behavior unchanged (safe by default for casual players)!
+
+**Affected Config Options:**
+```json
+"enableHomeTeleportSafety": false  // Now works! Allows homes in lava, void, etc.
+"enableWarpSafety": false          // Now works! Allows warps at dangerous locations
+"enableSpawnSafety": false         // Now works! Allows spawn anywhere
+"enableTeleportSafety": false      // Now works! Allows TPA to unsafe locations
+```
 
 ### Module Export Conflicts - RESOLVED ✅
 **The Problem:**
@@ -57,8 +85,6 @@ This release fixes critical compatibility issues that prevented NeoEssentials fr
 
 ---
 
-## ✨ New Features
-
 ### Config File Splitting (IMPROVED!)
 **SMART AUTO-DETECTION** - New servers get optimized configs automatically!
 
@@ -92,6 +118,8 @@ main.json, commands.json, chat.json, teleportation.json, moderation.json, webdas
 ---
 
 ## ✨ New Features (Continued)
+## ✨ New Features
+
 
 ### 💬 Phase 2: Interactive Chat
 - **Clickable URLs** - Auto-detect and link http/https URLs

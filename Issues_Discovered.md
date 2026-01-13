@@ -74,12 +74,8 @@
     - **Details:** When `_configVersion` is updated, the system:
       - Detects version mismatch
       - Creates backup: `config_v12_backup_2026-01-10_15-30-00.json`
-      - Replaces with new version from JAR
-      - Logs all actions for transparency
-    - Users no longer need to manually delete configs for updates
-
 - **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
-    - **FIXED:** Implemented `/invsee <player>` command (view inventory, read-only)
+
     - **FIXED:** Implemented `/invseeedit <player>` command (view and edit inventory)
     - **FIXED:** Implemented `/enderchest <player>` command (view ender chest, read-only)
     - **FIXED:** Implemented `/enderchestedit <player>` command (view and edit ender chest)
@@ -105,4 +101,9 @@
 
 - **Economy integration**: Chest sign shops, Player Chest shops, Entity shops, dynamic pricing, CSV Dynamic pricing list import/export, and ect. more.
 - **Holographic displays**: Support for holographic displays to show any information.
+- **Chat formatting options**: More options for customizing chat format.
+- **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
+- **Minecraft Assets API support**: Figure out a way to integrate Minecraft Assets API for better resource assests to show in web-dashboards and other places.
+- **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
 - **Player Tablist**: Custom code for a custom player tab list that is highly customizable {References: Bungee Tablist Plus, TAB [1.7.x - 1.21.11], ☆ Simple TabList ☆《1.16.x - 1.21.x》- Animated - Hex colors}
+- **Cofig Files Splitting**: Split large config files into smaller, more manageable files for easier editing and maintenance.

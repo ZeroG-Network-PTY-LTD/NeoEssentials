@@ -474,75 +474,26 @@ public class FileManagementHandler implements HttpHandler {
     }
 
     /**
-     * List available cloud providers and their status
+     * List available cloud providers and their status (stub)
      * GET /api/files/cloudProviders
+
      */
     private void handleCloudProviders(HttpExchange exchange) throws IOException {
-        CloudProviderManager cloudManager = CloudProviderManager.getInstance();
-
         JsonArray providers = new JsonArray();
-
-        // Google Drive
         JsonObject google = new JsonObject();
         google.addProperty("name", "Google Drive");
-        google.addProperty("id", "google_drive");
-        google.addProperty("linked", cloudManager.isProviderLinked("google_drive"));
-        google.addProperty("description", "Store backups on Google Drive");
-        google.addProperty("icon", "☁️");
+        google.addProperty("linked", false); // TODO: Implement OAuth status
         providers.add(google);
-
-        // Dropbox
         JsonObject dropbox = new JsonObject();
         dropbox.addProperty("name", "Dropbox");
-        dropbox.addProperty("id", "dropbox");
-        dropbox.addProperty("linked", cloudManager.isProviderLinked("dropbox"));
-        dropbox.addProperty("description", "Store backups on Dropbox");
-        dropbox.addProperty("icon", "📦");
+        dropbox.addProperty("linked", false); // TODO: Implement OAuth status
         providers.add(dropbox);
-
-        // OneDrive (bonus provider)
-        JsonObject onedrive = new JsonObject();
-        onedrive.addProperty("name", "OneDrive");
-        onedrive.addProperty("id", "onedrive");
-        onedrive.addProperty("linked", cloudManager.isProviderLinked("onedrive"));
-        onedrive.addProperty("description", "Store backups on Microsoft OneDrive");
-        onedrive.addProperty("icon", "☁️");
-        providers.add(onedrive);
-
         JsonObject response = new JsonObject();
         response.add("providers", providers);
         response.addProperty("stub", true);
-        response.addProperty("message", "Cloud provider integration not fully implemented yet. OAuth linking is ready but file sync requires additional implementation.");
-
+        response.addProperty("message", "Cloud provider integration not implemented yet");
         sendJsonResponse(exchange, 200, response);
     }
-
-    /**
-     * Initiate backup of a file/folder to a selected cloud provider (stub)
-     * POST /api/files/cloudBackup
-     * Body: {"path": "config/main.json", "provider": "Google Drive"}
-     */
-    private void handleCloudBackup(HttpExchange exchange) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("success", false);
-        response.addProperty("stub", true);
-        response.addProperty("message", "Cloud backup not implemented yet. This will upload the file/folder to the selected provider in the future.");
-        sendJsonResponse(exchange, 501, response);
-    }
-
-    /**
-     * Restore a file/folder from a selected cloud provider (stub)
-     * POST /api/files/cloudRestore
-     * Body: {"path": "config/main.json", "provider": "Google Drive", "cloudPath": "..."}
-     */
-    private void handleCloudRestore(HttpExchange exchange) throws IOException {
-        JsonObject response = new JsonObject();
-        response.addProperty("success", false);
-        response.addProperty("stub", true);
-        response.addProperty("message", "Cloud restore not implemented yet. This will download the file/folder from the selected provider in the future.");
-        sendJsonResponse(exchange, 501, response);
-    }
-
     /**
      * Link a cloud provider (OAuth authentication)
      * POST /api/files/cloudLink
@@ -602,6 +553,33 @@ public class FileManagementHandler implements HttpHandler {
         sendJsonResponse(exchange, 200, response);
     }
 
+
+    /**
+     * Initiate backup of a file/folder to a selected cloud provider (stub)
+     * POST /api/files/cloudBackup
+     * Body: {"path": "config/main.json", "provider": "Google Drive"}
+     */
+    private void handleCloudBackup(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("stub", true);
+        response.addProperty("message", "Cloud backup not implemented yet. This will upload the file/folder to the selected provider in the future.");
+        sendJsonResponse(exchange, 501, response);
+    }
+
+    /**
+     * Restore a file/folder from a selected cloud provider (stub)
+     * POST /api/files/cloudRestore
+     * Body: {"path": "config/main.json", "provider": "Google Drive", "cloudPath": "..."}
+     */
+    private void handleCloudRestore(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("stub", true);
+        response.addProperty("message", "Cloud restore not implemented yet. This will download the file/folder from the selected provider in the future.");
+        sendJsonResponse(exchange, 501, response);
+    }
+
     /**
      * Stub: Get server-wide statistics (uptime, TPS, RAM, CPU, etc.)
      * GET /api/files/server/statistics
@@ -622,6 +600,7 @@ public class FileManagementHandler implements HttpHandler {
     /**
      * Stub: Get player statistics (online time, messages sent, economy, etc.)
      * GET /api/files/player/statistics
+            @NotNull
      */
     private void handlePlayerStatistics(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
@@ -676,7 +655,8 @@ public class FileManagementHandler implements HttpHandler {
             throw new SecurityException("Access to path denied: " + path);
         }
     }
-    
+            @NotNull
+
     /**
      * Create backup of file before modification
      */
@@ -704,13 +684,11 @@ public class FileManagementHandler implements HttpHandler {
      */
     private void deleteDirectory(Path directory) throws IOException {
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
-            @NotNull
             @Override
             public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
-            @NotNull
             @Override
             public FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
