@@ -600,7 +600,6 @@ public class FileManagementHandler implements HttpHandler {
     /**
      * Stub: Get player statistics (online time, messages sent, economy, etc.)
      * GET /api/files/player/statistics
-            @NotNull
      */
     private void handlePlayerStatistics(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
@@ -655,7 +654,6 @@ public class FileManagementHandler implements HttpHandler {
             throw new SecurityException("Access to path denied: " + path);
         }
     }
-            @NotNull
 
     /**
      * Create backup of file before modification
@@ -685,12 +683,12 @@ public class FileManagementHandler implements HttpHandler {
     private void deleteDirectory(Path directory) throws IOException {
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
             @Override
-            public FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exc) throws IOException {
+            public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }

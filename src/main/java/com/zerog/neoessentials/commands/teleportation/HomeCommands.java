@@ -13,6 +13,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Commands for the home teleportation system:
  * - /home [name] - Teleport to home
@@ -20,9 +24,6 @@ import net.minecraft.server.level.ServerPlayer;
  * - /delhome <name> - Delete a home  
  * - /homes - List all homes
  */
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class HomeCommands {
     // Track pending delete confirmations: player UUID -> home name
@@ -171,6 +172,10 @@ public class HomeCommands {
      */
     private static int executeHomeDefault(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         HomeManager homeManager = HomeManager.getInstance();
         // Jail escape prevention
         com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -193,6 +198,10 @@ public class HomeCommands {
      */
     private static int executeHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         // Jail escape prevention
@@ -211,6 +220,10 @@ public class HomeCommands {
      */
     private static int executeSetHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         
@@ -239,6 +252,10 @@ public class HomeCommands {
      */
     private static int executeSetHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         
@@ -264,6 +281,10 @@ public class HomeCommands {
      */
     private static int executeDelHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
@@ -293,6 +314,10 @@ public class HomeCommands {
      */
     private static int executeDelHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();

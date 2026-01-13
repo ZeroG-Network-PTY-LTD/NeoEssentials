@@ -1,6 +1,41 @@
 # NeoEssentials v1.0.2.4 - Changelog
 
-**Build #750** | January 13, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #758** | January 13, 2026 | Minecraft 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+
+---
+
+### 🔒 **Critical Security & Safety Fixes**
+
+#### **Permission Prefix/Suffix Command Safety** ✅
+Fixed major safety issues in `/pex group <group> setprefix/setsuffix` commands:
+
+**What Was Unsafe:**
+- ❌ No length validation - could cause chat display issues
+- ❌ No character validation - control characters could crash clients
+- ❌ Silent save failures - users weren't notified of errors
+- ❌ No cache clearing - changes required restart to take effect
+- ❌ Poor error messages - unclear what went wrong
+
+**Safety Improvements:**
+- ✅ **Length Limits:** Maximum 64 characters for prefix/suffix
+- ✅ **Character Validation:** Blocks dangerous control characters (0x00-0x1F)
+- ✅ **Proper Error Handling:** Users are notified if save fails
+- ✅ **Immediate Cache Clear:** Changes take effect instantly
+- ✅ **Clear Error Messages:** Specific feedback on what's wrong
+- ✅ **Detailed Logging:** All changes logged with prefix/group info
+
+**Example Usage:**
+```
+/pex group admin setprefix &c[Admin]&r   ✅ Safe and works
+/pex group vip setprefix &6[VIP]&r       ✅ Safe and works
+/pex group test setprefix <64+ chars>    ❌ Rejected: "Too long!"
+```
+
+**Commands Affected:**
+- `/pex group <group> setprefix <prefix>`
+- `/permissions group <group> setprefix <prefix>`
+- `/pex group <group> setsuffix <suffix>`
+- `/permissions group <group> setsuffix <suffix>`
 
 ---
 
