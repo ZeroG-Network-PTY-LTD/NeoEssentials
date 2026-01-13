@@ -91,17 +91,20 @@ public class SpawnManager {
             return false;
         }
         
-        // Check if location is safe
-        if (requireSafeLocation && !location.isSafe()) {
-            TeleportLocation safeLocation = location.findSafeLocation();
-            if (safeLocation == null) {
-                setter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe_location"));
-                return false;
+        // Check if location is safe (only enforce if safety is required)
+        if (requireSafeLocation) {
+            if (!location.isSafe()) {
+                TeleportLocation safeLocation = location.findSafeLocation();
+                if (safeLocation == null) {
+                    setter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe_location"));
+                    return false;
+                }
+                location = safeLocation;
+                setter.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
             }
-            location = safeLocation;
-            setter.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
         }
-        
+        // If safety is not required, allow spawn at unsafe locations
+
         // Set spawn location
         this.spawnLocation = location;
         saveSpawn();
@@ -167,21 +170,24 @@ public class SpawnManager {
             }
         }
         
-        // Check if spawn location is still safe
-        if (spawnLocation != null && requireSafeLocation && !spawnLocation.isSafe()) {
-            TeleportLocation safeLocation = spawnLocation.findSafeLocation();
-            if (safeLocation == null) {
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe"));
-                teleportToWorldSpawn(player);
-                return;
+        // Check if spawn location is still safe (only enforce if safety is required)
+        if (spawnLocation != null && requireSafeLocation) {
+            if (!spawnLocation.isSafe()) {
+                TeleportLocation safeLocation = spawnLocation.findSafeLocation();
+                if (safeLocation == null) {
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe"));
+                    teleportToWorldSpawn(player);
+                    return;
+                }
+
+                // Update spawn to safe location
+                spawnLocation = safeLocation;
+                saveSpawn();
+                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
             }
-            
-            // Update spawn to safe location
-            spawnLocation = safeLocation;
-            saveSpawn();
-            player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
         }
-        
+        // If safety is not required, allow teleportation to unsafe locations
+
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 

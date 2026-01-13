@@ -1,5 +1,5 @@
 {
-  "_configVersion": 15,
+  "_configVersion": 16,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -301,7 +301,7 @@
       "allowCrossDimensionWarps": true,
       "allowCrossDimensionWarps_comment": "Allow warps to be set and used across dimensions.",
       "enableWarpSafety": true,
-      "enableWarpSafety_comment": "Check if warp location is safe before teleporting.",
+      "enableWarpSafety_comment": "When true, warps must be safe. When false, allows warps at any location including unsafe ones.",
       "logWarpActions": true,
       "logWarpActions_comment": "Log warp creation/deletion/usage to server logs."
     },
@@ -316,7 +316,7 @@
       "allowSpawnSet": true,
       "allowSpawnSet_comment": "Allow admins to set the spawn location with /setspawn.",
       "enableSpawnSafety": true,
-      "enableSpawnSafety_comment": "Ensure spawn location is safe before teleporting players.",
+      "enableSpawnSafety_comment": "When true, spawn must be safe. When false, allows spawn at any location including unsafe ones.",
       "logSpawnActions": true,
       "logSpawnActions_comment": "Log spawn teleports and spawn point changes to server logs."
     },
@@ -335,7 +335,7 @@
       "autoAcceptFromFriends": false,
       "autoAcceptFromFriends_comment": "Automatically accept teleport requests from friends (requires friends system).",
       "enableTeleportSafety": true,
-      "enableTeleportSafety_comment": "Check teleport destination safety before completing teleportation.",
+      "enableTeleportSafety_comment": "When true, blocks teleportation to unsafe destinations. When false, allows teleportation to any location including unsafe ones.",
       "logTeleportRequests": true,
       "logTeleportRequests_comment": "Log teleport request actions to server logs."
     },

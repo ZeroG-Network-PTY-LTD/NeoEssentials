@@ -87,7 +87,9 @@ public class ListCommand {
 
     /**
      * Show the online players list with advanced formatting
+     * @return 1 (success) - Minecraft command convention requires returning 1 for successful execution
      */
+    @SuppressWarnings("SameReturnValue")
     private static int showOnlinePlayersList(CommandSourceStack source, ServerPlayer viewer) {
         PlayerList playerList = source.getServer().getPlayerList();
         List<ServerPlayer> onlinePlayers = new ArrayList<>(playerList.getPlayers());
@@ -143,10 +145,10 @@ public class ListCommand {
 
         if (useLuckPerms) {
             // Group players by LuckPerms groups with weight sorting
-            displayLuckPermsGroupedList(source, onlinePlayers, viewer, canSeeVanished);
+            displayLuckPermsGroupedList(source, onlinePlayers, canSeeVanished);
         } else {
             // Fallback to simple grouping
-            displaySimpleGroupedList(source, onlinePlayers, viewer, canSeeVanished);
+            displaySimpleGroupedList(source, onlinePlayers, canSeeVanished);
         }
 
         // Send footer
@@ -161,7 +163,7 @@ public class ListCommand {
     /**
      * Display players grouped by LuckPerms groups (sorted by weight)
      */
-    private static void displayLuckPermsGroupedList(CommandSourceStack source, List<ServerPlayer> players, ServerPlayer viewer, boolean canSeeVanished) {
+    private static void displayLuckPermsGroupedList(CommandSourceStack source, List<ServerPlayer> players, boolean canSeeVanished) {
         try {
             // Get LuckPerms API
             net.luckperms.api.LuckPerms luckPerms = net.luckperms.api.LuckPermsProvider.get();
@@ -219,7 +221,7 @@ public class ListCommand {
                 MutableComponent playerLine = Component.literal("  §f");
                 for (int i = 0; i < groupPlayers.size(); i++) {
                     ServerPlayer player = groupPlayers.get(i);
-                    playerLine.append(createPlayerComponent(player, viewer, canSeeVanished));
+                    playerLine.append(createPlayerComponent(player, canSeeVanished));
 
                     if (i < groupPlayers.size() - 1) {
                         playerLine.append(Component.literal("§7, "));
@@ -235,14 +237,14 @@ public class ListCommand {
         } catch (Exception e) {
             LOGGER.error("Error displaying LuckPerms grouped list: {}", e.getMessage(), e);
             // Fallback to simple list
-            displaySimpleGroupedList(source, players, viewer, canSeeVanished);
+            displaySimpleGroupedList(source, players, canSeeVanished);
         }
     }
 
     /**
      * Display players with simple grouping (fallback when LuckPerms is not available)
      */
-    private static void displaySimpleGroupedList(CommandSourceStack source, List<ServerPlayer> players, ServerPlayer viewer, boolean canSeeVanished) {
+    private static void displaySimpleGroupedList(CommandSourceStack source, List<ServerPlayer> players, boolean canSeeVanished) {
         // Group players by status
         Map<String, List<ServerPlayer>> groupedPlayers = new LinkedHashMap<>();
 
@@ -267,7 +269,7 @@ public class ListCommand {
             MutableComponent playerLine = Component.literal("  §f");
             for (int i = 0; i < groupPlayers.size(); i++) {
                 ServerPlayer player = groupPlayers.get(i);
-                playerLine.append(createPlayerComponent(player, viewer, canSeeVanished));
+                playerLine.append(createPlayerComponent(player, canSeeVanished));
 
                 if (i < groupPlayers.size() - 1) {
                     playerLine.append(Component.literal("§7, "));
@@ -296,7 +298,7 @@ public class ListCommand {
     /**
      * Create a formatted component for a player entry
      */
-    private static MutableComponent createPlayerComponent(ServerPlayer player, ServerPlayer viewer, boolean canSeeVanished) {
+    private static MutableComponent createPlayerComponent(ServerPlayer player, boolean canSeeVanished) {
         String playerName = player.getName().getString();
         MutableComponent component = Component.literal(playerName);
 
@@ -333,7 +335,10 @@ public class ListCommand {
         // Add hover text with detailed info
         List<Component> hoverLines = new ArrayList<>();
         hoverLines.add(Component.literal("§6Player: §f" + playerName));
-        hoverLines.add(Component.literal("§6World: §f" + player.level().dimension().location().getPath()));
+        // Level objects in Minecraft don't need to be closed with try-with-resources
+        @SuppressWarnings("resource")
+        String worldName = player.level().dimension().location().getPath();
+        hoverLines.add(Component.literal("§6World: §f" + worldName));
         hoverLines.add(Component.literal("§6Location: §f" +
             (int)player.getX() + ", " + (int)player.getY() + ", " + (int)player.getZ()));
 
