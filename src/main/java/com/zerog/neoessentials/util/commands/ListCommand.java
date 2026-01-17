@@ -110,31 +110,31 @@ public class ListCommand {
         int totalCount = playerList.getPlayerCount();
 
         source.sendSuccess(
-            () -> Component.literal("§8§m                                                    "),
+            () -> MessageUtil.component("commands.neoessentials.list.separator"),
             false
         );
 
         if (canSeeVanished && visibleCount != totalCount) {
             source.sendSuccess(
-                () -> Component.literal("§6§lOnline Players: §f" + visibleCount + "§7/§f" + totalCount + " §7(§f" + playerList.getMaxPlayers() + " max§7)"),
+                () -> MessageUtil.component("commands.neoessentials.list.header_with_visible", visibleCount, totalCount, playerList.getMaxPlayers()),
                 false
             );
         } else {
             source.sendSuccess(
-                () -> Component.literal("§6§lOnline Players: §f" + visibleCount + "§7/§f" + playerList.getMaxPlayers()),
+                () -> MessageUtil.component("commands.neoessentials.list.header", visibleCount, playerList.getMaxPlayers()),
                 false
             );
         }
 
         source.sendSuccess(
-            () -> Component.literal("§8§m                                                    "),
+            () -> MessageUtil.component("commands.neoessentials.list.separator"),
             false
         );
 
         if (onlinePlayers.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("§7No players online"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.list.no_players"), false);
             source.sendSuccess(
-                () -> Component.literal("§8§m                                                    "),
+                () -> MessageUtil.component("commands.neoessentials.list.separator"),
                 false
             );
             return 1;
@@ -153,7 +153,7 @@ public class ListCommand {
 
         // Send footer
         source.sendSuccess(
-            () -> Component.literal("§8§m                                                    "),
+            () -> MessageUtil.component("commands.neoessentials.list.separator"),
             false
         );
 

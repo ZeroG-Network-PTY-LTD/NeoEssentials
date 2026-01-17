@@ -2,6 +2,8 @@ package com.zerog.neoessentials.commands.utility;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.DashboardAPI;
 import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
 import com.zerog.neoessentials.config.ConfigManager;
@@ -22,7 +24,7 @@ public class DashboardCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("dashboard")
-            .requires(source -> source.hasPermission(4)) // Op level 4 (admin)
+            .requires(source -> PermissionValidator.validateAdminPermission(source, "neoessentials.admin.dashboard").hasPermission())
             .executes(DashboardCommand::showStatus)
             .then(Commands.literal("start")
                 .executes(DashboardCommand::startDashboard))
@@ -41,9 +43,9 @@ public class DashboardCommand {
         DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
         CommandSourceStack source = context.getSource();
         
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
-        source.sendSuccess(() -> Component.literal("§6§lNeoEssentials Dashboard Status"), false);
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.separator"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.separator"), false);
         source.sendSuccess(() -> Component.literal(""), false);
         
         // Running status

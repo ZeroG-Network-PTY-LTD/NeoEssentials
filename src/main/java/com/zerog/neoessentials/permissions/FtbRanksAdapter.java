@@ -25,10 +25,24 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
             try {
                 // Load FTB Ranks API using reflection
                 ftbRanksAPIClass = Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
-                // Get the INSTANCE field
-                ftbRanksApi = ftbRanksAPIClass.getField("INSTANCE").get(null);
+
+                // Try to get the INSTANCE field
+                try {
+                    ftbRanksApi = ftbRanksAPIClass.getField("INSTANCE").get(null);
+                } catch (NoSuchFieldException e) {
+                    // FTB Ranks might not use INSTANCE pattern, try getInstance() method
+                    try {
+                        var getInstanceMethod = ftbRanksAPIClass.getMethod("getInstance");
+                        ftbRanksApi = getInstanceMethod.invoke(null);
+                    } catch (Exception ex) {
+                        LOGGER.debug("FTB Ranks API does not have INSTANCE field or getInstance() method");
+                        ftbRanksApi = null;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                LOGGER.debug("FTB Ranks API class not found");
             } catch (Exception e) {
-                LOGGER.error("Failed to load FTB Ranks API: {}", e.getMessage(), e);
+                LOGGER.debug("Failed to load FTB Ranks API: {}", e.getMessage());
             }
         }
     }

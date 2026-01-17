@@ -298,10 +298,10 @@ public class ModRootCommand {
                 return 0;
             }
             
-            source.sendSuccess(() -> MessageUtil.info("§6========================================"), false);
+            source.sendSuccess(() -> MessageUtil.info("§6" + "─".repeat(40)), false);
             source.sendSuccess(() -> MessageUtil.info("§eMigrating to split configuration files..."), false);
-            source.sendSuccess(() -> MessageUtil.info("§6========================================"), false);
-            
+            source.sendSuccess(() -> MessageUtil.info("§6" + "─".repeat(40)), false);
+
             // Perform the migration
             boolean success = ConfigSplitter.migrateToSplitConfigs();
 

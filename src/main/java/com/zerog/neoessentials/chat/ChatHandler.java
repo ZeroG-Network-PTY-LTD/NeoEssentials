@@ -272,6 +272,35 @@ public class ChatHandler {
                         LOGGER.debug("[{}] (global) {}: {}", channel, playerName, message);
                     }
                 }
+
+                // Send message to Discord integration (if available and enabled for this channel)
+                try {
+                    // Check if Discord relay is enabled for this channel
+                    boolean discordEnabled = false;
+                    String discordChannelId = null;
+
+                    if (channelObj != null && channelObj.has("discord")) {
+                        com.google.gson.JsonObject discordConfig = channelObj.getAsJsonObject("discord");
+                        if (discordConfig.has("enabled")) {
+                            discordEnabled = discordConfig.get("enabled").getAsBoolean();
+                        }
+                        if (discordEnabled && discordConfig.has("channelId")) {
+                            discordChannelId = discordConfig.get("channelId").getAsString();
+                            if (discordChannelId != null && discordChannelId.trim().isEmpty()) {
+                                discordChannelId = null; // Treat empty string as null
+                            }
+                        }
+                    }
+
+                    // Only send to Discord if enabled for this channel
+                    if (discordEnabled) {
+                        String formattedMessageText = formattedMessage.getString();
+                        com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastPlayerChat(
+                            player, channel, message, formattedMessageText, discordChannelId);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to send chat to Discord integration: {}", e.getMessage());
+                }
             } // else: do not cancel event, let vanilla formatting happen
 
         } catch (Exception e) {

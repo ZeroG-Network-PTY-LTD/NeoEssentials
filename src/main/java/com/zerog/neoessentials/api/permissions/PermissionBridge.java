@@ -714,7 +714,7 @@ public class PermissionBridge {
         Set<String> allPermissions = new HashSet<>(registry.getAllPermissions());
         allPermissions.addAll(scanner.getDiscoveredPermissions());
         
-        source.sendSuccess(() -> Component.literal("§6=== ALL NEOESSENTIALS PERMISSIONS ==="), false);
+        source.sendSuccess(() -> Component.literal("§6┌─ ALL NEOESSENTIALS PERMISSIONS ─┐"), false);
         source.sendSuccess(() -> Component.literal("§eTotal: " + allPermissions.size() + " permissions"), false);
         source.sendSuccess(() -> Component.literal("§eCopy these for PermissionsEX commands:"), false);
         source.sendSuccess(() -> Component.literal(""), false);
@@ -755,7 +755,7 @@ public class PermissionBridge {
      * Show PermissionsEX group command examples
      */
     private static void showGroupExamples(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("§6=== PermissionsEX Group Examples ==="), false);
+        source.sendSuccess(() -> Component.literal("§6┌─ PermissionsEX Group Examples ─┐"), false);
         source.sendSuccess(() -> Component.literal("§eUse these commands to set up permission groups:"), false);
         source.sendSuccess(() -> Component.literal(""), false);
         
@@ -805,7 +805,7 @@ public class PermissionBridge {
      * Show PermissionsEX user command examples
      */
     private static void showUserExamples(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("§6=== PermissionsEX User Examples ==="), false);
+        source.sendSuccess(() -> Component.literal("§6┌─ PermissionsEX User Examples ─┐"), false);
         source.sendSuccess(() -> Component.literal("§eUse these commands to grant permissions to specific users:"), false);
         source.sendSuccess(() -> Component.literal(""), false);
         

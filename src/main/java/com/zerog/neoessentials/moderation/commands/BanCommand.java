@@ -7,6 +7,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.moderation.BanManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -53,8 +54,7 @@ public class BanCommand {
         
         // /ban <player> [reason]
         dispatcher.register(Commands.literal("ban")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.ban"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.ban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.greedyString())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
@@ -68,8 +68,7 @@ public class BanCommand {
 
         // /tempban <player> <duration> [reason]
         dispatcher.register(Commands.literal("tempban")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.tempban"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.tempban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
@@ -87,8 +86,7 @@ public class BanCommand {
 
         // /banip <ip> [reason]
         dispatcher.register(Commands.literal("banip")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.banip"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.banip").hasPermission())
             .then(Commands.argument("ip", StringArgumentType.word())
                 .executes(ctx -> executeBanIP(ctx, 
                     StringArgumentType.getString(ctx, "ip"), com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
@@ -100,8 +98,7 @@ public class BanCommand {
         
         // /unban <player>
         dispatcher.register(Commands.literal("unban")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.unban"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_BANNED_PLAYERS)
                 .executes(ctx -> executeUnban(ctx, StringArgumentType.getString(ctx, "player"))))
@@ -109,8 +106,7 @@ public class BanCommand {
         
         // /unbanip <ip>
         dispatcher.register(Commands.literal("unbanip")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.unbanip"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unbanip").hasPermission())
             .then(Commands.argument("ip", StringArgumentType.word())
                 .suggests(SUGGEST_BANNED_IPS)
                 .executes(ctx -> executeUnbanIP(ctx, StringArgumentType.getString(ctx, "ip"))))
@@ -118,8 +114,7 @@ public class BanCommand {
         
         // /banlist [players|ips]
         dispatcher.register(Commands.literal("banlist")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.banlist"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.banlist").hasPermission())
             .executes(ctx -> executeBanList(ctx, "players"))
             .then(Commands.literal("players")
                 .executes(ctx -> executeBanList(ctx, "players")))

@@ -26,8 +26,9 @@ public class TeleportLocation {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.yaw = yaw;
-        this.pitch = pitch;
+        // Validate and sanitize rotation values to prevent NaN propagation
+        this.yaw = Float.isNaN(yaw) || Float.isInfinite(yaw) ? 0.0f : yaw;
+        this.pitch = Float.isNaN(pitch) || Float.isInfinite(pitch) ? 0.0f : pitch;
         this.timestamp = System.currentTimeMillis();
         this.createdBy = createdBy;
     }
@@ -36,10 +37,11 @@ public class TeleportLocation {
     public TeleportLocation(ServerPlayer player) {
         this(player.level().dimension().location().toString(),
              player.getX(),
-             player.getY(), 
+             player.getY(),
              player.getZ(),
-             player.getYRot(),
-             player.getXRot(),
+             // Sanitize rotation inline - NaN from player edge cases (respawn, dimension change, etc.)
+             (Float.isNaN(player.getYRot()) || Float.isInfinite(player.getYRot())) ? 0.0f : player.getYRot(),
+             (Float.isNaN(player.getXRot()) || Float.isInfinite(player.getXRot())) ? 0.0f : player.getXRot(),
              player.getName().getString());
     }
     
@@ -222,8 +224,27 @@ public class TeleportLocation {
             double x = json.get("x").getAsDouble();
             double y = json.get("y").getAsDouble();
             double z = json.get("z").getAsDouble();
-            float yaw = json.has("yaw") ? json.get("yaw").getAsFloat() : 0.0f;
-            float pitch = json.has("pitch") ? json.get("pitch").getAsFloat() : 0.0f;
+
+            // Parse rotation values with validation
+            float yaw = 0.0f;
+            float pitch = 0.0f;
+
+            if (json.has("yaw")) {
+                yaw = json.get("yaw").getAsFloat();
+                // Sanitize NaN/Infinite values that might be in saved data
+                if (Float.isNaN(yaw) || Float.isInfinite(yaw)) {
+                    yaw = 0.0f;
+                }
+            }
+
+            if (json.has("pitch")) {
+                pitch = json.get("pitch").getAsFloat();
+                // Sanitize NaN/Infinite values that might be in saved data
+                if (Float.isNaN(pitch) || Float.isInfinite(pitch)) {
+                    pitch = 0.0f;
+                }
+            }
+
             String createdBy = json.has("createdBy") ? json.get("createdBy").getAsString() : "Unknown";
             
             // Timestamp is set in constructor, but we can preserve the original if present

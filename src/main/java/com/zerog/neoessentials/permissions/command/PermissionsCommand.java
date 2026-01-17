@@ -347,9 +347,9 @@ public class PermissionsCommand {
                 return 0;
             }
             
-            String groupName = StringArgumentType.getString(ctx, "group");
-            String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
-            
+            final String groupName = StringArgumentType.getString(ctx, "group");
+            final String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+
             LOGGER.debug("Adding permission '{}' to group '{}'", perm, groupName);
             
             // Validate permission format
@@ -388,7 +388,6 @@ public class PermissionsCommand {
         } catch (Exception e) {
             LOGGER.error("Unexpected error in addGroupPermission command", e);
             ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
-            e.printStackTrace();
             return 0;
         }
     }
@@ -436,9 +435,10 @@ public class PermissionsCommand {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed", perm, groupName), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error in removeGroupPermission command", e);
+            LOGGER.error("Unexpected error in removeGroupPermission command for group '{}', permission '{}'",
+                StringArgumentType.getString(ctx, "group"),
+                StringArgumentType.getString(ctx, "permission"), e);
             ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
-            e.printStackTrace();
             return 0;
         }
     }
@@ -502,9 +502,10 @@ public class PermissionsCommand {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_group_set", playerName, groupName), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error in setUserGroup command", e);
+            LOGGER.error("Unexpected error in setUserGroup command for player '{}', group '{}'",
+                StringArgumentType.getString(ctx, "player"),
+                StringArgumentType.getString(ctx, "group"), e);
             ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
-            e.printStackTrace();
             return 0;
         }
     }

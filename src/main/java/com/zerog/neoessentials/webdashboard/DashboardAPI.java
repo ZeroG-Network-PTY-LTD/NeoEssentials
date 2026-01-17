@@ -66,6 +66,13 @@ public class DashboardAPI {
     }
     
     /**
+     * Get the MinecraftServer instance
+     */
+    public MinecraftServer getServer() {
+        return this.server;
+    }
+
+    /**
      * Get current port from config
      */
     public int getPort() {

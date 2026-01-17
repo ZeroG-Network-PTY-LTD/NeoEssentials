@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -67,12 +68,12 @@ public class WhoisCommand {
         boolean canSeeDetailed = detailedResult.hasPermission();
         
         // Header
-        MutableComponent header = Component.literal("§6§l=== Player Information: " + targetPlayer.getName().getString() + " ===");
+        MutableComponent header = Component.literal("§6§l┌─ Player Information: " + targetPlayer.getName().getString() + " ─┐");
         source.sendSuccess(() -> header, false);
         
         // Basic Information
-        source.sendSuccess(() -> Component.literal("§7§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"), false);
-        
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.separator"), false);
+
         // Display Name (if different from username)
         String displayName = targetPlayer.getDisplayName().getString();
         String realName = targetPlayer.getName().getString();
@@ -80,7 +81,7 @@ public class WhoisCommand {
             MutableComponent nickInfo = Component.literal("§aNickname: §f" + displayName + " §7(Real: " + realName + ")");
             source.sendSuccess(() -> nickInfo, false);
         } else {
-            source.sendSuccess(() -> Component.literal("§aUsername: §f" + realName), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.username", realName), false);
         }
         
         // UUID (for admins)
@@ -96,8 +97,8 @@ public class WhoisCommand {
         // Status
         String status = "§aOnline";
         // Note: Vanish detection would be added here if VanishHandler exists
-        source.sendSuccess(() -> Component.literal("§eStatus: " + status), false);
-        
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.status", status), false);
+
         // Game Mode
         GameType gameType = targetPlayer.gameMode.getGameModeForPlayer();
         String gameModeName = switch (gameType) {
@@ -106,8 +107,8 @@ public class WhoisCommand {
             case ADVENTURE -> "§9Adventure";
             case SPECTATOR -> "§7Spectator";
         };
-        source.sendSuccess(() -> Component.literal("§eGame Mode: " + gameModeName), false);
-        
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.gamemode", gameModeName), false);
+
         // Health and Food (for admins or self)
         try {
             ServerPlayer viewer = source.getPlayerOrException();
@@ -116,9 +117,9 @@ public class WhoisCommand {
                 float maxHealth = targetPlayer.getMaxHealth();
                 int foodLevel = targetPlayer.getFoodData().getFoodLevel();
                 
-                source.sendSuccess(() -> Component.literal("§cHealth: §f" + DECIMAL_FORMAT.format(health) + 
-                    "§7/§f" + DECIMAL_FORMAT.format(maxHealth)), false);
-                source.sendSuccess(() -> Component.literal("§6Food: §f" + foodLevel + "§7/§f20"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.health_online",
+                    DECIMAL_FORMAT.format(health), DECIMAL_FORMAT.format(maxHealth)), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.food", foodLevel), false);
             }
         } catch (CommandSyntaxException ignored) {
             // Console execution, show detailed info
@@ -127,9 +128,9 @@ public class WhoisCommand {
                 float maxHealth = targetPlayer.getMaxHealth();
                 int foodLevel = targetPlayer.getFoodData().getFoodLevel();
                 
-                source.sendSuccess(() -> Component.literal("§cHealth: §f" + DECIMAL_FORMAT.format(health) + 
-                    "§7/§f" + DECIMAL_FORMAT.format(maxHealth)), false);
-                source.sendSuccess(() -> Component.literal("§6Food: §f" + foodLevel + "§7/§f20"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.health_offline",
+                    DECIMAL_FORMAT.format(health), DECIMAL_FORMAT.format(maxHealth)), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.food", foodLevel), false);
             }
         }
         
@@ -153,20 +154,20 @@ public class WhoisCommand {
         
         // Experience Level
         int expLevel = targetPlayer.experienceLevel;
-        source.sendSuccess(() -> Component.literal("§2Experience Level: §f" + expLevel), false);
-        
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.experience_level", expLevel), false);
+
         // IP Address (for admins only)
         if (canSeeDetailed && targetPlayer.connection != null) {
             String ipAddress = targetPlayer.connection.getRemoteAddress().toString();
-            source.sendSuccess(() -> Component.literal("§cIP Address: §7" + ipAddress), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.ip_address", ipAddress), false);
         }
         
         // Play time (if available through SeenCommand data)
         showPlayTimeInfo(source, targetPlayer);
         
         // Footer
-        source.sendSuccess(() -> Component.literal("§7§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"), false);
-        
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.separator"), false);
+
         return 1;
     }
 
@@ -180,11 +181,11 @@ public class WhoisCommand {
             // Check if we have data from SeenCommand
             Optional<Component> seenInfo = getOfflinePlayerSeenInfo(playerName);
             if (seenInfo.isPresent()) {
-                source.sendSuccess(() -> Component.literal("§6§l=== Offline Player Information: " + playerName + " ==="), false);
-                source.sendSuccess(() -> Component.literal("§7§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"), false);
-                source.sendSuccess(() -> Component.literal("§eStatus: §cOffline"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.offline_header", playerName), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.separator"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.status_offline"), false);
                 source.sendSuccess(() -> seenInfo.get(), false);
-                source.sendSuccess(() -> Component.literal("§7§m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.separator"), false);
                 return 1;
             }
         }
@@ -199,7 +200,7 @@ public class WhoisCommand {
         // For now, we'll show current session time
         try {
             // This is a placeholder - in a real implementation, you'd track when the player joined
-            source.sendSuccess(() -> Component.literal("§3Session Time: §fCurrent session (tracking not implemented)"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.session_time"), false);
         } catch (Exception e) {
             // Skip if we can't get play time info
         }

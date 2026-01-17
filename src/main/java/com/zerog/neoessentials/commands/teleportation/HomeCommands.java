@@ -346,6 +346,10 @@ public class HomeCommands {
      */
     private static int executeHomes(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
         HomeManager homeManager = HomeManager.getInstance();
         
         String homesList = homeManager.getFormattedHomesList(player);

@@ -1,5 +1,5 @@
 {
-  "_configVersion": 16,
+  "_configVersion": 17,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -117,7 +117,7 @@
     "websocketPort": 8081,
     "websocketPort_comment": "Port number for the WebSocket server used for real-time dashboard updates (1024-65535). Use a different port from HTTP server. Many hosting providers assign random ports - configure both ports based on your provider's requirements",
     "bindAddress": "0.0.0.0",
-    "bindAddress_comment": "IP address to bind to. Use '0.0.0.0' for all interfaces (recommended for compatibility), or '127.0.0.1' for localhost only (more secure but may cause 'Cannot assign requested address' errors on some systems). The mod will automatically try 0.0.0.0 as fallback if the configured address fails",
+    "bindAddress_comment": "IP address to bind to. '0.0.0.0' binds to all network interfaces (recommended). Users access the dashboard via http://YOUR_SERVER_IP:8080 (replace YOUR_SERVER_IP with your actual server's IP address or domain). Use '127.0.0.1' for localhost-only access (more secure but only accessible from the server machine itself).",
     "enableCORS": true,
     "enableCORS_comment": "Enable Cross-Origin Resource Sharing headers. Useful for development and external integrations",
     "maxThreads": 4,
@@ -645,14 +645,26 @@
         "command": "l",
         "aliases": ["local", "lc"],
         "prefix": "",
-        "default": true
+        "default": true,
+        "discord": {
+          "enabled": false,
+          "enabled_comment": "Send local chat messages to Discord. Usually disabled since local is proximity-based.",
+          "channelId": "",
+          "channelId_comment": "Discord channel ID to send messages to. Leave empty to use default 'chat' channel. Get ID by right-clicking channel in Discord (Developer Mode enabled)."
+        }
       },
       "global": {
         "enabled": true,
         "command": "g",
         "aliases": ["global", "gc"],
         "prefix": "!",
-        "default": false
+        "default": false,
+        "discord": {
+          "enabled": true,
+          "enabled_comment": "Send global chat messages to Discord.",
+          "channelId": "",
+          "channelId_comment": "Discord channel ID to send messages to. Leave empty to use default 'chat' channel."
+        }
       },
       "staff": {
         "enabled": true,
@@ -660,7 +672,13 @@
         "aliases": ["mod", "admin", "s"],
         "prefix": "@",
         "permission": "neoessentials.chat.staff",
-        "default": false
+        "default": false,
+        "discord": {
+          "enabled": true,
+          "enabled_comment": "Send staff chat messages to Discord.",
+          "channelId": "",
+          "channelId_comment": "Discord channel ID for staff chat. Leave empty to use default 'staff' or 'moderation' channel. Recommended to use a private staff-only Discord channel."
+        }
       }
     },
     "channels-description": "Chat channels system: Set 'enabled' to false to disable all channels and use standard global chat. When enabled, players can use local (proximity-based), global (all players), and staff (permission-based) channels. Each channel has its own enabled flag, command, prefix, and settings. For proximity-only servers: set channels.enabled=true, local.enabled=true, global.enabled=false. For global-only servers: set channels.enabled=false OR set local.enabled=false, global.enabled=true.",

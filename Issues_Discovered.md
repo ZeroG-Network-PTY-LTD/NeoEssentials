@@ -1,6 +1,5 @@
 # 👾 Issues That Were Discovered
-
-
+- **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, alot of hardcoded English strings, want to allow custom language files.
 
 # 👾 Issues That Were Fixed
 
@@ -8,6 +7,11 @@
     - **FIXED:** Implemented config splitting system
     - **FIXED:** Added `/neoessentials config split` command
     - **FIXED:** Automatic migration with backup creation
+    - **FIXED:** Config.json is replaced with minimal stub file when split configs are active
+        - Original config backed up to config.json.backup
+        - Stub file contains helpful guide to all split config files
+        - Includes restoration instructions
+        - Prevents confusion about which files to edit
     - **FIXED:** 100% backward compatible - existing code works unchanged
     - **FIXED:** Seamless merging of split configs into single view
     - **Details:** Config.json (685 lines) can now be split into:
@@ -32,6 +36,21 @@
     - **FIXED:** Per-player channel state tracking
     - **FIXED:** Local channel respects radius setting
     - **FIXED:** Staff channel respects permission setting
+    - **FIXED:** Discord integration now receives chat messages
+        - Added `onPlayerChat()` method to ChatIntegrationAdapter interface
+        - Implemented in DiscordSRV, SDLink, and DCIntegration adapters
+        - Messages include channel indicator and emoji (💬 Local, 🌍 Global, 🛡️ Staff)
+        - Minecraft formatting codes are stripped for Discord compatibility
+        - Integration broadcasts to all registered Discord mod adapters
+    - **FIXED:** Channels respect LuckPerms permissions
+        - Permission-based channels check neoessentials permissions
+        - Works with both internal and external permission systems (LuckPerms, etc.)
+        - Staff channel requires `neoessentials.chat.staff` permission
+        - Custom channels can define their own permission requirements
+    - **FIXED:** Local radius works correctly
+        - Checks same dimension requirement
+        - Accurately calculates distance between players
+        - Only sends to players within configured radius
     - **Details:** Config example:
     ```json
     {

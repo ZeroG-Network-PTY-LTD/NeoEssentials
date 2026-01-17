@@ -265,6 +265,67 @@ function setupEventListeners() {
     if (saveWorldsBtn) {
         saveWorldsBtn.addEventListener('click', () => handleSaveWorlds());
     }
+
+    // Navigation items - Page switching
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = item.getAttribute('data-page');
+            if (page) {
+                switchPage(page);
+            }
+        });
+    });
+}
+
+// Switch between dashboard pages
+function switchPage(pageName) {
+    // Update active nav item
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (item.getAttribute('data-page') === pageName) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Hide all page sections
+    const pageCards = document.querySelectorAll('[data-page]');
+    pageCards.forEach(card => {
+        if (card.classList.contains('nav-item')) {
+            // Skip nav items
+            return;
+        }
+        if (card.getAttribute('data-page') === pageName) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Update page title
+    const pageTitle = document.getElementById('pageTitle');
+    if (pageTitle) {
+        const pageTitles = {
+            'overview': 'Overview',
+            'players': 'Players',
+            'performance': 'Performance',
+            'worlds': 'Worlds',
+            'events': 'Events',
+            'admin': 'Admin Controls'
+        };
+        pageTitle.textContent = pageTitles[pageName] || 'Dashboard';
+    }
+
+    // If switching to overview, show stats cards
+    const statsRow = document.querySelector('.stats-row');
+    if (statsRow) {
+        statsRow.style.display = pageName === 'overview' ? '' : 'none';
+    }
+
+    console.log('Switched to page:', pageName);
 }
 
 // Handle login
@@ -306,16 +367,26 @@ async function handleLogin() {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            // Store auth token
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('username', data.username);
-            localStorage.setItem('isAdmin', data.isAdmin);
-            localStorage.setItem('authType', data.authType);
-            
+            // Store auth data
+            localStorage.setItem('authToken', data.sessionId || data.token);
+            localStorage.setItem('sessionId', data.sessionId);
+            localStorage.setItem('authType', data.authType || 'minecraft');
+
+            // Extract user data
+            if (data.user) {
+                localStorage.setItem('username', data.user.username || username.trim());
+                localStorage.setItem('isAdmin', data.user.role === 'ADMIN' || data.user.isAdmin || false);
+                localStorage.setItem('role', data.user.role || 'VIEWER');
+            } else {
+                localStorage.setItem('username', username.trim());
+                localStorage.setItem('isAdmin', false);
+                localStorage.setItem('role', 'VIEWER');
+            }
+
             // Show dashboard
             showDashboard();
             
-            console.log('Login successful:', data.username);
+            console.log('Login successful:', localStorage.getItem('username'), 'Role:', localStorage.getItem('role'));
         } else {
             // Show error
             if (loginError) {
@@ -759,7 +830,7 @@ async function loadServerInfo() {
                 </div>
                 <div class="info-row">
                     <span class="info-label">MOTD</span>
-                    <span class="info-value">${escapeHtml(data.motd || 'N/A')}</span>
+                    <span class="info-value motd-display">${convertMinecraftColors(data.motd || 'N/A')}</span>
                 </div>
             `;
             }
@@ -1112,20 +1183,28 @@ async function loadPlayerDetails(username, isOnline) {
         const achievementsResponse = await fetchWithAuth(`${API_BASE_URL}/player/achievements/${username}`);
         if (achievementsResponse.ok) {
             const achievements = await achievementsResponse.json();
+            const total = achievements.total || 0;
+            const completed = achievements.completedCount || 0;
+            const inProgress = achievements.inProgressCount || 0;
+            const percentComplete = total > 0 ? Math.round((completed / total) * 100) : 0;
+
             achievementsInfo.innerHTML = `
                 <div class="detail-row">
                     <span class="detail-label">Total</span>
-                    <span class="detail-value">${achievements.total || 0}</span>
+                    <span class="detail-value">${total}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Completed</span>
-                    <span class="detail-value">${achievements.completedCount || 0} 🏆</span>
+                    <span class="detail-value">${completed} 🏆 (${percentComplete}%)</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">In Progress</span>
-                    <span class="detail-value">${achievements.inProgress ? achievements.inProgress.length : 0} ⏳</span>
+                    <span class="detail-value">${inProgress} ⏳</span>
                 </div>
+                ${achievements.error ? `<div class="detail-row"><span class="detail-label error">${achievements.error}</span></div>` : ''}
             `;
+        } else {
+            achievementsInfo.innerHTML = '<p class="empty-state-small">Could not load achievements</p>';
         }
         
         // Load homes
@@ -1145,242 +1224,121 @@ async function loadPlayerDetails(username, isOnline) {
             }
         }
 
-        // Load inventory (works for both online and offline players)
-        const inventoryResponse = await fetchWithAuth(`${API_BASE_URL}/player/inventory/${username}`);
-        if (inventoryResponse.ok) {
-            const inventory = await inventoryResponse.json();
-            let inventoryHtml = '';
-            
-            // Armor slots (4 slots)
-            if (inventory.armor && inventory.armor.length > 0) {
-                inventoryHtml += '<div class="inventory-section-label">Armor</div>';
-                inventory.armor.forEach(item => {
-                    inventoryHtml += renderInventorySlot(item);
-                });
-            }
-            
-            // Offhand (1 slot)
-            if (inventory.offhand && inventory.offhand.length > 0) {
-                inventoryHtml += '<div class="inventory-section-label">Off-Hand</div>';
-                inventory.offhand.forEach(item => {
-                    inventoryHtml += renderInventorySlot(item);
-                });
-            }
-            
-            // Main inventory (36 slots - hotbar + inventory)
-            if (inventory.main && inventory.main.length > 0) {
-                inventoryHtml += '<div class="inventory-section-label">Inventory (Slots 0-35)</div>';
-                inventory.main.forEach(item => {
-                    inventoryHtml += renderInventorySlot(item);
-                });
-            }
-            
-            inventoryInfo.innerHTML = inventoryHtml || '<p class="empty-state-small">Empty inventory</p>';
-        } else {
-            inventoryInfo.innerHTML = '<p class="empty-state-small">Unable to load inventory</p>';
-        }
-        
+        // Inventory viewing has been removed from the dashboard
+        // Players can check their inventory in-game
+        inventoryInfo.innerHTML = '<p class="empty-state-small">Inventory viewing removed - check in-game</p>';
+
     } catch (error) {
         console.error('Error loading player details:', error);
         basicInfo.innerHTML = '<p class="empty-state-small">Error loading data</p>';
     }
 }
 
-function renderInventorySlot(item) {
-    if (!item || !item.id) {
-        return '<div class="inventory-slot empty"></div>';
-    }
-    
-    // Determine display name (prefer custom name, then display name, then formatted ID)
-    const itemName = item.customName || item.displayName ||
-                     item.id.split(':')[1]?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) ||
-                     'Unknown';
-
-    const count = item.count > 1 ? `<div class="inventory-slot-count">${item.count}</div>` : '';
-    
-    // Build tooltip text with mod information
-    let tooltipText = escapeHtml(itemName);
-    if (item.count > 1) tooltipText += ` x${item.count}`;
-    if (item.modded && item.modName) tooltipText += `\\n[${item.modName}]`;
-    if (item.enchanted) tooltipText += '\\n✨ Enchanted';
-
-    // Get texture URL
-    const textureUrl = getItemTextureUrl(item);
-    
-    // Add classes for modded/enchanted items
-    const moddedClass = item.modded ? 'modded-item' : '';
-    const enchantedClass = item.enchanted ? 'enchanted-item' : '';
-
-    return `
-        <div class="inventory-slot ${moddedClass} ${enchantedClass}"
-             title="${tooltipText}"
-             data-item-id="${escapeHtml(item.id)}"
-             data-namespace="${escapeHtml(item.namespace || 'minecraft')}"
-             data-path="${escapeHtml(item.path || '')}"
-             data-modded="${item.modded || false}">
-            <img src="${textureUrl}"
-                 alt="${escapeHtml(itemName)}" 
-                 class="inventory-slot-texture"
-                 onerror="handleInventoryTextureError(this)">
-            <div class="inventory-slot-fallback" style="display:none;">
-                ${escapeHtml(itemName.substring(0, 2).toUpperCase())}
-            </div>
-            ${count}
-            ${item.enchanted ? '<div class="enchanted-glint"></div>' : ''}
-            ${item.modded ? '<div class="modded-badge" title="Modded Item">M</div>' : ''}
-        </div>
-    `;
-}
+// ===== INVENTORY AND TEXTURE CODE REMOVED =====
+// Inventory viewing has been removed from the dashboard.
+// Players can check their inventory in-game.
 
 /**
- * Handle texture loading errors - show placeholder
- * NOTE: All textures should be served from server's TextureCache
- * If texture fails, it means it wasn't in cache or doesn't exist
+ * Helper function to convert Minecraft color codes to HTML
+ * Supports both § and & color codes
  */
-function handleInventoryTextureError(imgElement) {
-    // Get item data from parent slot's data attributes
-    const slot = imgElement.closest('.inventory-slot');
-    if (!slot) {
-        console.error('Could not find inventory slot for failed texture');
-        imgElement.style.display = 'none';
-        return;
-    }
+function convertMinecraftColors(text) {
+    if (!text) return '';
 
-    const item = {
-        namespace: slot.dataset.namespace || 'minecraft',
-        path: slot.dataset.path || '',
-        id: slot.dataset.itemId || ''
+    // Minecraft color codes map
+    const colorMap = {
+        '0': '#000000', // Black
+        '1': '#0000AA', // Dark Blue
+        '2': '#00AA00', // Dark Green
+        '3': '#00AAAA', // Dark Aqua
+        '4': '#AA0000', // Dark Red
+        '5': '#AA00AA', // Dark Purple
+        '6': '#FFAA00', // Gold
+        '7': '#AAAAAA', // Gray
+        '8': '#555555', // Dark Gray
+        '9': '#5555FF', // Blue
+        'a': '#55FF55', // Green
+        'b': '#55FFFF', // Aqua
+        'c': '#FF5555', // Red
+        'd': '#FF55FF', // Light Purple
+        'e': '#FFFF55', // Yellow
+        'f': '#FFFFFF', // White
+        'k': 'obfuscated',  // Obfuscated
+        'l': 'bold',        // Bold
+        'm': 'strikethrough', // Strikethrough
+        'n': 'underline',   // Underline
+        'o': 'italic',      // Italic
+        'r': 'reset'        // Reset
     };
 
-    // Hide the failed image
-    imgElement.style.display = 'none';
+    let html = '';
+    let currentColor = null;
+    let currentFormats = [];
 
-    // Show the placeholder
-    const fallbackDiv = imgElement.nextElementSibling;
-    if (fallbackDiv && fallbackDiv.classList.contains('inventory-slot-fallback')) {
-        fallbackDiv.style.display = 'flex';
-        fallbackDiv.style.alignItems = 'center';
-        fallbackDiv.style.justifyContent = 'center';
-        fallbackDiv.style.width = '100%';
-        fallbackDiv.style.height = '100%';
-        fallbackDiv.style.fontSize = '12px';
-        fallbackDiv.style.fontWeight = 'bold';
-        fallbackDiv.style.color = '#fff';
-        fallbackDiv.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
-    }
+    // Replace both § and & color codes
+    text = text.replace(/&([0-9a-fk-or])/gi, '§$1');
 
-    console.debug(`Texture not in server cache: ${item.id}, showing placeholder`);
-}
-}
+    // Split by color codes
+    const parts = text.split(/(§[0-9a-fk-or])/i);
 
-/**
- * Get item texture URL from server's TextureCache
- * Textures are loaded at server startup from resource packs
- */
-function getItemTextureUrl(item) {
-    const namespace = item.namespace || 'minecraft';
-    const path = item.path || item.id?.split(':')[1] || 'stone';
+    for (let part of parts) {
+        if (part.match(/^§[0-9a-fk-or]$/i)) {
+            // This is a color code
+            const code = part.charAt(1).toLowerCase();
+            const value = colorMap[code];
 
-    // ALL textures are served from server's pre-loaded TextureCache
-    // If texture not found (404), placeholder will be shown
-    return `/api/textures/item/${namespace}/${path}`;
-}
+            if (value === 'reset') {
+                // Close any open tags
+                if (currentFormats.length > 0) {
+                    html += '</span>';
+                }
+                currentColor = null;
+                currentFormats = [];
+            } else if (value === 'obfuscated') {
+                // Special handling for obfuscated text (animated)
+                currentFormats.push('obfuscated');
+            } else if (['bold', 'strikethrough', 'underline', 'italic'].includes(value)) {
+                currentFormats.push(value);
+            } else {
+                // It's a color
+                if (currentColor || currentFormats.length > 0) {
+                    html += '</span>';
+                }
+                currentColor = value;
+                let styles = `color: ${value};`;
+                let classes = '';
 
-/**
- * Get texture URL for known/popular mods
- */
-function getKnownModTexture(namespace, path) {
-    // Future: Add mappings for popular mods that have public texture repos
-    // Example structure:
-    const knownMods = {
-        // 'ae2': `https://example.com/ae2/textures/items/${path}.png`,
-        // 'mekanism': `https://example.com/mekanism/textures/items/${path}.png`,
-    };
+                if (currentFormats.includes('bold')) styles += ' font-weight: bold;';
+                if (currentFormats.includes('italic')) styles += ' font-style: italic;';
+                if (currentFormats.includes('underline')) styles += ' text-decoration: underline;';
+                if (currentFormats.includes('strikethrough')) styles += ' text-decoration: line-through;';
+                if (currentFormats.includes('obfuscated')) classes = 'class="obfuscated"';
 
-    return knownMods[namespace];
-}
-
-/**
- * Generate a placeholder image for modded items
- * Creates a data URL with item information
- */
-function generateModdedItemPlaceholder(item) {
-    // Create a canvas to draw a placeholder
-    const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext('2d');
-
-    // Draw a simple colored background based on item type
-    const typeColors = {
-        'sword': '#FF6B6B',
-        'pickaxe': '#4ECDC4',
-        'axe': '#45B7D1',
-        'shovel': '#96CEB4',
-        'food': '#FFEAA7',
-        'armor': '#A29BFE',
-        'block': '#DFE6E9',
-        'potion': '#FD79A8',
-        'default': '#B2BEC3'
-    };
-
-    const bgColor = typeColors[item.type] || typeColors.default;
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, 32, 32);
-
-    // Add border
-    ctx.strokeStyle = '#2D3436';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, 32, 32);
-
-    // Add first 2 letters of item name (like the fallback div)
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Get display name and take first 2 letters
-    const displayName = item.displayName || item.path || 'Unknown';
-    const letters = displayName.substring(0, 2).toUpperCase();
-
-    // Add text shadow for better visibility
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 2;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
-
-    ctx.fillText(letters, 16, 16);
-
-    // Convert to data URL
-    return canvas.toDataURL('image/png');
-}
-
-/**
- * Alternative getItemTextureUrl with API fallback chain
- * This version tries multiple APIs before giving up
- */
-function getItemTextureUrlWithFallback(item) {
-    const namespace = item.namespace || 'minecraft';
-    const path = item.path || item.id?.split(':')[1] || 'stone';
-
-    // Build fallback chain
-    const urls = [];
-
-    if (namespace === 'minecraft') {
-        // Vanilla items - try multiple APIs
-        urls.push(`https://mc-heads.net/minecraft/item/${path}`);
-        urls.push(`https://minecraft-api.com/api/v1/items/${path}/icon.png`);
-        urls.push(`https://api.minecraftservices.com/minecraft/profile/item/${path}`);
-    } else {
-        // Modded items - custom server or placeholder
-        const customTextureBase = localStorage.getItem('customTextureServer');
-        if (customTextureBase) {
-            urls.push(`${customTextureBase}/item/${namespace}/${path}.png`);
+                html += `<span style="${styles}" ${classes}>`;
+            }
+        } else if (part) {
+            // Regular text
+            if (!currentColor && currentFormats.length > 0) {
+                let styles = '';
+                let classes = '';
+                if (currentFormats.includes('bold')) styles += ' font-weight: bold;';
+                if (currentFormats.includes('italic')) styles += ' font-style: italic;';
+                if (currentFormats.includes('underline')) styles += ' text-decoration: underline;';
+                if (currentFormats.includes('strikethrough')) styles += ' text-decoration: line-through;';
+                if (currentFormats.includes('obfuscated')) classes = 'class="obfuscated"';
+                html += `<span style="${styles}" ${classes}>`;
+                currentColor = 'formatting';
+            }
+            html += part;
         }
     }
     
-    // If we have URLs, return the first one (dashboard will handle errors)
-    return urls.length > 0 ? urls[0] : generateModdedItemPlaceholder(item);
+    // Close any remaining open tags
+    if (currentColor || currentFormats.length > 0) {
+        html += '</span>';
+    }
+
+    return html;
 }
 
 // Close modal on escape key

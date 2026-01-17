@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
@@ -94,7 +95,7 @@ public class AdminEndpoint implements HttpHandler {
 
                 // Broadcast message to all players
                 server.getPlayerList().getPlayers().forEach(player -> {
-                    player.sendSystemMessage(Component.literal("§c§l[Server] §eServer is restarting via dashboard admin panel..."));
+                    player.sendSystemMessage(MessageUtil.component("commands.neoessentials.admin.server_restarting"));
                 });
 
                 LOGGER.info("Broadcasting restart message and scheduling restart in 5 seconds");
@@ -156,7 +157,7 @@ public class AdminEndpoint implements HttpHandler {
 
                 // Broadcast message to all players
                 server.getPlayerList().getPlayers().forEach(player -> {
-                    player.sendSystemMessage(Component.literal("§c§l[Server] §eServer is shutting down via dashboard admin panel..."));
+                    player.sendSystemMessage(MessageUtil.component("commands.neoessentials.admin.server_shutting_down"));
                 });
 
                 LOGGER.info("Broadcasting shutdown message and scheduling stop in 5 seconds");

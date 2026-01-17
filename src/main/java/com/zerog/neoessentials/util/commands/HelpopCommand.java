@@ -147,11 +147,11 @@ public class HelpopCommand {
             );
         
         // Send all components to staff member
-        staff.sendSystemMessage(Component.literal("§6§l=== HELP REQUEST ==="));
+        staff.sendSystemMessage(MessageUtil.component("commands.neoessentials.helpop.header"));
         staff.sendSystemMessage(header);
-        staff.sendSystemMessage(Component.literal("§7Location: ").append(locationComponent));
-        staff.sendSystemMessage(Component.literal("§7Message: ").append(messageComponent));
-        staff.sendSystemMessage(Component.literal("§7Actions: ").append(replyComponent));
-        staff.sendSystemMessage(Component.literal("§6§l=================="));
+        staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.location")).append(locationComponent));
+        staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.message")).append(messageComponent));
+        staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.actions")).append(replyComponent));
+        staff.sendSystemMessage(MessageUtil.component("commands.neoessentials.helpop.footer"));
     }
 }
