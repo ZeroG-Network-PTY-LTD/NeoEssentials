@@ -4,6 +4,8 @@ import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manager for miscellaneous teleportation utilities (/back, death locations, etc.)
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class MiscTeleportManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MiscTeleportManager.class);
     
@@ -226,13 +229,17 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Handle player death - save death location
+     * Event handler: Save death location when player dies
      */
-    public void onPlayerDeath(ServerPlayer player) {
-        saveDeathLocation(player);
+    @SubscribeEvent
+    public static void onPlayerDeathEvent(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        MiscTeleportManager.getInstance().saveDeathLocation(player);
     }
     
-    // Configuration getters/setters
+    /**
+     * Configuration getters/setters
+     */
     public int getMaxBackHistory() {
         return maxBackHistory;
     }
