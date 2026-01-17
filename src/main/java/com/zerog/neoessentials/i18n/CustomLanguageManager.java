@@ -24,6 +24,8 @@ public class CustomLanguageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomLanguageManager.class);
     private static CustomLanguageManager INSTANCE;
 
+    private static final String LANG_DIR = "run/neoessentials/languages/custom/";
+    private static final String LANG_FILE = "en_us.json";
     private final Path customLangDir;
     private final Path templatesDir;
     private final Map<String, Map<String, String>> customTranslations = new ConcurrentHashMap<>();
@@ -34,8 +36,8 @@ public class CustomLanguageManager {
     private final Set<String> missingKeys = ConcurrentHashMap.newKeySet();
 
     private CustomLanguageManager() {
-        this.customLangDir = Paths.get("neoessentials", "languages", "custom");
-        this.templatesDir = Paths.get("neoessentials", "languages", "templates");
+        this.customLangDir = resolveProjectRootPath("run", "neoessentials", "languages", "custom");
+        this.templatesDir = resolveProjectRootPath("neoessentials", "languages", "templates");
     }
 
     public static CustomLanguageManager getInstance() {
@@ -50,11 +52,71 @@ public class CustomLanguageManager {
      */
     public void initialize() {
         try {
+            LOGGER.info("Custom language directory resolved to: {}", customLangDir.toAbsolutePath());
+            LOGGER.info("Template directory resolved to: {}", templatesDir.toAbsolutePath());
+
             // Create directories
             Files.createDirectories(customLangDir);
             Files.createDirectories(templatesDir);
 
-            // Scan for custom language files
+            // Ensure language file exists (copy from JAR if missing or empty/invalid)
+            Path langFile = customLangDir.resolve(LANG_FILE);
+            boolean needsCopy = false;
+            if (!Files.exists(langFile)) {
+                needsCopy = true;
+            } else {
+                // Check if file is empty or invalid JSON
+                try (Reader reader = Files.newBufferedReader(langFile, StandardCharsets.UTF_8)) {
+                    Type type = new TypeToken<Map<String, String>>(){}.getType();
+                    Map<String, String> test = gson.fromJson(reader, type);
+                    if (test == null || test.isEmpty()) {
+                        needsCopy = true;
+                    }
+                } catch (Exception e) {
+                    needsCopy = true;
+                }
+            }
+            if (needsCopy) {
+                try (InputStream in = findLangResource(LANG_FILE)) {
+                    if (in != null) {
+                        Files.copy(in, langFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        LOGGER.info("Copied language file from JAR: {}", langFile.toAbsolutePath());
+                    } else {
+                        LOGGER.error("Failed to copy language file: Resource not found for {}!", LANG_FILE);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Exception while copying language file from JAR: {}", e.getMessage(), e);
+                }
+            } else {
+                // Merge missing keys from JAR version
+                Map<String, String> jarLang = loadBaseTranslations();
+                Map<String, String> fileLang;
+                try (Reader reader = Files.newBufferedReader(langFile, StandardCharsets.UTF_8)) {
+                    Type type = new TypeToken<Map<String, String>>(){}.getType();
+                    fileLang = gson.fromJson(reader, type);
+                }
+                boolean updated = false;
+                if (fileLang != null && jarLang != null) {
+                    for (Map.Entry<String, String> entry : jarLang.entrySet()) {
+                        if (!fileLang.containsKey(entry.getKey())) {
+                            fileLang.put(entry.getKey(), entry.getValue());
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        try (Writer writer = Files.newBufferedWriter(langFile, StandardCharsets.UTF_8)) {
+                            gson.toJson(fileLang, writer);
+                            LOGGER.info("Merged missing keys from JAR into language file: {}", langFile.toAbsolutePath());
+                        }
+                    }
+                }
+            }
+            // After copy/merge attempt, check if file exists
+            if (!Files.exists(langFile)) {
+                LOGGER.error("Critical: Language file {} still does not exist after copy attempt! Translations will not be loaded from disk.", langFile.toAbsolutePath());
+            }
+
+            // Scan for custom language files (will load the file)
             scanCustomLanguageFiles();
 
             // Generate templates for common languages if they don't exist
@@ -64,7 +126,6 @@ public class CustomLanguageManager {
             LOGGER.info("  Custom languages found: {}", languageFiles.keySet());
             LOGGER.info("  Custom language directory: {}", customLangDir.toAbsolutePath());
             LOGGER.info("  Template directory: {}", templatesDir.toAbsolutePath());
-
         } catch (Exception e) {
             LOGGER.error("Failed to initialize custom language manager", e);
         }
@@ -78,11 +139,10 @@ public class CustomLanguageManager {
             if (!Files.exists(customLangDir)) {
                 return;
             }
-
-            Files.list(customLangDir)
-                .filter(path -> path.toString().endsWith(".json"))
-                .forEach(this::loadCustomLanguageFile);
-
+            try (var stream = Files.list(customLangDir)) {
+                stream.filter(path -> path.toString().endsWith(".json"))
+                      .forEach(this::loadCustomLanguageFile);
+            }
         } catch (IOException e) {
             LOGGER.error("Failed to scan custom language files", e);
         }
@@ -335,5 +395,47 @@ public class CustomLanguageManager {
         public String getVersion() { return version; }
         public Path getFilePath() { return filePath; }
     }
-}
 
+    private InputStream findLangResource(String filename) {
+        // Try with and without leading slash
+        String[] paths = {"/data/lang/" + filename, "data/lang/" + filename};
+        for (String path : paths) {
+            InputStream in = getClass().getResourceAsStream(path);
+            if (in != null) {
+                LOGGER.info("Found language resource at: {}", path);
+                return in;
+            } else {
+                LOGGER.warn("Language resource not found at: {}", path);
+            }
+        }
+        // Try classloader as fallback
+        for (String path : paths) {
+            InputStream in = getClass().getClassLoader().getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
+            if (in != null) {
+                LOGGER.info("Found language resource via classloader at: {}", path);
+                return in;
+            } else {
+                LOGGER.warn("ClassLoader: Language resource not found at: {}", path);
+            }
+        }
+        // Log all resources in the JAR for debugging
+        try {
+            LOGGER.error("Language resource not found. Listing all resources in JAR for debugging:");
+            var jar = getClass().getProtectionDomain().getCodeSource().getLocation();
+            try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(jar.getPath())) {
+                jarFile.stream().forEach(entry -> {
+                    if (entry.getName().contains("lang")) {
+                        LOGGER.error("  JAR entry: {}", entry.getName());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to list JAR resources: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private static Path resolveProjectRootPath(String... parts) {
+        return Paths.get(System.getProperty("user.dir"), parts);
+    }
+}

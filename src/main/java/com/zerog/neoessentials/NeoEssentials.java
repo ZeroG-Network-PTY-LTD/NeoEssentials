@@ -1,4 +1,3 @@
-
 package com.zerog.neoessentials;
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigSplitter;
@@ -22,7 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
-
+import com.zerog.neoessentials.util.MessageUtil;
 
 
 
@@ -69,6 +68,9 @@ public class NeoEssentials {
             LOGGER.error("✗ Manager registration failed: {}", e.getMessage(), e);
         }
         
+        // Ensure custom language file is present
+        MessageUtil.ensureCustomLanguageFile();
+
         long duration = System.currentTimeMillis() - startTime;
         LOGGER.info("");
         LOGGER.info("✓ {} initialized successfully in {}ms", MOD_NAME, duration);
@@ -738,3 +740,4 @@ public class NeoEssentials {
         }
     }
 }
+

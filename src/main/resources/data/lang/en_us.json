@@ -1,5 +1,5 @@
 {
-  "_langVersion": "99",
+  "_langVersion": "100",
   "_comment_general": "=== General ===",
   "_comment_economy": "=== Economy System ===",
   "commands.neoessentials.balance": "Balance: {0}{1}",
@@ -634,7 +634,6 @@
   "commands.neoessentials.config.split_status_restore_exists": "Restore point exists.",
   "commands.neoessentials.config.split_status_restore_failed": "Restore failed.",
   "commands.neoessentials.config.split_status_already_split": "Config is already split.",
-  "commands.neoessentials.config.split_status_not_split": "Config is not split.",
   "commands.neoessentials.config.split_status_auto_enabled": "Auto-splitting is enabled.",
   "commands.neoessentials.config.split_status_auto_disabled": "Auto-splitting is disabled.",
   "commands.neoessentials.config.split_status_auto_split": "Config will be automatically split.",
