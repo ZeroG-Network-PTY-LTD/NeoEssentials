@@ -114,6 +114,9 @@ public class HomeCommands {
                 .then(Commands.literal("confirm")
                     .executes(HomeCommands::executeSetHomeConfirm)
                 )
+                .then(Commands.literal("deny")
+                    .executes(HomeCommands::executeSetHomeDeny)
+                )
             )
         );
     }
@@ -141,6 +144,9 @@ public class HomeCommands {
                 .executes(HomeCommands::executeDelHome)
                 .then(Commands.literal("confirm")
                     .executes(HomeCommands::executeDelHomeConfirm)
+                )
+                .then(Commands.literal("deny")
+                    .executes(HomeCommands::executeDelHomeDeny)
                 )
             )
         );
@@ -226,24 +232,46 @@ public class HomeCommands {
         }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
-        
         // If home exists, require confirmation
         if (homeManager.getHome(player, homeName) != null) {
             // Check if already pending confirmation for this home
             String pending = pendingSetHomeConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("You have already requested to overwrite home '" + homeName + "'. Use /sethome " + homeName + " confirm to overwrite."));
+                player.sendSystemMessage(MessageUtil.warning("You have already requested to overwrite home '" + homeName + "'."));
                 return 0;
             }
             // Set pending confirmation
             pendingSetHomeConfirmations.put(player.getUUID(), homeName);
-            player.sendSystemMessage(MessageUtil.warning("Home '" + homeName + "' already exists. Use /sethome " + homeName + " confirm to overwrite."));
+            // Send clickable confirmation message
+            player.sendSystemMessage(MessageUtil.homeConfirmComponent(
+                homeName,
+                "overwrite",
+                "/sethome " + homeName + " confirm",
+                "/sethome " + homeName + " deny"
+            ));
             return 0;
         }
-
         if (homeManager.setHome(player, homeName)) {
             return 1;
         }
+        return 0;
+    }
+
+    // Add handler for /sethome <name> deny
+    private static int executeSetHomeDeny(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
+        String homeName = StringArgumentType.getString(context, "name");
+        String pending = pendingSetHomeConfirmations.get(player.getUUID());
+        if (pending != null && pending.equals(homeName)) {
+            pendingSetHomeConfirmations.remove(player.getUUID());
+            player.sendSystemMessage(MessageUtil.info("Home overwrite cancelled for '" + homeName + "'."));
+            return 1;
+        }
+        player.sendSystemMessage(MessageUtil.warning("No pending overwrite confirmation for home '" + homeName + "'."));
         return 0;
     }
 
@@ -288,27 +316,45 @@ public class HomeCommands {
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
-
         if (config.isRequireConfirmationForDeleteEnabled()) {
-            // If already pending confirmation for this home, prompt to use confirm
             String pending = pendingDeleteConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("You have already requested to delete home '" + homeName + "'. Use /delhome " + homeName + " confirm to confirm deletion."));
+                player.sendSystemMessage(MessageUtil.warning("You have already requested to delete home '" + homeName + "'."));
                 return 0;
             }
-            // Set pending confirmation
             pendingDeleteConfirmations.put(player.getUUID(), homeName);
-            player.sendSystemMessage(MessageUtil.warning("Are you sure you want to delete home '" + homeName + "'? Use /delhome " + homeName + " confirm to confirm deletion."));
+            player.sendSystemMessage(MessageUtil.homeConfirmComponent(
+                homeName,
+                "delete",
+                "/delhome " + homeName + " confirm",
+                "/delhome " + homeName + " deny"
+            ));
             return 0;
         }
-
-        // No confirmation required, delete immediately
         if (homeManager.deleteHome(player, homeName)) {
             return 1;
         }
         return 0;
     }
 
+    // Add handler for /delhome <name> deny
+    private static int executeDelHomeDeny(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            return 0;
+        }
+        String homeName = StringArgumentType.getString(context, "name");
+        String pending = pendingDeleteConfirmations.get(player.getUUID());
+        if (pending != null && pending.equals(homeName)) {
+            pendingDeleteConfirmations.remove(player.getUUID());
+            player.sendSystemMessage(MessageUtil.info("Home deletion cancelled for '" + homeName + "'."));
+            return 1;
+        }
+        player.sendSystemMessage(MessageUtil.warning("No pending delete confirmation for home '" + homeName + "'."));
+        return 0;
+    }
+    
     /**
      * Execute /delhome <name> confirm
      */
@@ -321,18 +367,15 @@ public class HomeCommands {
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
-
         if (!config.isRequireConfirmationForDeleteEnabled()) {
             player.sendSystemMessage(MessageUtil.error("Confirmation is not required for home deletion."));
             return 0;
         }
-
         String pending = pendingDeleteConfirmations.get(player.getUUID());
         if (pending == null || !pending.equals(homeName)) {
             player.sendSystemMessage(MessageUtil.error("No pending delete confirmation for home '" + homeName + "'. Use /delhome " + homeName + " first."));
             return 0;
         }
-
         // Remove pending confirmation
         pendingDeleteConfirmations.remove(player.getUUID());
         if (homeManager.deleteHome(player, homeName)) {
@@ -340,7 +383,7 @@ public class HomeCommands {
         }
         return 0;
     }
-    
+
     /**
      * Execute /homes
      */
@@ -357,3 +400,4 @@ public class HomeCommands {
         return 1;
     }
 }
+

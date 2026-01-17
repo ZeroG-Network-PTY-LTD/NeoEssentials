@@ -291,21 +291,21 @@ public class NeoEssentials {
                             try {
                                 Thread.sleep(2000); // 2 second delay
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_title"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§l                    CONFIG SPLITTING AVAILABLE"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_large_config"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your config.json file is large and could be easier to manage!"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7NeoEssentials can split it into smaller, focused files."));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_easy"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_safe"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_organized"));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_backup"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Easier to edit §7- Each system in its own file"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Safer §7- Automatic backup before splitting"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Organized §7- Find settings faster"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Reversible §7- Keep backup to restore anytime"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eRun: §b/neoessentials config split §eto enable"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                             } catch (InterruptedException e) {
                                 // Ignore

@@ -12,6 +12,9 @@ import java.text.MessageFormat;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -275,6 +278,35 @@ public class MessageUtil {
         LOGGER.info("Forced translation reload completed, {} keys loaded", translations.size());
     }
     
+    /**
+     * Force update/merge the language file if config version is updated.
+     * Ensures all keys from the JAR are present in the server language file.
+     */
+    public static void ensureLanguageFileUpToDate() {
+        File serverLangFile = ResourceUtil.getLanguageFile("en_us");
+        Map<String, String> jarTranslations = loadJarTranslations();
+        Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
+        boolean needsUpdate = false;
+        if (serverTranslations == null) {
+            needsUpdate = true;
+        } else {
+            // Check for missing keys
+            for (String key : jarTranslations.keySet()) {
+                if (!serverTranslations.containsKey(key)) {
+                    needsUpdate = true;
+                    break;
+                }
+            }
+        }
+        if (needsUpdate) {
+            updateServerLanguageFile(serverLangFile, jarTranslations);
+            translations.clear();
+            loaded = false;
+            loadTranslations();
+            LOGGER.info("Language file updated/merged due to config version update.");
+        }
+    }
+
     // === Enhanced Chat Components ===
     
     /**
@@ -355,5 +387,26 @@ public class MessageUtil {
             LOGGER.warn("Invalid language version format, defaulting to 0");
             return 0;
         }
+    }
+
+    /**
+     * Create a clickable confirmation message for home actions
+     */
+    public static MutableComponent homeConfirmComponent(String homeName, String action, String commandConfirm, String commandDeny) {
+        MutableComponent confirm = Component.literal("[Confirm]")
+            .withStyle(style -> style.withColor(TextColor.fromRgb(0x4CAF50)))
+            .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, commandConfirm)))
+            .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to confirm " + action + " of home '" + homeName + "'"))));
+        MutableComponent deny = Component.literal("[Deny]")
+            .withStyle(style -> style.withColor(TextColor.fromRgb(0xF44336)))
+            .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, commandDeny)))
+            .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to cancel " + action + " of home '" + homeName + "'"))));
+        return Component.literal("")
+            .append(Component.literal("Are you sure you want to "+action+" home '").withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD600))))
+            .append(Component.literal(homeName).withStyle(style -> style.withColor(TextColor.fromRgb(0xFF9800))))
+            .append(Component.literal("'? "))
+            .append(confirm)
+            .append(Component.literal(" "))
+            .append(deny);
     }
 }

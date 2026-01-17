@@ -278,6 +278,7 @@ public class ChatHandler {
                     // Check if Discord relay is enabled for this channel
                     boolean discordEnabled = false;
                     String discordChannelId = null;
+                    boolean permissionPassed = true;
 
                     if (channelObj != null && channelObj.has("discord")) {
                         com.google.gson.JsonObject discordConfig = channelObj.getAsJsonObject("discord");
@@ -290,16 +291,50 @@ public class ChatHandler {
                                 discordChannelId = null; // Treat empty string as null
                             }
                         }
+                        // Debug: Log Discord relay config for this channel if debug mode is enabled
+                        if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            LOGGER.info("[DEBUG] Channel '{}' Discord relay config: enabled={}, channelId={}", channel, discordEnabled, discordChannelId);
+                        }
+                    } else {
+                        if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            LOGGER.info("[DEBUG] Channel '{}' has no Discord relay config.", channel);
+                        }
                     }
 
-                    // Only send to Discord if enabled for this channel
-                    if (discordEnabled) {
+                    // Permission check for Discord relay
+                    if (requiredPermission != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), requiredPermission)) {
+                        permissionPassed = false;
+                        if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            LOGGER.info("[DEBUG] Player '{}' does not have required permission '{}' for channel '{}'. Discord relay skipped.", playerName, requiredPermission, channel);
+                        }
+                    }
+
+                    // Only send to Discord if enabled for this channel and permission passed
+                    if (discordEnabled && permissionPassed) {
+                        if (discordChannelId == null && com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            LOGGER.warn("[DEBUG] Discord relay enabled for channel '{}' but no channelId set. Using fallback logic.", channel);
+                        }
                         String formattedMessageText = formattedMessage.getString();
+                        if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            LOGGER.info("[DEBUG] Relaying message to Discord: channel='{}', discordChannelId='{}', message='{}'", channel, discordChannelId, formattedMessage.getString());
+                        }
                         com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastPlayerChat(
                             player, channel, message, formattedMessageText, discordChannelId);
+                    } else {
+                        if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                            if (!discordEnabled) {
+                                LOGGER.info("[DEBUG] Discord relay is disabled for channel '{}'. Message will NOT be sent to Discord.", channel);
+                            } else if (!permissionPassed) {
+                                LOGGER.info("[DEBUG] Discord relay not sent: player '{}' lacks permission '{}' for channel '{}'", playerName, requiredPermission, channel);
+                            }
+                        }
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to send chat to Discord integration: {}", e.getMessage());
+                    if (com.zerog.neoessentials.util.MessageUtil.isDebugMode()) {
+                        LOGGER.error("[DEBUG] Failed to send chat to Discord integration: {}", e.getMessage(), e);
+                    } else {
+                        LOGGER.warn("Failed to send chat to Discord integration: {}", e.getMessage());
+                    }
                 }
             } // else: do not cancel event, let vanilla formatting happen
 
@@ -310,3 +345,4 @@ public class ChatHandler {
         }
     }
 }
+

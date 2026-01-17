@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -186,10 +187,14 @@ public class TeleportRequestCommands {
      */
     private static int executeTpAccept(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayer player = context.getSource().getPlayerOrException();
+            ServerPlayer teleportedPlayer = context.getSource().getPlayerOrException();
             TeleportRequestManager manager = TeleportRequestManager.getInstance();
-            boolean success = manager.acceptTeleportRequest(player);
-            
+
+            // Save the player's current location for /back
+            MiscTeleportManager.getInstance().saveBackLocation(teleportedPlayer);
+
+            boolean success = manager.acceptTeleportRequest(teleportedPlayer);
+
             return success ? 1 : 0;
             
         } catch (CommandSyntaxException e) {
