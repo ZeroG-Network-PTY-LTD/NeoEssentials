@@ -476,22 +476,43 @@ public class FileManagementHandler implements HttpHandler {
     /**
      * List available cloud providers and their status (stub)
      * GET /api/files/cloudProviders
-
      */
     private void handleCloudProviders(HttpExchange exchange) throws IOException {
+        CloudProviderManager cloudManager = CloudProviderManager.getInstance();
+
         JsonArray providers = new JsonArray();
+
+        // Google Drive
         JsonObject google = new JsonObject();
         google.addProperty("name", "Google Drive");
-        google.addProperty("linked", false); // TODO: Implement OAuth status
+        google.addProperty("id", "google_drive");
+        google.addProperty("linked", cloudManager.isProviderLinked("google_drive"));
+        google.addProperty("description", "Store backups on Google Drive");
+        google.addProperty("icon", "☁️");
         providers.add(google);
+
+        // Dropbox
         JsonObject dropbox = new JsonObject();
         dropbox.addProperty("name", "Dropbox");
-        dropbox.addProperty("linked", false); // TODO: Implement OAuth status
+        dropbox.addProperty("id", "dropbox");
+        dropbox.addProperty("linked", cloudManager.isProviderLinked("dropbox"));
+        dropbox.addProperty("description", "Store backups on Dropbox");
+        dropbox.addProperty("icon", "📦");
         providers.add(dropbox);
+
+        // OneDrive
+        JsonObject onedrive = new JsonObject();
+        onedrive.addProperty("name", "OneDrive");
+        onedrive.addProperty("id", "onedrive");
+        onedrive.addProperty("linked", cloudManager.isProviderLinked("onedrive"));
+        onedrive.addProperty("description", "Store backups on Microsoft OneDrive");
+        onedrive.addProperty("icon", "☁️");
+        providers.add(onedrive);
+
         JsonObject response = new JsonObject();
         response.add("providers", providers);
         response.addProperty("stub", true);
-        response.addProperty("message", "Cloud provider integration not implemented yet");
+        response.addProperty("message", "Cloud provider OAuth is ready. Actual file sync requires provider-specific API implementation.");
         sendJsonResponse(exchange, 200, response);
     }
     /**

@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -26,8 +27,7 @@ public class KickCommand {
         
         // /kick <player> [reason]
         dispatcher.register(Commands.literal("kick")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.kick"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.kick").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
@@ -40,8 +40,7 @@ public class KickCommand {
         
         // /kickall [reason]
         dispatcher.register(Commands.literal("kickall")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.kickall"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.kickall").hasPermission())
             .executes(ctx -> executeKickAll(ctx, "Server maintenance"))
             .then(Commands.argument("reason", StringArgumentType.greedyString())
                 .executes(ctx -> executeKickAll(ctx, StringArgumentType.getString(ctx, "reason"))))

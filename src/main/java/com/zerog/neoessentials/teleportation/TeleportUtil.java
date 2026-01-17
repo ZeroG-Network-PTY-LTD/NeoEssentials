@@ -43,7 +43,8 @@ public class TeleportUtil {
         com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
         boolean allowTeleportInCombat = configManager.isAllowTeleportInCombatEnabled();
         if (!allowTeleportInCombat && com.zerog.neoessentials.teleportation.CombatTracker.isInCombat(player)) {
-            future.complete(TeleportResult.failure("Teleportation is disabled while in combat!"));
+            int remainingTime = com.zerog.neoessentials.teleportation.CombatTracker.getRemainingCombatTime(player);
+            future.complete(TeleportResult.failure("You cannot teleport while in combat! Please wait " + remainingTime + " second(s)."));
             return future;
         }
 
@@ -166,7 +167,11 @@ public class TeleportUtil {
                 com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.unregisterPendingTeleport(player);
             }
             // Check if player moved (cancel if they did), only if enabled in config
-            if (cancelOnMovement && player.position().distanceTo(originalPos) > 1.0) {
+            // Use 1.5 block threshold to avoid false positives from network lag or small position shifts
+            if (cancelOnMovement && player.position().distanceTo(originalPos) > 1.5) {
+                double distance = player.position().distanceTo(originalPos);
+                LOGGER.debug("Teleport cancelled for {} - moved {} blocks (threshold: 1.5)",
+                    player.getName().getString(), String.format("%.2f", distance));
                 future.complete(TeleportResult.failure("Teleport cancelled - you moved!"));
                 return;
             }
@@ -225,13 +230,41 @@ public class TeleportUtil {
             // Perform the teleport
             if (player.level() != targetLevel) {
                 // Cross-dimension teleport
-                player.teleportTo(targetLevel, location.getX(), location.getY(), location.getZ(), 
-                                location.getYaw(), location.getPitch());
+                // Validate rotation values before teleporting
+                float yaw = location.getYaw();
+                float pitch = location.getPitch();
+
+                // Sanitize rotation to prevent NaN errors
+                if (Float.isNaN(yaw) || Float.isInfinite(yaw)) {
+                    yaw = 0.0f;
+                    LOGGER.warn("Invalid yaw during cross-dimension teleport, using 0.0f");
+                }
+                if (Float.isNaN(pitch) || Float.isInfinite(pitch)) {
+                    pitch = 0.0f;
+                    LOGGER.warn("Invalid pitch during cross-dimension teleport, using 0.0f");
+                }
+
+                player.teleportTo(targetLevel, location.getX(), location.getY(), location.getZ(), yaw, pitch);
             } else {
                 // Same dimension teleport
                 player.teleportTo(location.getX(), location.getY(), location.getZ());
-                player.setYRot(location.getYaw());
-                player.setXRot(location.getPitch());
+
+                // Validate rotation values before setting
+                float yaw = location.getYaw();
+                float pitch = location.getPitch();
+
+                // Sanitize rotation to prevent NaN errors
+                if (Float.isNaN(yaw) || Float.isInfinite(yaw)) {
+                    yaw = 0.0f;
+                    LOGGER.warn("Invalid yaw during same-dimension teleport, using 0.0f");
+                }
+                if (Float.isNaN(pitch) || Float.isInfinite(pitch)) {
+                    pitch = 0.0f;
+                    LOGGER.warn("Invalid pitch during same-dimension teleport, using 0.0f");
+                }
+
+                player.setYRot(yaw);
+                player.setXRot(pitch);
             }
 
             // Particle effects (destination)

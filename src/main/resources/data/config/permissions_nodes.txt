@@ -1,4 +1,4 @@
-# NeoEssentials Permission Nodes - Complete Reference
+    "useExternalPermissions": true,# NeoEssentials Permission Nodes - Complete Reference
 # Last Updated: January 1, 2026
 # Config Version: 5
 #
@@ -292,22 +292,28 @@ neoessentials.permissions.* - All permission system permissions
 ## ═══════════════════════════════════════════════════════════
 ## WEB DASHBOARD PERMISSIONS
 ## ═══════════════════════════════════════════════════════════
-neoessentials.dashboard - Basic dashboard access (default: false)
-neoessentials.dashboard.view - View dashboard interface (default: false)
-neoessentials.dashboard.status - View dashboard status (default: false)
+neoessentials.dashboard.access - Basic dashboard access (login ability) (default: false)
 neoessentials.dashboard.admin - Full dashboard administration (default: false)
+neoessentials.dashboard.moderator - Dashboard moderator access (default: false)
+neoessentials.dashboard.view - View dashboard statistics (default: false)
+neoessentials.dashboard.players - View/manage players (default: false)
+neoessentials.dashboard.commands - Execute commands via dashboard (default: false)
+
+# Dashboard Administration
 neoessentials.dashboard.admin.restart - Restart server via dashboard (default: false)
 neoessentials.dashboard.admin.stop - Stop server via dashboard (default: false)
 neoessentials.dashboard.admin.reload - Reload configs via dashboard (default: false)
 neoessentials.dashboard.admin.save - Save all worlds via dashboard (default: false)
-neoessentials.dashboard.temppass - Generate temporary passwords (default: false)
+neoessentials.dashboard.admin.users - Manage dashboard users (default: false)
+neoessentials.dashboard.admin.sessions - View active sessions (default: false)
+neoessentials.dashboard.admin.files - File management access (default: false)
 
 ## ═══════════════════════════════════════════════════════════
 ## ADDITIONAL INFORMATION
 ## ═══════════════════════════════════════════════════════════
 
-# Total Registered Permissions: 96+
-# Permission Categories: 9 (Core, Economy, Teleport, Kits, Items, Chat, Misc, Admin, Dashboard)
+# Total Registered Permissions: 100+
+# Permission Categories: 10 (Core, Economy, Teleport, Kits, Items, Chat, Misc, Admin, Dashboard, Moderation)
 # Supports: LuckPerms, FTB Ranks, Internal Permission System
 # Validation: Automatic validation on server startup
 # Caching: Configurable permission caching with expiry
@@ -320,10 +326,12 @@ neoessentials.dashboard.temppass - Generate temporary passwords (default: false)
 # Configuration Files:
 # - config/neoessentials/config.json (main config)
 # - config/neoessentials/permissions.json (internal permissions)
+# - config/neoessentials/discord_auth.json (Discord authentication)
 
 # Commands:
 # /neoessentials reload - Reload all configurations
 # /permissions list - List all registered permissions (if permissions module enabled)
+# /dashboard - Manage dashboard server (requires neoessentials.admin.dashboard)
 
 ## ═══════════════════════════════════════════════════════════
 ## END OF PERMISSION NODES REFERENCE

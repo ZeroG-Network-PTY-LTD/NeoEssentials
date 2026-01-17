@@ -31,7 +31,7 @@ public class NeoEssentials {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentials.class);
     
     // Build and version information
-    private static final String MOD_VERSION = "1.0.2.4";
+    private static final String MOD_VERSION = "1.0.2.5";
     private static final String MOD_NAME = "NeoEssentials";
     private static final String BUILD_NUMBER = readBuildNumber();
     private static final String MINECRAFT_VERSION = "1.21.1-1.21.10";
@@ -194,6 +194,15 @@ public class NeoEssentials {
                 ManagerRegistry.getInstance().markFailed("PermissionSystem", e.getMessage());
             }
 
+            // Initialize custom language system
+            try {
+                LOGGER.info("⚙ Initializing custom language system...");
+                com.zerog.neoessentials.i18n.CustomLanguageManager.getInstance().initialize();
+                LOGGER.info("✓ Custom language system initialized successfully");
+            } catch (Exception e) {
+                LOGGER.error("✗ Custom language system failed to initialize!", e);
+            }
+
             // Initialize custom badge images (Phase 3)
             try {
                 LOGGER.info("⚙ Loading custom badge images...");
@@ -282,21 +291,21 @@ public class NeoEssentials {
                             try {
                                 Thread.sleep(2000); // 2 second delay
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§lNeoEssentials Configuration Notice"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_title"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your server is using a §elarge config.json§7 file."));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7NeoEssentials can §asplit§7 it into smaller, easier-to-edit files!"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_large_config"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Easier to find settings"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Less chance of syntax errors"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Better organization"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ §7Automatic backup before splitting"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_easy"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_safe"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_organized"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_benefit_backup"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eRun: §b/neoessentials config split §eto enable"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l═══════════════════════════════════════════════"));
+                                player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component("commands.neoessentials.config.split_notice_header"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                             } catch (InterruptedException e) {
                                 // Ignore
@@ -547,6 +556,10 @@ public class NeoEssentials {
 
         // Register channel commands (dynamically from config)
         com.zerog.neoessentials.chat.commands.ChannelCommands.register(dispatcher);
+
+        // ========== LANGUAGE COMMANDS ==========
+        registry.registerCommand("language", "Manage custom language files");
+        com.zerog.neoessentials.commands.LanguageCommand.register(dispatcher);
 
         // ========== PERMISSIONS COMMANDS ==========
         registry.registerCommand("permissions", "Manage permissions");

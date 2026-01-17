@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.moderation.JailManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -53,8 +54,7 @@ public class JailCommand {
         }
         // /jail <player> <jail> [reason]
         dispatcher.register(Commands.literal("jail")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.jail"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
@@ -87,8 +87,7 @@ public class JailCommand {
         
         // /unjail <player>
         dispatcher.register(Commands.literal("unjail")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.unjail"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unjail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_JAILED_PLAYERS)
                 .executes(ctx -> executeUnjail(ctx, StringArgumentType.getString(ctx, "player"))))
@@ -96,23 +95,20 @@ public class JailCommand {
         
         // /setjail <name>
         dispatcher.register(Commands.literal("setjail")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.setjail"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.setjail").hasPermission())
             .then(Commands.argument("name", StringArgumentType.word())
                 .executes(ctx -> executeSetJail(ctx, StringArgumentType.getString(ctx, "name"))))
         );
         
         // /jaillist
         dispatcher.register(Commands.literal("jaillist")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.jaillist"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jaillist").hasPermission())
             .executes(ctx -> executeJailList(ctx))
         );
         
         // /jailinfo [jail]
         dispatcher.register(Commands.literal("jailinfo")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.jailinfo"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jailinfo").hasPermission())
             .executes(ctx -> executeJailInfo(ctx, null))
             .then(Commands.argument("jail", StringArgumentType.word())
                 .suggests(SUGGEST_JAIL_NAMES)

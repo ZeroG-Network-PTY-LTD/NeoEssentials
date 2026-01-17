@@ -144,23 +144,61 @@ public class AuthenticationHandler implements HttpHandler {
     
     /**
      * POST /api/auth/login
-     * Body: {"username": "admin", "password": "password"}
+     * Body: {"username": "admin", "password": "password"} OR {"username": "minecraft_name", "type": "minecraft"}
+     * Supports both password-based and permission-based (Minecraft) authentication
      */
     private void handleLogin(HttpExchange exchange) throws IOException {
         String requestBody = readRequestBody(exchange);
         JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
         
-        if (!request.has("username") || !request.has("password")) {
-            sendJsonResponse(exchange, 400, createErrorResponse("Missing username or password"));
+        if (!request.has("username")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing username"));
             return;
         }
         
         String username = request.get("username").getAsString();
-        String password = request.get("password").getAsString();
         String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
         String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
-        
         AuthenticationManager authManager = AuthenticationManager.getInstance();
+
+        // Check if this is permission-based (Minecraft) authentication
+        if (request.has("type") && "minecraft".equals(request.get("type").getAsString())) {
+            // Permission-based authentication using Minecraft username
+            Session session = handleMinecraftAuth(username, ipAddress, userAgent);
+
+            if (session == null) {
+                sendJsonResponse(exchange, 403, createErrorResponse("You don't have permission to access the dashboard"));
+                return;
+            }
+
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("sessionId", session.getSessionId());
+            response.addProperty("authType", "minecraft");
+            response.add("session", session.toJson());
+
+            // Get user details
+            User user = authManager.getUser(session.getUserId());
+            if (user != null) {
+                response.add("user", user.toJson());
+            }
+
+            // Set session cookie
+            exchange.getResponseHeaders().add("Set-Cookie",
+                "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
+
+            sendJsonResponse(exchange, 200, response);
+            return;
+        }
+
+        // Traditional password-based authentication
+        if (!request.has("password")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing password"));
+            return;
+        }
+
+        String password = request.get("password").getAsString();
+
         Session session = authManager.authenticate(username, password, ipAddress, userAgent);
         if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
             if (session != null) {
@@ -179,6 +217,7 @@ public class AuthenticationHandler implements HttpHandler {
         JsonObject response = new JsonObject();
         response.addProperty("success", true);
         response.addProperty("sessionId", session.getSessionId());
+        response.addProperty("authType", "password");
         response.add("session", session.toJson());
         
         // Get user details
@@ -194,6 +233,185 @@ public class AuthenticationHandler implements HttpHandler {
         sendJsonResponse(exchange, 200, response);
     }
     
+    /**
+     * Handle Minecraft permission-based authentication
+     * Checks if the player has the required permission to access the dashboard
+     * Works for both online and offline players (uses permission system UUID lookup)
+     */
+    private Session handleMinecraftAuth(String minecraftUsername, String ipAddress, String userAgent) {
+        try {
+            // Get server instance from DashboardAPI
+            net.minecraft.server.MinecraftServer server = com.zerog.neoessentials.webdashboard.DashboardAPI.getInstance().getServer();
+            if (server == null) {
+                LOGGER.error("Cannot authenticate: Server instance not available");
+                return null;
+            }
+
+            UUID playerUuid = null;
+
+            // Try to get player UUID from various sources
+            // 1. Try server's profile cache (for players who have logged in)
+            com.mojang.authlib.GameProfile profile = server.getProfileCache().get(minecraftUsername).orElse(null);
+            if (profile != null) {
+                playerUuid = profile.getId();
+                LOGGER.debug("Found player UUID from server profile cache: {}", playerUuid);
+            }
+
+            // 2. Try to get from internal permission system (might have offline data)
+            if (playerUuid == null) {
+                com.zerog.neoessentials.permissions.PermissionManager permManager =
+                    com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
+
+                if (permManager != null) {
+                    // Check if we have a user with this username in our system
+                    for (com.zerog.neoessentials.permissions.PermissionUser permUser : permManager.getUsers()) {
+                        // Try to get username from cache
+                        var cachedProfile = server.getProfileCache().get(permUser.getUuid()).orElse(null);
+                        if (cachedProfile != null && cachedProfile.getName().equalsIgnoreCase(minecraftUsername)) {
+                            playerUuid = permUser.getUuid();
+                            LOGGER.debug("Found player UUID from permission system: {}", playerUuid);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 3. Try to get from LuckPerms if available
+            if (playerUuid == null && com.zerog.neoessentials.api.permissions.PermissionAPI.isUsingExternal()) {
+                try {
+                    com.zerog.neoessentials.permissions.ExternalPermissionAdapter adapter =
+                        com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter();
+
+                    if (adapter instanceof com.zerog.neoessentials.permissions.LuckPermsAdapter) {
+                        // Try to get UUID from LuckPerms user manager
+                        net.luckperms.api.LuckPerms luckPerms = net.luckperms.api.LuckPermsProvider.get();
+                        net.luckperms.api.model.user.User lpUser = luckPerms.getUserManager().getUser(minecraftUsername);
+
+                        if (lpUser != null) {
+                            playerUuid = lpUser.getUniqueId();
+                            LOGGER.debug("Found player UUID from LuckPerms: {}", playerUuid);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.debug("Could not get UUID from LuckPerms: {}", e.getMessage());
+                }
+            }
+
+            // 4. Try Mojang API as last resort (requires internet connection)
+            if (playerUuid == null) {
+                try {
+                    LOGGER.info("Attempting to fetch UUID from Mojang API for username: {}", minecraftUsername);
+                    playerUuid = fetchUuidFromMojangAPI(minecraftUsername);
+                    if (playerUuid != null) {
+                        LOGGER.info("Retrieved UUID from Mojang API: {}", playerUuid);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to fetch UUID from Mojang API: {}", e.getMessage());
+                }
+            }
+
+            if (playerUuid == null) {
+                LOGGER.warn("Could not find UUID for player: {} - They may have never joined the server and are not in any permission system", minecraftUsername);
+                return null;
+            }
+
+            // Check if player has dashboard access permission (works offline via permission systems)
+            boolean hasAccess = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                playerUuid, "neoessentials.dashboard.access");
+
+            if (!hasAccess) {
+                LOGGER.warn("Player {} (UUID: {}) does not have dashboard access permission", minecraftUsername, playerUuid);
+                return null;
+            }
+
+            // Determine user role based on permissions (works offline)
+            User.Role role = User.Role.VIEWER;
+            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                    playerUuid, "neoessentials.dashboard.admin")) {
+                role = User.Role.ADMIN;
+            } else if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                    playerUuid, "neoessentials.dashboard.moderator")) {
+                role = User.Role.MODERATOR;
+            }
+
+            // Get or create dashboard user
+            AuthenticationManager authManager = AuthenticationManager.getInstance();
+            User user = authManager.getUserByUsername(minecraftUsername);
+
+            if (user == null) {
+                // Auto-create user for Minecraft authentication using createUser method
+                // Use a random password since Minecraft auth doesn't use passwords
+                String randomPassword = UUID.randomUUID().toString();
+                user = authManager.createUser(minecraftUsername, randomPassword, playerUuid.toString() + "@minecraft", role);
+                LOGGER.info("Auto-created dashboard user for Minecraft player: {} (UUID: {}, Role: {})", minecraftUsername, playerUuid, role);
+            } else {
+                // Update existing user's role if permissions changed
+                if (user.getRole() != role) {
+                    user.setRole(role);
+                    authManager.saveUsers();
+                    LOGGER.info("Updated dashboard role for {} (UUID: {}): {}", minecraftUsername, playerUuid, role);
+                }
+            }
+
+            // Create session
+            Session session = authManager.createSession(user.getId(), ipAddress, userAgent);
+            LOGGER.info("Minecraft player {} (UUID: {}) authenticated to dashboard with role: {} (Offline-capable)", minecraftUsername, playerUuid, role);
+
+            return session;
+
+        } catch (Exception e) {
+            LOGGER.error("Error during Minecraft authentication for {}: {}", minecraftUsername, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch player UUID from Mojang API
+     * Used as fallback when player is not in local caches
+     */
+    private UUID fetchUuidFromMojangAPI(String username) {
+        try {
+            java.net.URL url = new java.net.URL("https://api.mojang.com/users/profiles/minecraft/" + username);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // Parse JSON response
+                com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(response.toString()).getAsJsonObject();
+                String uuidString = json.get("id").getAsString();
+
+                // Convert UUID string to proper UUID format (add dashes)
+                String formattedUuid = uuidString.replaceFirst(
+                    "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                    "$1-$2-$3-$4-$5"
+                );
+
+                return UUID.fromString(formattedUuid);
+            } else if (responseCode == 204 || responseCode == 404) {
+                LOGGER.debug("Player '{}' not found in Mojang database", username);
+                return null;
+            } else {
+                LOGGER.warn("Mojang API returned unexpected status code: {}", responseCode);
+                return null;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error fetching UUID from Mojang API: {}", e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * GET /api/auth/discord?username=<minecraftUsername>
      * Authenticate using Discord account linked via Simple Discord Link

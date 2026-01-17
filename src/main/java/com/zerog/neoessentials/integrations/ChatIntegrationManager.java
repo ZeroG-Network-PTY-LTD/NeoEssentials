@@ -38,6 +38,24 @@ public class ChatIntegrationManager {
     }
     
     /**
+     * Broadcast a player chat message event to all registered adapters
+     * @param player The player sending the message
+     * @param channel The channel name (e.g., "local", "global", "staff")
+     * @param message The raw message content
+     * @param formattedMessage The fully formatted message
+     * @param discordChannelId Optional Discord channel ID (null = use default)
+     */
+    public static void broadcastPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            try {
+                adapter.onPlayerChat(player, channel, message, formattedMessage, discordChannelId);
+            } catch (Exception e) {
+                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
      * Broadcast a private message event to all registered adapters
      * @param sender The sender
      * @param recipient The recipient  

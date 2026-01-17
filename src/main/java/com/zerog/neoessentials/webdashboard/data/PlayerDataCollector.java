@@ -180,9 +180,11 @@ public class PlayerDataCollector {
         ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
         
         if (player != null) {
+            // Online player - get from live data
             JsonArray completed = new JsonArray();
             JsonArray inProgress = new JsonArray();
-            
+            final int[] notStarted = {0}; // Use array to allow modification in lambda
+
             // Access player advancement progress
             net.minecraft.server.PlayerAdvancements playerAdvancements = player.getAdvancements();
             
@@ -204,20 +206,95 @@ public class PlayerDataCollector {
                     } else if (progress.hasProgress()) {
                         adv.addProperty("progress", progress.getPercent());
                         inProgress.add(adv);
+                    } else {
+                        notStarted[0]++;
                     }
                 }
             });
-            
+
+            int totalAdvancements = completed.size() + inProgress.size() + notStarted[0];
+
             achievements.add("completed", completed);
             achievements.add("inProgress", inProgress);
-            achievements.addProperty("total", completed.size() + inProgress.size());
+            achievements.addProperty("total", totalAdvancements);
             achievements.addProperty("completedCount", completed.size());
+            achievements.addProperty("inProgressCount", inProgress.size());
+            achievements.addProperty("notStartedCount", notStarted[0]);
         } else {
-            achievements.add("completed", new JsonArray());
-            achievements.add("inProgress", new JsonArray());
-            achievements.addProperty("total", 0);
-            achievements.addProperty("completedCount", 0);
-            achievements.addProperty("error", "Player not found or offline");
+            // Offline player - try to load from advancement file
+            try {
+                // Try to load player data to get advancements
+                net.minecraft.world.level.storage.LevelResource advancementsFolder =
+                    new net.minecraft.world.level.storage.LevelResource("advancements");
+                java.nio.file.Path advPath = server.getWorldPath(advancementsFolder)
+                    .resolve(playerUuid.toString() + ".json");
+
+                if (java.nio.file.Files.exists(advPath)) {
+                    String jsonContent = java.nio.file.Files.readString(advPath);
+                    com.google.gson.JsonObject advData = com.google.gson.JsonParser.parseString(jsonContent).getAsJsonObject();
+
+                    JsonArray completed = new JsonArray();
+                    JsonArray inProgress = new JsonArray();
+                    final int[] notStarted = {0}; // Use array to allow modification in lambda
+                    final int[] totalAdvancements = {0}; // Use array to allow modification in lambda
+
+                    // Count all possible advancements
+                    server.getAdvancements().getAllAdvancements().forEach(advancement -> {
+                        if (advancement.value().display().isPresent()) {
+                            totalAdvancements[0]++;
+                            String advId = advancement.id().toString();
+
+                            if (advData.has(advId)) {
+                                com.google.gson.JsonObject advProgress = advData.getAsJsonObject(advId);
+                                if (advProgress.has("done") && advProgress.get("done").getAsBoolean()) {
+                                    JsonObject adv = new JsonObject();
+                                    adv.addProperty("id", advId);
+                                    adv.addProperty("title", advancement.value().display().get().getTitle().getString());
+                                    adv.addProperty("isDone", true);
+                                    completed.add(adv);
+                                } else if (advProgress.has("criteria")) {
+                                    // Has some progress but not complete
+                                    JsonObject adv = new JsonObject();
+                                    adv.addProperty("id", advId);
+                                    adv.addProperty("title", advancement.value().display().get().getTitle().getString());
+                                    adv.addProperty("isDone", false);
+                                    inProgress.add(adv);
+                                }
+                            } else {
+                                notStarted[0]++;
+                            }
+                        }
+                    });
+
+                    achievements.add("completed", completed);
+                    achievements.add("inProgress", inProgress);
+                    achievements.addProperty("total", totalAdvancements[0]);
+                    achievements.addProperty("completedCount", completed.size());
+                    achievements.addProperty("inProgressCount", inProgress.size());
+                    achievements.addProperty("notStartedCount", notStarted[0]);
+                } else {
+                    // No advancement file - new player
+                    int totalAdvancements = (int) server.getAdvancements().getAllAdvancements().stream()
+                        .filter(adv -> adv.value().display().isPresent())
+                        .count();
+
+                    achievements.add("completed", new JsonArray());
+                    achievements.add("inProgress", new JsonArray());
+                    achievements.addProperty("total", totalAdvancements);
+                    achievements.addProperty("completedCount", 0);
+                    achievements.addProperty("inProgressCount", 0);
+                    achievements.addProperty("notStartedCount", totalAdvancements);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error loading offline player advancements for {}", playerUuid, e);
+                // Fallback to zeros with error
+                achievements.add("completed", new JsonArray());
+                achievements.add("inProgress", new JsonArray());
+                achievements.addProperty("total", 0);
+                achievements.addProperty("completedCount", 0);
+                achievements.addProperty("inProgressCount", 0);
+                achievements.addProperty("error", "Could not load advancement data: " + e.getMessage());
+            }
         }
         
         return achievements;

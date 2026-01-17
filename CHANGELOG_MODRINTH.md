@@ -1,10 +1,52 @@
 # NeoEssentials v1.0.2.4
 
-## 🚨 CRITICAL UPDATE - Module Conflict Resolution + Teleportation Fix
+## 🌍 NEW: Custom Language System + Hardcoded Strings Fixed
 
-**Build #750** | January 13, 2026 | MC 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
+**Build #769** | January 14, 2026 | MC 1.21.1 - 1.21.11 | NeoForge 21.1.179+ / 21.11.24-beta
 
-This release fixes critical compatibility issues AND teleportation safety bugs!
+---
+
+## 🌍 Custom Language System
+
+**Create and use custom language files for full translation support!**
+
+### ✅ **42 Hardcoded English Strings FIXED!**
+All messages now translatable:
+- WhoisCommand (12) - Player info, health, status
+- ListCommand (8) - Online players, headers
+- HelpopCommand (5) - Help requests
+- DashboardCommand (3) - Status display
+- AdminEndpoint (2) - Server messages
+- Config Splitter (12) - Migration notices
+
+**Result: 100% of user messages support translation!**
+
+### What's New
+- ✅ **Custom language files** - Translate to ANY language
+- ✅ **Template generation** - Auto-generate templates with all translation keys
+- ✅ **Live reloading** - Update without restart
+- ✅ **Missing key tracking** - Find untranslated messages
+- ✅ **RTL support** - Arabic, Hebrew, Persian, etc.
+
+### Commands
+- `/language list` - List custom languages
+- `/language template <code>` - Generate template (e.g., `es_es`, `fr_fr`)
+- `/language reload` - Reload languages
+- `/language stats` - Show statistics
+- `/language exportmissing` - Export missing keys
+- `/language info` - Help and docs
+
+### Quick Start
+1. Run: `/language template es_es`
+2. Edit: `neoessentials/languages/templates/es_es_template.json`
+3. Translate the text (keep `{0}` placeholders!)
+4. Save: `neoessentials/languages/custom/es_es.json`
+5. Run: `/language reload`
+
+### Supported Languages
+en_us, es_es, fr_fr, de_de, it_it, pt_br, ru_ru, ja_jp, ko_kr, zh_cn, ar_sa (RTL), he_il (RTL), nl_nl, pl_pl, tr_tr, and more!
+
+📖 **Full docs:** See `docs/CUSTOM_LANGUAGES.md` in the mod files
 
 ---
 

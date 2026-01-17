@@ -57,17 +57,30 @@ public class PermissionAPI {
             return false;
         }
         
-        // If using external permissions (LuckPerms, FTB Ranks), prioritize them FIRST
+        LOGGER.debug("═══ PERMISSION CHECK ═══");
+        LOGGER.debug("Player UUID: {}", uuid);
+        LOGGER.debug("Permission: {}", permission);
+        LOGGER.debug("External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+
+        // If using external permissions (LuckPerms, FTB Ranks), ONLY use external system
+        // Do NOT check ops bypass - let the external system handle that
         if (externalAdapter != null) {
+            LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
             boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
-            LOGGER.debug("External permission check for {}: {} = {}", uuid, permission, hasExternalPerm);
+            LOGGER.debug("External system returned: {}", hasExternalPerm);
+            LOGGER.debug("═══════════════════════");
             return hasExternalPerm;
         }
         
-        // Fallback to internal system: check ops bypass first
+        LOGGER.debug("Using INTERNAL permission system");
+
+        // Only use internal system if NO external adapter is configured
+        // Check ops bypass first (only for internal system)
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
             if (isPlayerOpped(uuid)) {
-                LOGGER.debug("Player {} bypassing permission check (is op)", uuid);
+                LOGGER.debug("Player is OP - bypassing permission check");
+                LOGGER.debug("Result: TRUE (op bypass)");
+                LOGGER.debug("═══════════════════════");
                 return true;
             }
         }
@@ -75,9 +88,16 @@ public class PermissionAPI {
         // Finally check internal permission manager
         if (manager == null) {
             LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null - returning false");
+            LOGGER.debug("Result: FALSE (no manager)");
+            LOGGER.debug("═══════════════════════");
             return false;
         }
-        return manager.hasPermission(uuid, permission);
+
+        boolean hasInternalPerm = manager.hasPermission(uuid, permission);
+        LOGGER.debug("Internal system returned: {}", hasInternalPerm);
+        LOGGER.debug("Result: {}", hasInternalPerm);
+        LOGGER.debug("═══════════════════════");
+        return hasInternalPerm;
     }
     
     /**
@@ -129,6 +149,7 @@ public class PermissionAPI {
             LOGGER.info(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
         }
 
+        // If external adapter is set, ONLY use it - do NOT fall back to internal
         if (externalAdapter != null) {
             if (debugEnabled) {
                 LOGGER.info(">>> Querying external adapter for prefix...");
@@ -137,16 +158,14 @@ public class PermissionAPI {
             if (debugEnabled) {
                 LOGGER.info(">>> External adapter returned: [{}]", prefix);
             }
-            if (prefix != null) {
-                if (debugEnabled) {
-                    LOGGER.info(">>> Returning external prefix: [{}]", prefix);
-                }
-                return prefix;
-            }
+            // Return what external system says, even if null/empty
+            // Do NOT fall back to internal when external is enabled
+            return prefix != null ? prefix : "";
         }
 
+        // Only use internal system if NO external adapter is configured
         if (debugEnabled) {
-            LOGGER.info(">>> Falling back to internal permission system");
+            LOGGER.info(">>> Using internal permission system (no external adapter)");
         }
 
         if (manager == null) {
@@ -168,7 +187,9 @@ public class PermissionAPI {
             return "";
         }
         String prefix = group.getPrefix();
-        LOGGER.info(">>> Internal system prefix: [{}]", prefix);
+        if (debugEnabled) {
+            LOGGER.info(">>> Internal system prefix: [{}]", prefix);
+        }
         return prefix != null ? prefix : "";
     }
 
@@ -179,10 +200,15 @@ public class PermissionAPI {
             return "";
         }
         
+        // If external adapter is set, ONLY use it - do NOT fall back to internal
         if (externalAdapter != null) {
             String suffix = externalAdapter.getSuffix(uuid);
-            if (suffix != null) return suffix;
+            // Return what external system says, even if null/empty
+            // Do NOT fall back to internal when external is enabled
+            return suffix != null ? suffix : "";
         }
+
+        // Only use internal system if NO external adapter is configured
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getSuffix: PermissionManager is null");
             return "";

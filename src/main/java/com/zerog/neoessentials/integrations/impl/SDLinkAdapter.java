@@ -58,6 +58,55 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     }
     
     @Override
+    public void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
+        if (!isEnabled()) return;
+
+        try {
+            // Strip Minecraft formatting codes for Discord
+            String cleanMessage = formattedMessage.replaceAll("§[0-9a-fk-or]", "");
+
+            // Format for Discord with channel indicator
+            String emoji = getChannelEmoji(channel);
+            String discordMessage = String.format("%s **[%s]** %s: %s",
+                emoji,
+                channel.toUpperCase(),
+                player.getName().getString(),
+                message);
+
+            // Determine which Discord channel to use
+            String targetChannel;
+            if (discordChannelId != null && !discordChannelId.isEmpty()) {
+                // Use configured Discord channel ID
+                targetChannel = discordChannelId;
+            } else {
+                // Fallback to default channel names based on channel type
+                targetChannel = switch (channel.toLowerCase()) {
+                    case "staff" -> "staff"; // Staff channel goes to staff/moderation Discord channel
+                    case "global" -> "chat"; // Global goes to main chat
+                    case "local" -> "chat";  // Local (if enabled) goes to main chat
+                    default -> "chat";
+                };
+            }
+
+            sendToDiscord(targetChannel, discordMessage);
+        } catch (Exception e) {
+            LOGGER.error("Failed to send chat message to Discord: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Get emoji for channel type
+     */
+    private String getChannelEmoji(String channel) {
+        return switch (channel.toLowerCase()) {
+            case "local" -> "💬";
+            case "global" -> "🌍";
+            case "staff" -> "🛡️";
+            default -> "💭";
+        };
+    }
+
+    @Override
     public void onPrivateMessage(ServerPlayer sender, ServerPlayer recipient, String message) {
         if (!isEnabled()) return;
         

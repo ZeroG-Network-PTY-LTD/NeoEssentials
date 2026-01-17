@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.moderation.VanishManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -49,20 +50,17 @@ public class VanishCommand {
         
         // /unvanish [player]
         dispatcher.register(Commands.literal("unvanish")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.vanish"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanish").hasPermission())
             .executes(ctx -> executeUnvanish(ctx, null))
             .then(Commands.argument("player", StringArgumentType.word())
-                .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                    getPlayerUUID(source), "neoessentials.moderation.vanish.others"))
+                .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanish.others").hasPermission())
                 .suggests(SUGGEST_VANISHED_PLAYERS)
                 .executes(ctx -> executeUnvanish(ctx, StringArgumentType.getString(ctx, "player"))))
         );
         
         // /vanishlist
         dispatcher.register(Commands.literal("vanishlist")
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.vanishlist"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanishlist").hasPermission())
             .executes(ctx -> executeVanishList(ctx))
         );
     }
@@ -70,12 +68,10 @@ public class VanishCommand {
     private static void registerVanishCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         // /vanish or /v [player]
         dispatcher.register(Commands.literal(commandName)
-            .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                getPlayerUUID(source), "neoessentials.moderation.vanish"))
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanish").hasPermission())
             .executes(ctx -> executeToggleVanish(ctx, null))
             .then(Commands.argument("player", StringArgumentType.word())
-                .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
-                    getPlayerUUID(source), "neoessentials.moderation.vanish.others"))
+                .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanish.others").hasPermission())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .executes(ctx -> executeToggleVanish(ctx, StringArgumentType.getString(ctx, "player"))))

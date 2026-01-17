@@ -1288,163 +1288,6 @@ body {
     padding: 20px;
 }
 
-/* Inventory Grid */
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    gap: 4px;
-    padding: 12px;
-    background: var(--background);
-    border-radius: var(--border-radius-sm);
-}
-
-.inventory-slot {
-    aspect-ratio: 1;
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    position: relative;
-    transition: var(--transition);
-}
-
-.inventory-slot:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-sm);
-    transform: scale(1.05);
-}
-
-.inventory-slot.empty {
-    opacity: 0.3;
-}
-
-.inventory-slot-texture {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
-}
-
-.inventory-slot.empty {
-    opacity: 0.3;
-}
-
-.inventory-slot-item {
-    font-size: 10px;
-    text-align: center;
-    word-break: break-word;
-    line-height: 1.2;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.inventory-slot-count {
-    position: absolute;
-    bottom: 2px;
-    right: 4px;
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.9);
-    padding: 1px 4px;
-    border-radius: 3px;
-    min-width: 16px;
-    text-align: center;
-    z-index: 2;
-}
-
-/* Modded Item Styles */
-.inventory-slot.modded-item {
-    border-color: #9B59B6;
-    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(255, 255, 255, 1) 100%);
-}
-
-.inventory-slot.modded-item:hover {
-    border-color: #8E44AD;
-    box-shadow: 0 0 10px rgba(155, 89, 182, 0.3);
-}
-
-.modded-badge {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    background: #9B59B6;
-    color: white;
-    font-size: 8px;
-    font-weight: bold;
-    padding: 1px 3px;
-    border-radius: 2px;
-    z-index: 3;
-    line-height: 1;
-}
-
-/* Enchanted Item Styles */
-.inventory-slot.enchanted-item {
-    position: relative;
-    overflow: hidden;
-}
-
-.enchanted-glint {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(138, 43, 226, 0.3) 50%,
-        transparent 70%
-    );
-    animation: enchant-shimmer 3s infinite;
-    pointer-events: none;
-    z-index: 1;
-}
-
-@keyframes enchant-shimmer {
-    0% {
-        transform: translateX(-100%) translateY(-100%);
-    }
-    100% {
-        transform: translateX(100%) translateY(100%);
-    }
-}
-
-/* Fallback Placeholder Styles */
-.inventory-slot-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 4px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.inventory-section-label {
-    grid-column: 1 / -1;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    padding: 8px 0 4px 0;
-    border-bottom: 1px solid var(--border-color);
-    margin-top: 8px;
-}
-
-.inventory-section-label:first-child {
-    margin-top: 0;
-}
-
 /* Player Item Clickable */
 .player-item {
     cursor: pointer;
@@ -1637,3 +1480,42 @@ body {
     }
 }
 
+/* ===== MOTD DISPLAY ===== */
+.motd-display {
+    font-family: 'Minecraft', 'Courier New', monospace;
+    font-weight: bold;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.4;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Obfuscated text animation (§k) */
+.obfuscated {
+    display: inline-block;
+    animation: obfuscate 0.1s infinite;
+}
+
+@keyframes obfuscate {
+    0% { content: attr(data-text); }
+    10% { opacity: 0.8; }
+    20% { opacity: 1; }
+    30% { opacity: 0.7; }
+    40% { opacity: 1; }
+    50% { opacity: 0.9; }
+    60% { opacity: 1; }
+    70% { opacity: 0.8; }
+    80% { opacity: 1; }
+    90% { opacity: 0.9; }
+    100% { opacity: 1; }
+}
+
+/* Optional: Add a Minecraft-style font if available */
+@font-face {
+    font-family: 'Minecraft';
+    src: local('Courier New'), local('monospace');
+}

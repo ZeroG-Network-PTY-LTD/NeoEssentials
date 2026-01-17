@@ -15,6 +15,18 @@ public interface ChatIntegrationAdapter {
     String getName();
     
     /**
+     * Called when a player sends a chat message in a channel
+     * @param player The player sending the message
+     * @param channel The channel name (e.g., "local", "global", "staff")
+     * @param message The message content
+     * @param formattedMessage The fully formatted message with colors/placeholders resolved
+     * @param discordChannelId Optional Discord channel ID to send to (null = use default)
+     */
+    default void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
+        // Default implementation does nothing
+    }
+
+    /**
      * Called when a private message is sent between players
      * @param sender The message sender
      * @param recipient The message recipient

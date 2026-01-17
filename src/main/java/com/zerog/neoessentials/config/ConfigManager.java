@@ -1209,13 +1209,38 @@ public class ConfigManager {
         String[] requiredConfigs = new String[] {
             MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG
         };
-        for (String configName : requiredConfigs) {
-            File configFile = ResourceUtil.getConfigFile(configName);
-            if (!configFile.exists()) {
-                copyDefaultConfig(configName, configFile);
-            } else {
-                // Config exists - check if it needs updating
-                checkAndUpdateConfigVersion(configName, configFile);
+
+        // Check if split configs are enabled
+        boolean splitConfigsEnabled = ConfigSplitter.isSplittingEnabled();
+
+        if (splitConfigsEnabled) {
+            // When split configs are enabled, update split config files instead of config.json
+            LOGGER.debug("Split configs enabled - checking split config file versions");
+            ConfigSplitter.ensureSplitConfigsUpToDate();
+
+            // Still need to check other standalone configs (economy, permissions, kits, discord_auth)
+            for (String configName : requiredConfigs) {
+                if (configName.equals(MAIN_CONFIG)) {
+                    continue; // Skip config.json when using split configs
+                }
+
+                File configFile = ResourceUtil.getConfigFile(configName);
+                if (!configFile.exists()) {
+                    copyDefaultConfig(configName, configFile);
+                } else {
+                    checkAndUpdateConfigVersion(configName, configFile);
+                }
+            }
+        } else {
+            // Normal monolithic config mode
+            for (String configName : requiredConfigs) {
+                File configFile = ResourceUtil.getConfigFile(configName);
+                if (!configFile.exists()) {
+                    copyDefaultConfig(configName, configFile);
+                } else {
+                    // Config exists - check if it needs updating
+                    checkAndUpdateConfigVersion(configName, configFile);
+                }
             }
         }
     }

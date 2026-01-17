@@ -60,12 +60,25 @@ public class AfkMovementDetector {
      */
     private static void checkPlayerMovement(ServerPlayer player) {
         UUID playerId = player.getUUID();
+
+        // Get rotation values
+        float yaw = player.getYRot();
+        float pitch = player.getXRot();
+
+        // Skip this check if rotation is invalid (prevents NaN errors)
+        if (Float.isNaN(yaw) || Float.isInfinite(yaw) ||
+            Float.isNaN(pitch) || Float.isInfinite(pitch)) {
+            LOGGER.debug("Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
+                player.getName().getString());
+            return;
+        }
+
         PlayerPosition currentPos = new PlayerPosition(
             player.getX(), 
             player.getY(), 
             player.getZ(),
-            player.getYRot(), // Y rotation (yaw)
-            player.getXRot()  // X rotation (pitch)
+            yaw,
+            pitch
         );
         
         PlayerPosition lastPos = lastPositions.get(playerId);
@@ -140,8 +153,9 @@ public class AfkMovementDetector {
             this.x = x;
             this.y = y;
             this.z = z;
-            this.yaw = yaw;
-            this.pitch = pitch;
+            // Validate and sanitize rotation values to prevent NaN propagation
+            this.yaw = Float.isNaN(yaw) || Float.isInfinite(yaw) ? 0.0f : yaw;
+            this.pitch = Float.isNaN(pitch) || Float.isInfinite(pitch) ? 0.0f : pitch;
         }
         
         /**

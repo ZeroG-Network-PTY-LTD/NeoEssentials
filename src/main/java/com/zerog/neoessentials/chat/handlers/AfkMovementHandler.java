@@ -56,8 +56,9 @@ public class AfkMovementHandler {
 
         PlayerPosition(Vec3 position, float yaw, float pitch) {
             this.position = position;
-            this.yaw = yaw;
-            this.pitch = pitch;
+            // Validate and sanitize rotation values to prevent NaN propagation
+            this.yaw = Float.isNaN(yaw) || Float.isInfinite(yaw) ? 0.0f : yaw;
+            this.pitch = Float.isNaN(pitch) || Float.isInfinite(pitch) ? 0.0f : pitch;
             this.timestamp = System.currentTimeMillis();
         }
 
@@ -113,6 +114,14 @@ public class AfkMovementHandler {
         Vec3 currentPosition = player.position();
         float currentYaw = player.getYRot();
         float currentPitch = player.getXRot();
+
+        // Validate rotation values - skip this tick if invalid (prevents NaN errors)
+        if (Float.isNaN(currentYaw) || Float.isInfinite(currentYaw) ||
+            Float.isNaN(currentPitch) || Float.isInfinite(currentPitch)) {
+            LOGGER.debug("Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
+                player.getName().getString());
+            return;
+        }
 
         // Get last known position
         PlayerPosition lastPosition = lastPositions.get(uuid);

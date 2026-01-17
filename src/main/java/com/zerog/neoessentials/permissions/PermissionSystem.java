@@ -38,17 +38,20 @@ public class PermissionSystem {
                 
                 if (externalAdapter != null && externalAdapter.isAvailable()) {
                     LOGGER.info("✓ External permission system detected: {}", externalAdapter.getName());
-                    LOGGER.info("✓ Using {} for all permission checks", externalAdapter.getName());
+                    LOGGER.info("✓ Using {} for ALL permission checks, prefixes, and suffixes", externalAdapter.getName());
                     PermissionAPI.setExternalAdapter(externalAdapter);
                     
-                    // Still create internal manager for fallback and prefix/suffix if needed
-                    LOGGER.info("✓ Loading internal permission system as fallback...");
+                    // Load internal manager for legacy compatibility ONLY
+                    // It will NOT be used for permissions, prefixes, or suffixes
+                    LOGGER.info("  Loading internal permission system for legacy compatibility only...");
+                    LOGGER.warn("  ⚠ Internal permissions.json will be IGNORED for all permission checks");
+                    LOGGER.warn("  ⚠ All permissions/groups MUST be managed in {}", externalAdapter.getName());
                     manager = new PermissionManager();
                     PermissionStorage.load(manager);
                     PermissionAPI.setManager(manager);
                     
                     initialized = true;
-                    LOGGER.info("✓ Permission system initialized with {} (internal fallback: {} groups)",
+                    LOGGER.info("✓ Permission system initialized with {} (internal groups loaded but NOT USED: {})",
                         externalAdapter.getName(), manager.getGroups().size());
 
                     // Sync permissions with LuckPerms for autocomplete/UI

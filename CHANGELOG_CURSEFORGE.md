@@ -1,4 +1,63 @@
 # NeoEssentials v1.0.2.4 - Changelog
+
+## 🌍 NEW: Custom Language System
+
+**Create and use custom language files for full translation support!**
+
+### ✅ **42 Hardcoded Strings Fixed!**
+All user-facing messages now support translation:
+- WhoisCommand, ListCommand, HelpopCommand
+- DashboardCommand, AdminEndpoint
+- Config Splitter notifications
+
+**100% translatable - no more English-only messages!**
+
+### Features
+- ✅ **Custom language files** - Add any language you want
+- ✅ **Template generation** - Auto-generate translation templates
+- ✅ **Missing key tracking** - Find untranslated messages
+- ✅ **Live reloading** - Update translations without restart
+- ✅ **RTL support** - Right-to-left languages (Arabic, Hebrew, etc.)
+- ✅ **Metadata tracking** - Author, version, language info
+
+### Commands
+- `/language list` - List all custom languages
+- `/language reload` - Reload language files
+- `/language stats` - Show statistics
+- `/language template <code>` - Generate template (e.g., `/language template es_es`)
+- `/language exportmissing` - Export missing translation keys
+- `/language clearmissing` - Clear missing keys tracker
+- `/language info` - Show help and information
+
+### How to Create a Language
+1. Run `/language template es_es` (or your language code)
+2. Edit the template file in `neoessentials/languages/templates/`
+3. Translate the text (keep `{0}` placeholders intact!)
+4. Save as `es_es.json` in `neoessentials/languages/custom/`
+5. Run `/language reload`
+
+### Supported Languages
+en_us, es_es, fr_fr, de_de, it_it, pt_br, ru_ru, ja_jp, ko_kr, zh_cn, nl_nl, and many more!
+
+📖 **Full documentation:** See `docs/CUSTOM_LANGUAGES.md`
+
+---
+
+## 🎯 Combat System Fixes
+
+**Fixed teleportation issues when moving/after combat!**
+
+- ✅ Combat timeout reduced: 10s → 5s
+- ✅ Environmental damage (fall, fire, hunger) no longer triggers combat
+- ✅ Movement threshold improved: 1.0 → 1.5 blocks (less false cancellations)
+- ✅ Better messages: Shows remaining combat time
+- ✅ Auto-cleanup of expired combat entries
+- ✅ Debug logging to track issues
+
+**What triggers combat:**
+- Attacking or being attacked by players/mobs ✅
+- Fall damage, fire, drowning, hunger ❌ (NOT combat!)
+
 ### Phase 4 Permissions
 - `neoessentials.chat.richtext` - Use all rich text effects
 - `neoessentials.chat.gradient` - Use gradient text

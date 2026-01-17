@@ -70,11 +70,12 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             Tristate result = user.getCachedData().getPermissionData(queryOptions).checkPermission(permission);
 
             // Tristate: TRUE = has permission, FALSE = explicitly denied, UNDEFINED = not set
-            // We consider UNDEFINED as false (no permission)
+            // When using external permissions (LuckPerms), we respect their decision completely
+            // UNDEFINED and FALSE both mean "no permission" - admin must explicitly grant permissions
             boolean hasPermission = result.asBoolean();
 
-            LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={}",
-                uuid, permission, hasPermission);
+            LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={} ({})",
+                uuid, permission, hasPermission, result);
 
             return hasPermission;
 

@@ -40,7 +40,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 1;
+    private static final int CURRENT_LANG_VERSION = 8;
 
     /**
      * Load translations from server directory, updating from JAR if needed

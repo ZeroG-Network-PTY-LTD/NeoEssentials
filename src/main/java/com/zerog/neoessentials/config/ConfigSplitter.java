@@ -60,6 +60,104 @@ public class ConfigSplitter {
     }
 
     /**
+     * Ensure all split config files are up to date
+     * Called by ConfigManager when split configs are enabled
+     */
+    public static void ensureSplitConfigsUpToDate() {
+        if (!isSplittingEnabled()) {
+            return;
+        }
+
+        LOGGER.debug("Checking split config file versions...");
+
+        for (Map.Entry<String, Integer> entry : SPLIT_CONFIG_VERSIONS.entrySet()) {
+            String fileName = entry.getKey();
+            int expectedVersion = entry.getValue();
+
+            File configFile = ResourceUtil.getConfigFile(fileName);
+
+            if (!configFile.exists()) {
+                // File missing - copy from JAR
+                LOGGER.info("Split config file {} missing, creating from defaults", fileName);
+                copyDefaultSplitConfig(fileName);
+            } else {
+                // Check version
+                checkSplitConfigVersion(fileName, configFile, expectedVersion);
+            }
+        }
+    }
+
+    /**
+     * Check if a split config file needs updating
+     */
+    private static void checkSplitConfigVersion(String fileName, File configFile, int expectedVersion) {
+        try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
+            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
+
+            int currentVersion = 0;
+            if (config.has("_configVersion")) {
+                currentVersion = config.get("_configVersion").getAsInt();
+            }
+
+            if (currentVersion < expectedVersion) {
+                LOGGER.warn("Split config {} is outdated (version {} < {}). Updating...",
+                    fileName, currentVersion, expectedVersion);
+
+                // Create backup
+                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
+                String backupName = fileName.replace(".json", String.format("_v%d_backup_%s.json", currentVersion, timestamp));
+                File backupFile = new File(configFile.getParentFile(), backupName);
+                java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.info("Created backup: {}", backupName);
+
+                // Update from JAR
+                copyDefaultSplitConfig(fileName);
+                LOGGER.info("Updated split config {} to version {}", fileName, expectedVersion);
+            } else if (currentVersion > expectedVersion) {
+                LOGGER.warn("Split config {} has newer version ({}) than expected ({})",
+                    fileName, currentVersion, expectedVersion);
+            } else {
+                LOGGER.debug("Split config {} is up to date (version {})", fileName, currentVersion);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check version for split config {}: {}", fileName, e.getMessage());
+        }
+    }
+
+    /**
+     * Copy a default split config from JAR
+     */
+    private static void copyDefaultSplitConfig(String fileName) {
+        try (InputStream in = ResourceUtil.getJarConfigResource(fileName)) {
+            if (in != null) {
+                File targetFile = ResourceUtil.getConfigFile(fileName);
+
+                // Ensure parent directories exist
+                File parentDir = targetFile.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    if (!parentDir.mkdirs()) {
+                        LOGGER.warn("Could not create parent directory for {}", fileName);
+                    }
+                }
+
+                try (FileOutputStream out = new FileOutputStream(targetFile)) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+                LOGGER.debug("Copied default split config: {}", fileName);
+            } else {
+                LOGGER.warn("Default split config not found in JAR: {}", fileName);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to copy default split config {}: {}", fileName, e.getMessage());
+        }
+    }
+
+    /**
      * Migrate from monolithic config.json to split configs
      */
     public static boolean migrateToSplitConfigs() {
@@ -113,6 +211,10 @@ public class ConfigSplitter {
             if (marker.createNewFile()) {
                 LOGGER.info("Created split configs marker file");
             }
+
+            // Replace config.json with a minimal stub file
+            replaceWithStubFile(configFile);
+            LOGGER.info("Replaced config.json with minimal stub file");
 
             LOGGER.info("========================================");
             LOGGER.info("Migration complete! Created {} config files", filesCreated);
@@ -360,5 +462,46 @@ public class ConfigSplitter {
     @SuppressWarnings("unused") // Called from NeoEssentials
     public static void markAdminsNotified() {
         shouldNotifyAdmins = false;
+    }
+
+    /**
+     * Replace config.json with a minimal stub file that redirects to split configs
+     */
+    private static void replaceWithStubFile(File configFile) throws IOException {
+        JsonObject stub = new JsonObject();
+
+        // Add version info
+        stub.addProperty("_configVersion", 13);
+        stub.addProperty("_configVersion_comment",
+            "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates.");
+
+        // Add informational comment
+        stub.addProperty("_notice",
+            "This server is using SPLIT CONFIGURATION FILES for easier management.");
+        stub.addProperty("_notice_info",
+            "Configuration has been split into smaller, focused files in the config/neoessentials/ directory.");
+
+        // Create a helpful guide object
+        JsonObject guide = new JsonObject();
+        guide.addProperty("main.json", "Core settings: modules, logging, permissions");
+        guide.addProperty("commands.json", "Command settings and toggles");
+        guide.addProperty("chat.json", "Chat formatting, channels, badges, anti-spam");
+        guide.addProperty("teleportation.json", "Teleport settings, homes, warps, spawn");
+        guide.addProperty("moderation.json", "Ban, kick, mute, freeze, jail settings");
+        guide.addProperty("webdashboard.json", "Web dashboard configuration");
+        guide.addProperty("items.json", "Item management and repair settings");
+        guide.addProperty("afk.json", "AFK system configuration");
+        guide.addProperty("security.json", "Security and validation settings");
+        guide.addProperty("kits.json", "Kit definitions (separate file)");
+        stub.add("_split_config_files", guide);
+
+        // Add restoration instructions
+        stub.addProperty("_restore_instructions",
+            "To restore the monolithic config.json, delete the .split_configs marker file and restore from config.json.backup");
+
+        // Write the stub file
+        try (FileWriter writer = new FileWriter(configFile, StandardCharsets.UTF_8)) {
+            GSON.toJson(stub, writer);
+        }
     }
 }
