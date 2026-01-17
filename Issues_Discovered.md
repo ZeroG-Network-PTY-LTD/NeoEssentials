@@ -51,6 +51,21 @@
         - Checks same dimension requirement
         - Accurately calculates distance between players
         - Only sends to players within configured radius
+    - **FIXED:** Discord channel mapping (v1.0.2.5)
+        - Each chat channel can now be individually enabled/disabled for Discord relay
+        - Configurable Discord channel IDs per chat channel
+        - Local chat defaults to disabled (proximity-based, would spam Discord)
+        - Global chat can send to main Discord channel
+        - Staff chat can send to private staff Discord channel
+        - Custom channels support Discord channel mapping
+        - Empty channelId uses sensible fallbacks (global/local → "chat", staff → "staff")
+        - Supports all Discord mods: DiscordSRV, SDLink, DCIntegration
+        - Example config:
+          ```json
+          "local": { "discord": { "enabled": false } },
+          "global": { "discord": { "enabled": true, "channelId": "123..." } },
+          "staff": { "discord": { "enabled": true, "channelId": "987..." } }
+          ```
     - **Details:** Config example:
     ```json
     {
