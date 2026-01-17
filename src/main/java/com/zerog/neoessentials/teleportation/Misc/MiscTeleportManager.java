@@ -4,6 +4,7 @@ import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,48 +78,64 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Teleport player back to their previous location
+     * Teleport player back to their previous location or death location (prioritizing death location, but do not remove death location until player dies again)
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        
-        // Check if player has a back location
-        TeleportLocation targetLocation = backLocations.get(playerId);
-        if (targetLocation == null) {
-            // Check for death location as fallback
-            targetLocation = deathLocations.get(playerId);
-            if (targetLocation == null) {
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_back_location"));
-                return false;
-            }
+        TeleportLocation deathLocation = deathLocations.get(playerId);
+        TeleportLocation backLocation = backLocations.get(playerId);
+        TeleportLocation targetLocation = null;
+        final boolean usedDeath;
+
+        // If death location exists and player is not already at that location, prioritize it
+        if (deathLocation != null && !isPlayerAtLocation(player, deathLocation)) {
+            targetLocation = deathLocation;
+            usedDeath = true;
+        } else if (backLocation != null) {
+            targetLocation = backLocation;
+            usedDeath = false;
+        } else {
+            usedDeath = false;
         }
-        
+
+        if (targetLocation == null) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_back_location"));
+            return false;
+        }
+
         // Save current location before teleporting back
         TeleportLocation currentLocation = new TeleportLocation(player);
-        final TeleportLocation finalTargetLocation = targetLocation; // Make final for lambda
-        
-        // Perform the teleport
-        int delayTicks = teleportDelay * 20; // Convert seconds to ticks
+        final TeleportLocation finalTargetLocation = targetLocation;
+        int delayTicks = teleportDelay * 20;
         TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
                 // Update back location to where they just came from
                 backLocations.put(playerId, currentLocation);
-                
-                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
-                
-                LOGGER.info("Player {} teleported back to {}", 
-                           player.getName().getString(), finalTargetLocation);
+                if (usedDeath) {
+                    player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
+                } else {
+                    player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
+                }
+                LOGGER.info("Player {} teleported back to {}", player.getName().getString(), finalTargetLocation);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_failed", result.getMessage()));
-                
-                LOGGER.warn("Failed back teleport for {}: {}", 
-                           player.getName().getString(), result.getMessage());
+                LOGGER.warn("Failed back teleport for {}: {}", player.getName().getString(), result.getMessage());
             }
         });
-        
         return true;
     }
-    
+
+    /**
+     * Helper to check if player is already at a given location (within a small threshold)
+     */
+    private boolean isPlayerAtLocation(ServerPlayer player, TeleportLocation location) {
+        double dx = player.getX() - location.getX();
+        double dy = player.getY() - location.getY();
+        double dz = player.getZ() - location.getZ();
+        return Math.abs(dx) < 0.5 && Math.abs(dy) < 1.0 && Math.abs(dz) < 0.5 &&
+                player.level().dimension().location().toString().equals(location.getWorldName());
+    }
+
     /**
      * Teleport player to their death location
      */
@@ -443,3 +460,8 @@ public class MiscTeleportManager {
         LOGGER.info("Cleared all misc teleport data");
     }
 }
+
+
+
+
+

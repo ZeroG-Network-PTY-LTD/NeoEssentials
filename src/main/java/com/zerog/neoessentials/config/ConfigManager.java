@@ -1266,17 +1266,15 @@ public class ConfigManager {
             if (currentVersion < expectedVersion) {
                 LOGGER.warn("Config file {} is outdated (version {} < {}). Backing up and updating...",
                     configName, currentVersion, expectedVersion);
-
                 // Create backup of old config
                 createConfigBackup(configFile, currentVersion);
-
                 // Replace with new version from JAR
                 copyDefaultConfig(configName, configFile);
-
                 // Clear cache to force reload
                 configCache.remove(configName);
-
                 LOGGER.info("Config file {} has been updated to version {}", configName, expectedVersion);
+                // Ensure language file is up to date as well
+                com.zerog.neoessentials.util.MessageUtil.ensureLanguageFileUpToDate();
             } else if (currentVersion > expectedVersion) {
                 LOGGER.warn("Config file {} has a newer version ({}) than expected ({}). This may cause issues.",
                     configName, currentVersion, expectedVersion);
