@@ -1,5 +1,5 @@
 # 👾 Issues That Were Discovered
-- **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, alot of hardcoded English strings, want to allow custom language files.
+- **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, a lot of hardcoded English strings, want to allow custom language files.
 
 # 👾 Issues That Were Fixed
 
@@ -27,6 +27,7 @@
     - Startup notification prompts admins about splitting option
     - Automatic version management per split file
     - Easy rollback via config.json.backup
+    - **FIXED:** Split config files now update with new config content if unified config.json is updated (per-file versioning)
 
 - **Channels not working as expected**: There were issues with chat channels not functioning correctly, messages were not being sent to the intended recipients based on channel settings.
     - **FIXED:** Implemented channel commands (/local, /global, /staff, etc.)
@@ -108,8 +109,9 @@
     - **Details:** When `_configVersion` is updated, the system:
       - Detects version mismatch
       - Creates backup: `config_v12_backup_2026-01-10_15-30-00.json`
-- **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
+      - Updates split config files with new content if unified config.json is newer
 
+- **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
     - **FIXED:** Implemented `/invseeedit <player>` command (view and edit inventory)
     - **FIXED:** Implemented `/enderchest <player>` command (view ender chest, read-only)
     - **FIXED:** Implemented `/enderchestedit <player>` command (view and edit ender chest)
@@ -129,7 +131,14 @@
     - Web dashboard already had inventory viewing (read-only)
 
 - **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
-
+    - **FIXED:** Added backup/restore endpoints to dashboard API
+    - **FIXED:** Implemented Google Drive and Dropbox OAuth integration (file upload/download)
+    - **FIXED:** Added detailed server/game/player statistics
+    - **FIXED:** Improved user management (role assignment, permission sync)
+    - **FIXED:** Dashboard now displays live MOTD preview
+    - **FIXED:** Achievements section now shows accurate values (not static)
+    - **FIXED:** Removed inventory/texture code from dashboard
+    - **FIXED:** Console spam reduced for permission checks
 
 # 🎯 Additional Features
 
@@ -141,3 +150,21 @@
 - **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
 - **Player Tablist**: Custom code for a custom player tab list that is highly customizable {References: Bungee Tablist Plus, TAB [1.7.x - 1.21.11], ☆ Simple TabList ☆《1.16.x - 1.21.x》- Animated - Hex colors}
 - **Cofig Files Splitting**: Split large config files into smaller, more manageable files for easier editing and maintenance.
+- **Utility Systems**: Check if all these are in place, Nicknames, MOTD, near, ping, depth, helpop, rules, suicide, etc.
+- **API & Placeholder System**: Apply more PlaceholderAPI integration, create more custom placeholders or allow the creation of more custom placeholders, REST API endpoints.
+- **Permissions System Improvements**:
+  - Wildcard & Hierarchical Permissions: Support for wildcards (e.g., neoessentials.*) and hierarchical permission inheritance, so granting a parent node gives access to all child nodes.
+    Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
+    Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
+    Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
+    Permission Debugging Tools: Add commands to debug/check a user's effective permissions, showing where a permission is granted or denied.
+    Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group’s permissions/prefixes/suffixes are used.
+    Permission Expiry: Support temporary permissions that expire after a set time or event.
+    API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
+    Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.
+    Audit Logging: Log permission changes, grants, and denials for security and debugging.
+    GUI Management: Provide a web or in-game GUI for managing permissions, groups, and users.
+    Integration with External Systems: Improve and document integration with LuckPerms, FTB Ranks, and other permission mods, including fallback logic.
+    Permission Suggestions: When a command is denied, suggest the required permission node in the error message.
+    Fine-Grained Command Control: Allow per-argument or per-subcommand permissions (e.g., /home set vs /home delete).
+    Custom Permission Conditions: Allow custom logic for permission checks (e.g., based on player stats, inventory, or server state).

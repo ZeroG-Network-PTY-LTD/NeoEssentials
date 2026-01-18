@@ -39,7 +39,33 @@ public class KitCommand {
             .executes(KitCommand::listAvailableKits)
             .then(Commands.argument("kitname", StringArgumentType.word())
                 .suggests(KitCommand::suggestKits)
-                .executes(KitCommand::useKit)
+                .executes(context -> {
+                    CommandSourceStack source = context.getSource();
+                    ServerPlayer player = (ServerPlayer) source.getEntity();
+                    if (player == null) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_player"));
+                        return 0;
+                    }
+                    String kitName = StringArgumentType.getString(context, "kitname");
+                    Kit kit = null;
+                    try {
+                        kit = KitManager.getInstance().getKit(kitName);
+                    } catch (Exception e) {
+                        // fallback, handled below
+                    }
+                    // Strict permission: require both general and per-kit permission
+                    if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.use")) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_permission_general"));
+                        return 0;
+                    }
+                    if (kit != null && kit.getPermission() != null && !kit.getPermission().isEmpty()) {
+                        if (!PermissionAPI.hasPermission(player.getUUID(), kit.getPermission())) {
+                            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_permission_kit", kitName));
+                            return 0;
+                        }
+                    }
+                    return useKit(context);
+                })
             )
         );
     }
@@ -66,7 +92,10 @@ public class KitCommand {
     private static int listAvailableKits(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = (ServerPlayer) source.getEntity();
-        
+        if (player == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_player"));
+            return 0;
+        }
         try {
             KitManager kitManager = KitManager.getInstance();
             var availableKits = kitManager.getAvailableKits(player);
@@ -89,6 +118,7 @@ public class KitCommand {
             return 1;
             
         } catch (Exception e) {
+            // player is guaranteed non-null here
             LOGGER.error("Error listing kits for player {}: {}", player.getName().getString(), e.getMessage(), e);
             source.sendFailure(MessageUtil.error("commands.neoessentials.listkits.error"));
             return 0;
@@ -145,8 +175,11 @@ public class KitCommand {
     private static int useKit(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = (ServerPlayer) source.getEntity();
+        if (player == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_player"));
+            return 0;
+        }
         String kitName = StringArgumentType.getString(context, "kitname");
-        
         try {
             // Check and deduct kit command cost if economy is enabled
             int cost = (int) com.zerog.neoessentials.config.ConfigManager.getKitCommandCost("kit");
@@ -162,22 +195,18 @@ public class KitCommand {
                     return 0;
                 }
             }
-
             KitManager kitManager = KitManager.getInstance();
             Kit kit = kitManager.getKit(kitName);
-            
             if (kit == null) {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.listkits.not_found", kitName));
                 return 0;
             }
-            
             // Check if player can use this kit
             var result = kitManager.canUseKit(player, kitName);
             if (!result.isAllowed()) {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.listkits.cannot_use", result.getMessage()));
                 return 0;
             }
-            
             // Give the kit
             var giveResult = kitManager.giveKit(player, kitName);
             if (giveResult.isAllowed()) {
@@ -190,9 +219,9 @@ public class KitCommand {
                     giveResult.getMessage()));
                 return 0;
             }
-            
+
         } catch (Exception e) {
-            LOGGER.error("Error giving kit '{}' to player {}: {}", 
+            LOGGER.error("Error giving kit '{}' to player {}: {}",
                         kitName, player.getName().getString(), e.getMessage(), e);
             source.sendFailure(MessageUtil.error("commands.neoessentials.listkits.error_using"));
             return 0;

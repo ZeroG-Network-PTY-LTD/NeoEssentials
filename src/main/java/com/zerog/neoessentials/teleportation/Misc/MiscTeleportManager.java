@@ -81,7 +81,7 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Teleport player back to their previous location or death location (prioritizing death location, but do not remove death location until player dies again)
+     * Teleport player back to their previous location or death location (prioritizing death location, but clear death location after successful teleport)
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
@@ -115,6 +115,8 @@ public class MiscTeleportManager {
                 // Update back location to where they just came from
                 backLocations.put(playerId, currentLocation);
                 if (usedDeath) {
+                    // Clear death location after successful teleport
+                    deathLocations.remove(playerId);
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
                 } else {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
@@ -467,6 +469,8 @@ public class MiscTeleportManager {
         LOGGER.info("Cleared all misc teleport data");
     }
 }
+
+
 
 
 
