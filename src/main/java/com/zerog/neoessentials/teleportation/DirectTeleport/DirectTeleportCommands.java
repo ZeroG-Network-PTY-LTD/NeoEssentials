@@ -25,7 +25,12 @@ import java.util.Random;
 
 public class DirectTeleportCommands {
     private static final Random RANDOM = new Random();
-    
+    private static final String PERMISSION_TP = "neoessentials.teleport.tp";
+    private static final String PERMISSION_TPHERE = "neoessentials.teleport.tphere";
+    private static final String PERMISSION_TPPOS = "neoessentials.teleport.tppos";
+    private static final String PERMISSION_TOP = "neoessentials.teleport.top";
+    private static final String PERMISSION_TPR = "neoessentials.teleport.tpr";
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
         
@@ -79,7 +84,12 @@ public class DirectTeleportCommands {
     
     private static void registerTpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tp")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TP);
+                }
+                return source.hasPermission(2); // Console fallback
+            })
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(context -> teleportToPlayer(context, context.getSource().getPlayerOrException(), 
                     EntityArgument.getPlayer(context, "target"))))
@@ -100,7 +110,12 @@ public class DirectTeleportCommands {
     
     private static void registerTphereCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tphere")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPHERE);
+                }
+                return source.hasPermission(2); // Console fallback
+            })
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> teleportPlayerHere(context, EntityArgument.getPlayer(context, "player"))))
         );
@@ -122,7 +137,12 @@ public class DirectTeleportCommands {
     
     private static void registerTpposCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tppos")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPPOS);
+                }
+                return source.hasPermission(2); // Console fallback
+            })
             .then(Commands.argument("coordinates", Vec3Argument.vec3())
                 .executes(context -> {
                     try {
@@ -142,7 +162,12 @@ public class DirectTeleportCommands {
     
     private static void registerTopCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("top")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TOP);
+                }
+                return source.hasPermission(0); // Console fallback
+            })
             .executes(DirectTeleportCommands::teleportToTop)
         );
     }
@@ -175,7 +200,12 @@ public class DirectTeleportCommands {
     
     private static void registerTprCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tpr")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                }
+                return source.hasPermission(0); // Console fallback
+            })
             .executes(DirectTeleportCommands::randomTeleport)
         );
     }

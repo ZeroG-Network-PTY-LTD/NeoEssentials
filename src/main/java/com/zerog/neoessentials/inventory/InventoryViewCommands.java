@@ -9,15 +9,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
 
 /**
  * Commands for viewing and editing other players' inventories
@@ -149,45 +144,43 @@ public class InventoryViewCommands {
      * Open a read-only view of another player's inventory
      */
     private static void openReadOnlyInventory(ServerPlayer viewer, ServerPlayer target) {
-        // Create a copy of the target's inventory that won't sync changes back
-        net.minecraft.world.Container inventoryCopy = new net.minecraft.world.SimpleContainer(target.getInventory().getContainerSize());
-
-        // Copy all items
-        for (int i = 0; i < target.getInventory().getContainerSize(); i++) {
-            inventoryCopy.setItem(i, target.getInventory().getItem(i).copy());
+        int invSize = target.getInventory().getContainerSize();
+        if (invSize <= 27) {
+            // 27 or fewer: use threeRows
+            net.minecraft.world.Container inventoryCopy = new net.minecraft.world.SimpleContainer(invSize);
+            for (int i = 0; i < invSize; i++) {
+                inventoryCopy.setItem(i, target.getInventory().getItem(i).copy());
+            }
+            viewer.openMenu(new SimpleMenuProvider(
+                (id, playerInventory, player) -> ChestMenu.threeRows(id, playerInventory, inventoryCopy),
+                Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
+            ));
+        } else {
+            // More than 27: always use 54 slots (sixRows)
+            net.minecraft.world.SimpleContainer inventoryCopy = new net.minecraft.world.SimpleContainer(54);
+            for (int i = 0; i < invSize; i++) {
+                inventoryCopy.setItem(i, target.getInventory().getItem(i).copy());
+            }
+            for (int i = invSize; i < 54; i++) {
+                inventoryCopy.setItem(i, net.minecraft.world.item.ItemStack.EMPTY.copy());
+            }
+            viewer.openMenu(new SimpleMenuProvider(
+                (id, playerInventory, player) -> ChestMenu.sixRows(id, playerInventory, inventoryCopy),
+                Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
+            ));
         }
-
-        // Open as a chest menu (read-only)
-        viewer.openMenu(new SimpleMenuProvider(
-            (id, playerInventory, player) -> {
-                if (inventoryCopy.getContainerSize() <= 27) {
-                    return ChestMenu.threeRows(id, playerInventory, inventoryCopy);
-                } else {
-                    return ChestMenu.sixRows(id, playerInventory, inventoryCopy);
-                }
-            },
-            Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
-        ));
     }
 
     /**
-     * Open an editable view of another player's inventory
+     * Open an editable view of another player's inventory (changes are persisted and live)
      */
     private static void openEditableInventory(ServerPlayer viewer, ServerPlayer target) {
-        // Open the target's actual inventory container (changes will sync)
-        viewer.openMenu(new MenuProvider() {
-            @Nonnull
-            @Override
-            public Component getDisplayName() {
-                return Component.literal(target.getName().getString() + "'s Inventory (Editable)");
-            }
-
-            @Override
-            public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int id, @Nonnull Inventory playerInventory, @Nonnull Player player) {
-                // Use the target player's inventory directly
-                return ChestMenu.sixRows(id, playerInventory, target.getInventory());
-            }
-        });
+        int invSize = target.getInventory().getContainerSize();
+        // Use custom container menu for any inventory size
+        viewer.openMenu(new SimpleMenuProvider(
+            (id, playerInventory, player) -> new PlayerInventoryContainerMenu(id, playerInventory, target),
+            PlayerInventoryContainerMenu.getTitle(target)
+        ));
     }
 
     /**

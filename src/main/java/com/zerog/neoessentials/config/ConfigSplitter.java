@@ -60,8 +60,7 @@ public class ConfigSplitter {
     }
 
     /**
-     * Ensure all split config files are up to date
-     * Called by ConfigManager when split configs are enabled
+     * Ensure all split config files are up to date, and if config.json is newer or has new keys, re-split and update split files.
      */
     public static void ensureSplitConfigsUpToDate() {
         if (!isSplittingEnabled()) {
@@ -70,19 +69,60 @@ public class ConfigSplitter {
 
         LOGGER.debug("Checking split config file versions...");
 
+        // Check if config.json is newer than any split file (by last modified time)
+        File configFile = ResourceUtil.getConfigFile("config.json");
+        boolean needsResplit = false;
+        if (configFile.exists()) {
+            long configJsonLastModified = configFile.lastModified();
+            for (String fileName : SPLIT_CONFIG_VERSIONS.keySet()) {
+                File splitFile = ResourceUtil.getConfigFile(fileName);
+                if (!splitFile.exists() || configJsonLastModified > splitFile.lastModified()) {
+                    needsResplit = true;
+                    break;
+                }
+            }
+        }
+
+        if (needsResplit) {
+            LOGGER.info("config.json is newer than split configs or split file missing. Re-splitting config.json into split files...");
+            migrateToSplitConfigs();
+            // After migration, return to avoid double update
+            return;
+        }
+
+        // Normal version check/update for each split file
         for (Map.Entry<String, Integer> entry : SPLIT_CONFIG_VERSIONS.entrySet()) {
             String fileName = entry.getKey();
             int expectedVersion = entry.getValue();
 
-            File configFile = ResourceUtil.getConfigFile(fileName);
+            File splitFile = ResourceUtil.getConfigFile(fileName);
 
-            if (!configFile.exists()) {
+            if (!splitFile.exists()) {
                 // File missing - copy from JAR
                 LOGGER.info("Split config file {} missing, creating from defaults", fileName);
                 copyDefaultSplitConfig(fileName);
             } else {
                 // Check version
-                checkSplitConfigVersion(fileName, configFile, expectedVersion);
+                checkSplitConfigVersion(fileName, splitFile, expectedVersion);
+            }
+        }
+
+        // --- NEW: Merge new/changed keys from config.json into split files ---
+        File unifiedConfig = ResourceUtil.getConfigFile("config.json");
+        if (unifiedConfig.exists()) {
+            try (FileReader reader = new FileReader(unifiedConfig, StandardCharsets.UTF_8)) {
+                JsonObject unified = JsonParser.parseReader(reader).getAsJsonObject();
+                for (Map.Entry<String, String> entry : CONFIG_FILE_MAP.entrySet()) {
+                    String sectionName = entry.getKey();
+                    String fileName = entry.getValue();
+                    File splitFile = ResourceUtil.getConfigFile(fileName);
+                    if (!splitFile.exists()) continue;
+                    if (!unified.has(sectionName)) continue;
+                    // Merge section from unified config into split file
+                    mergeSectionIntoSplitFile(sectionName, fileName, unified.getAsJsonObject(sectionName));
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to merge unified config into split files: {}", e.getMessage());
             }
         }
     }
@@ -503,5 +543,63 @@ public class ConfigSplitter {
         try (FileWriter writer = new FileWriter(configFile, StandardCharsets.UTF_8)) {
             GSON.toJson(stub, writer);
         }
+    }
+
+    /**
+     * Merge a section from the unified config into the split config file, preserving user customizations.
+     * Only adds new keys or updates values that are not present in the split file.
+     */
+    private static void mergeSectionIntoSplitFile(String sectionName, String fileName, JsonObject unifiedSection) {
+        File splitFile = ResourceUtil.getConfigFile(fileName);
+        try (FileReader reader = new FileReader(splitFile, StandardCharsets.UTF_8)) {
+            JsonObject splitConfig = JsonParser.parseReader(reader).getAsJsonObject();
+            boolean changed = false;
+            // For main.json, handle multiple sections
+            if (fileName.equals("main.json")) {
+                if (!splitConfig.has(sectionName)) {
+                    splitConfig.add(sectionName, unifiedSection);
+                    changed = true;
+                } else {
+                    JsonObject splitSection = splitConfig.getAsJsonObject(sectionName);
+                    changed |= mergeJsonObjects(splitSection, unifiedSection);
+                }
+            } else {
+                // Single section per file
+                if (!splitConfig.has(sectionName)) {
+                    splitConfig.add(sectionName, unifiedSection);
+                    changed = true;
+                } else {
+                    JsonObject splitSection = splitConfig.getAsJsonObject(sectionName);
+                    changed |= mergeJsonObjects(splitSection, unifiedSection);
+                }
+            }
+            if (changed) {
+                try (FileWriter writer = new FileWriter(splitFile, StandardCharsets.UTF_8)) {
+                    GSON.toJson(splitConfig, writer);
+                }
+                LOGGER.info("Updated split config {} with new keys from unified config", fileName);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to merge section {} into split file {}: {}", sectionName, fileName, e.getMessage());
+        }
+    }
+
+    /**
+     * Recursively merge keys from source into target JsonObject. Only adds new keys or updates values that are not present in target.
+     * Returns true if any changes were made.
+     */
+    private static boolean mergeJsonObjects(JsonObject target, JsonObject source) {
+        boolean changed = false;
+        for (Map.Entry<String, com.google.gson.JsonElement> entry : source.entrySet()) {
+            String key = entry.getKey();
+            com.google.gson.JsonElement value = entry.getValue();
+            if (!target.has(key)) {
+                target.add(key, value);
+                changed = true;
+            } else if (value.isJsonObject() && target.get(key).isJsonObject()) {
+                changed |= mergeJsonObjects(target.getAsJsonObject(key), value.getAsJsonObject());
+            }
+        }
+        return changed;
     }
 }

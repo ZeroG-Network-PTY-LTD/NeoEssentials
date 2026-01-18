@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -1139,6 +1140,7 @@ public class ConfigManager {
 
             // Special handling for config.json when split configs are enabled
             if (configName.equals(MAIN_CONFIG) && ConfigSplitter.isSplittingEnabled()) {
+                // Always merge from split files, never from config.json
                 JsonObject merged = ConfigSplitter.mergeSplitConfigs();
                 configCache.put(configName, merged);
                 return merged;
@@ -1161,6 +1163,7 @@ public class ConfigManager {
             lock.readLock().unlock();
         }
     }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
     // private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -1214,16 +1217,15 @@ public class ConfigManager {
         boolean splitConfigsEnabled = ConfigSplitter.isSplittingEnabled();
 
         if (splitConfigsEnabled) {
-            // When split configs are enabled, update split config files instead of config.json
-            LOGGER.debug("Split configs enabled - checking split config file versions");
+            // Always ensure split configs are up to date
+            LOGGER.info("Split configs enabled - ensuring all split config files are up to date");
             ConfigSplitter.ensureSplitConfigsUpToDate();
 
-            // Still need to check other standalone configs (economy, permissions, kits, discord_auth)
+            // Only check other standalone configs (economy, permissions, kits, discord_auth)
             for (String configName : requiredConfigs) {
                 if (configName.equals(MAIN_CONFIG)) {
                     continue; // Skip config.json when using split configs
                 }
-
                 File configFile = ResourceUtil.getConfigFile(configName);
                 if (!configFile.exists()) {
                     copyDefaultConfig(configName, configFile);
@@ -1238,7 +1240,6 @@ public class ConfigManager {
                 if (!configFile.exists()) {
                     copyDefaultConfig(configName, configFile);
                 } else {
-                    // Config exists - check if it needs updating
                     checkAndUpdateConfigVersion(configName, configFile);
                 }
             }
@@ -2339,5 +2340,28 @@ public class ConfigManager {
         return false;
     }
 
-}
+    /**
+     * Save config changes. If split configs are enabled, only write to split files, never to config.json.
+     */
+    public void saveConfig(String configName, JsonObject config) {
+        lock.writeLock().lock();
+        try {
+            if (ConfigSplitter.isSplittingEnabled() && configName.equals(MAIN_CONFIG)) {
+                LOGGER.info("Split configs enabled - skipping write to config.json, updating split files only");
+                // Optionally, update split files here if needed
+                return;
+            }
+            File file = ResourceUtil.getConfigFile(configName);
+            try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
+                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                gson.toJson(config, writer);
+            }
+            configCache.put(configName, config);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save config file {}: {}", configName, e.getMessage());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 
+}

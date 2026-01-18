@@ -81,7 +81,11 @@ public class HomeCommands {
         dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_HOME);
+                    boolean hasPerm = PermissionAPI.hasPermission(player.getUUID(), PERMISSION_HOME);
+                    if (!hasPerm) {
+                        return false;
+                    }
+                    return hasPerm;
                 }
                 return false; // Console can't use homes
             })
@@ -105,7 +109,11 @@ public class HomeCommands {
         dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETHOME);
+                    boolean hasPerm = PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETHOME);
+                    if (!hasPerm) {
+                        return false;
+                    }
+                    return hasPerm;
                 }
                 return false; // Console can't use homes
             })
@@ -135,7 +143,11 @@ public class HomeCommands {
         dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELHOME);
+                    boolean hasPerm = PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELHOME);
+                    if (!hasPerm) {
+                        return false;
+                    }
+                    return hasPerm;
                 }
                 return false; // Console can't use homes
             })
@@ -165,7 +177,11 @@ public class HomeCommands {
         dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_HOMES);
+                    boolean hasPerm = PermissionAPI.hasPermission(player.getUUID(), PERMISSION_HOMES);
+                    if (!hasPerm) {
+                        return false;
+                    }
+                    return hasPerm;
                 }
                 return false; // Console can't use homes
             })
