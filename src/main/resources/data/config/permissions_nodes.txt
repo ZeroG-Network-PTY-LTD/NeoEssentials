@@ -430,3 +430,109 @@ neoessentials.dashboard.admin.files - File management access (default: false)
 ## END OF PERMISSION NODES REFERENCE
 ## ═══════════════════════════════════════════════════════════
 
+# NeoEssentials Utility Commands and Permissions
+# Last Updated: January 18, 2026
+#
+# This section lists all utility commands and their required permission nodes.
+# All commands are strictly locked behind their respective permission nodes.
+
+## ═══════════════════════════════════════════════════════════
+## UTILITY COMMANDS & PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+# /motd - Message of the Day
+neoessentials.motd - Use /motd
+neoessentials.motd.reload - Reload MOTD
+neoessentials.motd.set - Set MOTD
+
+# /nick - Set nickname
+neoessentials.nick - Use /nick
+
+# /near - Show nearby players
+neoessentials.near - Use /near
+
+# /ping - Show ping
+neoessentials.ping - Use /ping
+neoessentials.ping.others - Check others' ping
+
+# /depth - Show depth
+neoessentials.depth - Use /depth
+neoessentials.depth.others - Check others' depth
+
+# /helpop - Request help
+neoessentials.helpop - Use /helpop
+
+# /rules - View rules
+neoessentials.rules - Use /rules
+
+# /suicide - Kill self
+neoessentials.suicide - Use /suicide
+
+# /seen - Last seen info
+neoessentials.seen - Use /seen
+
+# /list - List online players
+neoessentials.list - Use /list
+
+# /mail - Player mail system
+neoessentials.mail - Use /mail
+
+# /getpos - Get position
+neoessentials.getpos - Use /getpos
+neoessentials.getpos.others - Check others' position
+
+# /whois - Player info
+neoessentials.whois - Use /whois
+neoessentials.whois.detailed - Detailed info
+
+# /realname - Real username
+neoessentials.realname - Use /realname
+
+# /sign - Sign editing
+neoessentials.sign - Use /sign
+
+# /crafting - Open crafting table
+neoessentials.crafting - Use /crafting
+
+# /grindstone - Open grindstone
+neoessentials.grindstone - Use /grindstone
+
+# /smithing - Open smithing table
+neoessentials.smithing - Use /smithing
+
+# /stonecutting - Open stonecutter
+neoessentials.stonecutting - Use /stonecutting
+
+# /dispose - Item disposal
+neoessentials.dispose - Use /dispose
+
+# /msgtoggle - Toggle messages
+neoessentials.msgtoggle - Use /msgtoggle
+
+# /ignore - Ignore players
+neoessentials.ignore - Use /ignore
+
+# /unignore - Unignore players
+neoessentials.unignore - Use /unignore
+
+# /mutelist - View mute list
+neoessentials.mutelist - Use /mutelist
+
+# /mute - Mute players
+neoessentials.mute - Use /mute
+
+# /unmute - Unmute players
+neoessentials.unmute - Use /unmute
+
+# /socialspy - Social spy
+neoessentials.socialspy - Use /socialspy
+
+# /dashboard - Web dashboard
+neoessentials.dashboard.access - Dashboard access
+neoessentials.dashboard.admin - Dashboard admin
+neoessentials.dashboard.moderator - Dashboard moderator
+neoessentials.dashboard.view - View dashboard
+neoessentials.dashboard.players - Manage players
+neoessentials.dashboard.commands - Execute commands
+
+# All utility commands are strictly permission-locked.
+# Wildcard: neoessentials.utility.*

@@ -28,6 +28,7 @@
     - Automatic version management per split file
     - Easy rollback via config.json.backup
     - **FIXED:** Split config files now update with new config content if unified config.json is updated (per-file versioning)
+    - **FIXED:** If split configs are enabled, config.json is not used for loading/saving (except for migration/backup). No regeneration of config.json after split unless explicitly requested. Per-file config versioning and auto-migration logic for split configs. All split configs are checked and updated with new/changed settings and version if unified config.json is newer or has new options.
 
 - **Channels not working as expected**: There were issues with chat channels not functioning correctly, messages were not being sent to the intended recipients based on channel settings.
     - **FIXED:** Implemented channel commands (/local, /global, /staff, etc.)
@@ -149,7 +150,6 @@
 - **Minecraft Assets API support**: Figure out a way to integrate Minecraft Assets API for better resource assests to show in web-dashboards and other places.
 - **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
 - **Player Tablist**: Custom code for a custom player tab list that is highly customizable {References: Bungee Tablist Plus, TAB [1.7.x - 1.21.11], ☆ Simple TabList ☆《1.16.x - 1.21.x》- Animated - Hex colors}
-- **Cofig Files Splitting**: Split large config files into smaller, more manageable files for easier editing and maintenance.
 - **Utility Systems**: Check if all these are in place, Nicknames, MOTD, near, ping, depth, helpop, rules, suicide, etc.
 - **API & Placeholder System**: Apply more PlaceholderAPI integration, create more custom placeholders or allow the creation of more custom placeholders, REST API endpoints.
 - **Permissions System Improvements**:
