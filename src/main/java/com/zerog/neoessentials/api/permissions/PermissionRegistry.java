@@ -288,7 +288,12 @@ public class PermissionRegistry {
         register("neoessentials.item.dispose", "Use disposal system", PermissionCategory.ITEMS, true);
         register("neoessentials.item.clearinventory", "Clear inventory", PermissionCategory.ITEMS, false);
         register("neoessentials.item.clearinventory.others", "Clear others' inventory", PermissionCategory.ITEMS, false);
-        
+        // Inventory viewing/editing permissions
+        register("neoessentials.invsee", "View other players' inventories", PermissionCategory.ITEMS, false);
+        register("neoessentials.invsee.edit", "Edit other players' inventories", PermissionCategory.ITEMS, false);
+        register("neoessentials.enderchest", "View other players' ender chests", PermissionCategory.ITEMS, false);
+        register("neoessentials.enderchest.edit", "Edit other players' ender chests", PermissionCategory.ITEMS, false);
+
         // Chat system
         register("neoessentials.chat.msg", "Send private messages", PermissionCategory.CHAT, true);
         register("neoessentials.chat.reply", "Reply to messages", PermissionCategory.CHAT, true);
