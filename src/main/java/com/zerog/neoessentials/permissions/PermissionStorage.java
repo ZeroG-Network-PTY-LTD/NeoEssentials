@@ -26,6 +26,10 @@ public class PermissionStorage {
     private static final Path PLAYERDATA_PATH = com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permissions/playerdata.json");
 
     public static void save(PermissionManager manager) throws IOException {
+        // If using external permissions, do not save or backup internal permissions.json
+        if (com.zerog.neoessentials.permissions.PermissionSystem.isUsingExternal()) {
+            return;
+        }
         // Save groups to permissions.json (atomic operation)
         Map<String, Object> groupData = new HashMap<>();
         groupData.put("defaultGroup", manager.getDefaultGroup());
@@ -47,7 +51,7 @@ public class PermissionStorage {
         try (Writer writer = Files.newBufferedWriter(tempFile)) {
             GSON.toJson(groupData, writer);
         }
-        Files.move(tempFile, FILE_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        Files.move(tempFile, FILE_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
 
         // Save users to playerdata.json (atomic operation)
         List<Object> users = new ArrayList<>();
@@ -71,29 +75,41 @@ public class PermissionStorage {
     }
 
     public static void load(PermissionManager manager) throws IOException {
+        // If using external permissions, do not load internal permissions.json
+        if (com.zerog.neoessentials.permissions.PermissionSystem.isUsingExternal()) {
+            return;
+        }
         // Load groups from permissions.json
         if (Files.exists(FILE_PATH)) {
             try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
-                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                
-                // Load default group setting
-                if (root.has("defaultGroup")) {
-                    manager.setDefaultGroup(root.get("defaultGroup").getAsString());
-                }
-                
-                JsonArray groups = root.getAsJsonArray("groups");
-                for (JsonElement ge : groups) {
-                    JsonObject g = ge.getAsJsonObject();
-                    PermissionGroup group = new PermissionGroup(g.get("name").getAsString());
-                    if (g.has("prefix")) group.setPrefix(g.get("prefix").getAsString());
-                    if (g.has("suffix")) group.setSuffix(g.get("suffix").getAsString());
-                    for (JsonElement p : g.getAsJsonArray("permissions")) {
-                        group.addPermission(p.getAsString());
+                Map<?, ?> groupData = GSON.fromJson(reader, Map.class);
+                if (groupData == null) return;
+                Object defaultGroup = groupData.get("defaultGroup");
+                if (defaultGroup != null) manager.setDefaultGroup(defaultGroup.toString());
+                Object groups = groupData.get("groups");
+                if (groups instanceof List<?>) {
+                    for (Object o : (List<?>) groups) {
+                        if (o instanceof Map<?, ?> g) {
+                            PermissionGroup group = new PermissionGroup(g.get("name").toString());
+                            group.setPrefix((String) g.get("prefix"));
+                            group.setSuffix((String) g.get("suffix"));
+                            // Permissions
+                            Object permsObj = g.get("permissions");
+                            if (permsObj instanceof List<?>) {
+                                for (Object perm : (List<?>) permsObj) {
+                                    if (perm != null) group.addPermission(perm.toString());
+                                }
+                            }
+                            // Inherits
+                            Object inheritsObj = g.get("inherits");
+                            if (inheritsObj instanceof List<?>) {
+                                for (Object inh : (List<?>) inheritsObj) {
+                                    if (inh != null) group.addInheritance(inh.toString());
+                                }
+                            }
+                            manager.addGroup(group);
+                        }
                     }
-                    for (JsonElement inh : g.getAsJsonArray("inherits")) {
-                        group.addInheritance(inh.getAsString());
-                    }
-                    manager.addGroup(group);
                 }
             }
         }
@@ -149,5 +165,12 @@ public class PermissionStorage {
                 }
             }
         }
+    }
+
+    // --- PATCH: Add method to check permission for a user (strict, no OP fallback) ---
+    // Strict permission check using PermissionManager logic (no OP fallback)
+    public static boolean hasPermission(PermissionManager manager, UUID uuid, String permission) {
+        // Use the PermissionManager's hasPermission logic (which includes user, group, inheritance, wildcards)
+        return manager.hasPermission(uuid, permission);
     }
 }

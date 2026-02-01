@@ -11,11 +11,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Badge and Icon Manager - Phase 3
- * Handles:
- * - Rank badges (👑⭐🛡️💎)
- * - Status icons (💤👻📺🔇)
- * - Custom badge images from filesystem
+ * BadgeManager - Handles chat badge logic only (not above-head tags).
+ * Above-head tags are now managed by PlayerTagManager.
+ *
+ * Migration notes:
+ * - All chat badge logic remains here.
+ * - Above-head badge/tag logic is in PlayerTagManager (see tags/PlayerTagManager.java).
+ * - Config options: badges.enabled (chat), badges.aboveHeadTagsEnabled (above-head tags)
+ * - See README for migration details.
  */
 public class BadgeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(BadgeManager.class);
@@ -40,10 +43,10 @@ public class BadgeManager {
 
     /**
      * Get rank badge for a player based on their primary group.
-     * Supports Unicode emojis and custom image assets from filesystem.
+     * Only used for chat formatting. Above-head tags are handled elsewhere.
      */
     public String getRankBadge(ServerPlayer player) {
-        if (!isBadgesEnabled()) {
+        if (!isChatBadgesEnabled()) {
             return "";
         }
 
@@ -103,7 +106,7 @@ public class BadgeManager {
      * Get status icons for a player (AFK, vanished, etc.).
      */
     public String getStatusIcons(ServerPlayer player) {
-        if (!isBadgesEnabled() || !isStatusIconsEnabled()) {
+        if (!isChatBadgesEnabled() || !isStatusIconsEnabled()) {
             return "";
         }
 
@@ -145,7 +148,7 @@ public class BadgeManager {
      * Apply badges and icons to a chat format template.
      */
     public String applyBadgesAndIcons(ServerPlayer player, String template) {
-        if (!isBadgesEnabled()) {
+        if (!isChatBadgesEnabled()) {
             return template;
         }
 
@@ -358,11 +361,14 @@ public class BadgeManager {
     // Helper methods
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted") // Used correctly with ! operator
-    private boolean isBadgesEnabled() {
+    private boolean isChatBadgesEnabled() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
             if (chatConfig.has("badges")) {
-                return chatConfig.getAsJsonObject("badges").get("enabled").getAsBoolean();
+                var badges = chatConfig.getAsJsonObject("badges");
+                if (badges.has("enabled")) {
+                    return badges.get("enabled").getAsBoolean();
+                }
             }
         } catch (Exception e) {
             // Ignore
@@ -454,7 +460,3 @@ public class BadgeManager {
         }
     }
 }
-
-
-
-

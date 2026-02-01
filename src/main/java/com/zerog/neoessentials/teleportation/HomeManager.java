@@ -167,6 +167,13 @@ public class HomeManager {
     public boolean setHome(ServerPlayer player, String homeName, TeleportLocation customLocation) {
         UUID playerId = player.getUUID();
 
+        // Always check config for safety at runtime
+        boolean requireSafe = com.zerog.neoessentials.config.ConfigManager.getInstance().isHomeTeleportSafetyEnabled();
+        boolean debug = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
+        if (debug) {
+            LOGGER.info("[DEBUG] Home set safety: {} (from config)", requireSafe);
+        }
+
         // Enforce set home cooldown - atomic check
         if (homeSetCooldownSeconds > 0) {
             long now = System.currentTimeMillis();
@@ -200,14 +207,16 @@ public class HomeManager {
         }
 
         // Check if location is safe (only enforce if safety is required)
-        if (requireSafeLocations) {
+        if (requireSafe) {
             if (!location.isSafe()) {
                 TeleportLocation safeLocation = location.findSafeLocation();
                 if (safeLocation == null) {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe_location"));
+                    if (debug) LOGGER.info("[DEBUG] Unsafe sethome location for '{}', set blocked.", homeName);
                     return false;
                 }
                 location = safeLocation;
+                if (debug) LOGGER.info("[DEBUG] Sethome '{}' moved to safe location.", homeName);
             }
         }
         // If safety is not required, allow teleportation to unsafe locations
@@ -357,66 +366,40 @@ public class HomeManager {
     public void teleportToHome(ServerPlayer player, String homeName) {
         TeleportLocation home = getHome(player, homeName);
         UUID playerId = player.getUUID();
-
-        // Enforce teleport cooldown - atomic check
-        if (homeTeleportCooldownSeconds > 0) {
-            long now = System.currentTimeMillis();
-            // Use putIfAbsent to atomically check and update cooldown
-            Long lastTp = lastHomeTeleportTimestamps.putIfAbsent(playerId, now);
-            if (lastTp != null) {
-                long elapsed = (now - lastTp) / 1000L;
-                if (elapsed < homeTeleportCooldownSeconds) {
-                    long wait = homeTeleportCooldownSeconds - elapsed;
-                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.teleport_cooldown", wait));
-                    return;
-                }
-                // Update timestamp atomically
-                lastHomeTeleportTimestamps.put(playerId, now);
-            }
+        // Always check config for safety at runtime
+        boolean requireSafe = com.zerog.neoessentials.config.ConfigManager.getInstance().isHomeTeleportSafetyEnabled();
+        boolean debug = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
+        if (debug) {
+            LOGGER.info("[DEBUG] Home teleport safety: {} (from config)", requireSafe);
         }
-
-        // Enforce maxTeleportDistance if set in config
-        int maxDistance = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxTeleportDistance();
-        if (maxDistance > 0 && home != null) {
-            TeleportLocation fromLoc = new TeleportLocation(player);
-            if (fromLoc.getWorldName().equals(home.getWorldName())) {
-                double dist = fromLoc.distanceTo(home);
-                if (dist > maxDistance) {
-                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.distance_exceeded", maxDistance));
-                    return;
-                }
-            }
-        }
-
         if (home == null) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return;
         }
-
-        // Check if home location is still safe (only enforce if safety is required)
-        if (requireSafeLocations) {
+        // If safety is required, check for safe location
+        if (requireSafe) {
             if (!home.isSafe()) {
                 TeleportLocation safeLocation = home.findSafeLocation();
                 if (safeLocation == null) {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe", homeName));
+                    if (debug) LOGGER.info("[DEBUG] Unsafe home location for '{}', teleport blocked.", homeName);
                     return;
                 }
-
                 // Update home to safe location atomically
                 playerHomes.computeIfPresent(playerId, (id, homes) -> {
                     homes.put(homeName, safeLocation);
                     return homes;
                 });
-
                 // Save to file (per-player storage)
                 savePlayerHomes(playerId);
                 home = safeLocation;
-
                 player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
+                if (debug) LOGGER.info("[DEBUG] Home '{}' moved to safe location.", homeName);
             }
+        } else {
+            // If safety is not required, allow teleportation to unsafe locations
+            if (debug) LOGGER.info("[DEBUG] Home teleport safety is disabled. Teleporting to potentially unsafe location for '{}'.", homeName);
         }
-        // If safety is not required, allow teleportation to unsafe locations
-
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
@@ -435,7 +418,7 @@ public class HomeManager {
             }
         });
     }
-    
+
     /**
      * Teleport to default home (first home or "home")
      */
@@ -463,7 +446,7 @@ public class HomeManager {
         }
         
         StringBuilder builder = new StringBuilder();
-    int allowedHomes = getMaxHomesForPlayer(player);
+    int allowedHomes = this.getMaxHomesForPlayer(player);
     builder.append(MessageUtil.localize("commands.neoessentials.teleport.home.list_header", homes.size(), allowedHomes));
         
         List<String> sortedNames = new ArrayList<>(homes.keySet());

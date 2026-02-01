@@ -41,7 +41,12 @@ public class HomeCommands {
     private static final SuggestionProvider<CommandSourceStack> HOME_SUGGESTIONS = (context, builder) -> {
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             HomeManager homeManager = HomeManager.getInstance();
-            return SharedSuggestionProvider.suggest(homeManager.getHomeNames(player), builder);
+            java.util.List<String> homeNames = homeManager.getHomeNames(player);
+            // Debug logging for home suggestions
+            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+                System.out.println("[DEBUG] Home suggestions for " + player.getName().getString() + ": " + homeNames);
+            }
+            return SharedSuggestionProvider.suggest(homeNames, builder);
         }
         return builder.buildFuture();
     };
@@ -243,22 +248,26 @@ public class HomeCommands {
     private static int executeSetHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
+        // Enforce dynamic home limit
+        int maxHomes = homeManager.getMaxHomesForPlayer(player);
+        int currentHomes = homeManager.getHomeNames(player).size();
+        if (homeManager.getHome(player, homeName) == null && currentHomes >= maxHomes) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.limit_exceeded", maxHomes));
+            return 0;
+        }
         // If home exists, require confirmation
         if (homeManager.getHome(player, homeName) != null) {
-            // Check if already pending confirmation for this home
             String pending = pendingSetHomeConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("You have already requested to overwrite home '" + homeName + "'."));
+                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.overwrite_already_pending", homeName));
                 return 0;
             }
-            // Set pending confirmation
             pendingSetHomeConfirmations.put(player.getUUID(), homeName);
-            // Send clickable confirmation message
             player.sendSystemMessage(MessageUtil.homeConfirmComponent(
                 homeName,
                 "overwrite",
@@ -267,27 +276,13 @@ public class HomeCommands {
             ));
             return 0;
         }
-        if (homeManager.setHome(player, homeName)) {
-            return 1;
+        pendingSetHomeConfirmations.remove(player.getUUID());
+        if (!pendingSetHomeConfirmations.containsKey(player.getUUID())) {
+            if (homeManager.setHome(player, homeName)) {
+                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, player.blockPosition().toShortString()));
+                return 1;
+            }
         }
-        return 0;
-    }
-
-    // Add handler for /sethome <name> deny
-    private static int executeSetHomeDeny(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
-            return 0;
-        }
-        String homeName = StringArgumentType.getString(context, "name");
-        String pending = pendingSetHomeConfirmations.get(player.getUUID());
-        if (pending != null && pending.equals(homeName)) {
-            pendingSetHomeConfirmations.remove(player.getUUID());
-            player.sendSystemMessage(MessageUtil.info("Home overwrite cancelled for '" + homeName + "'."));
-            return 1;
-        }
-        player.sendSystemMessage(MessageUtil.warning("No pending overwrite confirmation for home '" + homeName + "'."));
         return 0;
     }
 
@@ -297,36 +292,54 @@ public class HomeCommands {
     private static int executeSetHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
-        
-        // Check if there's a pending confirmation for this home
         String pending = pendingSetHomeConfirmations.get(player.getUUID());
         if (pending == null || !pending.equals(homeName)) {
-            player.sendSystemMessage(MessageUtil.error("No pending overwrite confirmation for home '" + homeName + "'. Use /sethome " + homeName + " first."));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_overwrite", homeName));
             return 0;
         }
-
-        // Remove pending confirmation
         pendingSetHomeConfirmations.remove(player.getUUID());
+        boolean success = homeManager.setHome(player, homeName);
+        if (success) {
+            player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.overwrite_success", homeName));
+            return 1;
+        } else {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.overwrite_failed", homeName));
+            return 0;
+        }
+    }
 
-        // Set the home (this will overwrite the existing one)
-        if (homeManager.setHome(player, homeName)) {
+    /**
+     * Execute /sethome <name> deny
+     */
+    private static int executeSetHomeDeny(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
+            return 0;
+        }
+        String homeName = StringArgumentType.getString(context, "name");
+        String pending = pendingSetHomeConfirmations.get(player.getUUID());
+        if (pending != null && pending.equals(homeName)) {
+            pendingSetHomeConfirmations.remove(player.getUUID());
+            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.overwrite_cancelled", homeName));
             return 1;
         }
+        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_overwrite", homeName));
         return 0;
     }
-    
+
     /**
      * Execute /delhome <name>
      */
     private static int executeDelHome(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
         String homeName = StringArgumentType.getString(context, "name");
@@ -335,7 +348,7 @@ public class HomeCommands {
         if (config.isRequireConfirmationForDeleteEnabled()) {
             String pending = pendingDeleteConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("You have already requested to delete home '" + homeName + "'."));
+                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.delete_already_pending", homeName));
                 return 0;
             }
             pendingDeleteConfirmations.put(player.getUUID(), homeName);
@@ -347,57 +360,50 @@ public class HomeCommands {
             ));
             return 0;
         }
-        if (homeManager.deleteHome(player, homeName)) {
-            return 1;
+        pendingDeleteConfirmations.remove(player.getUUID());
+        if (!pendingDeleteConfirmations.containsKey(player.getUUID())) {
+            if (homeManager.deleteHome(player, homeName)) {
+                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.delete_success", homeName));
+                return 1;
+            }
         }
         return 0;
     }
 
-    // Add handler for /delhome <name> deny
-    private static int executeDelHomeDeny(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
-            return 0;
-        }
-        String homeName = StringArgumentType.getString(context, "name");
-        String pending = pendingDeleteConfirmations.get(player.getUUID());
-        if (pending != null && pending.equals(homeName)) {
-            pendingDeleteConfirmations.remove(player.getUUID());
-            player.sendSystemMessage(MessageUtil.info("Home deletion cancelled for '" + homeName + "'."));
-            return 1;
-        }
-        player.sendSystemMessage(MessageUtil.warning("No pending delete confirmation for home '" + homeName + "'."));
-        return 0;
-    }
-    
     /**
      * Execute /delhome <name> confirm
      */
     private static int executeDelHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
-            context.getSource().sendFailure(MessageUtil.error("This command can only be used by players."));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
-        if (!config.isRequireConfirmationForDeleteEnabled()) {
-            player.sendSystemMessage(MessageUtil.error("Confirmation is not required for home deletion."));
-            return 0;
-        }
+        // Guard: Only allow a single confirm, do not allow repeated confirm arguments
         String pending = pendingDeleteConfirmations.get(player.getUUID());
-        if (pending == null || !pending.equals(homeName)) {
-            player.sendSystemMessage(MessageUtil.error("No pending delete confirmation for home '" + homeName + "'. Use /delhome " + homeName + " first."));
+        if (!config.isRequireConfirmationForDeleteEnabled()) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_no_confirm_required"));
             return 0;
         }
-        // Remove pending confirmation
-        pendingDeleteConfirmations.remove(player.getUUID());
-        if (homeManager.deleteHome(player, homeName)) {
-            return 1;
+        if (pending == null || !pending.equals(homeName)) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_delete", homeName));
+            // Always clear any accidental stacking
+            pendingDeleteConfirmations.remove(player.getUUID());
+            return 0;
         }
-        return 0;
+        // Remove pending confirmation before attempting deletion to prevent stacking
+        pendingDeleteConfirmations.remove(player.getUUID());
+        boolean success = homeManager.deleteHome(player, homeName);
+        if (success) {
+            player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.delete_success", homeName));
+            return 1;
+        } else {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_failed", homeName));
+            return 0;
+        }
     }
 
     /**
@@ -415,5 +421,22 @@ public class HomeCommands {
         player.sendSystemMessage(MessageUtil.component(homesList));
         return 1;
     }
-}
 
+    // Add handler for /delhome <name> deny
+    private static int executeDelHomeDeny(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
+            return 0;
+        }
+        String homeName = StringArgumentType.getString(context, "name");
+        String pending = pendingDeleteConfirmations.get(player.getUUID());
+        if (pending != null && pending.equals(homeName)) {
+            pendingDeleteConfirmations.remove(player.getUUID());
+            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.delete_cancelled", homeName));
+            return 1;
+        }
+        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_delete", homeName));
+        return 0;
+    }
+}

@@ -58,12 +58,17 @@ public class KitCommand {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_permission_general"));
                         return 0;
                     }
-                    if (kit != null && kit.getPermission() != null && !kit.getPermission().isEmpty()) {
-                        if (!PermissionAPI.hasPermission(player.getUUID(), kit.getPermission())) {
-                            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_permission_kit", kitName));
-                            return 0;
-                        }
+                    // Always check per-kit permission node (auto-generated if not set)
+                    String kitPerm = kit != null && kit.getPermission() != null && !kit.getPermission().isEmpty()
+                        ? kit.getPermission()
+                        : ("neoessentials.kits." + kitName.toLowerCase());
+                    boolean hasKitPerm = PermissionAPI.hasPermission(player.getUUID(), kitPerm);
+                    if (!hasKitPerm) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.kits.no_permission_kit", kitName));
+                        return 0;
                     }
+                    // Debug log
+                    org.slf4j.LoggerFactory.getLogger(KitCommand.class).debug("Kit permission check: {} for {}: {}", kitPerm, player.getUUID(), hasKitPerm);
                     return useKit(context);
                 })
             )
@@ -76,16 +81,21 @@ public class KitCommand {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
             return builder.buildFuture();
         }
-        
         try {
             KitManager kitManager = KitManager.getInstance();
-            for (Kit kit : kitManager.getAvailableKits(player)) {
-                builder.suggest(kit.getName());
+            for (Kit kit : kitManager.getAllKits()) {
+                String kitPerm = kit.getPermission() != null && !kit.getPermission().isEmpty()
+                        ? kit.getPermission()
+                        : ("neoessentials.kits." + kit.getName().toLowerCase());
+                boolean hasGeneral = PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.use");
+                boolean hasKitPerm = PermissionAPI.hasPermission(player.getUUID(), kitPerm);
+                if (hasGeneral && hasKitPerm) {
+                    builder.suggest(kit.getName());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Error suggesting kits: {}", e.getMessage(), e);
         }
-        
         return builder.buildFuture();
     }
     

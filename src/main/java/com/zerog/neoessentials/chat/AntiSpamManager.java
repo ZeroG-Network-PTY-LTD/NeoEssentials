@@ -361,24 +361,37 @@ public class AntiSpamManager {
         return true;
     }
 
+    private JsonObject getSafeJsonObject(JsonObject parent, String key) {
+        if (parent == null || !parent.has(key) || parent.get(key).isJsonNull()) return null;
+        try {
+            return parent.getAsJsonObject(key);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private JsonObject getSpamFilterConfig() {
         var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
-        return chatConfig.getAsJsonObject("antiSpam").getAsJsonObject("spamFilter");
+        var antiSpam = getSafeJsonObject(chatConfig, "antiSpam");
+        return getSafeJsonObject(antiSpam, "spamFilter");
     }
 
     private JsonObject getRepeatFilterConfig() {
         var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
-        return chatConfig.getAsJsonObject("antiSpam").getAsJsonObject("repeatFilter");
+        var antiSpam = getSafeJsonObject(chatConfig, "antiSpam");
+        return getSafeJsonObject(antiSpam, "repeatFilter");
     }
 
     private JsonObject getLinkFilterConfig() {
         var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
-        return chatConfig.getAsJsonObject("antiSpam").getAsJsonObject("linkFilter");
+        var antiSpam = getSafeJsonObject(chatConfig, "antiSpam");
+        return getSafeJsonObject(antiSpam, "linkFilter");
     }
 
     private JsonObject getCapsFilterConfig() {
         var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
-        return chatConfig.getAsJsonObject("antiSpam").getAsJsonObject("capsFilter");
+        var antiSpam = getSafeJsonObject(chatConfig, "antiSpam");
+        return getSafeJsonObject(antiSpam, "capsFilter");
     }
 
     /**

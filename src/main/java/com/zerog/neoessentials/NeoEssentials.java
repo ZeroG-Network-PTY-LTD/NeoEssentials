@@ -482,9 +482,14 @@ public class NeoEssentials {
         registry.registerCommand("tphere", "Teleport a player to you");
         registry.registerCommand("tpall", "Teleport all players to you");
         registry.registerCommand("tppos", "Teleport to coordinates");
-        registry.registerCommand("tpr", "Random teleportation");
+        registry.registerCommand("tpr", "Random teleportation", "randomtp", "randomteleport");
         com.zerog.neoessentials.teleportation.DirectTeleport.DirectTeleportCommands.register(dispatcher);
         
+        // Register root aliases for random teleport
+        registry.registerCommand("neoe tpr", "Random teleportation (alias)");
+        registry.registerCommand("neoe randomtp", "Random teleportation (alias)");
+        registry.registerCommand("neoe randomteleport", "Random teleportation (alias)");
+
         // Register misc teleportation commands
         registry.registerCommand("back", "Return to previous location");
         registry.registerCommand("top", "Teleport to highest block");
@@ -739,5 +744,11 @@ public class NeoEssentials {
             ManagerRegistry.getInstance().markFailed("PlaceholderManager", e.getMessage());
         }
     }
+
+    public void onInitialize() {
+        // Ensure split configs are present and up to date on startup
+        com.zerog.neoessentials.config.ConfigManager.ensureSplitConfigsOnStartup();
+    }
 }
+
 
