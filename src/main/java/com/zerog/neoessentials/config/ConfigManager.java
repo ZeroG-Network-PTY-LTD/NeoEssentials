@@ -1207,6 +1207,8 @@ public class ConfigManager {
 
     /**
      * Ensure all required config files exist in the config directory, copying from JAR if missing.
+     * If split configs are enabled, config.json is skipped for all operations except migration/backup.
+     * Internal permissions.json is not generated if external permissions are enabled.
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
@@ -1215,6 +1217,10 @@ public class ConfigManager {
 
         // Check if split configs are enabled
         boolean splitConfigsEnabled = ConfigSplitter.isSplittingEnabled();
+        boolean externalPermsEnabled = false;
+        try {
+            externalPermsEnabled = isExternalPermissionsEnabled();
+        } catch (Exception ignored) {}
 
         if (splitConfigsEnabled) {
             // Always ensure split configs are up to date
@@ -1226,6 +1232,10 @@ public class ConfigManager {
                 if (configName.equals(MAIN_CONFIG)) {
                     continue; // Skip config.json when using split configs
                 }
+                if (configName.equals(PERMISSIONS_CONFIG) && externalPermsEnabled) {
+                    // Skip internal permissions.json if external permissions are enabled
+                    continue;
+                }
                 File configFile = ResourceUtil.getConfigFile(configName);
                 if (!configFile.exists()) {
                     copyDefaultConfig(configName, configFile);
@@ -1236,6 +1246,10 @@ public class ConfigManager {
         } else {
             // Normal monolithic config mode
             for (String configName : requiredConfigs) {
+                if (configName.equals(PERMISSIONS_CONFIG) && externalPermsEnabled) {
+                    // Skip internal permissions.json if external permissions are enabled
+                    continue;
+                }
                 File configFile = ResourceUtil.getConfigFile(configName);
                 if (!configFile.exists()) {
                     copyDefaultConfig(configName, configFile);
@@ -1881,7 +1895,7 @@ public class ConfigManager {
     }
 
     /**
-     * Returns the ban message format from moderation.banSettings.banMessageFormat.
+     * Returns the ban message format from moderation.banSettings.banMessageFormat
      * Defaults to standard message if not set.
      */
     public static String getBanMessageFormat() {
@@ -1899,8 +1913,8 @@ public class ConfigManager {
         return "You have been banned from this server.\nReason: {reason}\nBanned by: {bannedBy}\n{duration}";
     }
 
-    /**
-     * Returns the temp ban message format from moderation.banSettings.tempBanMessageFormat.
+   /**
+     * Returns the temp ban message format from moderation.banSettings.tempBanMessageFormat
      * Defaults to standard message if not set.
      */
     public static String getTempBanMessageFormat() {
@@ -2364,4 +2378,45 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * Returns true if home teleport safety is enabled in teleportation.homeSettings config section.
+     * (teleportation.homeSettings.enableHomeTeleportSafety)
+     */
+    public boolean isHomeTeleportSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("homeSettings")) {
+                JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                if (homeSettings.has("enableHomeTeleportSafety")) {
+                    return homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true for safety
+    }
+
+    /**
+     * Ensure split configs are present and up to date on startup
+     */
+    public static void ensureSplitConfigsOnStartup() {
+        if (ConfigSplitter.isSplittingEnabled()) {
+            ConfigSplitter.ensureSplitConfigsUpToDate();
+        }
+    }
+
+
+    // === STUB: ResourceUtil.getConfigDirectory() replacement ===
+    private static File getConfigDirectory() {
+        // TODO: Replace with actual ResourceUtil.getConfigDirectory() if available
+        // For now, use standard config/neoessentials directory
+        File configDir = new File("config/neoessentials");
+        if (!configDir.exists()) {
+            boolean created = configDir.mkdirs();
+            if (!created) {
+                LOGGER.warn("Failed to create config directory at {}", configDir.getAbsolutePath());
+            }
+        }
+        return configDir;
+    }
 }

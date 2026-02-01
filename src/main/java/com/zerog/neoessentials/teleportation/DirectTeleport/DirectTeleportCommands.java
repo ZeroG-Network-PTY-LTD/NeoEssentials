@@ -208,6 +208,113 @@ public class DirectTeleportCommands {
             })
             .executes(DirectTeleportCommands::randomTeleport)
         );
+        // Register aliases for /tpr
+        dispatcher.register(Commands.literal("randomtp")
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                }
+                return source.hasPermission(0);
+            })
+            .executes(DirectTeleportCommands::randomTeleport)
+        );
+        dispatcher.register(Commands.literal("randomteleport")
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                }
+                return source.hasPermission(0);
+            })
+            .executes(DirectTeleportCommands::randomTeleport)
+        );
+        // Register /rtp as an alias for random teleport
+        dispatcher.register(Commands.literal("rtp")
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                }
+                return source.hasPermission(0);
+            })
+            .executes(DirectTeleportCommands::randomTeleport)
+        );
+        // Register aliases for /neoe tpr, /neoe randomtp, /neoe randomteleport, /neoe rtp
+        dispatcher.register(Commands.literal("neoe")
+            .then(Commands.literal("tpr")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("randomtp")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("randomteleport")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("rtp")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+        );
+        // Register aliases for /neoessentials tpr, /neoessentials randomtp, /neoessentials randomteleport, /neoessentials rtp
+        dispatcher.register(Commands.literal("neoessentials")
+            .then(Commands.literal("tpr")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("randomtp")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("randomteleport")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+            .then(Commands.literal("rtp")
+                .requires(source -> {
+                    if (source.getEntity() instanceof ServerPlayer player) {
+                        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_TPR);
+                    }
+                    return source.hasPermission(0);
+                })
+                .executes(DirectTeleportCommands::randomTeleport)
+            )
+        );
     }
     
     private static void registerTpoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {

@@ -1,4 +1,3 @@
-
 package com.zerog.neoessentials.permissions.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +60,118 @@ public class PermissionsCommand {
                     .executes(ctx -> listGroups(ctx)))
                 .then(Commands.literal("users")
                     .executes(ctx -> listUsers(ctx))))
+            .then(Commands.literal("info")
+                .then(Commands.literal("group")
+                    .then(Commands.argument("group", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            try {
+                                var groups = PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName)
+                                    .toList();
+                                if (!groups.isEmpty()) {
+                                    return SharedSuggestionProvider.suggest(groups, builder);
+                                }
+                            } catch (Exception e) {}
+                            return SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                builder);
+                        })
+                        .executes(ctx -> showGroupInfo(ctx))))
+                .then(Commands.literal("user")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                            ctx.getSource().getServer().getPlayerList().getPlayers().stream()
+                                .map(p -> p.getGameProfile().getName()),
+                            builder
+                        ))
+                        .executes(ctx -> showUserInfo(ctx)))))
+            .then(Commands.literal("check")
+                .then(Commands.literal("user")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                            ctx.getSource().getServer().getPlayerList().getPlayers().stream()
+                                .map(p -> p.getGameProfile().getName()),
+                            builder
+                        ))
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
+                            .executes(ctx -> checkUserPermission(ctx)))))
+                .then(Commands.literal("group")
+                    .then(Commands.argument("group", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            try {
+                                var groups = PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName)
+                                    .toList();
+                                if (!groups.isEmpty()) {
+                                    return SharedSuggestionProvider.suggest(groups, builder);
+                                }
+                            } catch (Exception e) {}
+                            return SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                builder);
+                        })
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
+                            .executes(ctx -> checkGroupPermission(ctx))))))
+            .then(Commands.literal("search")
+                .then(Commands.argument("pattern", StringArgumentType.greedyString())
+                    .executes(ctx -> searchPermissions(ctx))))
+            .then(Commands.literal("create")
+                .then(Commands.literal("group")
+                    .then(Commands.argument("group", StringArgumentType.word())
+                        .executes(ctx -> createGroup(ctx)))))
+            .then(Commands.literal("delete")
+                .then(Commands.literal("group")
+                    .then(Commands.argument("group", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            try {
+                                var groups = PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName)
+                                    .toList();
+                                if (!groups.isEmpty()) {
+                                    return SharedSuggestionProvider.suggest(groups, builder);
+                                }
+                            } catch (Exception e) {}
+                            return SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                builder);
+                        })
+                        .executes(ctx -> deleteGroup(ctx)))))
+            .then(Commands.literal("rename")
+                .then(Commands.literal("group")
+                    .then(Commands.argument("oldName", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            try {
+                                var groups = PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName)
+                                    .toList();
+                                if (!groups.isEmpty()) {
+                                    return SharedSuggestionProvider.suggest(groups, builder);
+                                }
+                            } catch (Exception e) {}
+                            return SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                builder);
+                        })
+                        .then(Commands.argument("newName", StringArgumentType.word())
+                            .executes(ctx -> renameGroup(ctx))))))
+            .then(Commands.literal("clone")
+                .then(Commands.literal("group")
+                    .then(Commands.argument("source", StringArgumentType.word())
+                        .suggests((ctx, builder) -> {
+                            try {
+                                var groups = PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName)
+                                    .toList();
+                                if (!groups.isEmpty()) {
+                                    return SharedSuggestionProvider.suggest(groups, builder);
+                                }
+                            } catch (Exception e) {}
+                            return SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                builder);
+                        })
+                        .then(Commands.argument("newGroup", StringArgumentType.word())
+                            .executes(ctx -> cloneGroup(ctx))))))
             .then(Commands.literal("group")
                 .then(Commands.argument("group", StringArgumentType.word())
                     .suggests((ctx, builder) -> {
@@ -143,7 +254,41 @@ public class PermissionsCommand {
                                     );
                                 }
                             })
-                            .executes(ctx -> removeGroupPermission(ctx))))))
+                            .executes(ctx -> removeGroupPermission(ctx))))
+                    .then(Commands.literal("clear")
+                        .executes(ctx -> clearGroupPermissions(ctx)))
+                    .then(Commands.literal("inherit")
+                        .then(Commands.literal("add")
+                            .then(Commands.argument("inheritGroup", StringArgumentType.word())
+                                .suggests((ctx, builder) -> {
+                                    try {
+                                        var groups = PermissionAPI.getManager().getGroups().stream()
+                                            .map(PermissionGroup::getName)
+                                            .toList();
+                                        if (!groups.isEmpty()) {
+                                            return SharedSuggestionProvider.suggest(groups, builder);
+                                        }
+                                    } catch (Exception e) {}
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                        builder);
+                                })
+                                .executes(ctx -> addGroupInheritance(ctx))))
+                        .then(Commands.literal("remove")
+                            .then(Commands.argument("inheritGroup", StringArgumentType.word())
+                                .suggests((ctx, builder) -> {
+                                    try {
+                                        String groupName = StringArgumentType.getString(ctx, "group");
+                                        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+                                        if (group != null && !group.getInherits().isEmpty()) {
+                                            return SharedSuggestionProvider.suggest(group.getInherits(), builder);
+                                        }
+                                    } catch (Exception e) {}
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                        builder);
+                                })
+                                .executes(ctx -> removeGroupInheritance(ctx)))))))
             .then(Commands.literal("user")
                 .then(Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -214,7 +359,9 @@ public class PermissionsCommand {
                                     );
                                 }
                             })
-                            .executes(ctx -> removeUserPermission(ctx))))));
+                            .executes(ctx -> removeUserPermission(ctx))))
+                    .then(Commands.literal("clear")
+                        .executes(ctx -> clearUserPermissions(ctx)))));
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
@@ -701,4 +848,513 @@ public class PermissionsCommand {
         }
         return 1;
     }
+
+    // ========== NEW COMMANDS ==========
+
+    private static int showGroupInfo(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.info.group");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("=== Group: " + group.getName() + " ==="), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Prefix: " + (group.getPrefix() != null ? group.getPrefix() : "None")), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Suffix: " + (group.getSuffix() != null ? group.getSuffix() : "None")), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Permissions (" + group.getPermissions().size() + "):"), false);
+
+        if (group.getPermissions().isEmpty()) {
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("  - No permissions"), false);
+        } else {
+            group.getPermissions().stream().limit(10).forEach(perm ->
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  - " + perm), false));
+            if (group.getPermissions().size() > 10) {
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  ... and " + (group.getPermissions().size() - 10) + " more"), false);
+            }
+        }
+
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Inherits (" + group.getInherits().size() + "):"), false);
+        if (group.getInherits().isEmpty()) {
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("  - No inheritance"), false);
+        } else {
+            group.getInherits().forEach(inherit ->
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  - " + inherit), false));
+        }
+
+        return 1;
+    }
+
+    private static int showUserInfo(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.info.user");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String playerName = StringArgumentType.getString(ctx, "player");
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+
+        UUID playerUUID = uuidOpt.get();
+        PermissionUser user = PermissionAPI.getManager().getUser(playerUUID);
+        if (user == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found", playerName));
+            return 0;
+        }
+
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("=== User: " + playerName + " ==="), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("UUID: " + playerUUID), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Group: " + (user.getGroup() != null ? user.getGroup() : "default")), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Direct Permissions (" + user.getPermissions().size() + "):"), false);
+
+        if (user.getPermissions().isEmpty()) {
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("  - No direct permissions"), false);
+        } else {
+            user.getPermissions().stream().limit(10).forEach(perm ->
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  - " + perm), false));
+            if (user.getPermissions().size() > 10) {
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  ... and " + (user.getPermissions().size() - 10) + " more"), false);
+            }
+        }
+
+        return 1;
+    }
+
+    private static int checkUserPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.check");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String playerName = StringArgumentType.getString(ctx, "player");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+
+        UUID playerUUID = uuidOpt.get();
+        boolean hasPermission = PermissionAPI.getManager().hasPermission(playerUUID, permission);
+
+        if (hasPermission) {
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("✓ " + playerName + " has permission: " + permission), false);
+        } else {
+            ctx.getSource().sendSuccess(() -> MessageUtil.error("✗ " + playerName + " does NOT have permission: " + permission), false);
+        }
+
+        return 1;
+    }
+
+    private static int checkGroupPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.check");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+
+        boolean hasPermission = group.getPermissions().contains(permission.toLowerCase());
+
+        if (hasPermission) {
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("✓ Group '" + groupName + "' has permission: " + permission), false);
+        } else {
+            ctx.getSource().sendSuccess(() -> MessageUtil.error("✗ Group '" + groupName + "' does NOT have permission: " + permission), false);
+        }
+
+        return 1;
+    }
+
+    private static int searchPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.search");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String pattern = StringArgumentType.getString(ctx, "pattern").toLowerCase();
+
+        try {
+            java.util.List<String> allPermissions =
+                com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+
+            java.util.List<String> matches = allPermissions.stream()
+                .filter(perm -> perm.toLowerCase().contains(pattern))
+                .sorted()
+                .toList();
+
+            if (matches.isEmpty()) {
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("No permissions found matching: " + pattern), false);
+                return 1;
+            }
+
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Found " + matches.size() + " permissions matching '" + pattern + "':"), false);
+            matches.stream().limit(20).forEach(perm ->
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  - " + perm), false));
+
+            if (matches.size() > 20) {
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("  ... and " + (matches.size() - 20) + " more"), false);
+            }
+
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to search permissions: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int createGroup(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.create");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        if (manager.getGroup(groupName) != null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + groupName + "' already exists!"));
+            return 0;
+        }
+
+        PermissionGroup newGroup = new PermissionGroup(groupName);
+        manager.addGroup(newGroup);
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Created group: " + groupName), false);
+            LOGGER.info("Created new permission group: {}", groupName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after creating group", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int deleteGroup(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.delete");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        if (manager.getGroup(groupName) == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + groupName + "' does not exist!"));
+            return 0;
+        }
+
+        // Prevent deleting default group
+        if (groupName.equalsIgnoreCase(manager.getDefaultGroup())) {
+            ctx.getSource().sendFailure(MessageUtil.error("Cannot delete the default group!"));
+            return 0;
+        }
+
+        manager.getGroups().removeIf(g -> g.getName().equalsIgnoreCase(groupName));
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Deleted group: " + groupName), false);
+            LOGGER.info("Deleted permission group: {}", groupName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after deleting group", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int renameGroup(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.rename");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String oldName = StringArgumentType.getString(ctx, "oldName");
+        String newName = StringArgumentType.getString(ctx, "newName");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        PermissionGroup oldGroup = manager.getGroup(oldName);
+        if (oldGroup == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + oldName + "' does not exist!"));
+            return 0;
+        }
+
+        if (manager.getGroup(newName) != null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + newName + "' already exists!"));
+            return 0;
+        }
+
+        // Create new group with new name and copy data
+        PermissionGroup newGroup = new PermissionGroup(newName);
+        newGroup.setPrefix(oldGroup.getPrefix());
+        newGroup.setSuffix(oldGroup.getSuffix());
+        oldGroup.getPermissions().forEach(newGroup::addPermission);
+        oldGroup.getInherits().forEach(newGroup::addInheritance);
+
+        // Remove old group and add new one
+        manager.getGroups().removeIf(g -> g.getName().equalsIgnoreCase(oldName));
+        manager.addGroup(newGroup);
+
+        // Update users with old group to new group
+        manager.getUsers().stream()
+            .filter(u -> oldName.equalsIgnoreCase(u.getGroup()))
+            .forEach(u -> u.setGroup(newName));
+
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Renamed group '" + oldName + "' to '" + newName + "'"), false);
+            LOGGER.info("Renamed permission group '{}' to '{}'", oldName, newName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after renaming group", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int cloneGroup(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.clone");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String sourceName = StringArgumentType.getString(ctx, "source");
+        String newName = StringArgumentType.getString(ctx, "newGroup");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        PermissionGroup sourceGroup = manager.getGroup(sourceName);
+        if (sourceGroup == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + sourceName + "' does not exist!"));
+            return 0;
+        }
+
+        if (manager.getGroup(newName) != null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + newName + "' already exists!"));
+            return 0;
+        }
+
+        // Create new group and copy all data
+        PermissionGroup newGroup = new PermissionGroup(newName);
+        newGroup.setPrefix(sourceGroup.getPrefix());
+        newGroup.setSuffix(sourceGroup.getSuffix());
+        sourceGroup.getPermissions().forEach(newGroup::addPermission);
+        sourceGroup.getInherits().forEach(newGroup::addInheritance);
+
+        manager.addGroup(newGroup);
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Cloned group '" + sourceName + "' to '" + newName + "'"), false);
+            LOGGER.info("Cloned permission group '{}' to '{}'", sourceName, newName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after cloning group", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int clearGroupPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.clear");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+
+        int count = group.getPermissions().size();
+        group.getPermissions().clear();
+        PermissionAPI.getManager().clearCache();
+
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Cleared " + count + " permissions from group: " + groupName), false);
+            LOGGER.info("Cleared all permissions from group '{}'", groupName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after clearing group", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int clearUserPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.clear");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String playerName = StringArgumentType.getString(ctx, "player");
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+
+        UUID playerUUID = uuidOpt.get();
+        PermissionUser user = PermissionAPI.getManager().getUser(playerUUID);
+        if (user == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found", playerName));
+            return 0;
+        }
+
+        int count = user.getPermissions().size();
+        user.getPermissions().clear();
+        PermissionAPI.getManager().clearCache();
+
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Cleared " + count + " permissions from user: " + playerName), false);
+            LOGGER.info("Cleared all permissions from user '{}'", playerName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after clearing user", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int addGroupInheritance(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.inherit");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String inheritGroup = StringArgumentType.getString(ctx, "inheritGroup");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+
+        PermissionGroup targetGroup = manager.getGroup(inheritGroup);
+        if (targetGroup == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("Inherit group '" + inheritGroup + "' does not exist!"));
+            return 0;
+        }
+
+        if (groupName.equalsIgnoreCase(inheritGroup)) {
+            ctx.getSource().sendFailure(MessageUtil.error("A group cannot inherit from itself!"));
+            return 0;
+        }
+
+        if (group.getInherits().contains(inheritGroup)) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + groupName + "' already inherits from '" + inheritGroup + "'!"));
+            return 0;
+        }
+
+        group.addInheritance(inheritGroup);
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Group '" + groupName + "' now inherits from '" + inheritGroup + "'"), false);
+            LOGGER.info("Added inheritance from '{}' to group '{}'", inheritGroup, groupName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after adding inheritance", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int removeGroupInheritance(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.inherit");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String inheritGroup = StringArgumentType.getString(ctx, "inheritGroup");
+        PermissionManager manager = PermissionAPI.getManager();
+
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+
+        if (!group.getInherits().contains(inheritGroup)) {
+            ctx.getSource().sendFailure(MessageUtil.error("Group '" + groupName + "' does not inherit from '" + inheritGroup + "'!"));
+            return 0;
+        }
+
+        group.removeInheritance(inheritGroup);
+        manager.clearCache();
+
+        try {
+            PermissionStorage.save(manager);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("Removed inheritance of '" + inheritGroup + "' from group '" + groupName + "'"), false);
+            LOGGER.info("Removed inheritance from '{}' from group '{}'", inheritGroup, groupName);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after removing inheritance", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
 }
+

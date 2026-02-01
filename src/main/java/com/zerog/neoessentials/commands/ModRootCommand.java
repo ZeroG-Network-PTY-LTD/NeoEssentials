@@ -58,15 +58,28 @@ public class ModRootCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModRootCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        LOGGER.info("Registering /neoe and /neoessentials root commands");
         dispatcher.register(
             Commands.literal("neoe")
-                .requires(ModRootCommand::hasBaseCommandPermission)
+                .requires(source -> {
+                    boolean result = hasBaseCommandPermission(source);
+                    LOGGER.debug("/neoe permission check for {}: {}", source.getTextName(), result);
+                    return result;
+                })
                 .then(Commands.literal("reload")
-                    .requires(ModRootCommand::hasAdminPermission)
+                    .requires(source -> {
+                        boolean result = hasAdminPermission(source);
+                        LOGGER.debug("/neoe reload admin permission for {}: {}", source.getTextName(), result);
+                        return result;
+                    })
                     .executes(ModRootCommand::reloadConfiguration)
                 )
                 .then(Commands.literal("config")
-                    .requires(ModRootCommand::hasAdminPermission)
+                    .requires(source -> {
+                        boolean result = hasAdminPermission(source);
+                        LOGGER.debug("/neoe config admin permission for {}: {}", source.getTextName(), result);
+                        return result;
+                    })
                     .then(Commands.literal("split")
                         .executes(ModRootCommand::splitConfiguration)
                     )
@@ -79,13 +92,25 @@ public class ModRootCommand {
         );
         dispatcher.register(
             Commands.literal("neoessentials")
-                .requires(ModRootCommand::hasBaseCommandPermission)
+                .requires(source -> {
+                    boolean result = hasBaseCommandPermission(source);
+                    LOGGER.debug("/neoessentials permission check for {}: {}", source.getTextName(), result);
+                    return result;
+                })
                 .then(Commands.literal("reload")
-                    .requires(ModRootCommand::hasAdminPermission)
+                    .requires(source -> {
+                        boolean result = hasAdminPermission(source);
+                        LOGGER.debug("/neoessentials reload admin permission for {}: {}", source.getTextName(), result);
+                        return result;
+                    })
                     .executes(ModRootCommand::reloadConfiguration)
                 )
                 .then(Commands.literal("config")
-                    .requires(ModRootCommand::hasAdminPermission)
+                    .requires(source -> {
+                        boolean result = hasAdminPermission(source);
+                        LOGGER.debug("/neoessentials config admin permission for {}: {}", source.getTextName(), result);
+                        return result;
+                    })
                     .then(Commands.literal("split")
                         .executes(ModRootCommand::splitConfiguration)
                     )

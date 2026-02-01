@@ -78,29 +78,34 @@ public class KitManager {
                     JsonObject config = GSON.fromJson(reader, JsonObject.class);
                     
                     if (config != null && config.has("kits")) {
-                        JsonArray kitsArray = config.getAsJsonArray("kits");
-                        int loadedCount = 0;
-                        
-                        for (JsonElement element : kitsArray) {
-                            try {
-                                Kit kit = Kit.fromJson(element.getAsJsonObject());
-                                kits.put(kit.getName(), kit);
-                                
-                                // Register kit permission with the permission registry for tab completion
-                                try {
-                                    com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
-                                        .registerKitPermission(kit.getName());
-                                } catch (Exception e) {
-                                    LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
+                        JsonElement kitsElement = config.get("kits");
+                        if (kitsElement != null && kitsElement.isJsonArray()) {
+                            JsonArray kitsArray = kitsElement.getAsJsonArray();
+                            int loadedCount = 0;
+
+                            for (JsonElement element : kitsArray) {
+                                if (element.isJsonObject()) {
+                                    try {
+                                        Kit kit = Kit.fromJson(element.getAsJsonObject());
+                                        kits.put(kit.getName(), kit);
+
+                                        // Register kit permission with the permission registry for tab completion
+                                        try {
+                                            com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
+                                                .registerKitPermission(kit.getName());
+                                        } catch (Exception e) {
+                                            LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
+                                        }
+
+                                        loadedCount++;
+                                    } catch (Exception e) {
+                                        LOGGER.warn("Failed to load kit from config: {}", e.getMessage());
+                                    }
                                 }
-                                
-                                loadedCount++;
-                            } catch (Exception e) {
-                                LOGGER.warn("Failed to load kit from config: {}", e.getMessage());
                             }
+
+                            LOGGER.info("Loaded {} kits from configuration", loadedCount);
                         }
-                        
-                        LOGGER.info("Loaded {} kits from configuration", loadedCount);
                     }
                 }
             } else {
@@ -669,3 +674,4 @@ public class KitManager {
         public String getMessage() { return message; }
     }
 }
+

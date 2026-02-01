@@ -67,6 +67,10 @@
                     <span class="nav-icon">📜</span>
                     <span class="nav-text">Events</span>
                 </a>
+                <a href="#" class="nav-item admin-only" data-page="permissions" style="display: none;">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Permissions</span>
+                </a>
                 <a href="#" class="nav-item admin-only" data-page="admin" style="display: none;">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-text">Admin Controls</span>
@@ -257,6 +261,110 @@
                                     <div class="empty-state">
                                         <span class="empty-icon">📜</span>
                                         <p>No recent events</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Management Section -->
+                        <div class="card card-full admin-only" data-page="permissions" style="display: none;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="title-icon">🔐</span>
+                                    Permission System Management
+                                </h3>
+                                <span class="card-badge" id="permSystemBadge">Internal</span>
+                            </div>
+                            <div class="card-body">
+                                <!-- Permission System Status -->
+                                <div class="perm-status-alert" id="permStatusAlert">
+                                    <div class="alert-content">
+                                        <span class="alert-icon">ℹ️</span>
+                                        <span class="alert-text">Loading permission system status...</span>
+                                    </div>
+                                </div>
+
+                                <!-- Permission Tabs -->
+                                <div class="perm-tabs">
+                                    <button class="perm-tab active" data-tab="overview">
+                                        <span>📊</span> Overview
+                                    </button>
+                                    <button class="perm-tab" data-tab="groups">
+                                        <span>👥</span> Groups
+                                    </button>
+                                    <button class="perm-tab" data-tab="users">
+                                        <span>🎮</span> Users
+                                    </button>
+                                    <button class="perm-tab" data-tab="permissions">
+                                        <span>🔑</span> Permissions
+                                    </button>
+                                </div>
+
+                                <!-- Overview Tab Content -->
+                                <div class="perm-tab-content active" id="permOverviewTab">
+                                    <div class="perm-stats-grid">
+                                        <div class="perm-stat-card">
+                                            <div class="perm-stat-icon">👥</div>
+                                            <div class="perm-stat-content">
+                                                <div class="perm-stat-label">Total Groups</div>
+                                                <div class="perm-stat-value" id="totalGroupsStat">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="perm-stat-card">
+                                            <div class="perm-stat-icon">🎮</div>
+                                            <div class="perm-stat-content">
+                                                <div class="perm-stat-label">Online Users</div>
+                                                <div class="perm-stat-value" id="totalUsersStat">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="perm-stat-card">
+                                            <div class="perm-stat-icon">🔐</div>
+                                            <div class="perm-stat-content">
+                                                <div class="perm-stat-label">System Type</div>
+                                                <div class="perm-stat-value" id="systemTypeStat">Internal</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="perm-groups-overview" id="permGroupsOverview">
+                                        <h4>Groups Overview</h4>
+                                        <div class="perm-groups-list" id="permGroupsList">
+                                            <div class="empty-state">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Groups Tab Content -->
+                                <div class="perm-tab-content" id="permGroupsTab">
+                                    <div class="perm-actions-bar">
+                                        <button class="btn btn-primary" id="createGroupBtn">
+                                            <span>➕</span> Create Group
+                                        </button>
+                                        <button class="btn btn-secondary" id="refreshGroupsBtn">
+                                            <span>🔄</span> Refresh
+                                        </button>
+                                    </div>
+                                    <div class="perm-groups-table" id="permGroupsTable">
+                                        <div class="empty-state">Loading groups...</div>
+                                    </div>
+                                </div>
+
+                                <!-- Users Tab Content -->
+                                <div class="perm-tab-content" id="permUsersTab">
+                                    <div class="perm-actions-bar">
+                                        <input type="text" class="search-input" id="userSearchInput" placeholder="🔍 Search users...">
+                                        <button class="btn btn-secondary" id="refreshUsersBtn">
+                                            <span>🔄</span> Refresh
+                                        </button>
+                                    </div>
+                                    <div class="perm-users-table" id="permUsersTable">
+                                        <div class="empty-state">Loading users...</div>
+                                    </div>
+                                </div>
+
+                                <!-- Permissions Tab Content -->
+                                <div class="perm-tab-content" id="permPermissionsTab">
+                                    <div class="perm-permissions-categories" id="permPermissionsCategories">
+                                        <div class="empty-state">Loading available permissions...</div>
                                     </div>
                                 </div>
                             </div>
@@ -462,5 +570,6 @@
     </div>
 
     <script src="dashboard.js?v=417"></script>
+    <script src="permissions.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.util.MessageUtil;
+import net.neoforged.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,21 +24,24 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CustomLanguageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomLanguageManager.class);
     private static CustomLanguageManager INSTANCE;
-
-    private static final String LANG_DIR = "run/neoessentials/languages/custom/";
+    // Use only the correct path under the mod's data directory
+    private static final String LANG_DIR = "neoessentials/languages/custom/";
     private static final String LANG_FILE = "en_us.json";
     private final Path customLangDir;
     private final Path templatesDir;
-    private final Map<String, Map<String, String>> customTranslations = new ConcurrentHashMap<>();
-    private final Map<String, LanguageFileInfo> languageFiles = new ConcurrentHashMap<>();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     // Track missing translation keys for template generation
     private final Set<String> missingKeys = ConcurrentHashMap.newKeySet();
+    private final Map<String, Map<String, String>> customTranslations = new ConcurrentHashMap<>();
+    private final Map<String, LanguageFileInfo> languageFiles = new ConcurrentHashMap<>();
 
     private CustomLanguageManager() {
-        this.customLangDir = resolveProjectRootPath("run", "neoessentials", "languages", "custom");
-        this.templatesDir = resolveProjectRootPath("neoessentials", "languages", "templates");
+        // Always resolve relative to the server root, not 'run/'
+        this.customLangDir = resolveModDataPath("languages", "custom");
+        this.templatesDir = resolveModDataPath("languages", "templates");
+        LOGGER.info("[LANG] Custom language directory set to: {}", this.customLangDir.toAbsolutePath());
+        LOGGER.info("[LANG] Template directory set to: {}", this.templatesDir.toAbsolutePath());
     }
 
     public static CustomLanguageManager getInstance() {
@@ -435,7 +439,18 @@ public class CustomLanguageManager {
         return null;
     }
 
-    private static Path resolveProjectRootPath(String... parts) {
-        return Paths.get(System.getProperty("user.dir"), parts);
+    /**
+     * Resolve a path relative to the mod's data directory (server root/neoessentials/)
+     */
+    private static Path resolveModDataPath(String... parts) {
+        // Always resolve to the server root directory, not the working directory
+        Path serverRoot = FMLPaths.GAMEDIR.get();
+        Path neoEssentialsDir = serverRoot.resolve("neoessentials");
+        for (String part : parts) {
+            neoEssentialsDir = neoEssentialsDir.resolve(part);
+        }
+        // Log the resolved path for debugging
+        LOGGER.info("[LANG] Resolved mod data path: {}", neoEssentialsDir.toAbsolutePath());
+        return neoEssentialsDir;
     }
 }

@@ -8,8 +8,14 @@ import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 /**
@@ -66,11 +72,16 @@ public class ConfigSplitter {
         if (!isSplittingEnabled()) {
             return;
         }
+        File configFile = ResourceUtil.getConfigFile("config.json");
+        ConfigSplitter splitter = new ConfigSplitter();
+        if (!splitter.ensureUnifiedConfigExists(configFile)) {
+            LOGGER.error("config.json is missing and could not be generated. Split config update aborted.");
+            return;
+        }
 
         LOGGER.debug("Checking split config file versions...");
 
         // Check if config.json is newer than any split file (by last modified time)
-        File configFile = ResourceUtil.getConfigFile("config.json");
         boolean needsResplit = false;
         if (configFile.exists()) {
             long configJsonLastModified = configFile.lastModified();
@@ -98,9 +109,38 @@ public class ConfigSplitter {
             File splitFile = ResourceUtil.getConfigFile(fileName);
 
             if (!splitFile.exists()) {
-                // File missing - copy from JAR
-                LOGGER.info("Split config file {} missing, creating from defaults", fileName);
-                copyDefaultSplitConfig(fileName);
+                // Always try to extract from config.json first
+                File unifiedConfig = ResourceUtil.getConfigFile("config.json");
+                boolean generated = false;
+                if (unifiedConfig.exists()) {
+                    try (FileReader reader = new FileReader(unifiedConfig, StandardCharsets.UTF_8)) {
+                        JsonObject config = GSON.fromJson(reader, JsonObject.class);
+                        // Find the section name for this file
+                        String sectionName = null;
+                        for (Map.Entry<String, String> mapEntry : CONFIG_FILE_MAP.entrySet()) {
+                            if (mapEntry.getValue().equals(fileName)) {
+                                sectionName = mapEntry.getKey();
+                                break;
+                            }
+                        }
+                        if (sectionName != null && config.has(sectionName)) {
+                            JsonObject section = extractSection(config, sectionName, fileName);
+                            try (FileWriter writer = new FileWriter(splitFile, StandardCharsets.UTF_8)) {
+                                GSON.toJson(section, writer);
+                                LOGGER.info("  ✓ Generated {} from unified config.json", fileName);
+                                generated = true;
+                            }
+                        } else {
+                            LOGGER.warn("Section '{}' not found in config.json for split config {}", sectionName, fileName);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to generate split config {}: {}", fileName, e.getMessage());
+                    }
+                }
+                // If still missing, do not fallback to JAR, just warn
+                if (!splitFile.exists() && !generated) {
+                    LOGGER.warn("Split config file {} could not be generated from config.json and will remain missing.", fileName);
+                }
             } else {
                 // Check version
                 checkSplitConfigVersion(fileName, splitFile, expectedVersion);
@@ -124,76 +164,6 @@ public class ConfigSplitter {
             } catch (Exception e) {
                 LOGGER.error("Failed to merge unified config into split files: {}", e.getMessage());
             }
-        }
-    }
-
-    /**
-     * Check if a split config file needs updating
-     */
-    private static void checkSplitConfigVersion(String fileName, File configFile, int expectedVersion) {
-        try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
-            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
-
-            int currentVersion = 0;
-            if (config.has("_configVersion")) {
-                currentVersion = config.get("_configVersion").getAsInt();
-            }
-
-            if (currentVersion < expectedVersion) {
-                LOGGER.warn("Split config {} is outdated (version {} < {}). Updating...",
-                    fileName, currentVersion, expectedVersion);
-
-                // Create backup
-                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
-                String backupName = fileName.replace(".json", String.format("_v%d_backup_%s.json", currentVersion, timestamp));
-                File backupFile = new File(configFile.getParentFile(), backupName);
-                java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.info("Created backup: {}", backupName);
-
-                // Update from JAR
-                copyDefaultSplitConfig(fileName);
-                LOGGER.info("Updated split config {} to version {}", fileName, expectedVersion);
-            } else if (currentVersion > expectedVersion) {
-                LOGGER.warn("Split config {} has newer version ({}) than expected ({})",
-                    fileName, currentVersion, expectedVersion);
-            } else {
-                LOGGER.debug("Split config {} is up to date (version {})", fileName, currentVersion);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to check version for split config {}: {}", fileName, e.getMessage());
-        }
-    }
-
-    /**
-     * Copy a default split config from JAR
-     */
-    private static void copyDefaultSplitConfig(String fileName) {
-        try (InputStream in = ResourceUtil.getJarConfigResource(fileName)) {
-            if (in != null) {
-                File targetFile = ResourceUtil.getConfigFile(fileName);
-
-                // Ensure parent directories exist
-                File parentDir = targetFile.getParentFile();
-                if (parentDir != null && !parentDir.exists()) {
-                    if (!parentDir.mkdirs()) {
-                        LOGGER.warn("Could not create parent directory for {}", fileName);
-                    }
-                }
-
-                try (FileOutputStream out = new FileOutputStream(targetFile)) {
-                    byte[] buffer = new byte[8192];
-                    int len;
-                    while ((len = in.read(buffer)) > 0) {
-                        out.write(buffer, 0, len);
-                    }
-                }
-                LOGGER.debug("Copied default split config: {}", fileName);
-            } else {
-                LOGGER.warn("Default split config not found in JAR: {}", fileName);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to copy default split config {}: {}", fileName, e.getMessage());
         }
     }
 
@@ -601,5 +571,107 @@ public class ConfigSplitter {
             }
         }
         return changed;
+    }
+
+    /**
+     * Check if a split config file needs updating
+     */
+    private static void checkSplitConfigVersion(String fileName, File configFile, int expectedVersion) {
+        try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
+            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
+
+            int currentVersion = 0;
+            if (config.has("_configVersion")) {
+                currentVersion = config.get("_configVersion").getAsInt();
+            }
+
+            if (currentVersion < expectedVersion) {
+                LOGGER.warn("Split config {} is outdated (version {} < {}). Updating...",
+                    fileName, currentVersion, expectedVersion);
+
+                // Create backup
+                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
+                String backupName = fileName.replace(".json", String.format("_v%d_backup_%s.json", currentVersion, timestamp));
+                File backupFile = new File(configFile.getParentFile(), backupName);
+                java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.info("Created backup: {}", backupName);
+
+                // Update from JAR
+                copyDefaultSplitConfig(fileName);
+                LOGGER.info("Updated split config {} to version {}", fileName, expectedVersion);
+            } else if (currentVersion > expectedVersion) {
+                LOGGER.warn("Split config {} has newer version ({}) than expected ({})",
+                    fileName, currentVersion, expectedVersion);
+            } else {
+                LOGGER.debug("Split config {} is up to date (version {})", fileName, currentVersion);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check version for split config {}: {}", fileName, e.getMessage());
+        }
+    }
+
+    /**
+     * Copy a default split config from JAR
+     */
+    private static void copyDefaultSplitConfig(String fileName) {
+        try (InputStream in = ResourceUtil.getJarConfigResource(fileName)) {
+            if (in != null) {
+                File targetFile = ResourceUtil.getConfigFile(fileName);
+
+                // Ensure parent directories exist
+                File parentDir = targetFile.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    if (!parentDir.mkdirs()) {
+                        LOGGER.warn("Could not create parent directory for {}", fileName);
+                    }
+                }
+
+                try (FileOutputStream out = new FileOutputStream(targetFile)) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+                LOGGER.debug("Copied default split config: {}", fileName);
+            } else {
+                LOGGER.warn("Default split config not found in JAR: {}", fileName);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to copy default split config {}: {}", fileName, e.getMessage());
+        }
+    }
+
+    /**
+     * Ensures config.json exists. If missing, attempts to generate from JAR default.
+     * Returns true if config.json exists after this call, false otherwise.
+     */
+    private boolean ensureUnifiedConfigExists(File configFile) {
+        if (configFile.exists()) return true;
+
+        // Ensure parent directory exists
+        File parentDir = configFile.getParentFile();
+        if (!parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                LOGGER.error("Failed to create config directory: {}", parentDir.getAbsolutePath());
+                return false;
+            }
+        }
+
+        // Try to copy from JAR default - correct path in JAR
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("data/config/neoessentials/config.json")) {
+            if (in != null) {
+                Files.copy(in, configFile.toPath());
+                LOGGER.info("Generated missing config.json from JAR default");
+                return true;
+            } else {
+                LOGGER.error("Could not find default config.json in JAR (data/config/neoessentials/config.json)");
+                return false;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to generate config.json from JAR default", e);
+            return false;
+        }
     }
 }

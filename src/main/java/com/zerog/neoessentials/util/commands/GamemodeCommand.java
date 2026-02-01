@@ -140,8 +140,9 @@ public class GamemodeCommand {
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.gamemode.changed_self", gameTypeName), true);
         } else {
             // Staff changed another player's gamemode
-            target.sendSystemMessage(MessageUtil.success("commands.neoessentials.gamemode.changed_by_other", gameTypeName));
-            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.gamemode.changed_other", 
+            String changerName = source.getEntity() != null ? source.getEntity().getName().getString() : "Console";
+            target.sendSystemMessage(MessageUtil.success("commands.neoessentials.gamemode.changed_by_other", changerName, gameTypeName));
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.gamemode.changed_other",
                 target.getName().getString(), gameTypeName), true);
         }
         

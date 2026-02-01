@@ -174,7 +174,10 @@ public class Kit {
             cooldownMillis = cooldownSeconds * 1000;
         }
 
-        String permission = json.has("permission") ? json.get("permission").getAsString() : null;
+        // Always set permission node to neoessentials.kits.<kitname> if not present
+        String permission = json.has("permission") && !json.get("permission").getAsString().isEmpty()
+                ? json.get("permission").getAsString()
+                : ("neoessentials.kits." + name.toLowerCase());
         int maxUses = json.has("maxUses") ? json.get("maxUses").getAsInt() : -1;
         boolean enabled = !json.has("enabled") || json.get("enabled").getAsBoolean();
         

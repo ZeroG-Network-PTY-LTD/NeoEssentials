@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.util;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -56,8 +57,8 @@ public class MessageUtil {
 
         LOGGER.info("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
 
-        // Use custom language directory for server language files
-        File customLangDir = new File("run/neoessentials/languages/custom/");
+        // Use the same logic as CustomLanguageManager for the language directory
+        File customLangDir = getNeoEssentialsLangCustomDir();
         if (!customLangDir.exists()) {
             boolean dirCreated = customLangDir.mkdirs();
             if (!dirCreated) {
@@ -479,5 +480,101 @@ public class MessageUtil {
             .append(confirm)
             .append(Component.literal(" "))
             .append(deny);
+    }
+
+    /**
+     * Utility to get the NeoEssentials custom language directory (matches CustomLanguageManager)
+     *
+     * This version also removes the legacy 'lang' directory if it exists in the server root.
+     */
+    private static File getNeoEssentialsLangCustomDir() {
+        // Use FMLPaths.GAMEDIR if available, else fallback to user.dir
+        File langDir;
+        try {
+            // Try to use FMLPaths if available (Forge/NeoForge)
+            Class<?> fmlPathsClass = Class.forName("net.neoforged.fml.loading.FMLPaths");
+            java.lang.reflect.Method gamedirMethod = fmlPathsClass.getMethod("GAMEDIR");
+            Object gamedirPath = gamedirMethod.invoke(null);
+            java.nio.file.Path serverRoot = (java.nio.file.Path) gamedirPath.getClass().getMethod("get").invoke(gamedirPath);
+            langDir = serverRoot.resolve("neoessentials").resolve("languages").resolve("custom").toFile();
+            // Remove legacy 'lang' directory if it exists
+            File legacyLangDir = serverRoot.resolve("neoessentials").resolve("lang").toFile();
+            if (legacyLangDir.exists() && legacyLangDir.isDirectory()) {
+                deleteDirectoryRecursively(legacyLangDir);
+                LOGGER.info("Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            // Fallback: use user.dir
+            File fallbackRoot = new File(System.getProperty("user.dir"), "neoessentials");
+            langDir = new File(fallbackRoot, "languages/custom");
+            // Remove legacy 'lang' directory if it exists
+            File legacyLangDir = new File(fallbackRoot, "lang");
+            if (legacyLangDir.exists() && legacyLangDir.isDirectory()) {
+                deleteDirectoryRecursively(legacyLangDir);
+                LOGGER.info("Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
+            }
+        }
+        return langDir;
+    }
+
+    /**
+     * Recursively delete a directory and all its contents.
+     */
+    private static void deleteDirectoryRecursively(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    deleteDirectoryRecursively(file);
+                }
+            }
+        }
+        dir.delete();
+    }
+
+    /**
+     * Loads a language file from the custom language directory in the NeoEssentials data folder.
+     *
+     * @param languageCode The language code (e.g., "en_us").
+     * @return The loaded language map, or null if not found.
+     */
+    public static Map<String, String> loadCustomLanguageFile(String languageCode) {
+        // Always use the NeoEssentials data directory for custom languages
+        File customLangFile = new File("neoessentials/languages/custom/" + languageCode + ".json");
+        if (!customLangFile.exists()) {
+            return null;
+        }
+        try (FileReader reader = new FileReader(customLangFile)) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>() {}.getType();
+            return gson.fromJson(reader, type);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Loads all available custom language files from the NeoEssentials data directory.
+     */
+    public static Map<String, Map<String, String>> loadAllCustomLanguages() {
+        Map<String, Map<String, String>> languages = new HashMap<>();
+        File langDir = new File("neoessentials/languages/custom");
+        if (langDir.exists() && langDir.isDirectory()) {
+            File[] files = langDir.listFiles((dir, name) -> name.endsWith(".json"));
+            if (files != null) {
+                for (File file : files) {
+                    String langCode = file.getName().replace(".json", "");
+                    Map<String, String> langMap = loadCustomLanguageFile(langCode);
+                    if (langMap != null) {
+                        languages.put(langCode, langMap);
+                    }
+                }
+            }
+        }
+        return languages;
     }
 }
