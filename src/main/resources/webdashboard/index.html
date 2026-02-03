@@ -47,31 +47,31 @@
             </div>
             
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="overview">
+                <a href="index.html" class="nav-item active" data-page="overview">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Overview</span>
                 </a>
-                <a href="#" class="nav-item" data-page="players">
+                <a href="#players" class="nav-item" data-page="players">
                     <span class="nav-icon">👥</span>
                     <span class="nav-text">Players</span>
                 </a>
-                <a href="#" class="nav-item" data-page="performance">
+                <a href="#performance" class="nav-item" data-page="performance">
                     <span class="nav-icon">⚡</span>
                     <span class="nav-text">Performance</span>
                 </a>
-                <a href="#" class="nav-item" data-page="worlds">
+                <a href="#worlds" class="nav-item" data-page="worlds">
                     <span class="nav-icon">🌍</span>
                     <span class="nav-text">Worlds</span>
                 </a>
-                <a href="#" class="nav-item" data-page="events">
+                <a href="#events" class="nav-item" data-page="events">
                     <span class="nav-icon">📜</span>
                     <span class="nav-text">Events</span>
                 </a>
-                <a href="#" class="nav-item admin-only" data-page="permissions" style="display: none;">
+                <a href="permissions.html" class="nav-item admin-only" style="display: none;">
                     <span class="nav-icon">🔐</span>
                     <span class="nav-text">Permissions</span>
                 </a>
-                <a href="#" class="nav-item admin-only" data-page="admin" style="display: none;">
+                <a href="admin.html" class="nav-item admin-only" style="display: none;">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-text">Admin Controls</span>
                 </a>
@@ -261,182 +261,6 @@
                                     <div class="empty-state">
                                         <span class="empty-icon">📜</span>
                                         <p>No recent events</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Permissions Management Section -->
-                        <div class="card card-full admin-only" data-page="permissions" style="display: none;">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <span class="title-icon">🔐</span>
-                                    Permission System Management
-                                </h3>
-                                <span class="card-badge" id="permSystemBadge">Internal</span>
-                            </div>
-                            <div class="card-body">
-                                <!-- Permission System Status -->
-                                <div class="perm-status-alert" id="permStatusAlert">
-                                    <div class="alert-content">
-                                        <span class="alert-icon">ℹ️</span>
-                                        <span class="alert-text">Loading permission system status...</span>
-                                    </div>
-                                </div>
-
-                                <!-- Permission Tabs -->
-                                <div class="perm-tabs">
-                                    <button class="perm-tab active" data-tab="overview">
-                                        <span>📊</span> Overview
-                                    </button>
-                                    <button class="perm-tab" data-tab="groups">
-                                        <span>👥</span> Groups
-                                    </button>
-                                    <button class="perm-tab" data-tab="users">
-                                        <span>🎮</span> Users
-                                    </button>
-                                    <button class="perm-tab" data-tab="permissions">
-                                        <span>🔑</span> Permissions
-                                    </button>
-                                </div>
-
-                                <!-- Overview Tab Content -->
-                                <div class="perm-tab-content active" id="permOverviewTab">
-                                    <div class="perm-stats-grid">
-                                        <div class="perm-stat-card">
-                                            <div class="perm-stat-icon">👥</div>
-                                            <div class="perm-stat-content">
-                                                <div class="perm-stat-label">Total Groups</div>
-                                                <div class="perm-stat-value" id="totalGroupsStat">0</div>
-                                            </div>
-                                        </div>
-                                        <div class="perm-stat-card">
-                                            <div class="perm-stat-icon">🎮</div>
-                                            <div class="perm-stat-content">
-                                                <div class="perm-stat-label">Online Users</div>
-                                                <div class="perm-stat-value" id="totalUsersStat">0</div>
-                                            </div>
-                                        </div>
-                                        <div class="perm-stat-card">
-                                            <div class="perm-stat-icon">🔐</div>
-                                            <div class="perm-stat-content">
-                                                <div class="perm-stat-label">System Type</div>
-                                                <div class="perm-stat-value" id="systemTypeStat">Internal</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="perm-groups-overview" id="permGroupsOverview">
-                                        <h4>Groups Overview</h4>
-                                        <div class="perm-groups-list" id="permGroupsList">
-                                            <div class="empty-state">Loading...</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Groups Tab Content -->
-                                <div class="perm-tab-content" id="permGroupsTab">
-                                    <div class="perm-actions-bar">
-                                        <button class="btn btn-primary" id="createGroupBtn">
-                                            <span>➕</span> Create Group
-                                        </button>
-                                        <button class="btn btn-secondary" id="refreshGroupsBtn">
-                                            <span>🔄</span> Refresh
-                                        </button>
-                                    </div>
-                                    <div class="perm-groups-table" id="permGroupsTable">
-                                        <div class="empty-state">Loading groups...</div>
-                                    </div>
-                                </div>
-
-                                <!-- Users Tab Content -->
-                                <div class="perm-tab-content" id="permUsersTab">
-                                    <div class="perm-actions-bar">
-                                        <input type="text" class="search-input" id="userSearchInput" placeholder="🔍 Search users...">
-                                        <button class="btn btn-secondary" id="refreshUsersBtn">
-                                            <span>🔄</span> Refresh
-                                        </button>
-                                    </div>
-                                    <div class="perm-users-table" id="permUsersTable">
-                                        <div class="empty-state">Loading users...</div>
-                                    </div>
-                                </div>
-
-                                <!-- Permissions Tab Content -->
-                                <div class="perm-tab-content" id="permPermissionsTab">
-                                    <div class="perm-permissions-categories" id="permPermissionsCategories">
-                                        <div class="empty-state">Loading available permissions...</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Admin Controls Section -->
-                        <div class="card card-full admin-only" data-page="admin" style="display: none;">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <span class="title-icon">⚙️</span>
-                                    Server Administration
-                                </h3>
-                                <span class="card-badge">Admin Only</span>
-                            </div>
-                            <div class="card-body">
-                                <div class="admin-controls-grid">
-                                    <!-- Restart Server Card -->
-                                    <div class="admin-control-card danger">
-                                        <div class="admin-control-icon">🔄</div>
-                                        <div class="admin-control-content">
-                                            <h4>Restart Server</h4>
-                                            <p>Gracefully restart the Minecraft server with 5-second countdown</p>
-                                            <button class="btn btn-danger" id="restartServerBtn">
-                                                <span>🔄</span> Restart Server
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Stop Server Card -->
-                                    <div class="admin-control-card danger">
-                                        <div class="admin-control-icon">🛑</div>
-                                        <div class="admin-control-content">
-                                            <h4>Stop Server</h4>
-                                            <p>Gracefully shutdown the server with 5-second countdown</p>
-                                            <button class="btn btn-danger" id="stopServerBtn">
-                                                <span>🛑</span> Stop Server
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Reload Configs Card -->
-                                    <div class="admin-control-card warning">
-                                        <div class="admin-control-icon">🔃</div>
-                                        <div class="admin-control-content">
-                                            <h4>Reload Configurations</h4>
-                                            <p>Reload all mod configurations without restarting</p>
-                                            <button class="btn btn-warning" id="reloadConfigsBtn">
-                                                <span>🔃</span> Reload Configs
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Save All Worlds Card -->
-                                    <div class="admin-control-card success">
-                                        <div class="admin-control-icon">💾</div>
-                                        <div class="admin-control-content">
-                                            <h4>Save All Worlds</h4>
-                                            <p>Force save all loaded world chunks</p>
-                                            <button class="btn btn-success" id="saveWorldsBtn">
-                                                <span>💾</span> Save Worlds
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Admin Action Log -->
-                                <div class="admin-log-section">
-                                    <h4 class="admin-log-title">
-                                        <span>📋</span> Action Log
-                                    </h4>
-                                    <div class="admin-log-messages" id="adminLogMessages">
-                                        <div class="admin-log-empty">No recent actions</div>
                                     </div>
                                 </div>
                             </div>
