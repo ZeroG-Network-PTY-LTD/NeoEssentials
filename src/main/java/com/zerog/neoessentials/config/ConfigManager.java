@@ -2406,17 +2406,12 @@ public class ConfigManager {
     }
 
 
-    // === STUB: ResourceUtil.getConfigDirectory() replacement ===
+    /**
+     * Get the config directory, using ResourceUtil for centralized path management
+     */
     private static File getConfigDirectory() {
-        // TODO: Replace with actual ResourceUtil.getConfigDirectory() if available
-        // For now, use standard config/neoessentials directory
-        File configDir = new File("config/neoessentials");
-        if (!configDir.exists()) {
-            boolean created = configDir.mkdirs();
-            if (!created) {
-                LOGGER.warn("Failed to create config directory at {}", configDir.getAbsolutePath());
-            }
-        }
+        File configDir = new File(ResourceUtil.CONFIG_DIR);
+        ResourceUtil.ensureDirectoryExists(ResourceUtil.CONFIG_DIR);
         return configDir;
     }
 }

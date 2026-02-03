@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.DashboardAPI;
+import com.zerog.neoessentials.webdashboard.DashboardFileManager;
 import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
 import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.commands.CommandSourceStack;
@@ -21,7 +22,7 @@ import net.minecraft.network.chat.Component;
  * - /dashboard url - Show dashboard URL
  */
 public class DashboardCommand {
-    
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("dashboard")
             .requires(source -> PermissionValidator.validateAdminPermission(source, "neoessentials.admin.dashboard").hasPermission())
@@ -36,9 +37,11 @@ public class DashboardCommand {
                 .executes(DashboardCommand::showStatus))
             .then(Commands.literal("url")
                 .executes(DashboardCommand::showUrl))
+            .then(Commands.literal("update")
+                .executes(DashboardCommand::updateDashboardFiles))
         );
     }
-    
+
     private static int showStatus(CommandContext<CommandSourceStack> context) {
         DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
         CommandSourceStack source = context.getSource();
@@ -190,5 +193,29 @@ public class DashboardCommand {
         source.sendSuccess(() -> Component.literal("§7API: §b§n" + status.url + "/api/"), false);
         
         return 1;
+    }
+
+    private static int updateDashboardFiles(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+
+        source.sendSuccess(() -> Component.literal("§6Updating dashboard files from JAR..."), false);
+
+        try {
+            DashboardFileManager.forceUpdateDashboardFiles();
+
+            source.sendSuccess(() -> Component.literal("§a§l✓ §aDashboard files updated successfully!"), false);
+            source.sendSuccess(() -> Component.literal("§7Files extracted to: §eneoessentials/webdashboard/"), false);
+
+            // Recommend restart if dashboard is running
+            if (DashboardAPI.getInstance().isRunning()) {
+                source.sendSuccess(() -> Component.literal("§e⚠ §eRestart dashboard to apply changes: §b/dashboard restart"), false);
+            }
+
+            return 1;
+        } catch (Exception e) {
+            source.sendSuccess(() -> Component.literal("§c§l✗ §cFailed to update dashboard files!"), false);
+            source.sendSuccess(() -> Component.literal("§7Error: " + e.getMessage()), false);
+            return 0;
+        }
     }
 }

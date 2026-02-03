@@ -359,16 +359,16 @@ public class DashboardAPI {
                     }
                     
                     LOGGER.debug("Successfully served: {} ({} bytes, ETag: {})", path, bytes.length, etag);
-                } else {
-                    // 404 Not Found
-                    LOGGER.warn("File not found: /webdashboard{}", path);
-                    String response = "404 Not Found: " + path;
-                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-                    exchange.getResponseHeaders().set("Content-Type", "text/plain");
-                    exchange.sendResponseHeaders(404, bytes.length);
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
-                    }
+                }
+            } catch (java.io.FileNotFoundException e) {
+                // 404 Not Found
+                LOGGER.warn("File not found: {}", path);
+                String response = "404 Not Found: " + path;
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(404, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
                 }
             } catch (Exception e) {
                 LOGGER.error("Error serving file: {}", path, e);

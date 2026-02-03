@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Controls - NeoEssentials Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-wrapper" id="dashboardWrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">NeoEssentials</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Overview</span>
+                </a>
+                <a href="index.html#players" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Players</span>
+                </a>
+                <a href="index.html#performance" class="nav-item">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-text">Performance</span>
+                </a>
+                <a href="index.html#worlds" class="nav-item">
+                    <span class="nav-icon">🌍</span>
+                    <span class="nav-text">Worlds</span>
+                </a>
+                <a href="index.html#events" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">Events</span>
+                </a>
+                <a href="permissions.html" class="nav-item admin-only">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Permissions</span>
+                </a>
+                <a href="admin.html" class="nav-item admin-only active">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Admin Controls</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="server-status-mini">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Server Online</span>
+                </div>
+            </div>
+        </aside>
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon" id="sidebarToggle">
+                        <span>☰</span>
+                    </button>
+                    <h2 class="page-title">Admin Controls</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="status-badge" id="serverStatusBadge">
+                        <span class="dot"></span>
+                        <span id="serverStatusText">Online</span>
+                    </div>
+                    <div class="user-info" id="userInfo">
+                        <div class="user-avatar">?</div>
+                        <span class="user-name" id="userName">Guest</span>
+                    </div>
+                    <button class="btn-icon" id="logoutBtn" title="Logout">
+                        <span>🚪</span>
+                    </button>
+                </div>
+            </header>
+            <main class="content">
+                <div class="content-inner">
+                    <div class="card card-full">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <span class="title-icon">⚙️</span>
+                                Server Administration
+                            </h3>
+                            <span class="card-badge">Admin Only</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="admin-controls-grid">
+                                <div class="admin-control-card danger">
+                                    <div class="admin-control-icon">🔄</div>
+                                    <div class="admin-control-content">
+                                        <h4>Restart Server</h4>
+                                        <p>Gracefully restart the Minecraft server with 5-second countdown</p>
+                                        <button class="btn btn-danger" id="restartServerBtn">
+                                            <span>🔄</span> Restart Server
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="admin-control-card danger">
+                                    <div class="admin-control-icon">🛑</div>
+                                    <div class="admin-control-content">
+                                        <h4>Stop Server</h4>
+                                        <p>Gracefully shutdown the server with 5-second countdown</p>
+                                        <button class="btn btn-danger" id="stopServerBtn">
+                                            <span>🛑</span> Stop Server
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="admin-control-card warning">
+                                    <div class="admin-control-icon">🔃</div>
+                                    <div class="admin-control-content">
+                                        <h4>Reload Configurations</h4>
+                                        <p>Reload all mod configurations without restarting</p>
+                                        <button class="btn btn-warning" id="reloadConfigsBtn">
+                                            <span>🔃</span> Reload Configs
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="admin-control-card success">
+                                    <div class="admin-control-icon">💾</div>
+                                    <div class="admin-control-content">
+                                        <h4>Save All Worlds</h4>
+                                        <p>Force save all loaded world chunks</p>
+                                        <button class="btn btn-success" id="saveWorldsBtn">
+                                            <span>💾</span> Save Worlds
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="admin-log-section">
+                                <h4 class="admin-log-title">
+                                    <span>📋</span> Action Log
+                                </h4>
+                                <div class="admin-log-messages" id="adminLogMessages">
+                                    <div class="admin-log-empty">No recent actions</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <footer class="footer">
+                <div class="footer-content">
+                    <div class="footer-left">
+                        <span>NeoEssentials Dashboard v2.0</span>
+                        <span class="separator">•</span>
+                        <span>Powered by NeoForge</span>
+                    </div>
+                    <div class="footer-right">
+                        <span>API Status:</span>
+                        <span class="api-status" id="apiStatus">
+                            <span class="status-dot"></span>
+                            Connected
+                        </span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="dashboard.js?v=417"></script>
+</body>
+</html>
