@@ -574,32 +574,63 @@ public class ConfigSplitter {
     }
 
     /**
-     * Check if a split config file needs updating
+     * Check if a split config file needs updating.
+     *
+     * Uses the same merge-not-replace strategy as ConfigManager.checkAndUpdateConfigVersion:
+     * adds only NEW keys from the JAR template, never overwrites user-set values.
+     * Still bumps _configVersion on disk after the merge.
      */
     private static void checkSplitConfigVersion(String fileName, File configFile, int expectedVersion) {
         try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
-            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonObject onDisk = JsonParser.parseReader(reader).getAsJsonObject();
 
             int currentVersion = 0;
-            if (config.has("_configVersion")) {
-                currentVersion = config.get("_configVersion").getAsInt();
+            if (onDisk.has("_configVersion")) {
+                currentVersion = onDisk.get("_configVersion").getAsInt();
             }
 
             if (currentVersion < expectedVersion) {
-                LOGGER.warn("Split config {} is outdated (version {} < {}). Updating...",
+                LOGGER.warn("Split config {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
                     fileName, currentVersion, expectedVersion);
 
-                // Create backup
+                // Load JAR template
+                JsonObject jarTemplate = null;
+                try (InputStream in = ResourceUtil.getJarConfigResource(fileName)) {
+                    if (in != null) {
+                        jarTemplate = JsonParser.parseReader(
+                            new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Could not load JAR template for {}: {}", fileName, e.getMessage());
+                }
+
+                if (jarTemplate == null) {
+                    LOGGER.warn("JAR template not found for {}. Skipping update.", fileName);
+                    return;
+                }
+
+                // Backup before modifying
                 String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
-                String backupName = fileName.replace(".json", String.format("_v%d_backup_%s.json", currentVersion, timestamp));
+                String backupName = fileName.replace(".json",
+                    String.format("_v%d_backup_%s.json", currentVersion, timestamp));
                 File backupFile = new File(configFile.getParentFile(), backupName);
                 java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 LOGGER.info("Created backup: {}", backupName);
 
-                // Update from JAR
-                copyDefaultSplitConfig(fileName);
-                LOGGER.info("Updated split config {} to version {}", fileName, expectedVersion);
+                // Deep-merge new keys from JAR into user's file, never overwrite existing values
+                mergeJsonObjects(onDisk, jarTemplate);
+
+                // Bump version
+                onDisk.addProperty("_configVersion", expectedVersion);
+
+                // Write back
+                try (java.io.FileWriter writer = new java.io.FileWriter(configFile, StandardCharsets.UTF_8)) {
+                    GSON.toJson(onDisk, writer);
+                }
+
+                LOGGER.info("Merged split config {} to version {}", fileName, expectedVersion);
+
             } else if (currentVersion > expectedVersion) {
                 LOGGER.warn("Split config {} has newer version ({}) than expected ({})",
                     fileName, currentVersion, expectedVersion);
