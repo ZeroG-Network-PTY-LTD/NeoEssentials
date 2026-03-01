@@ -1,0 +1,29 @@
+name: 💥 Crash Report
+description: Report a crash caused by the mod
+title: "[Crash]: "
+labels: ["crash"]
+assignees: []
+
+body:
+  - type: input
+    id: mod-version
+    attributes:
+      label: Mod Version
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft Version
+    validations:
+      required: true
+
+  - type: textarea
+    id: crash-report
+    attributes:
+      label: Full Crash Report
+      description: Paste the FULL crash report here.
+      render: shell
+    validations:
+      required: true
