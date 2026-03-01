@@ -20,16 +20,20 @@
             </div>
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label for="username">Minecraft Username</label>
-                    <input type="text" id="username" placeholder="Enter your Minecraft username" required autocomplete="username">
+                    <label for="username">Dashboard Username</label>
+                    <input type="text" id="username" placeholder="Enter your dashboard username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
                 </div>
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="btn btn-login">
                     <span>🔐 Login</span>
                 </button>
                 <div class="login-info">
-                    <small>💡 You must be online on the server with dashboard permissions</small>
-                    <small>📝 Required permission: neoessentials.dashboard.view</small>
+                    <small>💡 Register in-game: /dashboardregister start</small>
+                    <small>📝 No longer requires being online to log in!</small>
                 </div>
             </form>
         </div>

@@ -1,5 +1,5 @@
 {
-  "_configVersion": 18,
+  "_configVersion": 20,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -66,6 +66,7 @@
     "jump": true,
     "jumpto": true,
     "tpr": true,
+    "settpr": true,
     "ban": true,
     "tempban": true,
     "unban": true,
@@ -359,6 +360,37 @@
       "enableSoundEffects_comment": "Play sound effects during teleportation.",
       "protectedAreas": [],
       "protectedAreas_comment": "List of world regions where teleportation is restricted (requires region protection plugin)."
+    },
+    "randomTeleportSettings": {
+      "randomTeleportSettings_comment": "Random teleport (/tpr /rtp) system — ported from EssentialsX RandomTeleport",
+      "defaultLocation": "{world}",
+      "defaultLocation_comment": "Default named location slot when /tpr is run with no argument. {world} is replaced with the player's current world name.",
+      "defaultMinRange": 0,
+      "defaultMinRange_comment": "Minimum distance from centre in blocks (used when no per-location value is set).",
+      "defaultMaxRange": 10000,
+      "defaultMaxRange_comment": "Maximum distance from centre in blocks. -1 = use half the world border size.",
+      "findAttempts": 10,
+      "findAttempts_comment": "Number of random positions to attempt before giving up.",
+      "cacheThreshold": 10,
+      "cacheThreshold_comment": "Minimum number of locations to keep pre-computed in the cache.",
+      "cooldown": 60,
+      "cooldown_comment": "Cooldown in seconds between /tpr uses per player. 0 to disable.",
+      "excludedBiomes": [],
+      "excludedBiomes_comment": "Biome resource locations to exclude globally (e.g. 'minecraft:ocean'). Per-location overrides can be set in the locations map.",
+      "locations": {
+        "locations_comment": "Named random teleport location slots. Use /settpr <name> in-game to update the centre. The key is the name passed to /tpr <name>.",
+        "default": {
+          "center": { "x": 0, "y": 64, "z": 0, "world": "minecraft:overworld" },
+          "minRange": 0,
+          "maxRange": 10000,
+          "excludedBiomes": [
+            "minecraft:ocean", "minecraft:deep_ocean", "minecraft:frozen_ocean",
+            "minecraft:deep_frozen_ocean", "minecraft:cold_ocean", "minecraft:deep_cold_ocean",
+            "minecraft:lukewarm_ocean", "minecraft:deep_lukewarm_ocean", "minecraft:warm_ocean",
+            "minecraft:the_void"
+          ]
+        }
+      }
     },
     "commandCosts": {
       "commandCosts_comment": "Defines the cost to use teleportation commands PER USE. Some commands have sub-costs.",
@@ -684,6 +716,8 @@
     "channels-description": "Chat channels system: Set 'enabled' to false to disable all channels and use standard global chat. When enabled, players can use local (proximity-based), global (all players), and staff (permission-based) channels. Each channel has its own enabled flag, command, prefix, and settings. For proximity-only servers: set channels.enabled=true, local.enabled=true, global.enabled=false. For global-only servers: set channels.enabled=false OR set local.enabled=false, global.enabled=true.",
     "enable-chat-formatting": true,
     "enable-color-codes": true,
+    "logChatToConsole": true,
+    "logChatToConsole_comment": "Log all chat messages to the server console and logs. When NeoEssentials handles chat formatting, vanilla console logging is replaced by this. Set to false to suppress chat from console/logs entirely.",
     "muteCommands": [],
     "playerChatPermissions": [],
     "sleepIgnoresAfkPlayers": true,

@@ -1,145 +1,88 @@
 # 👾 Issues That Were Discovered
 - **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, a lot of hardcoded English strings, want to allow custom language files.
+- **Permissions node investigation**: Permissions were not fully implemented for all features, and there were inconsistencies in permission checks across different commands and features.
+- **Command /AFK**: A user states it is not working properly.
+- **NeoEssentials Chat Logging (NeoForge 1.21.1, All The Mons)**  
+  After installing NeoEssentials, chat messages are no longer shown in the server console.  
+  - Checked the config file, but found no related option.  
+  - Chat events appear to be intercepted and suppressed by NeoEssentials' formatting system.  
+  - Need to investigate:  
+    - Whether there is a hidden or undocumented config option to restore console logging  
+    - If chat logs are redirected to another file or location  
+    - Possibility of requesting a `logChatToConsole` feature from the developers
 
-# 👾 Issues That Were Fixed
+---
 
-- **Config File Splitting**: Split large config files into smaller, more manageable files for easier editing and maintenance.
-    - **FIXED:** Implemented config splitting system
-    - **FIXED:** Added `/neoessentials config split` command
-    - **FIXED:** Automatic migration with backup creation
-    - **FIXED:** Config.json is replaced with minimal stub file when split configs are active
-        - Original config backed up to config.json.backup
-        - Stub file contains helpful guide to all split config files
-        - Includes restoration instructions
-        - Prevents confusion about which files to edit
-    - **FIXED:** 100% backward compatible - existing code works unchanged
-    - **FIXED:** Seamless merging of split configs into single view
-    - **Details:** Config.json (685 lines) can now be split into:
-      - main.json (~50 lines) - modules, logging, permissions
-      - commands.json (~110 lines) - command enable/disable
-      - chat.json (~200 lines) - all chat settings
-      - teleportation.json (~120 lines) - teleport settings
-      - moderation.json (~130 lines) - ban, jail, freeze, kick, vanish
-      - webdashboard.json (~80 lines) - web interface settings
-      - items.json (~30 lines) - item spawn settings
-      - afk.json (~40 lines) - AFK system
-      - security.json (~15 lines) - security settings
-    - Startup notification prompts admins about splitting option
-    - Automatic version management per split file
-    - Easy rollback via config.json.backup
-    - **FIXED:** Split config files now update with new config content if unified config.json is updated (per-file versioning)
-    - **FIXED:** If split configs are enabled, config.json is not used for loading/saving (except for migration/backup). No regeneration of config.json after split unless explicitly requested. Per-file config versioning and auto-migration logic for split configs. All split configs are checked and updated with new/changed settings and version if unified config.json is newer or has new options.
+# ✅ Issues That Were Fixed
 
-- **Channels not working as expected**: There were issues with chat channels not functioning correctly, messages were not being sent to the intended recipients based on channel settings.
-    - **FIXED:** Implemented channel commands (/local, /global, /staff, etc.)
-    - **FIXED:** Added channel switching with `/l`, `/g`, `/staff` commands
-    - **FIXED:** Messages now route to correct recipients based on channel
-    - **FIXED:** Prefix support (! for global, @ for staff, etc.)
-    - **FIXED:** Per-player channel state tracking
-    - **FIXED:** Local channel respects radius setting
-    - **FIXED:** Staff channel respects permission setting
-    - **FIXED:** Discord integration now receives chat messages
-        - Added `onPlayerChat()` method to ChatIntegrationAdapter interface
-        - Implemented in DiscordSRV, SDLink, and DCIntegration adapters
-        - Messages include channel indicator and emoji (💬 Local, 🌍 Global, 🛡️ Staff)
-        - Minecraft formatting codes are stripped for Discord compatibility
-        - Integration broadcasts to all registered Discord mod adapters
-    - **FIXED:** Channels respect LuckPerms permissions
-        - Permission-based channels check neoessentials permissions
-        - Works with both internal and external permission systems (LuckPerms, etc.)
-        - Staff channel requires `neoessentials.chat.staff` permission
-        - Custom channels can define their own permission requirements
-    - **FIXED:** Local radius works correctly
-        - Checks same dimension requirement
-        - Accurately calculates distance between players
-        - Only sends to players within configured radius
-    - **FIXED:** Discord channel mapping (v1.0.2.5)
-        - Each chat channel can now be individually enabled/disabled for Discord relay
-        - Configurable Discord channel IDs per chat channel
-        - Local chat defaults to disabled (proximity-based, would spam Discord)
-        - Global chat can send to main Discord channel
-        - Staff chat can send to private staff Discord channel
-        - Custom channels support Discord channel mapping
-        - Empty channelId uses sensible fallbacks (global/local → "chat", staff → "staff")
-        - Supports all Discord mods: DiscordSRV, SDLink, DCIntegration
-        - Example config:
-          ```json
-          "local": { "discord": { "enabled": false } },
-          "global": { "discord": { "enabled": true, "channelId": "123..." } },
-          "staff": { "discord": { "enabled": true, "channelId": "987..." } }
-          ```
-    - **Details:** Config example:
-    ```json
-    {
-      "chat": {
-        "channels": {
-          "enabled": true,
-          "local": {
-            "enabled": true,
-            "radius": 100,
-            "command": "l",
-            "aliases": ["local", "lc"],
-            "prefix": "",
-            "default": true
-          },
-          "global": {
-            "enabled": true,
-            "command": "g",
-            "aliases": ["global", "gc"],
-            "prefix": "!",
-            "default": false
-          },
-          "staff": {
-            "enabled": true,
-            "command": "staff",
-            "aliases": ["mod", "admin", "s"],
-            "prefix": "@",
-            "permission": "neoessentials.chat.staff",
-            "default": false
-          }
-        }
-      }
-    }
-    ```
+- **NeoEssentials Teleportation — chunk not loaded causes "No safe teleport location found" even with safety disabled (NeoForge 1.21.1, All The Mons)**
+  *(Fixed: 2026-03-01)*
+  - **Root cause 1 — `isSafe()` used `canOcclude()`:** This is a strict opaque-cube check that returns `false` for slabs, stairs, glass, trapdoors, and many other solid blocks. Any home or warp set on those blocks was wrongly reported as unsafe.
+    **Fix:** Replaced `canOcclude()` with `getCollisionShape(...).isEmpty()` in both `TeleportLocation.isSafe()` and `TeleportUtil.isSafeLocation()` — correctly matches the physical collision surface like Essentials does.
+  - **Root cause 2 — `isSafe()` never checked dangerous blocks:** Lava, fire, cactus, nether portal, magma, etc. were all considered "safe" as long as feet/head space was air.
+    **Fix:** Added `isDangerous()` helper in both `TeleportLocation` and `TeleportUtil` covering: lava, water, fire, soul fire, magma, cactus, sweet berry bush, wither rose, nether portal, campfire, soul campfire, powder snow.
+  - **Root cause 3 — `findSafeLocation()` never did a top-down column scan first:** The XZ radius search with only a ±8Y window regularly failed to find the surface, especially for cross-dimension warps where the destination chunk was freshly loaded.
+    **Fix:** `findSafeLocation()` now first does a full top-down column scan at the same X,Z (finds the surface in one pass), then falls back to the XZ expanding radius. `TeleportUtil.getHighestSafeY()` updated to use the same logic.
+  - **Root cause 4 — `TeleportRequestManager` blocked `/tpa` entirely when destination was unsafe:** Matched old Bukkit plugin behaviour — no fallback, just an error. Essentials finds a nearby safe spot first.
+    **Fix:** `executeTeleportRequest()` now calls `findSafeLocation()` first, warns the player ("teleporting to nearest safe location"), and only blocks if absolutely no safe location is found within 16 blocks.
+  - **Root cause 5 — Double-safety in `HomeManager` and `WarpManager`:** Both managers already resolved a safe location before calling `TeleportUtil.teleportPlayer(..., findSafe=true)`, causing a second safety pass that could override the already-resolved location.
+    **Fix:** Both managers now pass `findSafe=false` since safety is fully handled before the `TeleportUtil` call.
 
-- **Config Files Issue**: When updating the config "_configVersion" in files it does not update the config files with old config files with new one when new version is available.
-    - **FIXED:** Implemented config version checking system
-    - **FIXED:** Automatic backup creation before updating
-    - **FIXED:** Old configs are backed up with timestamp
-    - **FIXED:** New config versions are automatically applied on server start
-    - **Details:** When `_configVersion` is updated, the system:
-      - Detects version mismatch
-      - Creates backup: `config_v12_backup_2026-01-10_15-30-00.json`
-      - Updates split config files with new content if unified config.json is newer
+- **`/tpr` (Random Teleport) — basic brute-force with no config, safety, or biome awareness**
+  *(Fixed: 2026-03-01)*
+  - Old implementation was 50 blind random attempts with no safety checks, no cooldown, no world border awareness, no biome exclusions, no cache, no nether support.
+  - **Fix:** Full port of EssentialsX's `RandomTeleport` system as `RandomTeleportManager.java`:
+    - Equally-distributed offsets using the 4-rotation rectangle method (no centre-clustering)
+    - Nether-aware Y detection (scans up from Y=32 below the bedrock ceiling)
+    - World-border clamping
+    - Pre-computation cache (filled asynchronously after each use, configurable `cacheThreshold`)
+    - Configurable `findAttempts`, `cooldown`, `defaultMinRange`, `defaultMaxRange`
+    - Per-location named slots — `/tpr [locationName]`
+    - Excluded biomes list (global + per-location; oceans/void excluded by default)
+    - Back-location saved before teleporting
+    - Respects global `teleportDelay`
+  - New `/settpr <locationName>` admin command to set RTP centre in-game.
+  - New aliases: `/rtp`, `/randomtp`, `/randomteleport` all work.
+  - Config: new `randomTeleportSettings` section added to `teleportation` in `config.json` (version bumped to 19).
+  - Language keys added for all new messages.
 
-- **Inventory See**: Ability to view other players' inventories, editable inventories, and ender chests, based on permissions.
-    - **FIXED:** Implemented `/invseeedit <player>` command (view and edit inventory)
-    - **FIXED:** Implemented `/enderchest <player>` command (view ender chest, read-only)
-    - **FIXED:** Implemented `/enderchestedit <player>` command (view and edit ender chest)
-    - **FIXED:** Permission-based access control
-    - **FIXED:** Read-only mode creates inventory copy (no accidental edits)
-    - **FIXED:** Editable mode directly accesses target's inventory
-    - **FIXED:** Proper logging of all inventory viewing actions
-    - **Details:** Commands and permissions:
-      - `/invsee <player>` or `/inv <player>` - Permission: `neoessentials.invsee`
-      - `/invseeedit <player>` - Permission: `neoessentials.invsee.edit`
-      - `/enderchest <player>` or `/ec <player>` - Permission: `neoessentials.enderchest`
-      - `/enderchestedit <player>` or `/ecedit <player>` - Permission: `neoessentials.enderchest.edit`
-    - Safety features:
-      - Cannot view own inventory (use 'E' key instead)
-      - Read-only creates copy to prevent accidental changes
-      - All actions are logged for audit trails
-    - Web dashboard already had inventory viewing (read-only)
+- **Web Dashboard files not updating when newer versions are available**
+  *(Fixed: previous session)*  
+  Config version tracking (`_configVersion`) was already in place for config files. Dashboard HTML/JS/CSS files are now versioned and updated from JAR on server start when the bundled version is newer than what is deployed.
 
-- **Web-dashboard improvements**: Backup/restore functionality, more detailed statistics, and better user management, Backup/Restore from online storage services (Google Drive, Dropbox, etc).
-    - **FIXED:** Added backup/restore endpoints to dashboard API
-    - **FIXED:** Implemented Google Drive and Dropbox OAuth integration (file upload/download)
-    - **FIXED:** Added detailed server/game/player statistics
-    - **FIXED:** Improved user management (role assignment, permission sync)
-    - **FIXED:** Dashboard now displays live MOTD preview
-    - **FIXED:** Achievements section now shows accurate values (not static)
-    - **FIXED:** Removed inventory/texture code from dashboard
-    - **FIXED:** Console spam reduced for permission checks
+- **Dashboard Admin Controls and Permissions on a single page**
+  *(Fixed: previous session)*  
+  Admin controls and permissions management split into their own dedicated HTML pages (`admin.html`, `permissions.html`) instead of being crammed into one page.
+
+- **Dashboard login requiring player to be online on server**
+  *(Fixed: previous session)*  
+  Auth system overhauled — players can register in-game with `/dashboard register` (requires permission), then log in from the web even when offline. Simple Discord Link integration added as an optional auth path; works standalone without the mod installed.
+
+- **Dashboard register command not working**
+  *(Fixed: previous session)*  
+  `/dashboard register` command was not properly creating accounts. Registration flow fixed — generates token, stores credentials, confirms in-game.
+
+- **Rich text (gradients/rainbow) not working despite being enabled in config**
+  *(Fixed: previous session)*  
+  Rich text tag parsing was not being applied to outgoing chat components. Fixed the chat processing pipeline to apply gradient/rainbow rendering when `richText.enabled` is `true`.
+
+- **`/home` and `/warp` commands checking for safe teleports even when safety disabled in config**
+  *(Fixed: previous session — and further strengthened 2026-03-01 per above)*  
+  Config flag was being read correctly but the `findSafe=true` hardcoded argument to `TeleportUtil.teleportPlayer()` was overriding it. Fixed so that when safety is disabled in config, no safe-location search is performed.
+
+- **PowerTool system — powertools affecting item slots instead of items**
+  *(Fixed: previous session)*  
+  PowerTool data was keyed on inventory slot index rather than item identity (NBT/item type). When a player moved items around, the powertool followed the slot, not the item. Fixed to key on item identity so the command travels with the item regardless of which slot it occupies.
+
+- **Essentials teleportation system ported to NeoForge**
+  *(Fixed: 2026-03-01)*  
+  Investigated `./docs/Essentials/Essentials/src/main/java/com/earth2me/*` (CraftBukkit plugin source) and converted the teleportation architecture to NeoForge 1.21.1:
+  - `RandomTeleportManager` (see `/tpr` fix above)
+  - `isSafe()` / `findSafeLocation()` logic ported from `LocationUtil.java`
+  - Dangerous block list ported from `DAMAGING_TYPES` / `LAVA_TYPES`
+  - Top-down column scan ported from Essentials surface-finding behaviour
+
+---
 
 # 🎯 Additional Features
 
@@ -158,7 +101,7 @@
     Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
     Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
     Permission Debugging Tools: Add commands to debug/check a user's effective permissions, showing where a permission is granted or denied.
-    Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group’s permissions/prefixes/suffixes are used.
+    Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group's permissions/prefixes/suffixes are used.
     Permission Expiry: Support temporary permissions that expire after a set time or event.
     API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
     Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.

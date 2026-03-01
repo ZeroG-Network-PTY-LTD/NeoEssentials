@@ -4,6 +4,9 @@ import com.zerog.neoessentials.items.commands.PowertoolCommand;
 import com.zerog.neoessentials.items.commands.PowertoolToggleCommand;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -33,23 +36,30 @@ public class ItemInteractionHandler {
 
         try {
             UUID playerUUID = player.getUUID();
-            // Get the selected hotbar slot index (0-8)
-            // Access the public 'selected' field from Inventory class
-            int slot = player.getInventory().selected;
 
             // Check if player has powertool data
             if (!PowertoolCommand.hasPowertoolData(playerUUID)) {
                 return;
             }
 
-            // Check if this slot has a powertool command assigned
-            String command = PowertoolCommand.getPowertoolCommand(playerUUID, slot);
+            // Get the item being used
+            ItemStack heldItem = player.getMainHandItem();
+            if (heldItem.isEmpty()) {
+                return;
+            }
+
+            // Get item ID
+            ResourceLocation itemKey = BuiltInRegistries.ITEM.getKey(heldItem.getItem());
+            String itemId = itemKey.toString();
+
+            // Check if this item has a powertool command assigned
+            String command = PowertoolCommand.getPowertoolCommand(playerUUID, itemId);
             if (command == null || command.trim().isEmpty()) {
                 return;
             }
 
-            // Check if powertool is enabled for this slot
-            if (!PowertoolToggleCommand.isPowertoolEnabled(playerUUID, slot)) {
+            // Check if powertool is enabled for this item
+            if (!PowertoolToggleCommand.isPowertoolEnabled(playerUUID, itemId)) {
                 return;
             }
 

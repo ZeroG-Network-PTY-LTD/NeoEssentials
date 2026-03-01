@@ -10,6 +10,9 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -22,6 +25,8 @@ import org.slf4j.LoggerFactory;
  * <p>Commands:</p>
  * <ul>
  *   <li>/powertool &lt;command&gt; - Bind command to item in hand</li>
+ *   <li>/powertool remove - Remove powertool from item in hand</li>
+ *   <li>/powertool list - List all your powertools</li>
  *   <li>/powertool @p &lt;command&gt; - Create targeting command (executes on all other players)</li>
  *   <li>/ptool - Alias for /powertool</li>
  *   <li>/pt - Short alias for /powertool</li>
@@ -40,18 +45,20 @@ import org.slf4j.LoggerFactory;
  * 
  * <p>Features:</p>
  * <ul>
- *   <li>Bind any command to an item for right-click execution</li>
+ *   <li>Bind any command to an item TYPE (not slot) for right-click execution</li>
  *   <li>Advanced @p targeting executes command on all other online players</li>
  *   <li>Server-side storage prevents client tampering</li>
  *   <li>Supports placeholder substitution ({player} in commands)</li>
  *   <li>Audit logging for assignments and executions</li>
+ *   <li>Remove powertools with /powertool remove</li>
+ *   <li>List all powertools with /powertool list</li>
  * </ul>
  */
 public class PowertoolCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(PowertoolCommand.class);
     
-    // Server-side powertool assignments: player UUID -> slot -> command
-    private static final Map<java.util.UUID, Map<Integer, String>> POWERS = new HashMap<>();
+    // Server-side powertool assignments: player UUID -> item ID -> command
+    private static final Map<java.util.UUID, Map<String, String>> POWERS = new HashMap<>();
     /**
      * Register the /powertool and /pt commands.
      */
@@ -65,6 +72,49 @@ public class PowertoolCommand {
         dispatcher.register(
             Commands.literal(commandName)
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+                // /powertool list - List all powertools
+                .then(Commands.literal("list")
+                    .executes(ctx -> {
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult =
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+
+                        ServerPlayer player = permResult.getPlayer();
+                        return listPowertools(player);
+                    })
+                )
+                // /powertool remove - Remove powertool from item in hand
+                .then(Commands.literal("remove")
+                    .executes(ctx -> {
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult =
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+
+                        ServerPlayer player = permResult.getPlayer();
+                        ItemStack heldItem = player.getMainHandItem();
+
+                        if (heldItem.isEmpty()) {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.no_item"));
+                            return 0;
+                        }
+
+                        String itemId = getItemId(heldItem);
+                        if (removePowertool(player.getUUID(), itemId)) {
+                            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.remove.success"), false);
+                            return 1;
+                        } else {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.remove.not_found"));
+                            return 0;
+                        }
+                    })
+                )
+                // /powertool <command> - Assign command to item
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .executes(ctx -> {
                         // Validate permission
@@ -83,6 +133,13 @@ public class PowertoolCommand {
                             return executeTargetCommand(ctx.getSource(), player, cmd.substring(3));
                         }
                         
+                        // Check if player is holding an item
+                        ItemStack heldItem = player.getMainHandItem();
+                        if (heldItem.isEmpty()) {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.no_item"));
+                            return 0;
+                        }
+
                         // Original powertool functionality
                         // Validate command
                         com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
@@ -102,6 +159,49 @@ public class PowertoolCommand {
         dispatcher.register(
             Commands.literal("pt")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+                // /pt list
+                .then(Commands.literal("list")
+                    .executes(ctx -> {
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult =
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+
+                        ServerPlayer player = permResult.getPlayer();
+                        return listPowertools(player);
+                    })
+                )
+                // /pt remove
+                .then(Commands.literal("remove")
+                    .executes(ctx -> {
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult =
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+
+                        ServerPlayer player = permResult.getPlayer();
+                        ItemStack heldItem = player.getMainHandItem();
+
+                        if (heldItem.isEmpty()) {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.no_item"));
+                            return 0;
+                        }
+
+                        String itemId = getItemId(heldItem);
+                        if (removePowertool(player.getUUID(), itemId)) {
+                            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.remove.success"), false);
+                            return 1;
+                        } else {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.remove.not_found"));
+                            return 0;
+                        }
+                    })
+                )
+                // /pt <command>
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .executes(ctx -> {
                         // Validate permission
@@ -120,6 +220,13 @@ public class PowertoolCommand {
                             return executeTargetCommand(ctx.getSource(), player, cmd.substring(3));
                         }
                         
+                        // Check if player is holding an item
+                        ItemStack heldItem = player.getMainHandItem();
+                        if (heldItem.isEmpty()) {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.powertool.no_item"));
+                            return 0;
+                        }
+
                         // Original powertool functionality
                         // Validate command
                         com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
@@ -139,19 +246,52 @@ public class PowertoolCommand {
     }
 
     /**
-     * Assigns a command to the item in the player's main hand using vanilla NBT.
+     * Get the item ID from an ItemStack.
+     */
+    private static String getItemId(ItemStack itemStack) {
+        ResourceLocation itemKey = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+        return itemKey.toString();
+    }
+
+    /**
+     * Assigns a command to the item type in the player's main hand.
      * Logs the assignment for audit trail purposes.
      * 
      * @param player The player assigning the powertool
      * @param command The command to bind to the item
      */
     public static void assign(ServerPlayer player, String command) {
-        int slot = player.getInventory().selected;
-        POWERS.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(slot, command);
-        
+        ItemStack heldItem = player.getMainHandItem();
+        String itemId = getItemId(heldItem);
+
+        POWERS.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(itemId, command);
+
         // Log powertool assignment for audit trail
-        LOGGER.info("Player {} assigned powertool command '{}' to slot {}", 
-            player.getName().getString(), command, slot);
+        LOGGER.info("Player {} assigned powertool command '{}' to item {}",
+            player.getName().getString(), command, itemId);
+    }
+
+    /**
+     * List all powertools for a player.
+     */
+    private static int listPowertools(ServerPlayer player) {
+        Map<String, String> playerPowers = POWERS.get(player.getUUID());
+
+        if (playerPowers == null || playerPowers.isEmpty()) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.powertool.list.empty"));
+            return 0;
+        }
+
+        player.sendSystemMessage(MessageUtil.success("commands.neoessentials.powertool.list.header"));
+        for (Map.Entry<String, String> entry : playerPowers.entrySet()) {
+            String itemId = entry.getKey();
+            String command = entry.getValue();
+            // Extract just the item name from the full ID (e.g., "minecraft:diamond_sword" -> "diamond_sword")
+            String itemName = itemId.contains(":") ? itemId.substring(itemId.indexOf(":") + 1) : itemId;
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §e" + itemName + "§r: §7" + command));
+        }
+
+        return 1;
     }
 
     /**
@@ -162,24 +302,27 @@ public class PowertoolCommand {
     }
 
     /**
-     * Get the powertool command for a specific slot.
+     * Get the powertool command for a specific item.
      */
-    public static String getPowertoolCommand(java.util.UUID playerUUID, int slot) {
-        Map<Integer, String> playerPowers = POWERS.get(playerUUID);
-        return playerPowers != null ? playerPowers.get(slot) : null;
+    public static String getPowertoolCommand(java.util.UUID playerUUID, String itemId) {
+        Map<String, String> playerPowers = POWERS.get(playerUUID);
+        return playerPowers != null ? playerPowers.get(itemId) : null;
     }
 
     /**
-     * Remove powertool command from a slot.
+     * Remove powertool command from an item.
+     * @return true if a powertool was removed, false if none existed
      */
-    public static void removePowertool(java.util.UUID playerUUID, int slot) {
-        Map<Integer, String> playerPowers = POWERS.get(playerUUID);
+    public static boolean removePowertool(java.util.UUID playerUUID, String itemId) {
+        Map<String, String> playerPowers = POWERS.get(playerUUID);
         if (playerPowers != null) {
-            playerPowers.remove(slot);
+            String removed = playerPowers.remove(itemId);
             if (playerPowers.isEmpty()) {
                 POWERS.remove(playerUUID);
             }
+            return removed != null;
         }
+        return false;
     }
 
     /**

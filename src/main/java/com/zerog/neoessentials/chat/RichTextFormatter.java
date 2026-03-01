@@ -36,23 +36,26 @@ public class RichTextFormatter {
      * Process rich text formatting tags and convert to colored components.
      */
     public static Component processRichText(String text) {
-        if (!isRichTextEnabled()) {
-            return Component.literal(text);
-        }
-
         try {
-            // Process gradients first
-            text = processGradients(text);
+            if (isRichTextEnabled()) {
+                // Process gradients first
+                text = processGradients(text);
 
-            // Process rainbow
-            text = processRainbow(text);
+                // Process rainbow
+                text = processRainbow(text);
+            }
 
-            // Parse final result with color codes
+            // Always parse color codes (even if rich text effects are disabled)
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
 
         } catch (Exception e) {
             LOGGER.error("Error processing rich text: {}", e.getMessage(), e);
-            return Component.literal(text);
+            // Still try to parse color codes on error
+            try {
+                return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
+            } catch (Exception e2) {
+                return Component.literal(text);
+            }
         }
     }
 

@@ -331,16 +331,28 @@ function switchPage(pageName) {
 // Handle login
 async function handleLogin() {
     const username = document.getElementById('username').value;
+    const password = document.getElementById('password') ? document.getElementById('password').value : null;
     const loginError = document.getElementById('loginError');
     
     if (!username || username.trim() === '') {
         if (loginError) {
-            loginError.textContent = 'Please enter your Minecraft username';
+            loginError.textContent = 'Please enter your dashboard username';
             loginError.style.display = 'block';
         }
         return;
     }
     
+    // Password-based authentication (new system)
+    if (password !== null) {
+        if (!password || password.trim() === '') {
+            if (loginError) {
+                loginError.textContent = 'Please enter your password';
+                loginError.style.display = 'block';
+            }
+            return;
+        }
+    }
+
     // Clear previous error
     if (loginError) loginError.style.display = 'none';
     
@@ -353,15 +365,28 @@ async function handleLogin() {
     }
     
     try {
+        // Prepare login request based on available fields
+        let requestBody;
+        if (password !== null) {
+            // Password-based authentication (new registration system)
+            requestBody = {
+                username: username.trim(),
+                password: password.trim()
+            };
+        } else {
+            // Legacy Minecraft authentication (deprecated, requires online)
+            requestBody = {
+                username: username.trim(),
+                type: 'minecraft'
+            };
+        }
+
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                username: username.trim(),
-                type: 'minecraft'
-            })
+            body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();
@@ -370,7 +395,7 @@ async function handleLogin() {
             // Store auth data
             localStorage.setItem('authToken', data.sessionId || data.token);
             localStorage.setItem('sessionId', data.sessionId);
-            localStorage.setItem('authType', data.authType || 'minecraft');
+            localStorage.setItem('authType', data.authType || 'password');
 
             // Extract user data
             if (data.user) {
@@ -390,7 +415,11 @@ async function handleLogin() {
         } else {
             // Show error
             if (loginError) {
-                loginError.textContent = data.error || 'Authentication failed';
+                let errorMessage = data.error || 'Authentication failed';
+                if (errorMessage.includes('online')) {
+                    errorMessage = 'Invalid credentials. Register in-game: /dashboardregister start';
+                }
+                loginError.textContent = errorMessage;
                 loginError.style.display = 'block';
             }
             console.error('Login failed:', data.error);

@@ -403,9 +403,9 @@ public class HomeManager {
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-        // Perform teleportation
-        int delayTicks = teleportDelay * 20; // Convert seconds to ticks
-        TeleportUtil.teleportPlayer(player, home, delayTicks, true).thenAccept(result -> {
+        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        int delayTicks = teleportDelay * 20;
+        TeleportUtil.teleportPlayer(player, home, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.success", homeName));
                 // Log home teleport if enabled in config
