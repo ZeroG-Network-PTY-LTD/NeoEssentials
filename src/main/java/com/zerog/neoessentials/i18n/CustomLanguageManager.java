@@ -120,6 +120,9 @@ public class CustomLanguageManager {
                 LOGGER.error("Critical: Language file {} still does not exist after copy attempt! Translations will not be loaded from disk.", langFile.toAbsolutePath());
             }
 
+            // Deploy all other bundled language files from the JAR (fr_fr, de_de, es_es, etc.)
+            deployBundledLanguageFiles();
+
             // Scan for custom language files (will load the file)
             scanCustomLanguageFiles();
 
@@ -398,6 +401,69 @@ public class CustomLanguageManager {
         public String getAuthor() { return author; }
         public String getVersion() { return version; }
         public Path getFilePath() { return filePath; }
+    }
+
+    /**
+     * Deploy all bundled language files from the JAR to the custom language directory.
+     * - If the file does not exist on disk → copy from JAR (first-run)
+     * - If the file already exists → merge only NEW keys from the JAR, preserving user edits
+     * Skips en_us.json (handled separately above).
+     */
+    private void deployBundledLanguageFiles() {
+        // All language codes bundled in the JAR (excluding en_us which is handled separately)
+        String[] bundledLangs = {"fr_fr", "de_de", "es_es", "pt_br", "zh_cn", "nl_nl", "pl_pl", "ru_ru"};
+        int deployed = 0;
+        int merged = 0;
+        for (String langCode : bundledLangs) {
+            String fileName = langCode + ".json";
+            Path target = customLangDir.resolve(fileName);
+            try {
+                try (InputStream in = findLangResource(fileName)) {
+                    if (in == null) {
+                        LOGGER.debug("No bundled lang file found in JAR for: {}", langCode);
+                        continue;
+                    }
+                    if (!Files.exists(target)) {
+                        // First run — copy from JAR
+                        Files.copy(in, target);
+                        LOGGER.info("Deployed bundled language file: {}", fileName);
+                        deployed++;
+                    } else {
+                        // Already on disk — merge NEW keys only, don't overwrite user edits
+                        Type type = new TypeToken<Map<String, String>>(){}.getType();
+                        Map<String, String> jarLang;
+                        try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                            jarLang = gson.fromJson(reader, type);
+                        }
+                        Map<String, String> diskLang;
+                        try (Reader reader = Files.newBufferedReader(target, StandardCharsets.UTF_8)) {
+                            diskLang = gson.fromJson(reader, type);
+                        }
+                        if (jarLang != null && diskLang != null) {
+                            boolean updated = false;
+                            for (Map.Entry<String, String> entry : jarLang.entrySet()) {
+                                if (!diskLang.containsKey(entry.getKey())) {
+                                    diskLang.put(entry.getKey(), entry.getValue());
+                                    updated = true;
+                                }
+                            }
+                            if (updated) {
+                                try (Writer writer = Files.newBufferedWriter(target, StandardCharsets.UTF_8)) {
+                                    gson.toJson(diskLang, writer);
+                                }
+                                LOGGER.info("Merged new keys from JAR into {}", fileName);
+                                merged++;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to deploy/merge bundled language file {}: {}", fileName, e.getMessage());
+            }
+        }
+        if (deployed > 0 || merged > 0) {
+            LOGGER.info("Language deployment complete: {} deployed, {} merged", deployed, merged);
+        }
     }
 
     private InputStream findLangResource(String filename) {

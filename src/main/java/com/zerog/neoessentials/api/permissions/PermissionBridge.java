@@ -602,8 +602,8 @@ public class PermissionBridge {
                 case "kits", "kit" -> {
                     return PermissionRegistry.PermissionCategory.KITS;
                 }
-                case "moderation", "mod", "mute", "ban" -> {
-                    return PermissionRegistry.PermissionCategory.MISC;
+                case "moderation", "mod", "mute", "ban", "kick", "freeze", "jail", "vanish" -> {
+                    return PermissionRegistry.PermissionCategory.MODERATION;
                 }
                 case "admin", "administration" -> {
                     return PermissionRegistry.PermissionCategory.ADMIN;

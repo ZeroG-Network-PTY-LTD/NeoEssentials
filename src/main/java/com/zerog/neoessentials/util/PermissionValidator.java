@@ -35,9 +35,10 @@ public class PermissionValidator {
             
             // Validate permission
             if (!PermissionAPI.hasPermission(playerUuid, permission)) {
-                LOGGER.debug("Permission denied for player {} ({}): {}", 
+                LOGGER.debug("Permission denied for player {} ({}): {}",
                     player.getGameProfile().getName(), playerUuid, permission);
-                return PermissionResult.failure("You don't have permission to use this command");
+                return PermissionResult.failure(
+                    "You don't have permission to use this command.\n§7Required: §f" + permission);
             }
             
             return PermissionResult.success(player);
@@ -70,10 +71,12 @@ public class PermissionValidator {
                 }
             }
             
-            LOGGER.debug("Permission denied for player {} ({}): none of {}", 
+            LOGGER.debug("Permission denied for player {} ({}): none of {}",
                 player.getGameProfile().getName(), playerUuid, java.util.Arrays.toString(permissions));
-            return PermissionResult.failure("You don't have permission to use this command");
-            
+            return PermissionResult.failure(
+                "You don't have permission to use this command.\n§7Required (any): §f"
+                + String.join("§7 or §f", permissions));
+
         } catch (Exception e) {
             LOGGER.error("Error validating permissions {} for source: {}", 
                 java.util.Arrays.toString(permissions), e.getMessage(), e);
@@ -114,11 +117,12 @@ public class PermissionValidator {
                 return PermissionResult.failure("You cannot target yourself with this command");
             }
             
-            // Check base permission
-            if (!PermissionAPI.hasPermission(executorUuid, basePermission)) {
-                return PermissionResult.failure("You don't have permission to use this command");
-            }
-            
+        // Check base permission
+        if (!PermissionAPI.hasPermission(executorUuid, basePermission)) {
+            return PermissionResult.failure(
+                "You don't have permission to use this command.\n§7Required: §f" + basePermission);
+        }
+
             // Check if executor can target this player (prevent privilege escalation)
             String targetProtectionPerm = basePermission + ".exempt";
             if (PermissionAPI.hasPermission(targetUuid, targetProtectionPerm)) {

@@ -36,14 +36,15 @@ public class PermissionRegistry {
     // Permission categories for organization
     public enum PermissionCategory {
         ADMIN("admin", "Administrative commands"),
-        ECONOMY("economy", "Economy system"),
-        TELEPORT("teleport", "Teleportation commands"),
-        CHAT("chat", "Chat and messaging"),
-        KITS("kits", "Kit system"),
-        ITEMS("items", "Item management"),
-        MISC("misc", "Miscellaneous commands"),
-        CORE("core", "Core functionality");
-        
+    ECONOMY("economy", "Economy system"),
+    TELEPORT("teleport", "Teleportation commands"),
+    CHAT("chat", "Chat and messaging"),
+    KITS("kits", "Kit system"),
+    ITEMS("items", "Item management"),
+    MODERATION("moderation", "Moderation commands"),
+    MISC("misc", "Miscellaneous commands"),
+    CORE("core", "Core functionality");
+
         private final String key;
         private final String description;
         
@@ -353,6 +354,16 @@ public class PermissionRegistry {
         register("neoessentials.suicide", "Use suicide command", PermissionCategory.MISC, true);
         register("neoessentials.ping", "Check own ping", PermissionCategory.MISC, true);
         register("neoessentials.ping.others", "Check others' ping", PermissionCategory.MISC, false);
+        register("neoessentials.book", "Give yourself a writable book", PermissionCategory.MISC, true);
+        register("neoessentials.book.unlock", "Unlock a written book for editing", PermissionCategory.MISC, false);
+        register("neoessentials.book.title", "Set the title of a written book", PermissionCategory.MISC, false);
+        register("neoessentials.book.author", "Set the author of a written book", PermissionCategory.MISC, false);
+        register("neoessentials.depth", "View depth/Y-level information", PermissionCategory.MISC, true);
+        register("neoessentials.depth.others", "View others' depth information", PermissionCategory.MISC, false);
+        register("neoessentials.gamemode", "Change own gamemode", PermissionCategory.MISC, false);
+        register("neoessentials.gamemode.others", "Change others' gamemode", PermissionCategory.ADMIN, false);
+        register("neoessentials.helpop", "Send a help request to staff", PermissionCategory.MISC, true);
+        register("neoessentials.helpop.receive", "Receive help-op requests", PermissionCategory.MISC, false);
 
         // Permission system
         register("neoessentials.permissions.admin", "Permission system administration", PermissionCategory.ADMIN, false);
@@ -364,7 +375,97 @@ public class PermissionRegistry {
         // Debug and info
         register("neoessentials.debug", "Debug mode access", PermissionCategory.ADMIN, false);
         register("neoessentials.info", "View mod information", PermissionCategory.MISC, true);
-        
+
+        // ── Moderation commands (actual permission nodes, not lang keys) ─────
+        register("neoessentials.moderation.ban", "Ban players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.banip", "Ban IP addresses", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.banlist", "View ban list", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.tempban", "Temporarily ban players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.unban", "Unban players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.unbanip", "Unban IP addresses", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.kick", "Kick players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.kickall", "Kick all players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.freeze", "Freeze players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.unfreeze", "Unfreeze players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.freezeall", "Freeze all players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.unfreezeall", "Unfreeze all players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.freezelist", "View frozen players list", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jail", "Jail players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.unjail", "Unjail players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.setjail", "Create jail locations", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jaillist", "View jailed players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jailinfo", "View jail info", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.vanish", "Vanish self", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.vanish.others", "Vanish other players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.seevanished", "See vanished players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.vanishlist", "View vanished players list", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.notify", "Receive moderation notifications", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.notifications", "Receive moderation event broadcasts", PermissionCategory.MODERATION, false);
+        register("neoessentials.vanish.see", "See vanished players (alias)", PermissionCategory.MODERATION, false);
+
+        // ── Utility / misc commands not yet registered ────────────────────────
+        register("neoessentials.list", "View online player list", PermissionCategory.MISC, true);
+        register("neoessentials.near", "View nearby players", PermissionCategory.MISC, true);
+        register("neoessentials.nick", "Change own nickname", PermissionCategory.MISC, true);
+        register("neoessentials.nick.color", "Use colour codes in nickname", PermissionCategory.MISC, false);
+        register("neoessentials.nick.others", "Change other players' nicknames", PermissionCategory.MISC, false);
+        register("neoessentials.staff", "Access staff chat and staff features", PermissionCategory.MISC, false);
+        register("neoessentials.motd", "View MOTD", PermissionCategory.MISC, true);
+        register("neoessentials.motd.set", "Set MOTD", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.broadcast", "Broadcast MOTD", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.reload", "Reload MOTD", PermissionCategory.ADMIN, false);
+
+        // ── Mail system ───────────────────────────────────────────────────────
+        register("neoessentials.mail", "Use mail system", PermissionCategory.CHAT, true);
+        register("neoessentials.mail.send", "Send mail to players", PermissionCategory.CHAT, true);
+        register("neoessentials.mail.clear", "Clear own mail", PermissionCategory.CHAT, true);
+
+        // ── Item system additions ─────────────────────────────────────────────
+        register("neoessentials.item.enchant.any", "Enchant any item (ignore restrictions)", PermissionCategory.ITEMS, false);
+        register("neoessentials.item.spawn", "Use /spawnitem command", PermissionCategory.ITEMS, false);
+
+        // ── Teleport additions ────────────────────────────────────────────────
+        register("neoessentials.teleport.settpr", "Set random teleport centre", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.tp", "Teleport self (alias)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.tphere", "Teleport others to self (alias)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.tppos", "Teleport to coordinates (alias)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.pwarp", "Use player warps", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.pwarp.create", "Create player warps", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.pwarp.delete", "Delete player warps", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.pwarp.list", "List player warps", PermissionCategory.TELEPORT, true);
+
+        // ── Kits additions ────────────────────────────────────────────────────
+        register("neoessentials.kits.create", "Create kits via /createkit", PermissionCategory.KITS, false);
+        register("neoessentials.kits.delete", "Delete kits via /delkit", PermissionCategory.KITS, false);
+        register("neoessentials.kits.override", "Override kit restrictions", PermissionCategory.KITS, false);
+
+        // ── Permissions sub-command nodes ─────────────────────────────────────
+        register("neoessentials.permissions.check", "Check a player's permissions", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.search", "Search permissions", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.list.groups", "List permission groups", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.list.users", "List permission users", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.info.user", "View user permission info", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.info.group", "View group permission info", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.user.permissions", "Manage user permission nodes", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.user.groups", "Manage user group membership", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.user.clear", "Clear all user permissions", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.create", "Create permission groups", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.delete", "Delete permission groups", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.rename", "Rename permission groups", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.clone", "Clone permission groups", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.inherit", "Set group inheritance", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.permissions", "Manage group permission nodes", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.modify", "Modify group settings", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.clear", "Clear all group permissions", PermissionCategory.ADMIN, false);
+
+        // ── Dashboard ────────────────────────────────────────────────────────
+        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
+        register("neoessentials.dashboard.access", "Register and access the web dashboard", PermissionCategory.MISC, false);
+        register("neoessentials.dashboard.view", "View-only dashboard access", PermissionCategory.MISC, false);
+        register("neoessentials.dashboard.manage", "Manage dashboard settings", PermissionCategory.ADMIN, false);
+        register("neoessentials.dashboard.moderator", "Moderator dashboard access", PermissionCategory.MODERATION, false);
+        register("neoessentials.dashboard.admin", "Full admin dashboard access", PermissionCategory.ADMIN, false);
+
         LOGGER.info("Registered {} permission nodes", registeredPermissions.size());
     }
     
@@ -452,15 +553,16 @@ public class PermissionRegistry {
         if (parts.length >= 2) {
             String category = parts[1].toLowerCase();
             
-            return switch (category) {
-                case "economy", "eco", "balance", "pay", "money" -> PermissionCategory.ECONOMY;
-                case "teleport", "tp", "tpa", "home", "warp", "spawn" -> PermissionCategory.TELEPORT;
-                case "chat", "msg", "message", "reply", "socialspy", "mute", "ignore" -> PermissionCategory.CHAT;
-                case "kit", "kits" -> PermissionCategory.KITS;
-                case "item", "items", "give", "enchant", "repair" -> PermissionCategory.ITEMS;
-                case "admin", "reload", "permissions", "debug" -> PermissionCategory.ADMIN;
-                default -> PermissionCategory.MISC;
-            };
+        return switch (category) {
+            case "economy", "eco", "balance", "pay", "money" -> PermissionCategory.ECONOMY;
+            case "teleport", "tp", "tpa", "home", "warp", "spawn" -> PermissionCategory.TELEPORT;
+            case "chat", "msg", "message", "reply", "socialspy", "mute", "ignore" -> PermissionCategory.CHAT;
+            case "kit", "kits" -> PermissionCategory.KITS;
+            case "item", "items", "give", "enchant", "repair" -> PermissionCategory.ITEMS;
+            case "moderation", "mod", "ban", "kick", "freeze", "jail", "vanish" -> PermissionCategory.MODERATION;
+            case "admin", "reload", "permissions", "debug" -> PermissionCategory.ADMIN;
+            default -> PermissionCategory.MISC;
+        };
         }
         
         return PermissionCategory.CORE;
