@@ -368,18 +368,23 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(teleporter);
 
         TeleportLocation targetLocation = new TeleportLocation(destination);
-        // Enforce teleport safety if enabled (only block if safety is required)
-        if (enableTeleportSafety) {
-            if (!targetLocation.isSafe()) {
+
+        // Enforce teleport safety if enabled — find a nearby safe spot rather than blocking entirely
+        if (enableTeleportSafety && !targetLocation.isSafe()) {
+            TeleportLocation safeLocation = targetLocation.findSafeLocation();
+            if (safeLocation == null) {
                 teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location", destination.getName().getString()));
                 destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location_other", teleporter.getName().getString()));
                 if (logTeleportRequests) {
-                    LOGGER.warn("Teleport request from {} to {} blocked: unsafe destination", teleporter.getName().getString(), destination.getName().getString());
+                    LOGGER.warn("Teleport request from {} to {} blocked: no safe location found near destination",
+                        teleporter.getName().getString(), destination.getName().getString());
                 }
                 return;
             }
+            // Warn and continue with safe location
+            teleporter.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.request.moved_to_safety"));
+            targetLocation = safeLocation;
         }
-        // If safety is not required, allow teleportation to unsafe locations
         int delayTicks = teleportDelay * 20;
         TeleportUtil.teleportPlayer(teleporter, targetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {

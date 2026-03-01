@@ -302,70 +302,77 @@ public class TeleportUtil {
     }
     
     /**
-     * Get the highest safe Y coordinate at the given X,Z in the world
+     * Get the highest safe Y coordinate at the given X,Z in the world.
+     * Scans top-down for a solid, non-dangerous ground with two clear blocks above.
      */
     public static int getHighestSafeY(ServerLevel level, int x, int z) {
-        // Search downward for a safe spot
-        for (int y = level.getMaxBuildHeight() - 1; y >= level.getMinBuildHeight(); y--) {
+        for (int y = level.getMaxBuildHeight() - 2; y >= level.getMinBuildHeight() + 1; y--) {
             BlockPos testPos = new BlockPos(x, y, z);
-            BlockPos above = testPos.above();
-            
-            // Check if this position is safe (solid ground, air above)
-            if (!level.getBlockState(testPos).isAir() && level.getBlockState(testPos).canOcclude() && 
-                level.getBlockState(above).isAir() && 
-                level.getBlockState(above.above()).isAir()) {
-                return y + 1; // Return the air block above the solid ground
+            if (isSafeLocation(level, testPos)) {
+                return y;
             }
         }
-        
-        return level.getSeaLevel(); // Fallback to sea level
+        return level.getSeaLevel();
     }
-    
+
     /**
-     * Find the nearest safe location to a position
+     * Find the nearest safe location to a position.
      */
     public static BlockPos findNearestSafeLocation(ServerLevel level, BlockPos center, int maxRadius) {
-        // Try the center first
-        if (isSafeLocation(level, center)) {
-            return center;
-        }
-        
-        // Search in expanding spiral
+        if (isSafeLocation(level, center)) return center;
+
         for (int radius = 1; radius <= maxRadius; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     if (Math.abs(dx) != radius && Math.abs(dz) != radius) continue;
-                    
-                    BlockPos testPos = center.offset(dx, 0, dz);
-                    int safeY = getHighestSafeY(level, testPos.getX(), testPos.getZ());
-                    BlockPos safePos = new BlockPos(testPos.getX(), safeY, testPos.getZ());
-                    
-                    if (isSafeLocation(level, safePos)) {
-                        return safePos;
-                    }
+                    int safeY = getHighestSafeY(level, center.getX() + dx, center.getZ() + dz);
+                    BlockPos safePos = new BlockPos(center.getX() + dx, safeY, center.getZ() + dz);
+                    if (isSafeLocation(level, safePos)) return safePos;
                 }
             }
         }
-        
-        return null; // No safe location found
+        return null;
     }
-    
+
     /**
-     * Check if a location is safe for teleportation
+     * Check if a location is safe for teleportation.
+     * Uses isSolid() (not canOcclude()) and rejects dangerous block types.
      */
     public static boolean isSafeLocation(ServerLevel level, BlockPos pos) {
         if (!level.isLoaded(pos)) return false;
-        
+
         BlockPos ground = pos.below();
-        BlockPos feet = pos;
-        BlockPos head = pos.above();
-        
-        // Need solid ground and air for feet/head
-        boolean solidGround = !level.getBlockState(ground).isAir() && level.getBlockState(ground).canOcclude();
-        boolean feetFree = level.getBlockState(feet).isAir();
-        boolean headFree = level.getBlockState(head).isAir();
-        
-        return solidGround && feetFree && headFree;
+        BlockPos head   = pos.above();
+
+        net.minecraft.world.level.block.state.BlockState groundState = level.getBlockState(ground);
+        net.minecraft.world.level.block.state.BlockState feetState   = level.getBlockState(pos);
+        net.minecraft.world.level.block.state.BlockState headState   = level.getBlockState(head);
+
+        // Ground must be solid: has a non-empty collision shape and is not air
+        if (groundState.isAir() || groundState.getCollisionShape(level, ground).isEmpty()) return false;
+        if (!feetState.getCollisionShape(level, pos).isEmpty() && !feetState.isAir()) return false;
+        if (!headState.getCollisionShape(level, head).isEmpty() && !headState.isAir()) return false;
+        if (isDangerousBlock(groundState)) return false;
+        if (isDangerousBlock(feetState))   return false;
+
+        return true;
+    }
+
+    /** Returns true if the block state represents a dangerous block to stand on or in. */
+    private static boolean isDangerousBlock(net.minecraft.world.level.block.state.BlockState state) {
+        net.minecraft.world.level.block.Block block = state.getBlock();
+        return block == net.minecraft.world.level.block.Blocks.LAVA
+            || block == net.minecraft.world.level.block.Blocks.WATER
+            || block == net.minecraft.world.level.block.Blocks.FIRE
+            || block == net.minecraft.world.level.block.Blocks.SOUL_FIRE
+            || block == net.minecraft.world.level.block.Blocks.MAGMA_BLOCK
+            || block == net.minecraft.world.level.block.Blocks.CACTUS
+            || block == net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH
+            || block == net.minecraft.world.level.block.Blocks.WITHER_ROSE
+            || block == net.minecraft.world.level.block.Blocks.NETHER_PORTAL
+            || block == net.minecraft.world.level.block.Blocks.CAMPFIRE
+            || block == net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE
+            || block == net.minecraft.world.level.block.Blocks.POWDER_SNOW;
     }
     
     /**

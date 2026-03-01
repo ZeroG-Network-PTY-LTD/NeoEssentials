@@ -95,63 +95,110 @@ public class TeleportLocation {
     }
     
     /**
-     * Check if this location is safe for teleportation
+     * Check if this location is safe for teleportation.
+     * A location is safe when:
+     *  - the chunk is loaded
+     *  - the block at feet-level and head-level are passable (air / non-solid)
+     *  - the block below feet is solid and not dangerous (lava, fire, cactus…)
      */
     public boolean isSafe() {
         ServerLevel level = getLevel();
         if (level == null) return false;
-        
+
         BlockPos pos = new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-        
-        // Check if the location is loaded
+
         if (!level.isLoaded(pos)) return false;
-        
-        // Check if there's solid ground and air space for player
+
         BlockPos ground = pos.below();
-        BlockPos head = pos.above();
-        
-        // Need solid ground and air for feet/head
-        boolean solidGround = !level.getBlockState(ground).isAir() && level.getBlockState(ground).canOcclude();
-        boolean feetFree = level.getBlockState(pos).isAir();
-        boolean headFree = level.getBlockState(head).isAir();
-        
-        return solidGround && feetFree && headFree;
+        BlockPos head   = pos.above();
+
+        net.minecraft.world.level.block.state.BlockState groundState = level.getBlockState(ground);
+        net.minecraft.world.level.block.state.BlockState feetState   = level.getBlockState(pos);
+        net.minecraft.world.level.block.state.BlockState headState   = level.getBlockState(head);
+
+        // Ground must be solid: has a full (non-empty) collision shape and is not air
+        if (groundState.isAir() || groundState.getCollisionShape(level, ground).isEmpty()) return false;
+
+        // Feet and head must be passable
+        if (!feetState.getCollisionShape(level, pos).isEmpty() &&
+            !feetState.isAir()) return false;
+        if (!headState.getCollisionShape(level, head).isEmpty() &&
+            !headState.isAir()) return false;
+
+        // Reject dangerous ground / feet blocks
+        if (isDangerous(level, ground)) return false;
+        if (isDangerous(level, pos))    return false;
+
+        return true;
     }
-    
+
+    /** Returns true if the block at pos is dangerous to stand on/in. */
+    private boolean isDangerous(ServerLevel level, BlockPos pos) {
+        net.minecraft.world.level.block.Block block = level.getBlockState(pos).getBlock();
+        return block == net.minecraft.world.level.block.Blocks.LAVA
+            || block == net.minecraft.world.level.block.Blocks.WATER
+            || block == net.minecraft.world.level.block.Blocks.FIRE
+            || block == net.minecraft.world.level.block.Blocks.SOUL_FIRE
+            || block == net.minecraft.world.level.block.Blocks.MAGMA_BLOCK
+            || block == net.minecraft.world.level.block.Blocks.CACTUS
+            || block == net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH
+            || block == net.minecraft.world.level.block.Blocks.WITHER_ROSE
+            || block == net.minecraft.world.level.block.Blocks.NETHER_PORTAL
+            || block == net.minecraft.world.level.block.Blocks.CAMPFIRE
+            || block == net.minecraft.world.level.block.Blocks.SOUL_CAMPFIRE
+            || block == net.minecraft.world.level.block.Blocks.POWDER_SNOW;
+    }
+
     /**
-     * Find a safe location near this position
+     * Find a safe location near this position.
+     * Strategy (mirrors EssentialsX behaviour):
+     *  1. Try the original location first.
+     *  2. Scan downward from build-height at the same X,Z (surface landing).
+     *  3. Expand in XZ radius up to 16, scanning a ±8 Y window at each column.
      */
     public TeleportLocation findSafeLocation() {
         ServerLevel level = getLevel();
         if (level == null) return null;
-        
-        BlockPos startPos = new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-        
-        // Try the original location first
+
         if (isSafe()) return this;
-        
-        // Search in expanding radius
+
+        int ix = (int) Math.floor(x);
+        int iz = (int) Math.floor(z);
+
+        // Step 1: top-down scan at same X,Z column
+        TeleportLocation col = scanColumnTopDown(level, ix, iz);
+        if (col != null) return col;
+
+        // Step 2: expanding XZ radius
         for (int radius = 1; radius <= 16; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     if (Math.abs(dx) != radius && Math.abs(dz) != radius) continue;
-                    
-                    BlockPos searchPos = startPos.offset(dx, 0, dz);
-                    
-                    // Try different Y levels
+                    // Quick ±8 Y scan around the stored Y
+                    int bx = ix + dx, bz = iz + dz;
+                    int startY = (int) Math.floor(y);
                     for (int dy = -8; dy <= 8; dy++) {
-                        BlockPos testPos = searchPos.offset(0, dy, 0);
+                        BlockPos testPos = new BlockPos(bx, startY + dy, bz);
                         TeleportLocation testLoc = new TeleportLocation(level, testPos, yaw, pitch, createdBy);
-                        
-                        if (testLoc.isSafe()) {
-                            return testLoc;
-                        }
+                        if (testLoc.isSafe()) return testLoc;
                     }
                 }
             }
         }
-        
-        return null; // No safe location found
+
+        return null;
+    }
+
+    /** Scan from just below build height downward at the given X,Z to find a safe surface spot. */
+    private TeleportLocation scanColumnTopDown(ServerLevel level, int bx, int bz) {
+        int maxY = level.getMaxBuildHeight() - 2;
+        int minY = level.getMinBuildHeight() + 1;
+        for (int by = maxY; by >= minY; by--) {
+            BlockPos candidate = new BlockPos(bx, by, bz);
+            TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);
+            if (loc.isSafe()) return loc;
+        }
+        return null;
     }
     
     /**

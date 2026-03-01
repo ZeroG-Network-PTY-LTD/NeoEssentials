@@ -655,6 +655,8 @@ public class NeoEssentials {
         // ========== WEB DASHBOARD COMMANDS ==========
         registry.registerCommand("dashboard", "Manage web dashboard");
         com.zerog.neoessentials.commands.utility.DashboardCommand.register(dispatcher);
+        registry.registerCommand("dashboardregister", "Register a dashboard account");
+        com.zerog.neoessentials.commands.utility.DashboardRegisterCommand.register(dispatcher);
 
         // ========== ITEM COMMANDS ==========
         registry.registerCommand("repair", "Repair items");

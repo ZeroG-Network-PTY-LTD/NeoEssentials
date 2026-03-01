@@ -144,30 +144,63 @@ public class AuthenticationHandler implements HttpHandler {
     
     /**
      * POST /api/auth/login
-     * Body: {"username": "admin", "password": "password"} OR {"username": "minecraft_name", "type": "minecraft"}
-     * Supports both password-based and permission-based (Minecraft) authentication
+     * Body:
+     * - {"username": "admin", "password": "password"} - Standard password auth
+     * - {"username": "minecraft_name", "type": "minecraft"} - Minecraft permission auth (DEPRECATED - requires online)
+     * - {"discordCode": "oauth_code"} - Discord OAuth (if SDLink is available)
+     *
+     * Supports: password-based, registration-based, Discord OAuth (with SDLink), and legacy Minecraft auth
      */
     private void handleLogin(HttpExchange exchange) throws IOException {
         String requestBody = readRequestBody(exchange);
         JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
         
+        String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
+        String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+
+        // Check if this is Discord OAuth authentication
+        if (request.has("discordCode")) {
+            Session session = handleDiscordOAuth(request.get("discordCode").getAsString(), ipAddress, userAgent);
+            if (session == null) {
+                sendJsonResponse(exchange, 401, createErrorResponse("Discord authentication failed"));
+                return;
+            }
+
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("sessionId", session.getSessionId());
+            response.addProperty("authType", "discord");
+            response.add("session", session.toJson());
+
+            User user = authManager.getUser(session.getUserId());
+            if (user != null) {
+                response.add("user", user.toJson());
+            }
+
+            exchange.getResponseHeaders().add("Set-Cookie",
+                "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
+
+            sendJsonResponse(exchange, 200, response);
+            return;
+        }
+
+        // Validate username
         if (!request.has("username")) {
             sendJsonResponse(exchange, 400, createErrorResponse("Missing username"));
             return;
         }
         
         String username = request.get("username").getAsString();
-        String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
-        String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
-        AuthenticationManager authManager = AuthenticationManager.getInstance();
 
-        // Check if this is permission-based (Minecraft) authentication
+        // LEGACY: Check if this is permission-based (Minecraft) authentication (DEPRECATED)
+        // This requires the player to be online, use registration-based auth instead
         if (request.has("type") && "minecraft".equals(request.get("type").getAsString())) {
-            // Permission-based authentication using Minecraft username
+            LOGGER.warn("Legacy Minecraft auth used by {}, this method is deprecated - use registration-based auth instead", username);
             Session session = handleMinecraftAuth(username, ipAddress, userAgent);
 
             if (session == null) {
-                sendJsonResponse(exchange, 403, createErrorResponse("You don't have permission to access the dashboard"));
+                sendJsonResponse(exchange, 403, createErrorResponse("You don't have permission to access the dashboard or are not online"));
                 return;
             }
 
@@ -177,13 +210,11 @@ public class AuthenticationHandler implements HttpHandler {
             response.addProperty("authType", "minecraft");
             response.add("session", session.toJson());
 
-            // Get user details
             User user = authManager.getUser(session.getUserId());
             if (user != null) {
                 response.add("user", user.toJson());
             }
 
-            // Set session cookie
             exchange.getResponseHeaders().add("Set-Cookie",
                 "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
 
@@ -191,7 +222,7 @@ public class AuthenticationHandler implements HttpHandler {
             return;
         }
 
-        // Traditional password-based authentication
+        // Standard password-based authentication
         if (!request.has("password")) {
             sendJsonResponse(exchange, 400, createErrorResponse("Missing password"));
             return;
@@ -361,6 +392,30 @@ public class AuthenticationHandler implements HttpHandler {
 
         } catch (Exception e) {
             LOGGER.error("Error during Minecraft authentication for {}: {}", minecraftUsername, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Handle Discord OAuth authentication
+     * Integrates with Simple Discord Link if available
+     */
+    private Session handleDiscordOAuth(String oauthCode, String ipAddress, String userAgent) {
+        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+
+        if (!discordProvider.isAvailable()) {
+            LOGGER.warn("Discord authentication requested but Simple Discord Link is not available");
+            return null;
+        }
+
+        try {
+            // TODO: Implement OAuth flow with SDLink
+            // For now, this is a placeholder for future Discord OAuth integration
+            LOGGER.info("Discord OAuth authentication requested (feature in development)");
+            return null;
+
+        } catch (Exception e) {
+            LOGGER.error("Error during Discord OAuth authentication: {}", e.getMessage(), e);
             return null;
         }
     }

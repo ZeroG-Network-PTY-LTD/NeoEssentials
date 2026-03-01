@@ -403,8 +403,24 @@ public class WarpManager {
             return false;
         }
         
-        // Check if location is safe
-        if (requireSafeLocations && !location.isSafe()) {
+        // Check if location is safe - read from config dynamically
+        boolean requireSafe = true; // Default to true for safety
+        try {
+            JsonObject config = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
+            if (config.has("teleportation")) {
+                JsonObject tp = config.getAsJsonObject("teleportation");
+                if (tp.has("warpSettings")) {
+                    JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+                    if (warpSettings.has("enableWarpSafety")) {
+                        requireSafe = warpSettings.get("enableWarpSafety").getAsBoolean();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to read warp safety config, defaulting to enabled: {}", e.getMessage());
+        }
+
+        if (requireSafe && !location.isSafe()) {
             TeleportLocation safeLocation = location.findSafeLocation();
             if (safeLocation == null) {
                 creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.unsafe_location"));
@@ -512,8 +528,24 @@ public class WarpManager {
             }
         }
         
-        // Check if warp location is still safe
-        if (requireSafeLocations && !warp.isSafe()) {
+        // Check if warp location is still safe - read from config dynamically
+        boolean requireSafe = true; // Default to true for safety
+        try {
+            JsonObject config = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
+            if (config.has("teleportation")) {
+                JsonObject tp = config.getAsJsonObject("teleportation");
+                if (tp.has("warpSettings")) {
+                    JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+                    if (warpSettings.has("enableWarpSafety")) {
+                        requireSafe = warpSettings.get("enableWarpSafety").getAsBoolean();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to read warp safety config, defaulting to enabled: {}", e.getMessage());
+        }
+
+        if (requireSafe && !warp.isSafe()) {
             TeleportLocation safeLocation = warp.findSafeLocation();
             if (safeLocation == null) {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.unsafe", warpName));
@@ -532,9 +564,9 @@ public class WarpManager {
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-        // Perform teleportation
-        int delayTicks = teleportDelay * 20; // Convert seconds to ticks
-        TeleportUtil.teleportPlayer(player, warp, delayTicks, true).thenAccept(result -> {
+        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        int delayTicks = teleportDelay * 20;
+        TeleportUtil.teleportPlayer(player, warp, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.success", warpName));
                 LOGGER.info("Player {} teleported to warp '{}'", player.getName().getString(), warpName);

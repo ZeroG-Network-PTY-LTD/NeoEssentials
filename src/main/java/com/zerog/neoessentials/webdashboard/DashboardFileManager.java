@@ -22,7 +22,8 @@ public class DashboardFileManager {
     private static final String DASHBOARD_DIR = "neoessentials/webdashboard/";
     private static final String VERSION_FILE = "neoessentials/webdashboard/.version";
 
-    // Files to manage
+    // Files to manage (auto-update when mod version changes)
+    // Updated to include new multi-page structure and new authentication system
     private static final List<String> DASHBOARD_FILES = Arrays.asList(
         "index.html",
         "permissions.html",
