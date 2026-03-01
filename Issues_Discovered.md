@@ -1,10 +1,83 @@
 # 👾 Issues That Were Discovered
-- **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, a lot of hardcoded English strings, want to allow custom language files.
-- **Permissions node investigation**: Permissions were not fully implemented for all features, and there were inconsistencies in permission checks across different commands and features.
+*(All known issues resolved — see Fixed section below)*
 
 ---
 
 # ✅ Issues That Were Fixed
+
+- **Permissions node investigation & documentation**
+  *(Fixed: 2026-03-01)*
+
+  **Root causes found:**
+
+  - **~50+ permission nodes used in commands but never registered in `PermissionRegistry`** — commands like `/list`, `/near`, `/nick`, `/motd`, `/mail`, `/ban`, `/kick`, `/freeze`, `/jail`, `/vanish`, and many others checked permissions that weren't in the registry. This meant `PermissionScanner` wouldn't find them, `/permissions list` wouldn't show them, and LuckPerms/FTB Ranks export was incomplete.
+
+  - **Lang message keys being confused for permission nodes** — strings like `neoessentials.moderation.ban_broadcast`, `neoessentials.moderation.ban_success` etc. are **lang keys** (translation strings), not permission nodes. The scanner was incorrectly picking them up as permissions because they follow the same `neoessentials.*` pattern.
+
+  - **`MODERATION` category missing from `PermissionCategory` enum** — all moderation permissions (ban, kick, freeze, jail, vanish) were falling through to `MISC` in both the `PermissionRegistry` categorize helper and `PermissionBridge.categorizePermission()`.
+
+  - **Permission denial gave no indication of what permission was required** — every denied command showed only `"You don't have permission to use this command"` with no hint of the actual node needed. Server admins had no way to know what to grant.
+
+  **Fixes applied:**
+
+  | Category | Newly Registered Nodes |
+  |---|---|
+  | **Moderation** | `ban`, `banip`, `banlist`, `tempban`, `unban`, `unbanip`, `kick`, `kickall`, `freeze`, `unfreeze`, `freezeall`, `unfreezeall`, `freezelist`, `jail`, `unjail`, `setjail`, `jaillist`, `jailinfo`, `vanish`, `vanish.others`, `seevanished`, `vanishlist`, `notify`, `notifications` |
+  | **Utilities** | `list`, `near`, `nick`, `nick.color`, `nick.others`, `staff`, `motd`, `motd.set`, `motd.broadcast`, `motd.reload`, `book`, `book.unlock`, `book.title`, `book.author`, `depth`, `depth.others`, `gamemode`, `gamemode.others`, `helpop`, `helpop.receive` |
+  | **Mail** | `mail`, `mail.send`, `mail.clear` |
+  | **Items** | `item.enchant.any`, `item.spawn` |
+  | **Teleport** | `teleport.settpr`, `teleport.tp`, `teleport.tphere`, `teleport.tppos`, `teleport.pwarp`, `teleport.pwarp.create`, `teleport.pwarp.delete`, `teleport.pwarp.list` |
+  | **Kits** | `kits.create`, `kits.delete`, `kits.override` |
+  | **Permissions sub-commands** | `permissions.check`, `permissions.search`, `permissions.list.groups`, `permissions.list.users`, `permissions.info.user`, `permissions.info.group`, `permissions.user.permissions`, `permissions.user.groups`, `permissions.user.clear`, `permissions.group.create`, `permissions.group.delete`, `permissions.group.rename`, `permissions.group.clone`, `permissions.group.inherit`, `permissions.group.permissions`, `permissions.group.modify`, `permissions.group.clear` |
+  | **Dashboard** | `admin.dashboard`, `dashboard.access`, `dashboard.view`, `dashboard.manage`, `dashboard.moderator`, `dashboard.admin` |
+  | **Vanish alias** | `vanish.see` |
+
+  **Structural fixes:**
+  - Added `MODERATION` to `PermissionCategory` enum — moderation commands now appear in their own category in `/permissions list`, exports, and the dashboard
+  - Updated `PermissionRegistry.categorizePermission()` and `PermissionBridge.categorizePermission()` to return `MODERATION` for ban/kick/freeze/jail/vanish prefixes
+  - Updated `PermissionBridge.categorizePermission()` — previously returned `MISC` for `moderation`, `mod`, `mute`, `ban`; now returns `MODERATION`
+
+  **Permission suggestion fix:**
+  - `PermissionValidator.validatePermission()` — denial message now reads:
+    `"You don't have permission to use this command.§7Required: §f<node>"`
+  - `PermissionValidator.validateAnyPermission()` — shows all accepted nodes:
+    `"You don't have permission. §7Required (any): §f<node1>§7 or §f<node2>"`
+  - `PermissionValidator.validateTargetPermission()` — same treatment
+
+
+- **Languages EN, FR, DE, ES, etc. incomplete — hardcoded strings, no custom language file support**
+  *(Fixed: 2026-03-01)*
+
+  **Root causes found:**
+
+  - **Only `en_us.json` existed** — no translation files for any other language were bundled in the JAR. The infrastructure (`CustomLanguageManager`, `LocalizationManager`) was fully built but had nothing to serve.
+
+  - **Broken colour codes in `en_us.json`** — the TPR/teleport keys added in a previous session had bare letter colour codes (e.g. `"eSearching..."` instead of `"§eSearching..."`), causing those messages to appear without formatting in-game.
+
+  - **`CustomLanguageManager.initialize()` only deployed `en_us.json`** — when the server started it copied only `en_us.json` from the JAR to disk. No other bundled lang files were ever extracted, so even if they existed in the JAR they would never reach the `languages/custom/` directory where the system reads from.
+
+  **Fixes applied:**
+
+  | Fix | Detail |
+  |---|---|
+  | Fixed all broken colour codes | All TPR/misc teleport keys in `en_us.json` corrected (`e` → `§e`, `a` → `§a`, `c` → `§c`). Lang version bumped 102 → 103 |
+  | Added `fr_fr.json` | French (France) — full coverage of all major command categories |
+  | Added `de_de.json` | German (Germany) — full coverage |
+  | Added `es_es.json` | Spanish (Spain) — full coverage |
+  | Added `pt_br.json` | Portuguese (Brazil) — full coverage |
+  | Added `zh_cn.json` | Chinese (Simplified) — full coverage |
+  | Added `nl_nl.json` | Dutch (Netherlands) — full coverage |
+  | Added `pl_pl.json` | Polish (Poland) — full coverage |
+  | Added `ru_ru.json` | Russian (Russia) — full coverage |
+  | Added `deployBundledLanguageFiles()` | New method in `CustomLanguageManager` — on every server start, iterates all 8 non-English bundled lang codes, copies missing files from JAR to `neoessentials/languages/custom/`, and merges NEW keys into existing files without overwriting user edits |
+
+  **How translations fall back:**
+  1. Custom user file on disk (`neoessentials/languages/custom/<lang>.json`) — highest priority
+  2. Bundled JAR translation for that language
+  3. `en_us.json` (English fallback via `MessageUtil`)
+  4. Translation key itself (last resort)
+
+  **Community contribution note:** All non-English files are tagged `"_author": "NeoEssentials (machine-translated, community corrections welcome)"` — admins can edit the files in `neoessentials/languages/custom/` and run `/language reload` to apply changes without restart.
 
 - **Command /AFK not working properly**
   *(Fixed: 2026-03-01)*
