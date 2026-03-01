@@ -255,7 +255,10 @@ public class ChatHandler {
                                 target.sendSystemMessage(formattedMessage);
                             }
                         }
-                        LOGGER.debug("[{}] (radius: {}) {}: {}", channel, radius, playerName, message);
+                        // Always log to server console so chat appears in logs
+                        if (isConsoleLoggingEnabled()) {
+                            LOGGER.info("[{}] (radius:{}) <{}> {}", channel, radius, playerName, message);
+                        }
                     } else if (requiredPermission != null) {
                         // Permission-based channel (staff, admin, donor, etc.)
                         for (ServerPlayer target : playerList.getPlayers()) {
@@ -263,13 +266,25 @@ public class ChatHandler {
                                 target.sendSystemMessage(formattedMessage);
                             }
                         }
-                        LOGGER.debug("[{}] (permission: {}) {}: {}", channel, requiredPermission, playerName, message);
+                        // Always log to server console
+                        if (isConsoleLoggingEnabled()) {
+                            LOGGER.info("[{}] <{}> {}", channel, playerName, message);
+                        }
                     } else {
                         // Global channel (no radius, no permission)
                         for (ServerPlayer target : playerList.getPlayers()) {
                             target.sendSystemMessage(formattedMessage);
                         }
-                        LOGGER.debug("[{}] (global) {}: {}", channel, playerName, message);
+                        // Always log to server console
+                        if (isConsoleLoggingEnabled()) {
+                            LOGGER.info("[{}] <{}> {}", channel, playerName, message);
+                        }
+                    }
+
+                    // Also send to server console as a system message so it appears exactly
+                    // like vanilla chat in the dedicated server terminal
+                    if (server != null && isConsoleLoggingEnabled()) {
+                        server.sendSystemMessage(formattedMessage);
                     }
                 }
 
@@ -343,6 +358,24 @@ public class ChatHandler {
                 event.getPlayer().getName().getString(), e.getMessage(), e);
             // Don't cancel the event on error - let vanilla handle it
         }
+    }
+
+    /**
+     * Returns whether chat messages should be logged to the server console.
+     * Reads chat.logChatToConsole from config, defaults to true.
+     */
+    private static boolean isConsoleLoggingEnabled() {
+        try {
+            com.google.gson.JsonObject config = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            if (config.has("chat")) {
+                com.google.gson.JsonObject chat = config.getAsJsonObject("chat");
+                if (chat.has("logChatToConsole")) {
+                    return chat.get("logChatToConsole").getAsBoolean();
+                }
+            }
+        } catch (Exception ignored) {}
+        return true; // Default: always log to console
     }
 }
 

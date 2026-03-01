@@ -261,7 +261,18 @@ public class NeoEssentials {
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize ChatManager on server start", e);
             }
-            
+
+            // Initialize AfkManager configuration from config file
+            try {
+                com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+                com.google.gson.JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                com.google.gson.JsonObject afkObj = config.has("afk") ? config.getAsJsonObject("afk") : new com.google.gson.JsonObject();
+                com.zerog.neoessentials.chat.AfkManager.getInstance().loadConfiguration(afkObj);
+                LOGGER.info("AfkManager configuration loaded successfully");
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize AfkManager configuration on server start", e);
+            }
+
             LOGGER.info("Server started - applying player nicknames...");
             
             // Apply nicknames to all online players

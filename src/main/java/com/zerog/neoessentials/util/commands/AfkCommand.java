@@ -59,9 +59,15 @@ public class AfkCommand {
                     }
                     
                     String message = StringArgumentType.getString(ctx, "message");
-                    
-                    // Toggle AFK with custom message
+                    // Determine current state to give correct feedback
+                    boolean wasAfk = AfkManager.getInstance().isAfk(player);
                     AfkManager.getInstance().toggleAfk(player, message);
+                    // Personal feedback (broadcast is handled inside AfkManager)
+                    if (!wasAfk) {
+                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are now AFK."), false);
+                    } else {
+                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are no longer AFK."), false);
+                    }
                     return 1;
                 })
             )
@@ -97,7 +103,14 @@ public class AfkCommand {
                 }
                 
                 // Toggle AFK without message (player already retrieved above)
+                boolean wasAfk = AfkManager.getInstance().isAfk(player);
                 AfkManager.getInstance().toggleAfk(player, null);
+                // Personal feedback
+                if (!wasAfk) {
+                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are now AFK."), false);
+                } else {
+                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are no longer AFK."), false);
+                }
                 return 1;
             })
         );

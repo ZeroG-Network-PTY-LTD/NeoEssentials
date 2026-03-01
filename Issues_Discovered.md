@@ -1,19 +1,42 @@
 # 👾 Issues That Were Discovered
 - **Languages EN, FR, DE, ES, ect. incomplete**: Some messages and features were not fully translated in all supported languages, a lot of hardcoded English strings, want to allow custom language files.
 - **Permissions node investigation**: Permissions were not fully implemented for all features, and there were inconsistencies in permission checks across different commands and features.
-- **Command /AFK**: A user states it is not working properly.
-- **NeoEssentials Chat Logging (NeoForge 1.21.1, All The Mons)**  
-  After installing NeoEssentials, chat messages are no longer shown in the server console.  
-  - Checked the config file, but found no related option.  
-  - Chat events appear to be intercepted and suppressed by NeoEssentials' formatting system.  
-  - Need to investigate:  
-    - Whether there is a hidden or undocumented config option to restore console logging  
-    - If chat logs are redirected to another file or location  
-    - Possibility of requesting a `logChatToConsole` feature from the developers
 
 ---
 
 # ✅ Issues That Were Fixed
+
+- **Command /AFK not working properly**
+  *(Fixed: 2026-03-01)*
+  Five separate root causes were found and fixed:
+
+  - **Root cause 1 — `AfkManager.loadConfiguration()` was never called:**
+    The method to read AFK settings from `config.json` (timeout, kick settings, broadcast messages, activity tracking, etc.) existed but was never wired up. `AfkManager` ran entirely on hardcoded defaults regardless of what was in the config file.
+    **Fix:** Added `AfkManager.getInstance().loadConfiguration(afkObj)` call to `NeoEssentials.onServerStarted()`, right after `ChatManager` is initialized.
+
+  - **Root cause 2 — `AfkActivityHandler` suspicious-score blocked real player activity:**
+    The anti-AFK-farming filter incremented the suspicious score by 10 for every action beyond 10 of the same type in 60 seconds. The threshold to be considered "suspicious" was 100 — meaning just 10 block interactions (perfectly normal building) would permanently block that player's activity from resetting their AFK timer. The score decay was also broken: it compared `now - lastActivity` where `lastActivity` was set to `now` on every call, so the difference was always ~0 and the score never decayed.
+    **Fix:** Raised `REPETITIVE_ACTION_THRESHOLD` from 10 → 30, raised `SUSPICIOUS_SCORE_THRESHOLD` from 100 → 300, fixed score decay to compare against `lastActionTime` for the relevant action type, and reset per-type count when the 60-second window expires.
+
+  - **Root cause 3 — `AfkMovementDetector` was missing `@EventBusSubscriber`:**
+    The class had `@SubscribeEvent` methods for player login and logout (to initialize/cleanup position tracking) but was missing the `@EventBusSubscriber(modid = "neoessentials")` class annotation. NeoForge never registered those listeners, so player positions were never cleaned up on logout and never initialized on login.
+    **Fix:** Added `@EventBusSubscriber(modid = "neoessentials")` annotation to the class.
+
+  - **Root cause 4 — AFK broadcasts silently failed (`MessageUtil.info()` used as raw string):**
+    `onPlayerGoAfk()` and `onPlayerReturnFromAfk()` called `MessageUtil.info(message)` where `message` was a plain string like `"Steve is now AFK"`. `MessageUtil.info()` treats its argument as a **translation key**, looks it up in the lang file, finds nothing, and returns the key unchanged — without colour or formatting. The broadcasts were also not logged to the server console.
+    **Fix:** Replaced with `Component.literal("§e" + message)` directly. Added `server.sendSystemMessage()` call so broadcasts also appear in the server console.
+
+  - **Root cause 5 — `/afk` command gave no feedback to the player:**
+    `toggleAfk()` broadcasts a message to all players, but the player who typed `/afk` received no direct personal confirmation that the command worked — especially confusing since the broadcast message may not be visible to the player themselves if it's formatted differently.
+    **Fix:** After calling `toggleAfk()`, the command now sends a direct `§eYou are now AFK.` / `§eYou are no longer AFK.` message to the executing player. Auto-AFK (inactivity timeout) also sends a personal notification: `§eYou are now AFK due to inactivity.`
+
+- **NeoEssentials Chat Logging — chat messages not shown in server console (NeoForge 1.21.1, All The Mons)**
+  *(Fixed: 2026-03-01)*
+  - **Root cause:** When `enable-chat-formatting` is `true`, `ChatHandler` calls `event.setCanceled(true)` and takes over dispatch itself — sending messages via `sendSystemMessage()` to players only. `sendSystemMessage()` does **not** write to the server console. The only logging was `LOGGER.debug(...)` which is silent at the default log level. Vanilla's console logging never fires because the event is cancelled.
+  - **Fix 1:** Added explicit `LOGGER.info("[channel] <player> message")` after dispatching to each channel type (proximity, permission-gated, global).
+  - **Fix 2:** Added `server.sendSystemMessage(formattedMessage)` so the formatted message also appears in the dedicated server terminal exactly as vanilla would show it.
+  - **Fix 3:** Added `logChatToConsole` boolean to `chat` config section (default `true`). Set to `false` to suppress chat from console/logs entirely if desired.
+  - Config version bumped to 20.
 
 - **NeoEssentials Teleportation — chunk not loaded causes "No safe teleport location found" even with safety disabled (NeoForge 1.21.1, All The Mons)**
   *(Fixed: 2026-03-01)*

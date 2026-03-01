@@ -2,7 +2,6 @@ package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -208,17 +207,23 @@ public class AfkManager {
             
             // Create AFK message
             String message = afkMessage.replace("{player}", player.getName().getString());
-            if (reason != null && !reason.trim().isEmpty()) {
+            if (reason != null && !reason.trim().isEmpty() && !reason.equals("Inactive")) {
                 message += " (" + reason + ")";
             }
             
-            // Broadcast to all players
-            Component afkComponent = MessageUtil.info(message);
+            // Broadcast to all players and log to console
+            Component afkComponent = Component.literal("§e" + message);
             server.getPlayerList().broadcastSystemMessage(afkComponent, false);
-            
+            server.sendSystemMessage(afkComponent);
+
+            // Send personal confirmation only for auto-AFK (manual toggle sends its own feedback via the command)
+            if ("Inactive".equals(reason)) {
+                player.sendSystemMessage(Component.literal("§eYou are now AFK due to inactivity."));
+            }
+
             LOGGER.info("Player {} went AFK{}", player.getName().getString(), 
-                reason != null ? " (" + reason + ")" : "");
-            
+                reason != null && !reason.equals("Inactive") ? " (" + reason + ")" : "");
+
             // Update tablist display
             com.zerog.neoessentials.chat.handlers.AfkTablistHandler.onPlayerAfk(player);
                 
@@ -244,10 +249,11 @@ public class AfkManager {
             // Create return message
             String message = returnMessage.replace("{player}", player.getName().getString());
             
-            // Broadcast to all players
-            Component returnComponent = MessageUtil.info(message);
+            // Broadcast to all players and log to console
+            Component returnComponent = Component.literal("§e" + message);
             server.getPlayerList().broadcastSystemMessage(returnComponent, false);
-            
+            server.sendSystemMessage(returnComponent);
+
             LOGGER.info("Player {} returned from AFK", player.getName().getString());
             
             // Update tablist display

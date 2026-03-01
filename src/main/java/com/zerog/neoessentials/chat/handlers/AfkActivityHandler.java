@@ -27,10 +27,10 @@ public class AfkActivityHandler {
     // Track player activity patterns to detect AFK farming
     private static final Map<UUID, ActivityPattern> activityPatterns = new ConcurrentHashMap<>();
 
-    // Configuration
-    private static final int REPETITIVE_ACTION_THRESHOLD = 10; // Same action 10 times
-    private static final long REPETITIVE_TIMEFRAME = 60000; // Within 1 minute
-    private static final int SUSPICIOUS_SCORE_THRESHOLD = 100; // Suspicious activity score
+    // Configuration — raised so normal play never trips the filter
+    private static final int REPETITIVE_ACTION_THRESHOLD = 30; // Same action 30+ times in window
+    private static final long REPETITIVE_TIMEFRAME = 60000;    // Within 1 minute
+    private static final int SUSPICIOUS_SCORE_THRESHOLD = 300; // Much higher bar
 
     /**
      * Activity pattern tracker for a player
@@ -45,25 +45,22 @@ public class AfkActivityHandler {
             long now = System.currentTimeMillis();
             lastActivity = now;
 
-            // Check for repetitive actions
             Long lastTime = lastActionTime.get(activityType);
             if (lastTime != null && (now - lastTime) < REPETITIVE_TIMEFRAME) {
                 int count = actionCounts.getOrDefault(activityType, 0) + 1;
                 actionCounts.put(activityType, count);
-
                 if (count > REPETITIVE_ACTION_THRESHOLD) {
-                    suspiciousScore += 10; // Increase suspicious score
+                    suspiciousScore += 10;
                     com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Detected repetitive {} activity: {} times", activityType, count);
                 }
             } else {
-                // Reset count for this activity type
+                // Timeframe expired for this action type — reset its counter
                 actionCounts.put(activityType, 1);
             }
-
             lastActionTime.put(activityType, now);
 
-            // Decay suspicious score over time
-            if (suspiciousScore > 0 && (now - lastActivity) > 300000) { // 5 minutes
+            // Decay suspicious score over time (using current time, not lastActivity)
+            if (suspiciousScore > 0 && lastTime != null && (now - lastTime) > 300000) {
                 suspiciousScore = Math.max(0, suspiciousScore - 5);
             }
         }

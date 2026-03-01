@@ -4,6 +4,7 @@ import com.zerog.neoessentials.chat.AfkManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
  * Simple movement detection using periodic position checks.
  * Uses a separate thread to periodically check player positions.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class AfkMovementDetector {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkMovementDetector.class);
     
