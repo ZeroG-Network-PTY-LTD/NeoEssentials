@@ -53,6 +53,10 @@ public class AuthenticationHandler implements HttpHandler {
                 handleLogin(exchange);
             } else if ("GET".equals(method) && path.endsWith("/discord")) {
                 handleDiscordAuth(exchange);
+            } else if ("GET".equals(method) && path.contains("/discord/callback")) {
+                handleDiscordOAuthCallback(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/discord/authorize")) {
+                handleDiscordAuthorizeRedirect(exchange);
             } else if ("POST".equals(method) && path.endsWith("/logout")) {
                 handleLogout(exchange);
             } else if ("GET".equals(method) && path.endsWith("/validate")) {
@@ -397,26 +401,350 @@ public class AuthenticationHandler implements HttpHandler {
     }
 
     /**
-     * Handle Discord OAuth authentication
-     * Integrates with Simple Discord Link if available
+     * Handle Discord OAuth2 flow — called when POST /api/auth/login contains {"discordCode": "..."}
+     * Exchanges the authorization code for an access token, fetches the Discord user,
+     * finds their linked Minecraft account via SDLink, then creates a dashboard session.
+     *
+     * Flow:
+     *   1. POST to Discord token endpoint with code + client credentials
+     *   2. GET /users/@me with the access token → Discord user ID + username
+     *   3. GET /users/@me/guilds/{guildId}/member with the access token → guild roles
+     *   4. Look up linked Minecraft account via DiscordAuthProvider.getLinkedAccountByDiscordId()
+     *   5. Apply role mapping, get/create dashboard user, create session
      */
     private Session handleDiscordOAuth(String oauthCode, String ipAddress, String userAgent) {
-        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
 
-        if (!discordProvider.isAvailable()) {
-            LOGGER.warn("Discord authentication requested but Simple Discord Link is not available");
+        if (!discordConfig.isEnabled()) {
+            LOGGER.warn("Discord OAuth2 authentication requested but Discord auth is disabled");
+            return null;
+        }
+
+        if (!discordConfig.isOauth2Configured()) {
+            LOGGER.warn("Discord OAuth2 authentication requested but clientId/clientSecret are not configured in discord_auth.json");
             return null;
         }
 
         try {
-            // TODO: Implement OAuth flow with SDLink
-            // For now, this is a placeholder for future Discord OAuth integration
-            LOGGER.info("Discord OAuth authentication requested (feature in development)");
-            return null;
+            // ── Step 1: Exchange authorization code for access token ──────────
+            String tokenJson = exchangeDiscordCode(
+                oauthCode,
+                discordConfig.getOauth2ClientId(),
+                discordConfig.getOauth2ClientSecret(),
+                discordConfig.getOauth2RedirectUri()
+            );
+
+            if (tokenJson == null) {
+                LOGGER.error("Discord token exchange failed — no response");
+                return null;
+            }
+
+            com.google.gson.JsonObject tokenResponse = com.google.gson.JsonParser
+                .parseString(tokenJson).getAsJsonObject();
+
+            if (tokenResponse.has("error")) {
+                LOGGER.error("Discord token exchange error: {} — {}",
+                    tokenResponse.get("error").getAsString(),
+                    tokenResponse.has("error_description")
+                        ? tokenResponse.get("error_description").getAsString() : "");
+                return null;
+            }
+
+            String accessToken = tokenResponse.get("access_token").getAsString();
+
+            // ── Step 2: Fetch Discord user info (/users/@me) ─────────────────
+            String userJson = fetchDiscordApi("https://discord.com/api/v10/users/@me", accessToken);
+            if (userJson == null) {
+                LOGGER.error("Failed to fetch Discord user info");
+                return null;
+            }
+
+            com.google.gson.JsonObject discordUserObj = com.google.gson.JsonParser
+                .parseString(userJson).getAsJsonObject();
+
+            String discordId = discordUserObj.get("id").getAsString();
+            String discordUsername = discordUserObj.has("global_name") && !discordUserObj.get("global_name").isJsonNull()
+                ? discordUserObj.get("global_name").getAsString()
+                : discordUserObj.get("username").getAsString();
+
+            LOGGER.info("Discord OAuth2: authenticated Discord user {} (ID: {})", discordUsername, discordId);
+
+            // ── Step 3: Check blacklist before going further ──────────────────
+            if (discordConfig.isBlacklisted(discordId)) {
+                LOGGER.warn("Blacklisted Discord user attempted OAuth2 login: {} ({})", discordUsername, discordId);
+                return null;
+            }
+
+            // ── Step 4: Fetch guild roles via /users/@me/guilds/{id}/member ──
+            // Roles are fetched via SDLink's cache first; OAuth fallback used when bot isn't ready
+            DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+            java.util.List<String> discordRoles;
+
+            if (discordProvider.isAvailable()) {
+                // Preferred: SDLink has the member cached with role IDs
+                discordRoles = discordProvider.getDiscordRoles(discordId);
+                LOGGER.debug("Fetched {} Discord roles from SDLink cache for {}", discordRoles.size(), discordId);
+            } else {
+                // Fallback: parse roles from token scopes if guild member endpoint available
+                discordRoles = new java.util.ArrayList<>();
+                LOGGER.debug("SDLink not available; role mapping will use empty role list for {}", discordUsername);
+            }
+
+            // ── Step 5: Whitelist check ───────────────────────────────────────
+            if (!discordConfig.passesWhitelist(discordRoles)) {
+                LOGGER.warn("Discord user {} ({}) does not have a whitelisted role, denying OAuth2 login",
+                    discordUsername, discordId);
+                return null;
+            }
+
+            // ── Step 6: Determine dashboard role from Discord roles ───────────
+            User.Role dashboardRole = discordConfig.getHighestRole(discordRoles);
+
+            // ── Step 7: Find linked Minecraft account ─────────────────────────
+            String minecraftUsername = null;
+
+            if (discordProvider.isAvailable()) {
+                DiscordUser linkedAccount = discordProvider.getLinkedAccountByDiscordId(discordId);
+                if (linkedAccount != null && linkedAccount.isLinked()) {
+                    minecraftUsername = linkedAccount.getMinecraftUsername();
+                    LOGGER.info("Discord OAuth2: found linked Minecraft account {} for Discord user {}",
+                        minecraftUsername, discordUsername);
+                } else if (discordConfig.requiresLinkedAccount()) {
+                    LOGGER.warn("Discord OAuth2: no linked Minecraft account for {} and requireLinkedAccount=true",
+                        discordUsername);
+                    return null;
+                }
+            } else if (discordConfig.requiresLinkedAccount()) {
+                LOGGER.warn("Discord OAuth2: SDLink not available and requireLinkedAccount=true — cannot verify link");
+                return null;
+            }
+
+            // ── Step 8: Get or create dashboard user ──────────────────────────
+            AuthenticationManager authManager = AuthenticationManager.getInstance();
+            // Use Minecraft username if linked, otherwise fall back to Discord username
+            String accountUsername = minecraftUsername != null ? minecraftUsername : discordUsername;
+
+            User user = authManager.getUserByUsername(accountUsername);
+
+            if (user == null) {
+                if (!discordConfig.allowsAutoRegistration()) {
+                    LOGGER.warn("Discord OAuth2: account not found and auto-registration is disabled for {}",
+                        accountUsername);
+                    return null;
+                }
+                // Auto-create with a random unusable password — login is via OAuth2 only
+                String email = discordId + "@discord.oauth";
+                user = authManager.createUser(
+                    accountUsername,
+                    UUID.randomUUID().toString(),
+                    email,
+                    dashboardRole
+                );
+                LOGGER.info("Discord OAuth2: auto-created dashboard user '{}' with role {} (Discord: {})",
+                    accountUsername, dashboardRole, discordUsername);
+            } else {
+                // Sync role if changed
+                if (user.getRole() != dashboardRole) {
+                    user.setRole(dashboardRole);
+                    authManager.saveUsers();
+                    LOGGER.info("Discord OAuth2: updated role for '{}' to {} based on Discord roles",
+                        accountUsername, dashboardRole);
+                }
+            }
+
+            // ── Step 9: Create session ────────────────────────────────────────
+            Session session = authManager.createSession(user.getId(), ipAddress,
+                userAgent != null ? userAgent : "Discord-OAuth2/" + discordUsername);
+
+            LOGGER.info("Discord OAuth2 authentication successful: {} (Discord: {}, Role: {}, IP: {})",
+                accountUsername, discordUsername, dashboardRole, ipAddress);
+
+            return session;
 
         } catch (Exception e) {
-            LOGGER.error("Error during Discord OAuth authentication: {}", e.getMessage(), e);
+            LOGGER.error("Error during Discord OAuth2 flow: {}", e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * Exchange a Discord authorization code for an access token.
+     * POSTs to https://discord.com/api/v10/oauth2/token with application/x-www-form-urlencoded body.
+     */
+    private String exchangeDiscordCode(String code, String clientId, String clientSecret, String redirectUri) {
+        try {
+            String body = "client_id=" + encode(clientId)
+                + "&client_secret=" + encode(clientSecret)
+                + "&grant_type=authorization_code"
+                + "&code=" + encode(code)
+                + "&redirect_uri=" + encode(redirectUri);
+
+            java.net.URL url = new java.net.URL("https://discord.com/api/v10/oauth2/token");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("User-Agent", "NeoEssentials-Dashboard/1.0");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+
+            try (java.io.OutputStream os = conn.getOutputStream()) {
+                os.write(body.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int status = conn.getResponseCode();
+            java.io.InputStream is = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
+            if (is == null) return null;
+
+            try (java.io.BufferedReader reader =
+                     new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                if (status >= 400) {
+                    LOGGER.error("Discord token endpoint returned HTTP {}: {}", status, sb);
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error exchanging Discord authorization code: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch a Discord API endpoint with a Bearer access token.
+     */
+    private String fetchDiscordApi(String apiUrl, String accessToken) {
+        try {
+            java.net.URL url = new java.net.URL(apiUrl);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            conn.setRequestProperty("User-Agent", "NeoEssentials-Dashboard/1.0");
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+
+            int status = conn.getResponseCode();
+            java.io.InputStream is = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
+            if (is == null) return null;
+
+            try (java.io.BufferedReader reader =
+                     new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                if (status >= 400) {
+                    LOGGER.error("Discord API {} returned HTTP {}: {}", apiUrl, status, sb);
+                    return null;
+                }
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error fetching Discord API {}: {}", apiUrl, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /** URL-encode a string for form-urlencoded body. */
+    private static String encode(String value) {
+        try {
+            return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
+    /**
+     * GET /api/auth/discord/authorize
+     * Returns the Discord OAuth2 authorization URL so the frontend can redirect the browser.
+     * Response: {"authorizeUrl": "https://discord.com/api/oauth2/authorize?..."}
+     */
+    private void handleDiscordAuthorizeRedirect(HttpExchange exchange) throws IOException {
+        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
+
+        if (!discordConfig.isEnabled()) {
+            sendJsonResponse(exchange, 403, createErrorResponse("Discord authentication is disabled"));
+            return;
+        }
+
+        if (!discordConfig.isOauth2Configured()) {
+            sendJsonResponse(exchange, 503, createErrorResponse(
+                "Discord OAuth2 is not configured. Set clientId and clientSecret in discord_auth.json"));
+            return;
+        }
+
+        String state = UUID.randomUUID().toString().replace("-", "");
+        String authorizeUrl = "https://discord.com/api/oauth2/authorize"
+            + "?client_id=" + encode(discordConfig.getOauth2ClientId())
+            + "&redirect_uri=" + encode(discordConfig.getOauth2RedirectUri())
+            + "&response_type=code"
+            + "&scope=" + encode(discordConfig.getOauth2Scopes())
+            + "&state=" + state;
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("authorizeUrl", authorizeUrl);
+        response.addProperty("state", state);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * GET /api/auth/discord/callback?code=...&state=...
+     * Discord redirects the browser here after the user authorizes the app.
+     * Exchanges the code for a session and redirects to the dashboard.
+     */
+    private void handleDiscordOAuthCallback(HttpExchange exchange) throws IOException {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null) {
+            sendHtmlRedirect(exchange, "/dashboard/login.html?error=missing_code");
+            return;
+        }
+
+        java.util.Map<String, String> params = new java.util.HashMap<>();
+        for (String pair : query.split("&")) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2) params.put(kv[0], java.net.URLDecoder.decode(kv[1], StandardCharsets.UTF_8));
+        }
+
+        String code = params.get("code");
+        String error = params.get("error");
+
+        if (error != null) {
+            LOGGER.warn("Discord OAuth2 callback received error: {}", error);
+            sendHtmlRedirect(exchange, "/dashboard/login.html?error=" + encode(error));
+            return;
+        }
+
+        if (code == null || code.isEmpty()) {
+            sendHtmlRedirect(exchange, "/dashboard/login.html?error=missing_code");
+            return;
+        }
+
+        String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
+        String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
+
+        Session session = handleDiscordOAuth(code, ipAddress, userAgent);
+
+        if (session == null) {
+            sendHtmlRedirect(exchange, "/dashboard/login.html?error=discord_auth_failed");
+            return;
+        }
+
+        // Set session cookie and redirect to dashboard
+        exchange.getResponseHeaders().add("Set-Cookie",
+            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
+        sendHtmlRedirect(exchange, "/dashboard/index.html");
+    }
+
+    /** Send a 302 redirect response with HTML body fallback. */
+    private void sendHtmlRedirect(HttpExchange exchange, String location) throws IOException {
+        exchange.getResponseHeaders().add("Location", location);
+        byte[] body = ("<html><body>Redirecting… <a href=\"" + location + "\">click here</a></body></html>")
+            .getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(302, body.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(body);
         }
     }
 

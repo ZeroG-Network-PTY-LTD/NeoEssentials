@@ -1,4 +1,5 @@
 package com.zerog.neoessentials.config;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
@@ -1197,7 +1198,7 @@ public class ConfigManager {
         put(ECONOMY_CONFIG, 2);
         put(PERMISSIONS_CONFIG, 5);
         put(KITS_CONFIG, 1);
-        put(DISCORD_AUTH_CONFIG, 5);
+        put(DISCORD_AUTH_CONFIG, 6);
     }};
 
     private ConfigManager() {
@@ -1262,7 +1263,16 @@ public class ConfigManager {
 
     /**
      * Check if a config file needs updating based on version mismatch.
-     * If the file version is older than expected, backup and replace with new version.
+     *
+     * Strategy:
+     *  - If the on-disk version is OLDER than expected → merge new/changed keys from the JAR
+     *    template into the user's file (preserve all existing values) then bump _configVersion.
+     *    A backup is still created before touching the file.
+     *  - If the on-disk version is NEWER than expected → warn only, do not touch.
+     *  - If equal → no-op.
+     *
+     * This prevents blowing away user-set values (role IDs, client secrets, custom settings)
+     * every time the config gains a new field.
      */
     private void checkAndUpdateConfigVersion(String configName, File configFile) {
         Integer expectedVersion = EXPECTED_CONFIG_VERSIONS.get(configName);
@@ -1271,34 +1281,89 @@ public class ConfigManager {
         }
 
         try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
-            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonObject onDisk = JsonParser.parseReader(reader).getAsJsonObject();
 
             int currentVersion = 0;
-            if (config.has(CONFIG_VERSION_KEY)) {
-                currentVersion = config.get(CONFIG_VERSION_KEY).getAsInt();
+            if (onDisk.has(CONFIG_VERSION_KEY)) {
+                currentVersion = onDisk.get(CONFIG_VERSION_KEY).getAsInt();
             }
 
             if (currentVersion < expectedVersion) {
-                LOGGER.warn("Config file {} is outdated (version {} < {}). Backing up and updating...",
+                LOGGER.warn("Config file {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
                     configName, currentVersion, expectedVersion);
-                // Create backup of old config
+
+                // Load JAR template
+                JsonObject jarTemplate = null;
+                try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
+                    if (in != null) {
+                        jarTemplate = JsonParser.parseReader(
+                            new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Could not load JAR template for {}: {}", configName, e.getMessage());
+                }
+
+                if (jarTemplate == null) {
+                    LOGGER.warn("JAR template not found for {}. Skipping update.", configName);
+                    return;
+                }
+
+                // Create backup before modifying
                 createConfigBackup(configFile, currentVersion);
-                // Replace with new version from JAR
-                copyDefaultConfig(configName, configFile);
-                // Clear cache to force reload
+
+                // Deep-merge: add keys that exist in JAR but are missing on disk.
+                // Never overwrite existing user values.
+                boolean changed = mergeNewKeys(jarTemplate, onDisk);
+
+                // Always bump the version so we don't re-run this on next start
+                onDisk.addProperty(CONFIG_VERSION_KEY, expectedVersion);
+
+                // Write merged result back
+                try (java.io.FileWriter writer = new java.io.FileWriter(configFile, StandardCharsets.UTF_8)) {
+                    new GsonBuilder().setPrettyPrinting().create().toJson(onDisk, writer);
+                }
+
                 configCache.remove(configName);
-                LOGGER.info("Config file {} has been updated to version {}", configName, expectedVersion);
-                // Ensure language file is up to date as well
+                LOGGER.info("Config file {} merged to version {} ({} new key(s) added).",
+                    configName, expectedVersion, changed ? "some" : "no");
+
                 com.zerog.neoessentials.util.MessageUtil.ensureLanguageFileUpToDate();
+
             } else if (currentVersion > expectedVersion) {
-                LOGGER.warn("Config file {} has a newer version ({}) than expected ({}). This may cause issues.",
+                LOGGER.warn("Config file {} has a newer version ({}) than expected ({}). This may indicate a downgrade.",
                     configName, currentVersion, expectedVersion);
             } else {
                 LOGGER.debug("Config file {} is up to date (version {})", configName, currentVersion);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to check version for config {}: {}", configName, e.getMessage());
+            LOGGER.error("Failed to check/update version for config {}: {}", configName, e.getMessage(), e);
         }
+    }
+
+    /**
+     * Deep-merge {@code source} into {@code target}: for every key in source that is missing
+     * in target, add it. Recurse into nested objects. Never overwrite existing values.
+     *
+     * @return true if at least one key was added
+     */
+    private boolean mergeNewKeys(com.google.gson.JsonObject source, com.google.gson.JsonObject target) {
+        boolean changed = false;
+        for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : source.entrySet()) {
+            String key = entry.getKey();
+            com.google.gson.JsonElement sourceVal = entry.getValue();
+
+            if (!target.has(key)) {
+                // Missing entirely — add from template
+                target.add(key, sourceVal.deepCopy());
+                changed = true;
+                LOGGER.debug("  + Added missing config key: {}", key);
+            } else if (sourceVal.isJsonObject() && target.get(key).isJsonObject()) {
+                // Both sides are objects — recurse
+                changed |= mergeNewKeys(sourceVal.getAsJsonObject(), target.get(key).getAsJsonObject());
+            }
+            // If key exists and isn't an object, leave the user's value alone
+        }
+        return changed;
     }
 
     /**
