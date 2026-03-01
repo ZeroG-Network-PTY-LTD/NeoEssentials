@@ -1,0 +1,44 @@
+name: ⚙️ Compatibility Issue
+description: Report compatibility issues with other mods
+title: "[Compat]: "
+labels: ["compatibility"]
+assignees: []
+
+body:
+  - type: input
+    id: mod-version
+    attributes:
+      label: Our Mod Version
+      placeholder: e.g. 1.2.3
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft Version
+      placeholder: e.g. 1.20.1
+    validations:
+      required: true
+
+  - type: input
+    id: other-mod
+    attributes:
+      label: Other Mod Name + Version
+      placeholder: e.g. JEI 15.2.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Happens?
+      description: Describe the compatibility problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      render: shell
