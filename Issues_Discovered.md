@@ -1,11 +1,66 @@
 # 👾 Issues That Were Discovered
+- **Commands Doc Update**: Update the commands document for all registered commands please.
 *(All known issues resolved — see Fixed section below)*
 
 ---
 
 # ✅ Issues That Were Fixed
 
+- **Server Admin system — Missing entirely: /broadcast, /time, /weather, /kill, /gamemode (full), /tpo, /tpohere, /tpoffline**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All commands were either absent or only partially registered (gamemode only had gms/gmc/gma/gmsp shortcuts, no `/gamemode` command).
+
+  **Implemented from scratch based on EssentialsX:**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/broadcast <msg>` | `neoessentials.broadcast` | Server-wide coloured announcement. Aliases: `/bc`, `/announce`. |
+  | `/time [set\|add] <value>` | `neoessentials.time(.set)` | Get time, set or add ticks. Named values: day/noon/sunset/night/midnight/sunrise. Aliases `/day`, `/night`. |
+  | `/weather <sun\|storm\|thunder> [dur]` | `neoessentials.weather` | Sets weather on all sky-light worlds. Optional duration in seconds. Aliases `/sun`, `/storm`, `/thunder`. |
+  | `/kill <player>` | `neoessentials.kill` | Kills player via `damageSources().genericKill()`. Respects `kill.exempt` + `kill.force`. |
+  | `/gamemode <survival\|creative\|adventure\|spectator\|0-3> [player]` | `neoessentials.gamemode(.others)` | Full gamemode command with all modes + numeric shortcuts. |
+  | `/tpo <player>` | `neoessentials.teleport.tpo` | Teleport to player ignoring their tptoggle setting. |
+  | `/tpohere <player>` | `neoessentials.teleport.tpohere` | Bring player to sender ignoring tptoggle. Notifies target. |
+  | `/tpoffline <player>` | `neoessentials.teleport.tpoffline` | Loads offline player NBT from world saves, teleports to their last recorded Pos/Dimension. |
+
+  **Additional registrations:** 14 permission nodes, 16 lang keys, all commands in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` updated with Server Admin section.
+
+- **Player State / Admin Tool system — Missing entirely: /fly, /god, /heal, /feed, /speed, /ext, /burn, /give, /more, /hat, /exp, /sudo, /playtime**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX):**
+
+  - All 13 commands were completely absent from the mod.
+
+  **Implemented from scratch based on EssentialsX pattern:**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/fly [player] [on\|off]` | `fly` / `fly.others` | Toggle flight. Clears fall distance. Resets flying when disabled. |
+  | `/god [player] [on\|off]` | `god` / `god.others` | Toggle god mode. Restores health+hunger on enable. `GodModeEventHandler` cancels all damage. |
+  | `/heal [player]` | `heal` / `heal.others` | Full health, full hunger, full saturation, clears all potion effects. Dead-player guard. |
+  | `/feed [player]` | `feed` / `feed.others` | Full hunger + saturation. |
+  | `/speed [walk\|fly] <0-10> [player]` | `speed` / `speed.others` | Maps 0–10 to Minecraft 0.0–1.0 speed. Auto-detects walk/fly from current state. |
+  | `/ext [player]` | `ext` / `ext.others` | `clearFire()`. Alias `/extinguish`. |
+  | `/burn <player> [seconds]` | `burn` | Sets fire ticks (seconds × 20). Default 10s. |
+  | `/give <player> <item> [amount]` | `give` | Multi-stack distribution. Drops to ground if inventory full. |
+  | `/more [amount]` | `more` | Sets held stack count to amount or max stack size. |
+  | `/hat` | `hat` | Swaps held item into helmet slot, returns old helmet to hand. |
+  | `/exp [show\|set\|give] [amount] [player]` | `exp` + sub-nodes | Show level+total XP. Set/give XP. Console + others support. |
+  | `/sudo <player> <command>` | `sudo` | Runs command as target. Blocks if target has `sudo.exempt`. Prevents self-sudo. |
+  | `/playtime [player]` | `playtime` / `playtime.others` | Uses `Stats.PLAY_TIME` ticks + current session ms. |
+
+  **Additional files created:**
+  - `GodModeEventHandler.java` — `LivingDamageEvent.Pre` cancels damage for god-mode players; `PlayerLoggedIn/Out` events track session start for playtime and clean up state on quit.
+  - `PermissionCategory.PLAYER` — Added enum value to PermissionRegistry.
+  - 26 permission nodes registered.
+  - 33 lang keys added to `en_us.json`.
+  - All commands added to `NeoEssentials.java` and `config.json` commands section.
+  - `PermissionSystem.md` updated with full Player State section.
+
 - **Worth/Sell system — Missing entirely: /worth, /sell hand|inventory|all|item, /setworth, WorthManager with price persistence**
+
   *(Fixed: 2026-03-02)*
 
   **Root causes found (vs EssentialsX `Worth.java`, `Commandworth.java`, `Commandsell.java`):**

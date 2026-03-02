@@ -700,10 +700,45 @@ public class NeoEssentials {
         registry.registerCommand("worth", "Check the sell value of an item");
         registry.registerCommand("sell", "Sell items for money");
         registry.registerCommand("setworth", "Set the sell price of an item");
-        // Initialize WorthManager before registering commands
         com.zerog.neoessentials.economy.worth.WorthManager.getInstance().initialize();
         com.zerog.neoessentials.economy.worth.WorthCommand.register(dispatcher);
         com.zerog.neoessentials.economy.worth.SellCommand.register(dispatcher);
+
+        // ========== PLAYER STATE / ADMIN TOOL COMMANDS ==========
+        registry.registerCommand("fly", "Toggle flight mode");
+        registry.registerCommand("god", "Toggle god mode");
+        registry.registerCommand("heal", "Restore player health and hunger");
+        registry.registerCommand("feed", "Restore player hunger");
+        registry.registerCommand("speed", "Set walk or fly speed");
+        registry.registerCommand("ext", "Extinguish a player");
+        registry.registerCommand("extinguish", "Extinguish a player (alias)");
+        registry.registerCommand("burn", "Set a player on fire");
+        registry.registerCommand("give", "Give items to a player");
+        registry.registerCommand("more", "Fill held stack to max");
+        registry.registerCommand("hat", "Wear held item as helmet");
+        registry.registerCommand("exp", "Manage player experience");
+        registry.registerCommand("xp", "Manage player experience (alias)");
+        registry.registerCommand("sudo", "Run a command as another player");
+        registry.registerCommand("playtime", "Check player play time");
+        com.zerog.neoessentials.util.commands.PlayerStateCommands.register(dispatcher);
+
+        // ========== SERVER ADMIN COMMANDS ==========
+        registry.registerCommand("broadcast", "Broadcast a message to all players");
+        registry.registerCommand("bc", "Broadcast a message (alias)");
+        registry.registerCommand("announce", "Broadcast a message (alias)");
+        registry.registerCommand("time", "Get or set world time");
+        registry.registerCommand("day", "Set time to day");
+        registry.registerCommand("night", "Set time to night");
+        registry.registerCommand("weather", "Set world weather");
+        registry.registerCommand("sun", "Set weather to clear");
+        registry.registerCommand("storm", "Set weather to storm");
+        registry.registerCommand("thunder", "Set weather to thunder");
+        registry.registerCommand("kill", "Kill a player");
+        registry.registerCommand("gamemode", "Change player gamemode");
+        registry.registerCommand("tpo", "Teleport override (bypass tptoggle)");
+        registry.registerCommand("tpohere", "Bring player here override");
+        registry.registerCommand("tpoffline", "Teleport to offline player's last position");
+        com.zerog.neoessentials.util.commands.ServerAdminCommands.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
