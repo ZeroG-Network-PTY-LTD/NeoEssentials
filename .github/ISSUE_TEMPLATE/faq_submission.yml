@@ -27,7 +27,7 @@ body:
       required: false
 
   - type: textarea
-    id: proposed_answer
+    id: proposed-answer
     attributes:
       label: Proposed Answer
       description: Your suggested answer
