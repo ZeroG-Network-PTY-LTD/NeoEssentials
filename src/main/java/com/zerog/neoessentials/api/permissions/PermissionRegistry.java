@@ -212,7 +212,13 @@ public class PermissionRegistry {
         register("neoessentials.economy.admin.take", "Take money from players", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.eco", "Run /eco admin commands (give/take/set/reset)", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.admin.set", "Set player balance", PermissionCategory.ECONOMY, false);
-        
+        // Worth / Sell
+        register("neoessentials.worth", "Check the sell value of an item (/worth)", PermissionCategory.ECONOMY, true);
+        register("neoessentials.sell", "Use the /sell command", PermissionCategory.ECONOMY, true);
+        register("neoessentials.sell.hand", "Sell item in hand (/sell hand)", PermissionCategory.ECONOMY, true);
+        register("neoessentials.sell.bulk", "Sell entire inventory (/sell inventory|all)", PermissionCategory.ECONOMY, true);
+        register("neoessentials.setworth", "Set item sell prices (/setworth)", PermissionCategory.ECONOMY, false);
+
         // Teleportation permissions
         register("neoessentials.teleport.admin", "Administrative teleportation", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.admin.tp", "Teleport players", PermissionCategory.TELEPORT, false);

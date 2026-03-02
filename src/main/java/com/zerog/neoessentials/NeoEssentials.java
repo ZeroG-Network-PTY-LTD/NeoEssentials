@@ -695,6 +695,15 @@ public class NeoEssentials {
         com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.ClearInventoryCommand.register(dispatcher);
+
+        // ========== WORTH / SELL COMMANDS ==========
+        registry.registerCommand("worth", "Check the sell value of an item");
+        registry.registerCommand("sell", "Sell items for money");
+        registry.registerCommand("setworth", "Set the sell price of an item");
+        // Initialize WorthManager before registering commands
+        com.zerog.neoessentials.economy.worth.WorthManager.getInstance().initialize();
+        com.zerog.neoessentials.economy.worth.WorthCommand.register(dispatcher);
+        com.zerog.neoessentials.economy.worth.SellCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
