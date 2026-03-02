@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands.teleportation;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -16,257 +17,265 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Commands for the warp teleportation system:
- * - /warp <name> - Teleport to warp
- * - /setwarp <name> [coordinates] - Create a warp (admin)
- * - /delwarp <name> - Delete a warp (admin)
- * - /warps - List all warps
+ * - /warp [page]             - List warps (Essentials: args.length==0 shows list)
+ * - /warp <name>             - Teleport to warp
+ * - /warp <name> <player>    - Warp another player (Essentials: essentials.warp.others)
+ * - /setwarp <name> [pos]    - Create a warp (admin)
+ * - /delwarp <name>          - Delete a warp (admin)
+ * - /warps [page]            - Paginated warp list (Essentials: WARPS_PER_PAGE=20)
  */
 public class WarpCommands {
-    
-    // Permission nodes for warp commands (matching PermissionRegistry)
-    private static final String PERMISSION_WARP = "neoessentials.teleport.warp";
-    private static final String PERMISSION_SETWARP = "neoessentials.teleport.warp.create";
-    private static final String PERMISSION_DELWARP = "neoessentials.teleport.warp.delete";
-    private static final String PERMISSION_WARPS = "neoessentials.teleport.warp.list";
-    
-    private static final SuggestionProvider<CommandSourceStack> WARP_SUGGESTIONS = (context, builder) -> {
-        WarpManager warpManager = WarpManager.getInstance();
-        return SharedSuggestionProvider.suggest(warpManager.getWarpNames(), builder);
-    };
-    
+
+    private static final String PERMISSION_WARP        = "neoessentials.teleport.warp";
+    private static final String PERMISSION_WARP_LIST   = "neoessentials.teleport.warp.list";
+    private static final String PERMISSION_WARP_OTHERS = "neoessentials.teleport.warp.others";
+    private static final String PERMISSION_SETWARP     = "neoessentials.teleport.warp.create";
+    private static final String PERMISSION_DELWARP     = "neoessentials.teleport.warp.delete";
+
+    /** Items per page for /warps (Essentials: WARPS_PER_PAGE = 20) */
+    private static final int WARPS_PER_PAGE = 20;
+
+    private static final SuggestionProvider<CommandSourceStack> WARP_SUGGESTIONS = (ctx, builder) ->
+        SharedSuggestionProvider.suggest(WarpManager.getInstance().getWarpNames(), builder);
+
+    private static final SuggestionProvider<CommandSourceStack> PLAYER_SUGGESTIONS = (ctx, builder) ->
+        SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), builder);
+
+    // ── Registration ──────────────────────────────────────────────────────────
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
-        
-        // Only register if teleportation module is enabled
-        if (config.isTeleportationEnabled()) {
-            // Register individual commands based on their command settings
-            if (config.isCommandEnabled("warp")) {
-                registerWarpCommand(dispatcher);
-            }
-            if (config.isCommandEnabled("setwarp")) {
-                registerSetWarpCommand(dispatcher);
-            }
-            if (config.isCommandEnabled("delwarp")) {
-                registerDelWarpCommand(dispatcher);
-            }
-            if (config.isCommandEnabled("listwarps")) {
-                registerWarpsCommand(dispatcher);
-            }
-        }
+        if (!config.isTeleportationEnabled()) return;
+
+        if (config.isCommandEnabled("warp"))     registerWarpCommand(dispatcher);
+        if (config.isCommandEnabled("setwarp"))  registerSetWarpCommand(dispatcher);
+        if (config.isCommandEnabled("delwarp"))  registerDelWarpCommand(dispatcher);
+        if (config.isCommandEnabled("listwarps")) registerWarpsCommand(dispatcher);
     }
-    
-    /**
-     * Register /warp <name> command
-     */
+
+    // ── /warp ─────────────────────────────────────────────────────────────────
     private static void registerWarpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("warp")
-            .requires(source -> {
-                if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_WARP);
-                }
-                return source.hasPermission(2); // Console fallback
-            })
+            .requires(src -> hasAnyWarpPerm(src))
+            // /warp              → show list (page 1)
+            .executes(ctx -> executeWarpList(ctx.getSource(), 1))
+            // /warp <page>       → show list at page
             .then(Commands.argument("name", StringArgumentType.word())
                 .suggests(WARP_SUGGESTIONS)
-                .executes(WarpCommands::executeWarp)
-            )
-        );
-    }
-    
-    /**
-     * Register /setwarp <name> [coordinates] command with aliases
-     */
-    private static void registerSetWarpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerSetWarpCommandWithName(dispatcher, "setwarp");
-        registerSetWarpCommandWithName(dispatcher, "createwarp");
-        registerSetWarpCommandWithName(dispatcher, "addwarp");
-    }
-    
-    private static void registerSetWarpCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
-        dispatcher.register(Commands.literal(commandName)
-            .requires(source -> {
-                if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETWARP);
-                }
-                return source.hasPermission(3); // Console fallback
-            })
-            .then(Commands.argument("name", StringArgumentType.word())
-                .executes(WarpCommands::executeSetWarpHere)
-                .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                    .executes(WarpCommands::executeSetWarpAt)
+                // /warp <name>
+                .executes(ctx -> executeWarp(ctx, StringArgumentType.getString(ctx, "name"), null))
+                // /warp <name> <player>  — Essentials: essentials.warp.others
+                .then(Commands.argument("target", StringArgumentType.word())
+                    .suggests(PLAYER_SUGGESTIONS)
+                    .requires(src -> src.getPlayer() == null ||
+                        PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_WARP_OTHERS))
+                    .executes(ctx -> executeWarp(ctx,
+                        StringArgumentType.getString(ctx, "name"),
+                        StringArgumentType.getString(ctx, "target")))
                 )
             )
         );
     }
-    
-    /**
-     * Register /delwarp <name> command with aliases
-     */
-    private static void registerDelWarpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerDelWarpCommandWithName(dispatcher, "delwarp");
-        registerDelWarpCommandWithName(dispatcher, "deletewarp");
-        registerDelWarpCommandWithName(dispatcher, "removewarp");
-        registerDelWarpCommandWithName(dispatcher, "rwarp");
+
+    private static boolean hasAnyWarpPerm(CommandSourceStack src) {
+        if (src.getPlayer() == null) return src.hasPermission(2);
+        UUID id = src.getPlayer().getUUID();
+        return PermissionAPI.hasPermission(id, PERMISSION_WARP)
+            || PermissionAPI.hasPermission(id, PERMISSION_WARP_LIST);
     }
-    
-    private static void registerDelWarpCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
-        dispatcher.register(Commands.literal(commandName)
-            .requires(source -> {
-                if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELWARP);
-                }
-                return source.hasPermission(3); // Console fallback
-            })
-            .then(Commands.argument("name", StringArgumentType.word())
-                .suggests(WARP_SUGGESTIONS)
-                .executes(WarpCommands::executeDelWarp)
-            )
-        );
-    }
-    
-    /**
-     * Register /warps command with aliases
-     */
-    private static void registerWarpsCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerWarpsCommandWithName(dispatcher, "warps");
-        registerWarpsCommandWithName(dispatcher, "warplist");
-        registerWarpsCommandWithName(dispatcher, "listwarps");
-    }
-    
-    private static void registerWarpsCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
-        dispatcher.register(Commands.literal(commandName)
-            .requires(source -> {
-                if (source.getEntity() instanceof ServerPlayer player) {
-                    return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_WARPS);
-                }
-                return source.hasPermission(2); // Console fallback
-            })
-            .executes(WarpCommands::executeWarps)
-        );
-    }
-    
-    /**
-     * Execute /warp <name>
-     */
-    private static int executeWarp(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        String warpName = StringArgumentType.getString(context, "name");
-        WarpManager warpManager = WarpManager.getInstance();
-        // Jail escape prevention
-        com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
-        com.zerog.neoessentials.moderation.JailManager jailManager = com.zerog.neoessentials.moderation.JailManager.getInstance();
-        if (config.isPreventJailEscapeEnabled() && jailManager.isPlayerJailed(player.getUUID())) {
-            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
-            return 0;
-        }
-        // Check permission
-        if (!hasWarpPermission(player)) {
-            context.getSource().sendFailure(MessageUtil.error("teleport.warp.no_permission"));
-            return 0;
-        }
-        warpManager.teleportToWarp(player, warpName);
-        return 1;
-    }
-    
-    /**
-     * Execute /setwarp <name> (at current location)
-     */
-    private static int executeSetWarpHere(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        String warpName = StringArgumentType.getString(context, "name");
-        WarpManager warpManager = WarpManager.getInstance();
-        
-        // Check permission
-        if (!hasSetWarpPermission(player)) {
-            context.getSource().sendFailure(MessageUtil.error("teleport.warp.no_set_permission"));
-            return 0;
-        }
-        
-        if (warpManager.createWarp(player, warpName)) {
-            return 1;
-        }
-        return 0;
-    }
-    
-    /**
-     * Execute /setwarp <name> <coordinates>
-     */
-    private static int executeSetWarpAt(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        String warpName = StringArgumentType.getString(context, "name");
-        WarpManager warpManager = WarpManager.getInstance();
-        
-        // Check permission
-        if (!hasSetWarpPermission(player)) {
-            context.getSource().sendFailure(MessageUtil.error("teleport.warp.no_set_permission"));
-            return 0;
-        }
-        
-        try {
-            BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-            ServerLevel level = player.serverLevel();
-            
-            if (warpManager.createWarp(player, warpName, level, pos)) {
-                return 1;
+
+    private static int executeWarpList(CommandSourceStack source, int page) {
+        WarpManager wm = WarpManager.getInstance();
+        ServerPlayer player = source.getPlayer();
+
+        // Build available warp list — filter by per-warp permission if enabled
+        List<String> allWarps = new ArrayList<>(wm.getWarpNames());
+        Collections.sort(allWarps, String.CASE_INSENSITIVE_ORDER);
+
+        boolean perWarpPerms = ConfigManager.getInstance().isPerWarpPermissionEnabled();
+        List<String> available = new ArrayList<>();
+        for (String name : allWarps) {
+            if (perWarpPerms && player != null
+                    && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.warps." + name)
+                    && !PermissionAPI.hasPermission(player.getUUID(), PERMISSION_WARP)) {
+                continue;
             }
-        } catch (Exception e) {
-            context.getSource().sendFailure(MessageUtil.error("teleport.warp.invalid_coordinates"));
+            available.add(name);
         }
-        return 0;
-    }
-    
-    /**
-     * Execute /delwarp <name>
-     */
-    private static int executeDelWarp(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        String warpName = StringArgumentType.getString(context, "name");
-        WarpManager warpManager = WarpManager.getInstance();
-        
-        // Check permission
-        if (!hasSetWarpPermission(player)) {
-            context.getSource().sendFailure(MessageUtil.error("teleport.warp.no_delete_permission"));
-            return 0;
-        }
-        
-        if (warpManager.deleteWarp(player, warpName)) {
+
+        if (available.isEmpty()) {
+            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.teleport.warp.list_empty"), false);
             return 1;
         }
-        return 0;
-    }
-    
-    /**
-     * Execute /warps
-     */
-    private static int executeWarps(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
-        WarpManager warpManager = WarpManager.getInstance();
-        
-        String warpsList = warpManager.getFormattedWarpsList();
-        player.sendSystemMessage(MessageUtil.component(warpsList));
-        
-        // Show statistics if player has admin permission
-        if (hasSetWarpPermission(player)) {
-            String stats = warpManager.getStatistics();
-            player.sendSystemMessage(MessageUtil.component(stats));
+
+        int totalPages = (int) Math.ceil((double) available.size() / WARPS_PER_PAGE);
+        int clampedPage = Math.max(1, Math.min(page, totalPages));
+        int start = (clampedPage - 1) * WARPS_PER_PAGE;
+        int end   = Math.min(start + WARPS_PER_PAGE, available.size());
+
+        String warpList = String.join("§7, §f", available.subList(start, end));
+
+        if (available.size() > WARPS_PER_PAGE) {
+            final int fp = clampedPage, tp = totalPages, tot = available.size();
+            source.sendSuccess(() -> MessageUtil.info(
+                "commands.neoessentials.teleport.warp.list_count", tot, fp, tp), false);
         }
-        
+        source.sendSuccess(() -> MessageUtil.info(
+            "commands.neoessentials.teleport.warp.list", warpList), false);
         return 1;
     }
-    
-    /**
-     * Check if player has permission to use warps
-     */
-    private static boolean hasWarpPermission(ServerPlayer player) {
-        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_WARP);
+
+    private static int executeWarp(CommandContext<CommandSourceStack> ctx, String warpName, String targetName) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer sender = source.getPlayer();
+        if (sender == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
+
+        // Jail escape prevention
+        if (ConfigManager.getInstance().isPreventJailEscapeEnabled()
+                && com.zerog.neoessentials.moderation.JailManager.getInstance()
+                    .isPlayerJailed(sender.getUUID())) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
+            return 0;
+        }
+
+        // Basic warp permission
+        if (!PermissionAPI.hasPermission(sender.getUUID(), PERMISSION_WARP)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+            return 0;
+        }
+
+        // Per-warp permission check (Essentials: getPerWarpPermission())
+        if (ConfigManager.getInstance().isPerWarpPermissionEnabled()
+                && !PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.warps." + warpName)) {
+            source.sendFailure(MessageUtil.error(
+                "commands.neoessentials.teleport.warp.no_per_warp_permission", warpName));
+            return 0;
+        }
+
+        WarpManager wm = WarpManager.getInstance();
+        if (!wm.hasWarp(warpName)) {
+            source.sendFailure(MessageUtil.error(
+                "commands.neoessentials.teleport.warp.not_found", warpName));
+            return 0;
+        }
+
+        // Warp-others branch (Essentials: essentials.warp.others)
+        if (targetName != null) {
+            ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(targetName);
+            if (target == null) {
+                source.sendFailure(MessageUtil.error(
+                    "commands.neoessentials.general.player_not_found", targetName));
+                return 0;
+            }
+            wm.teleportToWarp(target, warpName);
+            source.sendSuccess(() -> MessageUtil.success(
+                "commands.neoessentials.teleport.warp.warped_other", target.getName().getString(), warpName), true);
+            return 1;
+        }
+
+        wm.teleportToWarp(sender, warpName);
+        return 1;
     }
-    
-    /**
-     * Check if player has permission to create warps
-     */
-    private static boolean hasSetWarpPermission(ServerPlayer player) {
-        return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETWARP);
+
+    // ── /setwarp ──────────────────────────────────────────────────────────────
+    private static void registerSetWarpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        for (String alias : new String[]{"setwarp", "createwarp", "addwarp"}) {
+            dispatcher.register(Commands.literal(alias)
+                .requires(src -> src.getPlayer() == null
+                    ? src.hasPermission(3)
+                    : PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_SETWARP))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(WarpCommands::executeSetWarpHere)
+                    .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                        .executes(WarpCommands::executeSetWarpAt))
+                )
+            );
+        }
+    }
+
+    private static int executeSetWarpHere(CommandContext<CommandSourceStack> ctx) {
+        ServerPlayer player = ctx.getSource().getPlayer();
+        if (player == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
+        String name = StringArgumentType.getString(ctx, "name");
+        return WarpManager.getInstance().createWarp(player, name) ? 1 : 0;
+    }
+
+    private static int executeSetWarpAt(CommandContext<CommandSourceStack> ctx) {
+        ServerPlayer player = ctx.getSource().getPlayer();
+        if (player == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
+        String name = StringArgumentType.getString(ctx, "name");
+        try {
+            BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+            ServerLevel level = player.serverLevel();
+            return WarpManager.getInstance().createWarp(player, name, level, pos) ? 1 : 0;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("teleport.warp.invalid_coordinates"));
+            return 0;
+        }
+    }
+
+    // ── /delwarp ──────────────────────────────────────────────────────────────
+    private static void registerDelWarpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        for (String alias : new String[]{"delwarp", "deletewarp", "removewarp", "rwarp"}) {
+            dispatcher.register(Commands.literal(alias)
+                .requires(src -> src.getPlayer() == null
+                    ? src.hasPermission(3)
+                    : PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_DELWARP))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(WARP_SUGGESTIONS)
+                    .executes(ctx -> executeDelWarp(ctx, StringArgumentType.getString(ctx, "name")))
+                )
+            );
+        }
+    }
+
+    private static int executeDelWarp(CommandContext<CommandSourceStack> ctx, String warpName) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer player = source.getPlayer();
+        // Console support — allow ops to delete warps from console
+        if (player == null) {
+            if (WarpManager.getInstance().hasWarp(warpName)) {
+                // Create a synthetic delete — we need a ServerPlayer for the API but can simulate it
+                // Just check existence and remove directly via the manager
+                boolean removed = WarpManager.getInstance().deleteWarpByAdmin(warpName, source.getTextName());
+                if (removed) {
+                    source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.warp.deleted", warpName), true);
+                } else {
+                    source.sendFailure(MessageUtil.error("commands.neoessentials.teleport.warp.not_found", warpName));
+                }
+                return removed ? 1 : 0;
+            }
+            source.sendFailure(MessageUtil.error("commands.neoessentials.teleport.warp.not_found", warpName));
+            return 0;
+        }
+        // Permission is already checked in requires(), but double-check for clarity
+        if (!PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELWARP)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+            return 0;
+        }
+        return WarpManager.getInstance().deleteWarp(player, warpName) ? 1 : 0;
+    }
+
+    // ── /warps [page] ─────────────────────────────────────────────────────────
+    private static void registerWarpsCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        for (String alias : new String[]{"warps", "warplist", "listwarps"}) {
+            dispatcher.register(Commands.literal(alias)
+                .requires(src -> src.getPlayer() == null
+                    || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_WARP_LIST))
+                .executes(ctx -> executeWarpList(ctx.getSource(), 1))
+                .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                    .executes(ctx -> executeWarpList(ctx.getSource(),
+                        IntegerArgumentType.getInteger(ctx, "page"))))
+            );
+        }
     }
 }

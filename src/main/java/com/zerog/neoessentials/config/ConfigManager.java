@@ -2035,6 +2035,25 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if per-warp permission checks are enabled (teleportation.warpSettings.perWarpPermission).
+     * Essentials: getPerWarpPermission() — checks neoessentials.warps.<name> per warp.
+     * Defaults to false if not set.
+     */
+    public boolean isPerWarpPermissionEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("warpSettings")) {
+                JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+                if (warpSettings.has("perWarpPermission")) {
+                    return warpSettings.get("perWarpPermission").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns true if debug logging is enabled (logging.enableDebugLogging).
      * Defaults to false if not set.
      */

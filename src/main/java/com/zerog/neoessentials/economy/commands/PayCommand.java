@@ -5,12 +5,11 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
-
 import com.zerog.neoessentials.util.MessageUtil;
-import com.zerog.neoessentials.economy.managers.PayToggleManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -103,58 +102,100 @@ public class PayCommand {
             return 0;
         }
         
-        // Find recipient player
+        // Find recipient player — support offline if sender has neoessentials.economy.pay.offline
         net.minecraft.server.MinecraftServer server = ctx.getSource().getServer();
-        com.zerog.neoessentials.util.InputValidator.ValidationResult playerValidation = 
-            com.zerog.neoessentials.util.InputValidator.validateOnlinePlayer(targetName, server);
-        if (!playerValidation.isValid()) {
-            ctx.getSource().sendFailure(MessageUtil.error(playerValidation.getErrorMessage()));
-            return 0;
+        UUID recipientUUID = null;
+        String resolvedRecipientName = targetName;
+
+        // Try online first
+        ServerPlayer onlineRecipient = server.getPlayerList().getPlayerByName(targetName);
+        if (onlineRecipient != null) {
+            recipientUUID = onlineRecipient.getUUID();
+            resolvedRecipientName = onlineRecipient.getName().getString();
+        } else {
+            // Offline player — check permission (Essentials: essentials.pay.offline)
+            boolean canPayOffline = com.zerog.neoessentials.api.permissions.PermissionAPI
+                .hasPermission(sender.getUUID(), "neoessentials.economy.pay.offline");
+            if (!canPayOffline) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.offline_not_allowed"));
+                return 0;
+            }
+            // Resolve from profile cache
+            Optional<UUID> uuidOpt = com.zerog.neoessentials.economy.EconomyPlayerUtil
+                .getUUIDByName(server, targetName);
+            if (uuidOpt.isEmpty()) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.player_not_found", targetName));
+                return 0;
+            }
+            recipientUUID = uuidOpt.get();
         }
-        
-        ServerPlayer recipient = playerValidation.getValue(ServerPlayer.class);
-        
+
+        final UUID finalRecipientUUID = recipientUUID;
+        final String finalRecipientName = resolvedRecipientName;
+
         // Prevent self-payment
-        if (recipient.getUUID().equals(sender.getUUID())) {
+        if (finalRecipientUUID.equals(sender.getUUID())) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cannot_pay_self"));
             return 0;
         }
-        // Check if recipient allows payments
-        if (!PayToggleManager.getInstance().getPayToggle(recipient.getUUID())) {
+
+        // Check if recipient allows payments (Essentials: !player.isAcceptingPay())
+        if (!com.zerog.neoessentials.economy.managers.PayToggleManager.getInstance()
+                .getPayToggle(finalRecipientUUID)) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.toggled_off"));
             return 0;
         }
-        
+
+        // Ignore check — if online recipient ignores sender, block payment (Essentials: payExcludesIgnoreList)
+        if (onlineRecipient != null
+                && com.zerog.neoessentials.chat.IgnoreManager.isIgnoring(onlineRecipient, sender)) {
+            ctx.getSource().sendFailure(MessageUtil.error(
+                "commands.neoessentials.pay.toggled_off")); // same message as Essentials "notAcceptingPay"
+            return 0;
+        }
+
         // Use validated amount
         java.math.BigDecimal amount = amountValidation.getValue(java.math.BigDecimal.class);
-        
-        // Calculate tax using ConfigManager
+
+        // Calculate tax
         double taxPercent = com.zerog.neoessentials.config.ConfigManager.getEconomyTaxPercentage();
         java.math.BigDecimal fee = amount.multiply(java.math.BigDecimal.valueOf(taxPercent / 100.0));
         java.math.BigDecimal netAmount = amount.subtract(fee);
-        boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(sender.getUUID(), recipient.getUUID(), amount);
+
+        boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(
+            sender.getUUID(), finalRecipientUUID, amount);
         if (!success) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.insufficient_funds"));
             return 0;
         }
+
         String currency = EconomyManager.getInstance().getCurrencySymbol();
         ctx.getSource().sendSuccess(() -> MessageUtil.success(
             "commands.neoessentials.pay.success_fee",
-            targetName, amount, fee, netAmount, currency
-        ), false);
-        recipient.sendSystemMessage(MessageUtil.info(
-            "commands.neoessentials.pay.received_fee",
-            sender.getGameProfile().getName(), netAmount, fee, currency
-        ));
-        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(sender.getUUID(), MessageUtil.localize("commands.neoessentials.transaction.paid", targetName, amount, fee));
-        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(recipient.getUUID(), MessageUtil.localize("commands.neoessentials.transaction.received", netAmount, sender.getGameProfile().getName(), fee));
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.zerog.neoessentials.economy.events.EconomyTransactionEvent(
-            com.zerog.neoessentials.economy.events.EconomyTransactionEvent.Type.PAY,
-            sender.getUUID(),
-            recipient.getUUID(),
-            netAmount,
-            MessageUtil.localize("commands.neoessentials.transaction.pay_description", fee)
-        ));
+            finalRecipientName, amount, fee, netAmount, currency), false);
+
+        // Notify recipient if online
+        if (onlineRecipient != null) {
+            onlineRecipient.sendSystemMessage(MessageUtil.info(
+                "commands.neoessentials.pay.received_fee",
+                sender.getGameProfile().getName(), netAmount, fee, currency));
+        }
+
+        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance()
+            .addTransaction(sender.getUUID(), MessageUtil.localize(
+                "commands.neoessentials.transaction.paid", finalRecipientName, amount, fee));
+        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance()
+            .addTransaction(finalRecipientUUID, MessageUtil.localize(
+                "commands.neoessentials.transaction.received", netAmount,
+                sender.getGameProfile().getName(), fee));
+
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
+            new com.zerog.neoessentials.economy.events.EconomyTransactionEvent(
+                com.zerog.neoessentials.economy.events.EconomyTransactionEvent.Type.PAY,
+                sender.getUUID(), finalRecipientUUID, netAmount,
+                MessageUtil.localize("commands.neoessentials.transaction.pay_description", fee)));
+
+        BaltopCommand.invalidateCache();
         return 1;
     }
 }

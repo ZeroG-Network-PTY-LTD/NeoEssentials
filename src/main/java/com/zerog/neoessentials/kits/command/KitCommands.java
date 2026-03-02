@@ -69,7 +69,17 @@ public class KitCommands {
                 LOGGER.error("Failed to register listkits command", e);
             }
         }
-        
+
+        // Register kitreset command (Essentials: /kitreset)
+        if (config.isCommandEnabled("kitreset")) {
+            try {
+                KitResetCommand.register(dispatcher);
+                LOGGER.info("KitReset command registered");
+            } catch (Exception e) {
+                LOGGER.error("Failed to register kitreset command", e);
+            }
+        }
+
         LOGGER.info("All kit commands registration completed");
     }
 }

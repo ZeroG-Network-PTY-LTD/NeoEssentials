@@ -150,6 +150,13 @@ public class PlayerJoinQuitHandler {
             // Notify chat integrations about the join
             ChatIntegrationManager.broadcastPlayerJoin(player);
 
+            // Mail login notification (Essentials: notify of unread mail on join)
+            try {
+                com.zerog.neoessentials.util.commands.MailCommand.notifyOnLogin(player);
+            } catch (Exception e) {
+                LOGGER.debug("Could not send mail notification to {}: {}", player.getName().getString(), e.getMessage());
+            }
+
         } catch (Exception e) {
             LOGGER.error("Error handling join event for player {}: {}", 
                 player.getName().getString(), e.getMessage(), e);

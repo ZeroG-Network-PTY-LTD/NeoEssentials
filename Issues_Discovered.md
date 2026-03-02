@@ -5,7 +5,192 @@
 
 # ✅ Issues That Were Fixed
 
-- **Permissions node investigation & documentation**
+- **Kit system — Missing Essentials features: /kit others, /kitreset, clean list, console support, recipient notification, public cooldown API**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Commandkit.java`, `Commandkitreset.java`, `Kit.java`):**
+
+  - **`/kit <name> <player>` (give to others) missing** — Essentials `Commandkit` checks `essentials.kit.others` and lets you specify a second player argument. Our command had no `target` argument.
+  - **`/kitreset <kit> [player]` command missing entirely** — Essentials has a full `/kitreset` command that sets `user.setKitTimestamp(kitName, 0)`. We had no cooldown reset command at all.
+  - **`/kit` (no args) showed wrong format** — Previous list display showed verbose info blocks per kit. Essentials shows a clean single-line per-kit list with cooldown status.
+  - **Console support missing** — `KitCommand` blocked console entirely. Essentials allows console to run `/kit <name> <player>`.
+  - **Recipient notification missing** — Essentials sends `kitReceive` to the target when given a kit by another player. Our command sent nothing to the recipient.
+  - **Redundant double permission check** — Command checked permission, then called `canUseKit()` which checked it again, potentially sending two error messages for one denied action. Cleaned up to single check.
+  - **`getRemainingCooldown` private** — KitCommand couldn't show per-kit cooldown status in the list because the method was private. Needed for list display and external access.
+  - **`resetCooldown()` / `resetAllCooldowns()` methods missing** — No public API to reset a player's kit cooldown, required for `/kitreset`.
+  - **3 new permission nodes missing** — `kit.others`, `kitreset`, `kitreset.others` unregistered.
+  - **16 lang keys outdated** — Old keys used `{placeholder}` style instead of `{0}` MessageFormat style, missing new keys for list display, reset, others notifications.
+
+  **Fixes applied:**
+
+  | Area | Change |
+  |---|---|
+  | `/kit <name> <player>` | New `target` argument. Requires `neoessentials.kit.others`. Notifies recipient with `kits.received_from`. |
+  | Console `/kit` | Console allowed when target arg present. Logs as "Console gave kit X to Y". |
+  | `/kit` list (no args) | Clean format: per-kit single line with item count + cooldown status (Ready / Cooldown: Xm Ys). Filtered by player's permissions. |
+  | `/kitreset <kit> [player]` | New `KitResetCommand.java`. Self-reset + others-reset. Notifies target. Registered in `KitCommands` + `NeoEssentials`. |
+  | `getRemainingCooldownPublic()` | Public alias for private `getRemainingCooldown()`. Used by list display and future API. |
+  | `resetCooldown(uuid, kit)` | New public method. Removes cooldown entry and saves. |
+  | `resetAllCooldowns(uuid)` | New public method. Clears all cooldowns for a player. |
+  | Permission nodes | Added: `kit.others`, `kitreset`, `kitreset.others`. |
+  | Lang keys | Full rewrite with `{0}` MessageFormat args: `given`, `gave_to`, `received_from`, `list_header`, `list_entry`, `list_ready`, `list_cooldown`, `list_empty`, `reset_self`, `reset_other`, `reset_notify`, `console_needs_target`, `cannot_use`, `charge_failed`, `not_enough_money`. §colour-coded. |
+  | PermissionSystem.md | Kits section updated with all new nodes and correct command associations. |
+
+- **Warp system — Missing Essentials features: warp-others, per-warp permission, /warps pagination, /warp no-args list, deleteWarpByAdmin, console NPE fix**
+
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Warps.java` / `Commandwarp.java`):**
+
+  - **`/warp <name> <player>` missing** — Essentials supports warping another player with `essentials.warp.others`. Our command accepted only `<name>`.
+  - **`/warp` (no args) didn't show list** — Essentials: `if (args.length == 0 || args[0].matches("[0-9]+"))` → show paginated warp list. Ours required a name and threw a syntax error.
+  - **Per-warp permission (`neoessentials.warps.<name>`) missing** — Essentials has `getPerWarpPermission()` which checks `essentials.warps.<warpname>` per warp when enabled. Not wired in our command.
+  - **`/warps [page]` pagination missing** — Essentials: `WARPS_PER_PAGE = 20`, shows `page/maxPages` header. Our `/warps` dumped all warps as a single blob.
+  - **`/delwarp` used wrong permission** — Used `hasSetWarpPermission()` (create perm) instead of `PERMISSION_DELWARP`. Admin with delete-but-not-create permission couldn't delete warps.
+  - **`/warps` NPE from console** — `executeWarps()` cast `getEntity()` to `ServerPlayer` unconditionally. Would NPE if run from console.
+  - **No console `/delwarp` support** — `deleteWarp(ServerPlayer, String)` requires a player object. Console couldn't delete warps.
+  - **All warp lang keys undefined** — `WarpManager` referenced 20+ lang keys (`warp.not_found`, `warp.created`, `warp.list_header`, etc.) but none were in `en_us.json`. Players would see raw key strings.
+  - **`perWarpPermission` config option missing** — No config entry to enable/disable per-warp permissions.
+  - **3 new permission nodes missing** — `warp.others`, `warp.list` (was registered but undocumented properly), `warps.*`.
+
+  **Fixes applied:**
+
+  | Area | Change |
+  |---|---|
+  | `/warp <name> <player>` | New variant. Requires `neoessentials.teleport.warp.others`. Teleports target, notifies sender. |
+  | `/warp` (no args) | Now shows paginated warp list (page 1). Matches Essentials `args.length==0` behaviour. |
+  | Per-warp permission | `isPerWarpPermissionEnabled()` added to ConfigManager. When `true`, `/warp <name>` checks `neoessentials.warps.<name>`. |
+  | `perWarpPermission` config | Added `perWarpPermission: false` default to `warpSettings` in `config.json`. |
+  | `/warps [page]` pagination | 20 per page, sorted case-insensitively. Shows `(N total, page X/Y)` header when multi-page. Filters by per-warp perms. |
+  | `/delwarp` permission | Now correctly uses `PERMISSION_DELWARP` (`warp.delete`) not create perm. |
+  | Console `/delwarp` | `deleteWarpByAdmin(String, String)` — new method in `WarpManager`. No `ServerPlayer` needed. |
+  | `/warps` console NPE | `executeWarps` uses `source.getPlayer()` (nullable) not unchecked cast. |
+  | 26 warp lang keys | All `commands.neoessentials.teleport.warp.*` keys added to `en_us.json`. Previously showed raw keys. |
+  | Permission nodes | Added: `warp.others`, `warps.*`. Updated docs for `warp.list`. |
+  | PermissionSystem.md | Warp section fully updated with all nodes, per-warp info, and correct command associations. |
+
+- **Economy system — Missing Essentials features: /eco reset, percent amounts, offline pay, baltop async cache, pagination, total wealth, exempt players**
+
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Commandeco.java`, `Commandpay.java`, `BalanceTopImpl.java`):**
+
+  - **`/eco reset <player>` missing** — Essentials `EcoCommands` enum has `GIVE`, `TAKE`, `SET`, **`RESET`**. Our `EcoCommand` only had `give`, `take`, `set`. `reset` sets the player's balance back to `startingBalance` from config.
+  - **`/eco give/take <player> <amount%>` missing** — Essentials supports percent-of-balance amounts (e.g. `eco take Steve 10%` takes 10% of Steve's current balance). Ported via `scaleByPowerOfTen(-2)` logic.
+  - **`/eco give/take/set/reset` online-only** — `EcoPlayerUtil.getUUIDByName` existed but `ecoAdminAction` was already using it correctly; however notify-if-online messages were missing for `give`/`set`.
+  - **`/pay` online-only** — `PayCommand` used `validateOnlinePlayer()` which rejected offline targets entirely. Essentials allows offline payment with `essentials.pay.offline` permission.
+  - **`/pay` ignore check missing** — Essentials checks `player.isIgnoredPlayer(user)` in addition to `isAcceptingPay()`. If the online recipient was ignoring the sender, payment still went through. Fixed to check `IgnoreManager.isIgnoring()`.
+  - **`/baltop` blocking sort every call** — `BaltopCommand.execute()` called `EconomyManager.getAllBalances()` and sorted inline, on the server thread, every time anyone ran `/baltop`. With many players this would stall the server.
+  - **`/baltop` no pagination** — Only showed 10 entries with no way to see ranks 11+.
+  - **`/baltop` no total wealth** — Essentials shows `balanceTopTotal` (sum of all balances) at the footer.
+  - **`/baltop` no cache age** — No way to know if data was stale.
+  - **`/baltop` exempt permission missing** — No `baltop.exempt` node; admins/NPCs could appear on the list.
+  - **`/baltop` raw UUIDs in output** — `EconomyLeaderboard.formatLeaderboard()` used `entry.getKey()` (UUID string) not a resolved player name.
+  - **3 new permission nodes missing** — `pay.offline`, `baltop.exempt`, `eco.eco` (reset alias) unregistered.
+
+  **Fixes applied:**
+
+  | Area | Change |
+  |---|---|
+  | `/eco reset <player>` | New subcommand. Sets balance to `ConfigManager.getEconomyStartingBalance()`. Notifies target if online. Logs to transaction history. |
+  | `/eco give/take <player> <amount%>` | Percent support: detects `%` suffix, applies `current × (amount / 100)`. |
+  | `/eco give/set` online notification | Notifies target player if online with `eco.received_give` / `eco.set_notify` message. |
+  | `/pay` offline support | Resolves offline UUID from profile cache. Blocked unless sender has `neoessentials.economy.pay.offline`. |
+  | `/pay` ignore check | If online recipient ignores sender, payment blocked with "not accepting payments" message (Essentials behaviour). |
+  | `BaltopCommand` — full rewrite | Port of `BalanceTopImpl.calculateBalanceTopMapAsync()`: async `CompletableFuture`, thread-safe `CopyOnWriteArrayList`, `AtomicBoolean` cache lock. |
+  | Cache auto-refresh | Cache rebuilt asynchronously when stale (>60 s) or empty. Never blocks server thread. |
+  | `/baltop [page]` pagination | Default 10/page. Any page number supported. |
+  | Total economy wealth | Footer line shows sum of all non-exempt balances. |
+  | Cache age display | Header shows how many seconds ago data was calculated. |
+  | Exempt players | `neoessentials.economy.baltop.exempt` permission skips player from ranking & total. |
+  | Player name resolution | Profile cache lookup, falls back to UUID string if unresolvable. |
+  | Cache invalidation | `BaltopCommand.invalidateCache()` called after every `eco give/take/set/reset` and `pay` to keep data fresh. |
+  | Permission nodes | Added: `pay.offline`, `baltop.exempt`, `eco` (eco admin). Updated `pay` description. |
+  | Lang keys | `eco.reset`, `eco.reset_notify`, `eco.received_give`, `eco.set_notify`, `eco.player_not_found`, `pay.offline_not_allowed`, `pay.player_not_found`, `baltop.empty`, `baltop.refreshing`, `baltop.total`. Updated header + entry formatting with §colours. |
+
+- **Jail system — Missing Essentials features: timed jails, deljail, full event enforcement (respawn, teleport, interact, attack, gamemode)**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Jails.java` / `JailListener`):**
+
+  - **Timed jails missing** — `JailEntry` had no `expireAt` field. No way to jail someone for "30 minutes" and have them auto-release. Essentials has `checkJailTimeout(currentTime)` called on join and periodically.
+  - **`/jailfor` missing** — No timed-jail command. Essentials: `Commandtogglejail` uses `DateUtil.parseDateDiff`.
+  - **`/deljail` missing** — No command to remove a jail location. Essentials: `Commanddeljail`.
+  - **Interaction not blocked for jailed players** — `onPlayerRightClick` only checked freeze/vanish, never jail. Essentials: `onJailPlayerInteract` cancels `PlayerInteractEvent` unless `essentials.jail.allow-interact`.
+  - **Attack not blocked for jailed players** — No `LivingAttackEvent` handler. Essentials: `onJailEntityDamageByEntity` cancels attacks by jailed players unless `essentials.jail.allow-attack`.
+  - **Respawn not redirected to jail** — No `PlayerRespawnEvent` handler. Essentials: `onJailPlayerRespawn` (HIGHEST priority) redirects respawn location back to jail.
+  - **Teleport not intercepted for jailed players** — No teleport event handler. Essentials: `onJailPlayerTeleport` (HIGH priority) overrides teleport destination back to jail. Our tick-based enforcement had escape windows.
+  - **`onPlayerJoin` / `checkJailTimeout` never called from any event** — `JailManager.onPlayerJoin()` existed but was orphaned. `checkJailTimeout()` didn't exist at all.
+  - **Tick-based movement check scanned ALL players every tick** — Extremely expensive. Should only check jailed players and only once per second.
+  - **4 new bypass permission nodes missing** — `jail.allow-break`, `jail.allow-place`, `jail.allow-interact`, `jail.allow-attack` were unregistered.
+
+  **Fixes applied:**
+
+  | Area | Change |
+  |---|---|
+  | `JailEntry.expireAt` | New field. `0` = indefinite. Persisted to/from `jailed_players.json`. |
+  | `JailManager.checkJailTimeout()` | New method. Checks if timed jail expired → auto-unjails. Returns `true` if released. |
+  | `JailManager.jailPlayer(…, durationMillis)` | New overload. `0L` = indefinite (existing behaviour unchanged). Sets `expireAt`. |
+  | `JailManager.formatDuration()` | New static helper. Formats millis as `2h 30m 15s`. |
+  | `JailEntry.getFormattedRemaining()` | Returns remaining jail time or `"indefinite"`. |
+  | `/jailfor <player> <jail> <duration> [reason]` | New command. Duration: `30s`, `5m`, `2h`, `1d`, `1w`. Reuses `MailCommand.parseDuration()`. |
+  | `/deljail <name>` | New command. Warns if players were in that jail. |
+  | `ModerationEventHandler` — full rewrite | Replaced 194-line file with complete Essentials port. |
+  | `onPlayerLogin` | Calls `checkJailTimeout()` first → auto-release if expired. Then calls `onPlayerJoin()` to teleport to jail. |
+  | `onPlayerRespawn` | Schedules 1-tick delayed teleport back to jail after respawn. |
+  | `onPlayerTeleport` | Cancels `TeleportCommandEvent` for jailed players, redirects back to jail. |
+  | `onPlayerMove` (dimension change) | Catches cross-dimension escapes via `PlayerChangedDimensionEvent`. |
+  | `onPlayerRightClick` + `onPlayerRightClickBlock` | Cancels both for jailed players unless `neoessentials.jail.allow-interact`. |
+  | `onLivingAttack` | Cancels attacks by jailed players unless `neoessentials.jail.allow-attack`. |
+  | `onBlockBreak` / `onBlockPlace` | Now checks `allow-break` / `allow-place` bypass perms before cancelling. |
+  | `onServerTick` | Replaced all-player per-tick scan → runs every 20 ticks (1s), skips non-jailed players, also calls `checkJailTimeout`. |
+  | Permission nodes | Added: `jail.timed`, `deljail`, `jail.allow-break`, `jail.allow-place`, `jail.allow-interact`, `jail.allow-attack`. |
+  | Lang keys | Added: `jail.message`, `jail.escape_prevented`, `jail.released_expired`, `jail.invalid_duration`, `jail.deljail_success`, `jail.deljail_had_inmates`. |
+
+- **Mail system — Missing Essentials features: timed mail, sendall, clearall, mute/ignore checks, rate limiting, console support**
+
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Commandmail.java` / `MailServiceImpl.java`):**
+
+  - **`sendtemp` missing** — No way to send expiring/timed mail. Essentials supports `sendtemp <player> <duration> <message>` where the mail auto-deletes when expired and shows an expiry timestamp.
+  - **`sendall` / `sendtempall` missing** — Admins had no way to broadcast a mail to all players.
+  - **`clearall` missing** — No admin command to wipe every player's mailbox.
+  - **`clear <index>` and `clear <player>` missing** — Players couldn't delete a specific message by position; admins couldn't clear another player's mailbox. Only own full-clear existed.
+  - **Mute check missing** — Muted players could still send mail. Essentials blocks muted users from sending.
+  - **Ignore check missing** — If target ignored the sender, mail was still delivered. Essentials silently drops it.
+  - **Rate limiting missing** — No per-minute throttle. Old code only had a 50-message hard cap.
+  - **Console couldn't send** — `/mail send <player> <msg>` from console was blocked. Essentials allows it.
+  - **`senderUUID` not stored** — Only sender name was saved; no UUID for future cross-reference.
+  - **Message length cap was 200** — Essentials uses 1000 characters.
+  - **Expired mail not cleaned on read** — Old timed messages stayed in the mailbox forever.
+  - **Login notification not connected** — `hasUnreadMail()` existed but was never called on player join.
+  - **5 missing permission nodes** — `mail.sendtemp`, `mail.sendall`, `mail.sendtempall`, `mail.clear.others`, `mail.clearall` were unregistered.
+
+  **Fixes applied:**
+
+  | Area | Change |
+  |---|---|
+  | `/mail sendtemp <player> <duration> <msg>` | New sub-command. Duration: `30s`, `5m`, `2h`, `1d`, `1w`. Shows expiry in read list. Expired msgs auto-purged on read. |
+  | `/mail sendall <msg>` | Admin broadcast to all online players. Runs async. |
+  | `/mail sendtempall <duration> <msg>` | Admin timed broadcast to all online players. |
+  | `/mail clearall` | Admin wipe of all mailboxes. |
+  | `/mail clear <index>` | Delete a specific message by 1-based index. |
+  | `/mail clear <player> [index]` | Admin: clear another player's mailbox (whole or by index). |
+  | Mute check | Muted players blocked from sending. Returns `§cYou are muted and cannot send mail.` |
+  | Ignore check | If target ignores sender and both are online, mail is silently dropped (Essentials behaviour). |
+  | Rate limiting | Configurable `mail.mailsPerMinute` in `config.json` (default 10). Atomic per-minute window. |
+  | Console support | `/mail send <player> <msg>` works from server console (sender shown as "Console"). |
+  | `senderUUID` field | Now stored alongside `senderName` in `mail_data.json`. |
+  | Message length | Raised from 200 → 1000 characters (matches Essentials). |
+  | Expired mail cleanup | `readMail()` removes expired messages before rendering, same as Essentials `iterator.remove()`. |
+  | Login notification | `MailCommand.notifyOnLogin()` hooked into `PlayerJoinQuitHandler.onPlayerJoin()`. |
+  | Backward compatibility | Old `mail_data.json` format (with `sender`/`timestamp` fields) loads correctly alongside new format. |
+  | Permission nodes | Added: `mail.sendtemp`, `mail.sendall`, `mail.sendtempall`, `mail.clear.others`, `mail.clearall`. All registered in `PermissionRegistry`. |
+  | Lang keys | 8 new keys added; all existing mail keys updated with better formatting. |
+  | Pages | Increased from 5 per page → 9 per page (matches Essentials). |
+
+
   *(Fixed: 2026-03-01)*
 
   **Root causes found:**

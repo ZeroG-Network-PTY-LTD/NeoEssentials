@@ -304,7 +304,9 @@
       "enableWarpSafety": true,
       "enableWarpSafety_comment": "When true, warps must be safe. When false, allows warps at any location including unsafe ones.",
       "logWarpActions": true,
-      "logWarpActions_comment": "Log warp creation/deletion/usage to server logs."
+      "logWarpActions_comment": "Log warp creation/deletion/usage to server logs.",
+      "perWarpPermission": false,
+      "perWarpPermission_comment": "When true, players need neoessentials.warps.<name> permission for each individual warp (Essentials: per-warp-permission)."
     },
     "spawnSettings": {
       "spawnSettings_comment": "Spawn system configuration",
