@@ -132,6 +132,11 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.economy.admin.take` | 🔒 op-only | Take money from a player | `/eco take` |
 | `neoessentials.economy.admin.set` | 🔒 op-only | Set a player's balance | `/eco set` |
 | `neoessentials.economy.admin.reset` | 🔒 op-only | Reset a player's balance to starting balance | `/eco reset` |
+| `neoessentials.worth` | ✅ default | Check sell value of item | `/worth [item] [amount]` |
+| `neoessentials.sell` | ✅ default | Use the sell command | `/sell` |
+| `neoessentials.sell.hand` | ✅ default | Sell item in hand | `/sell hand [amount]` |
+| `neoessentials.sell.bulk` | ✅ default | Sell entire inventory | `/sell inventory\|all` |
+| `neoessentials.setworth` | 🔒 op-only | Set item sell prices | `/setworth <item\|hand> <price\|remove>` |
 
 ---
 

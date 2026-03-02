@@ -105,7 +105,23 @@
     "invsee": true,
     "invseeedit": true,
     "enderchest": true,
-    "enderchestedit": true
+
+    "enderchestedit": true,
+    "worth": true,
+    "sell": true,
+    "setworth": true,
+    "kitreset": true
+  },
+  "economy": {
+    "economy_comment": "Economy system configuration",
+    "currencySymbol": "$",
+    "currencySymbol_comment": "Symbol displayed before money amounts.",
+    "startingBalance": 0.0,
+    "startingBalance_comment": "Starting balance for new players.",
+    "sellMultiplier": 1.0,
+    "sellMultiplier_comment": "Multiplier applied to all sell prices. 1.0 = 100%, 0.5 = 50%, 2.0 = 200%.",
+    "allowSellNamedItems": false,
+    "allowSellNamedItems_comment": "Whether players can sell items with custom display names (renamed items). Essentials: allow-sell-named-items."
   },
   "webDashboard": {
     "webDashboard_comment": "Web Dashboard configuration - controls the built-in web interface for server monitoring and management",

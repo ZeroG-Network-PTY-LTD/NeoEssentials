@@ -5,6 +5,31 @@
 
 # ✅ Issues That Were Fixed
 
+- **Worth/Sell system — Missing entirely: /worth, /sell hand|inventory|all|item, /setworth, WorthManager with price persistence**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes found (vs EssentialsX `Worth.java`, `Commandworth.java`, `Commandsell.java`):**
+
+  - **Entire system was absent** — No `WorthManager`, no `/worth`, no `/sell`, no `/setworth` commands existed at all.
+
+  **Implemented from scratch based on EssentialsX pattern:**
+
+  | Component | Details |
+  |---|---|
+  | `WorthManager.java` | Singleton. Loads/saves `worth.json` (item registry ID → price). `getPrice(ItemStack)`, `setPrice()`, `removePrice()`, `getSellMultiplier()`, `isAllowSellNamedItems()`, `resolveItem(name)`. |
+  | `/worth [item\|hand] [amount]` | Shows sell value of held item or named item × amount. Essentials: `itemWorth()`. |
+  | `/sell hand [amount]` | Sells item in hand. Requires `neoessentials.sell.hand`. |
+  | `/sell inventory\|all\|invent` | Sells all priced items in inventory. Skips named items if disabled. Requires `neoessentials.sell.bulk`. |
+  | `/sell <item> [amount]` | Sells by item name/ID from inventory. |
+  | `/setworth <item\|hand> <price>` | Admin: sets sell price. `hand` uses held item. Requires `neoessentials.setworth`. |
+  | `/setworth <item\|hand> remove` | Admin: removes sell price. |
+  | Sell multiplier | `economy.sellMultiplier` config (default `1.0`). Applied to all sell prices. Essentials: `getSettings().getMultiplier(user)`. |
+  | Named item protection | `economy.allowSellNamedItems` config (default `false`). Essentials: `isAllowSellNamedItems()`. |
+  | `economy` config section | Added `currencySymbol`, `startingBalance`, `sellMultiplier`, `allowSellNamedItems` to `config.json`. |
+  | 5 permission nodes | `neoessentials.worth`, `sell`, `sell.hand`, `sell.bulk`, `setworth` registered. |
+  | 13 lang keys | All `worth.*` and `sell.*` keys added to `en_us.json`. |
+  | Commands registered | `worth`, `sell`, `setworth` added to `NeoEssentials.java` and `config.json` commands section. |
+
 - **Kit system — Missing Essentials features: /kit others, /kitreset, clean list, console support, recipient notification, public cooldown API**
   *(Fixed: 2026-03-02)*
 

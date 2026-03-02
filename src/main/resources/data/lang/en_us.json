@@ -710,5 +710,23 @@
   "commands.neoessentials.teleport.warp.playerwarp_deleted": "§aPlayer warp §f{0}§a has been deleted.",
   "commands.neoessentials.general.player_only": "§cOnly players can use this command.",
   "commands.neoessentials.general.no_permission": "§cYou do not have permission to use this command.",
-  "commands.neoessentials.general.player_not_found": "§cPlayer §f{0}§c not found or is not online."
+  "commands.neoessentials.general.player_not_found": "§cPlayer §f{0}§c not found or is not online.",
+
+  "_comment_worth": "=== Worth / Sell System ===",
+  "commands.neoessentials.worth.result": "§e{0}x §f{1}§e is worth §a{2}§e (§a{3}§e each).",
+  "commands.neoessentials.worth.no_price": "§cNo sell price has been set for §f{0}§c.",
+  "commands.neoessentials.worth.unknown_item": "§cUnknown item: §f{0}§c.",
+  "commands.neoessentials.worth.no_item_in_hand": "§cYou are not holding an item.",
+  "commands.neoessentials.sell.usage": "§cUsage: /sell hand|inventory|all|<item> [amount]",
+  "commands.neoessentials.sell.no_item_in_hand": "§cYou are not holding an item.",
+  "commands.neoessentials.sell.item_sold": "§aSold §f{0}x {1}§a for §2{2}§a (§2{3}§a each).",
+  "commands.neoessentials.sell.inventory_sold": "§aSold §f{0}§a item type(s) for §2{1}§a.",
+  "commands.neoessentials.sell.nothing_to_sell": "§cYou have no items with a sell price in your inventory.",
+  "commands.neoessentials.sell.named_items_skipped": "§e{0} named item(s) were skipped (selling named items is disabled).",
+  "commands.neoessentials.sell.cannot_sell_named": "§cYou cannot sell named items.",
+  "commands.neoessentials.sell.no_price": "§cNo sell price is set for §f{0}§c.",
+  "commands.neoessentials.sell.not_in_inventory": "§cYou do not have any §f{0}§c in your inventory.",
+  "commands.neoessentials.sell.not_enough_items": "§cYou do not have enough of that item to sell.",
+  "commands.neoessentials.sell.setworth_success": "§aSet sell price of §f{0}§a to §2{1}§a.",
+  "commands.neoessentials.sell.setworth_removed": "§aRemoved sell price for §f{0}§a."
 }
