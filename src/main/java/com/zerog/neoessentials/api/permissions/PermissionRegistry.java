@@ -42,6 +42,7 @@ public class PermissionRegistry {
     KITS("kits", "Kit system"),
     ITEMS("items", "Item management"),
     MODERATION("moderation", "Moderation commands"),
+    PLAYER("player", "Player state commands"),
     MISC("misc", "Miscellaneous commands"),
     CORE("core", "Core functionality");
 
@@ -218,6 +219,46 @@ public class PermissionRegistry {
         register("neoessentials.sell.hand", "Sell item in hand (/sell hand)", PermissionCategory.ECONOMY, true);
         register("neoessentials.sell.bulk", "Sell entire inventory (/sell inventory|all)", PermissionCategory.ECONOMY, true);
         register("neoessentials.setworth", "Set item sell prices (/setworth)", PermissionCategory.ECONOMY, false);
+
+        // Player-state / admin tool permissions
+        register("neoessentials.fly", "Toggle flight mode", PermissionCategory.PLAYER, false);
+        register("neoessentials.fly.others", "Toggle flight for other players", PermissionCategory.PLAYER, false);
+        register("neoessentials.god", "Toggle god mode (invincibility)", PermissionCategory.PLAYER, false);
+        register("neoessentials.god.others", "Toggle god mode for other players", PermissionCategory.PLAYER, false);
+        register("neoessentials.heal", "Restore own health and hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.heal.others", "Restore another player's health", PermissionCategory.PLAYER, false);
+        register("neoessentials.feed", "Restore own hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.feed.others", "Restore another player's hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.speed", "Set walk/fly speed", PermissionCategory.PLAYER, false);
+        register("neoessentials.speed.others", "Set another player's speed", PermissionCategory.PLAYER, false);
+        register("neoessentials.ext", "Extinguish self", PermissionCategory.PLAYER, true);
+        register("neoessentials.ext.others", "Extinguish another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.burn", "Set a player on fire", PermissionCategory.PLAYER, false);
+        register("neoessentials.give", "Give items to players", PermissionCategory.PLAYER, false);
+        register("neoessentials.more", "Fill held stack to max", PermissionCategory.PLAYER, false);
+        register("neoessentials.hat", "Wear held item as helmet", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp", "View XP info", PermissionCategory.PLAYER, true);
+        register("neoessentials.exp.set", "Set own XP", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.set.others", "Set another player's XP", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.give", "Give XP to self", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.give.others", "Give XP to another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.sudo", "Run commands as another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.sudo.exempt", "Cannot be sudo'd by non-console", PermissionCategory.PLAYER, false);
+        register("neoessentials.playtime", "View own playtime", PermissionCategory.PLAYER, true);
+        register("neoessentials.playtime.others", "View another player's playtime", PermissionCategory.PLAYER, false);
+        // Server admin commands
+        register("neoessentials.broadcast", "Broadcast a message to all players", PermissionCategory.ADMIN, false);
+        register("neoessentials.time", "View current world time", PermissionCategory.ADMIN, false);
+        register("neoessentials.time.set", "Set or add world time", PermissionCategory.ADMIN, false);
+        register("neoessentials.weather", "Set world weather", PermissionCategory.ADMIN, false);
+        register("neoessentials.kill", "Kill players", PermissionCategory.ADMIN, false);
+        register("neoessentials.kill.exempt", "Exempt from being killed by /kill", PermissionCategory.ADMIN, false);
+        register("neoessentials.kill.force", "Force kill even exempt players", PermissionCategory.ADMIN, false);
+        register("neoessentials.gamemode", "Change own gamemode", PermissionCategory.ADMIN, false);
+        register("neoessentials.gamemode.others", "Change another player's gamemode", PermissionCategory.ADMIN, false);
+        register("neoessentials.teleport.tpo", "Teleport to player ignoring tptoggle", PermissionCategory.ADMIN, false);
+        register("neoessentials.teleport.tpohere", "Bring player here ignoring tptoggle", PermissionCategory.ADMIN, false);
+        register("neoessentials.teleport.tpoffline", "Teleport to offline player's last location", PermissionCategory.ADMIN, false);
 
         // Teleportation permissions
         register("neoessentials.teleport.admin", "Administrative teleportation", PermissionCategory.TELEPORT, false);
@@ -483,8 +524,34 @@ public class PermissionRegistry {
         register("neoessentials.permissions.group.modify", "Modify group settings", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.clear", "Clear all group permissions", PermissionCategory.ADMIN, false);
 
-        // ── Dashboard ────────────────────────────────────────────────────────
-        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
+        // ── Player-state / admin tool commands ───────────────────────────────
+        register("neoessentials.fly", "Toggle flight mode", PermissionCategory.PLAYER, false);
+        register("neoessentials.fly.others", "Toggle flight for other players", PermissionCategory.PLAYER, false);
+        register("neoessentials.god", "Toggle god mode (invincibility)", PermissionCategory.PLAYER, false);
+        register("neoessentials.god.others", "Toggle god mode for other players", PermissionCategory.PLAYER, false);
+        register("neoessentials.heal", "Restore own health and hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.heal.others", "Restore another player's health", PermissionCategory.PLAYER, false);
+        register("neoessentials.feed", "Restore own hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.feed.others", "Restore another player's hunger", PermissionCategory.PLAYER, false);
+        register("neoessentials.speed", "Set walk/fly speed", PermissionCategory.PLAYER, false);
+        register("neoessentials.speed.others", "Set another player's speed", PermissionCategory.PLAYER, false);
+        register("neoessentials.ext", "Extinguish self", PermissionCategory.PLAYER, true);
+        register("neoessentials.ext.others", "Extinguish another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.burn", "Set a player on fire", PermissionCategory.PLAYER, false);
+        register("neoessentials.give", "Give items to players", PermissionCategory.PLAYER, false);
+        register("neoessentials.more", "Fill held stack to max", PermissionCategory.PLAYER, false);
+        register("neoessentials.hat", "Wear held item as helmet", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp", "View XP info", PermissionCategory.PLAYER, true);
+        register("neoessentials.exp.set", "Set own XP", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.set.others", "Set another player's XP", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.give", "Give XP to self", PermissionCategory.PLAYER, false);
+        register("neoessentials.exp.give.others", "Give XP to another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.sudo", "Run commands as another player", PermissionCategory.PLAYER, false);
+        register("neoessentials.sudo.exempt", "Cannot be sudo'd by non-console", PermissionCategory.PLAYER, false);
+        register("neoessentials.playtime", "View own playtime", PermissionCategory.PLAYER, true);
+        register("neoessentials.playtime.others", "View another player's playtime", PermissionCategory.PLAYER, false);
+
+        // ── Dashboard ────────────────────────────────────────────────────────        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
         register("neoessentials.dashboard.access", "Register and access the web dashboard", PermissionCategory.MISC, false);
         register("neoessentials.dashboard.view", "View-only dashboard access", PermissionCategory.MISC, false);
         register("neoessentials.dashboard.manage", "Manage dashboard settings", PermissionCategory.ADMIN, false);
@@ -586,6 +653,7 @@ public class PermissionRegistry {
             case "item", "items", "give", "enchant", "repair" -> PermissionCategory.ITEMS;
             case "moderation", "mod", "ban", "kick", "freeze", "jail", "vanish" -> PermissionCategory.MODERATION;
             case "admin", "reload", "permissions", "debug" -> PermissionCategory.ADMIN;
+            case "fly", "god", "heal", "feed", "speed", "ext", "burn", "more", "hat", "exp", "sudo", "playtime" -> PermissionCategory.PLAYER;
             default -> PermissionCategory.MISC;
         };
         }

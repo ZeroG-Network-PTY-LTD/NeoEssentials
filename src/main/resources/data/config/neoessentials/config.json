@@ -110,7 +110,20 @@
     "worth": true,
     "sell": true,
     "setworth": true,
-    "kitreset": true
+    "kitreset": true,
+    "broadcast": true,
+    "time": true,
+    "day": true,
+    "night": true,
+    "weather": true,
+    "sun": true,
+    "storm": true,
+    "thunder": true,
+    "kill": true,
+    "gamemode": true,
+    "tpo": true,
+    "tpohere": true,
+    "tpoffline": true
   },
   "economy": {
     "economy_comment": "Economy system configuration",

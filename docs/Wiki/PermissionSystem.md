@@ -234,7 +234,58 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ---
 
+### Player State & Admin Tools
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.fly` | 🔒 op-only | Toggle flight mode | `/fly [on\|off]` |
+| `neoessentials.fly.others` | 🔒 op-only | Toggle flight for another player | `/fly <player> [on\|off]` |
+| `neoessentials.god` | 🔒 op-only | Toggle god mode (invincibility) | `/god [on\|off]` |
+| `neoessentials.god.others` | 🔒 op-only | Toggle god mode for another player | `/god <player> [on\|off]` |
+| `neoessentials.heal` | 🔒 op-only | Restore own health and hunger | `/heal` |
+| `neoessentials.heal.others` | 🔒 op-only | Restore another player's health | `/heal <player>` |
+| `neoessentials.feed` | 🔒 op-only | Restore own hunger | `/feed` |
+| `neoessentials.feed.others` | 🔒 op-only | Restore another player's hunger | `/feed <player>` |
+| `neoessentials.speed` | 🔒 op-only | Set own walk or fly speed (0–10) | `/speed [walk\|fly] <0-10>` |
+| `neoessentials.speed.others` | 🔒 op-only | Set another player's speed | `/speed [walk\|fly] <0-10> <player>` |
+| `neoessentials.ext` | ✅ default | Extinguish own fire | `/ext` |
+| `neoessentials.ext.others` | 🔒 op-only | Extinguish another player | `/ext <player>` |
+| `neoessentials.burn` | 🔒 op-only | Set a player on fire | `/burn <player> [seconds]` |
+| `neoessentials.give` | 🔒 op-only | Give items to players | `/give <player> <item> [amount]` |
+| `neoessentials.more` | 🔒 op-only | Fill held stack to max | `/more [amount]` |
+| `neoessentials.hat` | 🔒 op-only | Wear held item as helmet | `/hat` |
+| `neoessentials.exp` | ✅ default | View own XP info | `/exp [show]` |
+| `neoessentials.exp.set` | 🔒 op-only | Set own XP | `/exp set <amount>` |
+| `neoessentials.exp.set.others` | 🔒 op-only | Set another player's XP | `/exp set <amount> <player>` |
+| `neoessentials.exp.give` | 🔒 op-only | Give XP to self | `/exp give <amount>` |
+| `neoessentials.exp.give.others` | 🔒 op-only | Give XP to another player | `/exp give <amount> <player>` |
+| `neoessentials.sudo` | 🔒 op-only | Run a command as another player | `/sudo <player> <command>` |
+| `neoessentials.sudo.exempt` | 🔒 op-only | Cannot be sudo'd by non-console | |
+| `neoessentials.playtime` | ✅ default | View own playtime | `/playtime` |
+| `neoessentials.playtime.others` | 🔒 op-only | View another player's playtime | `/playtime <player>` |
+
+---
+
 ### Items
+
+### Server Admin Commands
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.broadcast` | 🔒 op-only | Broadcast a message to all players | `/broadcast <msg>`, `/bc`, `/announce` |
+| `neoessentials.time` | 🔒 op-only | View current world time | `/time` |
+| `neoessentials.time.set` | 🔒 op-only | Set or add world time | `/time set\|add <value>`, `/day`, `/night` |
+| `neoessentials.weather` | 🔒 op-only | Set world weather | `/weather <sun\|storm\|thunder> [dur]`, `/sun`, `/storm`, `/thunder` |
+| `neoessentials.kill` | 🔒 op-only | Kill a player | `/kill <player>` |
+| `neoessentials.kill.exempt` | 🔒 op-only | Exempt from being killed by /kill | |
+| `neoessentials.kill.force` | 🔒 op-only | Force kill even exempt players | |
+| `neoessentials.gamemode` | 🔒 op-only | Change own gamemode | `/gamemode <mode>` |
+| `neoessentials.gamemode.others` | 🔒 op-only | Change another player's gamemode | `/gamemode <mode> <player>` |
+| `neoessentials.teleport.tpo` | 🔒 op-only | Teleport to player (bypass tptoggle) | `/tpo <player>` |
+| `neoessentials.teleport.tpohere` | 🔒 op-only | Bring player to you (bypass tptoggle) | `/tpohere <player>` |
+| `neoessentials.teleport.tpoffline` | 🔒 op-only | Teleport to offline player's last position | `/tpoffline <player>` |
+
+---
 
 | Node | Default | Description | Command |
 |---|---|---|---|
