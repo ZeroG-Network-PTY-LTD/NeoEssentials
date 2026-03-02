@@ -128,7 +128,24 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
                 return false;
             }
         }
-        
+
+        // Essentials tptoggle: check if target is accepting tp requests
+        // tpo/tpohere bypass this; only /tpa and /tpahere respect it
+        if (!com.zerog.neoessentials.util.commands.ItemCustomisationCommands.isTpToggleAllowed(targetId)
+                && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(requesterId, "neoessentials.teleport.tpo")) {
+            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.tptoggle_off",
+                target.getName().getString()));
+            return false;
+        }
+
+        // Essentials tpauto: if target has auto-accept enabled, skip the request and teleport immediately
+        if (com.zerog.neoessentials.teleportation.Misc.MiscTeleportCommands.isTpAutoEnabled(targetId)) {
+            executeTeleportRequest(requester, target, type);
+            requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.auto_accepted", target.getName().getString()));
+            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.auto_accepted_target", requester.getName().getString()));
+            return true;
+        }
+
         // Check if target has too many pending requests
         long targetPendingCount = pendingRequests.values().stream()
             .filter(req -> req != null && req.getTargetId().equals(targetId))

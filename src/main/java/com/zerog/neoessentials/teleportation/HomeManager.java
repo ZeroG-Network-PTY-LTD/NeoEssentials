@@ -326,7 +326,40 @@ public class HomeManager {
     }
     public int getHomeDeleteCooldownSeconds() { return homeDeleteCooldownSeconds; }
     public void setHomeDeleteCooldownSeconds(int seconds) { this.homeDeleteCooldownSeconds = Math.max(0, seconds); }
-    
+
+    /**
+     * Rename a home for a player (Essentials: Commandrenamehome)
+     */
+    public boolean renameHome(ServerPlayer player, String oldName, String newName) {
+        UUID playerId = player.getUUID();
+        if (!isValidHomeName(newName)) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.invalid_name", newName));
+            return false;
+        }
+        boolean[] result = {false};
+        playerHomes.computeIfPresent(playerId, (id, homes) -> {
+            TeleportLocation loc = homes.get(oldName);
+            if (loc == null) return homes;
+            if (homes.containsKey(newName)) return homes; // new name already taken
+            homes.remove(oldName);
+            homes.put(newName, loc);
+            result[0] = true;
+            return homes;
+        });
+        if (!result[0]) {
+            boolean exists = getOrLoadPlayerHomes(playerId).containsKey(oldName);
+            if (!exists) {
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", oldName));
+            } else {
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.name_taken", newName));
+            }
+            return false;
+        }
+        savePlayerHomes(playerId);
+        player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.renamed", oldName, newName));
+        return true;
+    }
+
     /**
      * Get or load homes for a player (lazy loading from PlayerDataStore)
      */

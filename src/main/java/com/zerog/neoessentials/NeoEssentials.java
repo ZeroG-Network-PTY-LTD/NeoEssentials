@@ -739,6 +739,45 @@ public class NeoEssentials {
         registry.registerCommand("tpohere", "Bring player here override");
         registry.registerCommand("tpoffline", "Teleport to offline player's last position");
         com.zerog.neoessentials.util.commands.ServerAdminCommands.register(dispatcher);
+
+        // ========== UTILITY COMMANDS ==========
+        registry.registerCommand("ptime", "Set per-player time override");
+        registry.registerCommand("pweather", "Set per-player weather override");
+        registry.registerCommand("effect", "Apply potion effects to players");
+        registry.registerCommand("spawnmob", "Spawn entities");
+        registry.registerCommand("mob", "Spawn entities (alias)");
+        registry.registerCommand("unlimited", "Toggle unlimited item use");
+        registry.registerCommand("condense", "Condense items to storage blocks");
+        com.zerog.neoessentials.util.commands.UtilityCommands.register(dispatcher);
+
+        // ========== ITEM CUSTOMISATION & MISC COMMANDS ==========
+        registry.registerCommand("me", "Broadcast an action message");
+        registry.registerCommand("tptoggle", "Toggle teleport request acceptance");
+        registry.registerCommand("gc", "Show server memory and TPS info");
+        registry.registerCommand("mem", "Show server memory info (alias)");
+        registry.registerCommand("lightning", "Strike lightning at a player");
+        registry.registerCommand("smite", "Strike lightning (alias)");
+        registry.registerCommand("skull", "Get a player head item");
+        registry.registerCommand("itemname", "Rename held item");
+        registry.registerCommand("rename", "Rename held item (alias)");
+        registry.registerCommand("itemlore", "Edit held item lore");
+        registry.registerCommand("remove", "Remove entities in radius");
+        registry.registerCommand("loom", "Open portable loom");
+        registry.registerCommand("cartography", "Open portable cartography table");
+        registry.registerCommand("cartographytable", "Open portable cartography table (alias)");
+        com.zerog.neoessentials.util.commands.ItemCustomisationCommands.register(dispatcher);
+
+        // /warpinfo → WarpCommands, /world+/spawner+/recipe → ServerAdminCommands
+        // (renamehome → HomeCommands, tpauto → MiscTeleportCommands — both registered in their own register() calls above)
+        com.zerog.neoessentials.commands.teleportation.WarpCommands.registerWarpInfoCommand(dispatcher);
+        com.zerog.neoessentials.util.commands.ServerAdminCommands.registerWorldCommands(dispatcher);
+
+        registry.registerCommand("renamehome", "Rename a home");
+        registry.registerCommand("warpinfo", "Show info about a warp");
+        registry.registerCommand("world", "Teleport to a world/dimension");
+        registry.registerCommand("spawner", "Change a spawner type");
+        registry.registerCommand("recipe", "Show/unlock recipe for an item");
+        registry.registerCommand("tpauto", "Auto-accept all teleport requests");
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
