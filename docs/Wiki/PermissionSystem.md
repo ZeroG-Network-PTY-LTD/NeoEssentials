@@ -341,7 +341,47 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ---
 
-### Items
+### World Interaction & Fun Commands
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.fireball` | 🔒 op-only | Shoot a projectile | `/fireball [type] [speed]` |
+| `neoessentials.fireball.*` | 🔒 op-only | Shoot any projectile type | wildcard |
+| `neoessentials.fireball.<type>` | 🔒 op-only | Shoot specific type (fireball/small/large/arrow/skull/egg/snowball/expbottle/dragon/trident/windcharge) | e.g. `neoessentials.fireball.arrow` |
+| `neoessentials.fireball.ride` | 🔒 op-only | Ride the shot projectile | `/fireball <type> <speed> ride` |
+| `neoessentials.tree` | 🔒 op-only | Grow a tree at look target | `/tree <type>`, `/bigtree` |
+| `neoessentials.break` | 🔒 op-only | Instantly break the looked-at block (no drops) | `/break` |
+| `neoessentials.break.bedrock` | 🔒 op-only | Break bedrock blocks | permission bypass |
+| `neoessentials.ice` | 🔒 op-only | Freeze self solid | `/ice` |
+| `neoessentials.ice.others` | 🔒 op-only | Freeze another player | `/ice <player>` |
+| `neoessentials.bottom` | 🔒 op-only | Teleport to world bottom at current XZ | `/bottom` |
+| `neoessentials.tpaall` | 🔒 op-only | Send tpa-here to all online players | `/tpaall [player]` |
+| `neoessentials.tpaall.others` | 🔒 op-only | Send tpaall on behalf of another player | `/tpaall <player>` |
+| `neoessentials.broadcastworld` | 🔒 op-only | Broadcast to players in your current world | `/broadcastworld`, `/bcastworld` |
+
+---
+
+### Player Info & Admin Tools
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.seen` | ✅ default | View when a player was last online | `/seen <player>` |
+| `neoessentials.near` | ✅ default | List players within a radius | `/near [radius]` |
+| `neoessentials.ping` | ✅ default | View your own ping | `/ping` |
+| `neoessentials.ping.others` | ✅ default | View another player's ping | `/ping <player>` |
+| `neoessentials.playtime` | ✅ default | View your total play time | `/playtime` |
+| `neoessentials.playtime.others` | ✅ default | View another player's play time | `/playtime <player>` |
+| `neoessentials.whois` | 🔒 op-only | View detailed player info (UUID, pos, gamemode, health) | `/whois <player>` |
+| `neoessentials.realname` | ✅ default | Look up real name from nickname | `/realname <nickname>` |
+| `neoessentials.sudo` | 🔒 op-only | Force a player to run a command | `/sudo <player> <command>` |
+| `neoessentials.sudo.exempt` | 🔒 op-only | Be immune to /sudo | permission node |
+| `neoessentials.suicide` | ✅ default | Kill yourself | `/suicide` |
+| `neoessentials.msgtoggle` | ✅ default | Toggle your incoming private messages on/off | `/msgtoggle [on\|off]` |
+| `neoessentials.msgtoggle.others` | 🔒 op-only | Toggle another player's messages | `/msgtoggle <player> [on\|off]` |
+| `neoessentials.rtoggle` | ✅ default | Toggle reply-to-last-sender for `/r` | `/rtoggle [on\|off]` |
+| `neoessentials.rtoggle.others` | 🔒 op-only | Toggle rtoggle for another player | `/rtoggle <player> [on\|off]` |
+| `neoessentials.motd` | ✅ default | View the message of the day | `/motd` |
+| `neoessentials.rules` | ✅ default | View server rules | `/rules` |
 
 ---
 

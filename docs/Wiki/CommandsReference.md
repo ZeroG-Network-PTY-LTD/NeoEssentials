@@ -336,6 +336,41 @@
 
 ---
 
+## Player Info & Admin Tools
+
+| Command | Syntax | Permission | Default | Description |
+|---|---|---|---|---|
+| `/seen` | `/seen <player>` | `neoessentials.seen` | ✅ | Show if a player is online with location/ping, or offline |
+| `/near` | `/near [radius]` | `neoessentials.near` | ✅ | List players within radius (default 200 blocks) with distance |
+| `/ping` | `/ping [player]` | `neoessentials.ping` / `.ping.others` | ✅ | Show network latency in ms. Green <80ms, yellow <200ms, red otherwise |
+| `/playtime` | `/playtime [player]` | `neoessentials.playtime` / `.playtime.others` | ✅ | Show total server play time (hours/minutes/seconds) from vanilla stats |
+| `/whois` | `/whois <player>` | `neoessentials.whois` | 🔒 | Show UUID, world, coordinates, gamemode, ping, health and food level |
+| `/realname` | `/realname <nickname>` | `neoessentials.realname` | ✅ | Find the real username of a player by their display name/nickname |
+| `/sudo` | `/sudo <player> <command>` | `neoessentials.sudo` | 🔒 | Force a player to run a command. Prefix `c:` to send chat. Respects `neoessentials.sudo.exempt` |
+| `/suicide` | `/suicide` | `neoessentials.suicide` | ✅ | Kill yourself. Broadcasts death message to all online players |
+| `/msgtoggle` | `/msgtoggle [on\|off] [player]` | `neoessentials.msgtoggle` / `.msgtoggle.others` | ✅ | Block or allow incoming private messages. Synced with `MsgToggleManager` |
+| `/rtoggle` | `/rtoggle [on\|off] [player]` | `neoessentials.rtoggle` / `.rtoggle.others` | ✅ | Toggle whether `/r` replies to the last sender (default on) |
+| `/motd` | `/motd` | `neoessentials.motd` | ✅ | Show the message of the day (configured in `config.json` → `general.motd`) |
+| `/rules` | `/rules` | `neoessentials.rules` | ✅ | Show server rules (configured in `config.json` → `general.rules`) |
+
+---
+
+## World Interaction & Fun Commands
+
+| Command | Syntax | Permission | Default | Description |
+|---|---|---|---|---|
+| `/fireball` | `/fireball [type] [speed] [ride]` | `neoessentials.fireball.<type>` | 🔒 | Shoot a projectile. Types: fireball, small, large, arrow, skull, egg, snowball, expbottle, dragon, trident, windcharge |
+| `/tree` | `/tree <type>` | `neoessentials.tree` | 🔒 | Grow a tree at look target. Types: oak, birch, spruce, jungle, acacia, darkoak, mangrove, cherry, azalea, bigoak, mega_spruce, mega_jungle |
+| `/bigtree` | `/bigtree` | `neoessentials.tree` | 🔒 | Grow a large oak tree (alias for `/tree bigoak`) |
+| `/break` | `/break` | `neoessentials.break` | 🔒 | Instantly break the looked-at block (no drops). Bedrock requires `neoessentials.break.bedrock` |
+| `/ice` | `/ice [player]` | `neoessentials.ice` / `.ice.others` | 🔒 | Freeze a player solid using powder snow freeze ticks |
+| `/bottom` | `/bottom` | `neoessentials.bottom` | 🔒 | Teleport to the lowest safe position at your current XZ coordinates |
+| `/tpaall` | `/tpaall [player]` | `neoessentials.tpaall` / `.tpaall.others` | 🔒 | Send a tpa-here request to every online player (respects tptoggle) |
+| `/broadcastworld` | `/broadcastworld <message>` | `neoessentials.broadcastworld` | 🔒 | Broadcast a coloured message to all players in the sender's current world |
+| `/bcastworld` | alias for `/broadcastworld` | same | 🔒 | Alias |
+
+---
+
 ## AFK
 
 | Command | Syntax | Permission | Default | Description |

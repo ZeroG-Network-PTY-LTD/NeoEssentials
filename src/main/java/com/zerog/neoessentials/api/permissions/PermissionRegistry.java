@@ -294,6 +294,37 @@ public class PermissionRegistry {
         register("neoessentials.recipe", "Show/unlock crafting recipe for an item", PermissionCategory.PLAYER, true);
         register("neoessentials.tpauto", "Auto-accept all incoming teleport requests", PermissionCategory.TELEPORT, true);
         register("neoessentials.tpauto.others", "Toggle tpauto for another player", PermissionCategory.ADMIN, false);
+        // World Interaction & Fun Commands
+        register("neoessentials.fireball", "Shoot projectiles", PermissionCategory.ADMIN, false);
+        register("neoessentials.fireball.*", "Shoot any projectile type", PermissionCategory.ADMIN, false);
+        register("neoessentials.fireball.ride", "Ride a shot projectile", PermissionCategory.ADMIN, false);
+        register("neoessentials.tree", "Grow a tree at look target", PermissionCategory.ADMIN, false);
+        register("neoessentials.break", "Break the looked-at block instantly", PermissionCategory.ADMIN, false);
+        register("neoessentials.break.bedrock", "Break bedrock blocks", PermissionCategory.ADMIN, false);
+        register("neoessentials.ice", "Freeze self with ice", PermissionCategory.PLAYER, false);
+        register("neoessentials.ice.others", "Freeze another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.bottom", "Teleport to world bottom at current XZ", PermissionCategory.PLAYER, false);
+        register("neoessentials.tpaall", "Send tpa-here to all online players", PermissionCategory.ADMIN, false);
+        register("neoessentials.tpaall.others", "Send tpaall on behalf of another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.broadcastworld", "Broadcast to players in your current world", PermissionCategory.ADMIN, false);
+        // Player Info & Admin Tools
+        register("neoessentials.seen", "View when a player was last online", PermissionCategory.PLAYER, true);
+        register("neoessentials.near", "List nearby players", PermissionCategory.PLAYER, true);
+        register("neoessentials.ping", "View your ping", PermissionCategory.PLAYER, true);
+        register("neoessentials.ping.others", "View another player's ping", PermissionCategory.PLAYER, true);
+        register("neoessentials.playtime", "View your total play time", PermissionCategory.PLAYER, true);
+        register("neoessentials.playtime.others", "View another player's play time", PermissionCategory.PLAYER, true);
+        register("neoessentials.whois", "View detailed player info", PermissionCategory.ADMIN, false);
+        register("neoessentials.realname", "Look up real name from nickname", PermissionCategory.PLAYER, true);
+        register("neoessentials.sudo", "Force a player to run a command", PermissionCategory.ADMIN, false);
+        register("neoessentials.sudo.exempt", "Be immune to /sudo", PermissionCategory.ADMIN, false);
+        register("neoessentials.suicide", "Kill yourself with /suicide", PermissionCategory.PLAYER, true);
+        register("neoessentials.msgtoggle", "Toggle your incoming private messages", PermissionCategory.PLAYER, true);
+        register("neoessentials.msgtoggle.others", "Toggle another player's messages", PermissionCategory.ADMIN, false);
+        register("neoessentials.rtoggle", "Toggle reply-to-last-sender", PermissionCategory.PLAYER, true);
+        register("neoessentials.rtoggle.others", "Toggle rtoggle for another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd", "View the message of the day", PermissionCategory.PLAYER, true);
+        register("neoessentials.rules", "View server rules", PermissionCategory.PLAYER, true);
 
         // Teleportation permissions
         register("neoessentials.teleport.admin", "Administrative teleportation", PermissionCategory.TELEPORT, false);
