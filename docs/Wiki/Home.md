@@ -3,6 +3,7 @@
 Welcome to the official documentation hub for NeoEssentials!
 
 ## 📚 Quick Links
+- [**Commands Reference**](CommandsReference) ← *All ~172 commands in one place*
 - [Economy System](EconomySystem)
 - [Chat System](ChatSystem)
 - [Moderation System](ModerationSystem)

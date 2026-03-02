@@ -287,6 +287,64 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ---
 
+### Utility Commands
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.ptime` | 🔒 op-only | Set own per-player time override | `/ptime [reset\|day\|night\|<ticks>]` |
+| `neoessentials.ptime.others` | 🔒 op-only | Set another player's time override | `/ptime <value> <player>` |
+| `neoessentials.pweather` | 🔒 op-only | Set own per-player weather override | `/pweather [reset\|sun\|storm]` |
+| `neoessentials.pweather.others` | 🔒 op-only | Set another player's weather override | `/pweather <type> <player>` |
+| `neoessentials.effect` | 🔒 op-only | Apply potion effects to players | `/effect <player> <effect\|clear> [dur] [amp]` |
+| `neoessentials.spawnmob` | 🔒 op-only | Spawn entities at own location | `/spawnmob <mob> [amount]`, `/mob` |
+| `neoessentials.spawnmob.others` | 🔒 op-only | Spawn entities at another player | `/spawnmob <mob> [amount] <player>` |
+| `neoessentials.unlimited` | 🔒 op-only | Toggle unlimited item use | `/unlimited [list\|clear\|<item>]` |
+| `neoessentials.unlimited.others` | 🔒 op-only | Toggle unlimited items for another player | `/unlimited <item> <player>` |
+| `neoessentials.condense` | 🔒 op-only | Condense items to storage blocks | `/condense [item]` |
+
+---
+
+### Item Customisation & Miscellaneous
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.me` | ✅ default | Broadcast action messages | `/me <action>` |
+| `neoessentials.tptoggle` | ✅ default | Toggle own teleport request acceptance | `/tptoggle [on\|off]` |
+| `neoessentials.tptoggle.others` | 🔒 op-only | Toggle tptoggle for another player | `/tptoggle <player> [on\|off]` |
+| `neoessentials.gc` | 🔒 op-only | View server TPS, memory, uptime, chunk info | `/gc`, `/mem` |
+| `neoessentials.lightning` | 🔒 op-only | Strike lightning at look target | `/lightning`, `/smite` |
+| `neoessentials.lightning.others` | 🔒 op-only | Strike lightning at a named player | `/lightning <player>` |
+| `neoessentials.skull` | 🔒 op-only | Get a player head item | `/skull [player]` |
+| `neoessentials.itemname` | 🔒 op-only | Rename the held item | `/itemname [name\|-]`, `/rename` |
+| `neoessentials.itemlore` | 🔒 op-only | Edit held item lore lines | `/itemlore add\|set\|remove\|clear` |
+| `neoessentials.remove` | 🔒 op-only | Remove entities in radius | `/remove <type> [radius]` |
+| `neoessentials.loom` | 🔒 op-only | Open portable loom | `/loom` |
+| `neoessentials.cartography` | 🔒 op-only | Open portable cartography table | `/cartography`, `/cartographytable` |
+
+---
+
+### Home & Warp Enhancements
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.renamehome` | ✅ default | Rename own home | `/renamehome <old> <new>` |
+| `neoessentials.renamehome.others` | 🔒 op-only | Rename another player's home | `/renamehome <player:old> <new>` |
+| `neoessentials.warpinfo` | ✅ default | Show warp coordinates and world | `/warpinfo <name>` |
+| `neoessentials.world` | 🔒 op-only | Teleport to a world/dimension | `/world [name]` |
+| `neoessentials.world.others` | 🔒 op-only | Teleport another player to a world | `/world <name> <player>` |
+| `neoessentials.spawner` | 🔒 op-only | Change a mob spawner type | `/spawner <mob>` |
+| `neoessentials.spawner.*` | 🔒 op-only | Change spawner to any mob | wildcard — grants all mob types |
+| `neoessentials.spawner.<mob>` | 🔒 op-only | Change spawner to a specific mob | e.g. `neoessentials.spawner.zombie` |
+| `neoessentials.recipe` | ✅ default | Show/unlock crafting recipe for an item | `/recipe [item]` |
+| `neoessentials.tpauto` | ✅ default | Auto-accept all incoming teleport requests | `/tpauto [on\|off]` |
+| `neoessentials.tpauto.others` | 🔒 op-only | Toggle tpauto for another player | `/tpauto <player> [on\|off]` |
+
+---
+
+### Items
+
+---
+
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.item.repair` | 🔒 op-only | Repair held item | `/repair` |

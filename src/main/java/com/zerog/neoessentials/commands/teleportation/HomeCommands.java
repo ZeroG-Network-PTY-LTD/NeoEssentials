@@ -37,7 +37,9 @@ public class HomeCommands {
     private static final String PERMISSION_SETHOME = "neoessentials.teleport.home.set";
     private static final String PERMISSION_DELHOME = "neoessentials.teleport.home.delete";
     private static final String PERMISSION_HOMES = "neoessentials.teleport.home.list";
-    
+    private static final String PERMISSION_RENAMEHOME = "neoessentials.renamehome";
+    private static final String PERMISSION_RENAMEHOME_OTHERS = "neoessentials.renamehome.others";
+
     private static final SuggestionProvider<CommandSourceStack> HOME_SUGGESTIONS = (context, builder) -> {
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             HomeManager homeManager = HomeManager.getInstance();
@@ -68,6 +70,9 @@ public class HomeCommands {
             }
             if (config.isCommandEnabled("listhomes")) {
                 registerHomesCommand(dispatcher);
+            }
+            if (config.isCommandEnabled("renamehome")) {
+                registerRenameHomeCommand(dispatcher);
             }
         }
     }
@@ -438,5 +443,62 @@ public class HomeCommands {
         }
         player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_delete", homeName));
         return 0;
+    }
+
+    // ── /renamehome <old> <new> ───────────────────────────────────────────────
+    // Essentials: Commandrenamehome — rename an existing home.
+    // Supports "player:home new" admin format.
+    private static void registerRenameHomeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("renamehome")
+            .requires(src -> src.getPlayer() == null
+                || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_RENAMEHOME))
+            // /renamehome <old> <new>
+            .then(Commands.argument("oldname", StringArgumentType.word())
+                .then(Commands.argument("newname", StringArgumentType.word())
+                    .executes(ctx -> executeRenameHome(ctx,
+                        StringArgumentType.getString(ctx, "oldname"),
+                        StringArgumentType.getString(ctx, "newname"),
+                        null))
+                )
+            )
+            // /renamehome <player:old> <new>  — admin format
+            .then(Commands.argument("playercolon", StringArgumentType.word())
+                .requires(src -> src.getPlayer() == null
+                    || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_RENAMEHOME_OTHERS))
+                .then(Commands.argument("newname2", StringArgumentType.word())
+                    .executes(ctx -> {
+                        String arg = StringArgumentType.getString(ctx, "playercolon");
+                        String newName = StringArgumentType.getString(ctx, "newname2");
+                        if (arg.contains(":")) {
+                            String[] parts = arg.split(":", 2);
+                            return executeRenameHome(ctx, parts[1], newName, parts[0]);
+                        }
+                        return executeRenameHome(ctx, arg, newName, null);
+                    })
+                )
+            )
+        );
+    }
+
+    private static int executeRenameHome(CommandContext<CommandSourceStack> ctx,
+            String oldName, String newName, String targetPlayerName) {
+        var src = ctx.getSource();
+        ServerPlayer target;
+        if (targetPlayerName != null) {
+            target = src.getServer().getPlayerList().getPlayerByName(targetPlayerName);
+            if (target == null) {
+                src.sendFailure(com.zerog.neoessentials.util.MessageUtil.error(
+                    "commands.neoessentials.general.player_not_found", targetPlayerName));
+                return 0;
+            }
+        } else {
+            target = src.getPlayer();
+            if (target == null) {
+                src.sendFailure(com.zerog.neoessentials.util.MessageUtil.error(
+                    "commands.neoessentials.general.player_only"));
+                return 0;
+            }
+        }
+        return HomeManager.getInstance().renameHome(target, oldName.toLowerCase(), newName.toLowerCase()) ? 1 : 0;
     }
 }

@@ -27,6 +27,7 @@ public class GodModeEventHandler {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerStateCommands.onPlayerJoin(player.getUUID());
+            com.zerog.neoessentials.util.commands.UtilityCommands.onPlayerJoin(player);
         }
     }
 
@@ -35,6 +36,7 @@ public class GodModeEventHandler {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerStateCommands.onPlayerQuit(player.getUUID());
+            com.zerog.neoessentials.util.commands.UtilityCommands.onPlayerQuit(player.getUUID());
         }
     }
 }

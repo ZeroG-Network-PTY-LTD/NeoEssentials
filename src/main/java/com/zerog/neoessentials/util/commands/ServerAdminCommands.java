@@ -4,20 +4,28 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.authlib.GameProfile;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Server admin utility commands ported from EssentialsX:
@@ -105,7 +113,7 @@ public class ServerAdminCommands {
         d.register(Commands.literal("time")
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.time"); })
             // /time  — show current time
-            .executes(ctx -> executeTimeGet(ctx))
+            .executes(ServerAdminCommands::executeTimeGet)
             // /time set <value>
             .then(Commands.literal("set")
                 .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.time.set"); })
@@ -246,15 +254,9 @@ public class ServerAdminCommands {
             if (!level.dimensionType().hasSkyLight()) continue; // skip nether/end
             int ticks = durationSeconds > 0 ? durationSeconds * 20 : 6000;
             switch (type) {
-                case "sun" -> {
-                    level.setWeatherParameters(ticks, 0, false, false);
-                }
-                case "storm" -> {
-                    level.setWeatherParameters(0, ticks, true, false);
-                }
-                case "thunder" -> {
-                    level.setWeatherParameters(0, ticks, true, true);
-                }
+                case "sun" -> level.setWeatherParameters(ticks, 0, false, false);
+                case "storm" -> level.setWeatherParameters(0, ticks, true, false);
+                case "thunder" -> level.setWeatherParameters(0, ticks, true, true);
             }
         }
         String label = durationSeconds > 0
@@ -422,15 +424,14 @@ public class ServerAdminCommands {
 
                     // Try to find by UUID from usercache
                     var userCache = src.getServer().getProfileCache();
-                    var profile = userCache != null ? userCache.get(name) : java.util.Optional.empty();
+                    Optional<GameProfile> profile = userCache != null ? userCache.get(name) : Optional.empty();
                     if (profile.isEmpty()) {
                         src.sendFailure(MessageUtil.error("commands.neoessentials.teleport.tpoffline.not_found", name));
                         return 0;
                     }
                     java.util.UUID uuid = profile.get().getId();
                     // Load offline player data from world save
-                    net.minecraft.nbt.CompoundTag tag = src.getServer().getPlayerList().getSingleplayer() != null
-                        ? null : loadOfflinePlayerData(src.getServer(), uuid);
+                    net.minecraft.nbt.CompoundTag tag = loadOfflinePlayerData(src.getServer(), uuid);
 
                     if (tag == null || !tag.contains("Pos")) {
                         src.sendFailure(MessageUtil.error("commands.neoessentials.teleport.tpoffline.no_data", name));
@@ -440,21 +441,20 @@ public class ServerAdminCommands {
                     var pos = tag.getList("Pos", net.minecraft.nbt.Tag.TAG_DOUBLE);
                     double x = pos.getDouble(0), y = pos.getDouble(1), z = pos.getDouble(2);
                     var rot = tag.getList("Rotation", net.minecraft.nbt.Tag.TAG_FLOAT);
-                    float yaw = rot.size() > 0 ? rot.getFloat(0) : 0f;
+                    float yaw = !rot.isEmpty() ? rot.getFloat(0) : 0f;
                     float pitch = rot.size() > 1 ? rot.getFloat(1) : 0f;
 
                     // Dimension
                     var dimKey = tag.contains("Dimension")
-                        ? net.minecraft.resources.ResourceLocation.tryParse(tag.getString("Dimension")) : null;
+                        ? ResourceLocation.tryParse(tag.getString("Dimension")) : null;
                     ServerLevel level = dimKey != null
-                        ? src.getServer().getAllLevels().stream()
+                        ? StreamSupport.stream(src.getServer().getAllLevels().spliterator(), false)
                             .filter(l -> l.dimension().location().equals(dimKey))
                             .findFirst().orElse(src.getServer().overworld())
                         : src.getServer().overworld();
 
                     final double fx = x, fy = y, fz = z;
-                    final float fyaw = yaw, fpitch = pitch;
-                    self.teleportTo(level, fx, fy, fz, fyaw, fpitch);
+                    self.teleportTo(level, fx, fy, fz, yaw, pitch);
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpoffline.success",
                         name, String.format("%.1f, %.1f, %.1f", fx, fy, fz)), false);
                     return 1;
@@ -468,9 +468,7 @@ public class ServerAdminCommands {
             net.minecraft.server.MinecraftServer server, java.util.UUID uuid) {
         try {
             java.io.File playerDataDir = new java.io.File(
-                server.getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR).toFile(),
-                ""
-            );
+                server.getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR).toFile(), "");
             java.io.File playerFile = new java.io.File(playerDataDir, uuid + ".dat");
             if (!playerFile.exists()) return null;
             return net.minecraft.nbt.NbtIo.readCompressed(playerFile.toPath(),
@@ -478,6 +476,174 @@ public class ServerAdminCommands {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ── Called from NeoEssentials to register world/spawner/recipe ────────────
+    public static void registerWorldCommands(CommandDispatcher<CommandSourceStack> d) {
+        registerWorld(d);
+        registerSpawner(d);
+        registerRecipe(d);
+    }
+
+    // ── /world [name] [player] ────────────────────────────────────────────────
+    // Essentials: Commandworld — teleport to a named dimension.
+    private static void registerWorld(CommandDispatcher<CommandSourceStack> d) {
+        d.register(Commands.literal("world")
+            .requires(src -> src.getPlayer() == null
+                || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.world"))
+            .executes(ctx -> {
+                var src = ctx.getSource();
+                List<String> worlds = new ArrayList<>();
+                for (ServerLevel level : src.getServer().getAllLevels())
+                    worlds.add(level.dimension().location().toString());
+                src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.world.list",
+                    String.join(", ", worlds)), false);
+                return 1;
+            })
+            .then(Commands.argument("dimension", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    StreamSupport.stream(ctx.getSource().getServer().getAllLevels().spliterator(), false)
+                        .map(l -> l.dimension().location().getPath()).collect(Collectors.toList()), b))
+                .executes(ctx -> executeWorld(ctx, StringArgumentType.getString(ctx, "dimension"), null))
+                .then(Commands.argument("target", StringArgumentType.word())
+                    .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                        ctx.getSource().getServer().getPlayerNames(), b))
+                    .requires(src -> src.getPlayer() == null
+                        || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.world.others"))
+                    .executes(ctx -> executeWorld(ctx,
+                        StringArgumentType.getString(ctx, "dimension"),
+                        StringArgumentType.getString(ctx, "target")))
+                )
+            )
+        );
+    }
+
+    private static int executeWorld(CommandContext<CommandSourceStack> ctx, String dimName, String targetName) {
+        var src = ctx.getSource();
+        ServerPlayer player = targetName != null
+            ? src.getServer().getPlayerList().getPlayerByName(targetName)
+            : src.getPlayer();
+        if (player == null) {
+            if (targetName != null) src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", targetName));
+            else src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
+        ServerLevel target = null;
+        for (ServerLevel level : src.getServer().getAllLevels()) {
+            ResourceLocation key = level.dimension().location();
+            if (key.getPath().equalsIgnoreCase(dimName) || key.toString().equalsIgnoreCase(dimName)) {
+                target = level; break;
+            }
+        }
+        if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.world.not_found", dimName)); return 0; }
+        BlockPos spawn = target.getSharedSpawnPos();
+        final ServerLevel fl = target;
+        player.teleportTo(fl, spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, player.getYRot(), player.getXRot());
+        final String fn = dimName;
+        src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.world.teleported", player.getName().getString(), fn), false);
+        return 1;
+    }
+
+    // ── /spawner <mob> ────────────────────────────────────────────────────────
+    // Essentials: Commandspawner — change looked-at spawner to a new entity type.
+    private static void registerSpawner(CommandDispatcher<CommandSourceStack> d) {
+        d.register(Commands.literal("spawner")
+            .requires(src -> src.getPlayer() == null
+                || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.spawner"))
+            .then(Commands.argument("mob", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                .executes(ctx -> executeSpawner(ctx, StringArgumentType.getString(ctx, "mob")))
+            )
+        );
+    }
+
+    private static int executeSpawner(CommandContext<CommandSourceStack> ctx, String mobName) {
+        var src = ctx.getSource();
+        var player = src.getPlayer();
+        if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
+        if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.spawner." + mobName.toLowerCase())
+                && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.spawner.*")) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.spawner.no_perm_mob", mobName));
+            return 0;
+        }
+        String id = mobName.contains(":") ? mobName : "minecraft:" + mobName;
+        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Optional<net.minecraft.world.entity.EntityType<?>> typeOpt = loc != null
+            ? BuiltInRegistries.ENTITY_TYPE.getOptional(loc) : Optional.empty();
+        if (typeOpt.isEmpty()) {
+            typeOpt = BuiltInRegistries.ENTITY_TYPE.entrySet().stream()
+                .filter(e -> e.getKey().location().getPath().equalsIgnoreCase(mobName))
+                .<net.minecraft.world.entity.EntityType<?>>map(Map.Entry::getValue)
+                .findFirst();
+        }
+        if (typeOpt.isEmpty()) { src.sendFailure(MessageUtil.error("commands.neoessentials.spawnmob.unknown", mobName)); return 0; }
+        var hit = player.pick(6, 1.0f, false);
+        BlockPos bpos = BlockPos.containing(hit.getLocation());
+        var level = player.serverLevel();
+        var state = level.getBlockState(bpos);
+        if (!state.is(Blocks.SPAWNER) || !(level.getBlockEntity(bpos) instanceof SpawnerBlockEntity spawnerBE)) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.spawner.not_looking_at_spawner")); return 0;
+        }
+        spawnerBE.setEntityId(typeOpt.get(), level.getRandom());
+        level.sendBlockUpdated(bpos, state, state, 3);
+        spawnerBE.setChanged();
+        final String fn = mobName;
+        src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.spawner.changed", fn), true);
+        LOGGER.info("{} changed spawner at {} to {}", player.getName().getString(), bpos, mobName);
+        return 1;
+    }
+
+    // ── /recipe [item] ────────────────────────────────────────────────────────
+    // Essentials: Commandrecipe — unlock and show crafting recipes for an item.
+    private static void registerRecipe(CommandDispatcher<CommandSourceStack> d) {
+        d.register(Commands.literal("recipe")
+            .requires(src -> src.getPlayer() == null
+                || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.recipe"))
+            .executes(ctx -> executeRecipe(ctx, null))
+            .then(Commands.argument("item", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                .executes(ctx -> executeRecipe(ctx, StringArgumentType.getString(ctx, "item")))
+            )
+        );
+    }
+
+    private static int executeRecipe(CommandContext<CommandSourceStack> ctx, String itemName) {
+        var src = ctx.getSource();
+        var player = src.getPlayer();
+        if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
+        net.minecraft.world.item.Item item = null;
+        if (itemName == null) {
+            ItemStack held = player.getMainHandItem();
+            if (held.isEmpty()) { src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.no_item")); return 0; }
+            item = held.getItem();
+        } else {
+            String id = itemName.contains(":") ? itemName : "minecraft:" + itemName;
+            ResourceLocation loc = ResourceLocation.tryParse(id);
+            if (loc != null) item = BuiltInRegistries.ITEM.get(loc);
+            if (item == null || item == net.minecraft.world.item.Items.AIR) {
+                src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.unknown_item", itemName)); return 0;
+            }
+        }
+        final net.minecraft.world.item.Item finalItem = item;
+        List<net.minecraft.world.item.crafting.RecipeHolder<?>> matching = new ArrayList<>();
+        for (var holder : src.getServer().getRecipeManager().getRecipes()) {
+            try {
+                if (holder.value().getResultItem(src.getServer().registryAccess()).getItem() == finalItem)
+                    matching.add(holder);
+            } catch (Exception ignored) {}
+        }
+        if (matching.isEmpty()) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.no_recipe", finalItem.getDescriptionId())); return 0;
+        }
+        // awardRecipes takes Collection<RecipeHolder<?>> in NeoForge 1.21.1
+        player.awardRecipes(matching);
+        final int fc = matching.size();
+        // Use registry key to get item name string (Item.getId returns int in 1.21)
+        final String desc = BuiltInRegistries.ITEM.getKey(finalItem).getPath();
+        src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.recipe.unlocked", fc, desc), false);
+        return 1;
     }
 }
 

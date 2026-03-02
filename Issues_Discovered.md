@@ -1,10 +1,68 @@
 # 👾 Issues That Were Discovered
 - **Commands Doc Update**: Update the commands document for all registered commands please.
-*(All known issues resolved — see Fixed section below)*
+  *(Fixed: 2026-03-02)*
+  Created `docs/Wiki/CommandsReference.md` — a comprehensive reference covering all ~172 commands across 17 systems, with syntax, permission node, default access level, aliases, and description for every command. Added link as the first entry in `Home.md` wiki index.
 
 ---
 
 # ✅ Issues That Were Fixed
+- **Home & Warp Enhancement system — Missing entirely: /renamehome, /warpinfo, /world, /spawner, /recipe, /tpauto**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All 6 command groups were completely absent. `HomeManager` had no rename capability. `TeleportRequestManager.sendTeleportRequest()` had no tpauto check.
+
+  **Implemented from scratch based on EssentialsX (`Commandrenamehome`, `Commandwarpinfo`, `Commandworld`, `Commandspawner`, `Commandrecipe`, `Commandtpauto`):**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/renamehome <old> <new>` | `neoessentials.renamehome(.others)` | Renames a home atomically via `HomeManager.renameHome()`. Supports `player:homename` format for admin use. Validates name with existing `isValidHomeName()`. |
+  | `/warpinfo <name>` | `neoessentials.warpinfo` | Shows warp coordinates and world via `WarpManager.getWarp()`. Tab-completes all warp names. |
+  | `/world [name] [player]` | `neoessentials.world(.others)` | Lists all registered `ServerLevel` dimensions. Teleports to world spawn via `player.teleportTo()`. Matches by dimension path or full resource location key. |
+  | `/spawner <mob>` | `neoessentials.spawner[.<mob>]` | Raycasts 6 blocks to find `Blocks.SPAWNER`. Sets entity type via `SpawnerBlockEntity.setEntityId()`. Per-mob perm `neoessentials.spawner.<mob>` or wildcard `neoessentials.spawner.*`. |
+  | `/recipe [item]` | `neoessentials.recipe` | Scans all server recipes for result matching held/named item. Unlocks via `player.awardRecipes()`. Reports count of matched recipes. |
+  | `/tpauto [on\|off] [player]` | `neoessentials.tpauto(.others)` | Per-player auto-accept state. `TeleportRequestManager.sendTeleportRequest()` now calls `HomeWarpEnhancementCommands.isTpAutoEnabled()` and immediately executes the teleport without sending a request if enabled. Warns if tptoggle is also off. |
+
+  **Additional:** `HomeManager.renameHome()` method added. 11 permission nodes, 21 lang keys (incl. auto-accept keys), all commands registered in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` + `CommandsReference.md` updated.
+
+- **Item Customisation & Miscellaneous system — Missing entirely: /me, /tptoggle, /gc, /lightning, /skull, /itemname, /itemlore, /remove, /loom, /cartography**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All commands were completely absent. `/tptoggle` was registered in the command list but had no implementation, and `TeleportRequestManager.sendTeleportRequest()` had no tptoggle check.
+
+  **Implemented from scratch based on EssentialsX (`Commandme`, `Commandtptoggle`, `Commandgc`, `Commandlightning`, `Commandskull`, `Commanditemname`, `Commanditemlore`, `Commandremove`):**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/me <action>` | `neoessentials.me` | Broadcasts `§5* §dName §faction` to all players. |
+  | `/tptoggle [on\|off] [player]` | `neoessentials.tptoggle(.others)` | Toggle tp-request acceptance. State stored in `ItemCustomisationCommands.isTpToggleAllowed()`. `TeleportRequestManager.sendTeleportRequest()` now checks this before sending — returns error unless sender has `neoessentials.teleport.tpo`. |
+  | `/gc` / `/mem` | `neoessentials.gc` | Shows uptime (JMX), TPS (via `server.getAverageTickTimeNanos()`), used/total/max memory, loaded chunk count across all dimensions. |
+  | `/lightning [player]` / `/smite` | `neoessentials.lightning(.others)` | Spawns `EntityType.LIGHTNING_BOLT` at look-target or named player. Essentials: `strikeLightning()`. |
+  | `/skull [player]` | `neoessentials.skull` | Creates `PLAYER_HEAD` with `DataComponents.PROFILE` set from server profile cache (`ResolvableProfile(GameProfile)`). Falls back to random UUID + name. |
+  | `/itemname [name\|-]` / `/rename` | `neoessentials.itemname` | Sets `DataComponents.CUSTOM_NAME` on held item. Omit or use `-` to clear. |
+  | `/itemlore add\|set <n>\|remove <n>\|clear` | `neoessentials.itemlore` | Reads/writes `DataComponents.LORE` (`ItemLore`). Full add/set/remove/clear sub-commands. |
+  | `/remove <type> [radius]` | `neoessentials.remove` | Removes entities in AABB-inflated radius. Types: all, items/drops, mobs, animals, monsters, arrows, xp, boats, minecarts, tnt, paintings. Never removes players. |
+  | `/loom` | `neoessentials.loom` | Opens `LoomMenu` via `MenuProvider` + `ContainerLevelAccess`. |
+  | `/cartography` / `/cartographytable` | `neoessentials.cartography` | Opens `CartographyTableMenu` via `MenuProvider` + `ContainerLevelAccess`. |
+
+  **Additional:** 13 permission nodes, 14 lang keys (incl. `tptoggle_off` for tptoggle-blocked tpa). All commands registered in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` + `CommandsReference.md` updated.
+
+- **Utility Commands system — Missing entirely: /ptime, /pweather, /effect, /spawnmob, /unlimited, /condense**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All 6 command groups were completely absent.
+
+  **Implemented from scratch based on EssentialsX (`Commandptime`, `Commandpweather`, `Commandpotion`, `Commandspawnmob`, `Commandunlimited`, `Commandcondense`):**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/ptime [reset\|day\|noon\|night\|midnight\|<ticks>] [player]` | `neoessentials.ptime(.others)` | Per-player client-side time via `ClientboundSetTimePacket`. Restored on rejoin. |
+  | `/pweather [reset\|sun\|storm\|clear\|rain] [player]` | `neoessentials.pweather(.others)` | Per-player weather via `ClientboundGameEventPacket`. Restored on rejoin. |
+  | `/effect <player> <effect\|clear> [duration] [amp]` | `neoessentials.effect` | Applies `MobEffectInstance`. Supports all registry effect names. `/effect <player> clear` removes all. |
+  | `/spawnmob <mob> [amount] [player]`, `/mob` | `neoessentials.spawnmob(.others)` | Spawns entities at player via `EntityType.create()` + `finalizeSpawn()`. Amount 1–100. |
+  | `/unlimited [list\|clear\|<item\|hand>] [player]` | `neoessentials.unlimited(.others)` | Adds item to per-player unlimited set. `isUnlimited()` static method for event handler use. |
+  | `/condense [item]` | `neoessentials.condense` | Converts loose items → storage blocks using 21 built-in rules (nugget→ingot→block pattern). |
+
+  **Additional:** `GodModeEventHandler` updated to call `UtilityCommands.onPlayerJoin/Quit` for ptime/pweather restore on login and state cleanup on logout. 10 permission nodes, 19 lang keys, all commands registered in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` updated.
 
 - **Server Admin system — Missing entirely: /broadcast, /time, /weather, /kill, /gamemode (full), /tpo, /tpohere, /tpoffline**
   *(Fixed: 2026-03-02)*

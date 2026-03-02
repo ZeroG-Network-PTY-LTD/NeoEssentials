@@ -38,6 +38,7 @@ public class WarpCommands {
     private static final String PERMISSION_WARP_OTHERS = "neoessentials.teleport.warp.others";
     private static final String PERMISSION_SETWARP     = "neoessentials.teleport.warp.create";
     private static final String PERMISSION_DELWARP     = "neoessentials.teleport.warp.delete";
+    private static final String PERMISSION_WARPINFO    = "neoessentials.warpinfo";
 
     /** Items per page for /warps (Essentials: WARPS_PER_PAGE = 20) */
     private static final int WARPS_PER_PAGE = 20;
@@ -277,5 +278,32 @@ public class WarpCommands {
                         IntegerArgumentType.getInteger(ctx, "page"))))
             );
         }
+    }
+
+    // ── /warpinfo <name> ──────────────────────────────────────────────────────
+    // Essentials: Commandwarpinfo — shows coordinates and world for a warp.
+    public static void registerWarpInfoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("warpinfo")
+            .requires(src -> src.getPlayer() == null
+                || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_WARPINFO))
+            .then(Commands.argument("warp", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    WarpManager.getInstance().getWarpNames(), b))
+                .executes(ctx -> {
+                    var src = ctx.getSource();
+                    String name = StringArgumentType.getString(ctx, "warp");
+                    com.zerog.neoessentials.teleportation.TeleportLocation loc =
+                        WarpManager.getInstance().getWarp(name);
+                    if (loc == null) {
+                        src.sendFailure(com.zerog.neoessentials.util.MessageUtil.error(
+                            "commands.neoessentials.teleport.warp.not_found", name));
+                        return 0;
+                    }
+                    src.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.info(
+                        "commands.neoessentials.warpinfo.info", name, loc.getLocationString()), false);
+                    return 1;
+                })
+            )
+        );
     }
 }

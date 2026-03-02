@@ -259,6 +259,41 @@ public class PermissionRegistry {
         register("neoessentials.teleport.tpo", "Teleport to player ignoring tptoggle", PermissionCategory.ADMIN, false);
         register("neoessentials.teleport.tpohere", "Bring player here ignoring tptoggle", PermissionCategory.ADMIN, false);
         register("neoessentials.teleport.tpoffline", "Teleport to offline player's last location", PermissionCategory.ADMIN, false);
+        // Utility commands
+        register("neoessentials.ptime", "Set own per-player time override", PermissionCategory.PLAYER, false);
+        register("neoessentials.ptime.others", "Set another player's time override", PermissionCategory.ADMIN, false);
+        register("neoessentials.pweather", "Set own per-player weather override", PermissionCategory.PLAYER, false);
+        register("neoessentials.pweather.others", "Set another player's weather override", PermissionCategory.ADMIN, false);
+        register("neoessentials.effect", "Apply potion effects to players", PermissionCategory.ADMIN, false);
+        register("neoessentials.spawnmob", "Spawn entities at a player", PermissionCategory.ADMIN, false);
+        register("neoessentials.spawnmob.others", "Spawn entities at another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.unlimited", "Toggle unlimited item use", PermissionCategory.ADMIN, false);
+        register("neoessentials.unlimited.others", "Toggle unlimited items for another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.condense", "Condense items to storage blocks", PermissionCategory.PLAYER, false);
+        // Item customisation & misc
+        register("neoessentials.me", "Broadcast action messages (/me)", PermissionCategory.CHAT, true);
+        register("neoessentials.tptoggle", "Toggle teleport request acceptance", PermissionCategory.TELEPORT, true);
+        register("neoessentials.tptoggle.others", "Toggle tptoggle for another player", PermissionCategory.TELEPORT, false);
+        register("neoessentials.gc", "View server memory and TPS info", PermissionCategory.ADMIN, false);
+        register("neoessentials.lightning", "Strike lightning at look target", PermissionCategory.ADMIN, false);
+        register("neoessentials.lightning.others", "Strike lightning at a named player", PermissionCategory.ADMIN, false);
+        register("neoessentials.skull", "Get a player head item", PermissionCategory.PLAYER, false);
+        register("neoessentials.itemname", "Rename held item", PermissionCategory.ITEMS, false);
+        register("neoessentials.itemlore", "Edit held item lore", PermissionCategory.ITEMS, false);
+        register("neoessentials.remove", "Remove entities in a radius", PermissionCategory.ADMIN, false);
+        register("neoessentials.loom", "Open portable loom", PermissionCategory.PLAYER, false);
+        register("neoessentials.cartography", "Open portable cartography table", PermissionCategory.PLAYER, false);
+        // Home & Warp Enhancements
+        register("neoessentials.renamehome", "Rename own homes", PermissionCategory.TELEPORT, true);
+        register("neoessentials.renamehome.others", "Rename another player's homes", PermissionCategory.ADMIN, false);
+        register("neoessentials.warpinfo", "Show warp location info", PermissionCategory.TELEPORT, true);
+        register("neoessentials.world", "Teleport to a world/dimension", PermissionCategory.ADMIN, false);
+        register("neoessentials.world.others", "Teleport another player to a world", PermissionCategory.ADMIN, false);
+        register("neoessentials.spawner", "Change a mob spawner type", PermissionCategory.ADMIN, false);
+        register("neoessentials.spawner.*", "Change spawner to any mob type", PermissionCategory.ADMIN, false);
+        register("neoessentials.recipe", "Show/unlock crafting recipe for an item", PermissionCategory.PLAYER, true);
+        register("neoessentials.tpauto", "Auto-accept all incoming teleport requests", PermissionCategory.TELEPORT, true);
+        register("neoessentials.tpauto.others", "Toggle tpauto for another player", PermissionCategory.ADMIN, false);
 
         // Teleportation permissions
         register("neoessentials.teleport.admin", "Administrative teleportation", PermissionCategory.TELEPORT, false);
