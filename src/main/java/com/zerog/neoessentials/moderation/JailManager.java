@@ -54,6 +54,7 @@ public class JailManager {
         public String reason;
         public String jailedBy;
         public long jailTime;
+        public long expireAt;   // 0 = indefinite (Essentials: checkJailTimeout)
         public String jailName;
         public BlockPos originalLocation;
         public String originalDimension;
@@ -65,6 +66,20 @@ public class JailManager {
             this.jailedBy = jailedBy;
             this.jailName = jailName;
             this.jailTime = System.currentTimeMillis();
+            this.expireAt = 0L;
+        }
+
+        /** Returns true if this is a timed jail that has now expired. */
+        public boolean isExpired() {
+            return expireAt > 0 && System.currentTimeMillis() >= expireAt;
+        }
+
+        /** Formatted remaining time string, or "indefinite". */
+        public String getFormattedRemaining() {
+            if (expireAt <= 0) return "indefinite";
+            long remaining = expireAt - System.currentTimeMillis();
+            if (remaining <= 0) return "expired";
+            return formatDuration(remaining);
         }
         
         public String getFormattedJailTime() {
@@ -123,9 +138,17 @@ public class JailManager {
     }
     
     /**
-     * Jail a player
+     * Jail a player indefinitely (no expiry).
      */
     public boolean jailPlayer(String playerName, UUID playerId, String reason, String jailedBy, String jailName) {
+        return jailPlayer(playerName, playerId, reason, jailedBy, jailName, 0L);
+    }
+
+    /**
+     * Jail a player with an optional timed duration (millis). 0 = indefinite.
+     * Ported from Essentials: checkJailTimeout pattern.
+     */
+    public boolean jailPlayer(String playerName, UUID playerId, String reason, String jailedBy, String jailName, long durationMillis) {
         // Check if already jailed atomically using putIfAbsent
         if (jailedPlayers.putIfAbsent(playerId, null) != null) {
             // Already jailed
@@ -171,6 +194,9 @@ public class JailManager {
 
         // Create jail entry
         JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
+        if (durationMillis > 0) {
+            jail.expireAt = System.currentTimeMillis() + durationMillis;
+        }
 
         // Store original location
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -353,6 +379,40 @@ public class JailManager {
     }
     
     /**
+     * Check if a player's timed jail has expired and release them if so.
+     * Called on player join (Essentials: user.checkJailTimeout(currentTime)) and periodically.
+     *
+     * @return true if the player was released due to expiry
+     */
+    public boolean checkJailTimeout(UUID playerId) {
+        JailEntry jail = jailedPlayers.get(playerId);
+        if (jail == null) return false;
+        if (!jail.isExpired()) return false;
+
+        LOGGER.info("Timed jail expired for player {} ({}). Auto-releasing.", jail.playerName, playerId);
+        unjailPlayer(playerId);
+        return true;
+    }
+
+    /**
+     * Format a duration in milliseconds into a human-readable string (e.g. "2h 30m 15s").
+     */
+    public static String formatDuration(long millis) {
+        if (millis <= 0) return "0s";
+        long seconds = millis / 1000;
+        long minutes = seconds / 60;
+        long hours   = minutes / 60;
+        long days    = hours / 24;
+        seconds %= 60; minutes %= 60; hours %= 24;
+        StringBuilder sb = new StringBuilder();
+        if (days > 0)    sb.append(days).append("d ");
+        if (hours > 0)   sb.append(hours).append("h ");
+        if (minutes > 0) sb.append(minutes).append("m ");
+        if (seconds > 0 || sb.length() == 0) sb.append(seconds).append("s");
+        return sb.toString().trim();
+    }
+
+    /**
      * Teleport player to jail
      */
     private void teleportToJail(ServerPlayer player, JailLocation jailLoc) {
@@ -455,7 +515,8 @@ public class JailManager {
                         jailObj.get("jailName").getAsString()
                     );
                     jail.jailTime = jailObj.get("jailTime").getAsLong();
-                    
+                    jail.expireAt = jailObj.has("expireAt") ? jailObj.get("expireAt").getAsLong() : 0L;
+
                     if (jailObj.has("originalLocation")) {
                         JsonObject locObj = jailObj.getAsJsonObject("originalLocation");
                         jail.originalLocation = new BlockPos(
@@ -526,7 +587,8 @@ public class JailManager {
                 jailObj.addProperty("jailedBy", jail.jailedBy);
                 jailObj.addProperty("jailName", jail.jailName);
                 jailObj.addProperty("jailTime", jail.jailTime);
-                
+                jailObj.addProperty("expireAt", jail.expireAt);
+
                 if (jail.originalLocation != null) {
                     JsonObject locObj = new JsonObject();
                     locObj.addProperty("x", jail.originalLocation.getX());

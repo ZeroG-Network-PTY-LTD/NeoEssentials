@@ -579,18 +579,41 @@ public class KitManager {
     }
     
     // Cooldown and Usage Tracking
-    
+
     private long getRemainingCooldown(UUID playerId, String kitName) {
         Map<String, Long> playerCooldownMap = playerCooldowns.get(playerId);
         if (playerCooldownMap == null) return 0;
-        
         Long cooldownEnd = playerCooldownMap.get(kitName.toLowerCase());
         if (cooldownEnd == null) return 0;
-        
         long remaining = cooldownEnd - System.currentTimeMillis();
         return Math.max(0, remaining);
     }
-    
+
+    /** Public alias — used by KitCommand list display and KitResetCommand. */
+    public long getRemainingCooldownPublic(UUID playerId, String kitName) {
+        return getRemainingCooldown(playerId, kitName);
+    }
+
+    /**
+     * Reset the cooldown for a player on a specific kit.
+     * Essentials: User.setKitTimestamp(kitName, 0)
+     */
+    public void resetCooldown(UUID playerId, String kitName) {
+        Map<String, Long> map = playerCooldowns.get(playerId);
+        if (map != null) {
+            map.remove(kitName.toLowerCase());
+        }
+        savePlayerData();
+    }
+
+    /**
+     * Reset ALL kit cooldowns for a player.
+     */
+    public void resetAllCooldowns(UUID playerId) {
+        playerCooldowns.remove(playerId);
+        savePlayerData();
+    }
+
     private void setCooldown(UUID playerId, String kitName, long cooldownEnd) {
         playerCooldowns.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                       .put(kitName.toLowerCase(), cooldownEnd);

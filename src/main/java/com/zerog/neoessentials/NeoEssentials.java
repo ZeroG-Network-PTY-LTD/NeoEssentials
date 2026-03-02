@@ -531,8 +531,10 @@ public class NeoEssentials {
         registry.registerCommand("unmute", "Unmute a player");
         registry.registerCommand("mutelist", "List muted players");
         registry.registerCommand("jail", "Jail a player");
+        registry.registerCommand("jailfor", "Jail a player for a set duration");
         registry.registerCommand("unjail", "Release a player from jail");
         registry.registerCommand("setjail", "Set jail location");
+        registry.registerCommand("deljail", "Delete a jail location");
         registry.registerCommand("jaillist", "List jailed players");
         registry.registerCommand("freeze", "Freeze a player");
         registry.registerCommand("unfreeze", "Unfreeze a player");
@@ -590,6 +592,7 @@ public class NeoEssentials {
         registry.registerCommand("listkits", "List available kits (alias)");
         registry.registerCommand("createkit", "Create a new kit");
         registry.registerCommand("delkit", "Delete a kit");
+        registry.registerCommand("kitreset", "Reset a kit cooldown");
         com.zerog.neoessentials.kits.command.KitCommands.register(dispatcher);
 
         // ========== UTILITY COMMANDS ==========

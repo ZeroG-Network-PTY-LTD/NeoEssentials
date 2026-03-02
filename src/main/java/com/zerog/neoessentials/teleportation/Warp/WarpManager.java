@@ -485,6 +485,21 @@ public class WarpManager {
     }
     
     /**
+     * Delete a warp by name — admin/console variant that doesn't require a ServerPlayer.
+     * Essentials: Warps.removeWarp(name)
+     */
+    public boolean deleteWarpByAdmin(String warpName, String deletedBy) {
+        String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
+        TeleportLocation removed = warps.remove(normalizedName);
+        if (removed == null) return false;
+        saveWarps();
+        if (ConfigManager.getInstance().isLogWarpActionsEnabled()) {
+            LOGGER.info("Warp '{}' deleted by {}", warpName, deletedBy);
+        }
+        return true;
+    }
+
+    /**
      * Delete a warp (admin/staff command)
      */
     public boolean deleteWarp(ServerPlayer player, String warpName) {

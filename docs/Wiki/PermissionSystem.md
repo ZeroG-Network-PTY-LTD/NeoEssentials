@@ -121,13 +121,17 @@ These are **registered automatically** when a kit is created via `/createkit`.
 |---|---|---|---|
 | `neoessentials.economy.balance` | ✅ default | Check own balance | `/balance` |
 | `neoessentials.economy.balance.others` | 🔒 op-only | Check another player's balance | `/balance <player>` |
-| `neoessentials.economy.pay` | ✅ default | Send money to another player | `/pay` |
+| `neoessentials.economy.pay` | ✅ default | Send money to online players | `/pay` |
+| `neoessentials.economy.pay.offline` | 🔒 op-only | Send money to offline players | `/pay` |
 | `neoessentials.economy.pay.toggle` | ✅ default | Toggle receiving payments | `/paytoggle` |
-| `neoessentials.economy.baltop` | ✅ default | View balance leaderboard | `/baltop` |
+| `neoessentials.economy.baltop` | ✅ default | View balance leaderboard | `/baltop [page]` |
+| `neoessentials.economy.baltop.exempt` | 🔒 op-only | Exclude self from baltop ranking | |
+| `neoessentials.economy.eco` | 🔒 op-only | Run eco admin commands | `/eco` |
 | `neoessentials.economy.admin` | 🔒 op-only | Economy administration (parent node) | `/eco` |
 | `neoessentials.economy.admin.give` | 🔒 op-only | Give money to a player | `/eco give` |
 | `neoessentials.economy.admin.take` | 🔒 op-only | Take money from a player | `/eco take` |
 | `neoessentials.economy.admin.set` | 🔒 op-only | Set a player's balance | `/eco set` |
+| `neoessentials.economy.admin.reset` | 🔒 op-only | Reset a player's balance to starting balance | `/eco reset` |
 
 ---
 
@@ -168,10 +172,13 @@ These are **registered automatically** when a kit is created via `/createkit`.
 #### Warp System
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.teleport.warp` | ✅ default | Use warps | `/warp` |
+| `neoessentials.teleport.warp` | ✅ default | Use warps | `/warp <name>` |
+| `neoessentials.teleport.warp.list` | ✅ default | List available warps | `/warps [page]`, `/warp` |
+| `neoessentials.teleport.warp.others` | 🔒 op-only | Warp another player to a warp | `/warp <name> <player>` |
 | `neoessentials.teleport.warp.create` | 🔒 op-only | Create a warp | `/setwarp` |
 | `neoessentials.teleport.warp.delete` | 🔒 op-only | Delete a warp | `/delwarp` |
-| `neoessentials.teleport.warp.list` | ✅ default | List warps | `/warps` |
+| `neoessentials.warps.<name>` | — | **Per-warp** — access to specific warp (when `perWarpPermission: true` in config) | |
+| `neoessentials.warps.*` | 🔒 op-only | Access ALL warps regardless of per-warp permissions | |
 | `neoessentials.teleport.pwarp` | ✅ default | Use player warps | `/pwarp` |
 | `neoessentials.teleport.pwarp.create` | ✅ default | Create a player warp | `/pwarp create` |
 | `neoessentials.teleport.pwarp.delete` | ✅ default | Delete a player warp | `/pwarp delete` |
@@ -205,16 +212,19 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.kits.use` | ✅ default | Use the kit system | `/kit` |
-| `neoessentials.kits.list` | ✅ default | List available kits | `/listkits` |
+| `neoessentials.kits.list` | ✅ default | List available kits | `/kit`, `/listkits` |
 | `neoessentials.kits.nocooldown` | 🔒 op-only | Bypass all kit cooldowns | |
+| `neoessentials.kit.others` | 🔒 op-only | Give a kit to another player | `/kit <name> <player>` |
+| `neoessentials.kitreset` | 🔒 op-only | Reset own kit cooldown | `/kitreset <kit>` |
+| `neoessentials.kitreset.others` | 🔒 op-only | Reset another player's kit cooldown | `/kitreset <kit> <player>` |
 | `neoessentials.kits.create` | 🔒 op-only | Create a kit from inventory | `/createkit` |
 | `neoessentials.kits.delete` | 🔒 op-only | Delete a kit | `/delkit` |
-| `neoessentials.kits.override` | 🔒 op-only | Override kit restrictions | |
+| `neoessentials.kits.override` | 🔒 op-only | Override all kit restrictions | |
 | `neoessentials.kits.admin` | 🔒 op-only | Kit administration (parent) | `/kit admin` |
 | `neoessentials.kits.admin.create` | 🔒 op-only | Admin kit creation | |
 | `neoessentials.kits.admin.delete` | 🔒 op-only | Admin kit deletion | |
 | `neoessentials.kits.admin.list` | 🔒 op-only | List all kits (admin) | |
-| `neoessentials.kits.<kitname>` | — | **Dynamic** — use specific kit | |
+| `neoessentials.kits.<kitname>` | — | **Dynamic** — access to specific kit | |
 | `neoessentials.kits.<kitname>.nocooldown` | — | **Dynamic** — bypass cooldown for specific kit | |
 
 ---

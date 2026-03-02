@@ -202,12 +202,15 @@ public class PermissionRegistry {
         // Economy permissions
         register("neoessentials.economy.balance", "Check own balance", PermissionCategory.ECONOMY, true);
         register("neoessentials.economy.balance.others", "Check others' balance", PermissionCategory.ECONOMY, false);
-        register("neoessentials.economy.pay", "Send payments", PermissionCategory.ECONOMY, true);
+        register("neoessentials.economy.pay", "Send payments to online players", PermissionCategory.ECONOMY, true);
+        register("neoessentials.economy.pay.offline", "Send payments to offline players", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.pay.toggle", "Toggle payment acceptance", PermissionCategory.ECONOMY, true);
         register("neoessentials.economy.baltop", "View balance leaderboard", PermissionCategory.ECONOMY, true);
+        register("neoessentials.economy.baltop.exempt", "Exclude self from baltop ranking", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.admin", "Economy administration", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.admin.give", "Give money to players", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.admin.take", "Take money from players", PermissionCategory.ECONOMY, false);
+        register("neoessentials.economy.eco", "Run /eco admin commands (give/take/set/reset)", PermissionCategory.ECONOMY, false);
         register("neoessentials.economy.admin.set", "Set player balance", PermissionCategory.ECONOMY, false);
         
         // Teleportation permissions
@@ -239,10 +242,12 @@ public class PermissionRegistry {
         
         // Warp system
         register("neoessentials.teleport.warp", "Use warp system", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.warp.list", "List all available warps", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.warp.others", "Warp another player to a warp (/warp <name> <player>)", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.warp.create", "Create warps", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.warp.delete", "Delete warps", PermissionCategory.TELEPORT, false);
-        register("neoessentials.teleport.warp.list", "List warps", PermissionCategory.TELEPORT, true);
-        
+        register("neoessentials.warps.*", "Access ALL warps regardless of per-warp permissions", PermissionCategory.TELEPORT, false);
+
         // Dynamic player warp limit permissions
         // Pattern: neoessentials.warp.limit.<amount> where <amount> is 1-100
         // Example: neoessentials.warp.limit.10 allows 10 player warps
@@ -270,6 +275,9 @@ public class PermissionRegistry {
         register("neoessentials.kits.use", "Use kit system", PermissionCategory.KITS, true);
         register("neoessentials.kits.list", "List available kits", PermissionCategory.KITS, true);
         register("neoessentials.kits.nocooldown", "Bypass kit cooldowns", PermissionCategory.KITS, false);
+        register("neoessentials.kit.others", "Give a kit to another player (/kit <name> <player>)", PermissionCategory.KITS, false);
+        register("neoessentials.kitreset", "Reset own kit cooldown", PermissionCategory.KITS, false);
+        register("neoessentials.kitreset.others", "Reset another player's kit cooldown", PermissionCategory.KITS, false);
         register("neoessentials.kits.admin", "Kit administration", PermissionCategory.KITS, false);
         register("neoessentials.kits.admin.create", "Create kits", PermissionCategory.KITS, false);
         register("neoessentials.kits.admin.delete", "Delete kits", PermissionCategory.KITS, false);
@@ -391,10 +399,16 @@ public class PermissionRegistry {
         register("neoessentials.moderation.unfreezeall", "Unfreeze all players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.freezelist", "View frozen players list", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.jail", "Jail players", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jail.timed", "Jail players for a set duration (/jailfor)", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.unjail", "Unjail players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.setjail", "Create jail locations", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.deljail", "Delete jail locations", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.jaillist", "View jailed players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.jailinfo", "View jail info", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.allow-break", "Break blocks while jailed", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.allow-place", "Place blocks while jailed", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.allow-interact", "Interact with blocks/items while jailed", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.allow-attack", "Attack entities while jailed", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.vanish", "Vanish self", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.vanish.others", "Vanish other players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.seevanished", "See vanished players", PermissionCategory.MODERATION, false);
@@ -416,9 +430,14 @@ public class PermissionRegistry {
         register("neoessentials.motd.reload", "Reload MOTD", PermissionCategory.ADMIN, false);
 
         // ── Mail system ───────────────────────────────────────────────────────
-        register("neoessentials.mail", "Use mail system", PermissionCategory.CHAT, true);
+        register("neoessentials.mail", "Use mail system (read, delete, status)", PermissionCategory.CHAT, true);
         register("neoessentials.mail.send", "Send mail to players", PermissionCategory.CHAT, true);
+        register("neoessentials.mail.sendtemp", "Send timed/expiring mail to a player", PermissionCategory.CHAT, true);
+        register("neoessentials.mail.sendall", "Broadcast mail to all players", PermissionCategory.CHAT, false);
+        register("neoessentials.mail.sendtempall", "Broadcast timed mail to all players", PermissionCategory.CHAT, false);
         register("neoessentials.mail.clear", "Clear own mail", PermissionCategory.CHAT, true);
+        register("neoessentials.mail.clear.others", "Clear another player's mail (admin)", PermissionCategory.CHAT, false);
+        register("neoessentials.mail.clearall", "Wipe every player's mailbox (admin)", PermissionCategory.CHAT, false);
 
         // ── Item system additions ─────────────────────────────────────────────
         register("neoessentials.item.enchant.any", "Enchant any item (ignore restrictions)", PermissionCategory.ITEMS, false);
