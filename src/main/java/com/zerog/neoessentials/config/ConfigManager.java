@@ -2498,4 +2498,28 @@ public class ConfigManager {
         ResourceUtil.ensureDirectoryExists(ResourceUtil.CONFIG_DIR);
         return configDir;
     }
+
+    /** Returns the MOTD string from general.motd, or null if not set. */
+    public String getMotd() {
+        try {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("general") && config.getAsJsonObject("general").has("motd")) {
+                String val = config.getAsJsonObject("general").get("motd").getAsString();
+                return val.isBlank() ? null : val;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /** Returns the rules string from general.rules, or null if not set. */
+    public String getRules() {
+        try {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("general") && config.getAsJsonObject("general").has("rules")) {
+                String val = config.getAsJsonObject("general").get("rules").getAsString();
+                return val.isBlank() ? null : val;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 }

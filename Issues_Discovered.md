@@ -6,6 +6,49 @@
 ---
 
 # ✅ Issues That Were Fixed
+- **Player Info & Admin Tools system — Missing entirely: /seen, /near, /ping, /playtime, /whois, /realname, /sudo, /suicide, /msgtoggle, /rtoggle, /motd, /rules**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All 12 commands were completely absent. `ConfigManager` had no `getMotd()`/`getRules()` methods.
+
+  **Implemented in `PlayerInfoCommands.java` based on EssentialsX:**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/seen <player>` | `neoessentials.seen` | Checks online list first (shows world/pos/ping). Falls back to `ProfileCache.get()` for offline players. |
+  | `/near [radius]` | `neoessentials.near` | Iterates online players in same `ServerLevel`, computes `distanceToSqr()`, sorts by name, shows distance in metres. Default 200 block radius. |
+  | `/ping [player]` | `neoessentials.ping(.others)` | Reads `player.latency`. Colour-coded green/yellow/red. |
+  | `/playtime [player]` | `neoessentials.playtime(.others)` | Reads `Stats.CUSTOM.get(Stats.PLAY_TIME)` ticks → formatted h/m/s. |
+  | `/whois <player>` | `neoessentials.whois` | Shows UUID, dimension, XYZ, gamemode, ping, health, food. |
+  | `/realname <nick>` | `neoessentials.realname` | Searches online players by `getDisplayName().getString()` with colour stripping. |
+  | `/sudo <player> <cmd>` | `neoessentials.sudo` | Respects `neoessentials.sudo.exempt`. Prefix `c:` to send chat. Runs via `player.createCommandSourceStack()`. |
+  | `/suicide` | `neoessentials.suicide` | `player.hurt(damageSources().magic(), Float.MAX_VALUE)`. Broadcasts death message to all others. |
+  | `/msgtoggle [on\|off]` | `neoessentials.msgtoggle(.others)` | Syncs with existing `MsgToggleManager` (name-based) used by `MsgCommand`, plus UUID shadow map for `isMsgBlocked()`. |
+  | `/rtoggle [on\|off]` | `neoessentials.rtoggle(.others)` | Per-player `rtoggleEnabled` map. `isRtoggleEnabled()` available for `ReplyCommand` to check. |
+  | `/motd` | `neoessentials.motd` | Reads `ConfigManager.getMotd()` → `general.motd` in config. Replaces `{player}` placeholder. |
+  | `/rules` | `neoessentials.rules` | Reads `ConfigManager.getRules()` → `general.rules` in config. |
+
+  **Additional:** `ConfigManager.getMotd()` + `getRules()` added. `general.motd` + `general.rules` added to `config.json`. 17 permission nodes, 18 lang keys, 12 commands registered in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` + `CommandsReference.md` updated.
+
+- **World Interaction & Fun system — Missing entirely: /fireball, /tree, /bigtree, /break, /ice, /bottom, /tpaall, /broadcastworld**
+  *(Fixed: 2026-03-02)*
+
+  **Root causes:** All 8 commands were completely absent from the codebase.
+
+  **Implemented in `WorldInteractionCommands.java` based on EssentialsX (`Commandfireball`, `Commandtree`, `Commandbigtree`, `Commandbreak`, `Commandice`, `Commandbottom`, `Commandtpaall`, `Commandbroadcastworld`):**
+
+  | Command | Perm | Description |
+  |---|---|---|
+  | `/fireball [type] [speed] [ride]` | `neoessentials.fireball.<type>` | Spawns typed projectile in look direction using NeoForge entity constructors. 11 types: fireball, small, large, arrow, skull, egg, snowball, expbottle, dragon, trident, windcharge. Optional `ride` mounts player on projectile. Per-type permission check + wildcard `neoessentials.fireball.*`. |
+  | `/tree <type>` / `/bigtree` | `neoessentials.tree` | Raycasts 20 blocks, plants one above. Uses `level.registryAccess()` to resolve `CONFIGURED_FEATURE` by ResourceLocation key and calls `holder.place()`. 12 tree types mapped to vanilla feature keys. |
+  | `/break` | `neoessentials.break` | Raycasts 20 blocks via `player.pick()`. Calls `level.destroyBlock(pos, false, player)` (no drops). Bedrock protected unless `neoessentials.break.bedrock`. |
+  | `/ice [player]` | `neoessentials.ice(.others)` | Calls `target.setTicksFrozen(target.getTicksRequiredToFreeze() + 1)` to fully freeze via powder-snow mechanic. |
+  | `/bottom` | `neoessentials.bottom` | Scans from `level.getMinBuildHeight()` upward looking for solid+air+air pattern. Saves `/back` location before teleport. |
+  | `/tpaall [player]` | `neoessentials.tpaall(.others)` | Iterates all online players, checks tptoggle, calls `TeleportRequestManager.sendTeleportRequest()` with `TPAHERE` type for each eligible player. |
+  | `/broadcastworld <msg>` / `/bcastworld` | `neoessentials.broadcastworld` | Filters online players by `p.serverLevel() == src.getLevel()`. Sends coloured `§6[World] §e<msg>`. |
+
+  **Additional:** 13 permission nodes, 17 lang keys, all commands registered in `NeoEssentials.java` + `config.json`. `PermissionSystem.md` + `CommandsReference.md` updated.
+
 - **Home & Warp Enhancement system — Missing entirely: /renamehome, /warpinfo, /world, /spawner, /recipe, /tpauto**
   *(Fixed: 2026-03-02)*
 
