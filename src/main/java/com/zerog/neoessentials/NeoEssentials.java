@@ -525,6 +525,8 @@ public class NeoEssentials {
         registry.registerCommand("banip", "Ban an IP address");
         registry.registerCommand("unbanip", "Unban an IP address");
         registry.registerCommand("banlist", "List banned players");
+        registry.registerCommand("tempban", "Temporarily ban a player");
+        registry.registerCommand("tempbanip", "Temporarily ban an IP address");
         registry.registerCommand("kick", "Kick a player");
         registry.registerCommand("kickall", "Kick all players");
         registry.registerCommand("mute", "Mute a player");
@@ -535,7 +537,10 @@ public class NeoEssentials {
         registry.registerCommand("unjail", "Release a player from jail");
         registry.registerCommand("setjail", "Set jail location");
         registry.registerCommand("deljail", "Delete a jail location");
-        registry.registerCommand("jaillist", "List jailed players");
+        registry.registerCommand("jaillist", "List all jail locations");
+        registry.registerCommand("jailinfo", "Show info about a jail");
+        registry.registerCommand("jails", "List all jail locations (alias)");
+        registry.registerCommand("togglejail", "Toggle a player's jail state");
         registry.registerCommand("freeze", "Freeze a player");
         registry.registerCommand("unfreeze", "Unfreeze a player");
         registry.registerCommand("freezeall", "Freeze all players");
@@ -598,6 +603,8 @@ public class NeoEssentials {
         // ========== UTILITY COMMANDS ==========
         registry.registerCommand("afk", "Toggle AFK status");
         registry.registerCommand("away", "Toggle AFK status (alias)");
+        registry.registerCommand("help", "Show available commands");
+        registry.registerCommand("?", "Show available commands (alias)");
         registry.registerCommand("nick", "Change your nickname");
         registry.registerCommand("nickname", "Change your nickname (alias)");
         registry.registerCommand("anvil", "Open portable anvil");
@@ -642,6 +649,7 @@ public class NeoEssentials {
         
         com.zerog.neoessentials.inventory.InventoryViewCommands.register(dispatcher);
         com.zerog.neoessentials.util.commands.AfkCommand.register(dispatcher);
+        com.zerog.neoessentials.util.commands.HelpCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.AnvilCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.BookCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.CompassCommand.register(dispatcher);
@@ -690,11 +698,24 @@ public class NeoEssentials {
         registry.registerCommand("ec", "View another player's ender chest (alias)");
         registry.registerCommand("enderchestedit", "View and edit another player's ender chest");
         registry.registerCommand("ecedit", "View and edit another player's ender chest (alias)");
+        registry.registerCommand("condense", "Compact items to their block forms");
+        registry.registerCommand("showkit", "Preview kit contents without claiming");
+        registry.registerCommand("powertoollist", "List all active powertool bindings");
+        registry.registerCommand("ptlist", "List all active powertool bindings (alias)");
+        registry.registerCommand("customtext", "Display a custom server text page");
+        registry.registerCommand("ctext", "Display a custom server text page (alias)");
+        registry.registerCommand("payconfirmtoggle", "Toggle payment confirmation prompts");
+        registry.registerCommand("ciconfirmtoggle", "Toggle /ci confirmation prompts");
+        registry.registerCommand("clearinventoryconfirmtoggle", "Toggle /ci confirmation prompts (alias)");
+        registry.registerCommand("item", "Give yourself an item by name");
+        registry.registerCommand("i", "Give yourself an item by name (alias)");
+        registry.registerCommand("rtoggle", "Toggle /r reply-to-sender direction");
         com.zerog.neoessentials.items.commands.RepairCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.DisposeCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.ClearInventoryCommand.register(dispatcher);
+        com.zerog.neoessentials.items.commands.MiscItemCommands.register(dispatcher);
 
         // ========== WORTH / SELL COMMANDS ==========
         registry.registerCommand("worth", "Check the sell value of an item");
@@ -805,6 +826,20 @@ public class NeoEssentials {
         registry.registerCommand("spawner", "Change a spawner type");
         registry.registerCommand("recipe", "Show/unlock recipe for an item");
         registry.registerCommand("tpauto", "Auto-accept all teleport requests");
+
+        // ========== FUN / MISCELLANEOUS COMMANDS ==========
+        registry.registerCommand("firework", "Edit or fire held firework rockets");
+        registry.registerCommand("fw", "Edit or fire held firework rockets (alias)");
+        registry.registerCommand("nuke", "Rain TNT on a player");
+        registry.registerCommand("antioch", "Spawn lit TNT at your look target (🐇 easter egg)");
+        registry.registerCommand("kittycannon", "Launch an exploding baby cat 🐱");
+        registry.registerCommand("beezooka", "Launch angry bees 🐝");
+        registry.registerCommand("itemdb", "Look up item registry info");
+        registry.registerCommand("potion", "Edit potion effects on held potion item");
+        registry.registerCommand("info", "Show server info/MOTD");
+        registry.registerCommand("rest", "Reset your sleep timer (prevent phantoms)");
+        registry.registerCommand("backup", "Trigger a server world save and backup");
+        com.zerog.neoessentials.util.commands.FunCommands.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

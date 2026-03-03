@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.zerog.neoessentials.util.InputValidator;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -168,8 +169,70 @@ public class JailCommand {
                 .suggests(SUGGEST_JAIL_NAMES)
                 .executes(ctx -> executeDelJail(ctx, StringArgumentType.getString(ctx, "name"))))
         );
+
+        // /jails — alias for /jaillist (Essentials: Commandjails)
+        dispatcher.register(Commands.literal("jails")
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jaillist").hasPermission())
+            .executes(ctx -> executeJailList(ctx))
+        );
+
+        // /togglejail <player> — toggle a player's jail state (Essentials: Commandtogglejail)
+        dispatcher.register(Commands.literal("togglejail")
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jail").hasPermission())
+            .then(Commands.argument("player", StringArgumentType.word())
+                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                    ctx.getSource().getServer().getPlayerNames(), builder))
+                .executes(ctx -> executeToggleJail(ctx, StringArgumentType.getString(ctx, "player"))))
+        );
     }
-    
+
+    private static int executeToggleJail(CommandContext<CommandSourceStack> ctx, String playerName) {
+        CommandSourceStack source = ctx.getSource();
+        JailManager jailManager = JailManager.getInstance();
+        MinecraftServer server = source.getServer();
+
+        // Resolve player
+        UUID playerId = null;
+        String resolvedName = playerName;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (p.getName().getString().equalsIgnoreCase(playerName)) {
+                playerId = p.getUUID();
+                resolvedName = p.getName().getString();
+                break;
+            }
+        }
+        if (playerId == null) {
+            source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
+            return 0;
+        }
+
+        boolean isJailed = jailManager.isPlayerJailed(playerId);
+        if (isJailed) {
+            boolean ok = jailManager.unjailPlayer(playerId);
+            if (ok) {
+                final String name = resolvedName;
+                source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.jail.unjail_success", name), true);
+                return 1;
+            }
+        } else {
+            List<JailManager.JailLocation> locations = jailManager.getAllJailLocations();
+            if (locations.isEmpty()) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.jail.no_locations"));
+                return 0;
+            }
+            String jailName = locations.get(0).name;
+            boolean ok = jailManager.jailPlayer(resolvedName, playerId, "Toggled by staff", getCommandSender(source), jailName, 0L);
+            if (ok) {
+                final String name = resolvedName;
+                source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.jail.jail_success", name, jailName), true);
+                return 1;
+            }
+        }
+        source.sendFailure(MessageUtil.error("commands.neoessentials.jail.toggle_failed", resolvedName));
+        return 0;
+    }
+
+
     private static int executeJail(CommandContext<CommandSourceStack> ctx, String playerName, String jailName, String reason, long durationMillis) {
         CommandSourceStack source = ctx.getSource();
         String jailedBy = getCommandSender(source);

@@ -2522,4 +2522,16 @@ public class ConfigManager {
         } catch (Exception ignored) {}
         return null;
     }
+
+    /** Returns the backup-command string from commands.backupCommand, or null if not set. */
+    public String getBackupCommand() {
+        try {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("commands") && config.getAsJsonObject("commands").has("backupCommand")) {
+                String val = config.getAsJsonObject("commands").get("backupCommand").getAsString();
+                return val.isBlank() ? null : val;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 }
