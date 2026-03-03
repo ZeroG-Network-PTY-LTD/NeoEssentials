@@ -56,8 +56,16 @@ import org.slf4j.LoggerFactory;
 public class PowertoolCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(PowertoolCommand.class);
     
-    // Server-side powertool assignments: player UUID -> item ID -> command
+// Server-side powertool assignments: player UUID -> item ID -> command
     private static final Map<java.util.UUID, Map<String, String>> POWERS = new HashMap<>();
+
+    // Per-player powertool toggle (true = enabled, default true)
+    private static final java.util.Set<java.util.UUID> ptDisabled = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
+    /** Returns true if powertools are globally enabled for this player. */
+    public static boolean isPowertoolEnabled(java.util.UUID uuid) {
+        return !ptDisabled.contains(uuid);
+    }
 
     /** Returns a read-only snapshot of all powertools for a given player UUID. */
     public static Map<String, String> getPlayerPowertools(java.util.UUID playerUUID) {
@@ -72,6 +80,57 @@ public class PowertoolCommand {
         if (!ConfigManager.getInstance().isCommandEnabled("powertool")) return;
         registerPowertoolCommand(dispatcher, "powertool");
         registerPowertoolCommand(dispatcher, "ptool");
+        registerPowertoolToggle(dispatcher);
+    }
+
+    /** /powertooltoggle — globally enable/disable all powertools for this player. */
+    private static void registerPowertoolToggle(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("powertooltoggle")
+            .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+            .executes(ctx -> {
+                ServerPlayer player = (ServerPlayer) ctx.getSource().getEntity();
+                if (player == null) return 0;
+                java.util.UUID uuid = player.getUUID();
+                boolean nowEnabled;
+                if (ptDisabled.contains(uuid)) {
+                    ptDisabled.remove(uuid);
+                    nowEnabled = true;
+                } else {
+                    if (!POWERS.containsKey(uuid) || POWERS.get(uuid).isEmpty()) {
+                        player.sendSystemMessage(MessageUtil.error("commands.neoessentials.powertooltoggle.none"));
+                        return 0;
+                    }
+                    ptDisabled.add(uuid);
+                    nowEnabled = false;
+                }
+                final boolean fe = nowEnabled;
+                player.sendSystemMessage(MessageUtil.success(
+                    fe ? "commands.neoessentials.powertooltoggle.enabled"
+                       : "commands.neoessentials.powertooltoggle.disabled"));
+                LOGGER.info("Player {} {} all powertools via /powertooltoggle",
+                    player.getName().getString(), nowEnabled ? "enabled" : "disabled");
+                return 1;
+            })
+        );
+        // /ptt alias
+        dispatcher.register(Commands.literal("ptt")
+            .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+            .executes(ctx -> {
+                // Delegate to the same logic
+                var src = ctx.getSource();
+                ServerPlayer player = (ServerPlayer) src.getEntity();
+                if (player == null) return 0;
+                java.util.UUID uuid = player.getUUID();
+                boolean nowEnabled;
+                if (ptDisabled.contains(uuid)) { ptDisabled.remove(uuid); nowEnabled = true; }
+                else { ptDisabled.add(uuid); nowEnabled = false; }
+                final boolean fe = nowEnabled;
+                player.sendSystemMessage(MessageUtil.success(
+                    fe ? "commands.neoessentials.powertooltoggle.enabled"
+                       : "commands.neoessentials.powertooltoggle.disabled"));
+                return 1;
+            })
+        );
     }
     
     private static void registerPowertoolCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {

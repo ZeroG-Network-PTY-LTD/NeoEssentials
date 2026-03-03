@@ -23,6 +23,7 @@
     "dispose": true,
     "powertool": true,
     "powertooltoggle": true,
+    "tablist": true,
     "clearinventory": true,
     "enchant": true,
     "enchanthand": true,
@@ -831,5 +832,29 @@
     "customNewUsernameMessage": "none",
     "useCustomServerFullMessage": false,
     "hideJoinQuitMessagesAbove": -1
+  },
+  "tablist": {
+    "enabled": true,
+    "enabled_comment": "Enable the custom tablist header/footer system.",
+    "refreshInterval": 20,
+    "refreshInterval_comment": "How often (in ticks, 20 = 1 second) to refresh the tablist for all players.",
+    "showPing": true,
+    "hideVanished": true,
+    "hideVanished_comment": "Hide vanished players from the online count for non-staff viewers.",
+    "showAfkIndicator": true,
+    "afkSuffix": " §7[AFK]",
+    "playerFormat": "§f{prefix}§r{player}{suffix}",
+    "playerFormat_comment": "Format for each player row. Supports {prefix}, {player}, {suffix}, {group}.",
+    "header": [
+      "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+      "§e§l         Welcome to {server_name}         ",
+      "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    ],
+    "header_comment": "Header displayed above the player list. Can be a string or array for animation frames. Supports placeholders: {player}, {displayname}, {online}, {max}, {ping}, {world}, {tps}, {time}, {server_name}, {x}, {y}, {z}, {balance}, {prefix}, {suffix}, {group}, {newline}, {bar}. Use & for colour codes.",
+    "footer": [
+      "§7Players: §a{online}§7/§a{max}  §8|  §7TPS: {tps}  §8|  §7Ping: §a{ping}§7ms",
+      "§7World: §e{world}  §8|  §7Time: §e{time}  §8|  §7Bal: §a${balance}"
+    ],
+    "footer_comment": "Footer displayed below the player list. Same placeholder support as header. Use an array for animated frames."
   }
 }

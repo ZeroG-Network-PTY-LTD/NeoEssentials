@@ -644,6 +644,8 @@ public class PermissionRegistry {
         register("neoessentials.moderation.tempbanip", "Temporarily ban an IP address", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.togglejail", "Toggle a player's jail state", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.jailinfo", "View jail location info", PermissionCategory.MODERATION, false);
+        register("neoessentials.powertooltoggle", "Toggle all powertools on/off globally", PermissionCategory.ITEMS, true);
+        register("neoessentials.tablist.admin", "Manage the custom tablist system", PermissionCategory.ADMIN, false);
 
         // ── Fun / miscellaneous commands ─────────────────────────────────────
         register("neoessentials.firework", "Edit held firework rockets", PermissionCategory.PLAYER, false);
