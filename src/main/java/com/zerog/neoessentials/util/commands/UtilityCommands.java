@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.util.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,14 +12,11 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.*;
-import net.minecraft.world.level.block.Blocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,15 +26,12 @@ import java.util.stream.Collectors;
 
 /**
  * Utility commands ported from EssentialsX:
- *
- *  /ptime [reset|day|night|<ticks>] [player]  — per-player client-side time override
- *  /pweather [reset|sun|storm] [player]         — per-player client-side weather override
- *  /effect <player> <effect> [duration] [amp]   — apply potion effects
- *  /effect <player> clear                        — clear all effects
- *  /spawnmob <mob> [amount] [player]             — spawn entities
- *  /mob <mob> [amount]                           — alias for spawnmob
- *  /unlimited [list|clear|<item>] [player]       — infinite item use
- *  /condense [item]                              — condense items to storage blocks
+ * /ptime [reset|day|night|<ticks>] [player]  — per-player client-side time override
+ * /pweather [reset|sun|storm] [player]         — per-player client-side weather override
+ * /effect <player> <effect> [duration] [amp]   — apply potion effects
+ * /spawnmob <mob> [amount] [player]             — spawn entities
+ * /unlimited [list|clear|<item>] [player]       — infinite item use
+ * /condense [item]                              — condense items to storage blocks
  */
 public class UtilityCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(UtilityCommands.class);
@@ -65,7 +58,7 @@ public class UtilityCommands {
     private static void registerPtime(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("ptime")
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.ptime"); })
-            .executes(ctx -> executePtimeGet(ctx, null))
+            .executes(UtilityCommands::executePtimeGet)
             // /ptime reset [player]
             .then(Commands.literal("reset")
                 .executes(ctx -> executePtimeSet(ctx, -1L, null))
@@ -89,19 +82,21 @@ public class UtilityCommands {
         );
     }
 
-    private static int executePtimeGet(CommandContext<CommandSourceStack> ctx, String targetName) {
+    private static int executePtimeGet(CommandContext<CommandSourceStack> ctx) {
         var src = ctx.getSource();
-        ServerPlayer target = resolveTarget(src, targetName);
+        ServerPlayer target = resolveTarget(src, null);
         if (target == null) return 0;
         Long t = playerTimes.get(target.getUUID());
         if (t == null || t < 0) {
             src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.ptime.none", target.getName().getString()), false);
         } else {
-            src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.ptime.current", target.getName().getString(), t), false);
+            final long ft = t;
+            src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.ptime.current", target.getName().getString(), ft), false);
         }
         return 1;
     }
 
+    @SuppressWarnings("resource") // ServerLevel does not implement AutoCloseable — IDE false positive
     private static int executePtimeSet(CommandContext<CommandSourceStack> ctx, long ticks, String targetName) {
         var src = ctx.getSource();
         ServerPlayer target = resolveTarget(src, targetName);
@@ -121,6 +116,7 @@ public class UtilityCommands {
         return 1;
     }
 
+    @SuppressWarnings("resource") // ServerLevel does not implement AutoCloseable — IDE false positive
     private static void sendTimePacket(ServerPlayer player, long ticks, boolean lock) {
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTimePacket(
             player.serverLevel().getGameTime(), ticks, !lock));
@@ -130,7 +126,7 @@ public class UtilityCommands {
     private static void registerPweather(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("pweather")
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.pweather"); })
-            .executes(ctx -> executePweatherGet(ctx, null))
+            .executes(UtilityCommands::executePweatherGet)
             .then(Commands.literal("reset")
                 .executes(ctx -> executePweatherSet(ctx, null, null))
                 .then(Commands.argument("target", StringArgumentType.word())
@@ -161,9 +157,9 @@ public class UtilityCommands {
         );
     }
 
-    private static int executePweatherGet(CommandContext<CommandSourceStack> ctx, String targetName) {
+    private static int executePweatherGet(CommandContext<CommandSourceStack> ctx) {
         var src = ctx.getSource();
-        ServerPlayer target = resolveTarget(src, targetName);
+        ServerPlayer target = resolveTarget(src, null);
         if (target == null) return 0;
         String w = playerWeather.get(target.getUUID());
         String label = w == null ? "server default" : w;
@@ -171,6 +167,7 @@ public class UtilityCommands {
         return 1;
     }
 
+    @SuppressWarnings("resource") // ServerLevel does not implement AutoCloseable — IDE false positive
     private static int executePweatherSet(CommandContext<CommandSourceStack> ctx, String type, String targetName) {
         var src = ctx.getSource();
         ServerPlayer target = resolveTarget(src, targetName);
@@ -228,7 +225,7 @@ public class UtilityCommands {
                 .then(Commands.argument("effect", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                         BuiltInRegistries.MOB_EFFECT.keySet().stream()
-                            .map(rl -> rl.getPath()).collect(Collectors.toList()), b))
+                            .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
                     .executes(ctx -> executeEffectApply(ctx,
                         StringArgumentType.getString(ctx, "target"),
                         StringArgumentType.getString(ctx, "effect"), 30, 0))
@@ -301,7 +298,7 @@ public class UtilityCommands {
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                        .map(rl -> rl.getPath()).collect(Collectors.toList()), b))
+                        .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -321,7 +318,8 @@ public class UtilityCommands {
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.spawnmob"); })
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(rl -> rl.getPath()).collect(Collectors.toList()), b))
+                    BuiltInRegistries.ENTITY_TYPE.keySet().stream()
+                        .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -330,6 +328,7 @@ public class UtilityCommands {
         );
     }
 
+    @SuppressWarnings("deprecation")
     private static int executeSpawnMob(CommandContext<CommandSourceStack> ctx,
             String mobId, int amount, String targetName) {
         var src = ctx.getSource();
@@ -352,7 +351,8 @@ public class UtilityCommands {
         if (typeOpt.isEmpty()) {
             typeOpt = BuiltInRegistries.ENTITY_TYPE.entrySet().stream()
                 .filter(e -> e.getKey().location().getPath().equals(mobId.toLowerCase()))
-                .map(Map.Entry::getValue).findFirst();
+                .<EntityType<?>>map(Map.Entry::getValue)
+                .findFirst();
         }
         if (typeOpt.isEmpty()) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.spawnmob.unknown", mobId));
@@ -364,8 +364,7 @@ public class UtilityCommands {
         for (int i = 0; i < amount; i++) {
             var entity = entityType.create(level);
             if (entity == null) break;
-            entity.moveTo(spawnAt.getX(), spawnAt.getY(), spawnAt.getZ(),
-                spawnAt.getYRot(), 0f);
+            entity.moveTo(spawnAt.getX(), spawnAt.getY(), spawnAt.getZ(), spawnAt.getYRot(), 0f);
             if (entity instanceof Mob mob) {
                 mob.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnAt.blockPosition()),
                     MobSpawnType.COMMAND, null);
@@ -467,6 +466,7 @@ public class UtilityCommands {
     }
 
     /** Check if an item ID is unlimited for this player. Used by item-use event handler. */
+    @SuppressWarnings("unused")
     public static boolean isUnlimited(UUID uuid, String itemId) {
         Set<String> items = unlimitedItems.get(uuid);
         return items != null && items.contains(itemId);
@@ -536,10 +536,8 @@ public class UtilityCommands {
             if (count < rule.inputCount) continue;
 
             int times = count / rule.inputCount;
-            int toRemove = times * rule.inputCount;
-
-            // Remove inputs
-            int remaining = toRemove;
+            // Remove inputs — inline count directly, no redundant intermediate variable
+            int remaining = times * rule.inputCount;
             for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
                 ItemStack s = inv.getItem(i);
                 if (!s.isEmpty() && com.zerog.neoessentials.economy.worth.WorthManager.getItemId(s).equals(rule.inputId)) {

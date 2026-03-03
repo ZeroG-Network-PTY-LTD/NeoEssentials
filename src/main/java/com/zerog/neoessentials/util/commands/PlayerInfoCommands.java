@@ -16,47 +16,31 @@ import net.minecraft.stats.Stats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Player information and admin tool commands ported from EssentialsX:
- *
- *  /seen <player>               — last seen / online info (Commandseen)
- *  /near [radius]               — list nearby players (Commandnear)
- *  /ping [player]               — show network latency (Commandping)
- *  /playtime [player]           — show total play time (Commandplaytime)
- *  /whois <player>              — detailed player info (Commandwhois)
- *  /realname <nickname>         — look up real name from nick (Commandrealname)
- *  /sudo <player> <command>     — force a player to run a command (Commandsudo)
- *  /suicide                     — kill yourself (Commandsuicide)
- *  /msgtoggle [on|off] [player] — block all incoming private messages (Commandmsgtoggle)
- *  /rtoggle [on|off] [player]   — toggle /r replying to last sender (Commandrtoggle)
- *  /motd                        — show the message of the day (Commandmotd)
- *  /rules                       — show server rules (Commandrules)
+ * /seen, /near, /ping, /playtime, /whois, /realname, /sudo, /suicide,
+ * /msgtoggle, /rtoggle, /motd, /rules
  */
+@SuppressWarnings({"unused", "resource"}) // Public API methods used externally; ServerLevel is not AutoCloseable
 public class PlayerInfoCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerInfoCommands.class);
-    private static final DateTimeFormatter DATE_FMT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault());
 
     // msgtoggle shadow map (UUID-keyed, kept in sync with MsgToggleManager)
     private static final Map<UUID, Boolean> msgToggleBlocked = new ConcurrentHashMap<>();
     // rtoggle state: UUID → reply-to-last-sender enabled (default true)
     private static final Map<UUID, Boolean> rtoggleEnabled = new ConcurrentHashMap<>();
 
-    /** Returns true if the player has blocked incoming private messages.
-     *  Delegates to existing MsgToggleManager so both /msgtoggle and MsgCommand share state. */
+    /** Returns true if the player has blocked incoming private messages. Used by MsgCommand. */
+    @SuppressWarnings("unused")
     public static boolean isMsgBlocked(UUID uuid) {
-        // MsgToggleManager uses player name — look up from online list is not available here,
-        // so we keep a UUID-keyed shadow map that /msgtoggle keeps in sync.
         return msgToggleBlocked.getOrDefault(uuid, false);
     }
 
     /** Returns true if the player has /r replying to last sender enabled (default on). */
+    @SuppressWarnings("unused")
     public static boolean isRtoggleEnabled(UUID uuid) {
         return rtoggleEnabled.getOrDefault(uuid, true);
     }
@@ -89,12 +73,13 @@ public class PlayerInfoCommands {
         );
     }
 
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable — IDE false positive
     private static int executeSeen(CommandContext<CommandSourceStack> ctx, String name) {
         var src = ctx.getSource();
         // Check online first
         ServerPlayer online = src.getServer().getPlayerList().getPlayerByName(name);
         if (online != null) {
-            long ping = online.latency;
+            int ping = online.connection.latency();
             src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.seen.online",
                 online.getName().getString(),
                 online.serverLevel().dimension().location().getPath(),
@@ -126,6 +111,7 @@ public class PlayerInfoCommands {
         );
     }
 
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable — IDE false positive
     private static int executeNear(CommandContext<CommandSourceStack> ctx, int radius) {
         var src = ctx.getSource();
         var player = src.getPlayer();
@@ -174,7 +160,7 @@ public class PlayerInfoCommands {
             else src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
             return 0;
         }
-        int ping = target.latency;
+        int ping = target.connection.latency();
         String color = ping < 80 ? "§a" : ping < 200 ? "§e" : "§c";
         final String name = target.getName().getString();
         src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.ping.result",
@@ -233,6 +219,7 @@ public class PlayerInfoCommands {
         );
     }
 
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable — IDE false positive
     private static int executeWhois(CommandContext<CommandSourceStack> ctx, String name) {
         var src = ctx.getSource();
         ServerPlayer target = src.getServer().getPlayerList().getPlayerByName(name);
@@ -243,8 +230,8 @@ public class PlayerInfoCommands {
         String uuid = target.getUUID().toString();
         String world = target.serverLevel().dimension().location().getPath();
         String pos = String.format("%.1f, %.1f, %.1f", target.getX(), target.getY(), target.getZ());
-        String gm = target.gameMode.getGameModeForPlayer().getName();
-        int ping = target.latency;
+        String gm = target.gameMode.getGameModeForPlayer().getSerializedName();
+        int ping = target.connection.latency();
         int health = (int) target.getHealth();
         int food = target.getFoodData().getFoodLevel();
         src.sendSuccess(() -> Component.literal(
@@ -272,7 +259,6 @@ public class PlayerInfoCommands {
                         if (displayName.equalsIgnoreCase(nick)
                                 || net.minecraft.ChatFormatting.stripFormatting(displayName).equalsIgnoreCase(nick)) {
                             final String real = p.getName().getString();
-                            final String dn = displayName;
                             src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.result",
                                 nick, real), false);
                             return 1;
@@ -311,7 +297,11 @@ public class PlayerInfoCommands {
                         }
                         // Chat message (c:prefix) vs command
                         if (command.toLowerCase().startsWith("c:")) {
-                            target.chat(command.substring(2));
+                            // NeoForge 1.21.1: player.chat() is unavailable externally;
+                            // broadcast the message as the player using /say equivalent
+                            String chatMsg = command.substring(2);
+                            src.getServer().getCommands().performPrefixedCommand(
+                                target.createCommandSourceStack(), "say " + chatMsg);
                         } else {
                             String stripped = command.startsWith("/") ? command.substring(1) : command;
                             src.getServer().getCommands().performPrefixedCommand(
