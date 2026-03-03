@@ -1,11 +1,14 @@
 # 👾 Issues That Were Discovered
-- **Commands Doc Update**: Update the commands document for all registered commands please.
-  *(Fixed: 2026-03-02)*
-  Created `docs/Wiki/CommandsReference.md` — a comprehensive reference covering all ~172 commands across 17 systems, with syntax, permission node, default access level, aliases, and description for every command. Added link as the first entry in `Home.md` wiki index.
+
 
 ---
 
 # ✅ Issues That Were Fixed
+
+- **Commands Doc Update**: Update the commands document for all registered commands please.
+  *(Fixed: 2026-03-02)*
+  Created `docs/Wiki/CommandsReference.md` — a comprehensive reference covering all ~172 commands across 17 systems, with syntax, permission node, default access level, aliases, and description for every command. Added link as the first entry in `Home.md` wiki index.
+
 - **Player Info & Admin Tools system — Missing entirely: /seen, /near, /ping, /playtime, /whois, /realname, /sudo, /suicide, /msgtoggle, /rtoggle, /motd, /rules**
   *(Fixed: 2026-03-02)*
 

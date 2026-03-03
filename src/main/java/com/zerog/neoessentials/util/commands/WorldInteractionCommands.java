@@ -5,40 +5,33 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
-import com.zerog.neoessentials.teleportation.TeleportLocation;
-import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 /**
  * World interaction & fun commands ported from EssentialsX:
- *
- *  /fireball [type] [speed] [ride]  — shoot a projectile (Commandfireball)
- *  /tree <type>                     — grow a tree at look target (Commandtree)
- *  /bigtree                         — grow a large tree at look target (Commandbigtree)
- *  /break                           — break the looked-at block instantly (Commandbreak)
- *  /ice [player]                    — freeze a player solid (Commandice)
- *  /bottom                          — teleport to bottom of world at your XZ (Commandbottom)
+ * /fireball [type] [speed] [ride]  — shoot a projectile (Commandfireball)
+ * /tree <type>                     — grow a tree at look target (Commandtree)
+ * /bigtree                         — grow a large tree at look target (Commandbigtree)
+ * /break                           — break the looked-at block instantly (Commandbreak)
+ * /ice [player]                    — freeze a player solid (Commandice)
+ * /bottom                          — teleport to bottom of world at your XZ (Commandbottom)
  *  /tpaall                          — send tpa-here request to all online players (Commandtpaall)
  *  /broadcastworld <msg>            — broadcast to players in your world (Commandbroadcastworld)
  */
@@ -121,7 +114,8 @@ public class WorldInteractionCommands {
                 yield sk;
             }
             case "arrow"      -> {
-                var ar = new Arrow(level, player, null, null);
+                var ar = new Arrow(net.minecraft.world.entity.EntityType.ARROW, level);
+                ar.setOwner(player);
                 ar.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 ar.setDeltaMovement(dir);
                 yield ar;
@@ -150,9 +144,13 @@ public class WorldInteractionCommands {
                 yield df;
             }
             case "windcharge" -> {
-                var wc = new WindCharge(level, player, spawnPos.x, spawnPos.y, spawnPos.z);
-                wc.setDeltaMovement(dir);
-                yield wc;
+                var wc = net.minecraft.world.entity.EntityType.WIND_CHARGE.create(level);
+                if (wc != null) {
+                    wc.setOwner(player);
+                    wc.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                    wc.setDeltaMovement(dir);
+                }
+                yield wc != null ? wc : new LargeFireball(level, player, dir, 1);
             }
             default           -> {
                 // "fireball" and fallback
@@ -164,8 +162,8 @@ public class WorldInteractionCommands {
 
         level.addFreshEntity(projectile);
 
-        if (ride && projectile instanceof net.minecraft.world.entity.Entity ent) {
-            ent.addPassenger(player);
+        if (ride) {
+            player.startRiding(projectile, true);
         }
 
         final String ft = type;
@@ -275,6 +273,7 @@ public class WorldInteractionCommands {
                     return 0;
                 }
                 BlockPos bpos = BlockPos.containing(hit.getLocation());
+                @SuppressWarnings("resource") // ServerLevel is not AutoCloseable
                 var level = player.serverLevel();
                 BlockState state = level.getBlockState(bpos);
 
@@ -438,7 +437,9 @@ public class WorldInteractionCommands {
                     Component broadcast = MessageUtil.coloredText("§6[World] §e" + msg);
                     int count = 0;
                     for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) {
-                        if (p.serverLevel() == targetLevel) {
+                        @SuppressWarnings("resource") // ServerLevel is not AutoCloseable
+                        boolean sameLevel = p.serverLevel() == targetLevel;
+                        if (sameLevel) {
                             p.sendSystemMessage(broadcast);
                             count++;
                         }
