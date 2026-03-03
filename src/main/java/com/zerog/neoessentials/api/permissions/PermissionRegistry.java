@@ -293,6 +293,19 @@ public class PermissionRegistry {
         register("neoessentials.spawner.*", "Change spawner to any mob type", PermissionCategory.ADMIN, false);
         register("neoessentials.recipe", "Show/unlock crafting recipe for an item", PermissionCategory.PLAYER, true);
         register("neoessentials.tpauto", "Auto-accept all incoming teleport requests", PermissionCategory.TELEPORT, true);
+        // Fun / miscellaneous commands
+        register("neoessentials.firework", "Edit held firework rockets", PermissionCategory.PLAYER, false);
+        register("neoessentials.firework.fire", "Launch firework rockets with /firework fire", PermissionCategory.PLAYER, false);
+        register("neoessentials.nuke", "Rain TNT on a player (/nuke)", PermissionCategory.ADMIN, false);
+        register("neoessentials.antioch", "Spawn lit TNT at look target (/antioch)", PermissionCategory.ADMIN, false);
+        register("neoessentials.kittycannon", "Launch exploding baby cat (/kittycannon)", PermissionCategory.ADMIN, false);
+        register("neoessentials.beezooka", "Launch angry bees (/beezooka)", PermissionCategory.ADMIN, false);
+        register("neoessentials.itemdb", "Look up item registry information (/itemdb)", PermissionCategory.PLAYER, false);
+        register("neoessentials.potion", "Edit potion effects on held potion item", PermissionCategory.ITEMS, false);
+        register("neoessentials.info", "View server info/MOTD (/info)", PermissionCategory.PLAYER, true);
+        register("neoessentials.rest", "Reset sleep timer to prevent phantom spawning", PermissionCategory.PLAYER, true);
+        register("neoessentials.rest.others", "Reset another player's sleep timer", PermissionCategory.ADMIN, false);
+        register("neoessentials.backup", "Trigger server world save and backup", PermissionCategory.ADMIN, false);
         register("neoessentials.tpauto.others", "Toggle tpauto for another player", PermissionCategory.ADMIN, false);
         // World Interaction & Fun Commands
         register("neoessentials.fireball", "Shoot projectiles", PermissionCategory.ADMIN, false);
@@ -623,6 +636,33 @@ public class PermissionRegistry {
         register("neoessentials.dashboard.manage", "Manage dashboard settings", PermissionCategory.ADMIN, false);
         register("neoessentials.dashboard.moderator", "Moderator dashboard access", PermissionCategory.MODERATION, false);
         register("neoessentials.dashboard.admin", "Full admin dashboard access", PermissionCategory.ADMIN, false);
+
+        register("neoessentials.item", "Give yourself an item by name (/item)", PermissionCategory.ITEMS, false);
+        register("neoessentials.rtoggle", "Toggle /r reply direction", PermissionCategory.CHAT, true);
+        register("neoessentials.rtoggle.others", "Toggle /r reply direction for another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.help", "View command help list", PermissionCategory.MISC, true);
+        register("neoessentials.moderation.tempbanip", "Temporarily ban an IP address", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.togglejail", "Toggle a player's jail state", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jailinfo", "View jail location info", PermissionCategory.MODERATION, false);
+
+        // ── Fun / miscellaneous commands ─────────────────────────────────────
+        register("neoessentials.firework", "Edit held firework rockets", PermissionCategory.PLAYER, false);
+        register("neoessentials.firework.fire", "Launch firework rockets with /firework fire", PermissionCategory.PLAYER, false);
+        register("neoessentials.nuke", "Rain TNT on a player (/nuke)", PermissionCategory.ADMIN, false);
+        register("neoessentials.antioch", "Spawn lit TNT at look target (/antioch)", PermissionCategory.ADMIN, false);
+        register("neoessentials.kittycannon", "Launch exploding baby cat (/kittycannon)", PermissionCategory.ADMIN, false);
+        register("neoessentials.beezooka", "Launch angry bees (/beezooka)", PermissionCategory.ADMIN, false);
+        register("neoessentials.itemdb", "Look up item registry information", PermissionCategory.PLAYER, false);
+        register("neoessentials.potion", "Edit potion effects on held potion item", PermissionCategory.ITEMS, false);
+        register("neoessentials.info", "View server info/MOTD (/info)", PermissionCategory.PLAYER, true);
+        register("neoessentials.rest", "Reset sleep timer to prevent phantom spawning", PermissionCategory.PLAYER, true);
+        register("neoessentials.rest.others", "Reset another player's sleep timer", PermissionCategory.ADMIN, false);
+        register("neoessentials.backup", "Trigger server world save and backup", PermissionCategory.ADMIN, false);
+        register("neoessentials.showkit", "Preview kit contents without claiming", PermissionCategory.PLAYER, true);
+        register("neoessentials.powertoollist", "List all active powertool bindings", PermissionCategory.PLAYER, true);
+        register("neoessentials.customtext", "Display custom server text pages", PermissionCategory.PLAYER, true);
+        register("neoessentials.payconfirmtoggle", "Toggle payment confirmation prompts", PermissionCategory.PLAYER, true);
+        register("neoessentials.ciconfirmtoggle", "Toggle /clearinventory confirmation prompts", PermissionCategory.PLAYER, true);
 
         LOGGER.info("Registered {} permission nodes", registeredPermissions.size());
     }

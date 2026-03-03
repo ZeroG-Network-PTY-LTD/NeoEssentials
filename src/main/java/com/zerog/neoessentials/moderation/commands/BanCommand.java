@@ -121,8 +121,24 @@ public class BanCommand {
             .then(Commands.literal("ips")
                 .executes(ctx -> executeBanList(ctx, "ips")))
         );
+
+        // /tempbanip <ip> <duration> [reason]  — Essentials: Commandtempbanip
+        dispatcher.register(Commands.literal("tempbanip")
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.tempbanip").hasPermission())
+            .then(Commands.argument("ip", StringArgumentType.word())
+                .then(Commands.argument("duration", StringArgumentType.word())
+                    .executes(ctx -> executeTempBanIP(ctx,
+                        StringArgumentType.getString(ctx, "ip"),
+                        StringArgumentType.getString(ctx, "duration"),
+                        com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
+                    .then(Commands.argument("reason", StringArgumentType.greedyString())
+                        .executes(ctx -> executeTempBanIP(ctx,
+                            StringArgumentType.getString(ctx, "ip"),
+                            StringArgumentType.getString(ctx, "duration"),
+                            StringArgumentType.getString(ctx, "reason"))))))
+        );
     }
-    
+
     private static int executeBan(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);
@@ -253,6 +269,46 @@ public class BanCommand {
         }
     }
     
+    private static int executeTempBanIP(CommandContext<CommandSourceStack> ctx, String ipAddress, String durationStr, String reason) {
+        CommandSourceStack source = ctx.getSource();
+        String bannedBy = getCommandSender(source);
+        try {
+            BanManager banManager = BanManager.getInstance();
+            MinecraftServer server = source.getServer();
+
+            // Parse duration using BanManager's built-in parser
+            long durationMillis = BanManager.parseDuration(durationStr);
+            if (durationMillis <= 0) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.invalid_duration", durationStr));
+                return 0;
+            }
+
+            // Validate IP format
+            if (!isValidIP(ipAddress)) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.invalid_ip", ipAddress));
+                return 0;
+            }
+
+            boolean success = banManager.tempBanIP(ipAddress, reason, bannedBy, durationMillis);
+            if (success) {
+                String formattedDur = BanManager.formatDuration(durationMillis);
+                String msg = MessageUtil.localize("neoessentials.moderation.tempbanip_success", ipAddress, formattedDur, reason);
+                source.sendSuccess(() -> MessageUtil.success(msg), true);
+                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.tempbanip_broadcast",
+                    ipAddress, formattedDur, bannedBy, reason));
+                LOGGER.info("IP {} temp-banned by {} for {} - Reason: {}", ipAddress, bannedBy, formattedDur, reason);
+                return 1;
+            } else {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.banip_failed", ipAddress));
+                return 0;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error executing tempbanip command", e);
+            source.sendFailure(MessageUtil.error("An error occurred while executing the tempbanip command."));
+            return 0;
+        }
+    }
+
     private static int executeBanIP(CommandContext<CommandSourceStack> ctx, String ipAddress, String reason) {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);

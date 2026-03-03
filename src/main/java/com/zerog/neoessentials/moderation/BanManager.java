@@ -89,14 +89,20 @@ public class BanManager {
         public String reason;
         public String bannedBy;
         public long banTime;
-        
+        public long expireTime; // 0 = permanent
+
         public IPBanEntry(String ipAddress, String reason, String bannedBy) {
             this.ipAddress = ipAddress;
             this.reason = reason;
             this.bannedBy = bannedBy;
             this.banTime = System.currentTimeMillis();
+            this.expireTime = 0;
         }
-        
+
+        public boolean isExpired() {
+            return expireTime > 0 && System.currentTimeMillis() > expireTime;
+        }
+
         public String getFormattedBanTime() {
             return formatTime(banTime);
         }
@@ -324,7 +330,38 @@ public class BanManager {
         }
         return true;
     }
-    
+
+    /**
+     * Temporarily ban an IP address (Essentials: Commandtempbanip)
+     */
+    public boolean tempBanIP(String ipAddress, String reason, String bannedBy, long durationMillis) {
+        if (isIPBanned(ipAddress)) return false;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansEnabled()) {
+            LOGGER.warn("IP bans are disabled. Cannot temp-ban IP {}.", ipAddress);
+            return false;
+        }
+        IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
+        ban.expireTime = System.currentTimeMillis() + durationMillis;
+        ipBans.put(ipAddress, ban);
+        saveIPBans();
+
+        // Kick all players with this IP
+        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            for (ServerPlayer player : new ArrayList<>(server.getPlayerList().getPlayers())) {
+                if (getPlayerIP(player).equals(ipAddress)) {
+                    String msg = "You have been temporarily IP banned for " + formatDuration(durationMillis)
+                        + (reason != null && !reason.isEmpty() ? ": " + reason : "");
+                    player.connection.disconnect(Component.literal(msg));
+                }
+            }
+        }
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
+            LOGGER.info("IP {} temporarily banned by {} for {} - Reason: {}", ipAddress, bannedBy, formatDuration(durationMillis), reason);
+        }
+        return true;
+    }
+
     /**
      * Unban a player
      */

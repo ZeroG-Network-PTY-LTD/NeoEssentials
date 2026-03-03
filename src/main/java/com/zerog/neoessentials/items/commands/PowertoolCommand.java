@@ -1,4 +1,3 @@
-
 package com.zerog.neoessentials.items.commands;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +58,13 @@ public class PowertoolCommand {
     
     // Server-side powertool assignments: player UUID -> item ID -> command
     private static final Map<java.util.UUID, Map<String, String>> POWERS = new HashMap<>();
+
+    /** Returns a read-only snapshot of all powertools for a given player UUID. */
+    public static Map<String, String> getPlayerPowertools(java.util.UUID playerUUID) {
+        Map<String, String> powers = POWERS.get(playerUUID);
+        return powers != null ? java.util.Collections.unmodifiableMap(powers) : java.util.Collections.emptyMap();
+    }
+
     /**
      * Register the /powertool and /pt commands.
      */
