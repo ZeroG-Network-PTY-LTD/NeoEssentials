@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
-import com.zerog.neoessentials.api.permissions.PermissionRegistry;
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -78,16 +77,17 @@ public class HelpCommand {
         List<CommandRegistry.CommandInfo> allCommands = registry.getAllCommandsSorted();
 
         // Build list of commands accessible to this player
+        // Show all registered commands; individual commands handle their own permission checks
         List<CommandRegistry.CommandInfo> accessible = allCommands.stream()
             .filter(cmd -> {
-                // Console can see everything
+                // Console can see everything; for players check admin or generic perm
                 if (uuid == null) return true;
-                // Check for a permission node neoessentials.<command>
-                String perm = "neoessentials." + cmd.getName();
-                // If no specific permission registered, show it (default accessible)
-                return !PermissionRegistry.getInstance().isRegistered(perm)
-                    || PermissionAPI.hasPermission(uuid, perm)
-                    || PermissionAPI.hasPermission(uuid, "neoessentials.admin");
+                String perm = "neoessentials." + cmd.getName().toLowerCase();
+                // Admin can see all
+                if (PermissionAPI.hasPermission(uuid, "neoessentials.admin")) return true;
+                // Try the command-specific permission; if not explicitly denied, show it
+                return PermissionAPI.hasPermission(uuid, perm)
+                    || PermissionAPI.hasPermission(uuid, "neoessentials.*");
             })
             .sorted(Comparator.comparing(CommandRegistry.CommandInfo::getName))
             .collect(Collectors.toList());

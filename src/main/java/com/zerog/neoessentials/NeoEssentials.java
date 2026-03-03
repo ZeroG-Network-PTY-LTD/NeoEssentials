@@ -282,6 +282,14 @@ public class NeoEssentials {
             } catch (Exception e) {
                 LOGGER.error("Failed to apply player nicknames on server start", e);
             }
+
+            // Initialize Tablist system
+            try {
+                com.zerog.neoessentials.tablist.TablistManager.getInstance().loadConfig();
+                LOGGER.info("TablistManager initialized successfully");
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize TablistManager: {}", e.getMessage());
+            }
         }
         
         @SubscribeEvent
