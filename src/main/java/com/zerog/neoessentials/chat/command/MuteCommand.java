@@ -86,6 +86,10 @@ public class MuteCommand {
         }
         
         com.zerog.neoessentials.chat.MuteManager.mute(sender, targetName);
+        // Notify Discord integrations
+        try {
+            com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, reason.isEmpty() ? "No reason given" : reason, true);
+        } catch (Exception ignored) {}
         if (reason.isEmpty()) {
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.mute.success", targetName), false);
         } else {

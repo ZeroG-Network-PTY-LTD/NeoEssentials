@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.integrations;
 
+import com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter;
+import com.zerog.neoessentials.integrations.impl.DiscordSRVAdapter;
+import com.zerog.neoessentials.integrations.impl.SDLinkAdapter;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,58 @@ import java.util.List;
 public class ChatIntegrationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatIntegrationManager.class);
     private static final List<ChatIntegrationAdapter> adapters = new ArrayList<>();
-    
+
+    /**
+     * Initialize all built-in chat integration adapters.
+     * Called once on server start. Each adapter checks if its target mod is loaded
+     * before doing anything, so it is safe to call unconditionally.
+     */
+    public static void initialize() {
+        LOGGER.info("Initializing chat integration adapters...");
+        clearAdapters();
+
+        List<ChatIntegrationAdapter> candidates = List.of(
+            new SDLinkAdapter(),
+            new DCIntegrationAdapter(),
+            new DiscordSRVAdapter()
+        );
+
+        int loaded = 0;
+        for (ChatIntegrationAdapter adapter : candidates) {
+            try {
+                if (adapter.initialize()) {
+                    registerAdapter(adapter);
+                    loaded++;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize chat integration adapter '{}': {}",
+                    adapter.getName(), e.getMessage(), e);
+            }
+        }
+
+        if (loaded == 0) {
+            LOGGER.info("No external chat integration mods found. Running in standalone mode.");
+        } else {
+            LOGGER.info("Initialized {} chat integration adapter(s).", loaded);
+        }
+    }
+
+    /**
+     * Shutdown all registered adapters and clear the list.
+     * Called on server stop.
+     */
+    public static void shutdown() {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            try {
+                adapter.shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Error shutting down chat integration adapter '{}': {}",
+                    adapter.getName(), e.getMessage(), e);
+            }
+        }
+        clearAdapters();
+        LOGGER.info("Chat integration adapters shut down.");
+    }
     /**
      * Register a chat integration adapter for a NeoForge mod
      * @param adapter The adapter to register
