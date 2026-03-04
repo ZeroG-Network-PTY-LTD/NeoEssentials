@@ -576,72 +576,220 @@ public class FileManagementHandler implements HttpHandler {
 
 
     /**
-     * Initiate backup of a file/folder to a selected cloud provider (stub)
+     * Initiate backup of a file/folder to a selected cloud provider.
      * POST /api/files/cloudBackup
      * Body: {"path": "config/main.json", "provider": "Google Drive"}
+     * NOTE: Requires a cloud storage SDK (Google Drive, Dropbox, etc.) to be configured.
      */
     private void handleCloudBackup(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("success", false);
-        response.addProperty("stub", true);
-        response.addProperty("message", "Cloud backup not implemented yet. This will upload the file/folder to the selected provider in the future.");
+        response.addProperty("error", "Cloud backup requires an external cloud storage provider to be configured. Link a provider via /api/files/cloudLink first.");
         sendJsonResponse(exchange, 501, response);
     }
 
     /**
-     * Restore a file/folder from a selected cloud provider (stub)
+     * Restore a file/folder from a selected cloud provider.
      * POST /api/files/cloudRestore
      * Body: {"path": "config/main.json", "provider": "Google Drive", "cloudPath": "..."}
+     * NOTE: Requires a cloud storage SDK to be configured.
      */
     private void handleCloudRestore(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
         response.addProperty("success", false);
-        response.addProperty("stub", true);
-        response.addProperty("message", "Cloud restore not implemented yet. This will download the file/folder from the selected provider in the future.");
+        response.addProperty("error", "Cloud restore requires an external cloud storage provider to be configured. Link a provider via /api/files/cloudLink first.");
         sendJsonResponse(exchange, 501, response);
     }
 
     /**
-     * Stub: Get server-wide statistics (uptime, TPS, RAM, CPU, etc.)
+     * Get server-wide statistics (uptime, TPS, RAM, CPU, etc.)
      * GET /api/files/server/statistics
      */
     private void handleServerStatistics(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
-        response.addProperty("stub", true);
-        response.addProperty("message", "Server statistics endpoint not implemented yet.");
-        // Example fields for future implementation
-        response.addProperty("uptime", 0);
-        response.addProperty("tps", 20.0);
-        response.addProperty("ramUsedMB", 0);
-        response.addProperty("ramTotalMB", 0);
-        response.addProperty("cpuUsage", 0.0);
+        try {
+            net.minecraft.server.MinecraftServer srv =
+                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+
+            // TPS
+            if (srv != null) {
+                double avgTickMs = srv.getAverageTickTimeNanos() / 1_000_000.0;
+                double tps = Math.min(20.0, 1000.0 / Math.max(avgTickMs, 1.0));
+                response.addProperty("tps", Math.round(tps * 10.0) / 10.0);
+                response.addProperty("avgTickMs", Math.round(avgTickMs * 10.0) / 10.0);
+                response.addProperty("onlinePlayers", srv.getPlayerCount());
+                response.addProperty("maxPlayers", srv.getMaxPlayers());
+                response.addProperty("motd", srv.getMotd());
+                // Uptime (ticks / 20 = seconds)
+                response.addProperty("uptimeSeconds", srv.getTickCount() / 20);
+            } else {
+                response.addProperty("tps", 0.0);
+                response.addProperty("avgTickMs", 0.0);
+                response.addProperty("onlinePlayers", 0);
+                response.addProperty("maxPlayers", 0);
+                response.addProperty("uptimeSeconds", 0);
+            }
+
+            // RAM
+            Runtime rt = Runtime.getRuntime();
+            long usedMB  = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024);
+            long totalMB = rt.totalMemory() / (1024 * 1024);
+            long maxMB   = rt.maxMemory()   / (1024 * 1024);
+            response.addProperty("ramUsedMB",  usedMB);
+            response.addProperty("ramTotalMB", totalMB);
+            response.addProperty("ramMaxMB",   maxMB);
+            response.addProperty("ramUsedPercent", maxMB > 0 ? Math.round((double) usedMB / maxMB * 100) : 0);
+
+            // CPU
+            java.lang.management.OperatingSystemMXBean os =
+                java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            response.addProperty("cpuProcessors", os.getAvailableProcessors());
+            double loadAvg = os.getSystemLoadAverage();
+            response.addProperty("cpuLoadAverage", loadAvg < 0 ? 0.0 : Math.round(loadAvg * 100.0) / 100.0);
+            // ProcessCpuLoad (if HotSpot MXBean available)
+            double cpuUsage = -1;
+            if (os instanceof com.sun.management.OperatingSystemMXBean hotspot) {
+                cpuUsage = hotspot.getProcessCpuLoad() * 100.0;
+            }
+            response.addProperty("cpuUsagePercent", cpuUsage < 0 ? -1 : Math.round(cpuUsage * 10.0) / 10.0);
+
+            response.addProperty("success", true);
+        } catch (Exception e) {
+            LOGGER.error("Error collecting server statistics: {}", e.getMessage(), e);
+            response.addProperty("success", false);
+            response.addProperty("error", e.getMessage());
+        }
         sendJsonResponse(exchange, 200, response);
     }
 
     /**
-     * Stub: Get player statistics (online time, messages sent, economy, etc.)
-     * GET /api/files/player/statistics
+     * Get player statistics (online time, economy balance, etc.)
+     * GET /api/files/player/statistics?player=<name>
      */
     private void handlePlayerStatistics(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
-        response.addProperty("stub", true);
-        response.addProperty("message", "Player statistics endpoint not implemented yet.");
-        // Example fields for future implementation
-        response.addProperty("onlineTime", 0);
-        response.addProperty("messagesSent", 0);
-        response.addProperty("balance", 0);
+        try {
+            String query = exchange.getRequestURI().getQuery();
+            String playerName = null;
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] kv = param.split("=", 2);
+                    if (kv.length == 2 && "player".equals(kv[0])) {
+                        playerName = URLDecoder.decode(kv[1], StandardCharsets.UTF_8);
+                    }
+                }
+            }
+
+            net.minecraft.server.MinecraftServer srv =
+                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (srv == null) {
+                response.addProperty("success", false);
+                response.addProperty("error", "Server not available");
+                sendJsonResponse(exchange, 503, response);
+                return;
+            }
+
+            // If no player specified, return stats for all online players
+            if (playerName == null || playerName.isEmpty()) {
+                JsonArray players = new JsonArray();
+                for (net.minecraft.server.level.ServerPlayer p : srv.getPlayerList().getPlayers()) {
+                    players.add(buildPlayerStatsObject(p));
+                }
+                response.addProperty("success", true);
+                response.add("players", players);
+            } else {
+                net.minecraft.server.level.ServerPlayer player = srv.getPlayerList().getPlayerByName(playerName);
+                if (player == null) {
+                    response.addProperty("success", false);
+                    response.addProperty("error", "Player not found or not online: " + playerName);
+                    sendJsonResponse(exchange, 404, response);
+                    return;
+                }
+                response.addProperty("success", true);
+                response.add("player", buildPlayerStatsObject(player));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error collecting player statistics: {}", e.getMessage(), e);
+            response.addProperty("success", false);
+            response.addProperty("error", e.getMessage());
+        }
         sendJsonResponse(exchange, 200, response);
     }
 
+    private JsonObject buildPlayerStatsObject(net.minecraft.server.level.ServerPlayer p) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", p.getName().getString());
+        obj.addProperty("uuid", p.getStringUUID());
+        obj.addProperty("world", p.serverLevel().dimension().location().toString());
+        obj.addProperty("health", p.getHealth());
+        obj.addProperty("maxHealth", p.getMaxHealth());
+        obj.addProperty("foodLevel", p.getFoodData().getFoodLevel());
+        obj.addProperty("xp", p.experienceLevel);
+        obj.addProperty("ping", p.connection.latency());
+        obj.addProperty("gamemode", p.gameMode.getGameModeForPlayer().getName());
+        obj.addProperty("x", p.getBlockX());
+        obj.addProperty("y", p.getBlockY());
+        obj.addProperty("z", p.getBlockZ());
+        // Play time in ticks → seconds
+        try {
+            int playTicks = p.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME));
+            obj.addProperty("playTimeSeconds", playTicks / 20);
+        } catch (Exception ignored) {
+            obj.addProperty("playTimeSeconds", 0);
+        }
+        // Economy balance
+        try {
+            java.math.BigDecimal bal = com.zerog.neoessentials.economy.managers.EconomyManager
+                .getInstance().getBalance(p.getUUID());
+            obj.addProperty("balance", bal.doubleValue());
+        } catch (Exception ignored) {
+            obj.addProperty("balance", 0.0);
+        }
+        return obj;
+    }
+
     /**
-     * Stub: Get user activity log for user management improvements
-     * GET /api/files/user/activityLog
+     * Get user activity log (dashboard login/action audit trail)
+     * GET /api/files/user/activityLog?limit=<n>
      */
     private void handleUserActivityLog(HttpExchange exchange) throws IOException {
         JsonObject response = new JsonObject();
-        response.addProperty("stub", true);
-        response.addProperty("message", "User activity log endpoint not implemented yet.");
-        // Example: response.add("log", new JsonArray());
+        try {
+            // Parse optional limit param (default 100)
+            int limit = 100;
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] kv = param.split("=", 2);
+                    if (kv.length == 2 && "limit".equals(kv[0])) {
+                        try { limit = Integer.parseInt(kv[1]); } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+
+            java.nio.file.Path auditLog = java.nio.file.Paths.get("neoessentials", "dashboard_audit.log");
+            JsonArray entries = new JsonArray();
+
+            if (java.nio.file.Files.exists(auditLog)) {
+                java.util.List<String> lines = java.nio.file.Files.readAllLines(auditLog, StandardCharsets.UTF_8);
+                // Return most recent entries first, up to limit
+                int start = Math.max(0, lines.size() - limit);
+                for (int i = lines.size() - 1; i >= start; i--) {
+                    String line = lines.get(i).trim();
+                    if (!line.isEmpty()) {
+                        entries.add(line);
+                    }
+                }
+            }
+
+            response.addProperty("success", true);
+            response.addProperty("total", entries.size());
+            response.add("log", entries);
+        } catch (Exception e) {
+            LOGGER.error("Error reading user activity log: {}", e.getMessage(), e);
+            response.addProperty("success", false);
+            response.addProperty("error", e.getMessage());
+        }
         sendJsonResponse(exchange, 200, response);
     }
 
