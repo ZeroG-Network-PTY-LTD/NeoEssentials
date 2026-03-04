@@ -60,6 +60,8 @@ public class PermissionStorage {
             u.put("uuid", user.getUuid().toString());
             u.put("group", user.getGroup());
             u.put("permissions", user.getPermissions());
+            if (!user.getPrefix().isEmpty()) u.put("prefix", user.getPrefix());
+            if (!user.getSuffix().isEmpty()) u.put("suffix", user.getSuffix());
             users.add(u);
         }
         Map<String, Object> userData = new HashMap<>();
@@ -121,10 +123,16 @@ public class PermissionStorage {
                 JsonArray users = root.getAsJsonArray("users");
                 for (JsonElement ue : users) {
                     JsonObject u = ue.getAsJsonObject();
-                    PermissionUser user = new PermissionUser(UUID.fromString(u.get("uuid").getAsString()), u.get("group").getAsString());
+                    PermissionUser user = new PermissionUser(
+                        UUID.fromString(u.get("uuid").getAsString()),
+                        u.get("group").getAsString());
                     for (JsonElement p : u.getAsJsonArray("permissions")) {
                         user.addPermission(p.getAsString());
                     }
+                    if (u.has("prefix") && !u.get("prefix").isJsonNull())
+                        user.setPrefix(u.get("prefix").getAsString());
+                    if (u.has("suffix") && !u.get("suffix").isJsonNull())
+                        user.setSuffix(u.get("suffix").getAsString());
                     manager.addUser(user);
                 }
             }
@@ -138,15 +146,23 @@ public class PermissionStorage {
                         List<Object> migratedUsers = new ArrayList<>();
                         for (JsonElement ue : users) {
                             JsonObject u = ue.getAsJsonObject();
-                            PermissionUser user = new PermissionUser(UUID.fromString(u.get("uuid").getAsString()), u.get("group").getAsString());
+                            PermissionUser user = new PermissionUser(
+                                UUID.fromString(u.get("uuid").getAsString()),
+                                u.get("group").getAsString());
                             for (JsonElement p : u.getAsJsonArray("permissions")) {
                                 user.addPermission(p.getAsString());
                             }
+                            if (u.has("prefix") && !u.get("prefix").isJsonNull())
+                                user.setPrefix(u.get("prefix").getAsString());
+                            if (u.has("suffix") && !u.get("suffix").isJsonNull())
+                                user.setSuffix(u.get("suffix").getAsString());
                             manager.addUser(user);
                             Map<String, Object> userMap = new HashMap<>();
                             userMap.put("uuid", user.getUuid().toString());
                             userMap.put("group", user.getGroup());
                             userMap.put("permissions", user.getPermissions());
+                            if (!user.getPrefix().isEmpty()) userMap.put("prefix", user.getPrefix());
+                            if (!user.getSuffix().isEmpty()) userMap.put("suffix", user.getSuffix());
                             migratedUsers.add(userMap);
                         }
                         Map<String, Object> userData = new HashMap<>();
