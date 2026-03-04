@@ -196,6 +196,15 @@ public class NeoEssentials {
                 ManagerRegistry.getInstance().markFailed("PermissionSystem", e.getMessage());
             }
 
+            // Initialize Vault API (after permissions, before chat/economy features)
+            try {
+                LOGGER.info("⚙ Initializing Vault API...");
+                com.zerog.neoessentials.vault.VaultManager.initialize();
+                LOGGER.info("✓ Vault API initialized successfully");
+            } catch (Exception e) {
+                LOGGER.error("✗ Vault API initialization failed: {}", e.getMessage(), e);
+            }
+
             // Initialize custom language system
             try {
                 LOGGER.info("⚙ Initializing custom language system...");
@@ -378,6 +387,13 @@ public class NeoEssentials {
                 com.zerog.neoessentials.economy.managers.PayToggleManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Pay Toggle Manager", e);
+            }
+
+            // Shutdown Vault API
+            try {
+                com.zerog.neoessentials.vault.VaultManager.shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Vault API", e);
             }
 
             // Shutdown Chat/AFK Managers
@@ -862,6 +878,10 @@ public class NeoEssentials {
         registry.registerCommand("rest", "Reset your sleep timer (prevent phantoms)");
         registry.registerCommand("backup", "Trigger a server world save and backup");
         com.zerog.neoessentials.util.commands.FunCommands.register(dispatcher);
+
+        // ========== VAULT API COMMANDS ==========
+        registry.registerCommand("vault", "NeoEssentials Vault API info and management");
+        com.zerog.neoessentials.vault.command.VaultCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
