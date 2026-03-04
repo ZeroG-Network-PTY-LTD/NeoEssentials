@@ -4,7 +4,6 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.permissions.PermissionGroup;
 import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.permissions.PermissionStorage;
-import com.zerog.neoessentials.permissions.PermissionUser;
 import com.zerog.neoessentials.vault.api.VaultChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +12,12 @@ import java.util.UUID;
 
 /**
  * NeoEssentials built-in {@link VaultChat} implementation.
- * Player prefix/suffix is stored on {@link PermissionUser} metadata,
- * and group prefix/suffix is stored on {@link PermissionGroup} directly.
+ * <p>
+ * Player prefix/suffix retrieval is routed through {@link PermissionAPI#getPrefix}/{@link PermissionAPI#getSuffix}
+ * so that external adapters (LuckPerms, FTB Ranks) are automatically used when present.
+ * <p>
+ * Group prefix/suffix and write operations go directly through {@link PermissionManager} /
+ * {@link PermissionStorage} since external adapters are read-only in the current integration.
  */
 public class NeoEssentialsChat extends VaultChat {
 
@@ -24,19 +27,15 @@ public class NeoEssentialsChat extends VaultChat {
     @Override public boolean isEnabled() { return true; }
 
     // ── Player prefix/suffix ──────────────────────────────────────────────────
+    // Route through PermissionAPI so LuckPerms / FTB Ranks are honoured automatically.
 
     @Override
     public String getPlayerPrefix(String world, UUID playerId) {
         try {
-            PermissionManager pm = PermissionAPI.getManager();
-            if (pm == null) return "";
-            PermissionUser user = pm.getUser(playerId);
-            // Fall back to the player's primary group prefix if no per-user prefix is set
-            String userPrefix = user.getPrefix();
-            if (userPrefix != null && !userPrefix.isEmpty()) return userPrefix;
-            return getGroupPrefixForPlayer(pm, user);
+            // PermissionAPI.getPrefix() handles: external adapter (LuckPerms/FTBRanks) → internal group prefix
+            return PermissionAPI.getPrefix(playerId);
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getPlayerPrefix error: {}", e.getMessage());
+            LOGGER.debug("VaultChat: getPlayerPrefix error for {}: {}", playerId, e.getMessage());
             return "";
         }
     }
@@ -44,10 +43,10 @@ public class NeoEssentialsChat extends VaultChat {
     @Override
     public void setPlayerPrefix(String world, UUID playerId, String prefix) {
         try {
+            // Per-player prefix override stored on PermissionUser (internal only)
             PermissionManager pm = PermissionAPI.getManager();
             if (pm == null) return;
-            PermissionUser user = pm.getUser(playerId);
-            user.setPrefix(prefix);
+            pm.getUser(playerId).setPrefix(prefix);
             PermissionStorage.save(pm);
         } catch (Exception e) {
             LOGGER.error("VaultChat: setPlayerPrefix error: {}", e.getMessage());
@@ -57,14 +56,10 @@ public class NeoEssentialsChat extends VaultChat {
     @Override
     public String getPlayerSuffix(String world, UUID playerId) {
         try {
-            PermissionManager pm = PermissionAPI.getManager();
-            if (pm == null) return "";
-            PermissionUser user = pm.getUser(playerId);
-            String userSuffix = user.getSuffix();
-            if (userSuffix != null && !userSuffix.isEmpty()) return userSuffix;
-            return getGroupSuffixForPlayer(pm, user);
+            // PermissionAPI.getSuffix() handles: external adapter → internal group suffix
+            return PermissionAPI.getSuffix(playerId);
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getPlayerSuffix error: {}", e.getMessage());
+            LOGGER.debug("VaultChat: getPlayerSuffix error for {}: {}", playerId, e.getMessage());
             return "";
         }
     }
@@ -74,8 +69,7 @@ public class NeoEssentialsChat extends VaultChat {
         try {
             PermissionManager pm = PermissionAPI.getManager();
             if (pm == null) return;
-            PermissionUser user = pm.getUser(playerId);
-            user.setSuffix(suffix);
+            pm.getUser(playerId).setSuffix(suffix);
             PermissionStorage.save(pm);
         } catch (Exception e) {
             LOGGER.error("VaultChat: setPlayerSuffix error: {}", e.getMessage());
@@ -83,6 +77,7 @@ public class NeoEssentialsChat extends VaultChat {
     }
 
     // ── Group prefix/suffix ───────────────────────────────────────────────────
+    // Groups are always managed through the internal PermissionManager.
 
     @Override
     public String getGroupPrefix(String world, String group) {
@@ -103,10 +98,7 @@ public class NeoEssentialsChat extends VaultChat {
             PermissionManager pm = PermissionAPI.getManager();
             if (pm == null) return;
             PermissionGroup grp = pm.getGroup(group);
-            if (grp == null) {
-                grp = new PermissionGroup(group);
-                pm.addGroup(grp);
-            }
+            if (grp == null) { grp = new PermissionGroup(group); pm.addGroup(grp); }
             grp.setPrefix(prefix);
             PermissionStorage.save(pm);
         } catch (Exception e) {
@@ -133,31 +125,11 @@ public class NeoEssentialsChat extends VaultChat {
             PermissionManager pm = PermissionAPI.getManager();
             if (pm == null) return;
             PermissionGroup grp = pm.getGroup(group);
-            if (grp == null) {
-                grp = new PermissionGroup(group);
-                pm.addGroup(grp);
-            }
+            if (grp == null) { grp = new PermissionGroup(group); pm.addGroup(grp); }
             grp.setSuffix(suffix);
             PermissionStorage.save(pm);
         } catch (Exception e) {
             LOGGER.error("VaultChat: setGroupSuffix error: {}", e.getMessage());
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private String getGroupPrefixForPlayer(PermissionManager pm, PermissionUser user) {
-        String groupName = user.getGroup();
-        if (groupName == null) return "";
-        PermissionGroup grp = pm.getGroup(groupName);
-        return (grp != null && grp.getPrefix() != null) ? grp.getPrefix() : "";
-    }
-
-    private String getGroupSuffixForPlayer(PermissionManager pm, PermissionUser user) {
-        String groupName = user.getGroup();
-        if (groupName == null) return "";
-        PermissionGroup grp = pm.getGroup(groupName);
-        return (grp != null && grp.getSuffix() != null) ? grp.getSuffix() : "";
-    }
 }
-

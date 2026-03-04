@@ -205,6 +205,16 @@ public class NeoEssentials {
                 LOGGER.error("✗ Vault API initialization failed: {}", e.getMessage(), e);
             }
 
+            // Initialize ChestShop system
+            try {
+                LOGGER.info("⚙ Initializing ChestShop system...");
+                com.zerog.neoessentials.shop.ShopManager.getInstance().initialize();
+                LOGGER.info("✓ ChestShop system initialized ({} shop(s) loaded)",
+                    com.zerog.neoessentials.shop.ShopManager.getInstance().getShopCount());
+            } catch (Exception e) {
+                LOGGER.error("✗ ChestShop system failed to initialize: {}", e.getMessage(), e);
+            }
+
             // Initialize custom language system
             try {
                 LOGGER.info("⚙ Initializing custom language system...");
@@ -394,6 +404,13 @@ public class NeoEssentials {
                 com.zerog.neoessentials.vault.VaultManager.shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Vault API", e);
+            }
+
+            // Shutdown ChestShop system
+            try {
+                com.zerog.neoessentials.shop.ShopManager.getInstance().shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown ChestShop system", e);
             }
 
             // Shutdown Chat/AFK Managers
@@ -882,6 +899,11 @@ public class NeoEssentials {
         // ========== VAULT API COMMANDS ==========
         registry.registerCommand("vault", "NeoEssentials Vault API info and management");
         com.zerog.neoessentials.vault.command.VaultCommand.register(dispatcher);
+
+        // ========== CHEST SHOP COMMANDS ==========
+        registry.registerCommand("chestshop", "Sign-based chest shop system");
+        registry.registerCommand("cshop", "Sign-based chest shop (alias)");
+        com.zerog.neoessentials.shop.commands.ShopCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
