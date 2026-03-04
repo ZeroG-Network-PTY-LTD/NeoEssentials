@@ -510,6 +510,7 @@ public class FunCommands {
 
         String playerName = player != null ? player.getName().getString() : "Server";
         String motdResolved = motd.replace("{player}", playerName).replace("{name}", playerName);
+        final String finalRules = rules;
 
         // Show MOTD + Rules summary together as /info
         src.sendSuccess(() -> Component.literal(
@@ -518,8 +519,8 @@ public class FunCommands {
             "§7Type §f/rules §7to view server rules."
         ), false);
 
-        if (!rules.isEmpty() && !rules.equals("No rules set.")) {
-            src.sendSuccess(() -> Component.literal("§e--- §fRules §e---\n" + rules), false);
+        if (!finalRules.isEmpty() && !finalRules.equals("No rules set.")) {
+            src.sendSuccess(() -> Component.literal("§e--- §fRules §e---\n" + finalRules), false);
         }
         return 1;
     }

@@ -27,8 +27,8 @@ public class LoggingEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.info("LoggingEndpoint handling request: {} {}", method, path);
-        
+        LOGGER.debug("LoggingEndpoint handling request: {} {}", method, path);
+
         try {
             // Only allow GET requests
             if (!"GET".equals(method)) {

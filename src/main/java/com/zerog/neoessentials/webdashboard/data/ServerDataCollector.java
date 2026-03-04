@@ -109,7 +109,7 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/statistics
      */
     public JsonObject getServerStatistics() {
-        LOGGER.info("=== Collecting Server Statistics ===");
+        LOGGER.debug("=== Collecting Server Statistics ===");
         JsonObject stats = new JsonObject();
         
         try {

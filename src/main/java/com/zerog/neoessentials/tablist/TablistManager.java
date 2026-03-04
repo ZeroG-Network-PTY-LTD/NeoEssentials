@@ -38,7 +38,6 @@ public class TablistManager {
     private List<String> headerFrames = new ArrayList<>();
     private List<String> footerFrames = new ArrayList<>();
     private String playerFormat = "§f{prefix}§r{player}{suffix}";
-    private boolean showPing = true;
     private boolean hideVanished = true;
     private boolean showAfkIndicator = true;
     private String afkSuffix = " §7[AFK]";
@@ -69,7 +68,6 @@ public class TablistManager {
 
             enabled = tab.has("enabled") && tab.get("enabled").getAsBoolean();
             refreshIntervalTicks = tab.has("refreshInterval") ? tab.get("refreshInterval").getAsInt() : 20;
-            showPing = !tab.has("showPing") || tab.get("showPing").getAsBoolean();
             hideVanished = !tab.has("hideVanished") || tab.get("hideVanished").getAsBoolean();
             showAfkIndicator = !tab.has("showAfkIndicator") || tab.get("showAfkIndicator").getAsBoolean();
             afkSuffix = tab.has("afkSuffix") ? tab.get("afkSuffix").getAsString() : " §7[AFK]";
@@ -190,7 +188,7 @@ public class TablistManager {
             .filter(p -> !isVanishedFromPlayer(p, player))
             .count();
         int max = server.getMaxPlayers();
-        int ping = player.latency;
+        int ping = player.connection.latency();
         String world = player.serverLevel().dimension().location().getPath();
         String playerName = player.getName().getString();
         String displayName = getDisplayName(player);
@@ -213,8 +211,8 @@ public class TablistManager {
         // Economy balance
         String balance = "0";
         try {
-            double bal = com.zerog.neoessentials.economy.EconomyManager.getInstance().getBalance(player.getUUID());
-            balance = String.format("%.2f", bal);
+            java.math.BigDecimal bd = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().getBalance(player.getUUID());
+            balance = String.format("%.2f", bd.doubleValue());
         } catch (Exception ignored) {}
 
         // Permission group prefix/suffix/name
@@ -248,7 +246,7 @@ public class TablistManager {
     // ── Helpers ───────────────────────────────────────────────────────────────
     private boolean isVanishedFromPlayer(ServerPlayer target, ServerPlayer viewer) {
         if (!hideVanished) return false;
-        boolean targetVanished = com.zerog.neoessentials.moderation.commands.VanishCommand.isVanished(target.getUUID());
+        boolean targetVanished = com.zerog.neoessentials.moderation.VanishManager.getInstance().isPlayerVanished(target.getUUID());
         if (!targetVanished) return false;
         // Staff with seevanished perm can still see them
         return !PermissionAPI.hasPermission(viewer.getUUID(), "neoessentials.vanish.see");
@@ -273,18 +271,14 @@ public class TablistManager {
 
     private String getPermissionPrefix(ServerPlayer player) {
         try {
-            // Access internal permission manager through PermissionAPI
-            var pmField = com.zerog.neoessentials.api.permissions.PermissionAPI.class.getDeclaredField("manager");
-            pmField.setAccessible(true);
-            var mgr = (com.zerog.neoessentials.permissions.PermissionManager) pmField.get(null);
-            if (mgr != null) {
-                var user = mgr.getUser(player.getUUID());
-                if (user != null) {
-                    String groupName = user.getGroup();
-                    var group = mgr.getGroup(groupName);
-                    if (group != null && group.getPrefix() != null && !group.getPrefix().isEmpty()) {
-                        return group.getPrefix().replace("&", "§");
-                    }
+            com.zerog.neoessentials.permissions.PermissionManager mgr =
+                com.zerog.neoessentials.permissions.PermissionSystem.getManager();
+            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
+            if (user != null) {
+                String groupName = user.getGroup();
+                com.zerog.neoessentials.permissions.PermissionGroup group = mgr.getGroup(groupName);
+                if (group != null && group.getPrefix() != null && !group.getPrefix().isEmpty()) {
+                    return group.getPrefix().replace("&", "§");
                 }
             }
         } catch (Exception ignored) {}
@@ -293,17 +287,14 @@ public class TablistManager {
 
     private String getPermissionSuffix(ServerPlayer player) {
         try {
-            var pmField = com.zerog.neoessentials.api.permissions.PermissionAPI.class.getDeclaredField("manager");
-            pmField.setAccessible(true);
-            var mgr = (com.zerog.neoessentials.permissions.PermissionManager) pmField.get(null);
-            if (mgr != null) {
-                var user = mgr.getUser(player.getUUID());
-                if (user != null) {
-                    String groupName = user.getGroup();
-                    var group = mgr.getGroup(groupName);
-                    if (group != null && group.getSuffix() != null && !group.getSuffix().isEmpty()) {
-                        return group.getSuffix().replace("&", "§");
-                    }
+            com.zerog.neoessentials.permissions.PermissionManager mgr =
+                com.zerog.neoessentials.permissions.PermissionSystem.getManager();
+            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
+            if (user != null) {
+                String groupName = user.getGroup();
+                com.zerog.neoessentials.permissions.PermissionGroup group = mgr.getGroup(groupName);
+                if (group != null && group.getSuffix() != null && !group.getSuffix().isEmpty()) {
+                    return group.getSuffix().replace("&", "§");
                 }
             }
         } catch (Exception ignored) {}
@@ -312,13 +303,10 @@ public class TablistManager {
 
     private String getPermissionGroup(ServerPlayer player) {
         try {
-            var pmField = com.zerog.neoessentials.api.permissions.PermissionAPI.class.getDeclaredField("manager");
-            pmField.setAccessible(true);
-            var mgr = (com.zerog.neoessentials.permissions.PermissionManager) pmField.get(null);
-            if (mgr != null) {
-                var user = mgr.getUser(player.getUUID());
-                if (user != null) return user.getGroup();
-            }
+            com.zerog.neoessentials.permissions.PermissionManager mgr =
+                com.zerog.neoessentials.permissions.PermissionSystem.getManager();
+            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
+            if (user != null) return user.getGroup();
         } catch (Exception ignored) {}
         return "default";
     }
@@ -363,6 +351,14 @@ public class TablistManager {
         server.execute(() -> updateAll(server));
     }
 }
+
+
+
+
+
+
+
+
 
 
 
