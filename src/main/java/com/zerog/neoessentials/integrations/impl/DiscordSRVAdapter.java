@@ -6,54 +6,105 @@ import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+
 /**
  * DiscordSRV integration adapter for NeoEssentials.
  * Sends NeoEssentials events to Discord via DiscordSRV.
+ * Uses reflection to avoid a hard compile-time dependency on DiscordSRV.
  */
 public class DiscordSRVAdapter implements ChatIntegrationAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordSRVAdapter.class);
+
     private boolean discordSRVLoaded = false;
-    private Object discordSRVApi = null;
-    
+
+    // Reflected DiscordSRV messaging API
+    private Method sendMessageMethod = null;
+    private Object messagingInstance = null; // null = static call
+
     @Override
     public String getName() {
         return "DiscordSRV";
     }
-    
+
     @Override
     public boolean initialize() {
         discordSRVLoaded = ModList.get().isLoaded("discordsrv");
-        
-        if (discordSRVLoaded) {
-            try {
-                // Initialize DiscordSRV mod integration
-                LOGGER.info("DiscordSRV mod detected, initializing NeoForge integration...");
-                
-                // For NeoForge mods, we would typically access the mod instance via:
-                // Optional<? extends ModContainer> discordSRVMod = ModList.get().getModContainerById("discordsrv");
-                // if (discordSRVMod.isPresent()) {
-                //     // Access the mod's API through its container or service provider
-                //     discordSRVApi = discordSRVMod.get().getMod();
-                // }
-                
-                // Alternative: Use service provider interface if DiscordSRV provides one
-                // discordSRVApi = ServiceLoader.load(DiscordSRVAPI.class).findFirst().orElse(null);
-                
-                LOGGER.info("DiscordSRV NeoForge mod integration initialized successfully");
-                return true;
-            } catch (Exception e) {
-                LOGGER.error("Failed to initialize DiscordSRV mod integration: {}", e.getMessage(), e);
-                return false;
-            }
+
+        if (!discordSRVLoaded) {
+            LOGGER.debug("DiscordSRV mod not found, integration disabled");
+            return false;
         }
-        
-        LOGGER.debug("DiscordSRV mod not found, integration disabled");
-        return false;
+
+        try {
+            LOGGER.info("DiscordSRV mod detected, initializing messaging integration...");
+
+            // DiscordSRV (Adventure / v2) exposes DiscordSRV.get().sendMessage(String channelId, String msg)
+            if (tryInitDiscordSRVV2()) {
+                LOGGER.info("DiscordSRV v2 messaging API initialised");
+                return true;
+            }
+
+            // DiscordSRV classic (v1) exposes static DiscordUtil.sendMessage(TextChannel, String)
+            // or DiscordSRV.getPlugin().getMainTextChannel().sendMessage(String)
+            if (tryInitDiscordSRVClassic()) {
+                LOGGER.info("DiscordSRV classic messaging API initialised");
+                return true;
+            }
+
+            LOGGER.warn("DiscordSRV detected but no supported messaging API found. " +
+                        "Events will be logged only. Ensure DiscordSRV is up to date.");
+            discordSRVLoaded = true;
+            return true;
+
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize DiscordSRV integration: {}", e.getMessage(), e);
+            return false;
+        }
     }
-    
+
+    /** DiscordSRV v2 (Adventure API): DiscordSRV.get().sendMessage(String, String) */
+    private boolean tryInitDiscordSRVV2() {
+        try {
+            Class<?> dsrvClass = Class.forName("com.discordsrv.api.DiscordSRVApi");
+            // DiscordSRV.get() returns the singleton
+            Method getMethod = Class.forName("com.discordsrv.api.DiscordSRV").getMethod("get");
+            Object instance = getMethod.invoke(null);
+            Method method = dsrvClass.getMethod("sendMessage", String.class, String.class);
+            messagingInstance = instance;
+            sendMessageMethod = method;
+            return true;
+        } catch (Exception e) {
+            LOGGER.debug("DiscordSRV v2 API not found: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /** DiscordSRV classic (v1): DiscordUtil.sendMessage(TextChannel, String) via getMainTextChannel */
+    private boolean tryInitDiscordSRVClassic() {
+        try {
+            // github.scarsz.discordsrv.DiscordSRV.getPlugin().getMainTextChannel()
+            Class<?> pluginClass = Class.forName("github.scarsz.discordsrv.DiscordSRV");
+            Method getPlugin = pluginClass.getMethod("getPlugin");
+            Object plugin = getPlugin.invoke(null);
+            // Use DiscordUtil.sendMessage(channel, message)
+            Class<?> utilClass = Class.forName("github.scarsz.discordsrv.util.DiscordUtil");
+            // sendMessage(TextChannel channel, String message) — we'll store the util method
+            // and pass the main channel on each call; store both plugin + method
+            Method method = utilClass.getMethod("sendMessage",
+                Class.forName("net.dv8tion.jda.api.entities.TextChannel"), String.class);
+            messagingInstance = plugin; // store plugin so we can get main channel at call time
+            sendMessageMethod = method;
+            return true;
+        } catch (Exception e) {
+            LOGGER.debug("DiscordSRV classic API not found: {}", e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public boolean isEnabled() {
-        return discordSRVLoaded && discordSRVApi != null;
+        return discordSRVLoaded;
     }
     
     @Override
@@ -61,16 +112,11 @@ public class DiscordSRVAdapter implements ChatIntegrationAdapter {
         if (!isEnabled()) return;
 
         try {
-            // Strip Minecraft formatting codes for Discord
-            String cleanMessage = formattedMessage.replaceAll("§[0-9a-fk-or]", "");
-
-            // Format for Discord with channel indicator
             String emoji = getChannelEmoji(channel);
+            // Strip Minecraft formatting codes for Discord
+            String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
             String discordMessage = String.format("%s **[%s]** %s: %s",
-                emoji,
-                channel.toUpperCase(),
-                player.getName().getString(),
-                message);
+                emoji, channel.toUpperCase(), player.getName().getString(), cleanMessage);
 
             // Determine which Discord channel to use
             String targetChannel;
@@ -189,21 +235,39 @@ public class DiscordSRVAdapter implements ChatIntegrationAdapter {
     }
     
     /**
-     * Send a message to Discord via DiscordSRV
-     * @param channel The Discord channel name
-     * @param message The message to send
+     * Send a message to Discord via DiscordSRV using the reflected API.
+     * Falls back to info logging if the API is not available.
      */
     private void sendToDiscord(String channel, String message) {
-        // Placeholder implementation
-        // Actual implementation would use DiscordSRV API:
-        // DiscordUtil.sendMessage(DiscordUtil.getTextChannelById(channelId), message);
-        
-        LOGGER.debug("Would send to Discord channel '{}': {}", channel, message);
+        if (sendMessageMethod != null) {
+            try {
+                // For classic DiscordSRV the first arg is a TextChannel, not a String.
+                // In that case call DiscordUtil.sendMessage(plugin.getMainTextChannel(), message)
+                if (messagingInstance != null &&
+                    messagingInstance.getClass().getName().contains("DiscordSRV") &&
+                    sendMessageMethod.getParameterCount() == 2 &&
+                    !sendMessageMethod.getParameterTypes()[0].equals(String.class)) {
+                    Method getChannel = messagingInstance.getClass().getMethod("getMainTextChannel");
+                    Object textChannel = getChannel.invoke(messagingInstance);
+                    if (textChannel != null) {
+                        sendMessageMethod.invoke(null, textChannel, message);
+                    }
+                } else {
+                    sendMessageMethod.invoke(messagingInstance, channel, message);
+                }
+                LOGGER.debug("Sent to Discord channel '{}' via DiscordSRV: {}", channel, message);
+            } catch (Exception e) {
+                LOGGER.warn("DiscordSRV sendMessage failed for channel '{}': {}", channel, e.getMessage());
+            }
+        } else {
+            LOGGER.info("[Discord->{}] {}", channel, message);
+        }
     }
     
     @Override
     public void shutdown() {
-        discordSRVApi = null;
+        sendMessageMethod = null;
+        messagingInstance = null;
         LOGGER.info("DiscordSRV integration shut down");
     }
 }

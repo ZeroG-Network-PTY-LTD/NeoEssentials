@@ -245,7 +245,14 @@ public class NeoEssentials {
         @SubscribeEvent
         public static void onServerStarted(ServerStartedEvent event) {
             LOGGER.info("Server started - initializing chat system...");
-            
+
+            // Initialize chat integration adapters (SDLink, DCIntegration, DiscordSRV, etc.)
+            try {
+                com.zerog.neoessentials.integrations.ChatIntegrationManager.initialize();
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize chat integration adapters", e);
+            }
+
             // Initialize ChatManager
             try {
                 com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -374,6 +381,13 @@ public class NeoEssentials {
             }
 
             // Shutdown Chat/AFK Managers
+            try {
+                LOGGER.info("Shutting down chat integration adapters...");
+                com.zerog.neoessentials.integrations.ChatIntegrationManager.shutdown();
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown chat integration adapters", e);
+            }
+
             try {
                 LOGGER.info("Shutting down AFK Manager...");
                 com.zerog.neoessentials.chat.AfkManager.getInstance().shutdown();
@@ -913,11 +927,5 @@ public class NeoEssentials {
             ManagerRegistry.getInstance().markFailed("PlaceholderManager", e.getMessage());
         }
     }
-
-    public void onInitialize() {
-        // Ensure split configs are present and up to date on startup
-        com.zerog.neoessentials.config.ConfigManager.ensureSplitConfigsOnStartup();
-    }
 }
-
 

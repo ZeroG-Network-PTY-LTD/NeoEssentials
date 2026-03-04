@@ -17,7 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * WebSocket server for real-time dashboard updates.
  * Extends org.java_websocket.server.WebSocketServer (bundled via JarJar).
  * Supports channel subscriptions, session auth, ping/pong, and rate limiting.
+ * Lifecycle is managed by {@link com.zerog.neoessentials.webdashboard.DashboardLifecycleManager}.
  */
+@SuppressWarnings("unused") // Used via DashboardLifecycleManager
 public class DashboardWebSocketServer extends WebSocketServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardWebSocketServer.class);
     private static final Gson GSON = new GsonBuilder().create();

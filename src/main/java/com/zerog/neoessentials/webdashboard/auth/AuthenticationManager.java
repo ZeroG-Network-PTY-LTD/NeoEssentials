@@ -11,7 +11,9 @@ import java.util.Map;
  * Authentication manager for the Dashboard API.
  * Delegates all real work to the fully-implemented
  * {@link com.zerog.neoessentials.webdashboard.security.AuthenticationManager}.
+ * Kept as a bridge for any external callers that reference the old auth package.
  */
+@SuppressWarnings("unused") // Bridge class — may be referenced by external callers or future code
 public class AuthenticationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationManager.class);
     private static AuthenticationManager INSTANCE;

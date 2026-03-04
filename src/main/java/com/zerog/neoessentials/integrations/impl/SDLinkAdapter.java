@@ -6,55 +6,98 @@ import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
+
 /**
  * Simple Discord Link (SDLink) integration adapter for NeoEssentials.
  * Sends NeoEssentials events to Discord via Simple Discord Link mod by hypherionsa.
- * Compatible with NeoForge 1.21.x versions.
+ * Uses reflection to avoid a hard compile-time dependency on SDLink.
  */
 public class SDLinkAdapter implements ChatIntegrationAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SDLinkAdapter.class);
+
     private boolean sdLinkLoaded = false;
-    private Object sdLinkApi = null;
-    
+
+    // Reflected SDLink messaging API
+    private Method sendMessageMethod = null;   // SDLinkMessagingService or BotController.sendMessage
+    private Object messagingInstance = null;   // instance to call the method on (null = static)
+
     @Override
     public String getName() {
         return "Simple Discord Link";
     }
-    
+
     @Override
     public boolean initialize() {
         sdLinkLoaded = ModList.get().isLoaded("sdlink");
-        
-        if (sdLinkLoaded) {
-            try {
-                // Initialize Simple Discord Link mod integration
-                LOGGER.info("Simple Discord Link mod detected, initializing NeoForge integration...");
-                
-                // For NeoForge mods, we would typically access the mod instance via:
-                // Optional<? extends ModContainer> sdLinkMod = ModList.get().getModContainerById("sdlink");
-                // if (sdLinkMod.isPresent()) {
-                //     // Access the mod's API through its container or service provider
-                //     sdLinkApi = sdLinkMod.get().getMod();
-                // }
-                
-                // Alternative: Use service provider interface if SDLink provides one
-                // sdLinkApi = ServiceLoader.load(SDLinkAPI.class).findFirst().orElse(null);
-                
-                LOGGER.info("Simple Discord Link NeoForge mod integration initialized successfully");
-                return true;
-            } catch (Exception e) {
-                LOGGER.error("Failed to initialize Simple Discord Link mod integration: {}", e.getMessage(), e);
-                return false;
-            }
+
+        if (!sdLinkLoaded) {
+            LOGGER.debug("Simple Discord Link mod not found, integration disabled");
+            return false;
         }
-        
-        LOGGER.debug("Simple Discord Link mod not found, integration disabled");
-        return false;
+
+        try {
+            LOGGER.info("Simple Discord Link mod detected, initializing messaging integration...");
+
+            // SDLink v3+ exposes a static sendMessage on BotController:
+            //   BotController.INSTANCE.sendMessage(String channelNameOrId, String message)
+            // Try that first, then fall back to older API shapes.
+            if (tryInitBotController()) {
+                LOGGER.info("SDLink BotController messaging API initialised successfully");
+                return true;
+            }
+
+            // Fallback: SDLinkAPI static helper (older versions)
+            if (tryInitStaticApi()) {
+                LOGGER.info("SDLink static messaging API initialised successfully");
+                return true;
+            }
+
+            LOGGER.warn("SDLink detected but no supported messaging API found. " +
+                        "Messages will be logged only. Ensure SDLink v3.2+ is installed.");
+            // Return true — the mod IS loaded; we log events but can't forward to Discord
+            sdLinkLoaded = true;
+            return true;
+
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize Simple Discord Link integration: {}", e.getMessage(), e);
+            return false;
+        }
     }
-    
+
+    /** Try to get BotController.INSTANCE.sendMessage(String, String) */
+    private boolean tryInitBotController() {
+        try {
+            Class<?> botControllerClass =
+                Class.forName("com.hypherionmc.sdlink.core.discord.BotController");
+            Object instance = botControllerClass.getField("INSTANCE").get(null);
+            Method method = botControllerClass.getMethod("sendMessage", String.class, String.class);
+            messagingInstance = instance;
+            sendMessageMethod = method;
+            return true;
+        } catch (Exception e) {
+            LOGGER.debug("BotController.sendMessage not found: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /** Try static SDLinkAPI.sendMessage(String, String) (older/alternative API) */
+    private boolean tryInitStaticApi() {
+        try {
+            Class<?> apiClass = Class.forName("com.hypherionmc.sdlink.api.SDLinkAPI");
+            Method method = apiClass.getMethod("sendMessage", String.class, String.class);
+            messagingInstance = null; // static
+            sendMessageMethod = method;
+            return true;
+        } catch (Exception e) {
+            LOGGER.debug("SDLinkAPI.sendMessage not found: {}", e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public boolean isEnabled() {
-        return sdLinkLoaded && sdLinkApi != null;
+        return sdLinkLoaded; // loaded = we can at least log; messaging uses sendMessageMethod
     }
     
     @Override
@@ -62,16 +105,11 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         if (!isEnabled()) return;
 
         try {
-            // Strip Minecraft formatting codes for Discord
-            String cleanMessage = formattedMessage.replaceAll("§[0-9a-fk-or]", "");
-
-            // Format for Discord with channel indicator
             String emoji = getChannelEmoji(channel);
+            // Strip Minecraft formatting codes for Discord
+            String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
             String discordMessage = String.format("%s **[%s]** %s: %s",
-                emoji,
-                channel.toUpperCase(),
-                player.getName().getString(),
-                message);
+                emoji, channel.toUpperCase(), player.getName().getString(), cleanMessage);
 
             // Determine which Discord channel to use
             String targetChannel;
@@ -190,21 +228,27 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     }
     
     /**
-     * Send a message to Discord via Simple Discord Link
-     * @param channel The Discord channel name
-     * @param message The message to send
+     * Send a message to Discord via Simple Discord Link using the reflected API.
+     * Falls back to debug logging if the API is not available.
      */
     private void sendToDiscord(String channel, String message) {
-        // Placeholder implementation
-        // Actual implementation would use Simple Discord Link API:
-        // SDLinkAPI.sendMessage(channel, message);
-        
-        LOGGER.debug("Would send to Discord channel '{}' via Simple Discord Link: {}", channel, message);
+        if (sendMessageMethod != null) {
+            try {
+                sendMessageMethod.invoke(messagingInstance, channel, message);
+                LOGGER.debug("Sent to Discord channel '{}' via SDLink: {}", channel, message);
+            } catch (Exception e) {
+                LOGGER.warn("SDLink sendMessage failed for channel '{}': {}", channel, e.getMessage());
+            }
+        } else {
+            // API unavailable — log so server admins can see the event
+            LOGGER.info("[Discord->{}] {}", channel, message);
+        }
     }
     
     @Override
     public void shutdown() {
-        sdLinkApi = null;
+        sendMessageMethod = null;
+        messagingInstance = null;
         LOGGER.info("Simple Discord Link integration shut down");
     }
 }

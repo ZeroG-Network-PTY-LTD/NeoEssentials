@@ -158,19 +158,35 @@ public class AfkManager {
     public void setAfkStatus(UUID playerUuid, boolean afk, String reason) {
         PlayerAfkData data = playerData.computeIfAbsent(playerUuid, k -> new PlayerAfkData());
         boolean wasAfk = data.isAfk();
-        
+
         data.setAfk(afk);
         data.setAfkReason(reason);
-        
+
         if (afk && !wasAfk) {
             data.setAfkStartTime(System.currentTimeMillis());
             onPlayerGoAfk(playerUuid, reason);
+            // Notify Discord integrations
+            try {
+                net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (srv != null) {
+                    ServerPlayer p = srv.getPlayerList().getPlayer(playerUuid);
+                    if (p != null) com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastAfkEvent(p, true, reason);
+                }
+            } catch (Exception ignored) {}
         } else if (!afk && wasAfk) {
             data.setAfkStartTime(0);
             data.setLastActivity(System.currentTimeMillis());
             onPlayerReturnFromAfk(playerUuid);
+            // Notify Discord integrations
+            try {
+                net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (srv != null) {
+                    ServerPlayer p = srv.getPlayerList().getPlayer(playerUuid);
+                    if (p != null) com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastAfkEvent(p, false, null);
+                }
+            } catch (Exception ignored) {}
         }
-        
+
         queueSaveAfkData();
     }
     
