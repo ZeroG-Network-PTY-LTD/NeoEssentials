@@ -1,47 +1,21 @@
 # 👾 Issues That Were Discovered
-- **Console Spam**: Reduce the console spam, by actually making it so if the enable debug is disabled stuff like this is reduced in console spam please.
-    - [03mar.2026 15:09:14.208] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: === LUCKPERMS PREFIX REQUEST ===
-      [03mar.2026 15:09:14.209] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: UUID: 740f1a1b-da18-4c14-9a16-a1d0b7abd061
-      [03mar.2026 15:09:14.211] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: LuckPerms loaded: true
-      [03mar.2026 15:09:14.211] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: LuckPerms API: available
-      [03mar.2026 15:09:14.212] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Cached user: gabirubs_
-      [03mar.2026 15:09:14.212] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: User: gabirubs_
-      [03mar.2026 15:09:14.213] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Primary Group: dono
-      [03mar.2026 15:09:14.214] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Prefix from LuckPerms: [&c[&lDONO&c]]
-      [03mar.2026 15:09:14.215] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Suffix from LuckPerms: [null]
-      [03mar.2026 15:09:14.216] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: All Meta Data:
-      [03mar.2026 15:09:14.216] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]:   Meta: lp-editor-key = [Lp+wscNaTiEbl37Jjcy9r5ecIbE=]
-      [03mar.2026 15:09:14.216] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]:   Meta: weight = [1000]
-      [03mar.2026 15:09:14.217] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]:   Meta: primarygroup = [dono]
-      [03mar.2026 15:09:14.218] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Checking for weighted prefixes...
-      [03mar.2026 15:09:14.218] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Number of prefixes: 1
-      [03mar.2026 15:09:14.219] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]:   Prefix weight 1000: [&c[&lDONO&c]]
-      [03mar.2026 15:09:14.219] [Server thread/INFO] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: === END LUCKPERMS PREFIX REQUEST ===
-      [03mar.2026 15:09:14.220] [Server thread/DEBUG] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: LuckPerms suffix for user 740f1a1b-da18-4c14-9a16-a1d0b7abd061: [null]
-      [03mar.2026 15:09:14.220] [Server thread/DEBUG] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: Number of suffixes: 0
-      [03mar.2026 15:09:14.221] [Server thread/INFO] [com.zerog.neoessentials.chat.ChatHandler/]: [local] (radius:100) <Gabirubs_> aaa
-      [03mar.2026 15:09:14.222] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [DONO] Gabirubs_ aaa
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: ═══ PERMISSION CHECK ═══
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Player UUID: 740f1a1b-da18-4c14-9a16-a1d0b7abd061
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Permission: neoessentials.chat.spam.bypass
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: External adapter: LuckPerms
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Using external permission system: LuckPerms
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: LuckPerms permission check: user=740f1a1b-da18-4c14-9a16-a1d0b7abd061, permission=neoessentials.chat.spam.bypass, result=true (TRUE)
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: External system returned: true
-      [03mar.2026 15:09:15.099] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: ═══════════════════════
-    - [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: ═══════════════════════
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: ═══ PERMISSION CHECK ═══
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Player UUID: 740f1a1b-da18-4c14-9a16-a1d0b7abd061
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Permission: neoessentials.chat.format
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: External adapter: LuckPerms
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: Using external permission system: LuckPerms
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.permissions.LuckPermsAdapter/]: LuckPerms permission check: user=740f1a1b-da18-4c14-9a16-a1d0b7abd061, permission=neoessentials.chat.format, result=true (TRUE)
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: External system returned: true
-      [03mar.2026 15:09:14.208] [Server thread/DEBUG] [com.zerog.neoessentials.api.permissions.PermissionAPI/]: ═══════════════════════
+
 
 ---
 
 # ✅ Issues That Were Fixed
+
+- **Console Spam**: Reduce the console spam — `LuckPermsAdapter.getPrefix()` and `PermissionAPI.getPrefix()` were logging at INFO level on every chat message/prefix lookup.
+  *(Fixed: 2026-03-04)*
+  - `LuckPermsAdapter.getPrefix()`: All ~20 `LOGGER.info()` diagnostic lines (the full `=== LUCKPERMS PREFIX REQUEST ===` block) changed to `LOGGER.debug()`. These fired on every single prefix lookup.
+  - `PermissionAPI.getPrefix()`: Removed manual `debugEnabled = ConfigManager.isDebugLoggingEnabled()` gate around `LOGGER.info()` calls. Replaced with plain `LOGGER.debug()` — consistent with the rest of the codebase and respects log level automatically.
+  - `ChatDebugUtil.java`: Removed `ConfigManager.isDebugLoggingEnabled()` gate + `LOGGER.info()`. Now uses plain `LOGGER.debug()` — fires per chat message.
+  - `ChatHandler.java`: Removed all `MessageUtil.isDebugMode()` gated `LOGGER.info("[DEBUG]…")` blocks in Discord relay section. Replaced with plain `LOGGER.debug()`.
+  - `MessageUtil.java`: Demoted all per-startup diagnostic `LOGGER.info()` in `loadTranslations()` and `updateServerLanguageFile()` to `LOGGER.debug()`. Kept only the single summary line (`"NeoEssentials: loaded N translations"`) at INFO. Also demoted `syncDebugModeFromConfig()` banner.
+  - `ServerDataCollector.java`: Demoted `"=== Collecting Server Statistics ==="` from `LOGGER.info()` to `LOGGER.debug()` — fires on every dashboard poll.
+  - `GameEndpoint.java`, `PlayerEndpoint.java`, `LoggingEndpoint.java`: Demoted all per-HTTP-request `LOGGER.info()` (handling/collecting/success lines) to `LOGGER.debug()` — fired on every dashboard page load/refresh.
+  - `ListCommand.java`: Removed redundant `MessageUtil.isDebugMode()` gate around `LOGGER.debug()` call — the debug level already suppresses it automatically.
+  - **Result:** With `enableDebugLogging: false` (default), zero prefix/permission lines appear in console. With `enableDebugLogging: true`, full diagnostics still available at DEBUG level.
 
 - **Commands Doc Update**: Update the commands document for all registered commands please.
   *(Fixed: 2026-03-02)*

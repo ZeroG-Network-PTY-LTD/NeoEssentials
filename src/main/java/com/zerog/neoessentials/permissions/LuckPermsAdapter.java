@@ -88,29 +88,29 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
     @Override
     public String getPrefix(UUID uuid) {
-        LOGGER.info("=== LUCKPERMS PREFIX REQUEST ===");
-        LOGGER.info("UUID: {}", uuid);
-        LOGGER.info("LuckPerms loaded: {}", luckPermsLoaded);
-        LOGGER.info("LuckPerms API: {}", (luckPermsApi != null ? "available" : "NULL"));
+        LOGGER.debug("=== LUCKPERMS PREFIX REQUEST ===");
+        LOGGER.debug("UUID: {}", uuid);
+        LOGGER.debug("LuckPerms loaded: {}", luckPermsLoaded);
+        LOGGER.debug("LuckPerms API: {}", (luckPermsApi != null ? "available" : "NULL"));
 
         if (!luckPermsLoaded || luckPermsApi == null) {
-            LOGGER.warn("LuckPerms not available - returning null");
+            LOGGER.debug("LuckPerms not available - returning null");
             return null;
         }
 
         try {
             User user = luckPermsApi.getUserManager().getUser(uuid);
-            LOGGER.info("Cached user: {}", (user != null ? user.getUsername() : "NULL"));
+            LOGGER.debug("Cached user: {}", (user != null ? user.getUsername() : "NULL"));
 
             // Try to load if not cached
             if (user == null) {
-                LOGGER.info("User not cached, attempting to load...");
+                LOGGER.debug("User not cached, attempting to load...");
                 try {
                     CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
-                    LOGGER.info("Loaded user: {}", (user != null ? user.getUsername() : "FAILED"));
+                    LOGGER.debug("Loaded user: {}", (user != null ? user.getUsername() : "FAILED"));
                 } catch (Exception e) {
-                    LOGGER.warn("Could not load user {} from LuckPerms for prefix: {}", uuid, e.getMessage());
+                    LOGGER.debug("Could not load user {} from LuckPerms for prefix: {}", uuid, e.getMessage());
                     return null;
                 }
             }
@@ -125,33 +125,33 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 // Get all meta entries to debug
                 var meta = metaData.getMeta();
 
-                LOGGER.info("User: {}", user.getUsername());
-                LOGGER.info("Primary Group: {}", primaryGroup);
-                LOGGER.info("Prefix from LuckPerms: [{}]", prefix);
-                LOGGER.info("Suffix from LuckPerms: [{}]", suffix);
-                LOGGER.info("All Meta Data:");
-                meta.forEach((key, value) -> LOGGER.info("  Meta: {} = {}", key, value));
+                LOGGER.debug("User: {}", user.getUsername());
+                LOGGER.debug("Primary Group: {}", primaryGroup);
+                LOGGER.debug("Prefix from LuckPerms: [{}]", prefix);
+                LOGGER.debug("Suffix from LuckPerms: [{}]", suffix);
+                LOGGER.debug("All Meta Data:");
+                meta.forEach((key, value) -> LOGGER.debug("  Meta: {} = {}", key, value));
 
                 // Check if there are prefixes with weights
-                LOGGER.info("Checking for weighted prefixes...");
+                LOGGER.debug("Checking for weighted prefixes...");
                 var prefixes = metaData.getPrefixes();
-                LOGGER.info("Number of prefixes: {}", prefixes.size());
+                LOGGER.debug("Number of prefixes: {}", prefixes.size());
                 prefixes.forEach((weight, prefixValue) ->
-                    LOGGER.info("  Prefix weight {}: [{}]", weight, prefixValue)
+                    LOGGER.debug("  Prefix weight {}: [{}]", weight, prefixValue)
                 );
 
-                LOGGER.info("=== END LUCKPERMS PREFIX REQUEST ===");
+                LOGGER.debug("=== END LUCKPERMS PREFIX REQUEST ===");
                 return prefix;
             } else {
-                LOGGER.warn("User is null after load attempt");
+                LOGGER.debug("User is null after load attempt");
             }
 
         } catch (Exception e) {
             LOGGER.error("Error getting prefix for user {}: {}", uuid, e.getMessage(), e);
         }
 
-        LOGGER.warn("Returning null prefix");
-        LOGGER.info("=== END LUCKPERMS PREFIX REQUEST ===");
+        LOGGER.debug("Returning null prefix");
+        LOGGER.debug("=== END LUCKPERMS PREFIX REQUEST ===");
         return null;
     }
 

@@ -43,8 +43,8 @@ public class PlayerEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.info("PlayerEndpoint handling request: {} {}", method, path);
-        
+        LOGGER.debug("PlayerEndpoint handling request: {} {}", method, path);
+
         try {
             // Only allow GET requests
             if (!"GET".equals(method)) {
@@ -55,7 +55,7 @@ public class PlayerEndpoint implements HttpHandler {
             // Execute data collection on server thread for thread safety
             CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    LOGGER.info("Collecting player data for endpoint: {}", path);
+                    LOGGER.debug("Collecting player data for endpoint: {}", path);
                     return getResponse(path);
                 } catch (Exception e) {
                     LOGGER.error("Error collecting player data for path: {}", path, e);
@@ -69,7 +69,7 @@ public class PlayerEndpoint implements HttpHandler {
             JsonObject response;
             try {
                 response = future.get(10, TimeUnit.SECONDS);
-                LOGGER.info("Player data collected successfully for: {}", path);
+                LOGGER.debug("Player data collected successfully for: {}", path);
             } catch (java.util.concurrent.TimeoutException e) {
                 LOGGER.error("Timeout waiting for player data collection: {}", path);
                 response = new JsonObject();

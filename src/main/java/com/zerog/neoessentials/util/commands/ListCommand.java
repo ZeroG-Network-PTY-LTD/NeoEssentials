@@ -31,12 +31,8 @@ public class ListCommand {
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         boolean enabled = ConfigManager.getInstance().isCommandEnabled("list");
-        boolean debug = MessageUtil.isDebugMode();
-
         if (!enabled) {
-            if (debug) {
-                LOGGER.debug("[DEBUG] Skipped registering 'list' and 'who' commands (disabled in config)");
-            }
+            LOGGER.debug("Skipped registering 'list' and 'who' commands (disabled in config)");
             return;
         }
 
@@ -80,9 +76,7 @@ public class ListCommand {
                 })
         );
 
-        if (debug) {
-            LOGGER.debug("[DEBUG] Registered 'list', 'who', and 'online' commands (enabled in config)");
-        }
+        LOGGER.debug("Registered 'list', 'who', and 'online' commands");
     }
 
     /**

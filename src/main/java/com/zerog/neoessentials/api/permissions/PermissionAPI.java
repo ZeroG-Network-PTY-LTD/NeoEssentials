@@ -133,49 +133,31 @@ public class PermissionAPI {
     }
 
     public static String getPrefix(UUID uuid) {
-        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
-
-        if (debugEnabled) {
-            LOGGER.info(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
-        }
-
         // Validate input parameters
         if (uuid == null) {
             LOGGER.warn("PermissionAPI.getPrefix: UUID is null");
             return "";
         }
-        
-        if (debugEnabled) {
-            LOGGER.info(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
-        }
+
+        LOGGER.debug(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
+        LOGGER.debug(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
 
         // If external adapter is set, ONLY use it - do NOT fall back to internal
         if (externalAdapter != null) {
-            if (debugEnabled) {
-                LOGGER.info(">>> Querying external adapter for prefix...");
-            }
+            LOGGER.debug(">>> Querying external adapter for prefix...");
             String prefix = externalAdapter.getPrefix(uuid);
-            if (debugEnabled) {
-                LOGGER.info(">>> External adapter returned: [{}]", prefix);
-            }
-            // Return what external system says, even if null/empty
-            // Do NOT fall back to internal when external is enabled
+            LOGGER.debug(">>> External adapter returned: [{}]", prefix);
             return prefix != null ? prefix : "";
         }
 
         // Only use internal system if NO external adapter is configured
-        if (debugEnabled) {
-            LOGGER.info(">>> Using internal permission system (no external adapter)");
-        }
+        LOGGER.debug(">>> Using internal permission system (no external adapter)");
 
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
             return "";
         }
         PermissionUser user = manager.getUser(uuid);
-        if (user == null) {
-            LOGGER.warn("PermissionAPI.getPrefix: No PermissionUser found for UUID " + uuid);
-        }
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
         if (groupName == null) {
             LOGGER.warn("PermissionAPI.getPrefix: Default group name is null");
@@ -187,9 +169,7 @@ public class PermissionAPI {
             return "";
         }
         String prefix = group.getPrefix();
-        if (debugEnabled) {
-            LOGGER.info(">>> Internal system prefix: [{}]", prefix);
-        }
+        LOGGER.debug(">>> Internal system prefix: [{}]", prefix);
         return prefix != null ? prefix : "";
     }
 

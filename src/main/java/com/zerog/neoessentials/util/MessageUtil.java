@@ -41,7 +41,7 @@ public class MessageUtil {
      */
     public static void syncDebugModeFromConfig() {
         debugMode = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
-        LOGGER.info("[NeoEssentials] Debug mode set to: {} (from config)", debugMode);
+        LOGGER.debug("Debug mode set to: {} (from config)", debugMode);
     }
     
     // Language version tracking - increment when translations change
@@ -55,28 +55,26 @@ public class MessageUtil {
         if (loaded) return;
         loaded = true;
 
-        LOGGER.info("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
+        LOGGER.debug("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
 
-        // Use the same logic as CustomLanguageManager for the language directory
         File customLangDir = getNeoEssentialsLangCustomDir();
         if (!customLangDir.exists()) {
             boolean dirCreated = customLangDir.mkdirs();
             if (!dirCreated) {
                 LOGGER.error("Failed to create custom language directory: {}", customLangDir.getAbsolutePath());
             } else {
-                LOGGER.info("Created custom language directory: {}", customLangDir.getAbsolutePath());
+                LOGGER.debug("Created custom language directory: {}", customLangDir.getAbsolutePath());
             }
         }
         File serverLangFile = new File(customLangDir, "en_us.json");
-        LOGGER.info("Server language file path: {}", serverLangFile.getAbsolutePath());
+        LOGGER.debug("Server language file path: {}", serverLangFile.getAbsolutePath());
 
-        // Always load from custom directory if file exists and is readable
         Map<String, String> finalTranslations = null;
         if (serverLangFile.exists() && serverLangFile.length() > 0) {
             finalTranslations = loadServerTranslations(serverLangFile);
             if (finalTranslations != null) {
                 translations.putAll(finalTranslations);
-                LOGGER.info("Successfully loaded {} translations from custom directory", translations.size());
+                LOGGER.info("NeoEssentials: loaded {} translations", translations.size());
             } else {
                 LOGGER.error("Failed to load custom language file, will attempt to update from JAR");
             }
@@ -90,22 +88,22 @@ public class MessageUtil {
                     if (testIn == null) {
                         LOGGER.error("JAR resource 'en_us.json' is missing or not found in /data/lang/");
                     } else {
-                        LOGGER.info("JAR resource 'en_us.json' is present but failed to load as translations.");
+                        LOGGER.debug("JAR resource 'en_us.json' is present but failed to load as translations.");
                     }
                 } catch (Exception e) {
                     LOGGER.error("Exception when testing JAR resource existence: {}", e.getMessage(), e);
                 }
                 return;
             }
-            LOGGER.info("JAR contains {} translation keys", jarTranslations.size());
+            LOGGER.debug("JAR contains {} translation keys", jarTranslations.size());
             try {
                 updateServerLanguageFile(serverLangFile, jarTranslations);
                 if (serverLangFile.exists()) {
-                    LOGGER.info("Language file successfully created: {}", serverLangFile.getAbsolutePath());
+                    LOGGER.debug("Language file successfully created: {}", serverLangFile.getAbsolutePath());
                     finalTranslations = loadServerTranslations(serverLangFile);
                     if (finalTranslations != null) {
                         translations.putAll(finalTranslations);
-                        LOGGER.info("Successfully loaded {} translations from custom directory after update", translations.size());
+                        LOGGER.info("NeoEssentials: loaded {} translations (updated from JAR)", translations.size());
                     } else {
                         LOGGER.error("Failed to load custom language file after update, using JAR translations directly");
                         translations.putAll(jarTranslations);
@@ -119,13 +117,7 @@ public class MessageUtil {
                 translations.putAll(jarTranslations);
             }
         }
-        LOGGER.info("=== TRANSLATION LOADING COMPLETE ===");
-        LOGGER.info("Total translations loaded: {}", translations.size());
-        LOGGER.info("Sample translation keys: {}", translations.keySet().stream().limit(5).toArray());
-        LOGGER.info("Home set message key exists: {}", translations.containsKey("commands.neoessentials.teleport.home.set"));
-        if (translations.containsKey("commands.neoessentials.teleport.home.set")) {
-            LOGGER.info("Home set message template: '{}'", translations.get("commands.neoessentials.teleport.home.set"));
-        }
+        LOGGER.debug("Translation loading complete. Total keys: {}", translations.size());
         if (serverLangFile.length() == 0) {
             LOGGER.error("Server language file is empty after creation! Check file permissions and JAR resource.");
         }
@@ -173,24 +165,21 @@ public class MessageUtil {
      */
     private static void updateServerLanguageFile(File serverFile, Map<String, String> jarTranslations) {
         try {
-            // Ensure parent directory exists
             File parentDir = serverFile.getParentFile();
             if (!parentDir.exists()) {
                 boolean dirCreated = parentDir.mkdirs();
                 if (!dirCreated) {
                     LOGGER.error("Failed to create language directory: {}", parentDir.getAbsolutePath());
                 } else {
-                    LOGGER.info("Created language directory: {}", parentDir.getAbsolutePath());
+                    LOGGER.debug("Created language directory: {}", parentDir.getAbsolutePath());
                 }
             }
-            // Create a copy with version key added
             Map<String, String> translationsWithVersion = new HashMap<>(jarTranslations);
             translationsWithVersion.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
-            // Write translations to server file
             try (java.io.FileWriter writer = new java.io.FileWriter(serverFile)) {
                 Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
                 gson.toJson(translationsWithVersion, writer);
-                LOGGER.info("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
+                LOGGER.debug("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to update server language file: {} ({}): {}", serverFile.getAbsolutePath(), serverFile.getParentFile(), e.getMessage(), e);

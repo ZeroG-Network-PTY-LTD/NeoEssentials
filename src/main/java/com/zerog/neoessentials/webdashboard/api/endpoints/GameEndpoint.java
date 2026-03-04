@@ -33,8 +33,8 @@ public class GameEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.info("GameEndpoint handling request: {} {}", method, path);
-        
+        LOGGER.debug("GameEndpoint handling request: {} {}", method, path);
+
         try {
             // Only allow GET requests
             if (!"GET".equals(method)) {
@@ -45,7 +45,7 @@ public class GameEndpoint implements HttpHandler {
             // Execute data collection on server thread for thread safety
             CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    LOGGER.info("Collecting game data for endpoint: {}", path);
+                    LOGGER.debug("Collecting game data for endpoint: {}", path);
                     // Parse path to determine which endpoint
                     return switch (path) {
                         case "/api/game/statistics" -> gameCollector.getGameStatistics();
@@ -70,7 +70,7 @@ public class GameEndpoint implements HttpHandler {
             JsonObject response;
             try {
                 response = future.get(10, TimeUnit.SECONDS);
-                LOGGER.info("Game data collected successfully for: {}", path);
+                LOGGER.debug("Game data collected successfully for: {}", path);
             } catch (java.util.concurrent.TimeoutException e) {
                 LOGGER.error("Timeout waiting for game data collection: {}", path);
                 response = new JsonObject();
