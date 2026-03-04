@@ -18,7 +18,8 @@ import java.util.UUID;
 
 /**
  * NeoEssentials built-in {@link VaultEconomy} implementation.
- * Delegates all calls to {@link EconomyManager}.
+ * Delegates all calls to {@link EconomyManager} and uses the same formatting
+ * and currency configuration as the rest of the mod.
  */
 public class NeoEssentialsEconomy extends VaultEconomy {
 
@@ -36,21 +37,29 @@ public class NeoEssentialsEconomy extends VaultEconomy {
         return ConfigManager.isEconomyEnabled() && EconomyManager.getInstance() != null;
     }
 
+    /**
+     * Format uses the same symbol + decimal pattern as BalanceCommand / EcoCommand.
+     */
     @Override
     public String format(double amount) {
-        String symbol = ConfigManager.getCurrencySymbol();
+        // Use EconomyManager so it respects whatever getCurrencySymbol() returns at runtime
+        String symbol = EconomyManager.getInstance().getCurrencySymbol();
         return symbol + fmt.format(amount);
     }
 
-    @Override public String currencyNameSingular() { return ConfigManager.getCurrencySymbol(); }
-    @Override public String currencyNamePlural()   { return ConfigManager.getCurrencySymbol(); }
-    @Override public int    fractionalDigits()      { return 2; }
+    /**
+     * There is no separate singular/plural currency name in the current config;
+     * we return the symbol as the name (same behaviour as BalanceCommand).
+     */
+    @Override public String currencyNameSingular() { return EconomyManager.getInstance().getCurrencySymbol(); }
+    @Override public String currencyNamePlural()   { return EconomyManager.getInstance().getCurrencySymbol(); }
 
     // ── Account ───────────────────────────────────────────────────────────────
 
     @Override
     public boolean hasAccount(UUID playerId) {
         try {
+            // An account exists if the player is already in the balance cache
             return EconomyManager.getInstance().getAllBalances().containsKey(playerId);
         } catch (Exception e) {
             LOGGER.error("VaultEconomy: hasAccount error for {}: {}", playerId, e.getMessage());
@@ -62,6 +71,7 @@ public class NeoEssentialsEconomy extends VaultEconomy {
     public boolean createPlayerAccount(UUID playerId) {
         try {
             if (hasAccount(playerId)) return true;
+            // Initialise with the configured starting balance — same as EconomyServiceImpl.createAccount()
             BigDecimal start = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
             EconomyManager.getInstance().setBalance(playerId, start);
             return true;
@@ -90,6 +100,10 @@ public class NeoEssentialsEconomy extends VaultEconomy {
 
     // ── Transactions ──────────────────────────────────────────────────────────
 
+    /**
+     * Withdraw — delegates to EconomyManager.subtractBalance() and fires the
+     * same EconomyWithdrawEvent that the /pay and /eco commands fire.
+     */
     @Override
     public EconomyResponse withdrawPlayer(UUID playerId, double amount) {
         if (amount < 0)
@@ -99,6 +113,7 @@ public class NeoEssentialsEconomy extends VaultEconomy {
             boolean ok = EconomyManager.getInstance().subtractBalance(playerId, amt);
             if (!ok)
                 return fail(amount, playerId, "Insufficient funds");
+            // Fire the same event the rest of the mod uses
             NeoForge.EVENT_BUS.post(new EconomyWithdrawEvent(playerId, amount));
             return new EconomyResponse(amount, getBalance(playerId), EconomyResponse.ResponseType.SUCCESS, "");
         } catch (Exception e) {
@@ -107,6 +122,10 @@ public class NeoEssentialsEconomy extends VaultEconomy {
         }
     }
 
+    /**
+     * Deposit — delegates to EconomyManager.addBalance() and fires the
+     * same EconomyDepositEvent that the rest of the mod uses.
+     */
     @Override
     public EconomyResponse depositPlayer(UUID playerId, double amount) {
         if (amount < 0)
@@ -116,7 +135,8 @@ public class NeoEssentialsEconomy extends VaultEconomy {
             BigDecimal amt = BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP);
             boolean ok = EconomyManager.getInstance().addBalance(playerId, amt);
             if (!ok)
-                return fail(amount, playerId, "Deposit rejected (max balance?)");
+                return fail(amount, playerId, "Deposit rejected (max balance reached?)");
+            // Fire the same event the rest of the mod uses
             NeoForge.EVENT_BUS.post(new EconomyDepositEvent(playerId, amount));
             return new EconomyResponse(amount, getBalance(playerId), EconomyResponse.ResponseType.SUCCESS, "");
         } catch (Exception e) {
@@ -125,9 +145,7 @@ public class NeoEssentialsEconomy extends VaultEconomy {
         }
     }
 
-    @Override public boolean hasBankSupport() { return false; }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helper ────────────────────────────────────────────────────────────────
 
     private EconomyResponse fail(double amount, UUID playerId, String msg) {
         return new EconomyResponse(amount, getBalance(playerId), EconomyResponse.ResponseType.FAILURE, msg);
