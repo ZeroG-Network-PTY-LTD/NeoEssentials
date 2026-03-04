@@ -38,12 +38,16 @@ import java.util.concurrent.Executors;
 public class DashboardAPI {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAPI.class);
     private static DashboardAPI INSTANCE;
-    
+
     private HttpServer apiServer;
     private java.util.concurrent.ExecutorService executor;
     private boolean running = false;
     private MinecraftServer server;
-    
+
+    // Per-IP rate limiter: maps IP → deque of request timestamps
+    private final java.util.Map<String, java.util.ArrayDeque<Long>> rateLimitMap =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
     private DashboardAPI() {
         // Empty constructor - port and bindAddress read from config on each start
     }
@@ -208,46 +212,73 @@ public class DashboardAPI {
     }
     
     /**
-     * Authentication middleware wrapper
-     * Validates token before allowing access to protected endpoints
+     * Authentication + rate-limiting middleware wrapper.
+     * - If webDashboard.security.requireAuthentication = true (default), validates Bearer token.
+     * - If webDashboard.security.enableRateLimiting = true (default), enforces per-IP request cap.
      */
-    @SuppressWarnings("ConstantConditions") // Null check is intentional for safety
+    @SuppressWarnings("ConstantConditions")
     private HttpHandler withAuth(HttpHandler handler) {
         return exchange -> {
             try {
-                // Get token from Authorization header
-                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
-                String token = null;
-                
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    token = authHeader.substring(7);
-                }
-                
-                // Validate token (validateToken handles null internally)
-                if (!AuthHandler.validateToken(token)) {
-                    // Unauthorized
-                    LOGGER.info("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
-                    String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";
-                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-                    exchange.getResponseHeaders().set("Content-Type", "application/json");
-                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-                    exchange.sendResponseHeaders(401, bytes.length);
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
+                ConfigManager cfg = ConfigManager.getInstance();
+
+                // ── Rate limiting ─────────────────────────────────────────────
+                if (cfg.isDashboardRateLimitingEnabled()) {
+                    String ip = exchange.getRemoteAddress().getAddress().getHostAddress();
+                    int maxReq = cfg.getDashboardMaxRequestsPerMinute();
+                    long now = System.currentTimeMillis();
+                    long windowStart = now - 60_000L;
+
+                    rateLimitMap.compute(ip, (k, deque) -> {
+                        if (deque == null) deque = new java.util.ArrayDeque<>();
+                        // Drop timestamps outside the 1-minute window
+                        while (!deque.isEmpty() && deque.peekFirst() < windowStart) deque.pollFirst();
+                        deque.addLast(now);
+                        return deque;
+                    });
+
+                    int reqCount = rateLimitMap.get(ip).size();
+                    if (reqCount > maxReq) {
+                        String response = "{\"success\":false,\"error\":\"Rate limit exceeded. Max " + maxReq + " requests/min.\"}";
+                        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                        exchange.getResponseHeaders().set("Content-Type", "application/json");
+                        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                        exchange.getResponseHeaders().set("Retry-After", "60");
+                        exchange.sendResponseHeaders(429, bytes.length);
+                        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+                        LOGGER.debug("Rate limit exceeded for IP {} ({}/{})", ip, reqCount, maxReq);
+                        return;
                     }
-                    return;
                 }
-                
-                LOGGER.info("Authenticated API request to {} by user {}", exchange.getRequestURI(), AuthHandler.getUsername(token));
-                
-                // Store auth info in exchange attributes for handler to use
-                exchange.setAttribute("auth-username", AuthHandler.getUsername(token));
-                exchange.setAttribute("auth-admin", AuthHandler.isAdmin(token));
-                
-                // Call the actual handler - this will handle its own exchange closing
+
+                // ── Authentication ─────────────────────────────────────────────
+                if (cfg.isDashboardAuthRequired()) {
+                    String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                    String token = null;
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                        token = authHeader.substring(7);
+                    }
+
+                    if (!AuthHandler.validateToken(token)) {
+                        LOGGER.debug("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
+                        String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";
+                        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                        exchange.getResponseHeaders().set("Content-Type", "application/json");
+                        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                        exchange.sendResponseHeaders(401, bytes.length);
+                        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+                        return;
+                    }
+
+                    exchange.setAttribute("auth-username", AuthHandler.getUsername(token));
+                    exchange.setAttribute("auth-admin", AuthHandler.isAdmin(token));
+                    LOGGER.debug("Authenticated API request to {} by {}", exchange.getRequestURI(), AuthHandler.getUsername(token));
+                }
+
                 handler.handle(exchange);
+
             } catch (Exception e) {
-                LOGGER.error("Error in authentication middleware for {}", exchange.getRequestURI(), e);
+                LOGGER.error("Error in auth middleware for {}", exchange.getRequestURI(), e);
                 try {
                     if (!exchange.getResponseHeaders().containsKey("Content-Type")) {
                         String errorResponse = "{\"success\":false,\"error\":\"Authentication error: " + e.getMessage() + "\"}";
@@ -255,9 +286,7 @@ public class DashboardAPI {
                         exchange.getResponseHeaders().set("Content-Type", "application/json");
                         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                         exchange.sendResponseHeaders(500, bytes.length);
-                        try (OutputStream os = exchange.getResponseBody()) {
-                            os.write(bytes);
-                        }
+                        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
                     }
                 } catch (Exception ex) {
                     LOGGER.error("Failed to send error response", ex);

@@ -2187,10 +2187,8 @@ public class ConfigManager {
     }
 
     /**
-     * Builds the dashboard URL based on configuration.
+     * Returns the dashboard URL to display to users.
      * If customUrl is set, returns that. Otherwise builds URL from hostname and port.
-     *
-     * @return The dashboard URL to display to users
      */
     public String getWebDashboardUrl() {
         String customUrl = getWebDashboardCustomUrl();
@@ -2203,6 +2201,67 @@ public class ConfigManager {
 
         // Build URL with hostname and port
         return "http://" + hostname + ":" + port;
+    }
+
+    /**
+     * Returns whether authentication is required for dashboard access.
+     * Reads webDashboard.securitySettings.requireAuthentication. Defaults to true.
+     */
+    public boolean isDashboardAuthRequired() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        try {
+            if (config.has("webDashboard")) {
+                JsonObject wd = config.getAsJsonObject("webDashboard");
+                JsonObject sec = null;
+                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
+                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
+                if (sec != null && sec.has("requireAuthentication")) {
+                    return sec.get("requireAuthentication").getAsBoolean();
+                }
+            }
+        } catch (Exception ignored) {}
+        return true; // Secure by default
+    }
+
+    /**
+     * Returns whether API rate limiting is enabled.
+     * Reads webDashboard.securitySettings.enableRateLimiting. Defaults to true.
+     */
+    public boolean isDashboardRateLimitingEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        try {
+            if (config.has("webDashboard")) {
+                JsonObject wd = config.getAsJsonObject("webDashboard");
+                JsonObject sec = null;
+                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
+                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
+                if (sec != null && sec.has("enableRateLimiting")) {
+                    return sec.get("enableRateLimiting").getAsBoolean();
+                }
+            }
+        } catch (Exception ignored) {}
+        return true; // Enabled by default
+    }
+
+    /**
+     * Returns the max requests per minute per IP for the dashboard API.
+     * Reads webDashboard.securitySettings.maxRequestsPerMinute. Defaults to 60.
+     */
+    public int getDashboardMaxRequestsPerMinute() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        try {
+            if (config.has("webDashboard")) {
+                JsonObject wd = config.getAsJsonObject("webDashboard");
+                JsonObject sec = null;
+                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
+                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
+                if (sec != null && sec.has("maxRequestsPerMinute")) {
+                    int val = sec.get("maxRequestsPerMinute").getAsInt();
+                    return val > 0 ? val : 60;
+                }
+            }
+        } catch (Exception ignored) {}
+        return 60;
     }
 
     /**

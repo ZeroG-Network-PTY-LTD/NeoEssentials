@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.webdashboard;
 
 import com.zerog.neoessentials.webdashboard.data.DataCollector;
+import com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -46,7 +47,17 @@ public class DashboardLifecycleManager {
             
             // Start Dashboard API
             DashboardAPI.getInstance().start();
-            
+
+            // Start WebSocket server
+            try {
+                int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
+                DashboardWebSocketServer wsServer = DashboardWebSocketServer.getInstance(wsPort);
+                wsServer.start();
+                LOGGER.info("Dashboard WebSocket server started on port {}", wsPort);
+            } catch (Exception wsEx) {
+                LOGGER.error("Failed to start WebSocket server: {}", wsEx.getMessage(), wsEx);
+            }
+
             LOGGER.info("Dashboard auto-started successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to auto-start dashboard", e);
@@ -67,6 +78,14 @@ public class DashboardLifecycleManager {
                 DashboardAPI.getInstance().stop();
                 long dashboardStopTime = System.currentTimeMillis() - startTime;
                 LOGGER.info("Dashboard API stopped in {}ms", dashboardStopTime);
+
+                // Stop WebSocket server
+                try {
+                    DashboardWebSocketServer.getInstance().stop(2000);
+                    LOGGER.info("Dashboard WebSocket server stopped");
+                } catch (Exception wsEx) {
+                    LOGGER.warn("Error stopping WebSocket server: {}", wsEx.getMessage());
+                }
 
                 // Shutdown data collector
                 startTime = System.currentTimeMillis();
@@ -98,7 +117,15 @@ public class DashboardLifecycleManager {
             
             // Start Dashboard API
             DashboardAPI.getInstance().start();
-            
+
+            // Start WebSocket server
+            try {
+                int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
+                DashboardWebSocketServer.getInstance(wsPort).start();
+            } catch (Exception wsEx) {
+                LOGGER.error("Failed to start WebSocket server (manual): {}", wsEx.getMessage(), wsEx);
+            }
+
             manuallyDisabled = false;
             return true;
         } catch (Exception e) {
@@ -118,7 +145,14 @@ public class DashboardLifecycleManager {
             
             // Stop Dashboard API
             DashboardAPI.getInstance().stop();
-            
+
+            // Stop WebSocket server
+            try {
+                DashboardWebSocketServer.getInstance().stop(2000);
+            } catch (Exception wsEx) {
+                LOGGER.warn("Error stopping WebSocket server (manual): {}", wsEx.getMessage());
+            }
+
             // Shutdown data collector
             DataCollector.getInstance().shutdown();
             

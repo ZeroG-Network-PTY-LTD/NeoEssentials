@@ -286,29 +286,64 @@ public class AuthHandler implements HttpHandler {
     }
     
     /**
-     * Check if Discord user has permission to view dashboard
+     * Check if Discord user has permission to view dashboard.
+     * Uses DiscordAuthProvider which integrates with Simple Discord Link (SDLink).
+     * Falls back to config-role matching if SDLink is not available.
      */
     private boolean checkDiscordPermission(String discordId) {
-        // Get allowed Discord roles from config
         List<String> allowedRoles = getDiscordAllowedRoles();
-        
-        // FUTURE IMPLEMENTATION: Actual Discord role checking via DCIntegration API
-        // When DCIntegration mod provides role checking API, implement here
-        LOGGER.warn("Discord permission check not yet implemented for user: {}", discordId);
-        LOGGER.debug("Allowed Discord roles: {}", allowedRoles);
-        return false;
+
+        com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider provider =
+            com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider.getInstance();
+        if (provider.isAvailable()) {
+            com.zerog.neoessentials.webdashboard.security.DiscordUser discordUser =
+                provider.getLinkedAccountByDiscordId(discordId);
+            if (discordUser == null) {
+                LOGGER.debug("Discord user {} has no linked Minecraft account via SDLink", discordId);
+                return false;
+            }
+            // getDiscordRoles() returns Discord role IDs — check against configured allowed roles
+            List<String> userRoles = discordUser.getDiscordRoles();
+            for (String allowed : allowedRoles) {
+                if (userRoles.contains(allowed)) {
+                    LOGGER.debug("Discord user {} has allowed role: {}", discordId, allowed);
+                    return true;
+                }
+            }
+            LOGGER.debug("Discord user {} has no matching allowed roles. Has: {}", discordId, userRoles);
+            return false;
+        }
+
+        // SDLink not available — standalone mode: wildcard grants access
+        LOGGER.debug("SDLink not available — standalone Discord auth mode for user {}", discordId);
+        return allowedRoles.contains("*") || allowedRoles.isEmpty();
     }
-    
+
     /**
-     * Check if Discord user has admin permissions
+     * Check if Discord user has admin permissions.
+     * Uses DiscordAuthProvider which integrates with Simple Discord Link (SDLink).
      */
     private boolean checkDiscordAdminPermission(String discordId) {
-        // Get admin Discord roles from config
         List<String> adminRoles = getDiscordAdminRoles();
-        
-        // FUTURE IMPLEMENTATION: Actual Discord role checking via DCIntegration API
-        LOGGER.warn("Discord admin check not yet implemented for user: {}", discordId);
-        LOGGER.debug("Admin Discord roles: {}", adminRoles);
+
+        com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider provider =
+            com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider.getInstance();
+        if (provider.isAvailable()) {
+            com.zerog.neoessentials.webdashboard.security.DiscordUser discordUser =
+                provider.getLinkedAccountByDiscordId(discordId);
+            if (discordUser != null) {
+                List<String> userRoles = discordUser.getDiscordRoles();
+                for (String adminRole : adminRoles) {
+                    if (userRoles.contains(adminRole)) {
+                        LOGGER.debug("Discord user {} has admin role: {}", discordId, adminRole);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // SDLink not available — no admin access without explicit role match
         return false;
     }
     

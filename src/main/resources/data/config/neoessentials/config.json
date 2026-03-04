@@ -232,16 +232,16 @@
     },
     "securitySettings": {
   "securitySettings_comment": "Security configuration for the web dashboard",
-  "requireAuthentication": false,
-  "requireAuthentication_comment": "[PLACEHOLDER] Future feature: Require authentication to access dashboard. Currently not enforced.",
+  "requireAuthentication": true,
+  "requireAuthentication_comment": "Require Bearer token authentication to access dashboard API endpoints. Strongly recommended.",
       "allowConfigEditing": true,
       "allowConfigEditing_comment": "Allow config file editing through the web interface",
       "restrictedConfigPaths": [],
       "restrictedConfigPaths_comment": "List of config file paths that cannot be edited via web dashboard",
-  "enableRateLimiting": false,
-  "enableRateLimiting_comment": "[PLACEHOLDER] Future feature: Enable rate limiting for API requests. Currently not enforced.",
+  "enableRateLimiting": true,
+  "enableRateLimiting_comment": "Enable per-IP rate limiting for dashboard API requests.",
   "maxRequestsPerMinute": 60,
-  "maxRequestsPerMinute_comment": "[PLACEHOLDER] Future feature: Maximum API requests per minute per IP (when rate limiting enabled). Currently not enforced."
+  "maxRequestsPerMinute_comment": "Maximum API requests per minute per IP address when rate limiting is enabled."
     },
     "uiSettings": {
       "uiSettings_comment": "User interface configuration",
