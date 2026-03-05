@@ -40,6 +40,7 @@ public class ConfigSplitter {
         put("teleportation", "teleportation.json");  // Already separate
         put("moderation", "moderation.json");
         put("chat", "chat.json");
+        put("tablist", "tablist.json");
     }};
 
     // Version for each split config file
@@ -54,6 +55,7 @@ public class ConfigSplitter {
         put("afk.json", 1);
         put("security.json", 1);
         put("modules.json", 1);
+        put("tablist.json", 1);
     }};
 
     /**

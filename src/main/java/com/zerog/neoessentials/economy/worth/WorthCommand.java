@@ -8,7 +8,6 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 import java.math.BigDecimal;
@@ -16,11 +15,10 @@ import java.math.BigDecimal;
 /**
  * /worth [item] [amount]
  *
- * Port of EssentialsX Commandworth:
- *  - /worth           → show value of item in hand
- *  - /worth <item>    → show value of named item (console / player)
- *  - /worth <item> <amount>  → show value of N of that item
- *  - /worth hand      → alias for held item
+ * - /worth                    → value of held item
+ * - /worth hand [amount]      → explicit held-item alias
+ * - /worth <item> [amount]    → item by id (vanilla name, mod:item_id, fuzzy name)
+ * - /worth <mod:item> [amt]   → full namespaced id supported via greedyString
  */
 public class WorthCommand {
 
@@ -32,7 +30,7 @@ public class WorthCommand {
                 var p = src.getPlayer();
                 return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.worth");
             })
-            // /worth  — hand item
+            // /worth  — held item
             .executes(ctx -> executeWorthHand(ctx, 0))
             // /worth hand [amount]
             .then(Commands.literal("hand")
@@ -40,19 +38,27 @@ public class WorthCommand {
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                     .executes(ctx -> executeWorthHand(ctx, IntegerArgumentType.getInteger(ctx, "amount"))))
             )
-            // /worth <item> [amount]
-            .then(Commands.argument("item", StringArgumentType.word())
-                .executes(ctx -> executeWorthItem(ctx,
-                    StringArgumentType.getString(ctx, "item"), 1))
-                .then(Commands.argument("amount", IntegerArgumentType.integer(1))
-                    .executes(ctx -> executeWorthItem(ctx,
-                        StringArgumentType.getString(ctx, "item"),
-                        IntegerArgumentType.getInteger(ctx, "amount"))))
+            // /worth <item|mod:item> [amount]
+            // greedyString captures "thermal:copper_ingot" or "copper ingot 64" as one token
+            .then(Commands.argument("item", StringArgumentType.greedyString())
+                .executes(ctx -> {
+                    String raw = StringArgumentType.getString(ctx, "item").trim();
+                    // Support trailing number as amount: "diamond 64"
+                    String[] parts = raw.split("\\s+");
+                    if (parts.length >= 2) {
+                        try {
+                            int amt = Integer.parseInt(parts[parts.length - 1]);
+                            String itemPart = String.join(" ", java.util.Arrays.copyOf(parts, parts.length - 1));
+                            return executeWorthItem(ctx, itemPart, amt);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    return executeWorthItem(ctx, raw, 1);
+                })
             )
         );
     }
 
-    // /worth [hand]
+    // ── /worth (hand) ─────────────────────────────────────────────────────────
     private static int executeWorthHand(CommandContext<CommandSourceStack> ctx, int amount) {
         var source = ctx.getSource();
         var player = source.getPlayer();
@@ -69,30 +75,32 @@ public class WorthCommand {
         return showWorth(source, held, qty);
     }
 
-    // /worth <item> [amount]
+    // ── /worth <item> [amount] ────────────────────────────────────────────────
     private static int executeWorthItem(CommandContext<CommandSourceStack> ctx, String itemId, int amount) {
         var source = ctx.getSource();
-        ItemStack stack = WorthManager.resolveItem(itemId);
-        if (stack == null) {
+        // Normalize: spaces → underscores, lowercase — handles "copper ingot", "Thermal:Copper_Ingot"
+        String normalized = itemId.trim().toLowerCase().replace(" ", "_");
+        ItemStack stack = WorthManager.resolveItem(normalized);
+        if (stack == null || stack.isEmpty()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.worth.unknown_item", itemId));
             return 0;
         }
-        stack.setCount(amount);
-        return showWorth(source, stack, amount);
+        int qty = Math.max(1, amount);
+        return showWorth(source, stack, qty);
     }
 
+    // ── show result ───────────────────────────────────────────────────────────
     private static int showWorth(CommandSourceStack source, ItemStack stack, int amount) {
         WorthManager wm = WorthManager.getInstance();
         BigDecimal price = wm.getPrice(stack);
         if (price == null) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.worth.no_price",
-                WorthManager.getItemId(stack)));
+            String itemId = WorthManager.getItemId(stack);
+            source.sendFailure(MessageUtil.error("commands.neoessentials.worth.no_price", itemId));
             return 0;
         }
         BigDecimal total = price.multiply(BigDecimal.valueOf(amount));
         String itemId = WorthManager.getItemId(stack);
-        String symbol = getCurrencySymbol();
-
+        String symbol  = getCurrencySymbol();
         source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.worth.result",
             amount, itemId, symbol + format(total), symbol + format(price)), false);
         return 1;
@@ -114,4 +122,3 @@ public class WorthCommand {
         return value.stripTrailingZeros().toPlainString();
     }
 }
-

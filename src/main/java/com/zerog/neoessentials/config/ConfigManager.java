@@ -1188,6 +1188,7 @@ public class ConfigManager {
     public static final String PERMISSIONS_CONFIG = "permissions.json";
     public static final String KITS_CONFIG = "kits.json";
     public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
+    public static final String TABLIST_CONFIG = "tablist.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
@@ -1199,6 +1200,7 @@ public class ConfigManager {
         put(PERMISSIONS_CONFIG, 5);
         put(KITS_CONFIG, 1);
         put(DISCORD_AUTH_CONFIG, 6);
+        put(TABLIST_CONFIG, 1);
     }};
 
     private ConfigManager() {
@@ -1213,7 +1215,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG
         };
 
         // Check if split configs are enabled

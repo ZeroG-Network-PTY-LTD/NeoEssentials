@@ -219,15 +219,61 @@ public class WorthManager {
         return stack.getDisplayName().getString();
     }
 
-    /** Resolve an item ID or Minecraft item name to an ItemStack. Returns null if unknown. */
+    /**
+     * Resolve an item name or ID to an ItemStack.
+     *
+     * <p>Resolution order:
+     * <ol>
+     *   <li>Exact full ID with namespace   — {@code thermal:copper_ingot}</li>
+     *   <li>Exact full ID, assume minecraft — {@code diamond} → {@code minecraft:diamond}</li>
+     *   <li>Fuzzy path-only match          — {@code copper_ingot} matches the FIRST registry
+     *       entry whose path equals {@code copper_ingot} (any namespace, alphabetical priority
+     *       so {@code minecraft:} sorts before most mods)</li>
+     *   <li>Fuzzy contains match           — {@code copper} matches the first entry whose
+     *       path <em>contains</em> {@code copper}</li>
+     * </ol>
+     *
+     * Returns {@code null} if nothing matches.
+     */
     public static ItemStack resolveItem(String name) {
-        // Try full registry ID first (minecraft:diamond or just diamond)
-        String id = name.contains(":") ? name : "minecraft:" + name;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
-        if (loc == null) return null;
-        Item item = BuiltInRegistries.ITEM.get(loc);
-        if (item == net.minecraft.world.item.Items.AIR) return null;
-        return new ItemStack(item);
+        if (name == null || name.isBlank()) return null;
+        String trimmed = name.trim().toLowerCase();
+
+        // 1. Try as-is if it has a namespace (modded or vanilla full id)
+        if (trimmed.contains(":")) {
+            ResourceLocation loc = ResourceLocation.tryParse(trimmed);
+            if (loc != null) {
+                Item item = BuiltInRegistries.ITEM.get(loc);
+                if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
+            }
+            // Namespace given but not found — don't fall through to vanilla assumption
+            return null;
+        }
+
+        // 2. Try minecraft: prefix for unqualified vanilla names
+        ResourceLocation vanillaLoc = ResourceLocation.tryParse("minecraft:" + trimmed);
+        if (vanillaLoc != null) {
+            Item item = BuiltInRegistries.ITEM.get(vanillaLoc);
+            if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
+        }
+
+        // 3. Fuzzy: exact path match across ALL namespaces (catches modded items by short name)
+        for (ResourceLocation key : BuiltInRegistries.ITEM.keySet()) {
+            if (key.getPath().equals(trimmed)) {
+                Item item = BuiltInRegistries.ITEM.get(key);
+                if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
+            }
+        }
+
+        // 4. Fuzzy: path contains the search string (last resort)
+        for (ResourceLocation key : BuiltInRegistries.ITEM.keySet()) {
+            if (key.getPath().contains(trimmed)) {
+                Item item = BuiltInRegistries.ITEM.get(key);
+                if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
+            }
+        }
+
+        return null;
     }
 
     private static String normalizeId(String id) {

@@ -105,17 +105,22 @@ public final class ShopParser {
         if (!shop.canBuy() && !shop.canSell()) return Optional.empty();
 
         // ── Line 3: item ──────────────────────────────────────────────────────
-        String itemStr = strip(lines[ShopData.ITEM_LINE]);
-        if (itemStr.isEmpty()) return Optional.empty();
+        String itemRaw = strip(lines[ShopData.ITEM_LINE]);
+        if (itemRaw.isEmpty()) return Optional.empty();
 
-        if (AUTOFILL_CODE.equals(itemStr)) {
-            // "?" — item not yet assigned; shop enters pending state
-            shop.itemId   = null;
+        // "?" autofill
+        if (AUTOFILL_CODE.equals(itemRaw)) {
+            shop.itemId      = null;
             shop.itemPending = true;
         } else {
+            // Normalise for registry lookup (spaces→underscores, lowercase)
+            String itemStr = normalizeItemStr(itemRaw);
+
             ItemStack resolved = resolveItem(itemStr);
             if (resolved == null || resolved.isEmpty()) {
-                LOGGER.debug("[ChestShop] Could not resolve item '{}' at {}", itemStr, signPos);
+                LOGGER.debug("[ChestShop] Could not resolve item '{}' (normalised: '{}') at {} — " +
+                    "check the item ID is correct (e.g. 'thermal:copper_ingot' or 'diamond')",
+                    itemRaw, itemStr, signPos);
                 return Optional.empty();
             }
             shop.itemId      = WorthManager.getItemId(resolved);
@@ -279,12 +284,36 @@ public final class ShopParser {
     }
 
     /**
+     * Normalise an item string from a sign line for registry lookup.
+     * Handles spaces-as-underscores (display names), ellipsis truncation artefacts,
+     * and the unicode ellipsis character (…).
+     */
+    public static String normalizeItemStr(String raw) {
+        if (raw == null) return "";
+        // Strip colour codes first
+        String s = raw.replaceAll("§[0-9a-fA-FkKlLmMnNoOrR]", "").trim();
+        // Remove trailing ellipsis (…) — artefact of display truncation
+        if (s.endsWith("…") || s.endsWith("...")) {
+            // Truncated display — unusable for lookup; caller should handle
+            return s;
+        }
+        // Replace spaces with underscores (display names use spaces)
+        s = s.replace(" ", "_");
+        return s.toLowerCase();
+    }
+
+    /**
      * Build the 4 display lines to write back to the sign after validation.
+     *
+     * <p><b>Note:</b> These lines are purely cosmetic — the shop data lives in
+     * {@code shops.json} and is never re-parsed from the sign. It is therefore
+     * safe to shorten the item ID on the sign without losing data.
+     *
      * <ul>
      *   <li>Line 0 = owner  (§2 dark-green for admin, §b aqua for player)</li>
      *   <li>Line 1 = quantity</li>
      *   <li>Line 2 = formatted price (§a buy, §6 sell)</li>
-     *   <li>Line 3 = item id shortened, or §e§l? if still pending</li>
+     *   <li>Line 3 = smart-shortened item id, or §e§l? if still pending</li>
      * </ul>
      */
     public static String[] formatSignLines(ShopData shop) {
@@ -297,13 +326,12 @@ public final class ShopParser {
         if (shop.buyPrice  != null && shop.sellPrice != null) priceBuilder.append("§f:");
         if (shop.sellPrice != null) priceBuilder.append("§6S ").append(shop.sellPrice.toPlainString());
 
-        // Line 3: pending = yellow bold ?, assigned = shortened item id
+        // Line 3: pending = yellow bold ?, assigned = smart display name
         String itemLine;
         if (shop.itemPending || shop.itemId == null) {
             itemLine = "§e§l?";
         } else {
-            itemLine = shop.itemId.replace("minecraft:", "");
-            if (itemLine.length() > 15) itemLine = itemLine.substring(0, 15);
+            itemLine = buildItemDisplayName(shop.itemId);
         }
 
         return new String[] {
@@ -312,6 +340,31 @@ public final class ShopParser {
             priceBuilder.toString(),
             itemLine
         };
+    }
+
+    /**
+     * Build a display-friendly item name for a sign line (max ~16 visible chars).
+     *
+     * <p>Strategy:
+     * <ol>
+     *   <li>Strip {@code minecraft:} prefix — vanilla items show just the path</li>
+     *   <li>Modded items keep their namespace — {@code thermal:copper_ingot} is shown as-is
+     *       if it fits; otherwise abbreviated to {@code thermal:copper…}</li>
+     *   <li>Underscores replaced with spaces for readability</li>
+     * </ol>
+     */
+    public static String buildItemDisplayName(String fullId) {
+        if (fullId == null || fullId.isBlank()) return "?";
+        // Strip minecraft: namespace for vanilla items
+        String display = fullId.startsWith("minecraft:") ? fullId.substring(10) : fullId;
+        // Replace underscores with spaces for readability
+        display = display.replace("_", " ");
+        // Minecraft signs render ~16 chars per line — truncate with ellipsis if needed
+        if (display.length() > 16) {
+            // Try to keep namespace visible: "thermal:copper i…"
+            display = display.substring(0, 15) + "…";
+        }
+        return display;
     }
 }
 

@@ -5,6 +5,53 @@
 
 # ✅ Issues That Were Fixed
 
+- **Economy integration — ChestShop system missing: sign-based player shops, admin shops, item autofill, auto-assign owner**
+  *(Fixed: 2026-03-05)*
+
+  **Root causes:** No chest shop system existed at all. The `🎯 Additional Features` section listed it as a wanted feature.
+
+  **Implemented from ChestShop-3 (Bukkit plugin), converted to NeoForge:**
+
+  | Component | Details |
+  |---|---|
+  | `ShopData.java` | Data model — owner UUID/name, quantity, buy/sell prices, item ID, sign pos, chest pos, `itemPending` flag |
+  | `ShopManager.java` | Singleton, `ConcurrentHashMap` in-memory store, persisted to `neoessentials/shops.json` with atomic-move writes |
+  | `ShopParser.java` | Validates all 4 sign lines; blank line 0 auto-assigns player name; `?` on line 4 creates pending shop; item resolution via `WorthManager.resolveItem()` then vanilla registry; K/M price suffix support |
+  | `ShopTransaction.java` | BUY (right-click) and SELL (left-click) flows; uses `Container` interface for chest access; balance checks; rollback on failure |
+  | `ShopInteractHandler.java` | `PlayerInteractEvent.RightClickBlock` → BUY; `LeftClickBlock` → SELL; `BlockEvent.BreakEvent` → shop removal |
+  | `ShopSignHandler.java` | Deferred tick-check queue (NeoForge has no sign-update event); detects sign text after player finishes editing; blank owner auto-assign |
+  | `ShopCommand.java` | `/chestshop list [player]`, `info`, `convert`, `remove <x y z>`, `reload` — alias `/cshop` |
+
+  **Sign format:**
+  ```
+  Line 1: owner name or blank (auto-assigns)
+  Line 2: quantity (1-3456)
+  Line 3: B 10:S 5 / B 10 / S 5 / B FREE / supports K/M suffixes
+  Line 4: item name or ? (right-click with item to assign)
+  ```
+
+  **Integration:** `EconomyManager` (add/subtract balance), `PermissionAPI` (LuckPerms/FTBRanks respected), `WorthManager` (item resolution), `ConfigManager` (economy enabled check), `ResourceUtil` (shops.json path)
+
+  **Permissions:** `neoessentials.shop.create`, `shop.create.admin`, `shop.use`, `shop.list.others`, `shop.admin.remove`, `shop.admin.reload`
+
+- **Vault API — missing: Economy, Chat, and Permission Vault providers**
+  *(Fixed: 2026-03-05)*
+
+  **Root causes:** No Vault API implementation existed. Other mods using Vault could not hook into NeoEssentials economy or permissions.
+
+  **Implemented:**
+
+  | Component | Details |
+  |---|---|
+  | `NeoEssentialsEconomy` | `VaultEconomy` backed by `EconomyManager`; `format()` uses live `getCurrencySymbol()`; fires `EconomyDepositEvent`/`EconomyWithdrawEvent`; `createPlayerAccount()` uses `ConfigManager.getEconomyStartingBalance()` |
+  | `NeoEssentialsChat` | `VaultChat`; `getPlayerPrefix/getSuffix` routes through `PermissionAPI.getPrefix/getSuffix()` (respects LuckPerms → FTBRanks → internal) |
+  | `NeoEssentialsPermission` | `VaultPermission`; `playerHas()` → `PermissionAPI.hasPermission()` (external adapters respected); write ops via `PermissionManager`/`PermissionStorage` |
+  | `VaultManager` | Initialises/shuts down all three providers; lifecycle hooked into server start/stop in `NeoEssentials.java` |
+
+  **Fixed during audit:**
+  - `currencyNameSingular/Plural()` now reads from `EconomyManager.getCurrencySymbol()` (was hardcoded)
+  - `getPlayerPrefix/getSuffix` was going directly to internal `PermissionUser`, bypassing LuckPerms/FTBRanks — fixed to use `PermissionAPI`
+
 - **Console Spam**: Reduce the console spam — `LuckPermsAdapter.getPrefix()` and `PermissionAPI.getPrefix()` were logging at INFO level on every chat message/prefix lookup.
   *(Fixed: 2026-03-04)*
   - `LuckPermsAdapter.getPrefix()`: All ~20 `LOGGER.info()` diagnostic lines (the full `=== LUCKPERMS PREFIX REQUEST ===` block) changed to `LOGGER.debug()`. These fired on every single prefix lookup.

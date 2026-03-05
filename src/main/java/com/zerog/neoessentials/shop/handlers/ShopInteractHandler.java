@@ -65,7 +65,7 @@ public class ShopInteractHandler {
                     ShopSignHandler.writeSignLines(level, pos, ShopParser.formatSignLines(shop));
                     String currency = EconomyManager.getInstance().getCurrencySymbol();
                     player.sendSystemMessage(Component.literal(
-                        "§aItem set to §f" + shop.itemId.replace("minecraft:", "") + "§a!"));
+                        "§aItem set to §f" + ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
                     if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
                         "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
                     if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
@@ -174,7 +174,8 @@ public class ShopInteractHandler {
     private static void sendTransactionResult(ServerPlayer player, TransactionResult result,
                                               ShopData shop, boolean buying) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        String itemDisplay = shop.itemId.replace("minecraft:", "");
+        // Use buildItemDisplayName for readable modded item names (spaces, no namespace for vanilla)
+        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
         switch (result.type) {
             case SUCCESS -> {
                 if (buying) {
@@ -215,7 +216,7 @@ public class ShopInteractHandler {
 
     private static void sendShopInfo(ServerPlayer player, ShopData shop) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        String itemDisplay = shop.itemId != null ? shop.itemId.replace("minecraft:", "") : "?";
+        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
         player.sendSystemMessage(Component.literal("§6§l--- Shop Info ---"));
         player.sendSystemMessage(Component.literal("§eOwner: §f" + shop.ownerName));
         player.sendSystemMessage(Component.literal("§eItem:  §f" + shop.quantity + "x " + itemDisplay));

@@ -3,8 +3,6 @@ package com.zerog.neoessentials.shop;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.shop.model.ShopData;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -178,11 +176,12 @@ public final class ShopTransaction {
     // ── Inventory helpers (use Container interface — avoids protected getItems()) ──
 
     private static ItemStack resolveItem(String itemId) {
+        // Delegate to WorthManager which handles vanilla, modded, fuzzy, and namespaced IDs
         try {
-            String id = itemId.contains(":") ? itemId : "minecraft:" + itemId;
-            return BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(id))
-                .map(ItemStack::new).orElse(ItemStack.EMPTY);
-        } catch (Exception e) { return ItemStack.EMPTY; }
+            ItemStack result = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(itemId);
+            if (result != null && !result.isEmpty()) return result;
+        } catch (Exception ignored) {}
+        return ItemStack.EMPTY;
     }
 
     private static ChestBlockEntity getChest(ShopData shop, ServerLevel level) {
