@@ -46,10 +46,12 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 8;
+    private static final int CURRENT_LANG_VERSION = 10;
 
     /**
-     * Load translations from server directory, updating from JAR if needed
+     * Load translations from server directory, updating from JAR if needed.
+     * If the deployed file exists but is at an older version, any missing keys
+     * are merged in from the JAR without overwriting user edits.
      */
     private static void loadTranslations() {
         if (loaded) return;
@@ -73,13 +75,43 @@ public class MessageUtil {
         if (serverLangFile.exists() && serverLangFile.length() > 0) {
             finalTranslations = loadServerTranslations(serverLangFile);
             if (finalTranslations != null) {
+                // Version check — merge any new JAR keys without overwriting user edits
+                int deployedVersion = 0;
+                try {
+                    deployedVersion = Integer.parseInt(
+                        finalTranslations.getOrDefault(LANG_VERSION_KEY, "0"));
+                } catch (NumberFormatException ignored) {}
+
+                if (deployedVersion < CURRENT_LANG_VERSION) {
+                    LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
+                        deployedVersion, CURRENT_LANG_VERSION);
+                    Map<String, String> jarTranslations = loadJarTranslations();
+                    if (jarTranslations != null) {
+                        int added = 0;
+                        for (Map.Entry<String, String> e : jarTranslations.entrySet()) {
+                            if (!finalTranslations.containsKey(e.getKey())) {
+                                finalTranslations.put(e.getKey(), e.getValue());
+                                added++;
+                            }
+                        }
+                        finalTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
+                        try (java.io.FileWriter fw = new java.io.FileWriter(serverLangFile)) {
+                            new com.google.gson.GsonBuilder().setPrettyPrinting()
+                                .create().toJson(finalTranslations, fw);
+                        } catch (Exception ex) {
+                            LOGGER.warn("NeoEssentials: could not save merged lang file: {}", ex.getMessage());
+                        }
+                        LOGGER.info("NeoEssentials: merged {} new translation keys (total: {})",
+                            added, finalTranslations.size());
+                    }
+                }
                 translations.putAll(finalTranslations);
                 LOGGER.info("NeoEssentials: loaded {} translations", translations.size());
             } else {
                 LOGGER.error("Failed to load custom language file, will attempt to update from JAR");
             }
         }
-        // If file missing or unreadable, update from JAR
+        // If file missing or unreadable, deploy from JAR
         if (translations.isEmpty()) {
             Map<String, String> jarTranslations = loadJarTranslations();
             if (jarTranslations == null || jarTranslations.isEmpty()) {

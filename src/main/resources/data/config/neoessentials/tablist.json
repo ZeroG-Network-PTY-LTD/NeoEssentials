@@ -1,0 +1,99 @@
+{
+  "_configVersion": 1,
+  "_comment": "==========================================================",
+  "_comment2": "  NeoEssentials — Tablist Configuration (tablist.json)",
+  "_comment3": "  Reload in-game with: /tablist reload",
+  "_comment4": "==========================================================",
+
+  "tablist": {
+    "_doc_enabled": "Set to true to enable the custom tablist header/footer system. False restores vanilla tablist.",
+    "enabled": true,
+
+    "_doc_refreshInterval": "How often the tablist header/footer is updated, in ticks. 20 ticks = 1 second. Lower = smoother animation but more network traffic.",
+    "refreshInterval": 20,
+
+    "_doc_header": [
+      "The text displayed ABOVE the player list.",
+      "Supports an array of strings for animated frames (each frame shown for refreshInterval ticks).",
+      "Use a single string for a static header.",
+      "Colour codes: use & followed by the code (0-9, a-f, k, l, m, n, o, r).",
+      "Available placeholders:",
+      "  {player}        — the viewing player's name",
+      "  {displayname}   — the viewing player's display name (nickname/prefix)",
+      "  {online}        — online player count (respects vanish hide setting)",
+      "  {max}           — server max player slots",
+      "  {ping}          — viewing player's ping in ms",
+      "  {world}         — current dimension path (overworld / the_nether / the_end)",
+      "  {tps}           — server TPS, colour-coded (green/yellow/red)",
+      "  {time}          — real-world server time (HH:mm)",
+      "  {server_name}   — server name from server.properties MOTD",
+      "  {x} {y} {z}     — viewing player's block coordinates",
+      "  {balance}       — viewing player's economy balance",
+      "  {prefix}        — viewing player's permission group prefix",
+      "  {suffix}        — viewing player's permission group suffix",
+      "  {group}         — viewing player's permission group name",
+      "  {newline}       — inserts a line break",
+      "  {bar}           — decorative separator line"
+    ],
+    "header": [
+      "&6&l{server_name} &8| &e{online}&8/&e{max} &7players",
+      "&6&l{server_name} &8| &eTPS: {tps}",
+      "&6&l{server_name} &8| &e{time}"
+    ],
+
+    "_doc_footer": [
+      "The text displayed BELOW the player list.",
+      "Same array animation and placeholder support as header."
+    ],
+    "footer": [
+      "&7TPS: {tps} &8| &7Ping: &a{ping}ms &8| &7{world}",
+      "&7Your coords: &e{x}&7, &e{y}&7, &e{z}",
+      "&7Balance: &a{balance} &8| &7Group: &e{group}"
+    ],
+
+    "_doc_playerFormat": [
+      "How each player's name appears in the player list rows.",
+      "Placeholders: {prefix}, {player}, {suffix}, {displayname}, {group}",
+      "This controls the display name shown next to the player's head in the tablist."
+    ],
+    "playerFormat": "&f{prefix}&r{player}{suffix}",
+
+    "_doc_hideVanished": "When true, vanished players are hidden from the {online} count and from other players' tablists. Players with 'neoessentials.vanish.see' still see vanished players.",
+    "hideVanished": true,
+
+    "_doc_showAfkIndicator": "When true, AFK players have the afkSuffix appended to their name in the tablist.",
+    "showAfkIndicator": true,
+
+    "_doc_afkSuffix": "The text appended to AFK players' names in the tablist. Supports colour codes with &.",
+    "afkSuffix": " &7[AFK]",
+
+    "_doc_groupColors": [
+      "Optional: per-group colour overrides for player names in the tablist.",
+      "If a player's group matches a key here, their name in the tablist is prefixed with that colour code.",
+      "Leave empty ({}) to use the default playerFormat only."
+    ],
+    "groupColors": {
+      "admin":   "&c",
+      "mod":     "&6",
+      "vip":     "&b",
+      "default": "&f"
+    },
+
+    "_doc_layout_examples": [
+      "--- Example: Simple static header/footer ---",
+      "  header: \"&6Welcome to My Server!\"",
+      "  footer: \"&7{online}/{max} online | {tps} TPS\"",
+      "",
+      "--- Example: Multi-line header using {newline} ---",
+      "  header: \"&6&lMy Server{newline}&7{online}/{max} players online\"",
+      "",
+      "--- Example: Animated frames (cycles every refreshInterval ticks) ---",
+      "  header: [",
+      "    \"&6&l★ My Server ★\",",
+      "    \"&e&l★ My Server ★\",",
+      "    \"&a&l★ My Server ★\"",
+      "  ]"
+    ]
+  }
+}
+

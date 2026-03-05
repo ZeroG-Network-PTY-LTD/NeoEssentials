@@ -138,13 +138,15 @@ public class TablistCommand {
     private static void showHelp(CommandSourceStack src) {
         src.sendSuccess(() -> Component.literal(
             "§6§lTablist Commands:\n" +
-            "§e/tablist reload §7— reload config\n" +
+            "§e/tablist reload §7— reload tablist.json config\n" +
             "§e/tablist enable §7— enable tablist\n" +
             "§e/tablist disable §7— disable tablist\n" +
             "§e/tablist preview §7— preview your header/footer\n" +
-            "§e/tablist set header <text> §7— set header override\n" +
-            "§e/tablist set footer <text> §7— set footer override\n" +
-            "§e/tablist info §7— show status"
+            "§e/tablist set header <text> §7— runtime header override\n" +
+            "§e/tablist set footer <text> §7— runtime footer override\n" +
+            "§e/tablist info §7— show status and config file path\n" +
+            "§e/tablist config §7— show current settings summary\n" +
+            "§7Config file: §fconfig/neoessentials/tablist.json"
         ), false);
     }
 }

@@ -41,6 +41,8 @@ public class TablistManager {
     private boolean hideVanished = true;
     private boolean showAfkIndicator = true;
     private String afkSuffix = " §7[AFK]";
+    /** Per-group colour overrides loaded from tablist.json groupColors section. */
+    private final Map<String, String> groupColors = new java.util.LinkedHashMap<>();
 
     // ── Runtime state ─────────────────────────────────────────────────────────
     private int headerFrame = 0;
@@ -59,19 +61,51 @@ public class TablistManager {
     // ── Initialisation ────────────────────────────────────────────────────────
     public void loadConfig() {
         try {
-            com.google.gson.JsonObject cfg = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
-            if (!cfg.has("tablist")) {
-                LOGGER.info("No tablist section in config — using defaults.");
+            // Prefer dedicated tablist.json; fall back to "tablist" section in config.json
+            com.google.gson.JsonObject tab = null;
+
+            // 1) Try standalone tablist.json first
+            try {
+                com.google.gson.JsonObject standalone = ConfigManager.getInstance()
+                    .getConfig(ConfigManager.TABLIST_CONFIG);
+                if (standalone != null && standalone.has("tablist")) {
+                    tab = standalone.getAsJsonObject("tablist");
+                    LOGGER.debug("TablistManager: loading from tablist.json");
+                }
+            } catch (Exception ex) {
+                LOGGER.debug("TablistManager: tablist.json not available, trying config.json fallback: {}", ex.getMessage());
+            }
+
+            // 2) Legacy fallback: "tablist" key inside config.json
+            if (tab == null) {
+                com.google.gson.JsonObject cfg = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
+                if (cfg != null && cfg.has("tablist")) {
+                    tab = cfg.getAsJsonObject("tablist");
+                    LOGGER.debug("TablistManager: loading from legacy tablist section in config.json");
+                }
+            }
+
+            if (tab == null) {
+                LOGGER.info("TablistManager: no tablist configuration found — using defaults.");
                 return;
             }
-            com.google.gson.JsonObject tab = cfg.getAsJsonObject("tablist");
 
-            enabled = tab.has("enabled") && tab.get("enabled").getAsBoolean();
-            refreshIntervalTicks = tab.has("refreshInterval") ? tab.get("refreshInterval").getAsInt() : 20;
-            hideVanished = !tab.has("hideVanished") || tab.get("hideVanished").getAsBoolean();
-            showAfkIndicator = !tab.has("showAfkIndicator") || tab.get("showAfkIndicator").getAsBoolean();
-            afkSuffix = tab.has("afkSuffix") ? tab.get("afkSuffix").getAsString() : " §7[AFK]";
-            playerFormat = tab.has("playerFormat") ? tab.get("playerFormat").getAsString() : playerFormat;
+            enabled            = !tab.has("enabled")           || tab.get("enabled").getAsBoolean();
+            refreshIntervalTicks = tab.has("refreshInterval")  ? tab.get("refreshInterval").getAsInt() : 20;
+            hideVanished       = !tab.has("hideVanished")       || tab.get("hideVanished").getAsBoolean();
+            showAfkIndicator   = !tab.has("showAfkIndicator")   || tab.get("showAfkIndicator").getAsBoolean();
+            afkSuffix          = tab.has("afkSuffix")
+                                    ? tab.get("afkSuffix").getAsString().replace("&", "§")
+                                    : " §7[AFK]";
+            playerFormat       = tab.has("playerFormat")        ? tab.get("playerFormat").getAsString() : playerFormat;
+
+            // Per-group colour overrides
+            groupColors.clear();
+            if (tab.has("groupColors") && tab.get("groupColors").isJsonObject()) {
+                for (var entry : tab.getAsJsonObject("groupColors").entrySet()) {
+                    groupColors.put(entry.getKey(), entry.getValue().getAsString().replace("&", "§"));
+                }
+            }
 
             headerFrames.clear();
             if (tab.has("header")) {
@@ -95,6 +129,11 @@ public class TablistManager {
 
             if (headerFrames.isEmpty()) headerFrames.add("§6§l{server_name}");
             if (footerFrames.isEmpty()) footerFrames.add("§7{online}§8/§7{max} online");
+
+            // Reset animation counters so changes take effect immediately on reload
+            headerFrame  = 0;
+            footerFrame  = 0;
+            tickCounter  = 0;
 
             LOGGER.info("TablistManager loaded — {} header frame(s), {} footer frame(s), refresh every {} ticks.",
                 headerFrames.size(), footerFrames.size(), refreshIntervalTicks);
@@ -220,9 +259,13 @@ public class TablistManager {
         String suffix = getPermissionSuffix(player);
         String group = getPermissionGroup(player);
 
+        // Apply per-group colour override to displayname if configured
+        String groupColor = groupColors.getOrDefault(group, groupColors.getOrDefault("default", ""));
+        String coloredDisplayName = groupColor.isEmpty() ? displayName : groupColor + displayName;
+
         text = text
             .replace("{player}", playerName)
-            .replace("{displayname}", displayName)
+            .replace("{displayname}", coloredDisplayName)
             .replace("{online}", String.valueOf(online))
             .replace("{max}", String.valueOf(max))
             .replace("{ping}", String.valueOf(ping))
@@ -314,6 +357,10 @@ public class TablistManager {
     // ── Public API ────────────────────────────────────────────────────────────
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public boolean isHideVanished() { return hideVanished; }
+    public int getRefreshIntervalTicks() { return refreshIntervalTicks; }
+    public int getHeaderFrameCount() { return headerFrames.size(); }
+    public int getFooterFrameCount() { return footerFrames.size(); }
 
     /** Runtime header override (first frame replaced). Cleared on reload. */
     public void setHeaderOverride(String text) {
@@ -351,6 +398,9 @@ public class TablistManager {
         server.execute(() -> updateAll(server));
     }
 }
+
+
+
 
 
 
