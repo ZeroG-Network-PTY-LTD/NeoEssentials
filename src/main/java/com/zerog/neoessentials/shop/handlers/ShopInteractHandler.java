@@ -3,6 +3,7 @@ package com.zerog.neoessentials.shop.handlers;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.shop.ShopManager;
+import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.ShopTransaction;
 import com.zerog.neoessentials.shop.ShopTransaction.TransactionResult;
 import com.zerog.neoessentials.shop.model.ShopData;
@@ -49,7 +50,36 @@ public class ShopInteractHandler {
 
         event.setCanceled(true);
 
-        // Owner right-clicks their own sign → show info instead of buying
+        // ── Item autofill: owner right-clicks a pending "?" shop with item in hand ──
+        if (shop.itemPending) {
+            if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+                net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
+                if (held.isEmpty()) {
+                    player.sendSystemMessage(Component.literal(
+                        "§eHold the item you want this shop to trade, then right-click the sign."));
+                } else {
+                    // Assign the held item
+                    shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                    shop.itemPending = false;
+                    ShopManager.getInstance().registerShop(shop); // re-save with updated data
+                    ShopSignHandler.writeSignLines(level, pos, ShopParser.formatSignLines(shop));
+                    String currency = EconomyManager.getInstance().getCurrencySymbol();
+                    player.sendSystemMessage(Component.literal(
+                        "§aItem set to §f" + shop.itemId.replace("minecraft:", "") + "§a!"));
+                    if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
+                        "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
+                    if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
+                        "§eSell price: §f" + currency + shop.sellPrice.toPlainString()));
+                    player.sendSystemMessage(Component.literal("§aShop is now active."));
+                }
+            } else {
+                player.sendSystemMessage(Component.literal("§cThis shop is not yet ready."));
+            }
+            return;
+        }
+
+        // ── Normal right-click = BUY ──────────────────────────────────────────
+        // Owner right-clicks their own active sign → show info instead of buying
         if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
             sendShopInfo(player, shop);
             return;
