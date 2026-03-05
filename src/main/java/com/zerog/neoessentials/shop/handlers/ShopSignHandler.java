@@ -18,6 +18,7 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -109,14 +110,17 @@ public class ShopSignHandler {
 
                 // Read text from the sign
                 String[] lines = readSignLines(sign);
-                // Only proceed if line 0 is non-empty (player finished editing)
-                if (lines[0].isBlank()) continue; // not yet edited
 
-                // If it doesn't look like a shop (no B or S on line 2), remove from pending silently
+                // Price line must have B or S to be a shop sign — skip silently if not
                 String priceLine = lines[ShopData.PRICE_LINE].toUpperCase().trim();
                 if (!priceLine.contains("B") && !priceLine.contains("S")) {
-                    iter.remove(); continue;
+                    // Not a shop sign — don't process yet, but also don't time out immediately
+                    // Wait for the timeout to clean it up
+                    continue;
                 }
+
+                // Quantity line must be non-empty before we can proceed
+                if (lines[ShopData.QUANTITY_LINE].isBlank()) continue;
 
                 iter.remove(); // done processing this pending entry
 
@@ -229,11 +233,11 @@ public class ShopSignHandler {
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SignBlockEntity sign)) return;
         for (int i = 0; i < 4 && i < lines.length; i++) {
-            final int lineIdx = i;
             final String text = lines[i] != null ? lines[i] : "";
             Component component = net.minecraft.network.chat.Component.literal(text);
+            final int capturedI = i;
             var currentText = sign.getFrontText();
-            var newText = currentText.setMessage(lineIdx, component);
+            var newText = currentText.setMessage(capturedI, component);
             sign.updateText(s -> newText, true);
         }
         sign.setChanged();

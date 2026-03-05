@@ -113,7 +113,7 @@ public final class ShopParser {
             shop.itemId   = null;
             shop.itemPending = true;
         } else {
-            ItemStack resolved = resolveItem(itemStr, level);
+            ItemStack resolved = resolveItem(itemStr);
             if (resolved == null || resolved.isEmpty()) {
                 LOGGER.debug("[ChestShop] Could not resolve item '{}' at {}", itemStr, signPos);
                 return Optional.empty();
@@ -225,9 +225,9 @@ public final class ShopParser {
 
     /**
      * Resolves an item name to an ItemStack.
-     * First tries WorthManager.resolveItem, then the vanilla registry.
+     * First tries WorthManager.resolveItem (handles aliases), then the vanilla registry.
      */
-    public static ItemStack resolveItem(String itemStr, ServerLevel level) {
+    public static ItemStack resolveItem(String itemStr) {
         // Try WorthManager first (handles aliases like "diamond", "iron_sword")
         try {
             ItemStack fromWorth = WorthManager.resolveItem(itemStr);
