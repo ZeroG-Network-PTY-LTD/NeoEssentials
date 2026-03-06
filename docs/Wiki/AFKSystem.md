@@ -1,56 +1,78 @@
 # AFK System
 
-## Config File: config.json (afk section)
-
-### Options
-- `enabled`: Enable/disable AFK system
-- `timeout`: Time in seconds before a player is marked AFK
-- `kickTimeout`: Time in seconds before AFK players are kicked (0 = disabled)
-- `afkkickMessage`: Message shown when kicked for AFK
-- `enableafkBroadcasts`: Enable AFK status broadcasts
-- `broadcastOnAfk`: Broadcast when a player goes AFK
-- `broadcastOnReturn`: Broadcast when a player returns
-- `afkMessage`: Message when player goes AFK
-- `returnMessage`: Message when player returns
-- `enableTablistIndicator`: Show AFK indicator in tablist
-- `tablistAfkPrefix`/`tablistAfkSuffix`: Tablist prefix/suffix for AFK players
-- `ignoreAfkInSleep`: Ignore AFK players for sleep checks
-- `enableActivityTracking`: Track player activity for AFK detection
-- `trackMovement`, `trackChat`, `trackCommands`, `trackInteractions`: What activities reset AFK timer
-- `movementThreshold`, `rotationThreshold`: Sensitivity for movement/rotation
-- `excludedCommands`: Commands that don't reset AFK
-- `autoSave`: Enable auto-saving AFK data
-- `saveInterval`: Interval for auto-save (seconds)
-
-### Example
-```json
-{
-  "enabled": true,
-  "timeout": 300,
-  "kickTimeout": 0,
-  "afkkickMessage": "Kicked for being AFK too long",
-  "enableafkBroadcasts": true,
-  "broadcastOnAfk": true,
-  "broadcastOnReturn": true,
-  "afkMessage": "{player} is now AFK",
-  "returnMessage": "{player} is no longer AFK",
-  "enableTablistIndicator": true,
-  "tablistAfkPrefix": "[AFK] ",
-  "tablistAfkSuffix": "",
-  "ignoreAfkInSleep": true,
-  "enableActivityTracking": true,
-  "trackMovement": true,
-  "trackChat": true,
-  "trackCommands": true,
-  "trackInteractions": true,
-  "movementThreshold": 0.1,
-  "rotationThreshold": 5.0,
-  "excludedCommands": ["afk", "list", "who", "tps", "ping", "help", "?"],
-  "autoSave": true,
-  "saveInterval": 60
-}
-```
+> **Version:** 1.0.2.6 · **Config:** `config.json` → `afk` section
 
 ---
 
-For more details, see the main documentation or ask in the Discord support server.
+## Overview
+
+The AFK system automatically marks players as AFK after a configurable period of inactivity, broadcasts status changes, shows an indicator in the tablist, and optionally kicks long-term AFK players.
+
+---
+
+## Config (`config.json` → `afk`)
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `true` | Enable/disable the AFK system |
+| `timeout` | `300` | Seconds of inactivity before a player is marked AFK |
+| `kickTimeout` | `0` | Seconds after going AFK before being kicked (0 = disabled) |
+| `afkkickMessage` | `"Kicked for being AFK too long"` | Message shown on AFK kick |
+| `enableafkBroadcasts` | `true` | Broadcast AFK status changes to all players |
+| `broadcastOnAfk` | `true` | Broadcast when a player goes AFK |
+| `broadcastOnReturn` | `true` | Broadcast when a player returns from AFK |
+| `afkMessage` | `"{player} is now AFK"` | Broadcast when going AFK (`{player}` placeholder) |
+| `returnMessage` | `"{player} is no longer AFK"` | Broadcast on return |
+| `enableTablistIndicator` | `true` | Show AFK indicator in tablist |
+| `tablistAfkPrefix` | `"[AFK] "` | Prefix added to tablist name for AFK players |
+| `tablistAfkSuffix` | `""` | Suffix added to tablist name for AFK players |
+| `ignoreAfkInSleep` | `true` | AFK players do not count for sleep percentage |
+| `enableActivityTracking` | `true` | Track player activity to detect inactivity |
+| `trackMovement` | `true` | Player movement resets AFK timer |
+| `trackChat` | `true` | Chat messages reset AFK timer |
+| `trackCommands` | `true` | Commands reset AFK timer |
+| `trackInteractions` | `true` | Block/entity interactions reset AFK timer |
+| `movementThreshold` | `0.1` | Minimum movement distance to count as activity |
+| `rotationThreshold` | `5.0` | Minimum look-rotation change to count as activity |
+| `excludedCommands` | `["afk","list","who","ping","help","?"]` | Commands that do NOT reset the AFK timer |
+| `autoSave` | `true` | Periodically save AFK state to disk |
+| `saveInterval` | `60` | Auto-save interval in seconds |
+
+---
+
+## Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/afk` | `/afk` | `neoessentials.afk` | Toggle your AFK status manually |
+| `/away` | alias | same | Alias |
+
+---
+
+## Permissions
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.afk` | ✅ | Use `/afk` to manually toggle AFK |
+| `neoessentials.afk.others` | 🔒 | Force another player in/out of AFK |
+| `neoessentials.afk.kickexempt` | 🔒 | Exempt from AFK kick timer |
+
+---
+
+## How It Works
+
+1. **Activity detection** — `AfkActivityHandler` listens for movement, chat, commands, and interactions. Each event that passes the threshold resets the player's inactivity timer.
+2. **AFK trigger** — After `timeout` seconds of no qualifying activity, `AfkManager` marks the player as AFK, broadcasts the message, and updates the tablist.
+3. **Return** — Any qualifying activity while AFK removes the AFK flag and broadcasts the return message.
+4. **Kick** — If `kickTimeout > 0`, a player who remains AFK longer than that value is kicked with `afkkickMessage`.
+5. **Sleep** — With `ignoreAfkInSleep: true`, AFK players are excluded from the sleep count so the night can be skipped without them.
+
+---
+
+## Anti-Spam Filter
+
+The activity tracker has a built-in repetitive-action filter. If the same action type occurs more than 30 times in 60 seconds the score increases — at 300+ the action no longer resets the timer, preventing AFK farms via automated clicking. The score decays naturally once the window expires.
+
+---
+
+*Back to [Wiki Home](Home)*

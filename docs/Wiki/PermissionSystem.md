@@ -1,6 +1,6 @@
 # NeoEssentials — Permission System
 
-> **Last updated:** 2026-03-01  
+> **Last updated:** 2026-03-06 · **Version:** 1.0.2.6  
 > **Source of truth:** `PermissionRegistry.registerAllPermissions()` in the mod source.  
 > All nodes listed here are **actively registered** and recognised by the permission engine.  
 > Nodes marked `✅ default` are granted to every player automatically (including non-OP).  

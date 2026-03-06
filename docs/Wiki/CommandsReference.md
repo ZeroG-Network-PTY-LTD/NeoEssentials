@@ -1,6 +1,6 @@
 # NeoEssentials — Complete Commands Reference
 
-> **Last Updated:** 2026-03-02  
+> **Last Updated:** 2026-03-06 · **Version:** 1.0.2.6  
 > All commands are prefixed with `/`. Permission nodes follow `neoessentials.<node>` pattern.  
 > `🔒` = op-only by default · `✅` = available to all players by default  
 > Square brackets `[x]` = optional · Angle brackets `<x>` = required · `|` = or

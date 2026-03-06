@@ -5,6 +5,24 @@
 
 # ✅ Issues That Were Fixed
 
+- **PowerTool system — powertools not firing on block right-clicks; dead PowertoolToggleCommand class causing stale per-item toggle check**
+  *(Fixed: 2026-03-06)*
+
+  **Root causes found:**
+
+  - **`ItemInteractionHandler` only subscribed to `RightClickItem`** — NeoForge fires `RightClickItem` only when the player clicks in the air. Clicking on a block fires `RightClickBlock`; clicking with nothing in air fires `RightClickEmpty`. Powertools were completely silent when the player aimed at any block.
+  - **`PowertoolToggleCommand.isPowertoolEnabled(uuid, itemId)` was the gate in the handler** — `PowertoolToggleCommand` is a dead legacy class with an empty `TOGGLES` map that was never populated. Every call returned `true` from the old per-item map (no entry = enabled), which accidentally masked the bug. But since the global per-player toggle in `PowertoolCommand.ptDisabled` was never checked by the handler, `/powertooltoggle` (the command players actually run) had zero effect.
+  - **`PowertoolToggleCommand` was still compiled and imported** — it registered a duplicate `/powertooltoggle` command (no-op after our fix) but its `isPowertoolEnabled()` signature accepted `(uuid, itemId)` which the handler was calling. The handler bypassed the real `PowertoolCommand.isPowertoolEnabled(uuid)` entirely.
+
+  **Fixes applied:**
+
+  | File | Change |
+  |---|---|
+  | `ItemInteractionHandler.java` | Added `onRightClickBlock` and `onRightClickEmpty` handlers, all delegating to `handlePowertool()`. Removed dead `PowertoolToggleCommand` import. Gate now correctly calls `PowertoolCommand.isPowertoolEnabled(playerUUID)` (global toggle). Added null-safety on `player.getServer()`. |
+  | `PowertoolToggleCommand.java` | Replaced entire class with a compatibility shim — `isPowertoolEnabled()` delegates to `PowertoolCommand.isPowertoolEnabled()`, `register()` is a no-op to prevent double-registration of `/powertooltoggle`. |
+
+---
+
 - **Economy integration — ChestShop system missing: sign-based player shops, admin shops, item autofill, auto-assign owner**
   *(Fixed: 2026-03-05)*
 
