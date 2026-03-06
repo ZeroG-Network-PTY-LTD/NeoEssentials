@@ -1,0 +1,35 @@
+name: 📝 FAQ Submission
+description: Submit a question to be added to the FAQ
+title: "[FAQ]: "
+labels: ["faq"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use this template to submit a question for the FAQ.
+        Include as much context as possible.
+
+  - type: input
+    id: question
+    attributes:
+      label: Question
+      description: The question you want answered
+      placeholder: What does this mod do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / Background
+      description: Any additional info, including where you saw this question (Discord, GitHub, etc.)
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposed-answer
+    attributes:
+      label: Proposed Answer
+      description: Your suggested answer
+    validations:
+      required: false

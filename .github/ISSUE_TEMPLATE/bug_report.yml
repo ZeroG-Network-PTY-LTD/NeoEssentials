@@ -1,0 +1,116 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in the mod (NeoForge only)
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug!
+        This mod is built for **NeoForge only**.
+        Please fill out all required fields so we can investigate properly.
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: Mod Version
+      description: What version of the mod are you using?
+      placeholder: e.g. 1.2.3
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft Version
+      description: What Minecraft version are you running?
+      placeholder: e.g. 1.20.1
+    validations:
+      required: true
+
+  - type: input
+    id: neoforge-version
+    attributes:
+      label: NeoForge Version
+      description: What version of NeoForge are you using?
+      placeholder: e.g. 20.4.123
+    validations:
+      required: true
+
+  - type: input
+    id: java-version
+    attributes:
+      label: Java Version
+      description: Output of `java -version`
+      placeholder: e.g. Java 17.0.10
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where does this issue occur?
+      options:
+        - Singleplayer
+        - Dedicated Server
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Place block
+        2. Right-click with item
+        3. Crash occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Crash Report
+      description: |
+        Please paste:
+        - latest.log
+        - debug.log (if available)
+        - FULL crash report (if applicable)
+
+        Use pastebin if the log is very large.
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I am using the latest version of the mod.
+          required: true
+        - label: I am using NeoForge (not Forge/Fabric).
+          required: true
+        - label: I have searched existing issues to avoid duplicates.
+          required: true
