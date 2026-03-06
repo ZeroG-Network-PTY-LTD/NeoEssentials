@@ -1,33 +1,145 @@
-## Utility Systems
+# Utility Systems
 
-### Features
-- **AFK System**: Automatic AFK detection, broadcasts, tablist indicator, activity tracking, AFK kick, and custom messages. Configurable via `afk` section in config.
-- **Nicknames**: Change player display names with `/nick` and `/realname` commands.
-- **Mail System**: (If implemented) Send/receive in-game mail/messages.
-- **MOTD**: Display server message of the day with `/motd` command.
-- **Near**: Show nearby players with `/near` command.
-- **Ping**: Check player/server latency with `/ping` command.
-- **Depth**: Show current depth with `/depth` command.
-- **GetPos**: Show player coordinates with `/getpos` command.
-- **List**: List online players with `/list` command.
-- **Seen**: Show last seen info for players with `/seen` command.
-- **HelpOp**: Send help requests to staff with `/helpop` command.
-- **Suicide**: Self-elimination with `/suicide` command.
-- **Rules**: Display server rules with `/rules` command.
+> **Version:** 1.0.2.6
 
-### Key Config Options (`config.json`)
-- `afk`: Enable/disable AFK system, timeouts, messages, tablist indicator, activity tracking, excluded commands, auto-save interval.
-- Other utility features are enabled/disabled via the `commands` section (e.g., `nick`, `motd`, `ping`, etc.).
+---
 
-### Commands
-- `/afk`, `/ignore`, `/unignore`, `/mute`, `/unmute`, `/msgtoggle`, `/socialspy`, `/mutelist`
-- `/nick`, `/realname`
-- `/motd`, `/near`, `/ping`, `/depth`, `/getpos`, `/list`, `/seen`, `/helpop`, `/suicide`, `/rules`
+## Overview
 
-### Permissions
-- Permissions for utility commands are typically `neoessentials.command.<command>` (e.g., `neoessentials.command.nick`).
-- AFK system may use `neoessentials.afk.*` for advanced features.
+Miscellaneous quality-of-life commands covering player info, server admin tools, world/environment manipulation, fun commands, and player state management.
 
-### Notes
-- Utility systems are highly configurable and cover quality-of-life features for players and staff.
-- Some features (e.g., mail) may require additional config or database support if implemented.
+---
+
+## Player Info Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/seen` | `/seen <player>` | `neoessentials.seen` | Show online/offline status with location or last-seen time |
+| `/near` | `/near [radius]` | `neoessentials.near` | List nearby players and their distance (default 200 blocks) |
+| `/ping` | `/ping [player]` | `neoessentials.ping` | Show connection latency (colour-coded) |
+| `/playtime` | `/playtime [player]` | `neoessentials.playtime` | Show total play time in h/m/s |
+| `/whois` | `/whois <player>` | `neoessentials.whois` | Show UUID, dimension, coords, gamemode, ping, health, food |
+| `/realname` | `/realname <nick>` | `neoessentials.realname` | Look up real username from nickname |
+| `/list` | `/list` | `neoessentials.list` | List online players with count |
+| `/who` | alias | same | Alias |
+| `/motd` | `/motd` | `neoessentials.motd` | Display server MOTD |
+| `/rules` | `/rules` | `neoessentials.rules` | Display server rules |
+| `/helpop` | `/helpop <message>` | `neoessentials.helpop` | Send message to online staff |
+| `/suicide` | `/suicide` | `neoessentials.suicide` | Kill yourself |
+
+---
+
+## Nicknames
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/nick` | `/nick <name\|off> [player]` | `neoessentials.nick` | Set a nickname |
+| `/nickname` | alias | same | Alias |
+
+Colour codes in nicks require `neoessentials.nick.color`. Setting others' nicks requires `neoessentials.nick.others`.
+
+---
+
+## Player State Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/fly` | `/fly [on\|off] [player]` | `neoessentials.fly` | Toggle flight |
+| `/god` | `/god [on\|off] [player]` | `neoessentials.god` | Toggle god mode |
+| `/heal` | `/heal [player]` | `neoessentials.heal` | Full health, hunger, and saturation |
+| `/feed` | `/feed [player]` | `neoessentials.feed` | Full hunger and saturation |
+| `/speed` | `/speed [walk\|fly] <0-10> [player]` | `neoessentials.speed` | Set walk or fly speed |
+| `/ext` | `/ext [player]` | `neoessentials.ext` | Extinguish fire |
+| `/extinguish` | alias | same | Alias |
+| `/burn` | `/burn <player> [seconds]` | `neoessentials.burn` | Set fire ticks on a player |
+| `/give` | `/give <player> <item> [amount]` | `neoessentials.give` | Give items to a player |
+| `/more` | `/more [amount]` | `neoessentials.more` | Fill held stack to max |
+| `/hat` | `/hat` | `neoessentials.hat` | Wear held item as helmet |
+| `/exp` | `/exp [show\|set\|give] [amount] [player]` | `neoessentials.exp` | Show, set, or give XP |
+| `/gamemode` | `/gamemode <mode\|0-3> [player]` | `neoessentials.gamemode` | Change gamemode |
+| `/gms`, `/gmc`, `/gma`, `/gmsp` | shortcut | same | Gamemode shortcuts |
+
+---
+
+## Per-Player Time & Weather
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/ptime` | `/ptime [reset\|day\|noon\|night\|<ticks>] [player]` | `neoessentials.ptime` | Set client-side time (server time unaffected) |
+| `/pweather` | `/pweather [reset\|sun\|storm\|clear\|rain] [player]` | `neoessentials.pweather` | Set client-side weather |
+
+---
+
+## Server Admin Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/broadcast` | `/broadcast <message>` | `neoessentials.broadcast` | Server-wide announcement |
+| `/bc`, `/announce` | aliases | same | Aliases |
+| `/broadcastworld` | `/broadcastworld <message>` | `neoessentials.broadcastworld` | Broadcast to current world only |
+| `/bcastworld` | alias | same | Alias |
+| `/time` | `/time [set\|add] <value\|day\|night…>` | `neoessentials.time` | Get/set server time |
+| `/day`, `/night` | shortcuts | same | Shortcuts |
+| `/weather` | `/weather <sun\|storm\|thunder> [dur]` | `neoessentials.weather` | Set server weather |
+| `/sun`, `/storm`, `/thunder` | shortcuts | same | Shortcuts |
+| `/sudo` | `/sudo <player> <command>` | `neoessentials.sudo` | Run a command as another player |
+| `/gc` | `/gc` | `neoessentials.gc` | Show TPS, memory, uptime, chunks |
+| `/mem` | alias | same | Alias |
+| `/backup` | `/backup` | `neoessentials.backup` | Trigger a server backup |
+| `/kill` | `/kill <player>` | `neoessentials.kill` | Kill a player |
+| `/spawner` | `/spawner <mob>` | `neoessentials.spawner` | Set spawner type at looked block |
+| `/spawnmob` | `/spawnmob <mob> [amount] [player]` | `neoessentials.spawnmob` | Spawn entities at a player |
+| `/mob` | alias | same | Alias |
+| `/effect` | `/effect <player> <effect\|clear> [dur] [amp]` | `neoessentials.effect` | Apply/clear potion effects |
+| `/unlimited` | `/unlimited [list\|clear\|<item\|hand>] [player]` | `neoessentials.unlimited` | Unlimited item mode (never depleted) |
+| `/recipe` | `/recipe [item]` | `neoessentials.recipe` | Unlock crafting recipes for an item |
+
+---
+
+## World Interaction
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/fireball` | `/fireball [type] [speed] [ride]` | `neoessentials.fireball.<type>` | Shoot a projectile (11 types) |
+| `/tree` | `/tree <type>` | `neoessentials.tree` | Grow a tree at your feet |
+| `/bigtree` | `/bigtree` | `neoessentials.tree` | Grow a big tree |
+| `/break` | `/break` | `neoessentials.break` | Instantly break looked-at block |
+| `/ice` | `/ice [player]` | `neoessentials.ice` | Fully freeze a player (powder snow mechanic) |
+| `/lightning` | `/lightning [player]` | `neoessentials.lightning` | Strike lightning |
+| `/smite` | alias | same | Alias |
+| `/remove` | `/remove <type> [radius]` | `neoessentials.remove` | Remove entities by type in radius |
+| `/nuke` | `/nuke` | `neoessentials.nuke` | Remove all nearby entities |
+| `/tptoggle` | `/tptoggle [on\|off]` | `neoessentials.tptoggle` | Toggle receiving TP requests |
+| `/msgtoggle` | `/msgtoggle [on\|off]` | `neoessentials.msgtoggle` | Toggle receiving private messages |
+| `/rtoggle` | `/rtoggle [on\|off]` | `neoessentials.rtoggle` | Toggle receiving `/reply` messages |
+
+---
+
+## Fun Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/me` | `/me <action>` | `neoessentials.me` | Broadcast a third-person action message |
+| `/firework` | `/firework` | `neoessentials.firework` | Launch a firework |
+| `/antioch` | `/antioch` | `neoessentials.antioch` | Launch a Holy Hand Grenade 🐇 |
+| `/kittycannon` | `/kittycannon` | `neoessentials.kittycannon` | Launch a kitten |
+| `/beezooka` | `/beezooka` | `neoessentials.beezooka` | Launch bees |
+| `/rest` | `/rest` | `neoessentials.rest` | Skip the night (vote) |
+| `/info` | `/info` | `neoessentials.info` | Show server/mod info |
+| `/itemdb` | `/itemdb [item]` | `neoessentials.itemdb` | Show registry info for held/named item |
+
+---
+
+## Mail
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/mail read` | `/mail read [page]` | `neoessentials.mail` | Read your mail |
+| `/mail send` | `/mail send <player> <message>` | `neoessentials.mail.send` | Send mail |
+| `/mail sendtemp` | `/mail sendtemp <player> <duration> <message>` | `neoessentials.mail.sendtemp` | Send expiring mail |
+| `/mail sendall` | `/mail sendall <message>` | `neoessentials.mail.sendall` | Broadcast mail to all players |
+| `/mail clear` | `/mail clear [index]` | `neoessentials.mail` | Clear your mailbox or specific message |
+
+---
+
+*Back to [Wiki Home](Home)*
