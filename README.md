@@ -1,11 +1,6 @@
 # NeoEssentials
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1--1.21.11-brightgreen.svg)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.179+-blue.svg)](https://neoforged.net/)
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-1.0.2.3-brightgreen.svg)]()
-[![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
-
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-blue.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
 > NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 1.21.1 - 1.21.11 servers. It provides 50+ commands, GUI tools, advanced administration, and a real-time web dashboard—all managed by modular JSON config files and standardized documentation.
 
 ## 🌟 Overview
@@ -31,19 +26,20 @@ NeoEssentials brings essential server management, player utilities, and advanced
 
 ## 📖 Documentation
 
-Start at [docs/Wiki/Home.md](docs/Wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
-  - [EconomySystem](docs/Wiki/EconomySystem.md)
-  - [ChatSystem](docs/Wiki/ChatSystem.md)
-  - [ModerationSystem](docs/Wiki/ModerationSystem.md)
-  - [TeleportationSystem](docs/Wiki/TeleportationSystem.md)
-  - [KitManagement](docs/Wiki/KitManagement.md)
-  - [WebDashboard](docs/Wiki/WebDashboard.md)
-  - [PermissionSystem](docs/Wiki/PermissionSystem.md)
-  - [ItemManagement](docs/Wiki/ItemManagement.md)
-  - [UtilitySystems](docs/Wiki/UtilitySystems.md)
-  - [APISystem](docs/Wiki/APISystem.md)
-  - [AFKSystem](docs/Wiki/AFKSystem.md)
-See [docs/Wiki/APISystem.md](docs/Wiki/APISystem.md) for API & Placeholder System details, including:
+Start at [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
+  - [EconomySystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/EconomySystem.md)
+  - [ChatSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ChatSystem.md)
+  - [ModerationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ModerationSystem.md)
+  - [TeleportationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/TeleportationSystem.md)
+  - [KitManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/KitManagement.md)
+  - [WebDashboard](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/WebDashboard.md)
+  - [PermissionSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/PermissionSystem.md)
+  - [ItemManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ItemManagement.md)
+  - [UtilitySystems](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/UtilitySystems.md)
+  - [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md)
+  - [AFKSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/AFKSystem.md)
+
+See [APISystem.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md) for API & Placeholder System details, including:
   - PlaceholderAPI integration for dynamic text
   - Custom and expansion placeholders
   - Web Dashboard REST API endpoints for server status, player info, logs, config, events, and statistics
@@ -78,15 +74,15 @@ For LuckPerms users:
 
 ## 🎮 Command Reference
 
-See [docs/Wiki/Home.md](docs/Wiki/Home.md) and individual system docs above for full command lists and config options.
+See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and individual system docs above for full command lists and config options.
 
 ## 🔧 Configuration Examples
 
-All features are managed by modular JSON config files. See [docs/Wiki/Home.md](docs/Wiki/Home.md) and system docs above for details.
+All features are managed by modular JSON config files. See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and system docs above for details.
 
 ## 🔗 API Integration for Modders
 
-See [docs/Wiki/APISystem.md](docs/Wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
+See [APISystem.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
 - Registering custom placeholders
 - Using REST API endpoints for server data
 - Economy API for mod integration
@@ -133,7 +129,7 @@ Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
 - **Bug Reports**: Report issues and bugs through GitHub or Discord
 - **Feature Requests**: Suggest new features and improvements
-- **Documentation**: See [docs/Wiki/Home.md](docs/Wiki/Home.md) and system docs above
+- **Documentation**: See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and system docs above
 
 ## 📄 License
 
