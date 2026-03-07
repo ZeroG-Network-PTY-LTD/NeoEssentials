@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="NeoEssentials:test" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="com.zerog.neoessentials" external.system.module.type="sourceSet" external.system.module.version="1.0.2.5+build.786" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <output-test url="file://$MODULE_DIR$/../../build/classes/java/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/test" />
+    <orderEntry type="jdk" jdkName="temurin-21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="NeoEssentials.main" />
+    <orderEntry type="library" name="Gradle: org.java-websocket:Java-WebSocket:1.5.7" level="project" />
+    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:2.0.6" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="NeoEssentials.main" />
+</module>
