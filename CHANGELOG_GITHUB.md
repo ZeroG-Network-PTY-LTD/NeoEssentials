@@ -6,6 +6,36 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.19] — 2026-04-01
+
+### Documentation — `allowUnsafeCommands` & Security Configuration
+
+#### `SplitConfigs.md` — Security Configuration section (complete rewrite)
+- **Fixed** The previous `allowUnsafeCommands` entry had the **wrong description** ("Allow enchantments and item operations beyond vanilla limits") — that describes `items.unsafe-enchantments`, not the security command filter.  Corrected to accurately reflect what the option does.
+- **Added** Full `security.json` / `config.json → security` reference table covering all six keys: `enableInputValidation`, `maxCommandLength`, `maxReasonLength`, `allowUnsafeCommands`, `enablePathTraversalProtection`, `enableXSSProtection`.
+- **Added** Detailed `allowUnsafeCommands` breakdown including:
+  - Every blocked substring (with explanations for each category: destructive ops, code-execution, path traversal, shell operators, URL injection, reflection).
+  - The character allowlist (`A-Z a-z 0-9 _ - / (space) : . & # ~`) and which common characters fall outside it (`@`, `{`, `%`, `=`, `!`, etc.).
+  - Explicit call-out that **tilde (`~`) is blocked** even though it's used for Minecraft relative coordinates — the most common cause of the confusing error message.
+  - Table of commands that **work by default** and table of commands that need `allowUnsafeCommands: true`.
+  - Step-by-step instructions for enabling in both split-config and monolithic mode, with `/neoe reload` reminder.
+  - Security recommendation: restrict `neoessentials.item.powertool` to trusted staff when enabling.
+
+#### `ItemManagement.md` — Powertool Command Safety Filter section (new)
+- **Added** "Command Safety Filter" subsection directly below the powertool how-it-works bullets.
+- Shows the exact error messages players receive when a command is blocked.
+- Quick-reference tables of commands that work vs. commands that need `allowUnsafeCommands: true`.
+- Config path for both split and monolithic mode, with `/neoe reload` shortcut.
+- Cross-link to the full Security Configuration section in `SplitConfigs.md`.
+
+#### `CommandsReference.md` — Powertool note (new)
+- **Added** Callout block beneath the `/powertool` / `/pt` rows explaining the command filter, the most common blocked patterns (`~`, `@`, `{`), and where to set `allowUnsafeCommands: true`.
+
+#### `Home.md` — Getting started key files (updated)
+- **Added** `security.json` to the getting-started key config files list with a brief description.
+
+---
+
 ## [1.0.2.6+build.18] — 2026-04-01
 
 ### New Feature — Fallback to Vanilla OP Permissions

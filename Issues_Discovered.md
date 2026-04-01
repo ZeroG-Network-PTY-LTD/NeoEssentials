@@ -360,6 +360,17 @@
 
 # Improvements Done 
 
+- **Documentation Update: allowUnsafeCommands Config** *(build #19)*
+    - ✅ Fixed wrong `allowUnsafeCommands` description in `SplitConfigs.md` — it incorrectly said "Allow enchantments and item operations beyond vanilla limits" (that's `items.unsafe-enchantments`). Now accurately describes the command safety filter used by `/powertool`.
+    - ✅ Added complete `security.json` reference table covering all six keys (`enableInputValidation`, `maxCommandLength`, `maxReasonLength`, `allowUnsafeCommands`, `enablePathTraversalProtection`, `enableXSSProtection`) with types, defaults, and descriptions.
+    - ✅ Documented every blocked substring in the dangerous-pattern check (destructive ops, code-execution, path traversal, shell operators, URL injection, reflection) with explanations.
+    - ✅ Documented the character allowlist and which common characters fall outside it (`@`, `{`, `%`, `=`, etc.).
+    - ✅ Explicitly called out that tilde `~` (Minecraft relative coordinates, e.g. `/tp ~ 100 ~`) is blocked by default — the most common cause of the confusing "dangerous operations" error for powertool users.
+    - ✅ Added tables of commands that work by default vs. commands requiring `allowUnsafeCommands: true`, with step-by-step enable instructions for both split-config and monolithic mode.
+    - ✅ Added "Command Safety Filter" subsection to `ItemManagement.md` under Powertool — exact error messages, quick-reference tables, config locations, and cross-link to `SplitConfigs.md`.
+    - ✅ Added warning callout on the `/powertool` row in `CommandsReference.md` naming the most common blocked patterns and linking to the full docs.
+    - ✅ Added `security.json` to the getting-started key files list in `Home.md`.
+
 - **Fallback to Vanilla OP Permissions** *(build #18)*
     - ✅ Added `permissions.vanillaOpFallback` config key (default `true`). After all permission systems (external adapter + internal manager) have been consulted and returned `false`, OPs (level 2+) are granted access as a last-resort safety net — distinct from `opsBypassPermissions` which skips checks entirely.
     - ✅ Permission system init failure no longer crashes the server with `RuntimeException`. Instead, `PermissionAPI.setEmergencyMode(true)` is activated: OPs get all permissions, non-OPs are denied, and a prominent boxed `ERROR` is logged at startup.

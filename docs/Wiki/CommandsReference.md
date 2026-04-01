@@ -263,6 +263,11 @@
 | `/clear` | alias for `/clearinventory` | same | 🔒 | Alias |
 | `/powertool` | `/powertool <command>` or `/powertool clear` | `neoessentials.item.powertool` | 🔒 | Bind a command to held item |
 | `/pt` | alias for `/powertool` | same | 🔒 | Alias (also alias for paytoggle — use with care) |
+
+> **⚠️ Powertool command filter** — by default, commands containing relative coordinates (`~`), `@` selectors, `{...}` NBT, or shell-like characters are blocked.  
+> Set `allowUnsafeCommands: true` in `security.json` (or `config.json → security`) and run `/neoe reload` to unlock all patterns.  
+> See [Security Configuration](SplitConfigs#security-configuration-securityjson) for the full list of blocked patterns and examples.
+
 | `/invsee` | `/invsee <player>` | `neoessentials.item.invsee` | 🔒 | View another player's inventory (read-only) |
 | `/inv` | alias for `/invsee` | same | 🔒 | Alias |
 | `/invseeedit` | `/invseeedit <player>` | `neoessentials.item.invsee.edit` | 🔒 | View and edit another player's inventory |
