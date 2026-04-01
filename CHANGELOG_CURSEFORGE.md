@@ -4,6 +4,16 @@
 
 ---
 
+## 1.0.2.6+build.23 — 2026-04-01
+
+### 📋 New Feature — Permission Audit Logging
+
+- **Added** `PermissionAuditLogger` — every permission change made through NeoEssentials commands is now written to `neoessentials/permissions_audit.log` (append-only). Includes timestamp, executor name, action type, affected target, and detail string.
+- **17 actions tracked:** user group set, user perm add/remove/clear, group create/delete/rename/clone, group perm add/remove/clear, group inherit add/remove, group prefix/suffix/priority set, and permissions reload.
+- **Added** `permissions.auditLogging` config key (default `true`). Set to `false` to disable.
+
+---
+
 ## 1.0.2.6+build.22 — 2026-04-01
 
 ### ⚖️ Improvement — Permission Groups & Priorities + Permission Suggestions

@@ -15,6 +15,7 @@ import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.permissions.PermissionGroup;
 import com.zerog.neoessentials.permissions.PermissionUser;
 import com.zerog.neoessentials.permissions.PermissionStorage;
+import com.zerog.neoessentials.permissions.PermissionAuditLogger;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.EconomyPlayerUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -377,6 +378,16 @@ public class PermissionsCommand {
                     .executes(ctx -> debugPlayerPermissions(ctx))));
     }
 
+    /** Returns the player name or "CONSOLE" for non-player sources. */
+    private static String getExecutorDisplay(CommandContext<CommandSourceStack> ctx) {
+        try {
+            ServerPlayer p = ctx.getSource().getPlayer();
+            return p != null ? p.getGameProfile().getName() : "CONSOLE";
+        } catch (Exception e) {
+            return "CONSOLE";
+        }
+    }
+
     private static int reload(CommandContext<CommandSourceStack> ctx) {
         // Validate admin permission for reloading permissions
         PermissionValidator.PermissionResult permResult = 
@@ -388,6 +399,7 @@ public class PermissionsCommand {
         
         try {
             com.zerog.neoessentials.permissions.PermissionSystem.reload();
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.PERMISSIONS_RELOADED, "-", "full reload via /permissions reload");
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
@@ -438,6 +450,7 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             LOGGER.info("Set prefix '{}' for group '{}'", prefix, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PREFIX_SET, groupName, "prefix=\"" + prefix + "\"");
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
             return 1;
         } catch (Exception e) {
@@ -488,6 +501,7 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             LOGGER.info("Set suffix '{}' for group '{}'", suffix, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_SUFFIX_SET, groupName, "suffix=\"" + suffix + "\"");
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
             return 1;
         } catch (Exception e) {
@@ -516,6 +530,7 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             LOGGER.info("Set priority {} for group '{}'", priority, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PRIORITY_SET, groupName, "priority=" + priority);
             ctx.getSource().sendSuccess(() -> MessageUtil.success(
                 "Priority for group '" + groupName + "' set to " + priority + "."), false);
             return 1;
@@ -587,6 +602,7 @@ public class PermissionsCommand {
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
                 LOGGER.info("Added permission '{}' to group '{}'", perm, groupName);
+                PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERM_ADDED, groupName, "node=" + perm);
             } catch (Exception e) { 
                 LOGGER.error("Failed to save permissions after adding group permission", e);
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
@@ -662,6 +678,7 @@ public class PermissionsCommand {
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
                 LOGGER.info("Removed permission '{}' from group '{}'", perm, groupName);
+                PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERM_REMOVED, groupName, "node=" + perm);
             } catch (Exception e) { 
                 LOGGER.error("Failed to save permissions after removing group permission", e); 
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
@@ -729,6 +746,7 @@ public class PermissionsCommand {
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
                 LOGGER.info("Set group '{}' for user '{}'", groupName, playerName);
+                PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_GROUP_SET, playerName, "group=" + groupName);
             } catch (Exception e) { 
                 LOGGER.error("Failed to save permissions after setting user group", e); 
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
@@ -794,6 +812,7 @@ public class PermissionsCommand {
         try { 
             PermissionStorage.save(PermissionAPI.getManager()); 
             LOGGER.info("Added permission '{}' to user '{}'", perm, playerName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERM_ADDED, playerName, "node=" + perm);
         } catch (Exception e) { 
             LOGGER.error("Failed to save permissions after adding user permission", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
@@ -844,6 +863,7 @@ public class PermissionsCommand {
         try { 
             PermissionStorage.save(PermissionAPI.getManager()); 
             LOGGER.info("Removed permission '{}' from user '{}'", perm, playerName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERM_REMOVED, playerName, "node=" + perm);
         } catch (Exception e) { 
             LOGGER.error("Failed to save permissions after removing user permission", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
@@ -1146,6 +1166,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Created group: " + groupName), false);
             LOGGER.info("Created new permission group: {}", groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CREATED, groupName, "new group");
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after creating group", e);
@@ -1183,6 +1204,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Deleted group: " + groupName), false);
             LOGGER.info("Deleted permission group: {}", groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_DELETED, groupName, "group deleted");
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after deleting group", e);
@@ -1236,6 +1258,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Renamed group '" + oldName + "' to '" + newName + "'"), false);
             LOGGER.info("Renamed permission group '{}' to '{}'", oldName, newName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_RENAMED, oldName, "newName=" + newName);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after renaming group", e);
@@ -1281,6 +1304,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Cloned group '" + sourceName + "' to '" + newName + "'"), false);
             LOGGER.info("Cloned permission group '{}' to '{}'", sourceName, newName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CLONED, sourceName, "newGroup=" + newName);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after cloning group", e);
@@ -1313,6 +1337,7 @@ public class PermissionsCommand {
             PermissionStorage.save(PermissionAPI.getManager());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Cleared " + count + " permissions from group: " + groupName), false);
             LOGGER.info("Cleared all permissions from group '{}'", groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERMS_CLEARED, groupName, "all nodes removed");
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after clearing group", e);
@@ -1353,6 +1378,7 @@ public class PermissionsCommand {
             PermissionStorage.save(PermissionAPI.getManager());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Cleared " + count + " permissions from user: " + playerName), false);
             LOGGER.info("Cleared all permissions from user '{}'", playerName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERMS_CLEARED, playerName, "all direct nodes removed");
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after clearing user", e);
@@ -1402,6 +1428,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Group '" + groupName + "' now inherits from '" + inheritGroup + "'"), false);
             LOGGER.info("Added inheritance from '{}' to group '{}'", inheritGroup, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_INHERIT_ADDED, groupName, "inherits=" + inheritGroup);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after adding inheritance", e);
@@ -1440,6 +1467,7 @@ public class PermissionsCommand {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("Removed inheritance of '" + inheritGroup + "' from group '" + groupName + "'"), false);
             LOGGER.info("Removed inheritance from '{}' from group '{}'", inheritGroup, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_INHERIT_REMOVED, groupName, "removed=" + inheritGroup);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions after removing inheritance", e);

@@ -330,32 +330,24 @@
     - REST API endpoints for external tools and dashboards.
     - Documentation for developers to extend NeoEssentials easily.
 
-- **Permissions Fallback to OP**  
-  Add a safeguard so that vanilla OP status is always respected:
-    - Ensures operators retain access even if configs or FTB Ranks fail.
-    - Prevents lockouts and reduces downtime.
-    - Acts as a fallback layer when external permissions are misconfigured.
-- **Permissions System Improvements**:
-  - Wildcard & Hierarchical Permissions: Support for wildcards (e.g., neoessentials.*) and hierarchical permission inheritance, so granting a parent node gives access to all child nodes.
-    Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
-    Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
-    Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
+- **Permissions System Improvements** (remaining items):
+  - Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
     Permission Expiry: Support temporary permissions that expire after a set time or event.
     API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
     Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.
-    Audit Logging: Log permission changes, grants, and denials for security and debugging.
     GUI Management: Provide a web or in-game GUI for managing permissions, groups, and users.
     Integration with External Systems: Improve and document integration with LuckPerms, FTB Ranks, and other permission mods, including fallback logic.
     Fine-Grained Command Control: Allow per-argument or per-subcommand permissions (e.g., /home set vs /home delete).
     Custom Permission Conditions: Allow custom logic for permission checks (e.g., based on player stats, inventory, or server state).
-- **Documentation Update: allowUnsafeCommands Config**  
-  Add a new section to the NeoEssentials documentation explaining the `allowUnsafeCommands` option.
-    - Clarify where the option is located when configs are split into multiple JSON files.
-    - Provide examples of usage and defaults.
-    - Reduce confusion for server admins by making the config structure easier to follow.
-    - Feedback from community (JJ {MrWhiteFlamesYT}, Chaz) highlighted that split JSON configs can be confusing, so clearer docs would help.
 
 # Improvements Done 
+
+- **Permission Audit Logging** *(build #23)*
+    - ✅ Created `PermissionAuditLogger.java` — persistent, append-only log written to `neoessentials/permissions_audit.log` (UTC timestamps, UTF-8). Each line records the timestamp, action type (padded for alignment), executor display name, target (group or player), and a detail string.
+    - ✅ 17 action constants tracked: `USER_GROUP_SET`, `USER_PERM_ADDED`, `USER_PERM_REMOVED`, `USER_PERMS_CLEARED`, `GROUP_CREATED`, `GROUP_DELETED`, `GROUP_RENAMED`, `GROUP_CLONED`, `GROUP_PERM_ADDED`, `GROUP_PERM_REMOVED`, `GROUP_PERMS_CLEARED`, `GROUP_INHERIT_ADDED`, `GROUP_INHERIT_REMOVED`, `GROUP_PREFIX_SET`, `GROUP_SUFFIX_SET`, `GROUP_PRIORITY_SET`, `PERMISSIONS_RELOADED`.
+    - ✅ `getExecutorDisplay()` helper added to `PermissionsCommand` — logs the player's name for in-game commands or `"CONSOLE"` for server-side execution.
+    - ✅ `PermissionAuditLogger.log()` calls added after every successful permission modification in `PermissionsCommand.java` (all 16 mutation paths + reload).
+    - ✅ Added `permissions.auditLogging` config key (default `true`) to `config.json`. `ConfigManager.isPermissionAuditEnabled()` public method added. When `false`, all log calls are no-ops.
 
 - **Permission Groups & Priorities + Permission Suggestions** *(build #22)*
     - ✅ Added `priority` (int, default `0`) field to `PermissionGroup`. Higher priority groups are checked first during inheritance resolution — both the positive-grant and negative-deny passes sort inherited groups by `priority` descending before recursing.

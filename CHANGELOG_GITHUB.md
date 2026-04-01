@@ -6,6 +6,44 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.23] — 2026-04-01
+
+### New Feature — Permission Audit Logging
+
+#### `PermissionAuditLogger` — persistent append-only audit trail
+- **Added** `PermissionAuditLogger.java` — writes every permission modification to `neoessentials/permissions_audit.log` (append-only, UTF-8).
+- **Log format:** `[YYYY-MM-DD HH:mm:ss UTC]  ACTION                   | executor=<name> | target=<group/player> | <detail>`
+- **17 tracked events:**
+
+  | Action constant | Trigger |
+  |---|---|
+  | `USER_GROUP_SET` | `/permissions user <p> setgroup <g>` |
+  | `USER_PERM_ADDED` | `/permissions user <p> add <node>` |
+  | `USER_PERM_REMOVED` | `/permissions user <p> remove <node>` |
+  | `USER_PERMS_CLEARED` | `/permissions user <p> clear` |
+  | `GROUP_CREATED` | `/permissions create group <g>` |
+  | `GROUP_DELETED` | `/permissions delete group <g>` |
+  | `GROUP_RENAMED` | `/permissions rename group <old> <new>` |
+  | `GROUP_CLONED` | `/permissions clone group <src> <new>` |
+  | `GROUP_PERM_ADDED` | `/permissions group <g> add <node>` |
+  | `GROUP_PERM_REMOVED` | `/permissions group <g> remove <node>` |
+  | `GROUP_PERMS_CLEARED` | `/permissions group <g> clear` |
+  | `GROUP_INHERIT_ADDED` | `/permissions group <g> inherit add <p>` |
+  | `GROUP_INHERIT_REMOVED` | `/permissions group <g> inherit remove <p>` |
+  | `GROUP_PREFIX_SET` | `/permissions group <g> setprefix <v>` |
+  | `GROUP_SUFFIX_SET` | `/permissions group <g> setsuffix <v>` |
+  | `GROUP_PRIORITY_SET` | `/permissions group <g> setpriority <v>` |
+  | `PERMISSIONS_RELOADED` | `/permissions reload` |
+
+- **Executor tracking:** Commands run by online players log the player's name; console commands log `"CONSOLE"`.
+- **Controlled by** `permissions.auditLogging` in `config.json` (default `true`). When `false`, all log calls are no-ops with zero overhead.
+
+#### New config key: `permissions.auditLogging`
+- **Added** to the default `config.json` template (`"auditLogging": true`).
+- `ConfigManager.isPermissionAuditEnabled()` public method added.
+
+---
+
 ## [1.0.2.6+build.22] — 2026-04-01
 
 ### Improvement — Permission Groups & Priorities + Permission Suggestions
