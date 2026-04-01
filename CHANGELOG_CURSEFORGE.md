@@ -4,6 +4,20 @@
 
 ---
 
+## 1.0.2.6+build.19 — 2026-04-01
+
+### 📖 Documentation — `allowUnsafeCommands` & Security Configuration
+
+- **Fixed** `SplitConfigs.md` had a completely wrong description for `allowUnsafeCommands` ("Allow enchantments and item operations beyond vanilla limits" — that's the `items` section).  Replaced with accurate full documentation.
+- **Added** Complete `security.json` reference table covering all six keys with types, defaults, and descriptions.
+- **Added** Detailed `allowUnsafeCommands` breakdown: every blocked substring explained, the character allowlist, explicit call-out that tilde `~` (Minecraft relative coords) is blocked by default — the most common cause of admin confusion.
+- **Added** Tables of commands that work vs. commands that need `allowUnsafeCommands: true`, with step-by-step enable instructions for both split-config and monolithic mode.
+- **Added** "Command Safety Filter" subsection in `ItemManagement.md` under Powertool — exact error messages, quick-reference tables, config location.
+- **Added** Warning callout on the `/powertool` row in `CommandsReference.md`.
+- **Added** `security.json` to the getting-started key files list in `Home.md`.
+
+---
+
 ## 1.0.2.6+build.18 — 2026-04-01
 
 ### 🛡️ New Feature — Fallback to Vanilla OP Permissions

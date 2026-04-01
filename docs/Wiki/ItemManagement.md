@@ -1,4 +1,4 @@
-# Item Management
+e# Item Management
 
 > **Version:** 1.0.2.6
 
@@ -72,6 +72,47 @@ Item management commands for repair, disposal, enchanting, inventory management,
 - Right-clicking with the item (on a block, mob, or in air) executes the bound command as you
 - `/powertooltoggle` globally enables/disables all your powertools without removing bindings
 - Use `@p <command>` syntax to execute the command on all other online players
+
+**Command Safety Filter**
+
+Before a command is accepted by `/powertool`, NeoEssentials runs it through a safety check.  
+If the command is rejected you will see:
+
+```
+Command contains potentially dangerous operations. Enable 'allowUnsafeCommands' in config to use this command.
+```
+or
+```
+Command contains unsafe characters. Enable 'allowUnsafeCommands' in config to use special characters.
+```
+
+**Commands that work without any config change** (common examples):
+
+| Command | Notes |
+|---|---|
+| `/give @s minecraft:diamond 1` | Standard item give |
+| `/effect give @s minecraft:speed 30 1` | Potion effect |
+| `/gamemode creative` | Mode switch |
+| `/say Hello` | Chat message |
+| `/neoe heal` | NeoEssentials shortcut |
+
+**Commands blocked by default** (require `allowUnsafeCommands: true`):
+
+| Command | Blocked because |
+|---|---|
+| `/tp ~ 100 ~` | Contains `~` (relative coords) |
+| `/tp ~0 ~10 ~0` | Contains `~` |
+| `/execute as @a run ...` | Contains `@` |
+| `/tellraw @a {"text":"hi"}` | Contains `@` and `{` |
+| `/give @s shulker_box{Items:[]}` | Contains `@` and `{` |
+
+**To unlock all command patterns**, set `allowUnsafeCommands: true` in:
+- **Split config mode:** `config/neoessentials/security.json` → `security.allowUnsafeCommands`
+- **Monolithic mode:** `config/neoessentials/config.json` → `security.allowUnsafeCommands`
+
+Then run `/neoe reload` — no restart needed.
+
+> ℹ️ Full details, all blocked patterns, and security advice are in [SplitConfigs — Security Configuration](SplitConfigs#security-configuration-securityjson).
 
 ### Portable Workstations
 

@@ -154,11 +154,14 @@ To return to monolithic mode:
 
 ---
 
-## allowUnsafeCommands
+## Security Configuration (`security.json`)
 
-This setting is in **`security.json`** under the `security` section:
+In **split config mode** all security settings live in `security.json`.  
+In **monolithic mode** they are under the `security` key in `config.json`.
 
 ```json
+// split:    config/neoessentials/security.json
+// monolith: config/neoessentials/config.json  →  "security": { ... }
 {
   "security": {
     "enableInputValidation": true,
@@ -173,10 +176,122 @@ This setting is in **`security.json`** under the `security` section:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `allowUnsafeCommands` | boolean | `false` | Allow enchantments and item operations beyond vanilla limits |
-| `maxUnsafeEnchantmentLevel` | int | `10` | Max level allowed when unsafe enchantments are on |
+| `enableInputValidation` | boolean | `true` | Master switch — disabling this turns off all checks below |
+| `maxCommandLength` | int | `256` | Maximum characters allowed in a `/powertool` command string |
+| `maxReasonLength` | int | `500` | Maximum characters in ban/kick/mute reasons |
+| `allowUnsafeCommands` | boolean | `false` | See full explanation below |
+| `enablePathTraversalProtection` | boolean | `true` | Block `../` and `..\\` in any user-supplied file path |
+| `enableXSSProtection` | boolean | `true` | Block `<script>`, `javascript:`, and similar XSS patterns in text inputs |
 
-In monolithic mode it is at `config.json → security.allowUnsafeCommands`.
+---
+
+### `allowUnsafeCommands` — Full Explanation
+
+> **TL;DR:** If your players get *"Command contains potentially dangerous operations"* when setting up a powertool, set `allowUnsafeCommands: true` in `security.json` (or `config.json → security` in monolithic mode).
+
+#### What it does
+
+When `allowUnsafeCommands` is `false` (the default), NeoEssentials validates any command string a player tries to bind via `/powertool` through two checks:
+
+1. **Dangerous-pattern check** — rejects commands containing any of the following substrings:
+
+   | Blocked substring | Why |
+   |---|---|
+   | `rm `, `del `, `delete `, `format`, `shutdown`, `reboot` | System-level destructive operations |
+   | `eval`, `exec`, `system`, `runtime`, `process` | Code-execution / reflection vectors |
+   | `../`, `..\` | Path traversal |
+   | `~` | Shell home-dir expansion (also used as relative coord — see note below) |
+   | `$`, `` ` `` | Shell variable / command substitution |
+   | `&&`, `\|\|`, `;` | Shell command chaining |
+   | `file:`, `http:`, `https:`, `ftp:`, `jar:` | URL/protocol injection |
+   | `class.forname`, `reflection`, `unsafe` | Java reflection abuse |
+
+2. **Character-allowlist check** — rejects commands that contain characters outside:  
+   `A-Z a-z 0-9 _ - / (space) : . & # ~`
+
+   Characters **not** in this allowlist include `%`, `@`, `=`, `<`, `>`, `{`, `}`, `[`, `]`, `"`, `'`, `\`, `?`, `!`, `(`, `)`, `*`, `+`, `,` and others.
+
+> ⚠️ **Important — tilde (`~`) in Minecraft commands:**  
+> The `~` character is used for relative coordinates (e.g. `/tp ~ 100 ~`).  
+> With `allowUnsafeCommands: false` any command containing `~` will be blocked because it also matches the dangerous-pattern list.  
+> If your admins need powertools with relative coordinates, set `allowUnsafeCommands: true`.
+
+---
+
+#### Commands that work by default (`allowUnsafeCommands: false`)
+
+These commands pass both checks and can be bound to powertools without any config change:
+
+```
+/give @s minecraft:diamond 1
+/effect give @s minecraft:speed 30 1
+/say Hello world
+/gamemode creative
+/tp PlayerName
+/time set day
+/weather clear
+/neoe heal
+/neoe fly on
+```
+
+#### Commands that are blocked by default and need `allowUnsafeCommands: true`
+
+```
+/tp ~ 100 ~            ← blocked: contains ~
+/tp ~0 ~10 ~0          ← blocked: contains ~
+/execute as @a run ...  ← blocked: contains @
+/tellraw @a {...}       ← blocked: contains @ and {
+/give @s shulker_box{...}  ← blocked: contains @ and {
+/say Hello & Goodbye   ← blocked: contains & (only &# codes are allowed, bare & is not)
+```
+
+---
+
+#### How to enable
+
+**Split config mode** — edit `config/neoessentials/security.json`:
+
+```json
+{
+  "security": {
+    "enableInputValidation": true,
+    "maxCommandLength": 256,
+    "maxReasonLength": 500,
+    "allowUnsafeCommands": true,
+    "enablePathTraversalProtection": true,
+    "enableXSSProtection": true
+  }
+}
+```
+
+**Monolithic config mode** — edit `config/neoessentials/config.json`:
+
+```json
+"security": {
+  "enableInputValidation": true,
+  "maxCommandLength": 256,
+  "maxReasonLength": 500,
+  "allowUnsafeCommands": true,
+  "enablePathTraversalProtection": true,
+  "enableXSSProtection": true
+}
+```
+
+Then reload without restart:
+
+```
+/neoe reload
+```
+
+---
+
+#### Security considerations
+
+Enabling `allowUnsafeCommands: true` means players with `neoessentials.item.powertool` permission can bind **any** command string to an item.  
+On servers where powertool is restricted to trusted players (OPs / admin rank), this is usually fine.  
+If you allow regular players to use powertools, keeping `allowUnsafeCommands: false` reduces the risk of players binding commands that could grief or exploit the server.
+
+> **Recommendation:** Give `neoessentials.item.powertool` only to trusted staff, then set `allowUnsafeCommands: true` for maximum flexibility.
 
 ---
 

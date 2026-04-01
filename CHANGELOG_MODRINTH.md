@@ -4,6 +4,17 @@
 
 ---
 
+## 1.0.2.6+build.19 — 2026-04-01
+
+### 📖 Documentation — `allowUnsafeCommands` & Security Config
+
+- **Docs** — Fixed wrong `allowUnsafeCommands` description in `SplitConfigs.md` (previously said "enchantments/item operations" — that's `items.unsafe-enchantments`).
+- **Docs** — Full `security.json` reference added: all six keys, blocked-pattern list, character allowlist, tables of commands that work vs. those needing `allowUnsafeCommands: true`.
+- **Docs** — Key insight documented: tilde `~` (relative coordinates) is blocked by default — the most common source of the "dangerous operations" error in powertools.
+- **Docs** — "Command Safety Filter" section added to `ItemManagement.md` under Powertool; warning note added to `CommandsReference.md` `/powertool` row; `security.json` added to `Home.md` getting-started list.
+
+---
+
 ## 1.0.2.6+build.18 — 2026-04-01
 
 ### 🛡️ New — Fallback to Vanilla OP Permissions

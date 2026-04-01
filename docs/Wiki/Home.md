@@ -17,6 +17,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Kit Management](KitManagement) | Kits, cooldowns, give-to-others, kitreset |
 | [Item Management](ItemManagement) | Repair, enchant, powertool, clearinv, condense |
 | [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
+
 | [Permission System](PermissionSystem) | All permission nodes, groups, wildcards, external mods |
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders |
@@ -36,6 +37,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
    - `teleportation.json` — homes, warps, spawn, TPA
    - `moderation.json` — ban, jail, freeze, kick
    - `tablist.json` — tablist header/footer/formatting
+   - `security.json` — input validation, `allowUnsafeCommands` (powertool filter), XSS protection
    - `webdashboard.json` — web dashboard port and auth
    - `economy.json` — player balances (runtime data)
    - `permissions.json` — groups and permission nodes
