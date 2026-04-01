@@ -7,9 +7,14 @@ import java.util.concurrent.TimeUnit;
 import net.neoforged.fml.ModList;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.event.EventSubscription;
+import net.luckperms.api.event.group.GroupDataRecalculateEvent;
+import net.luckperms.api.event.user.UserDataRecalculateEvent;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.util.Tristate;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +28,19 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     private LuckPerms luckPermsApi;
     private static final long USER_LOAD_TIMEOUT = 5; // seconds
 
+    // Held so the subscriptions stay active for the lifetime of this adapter
+    @SuppressWarnings("unused")
+    private EventSubscription<UserDataRecalculateEvent> userDataSubscription;
+    @SuppressWarnings("unused")
+    private EventSubscription<GroupDataRecalculateEvent> groupDataSubscription;
+
     public LuckPermsAdapter() {
         this.luckPermsLoaded = ModList.get().isLoaded("luckperms");
         if (luckPermsLoaded) {
             try {
                 this.luckPermsApi = LuckPermsProvider.get();
                 LOGGER.info("LuckPerms API loaded successfully");
+                registerEventListeners();
             } catch (Exception e) {
                 LOGGER.error("Failed to load LuckPerms API: {}", e.getMessage(), e);
                 this.luckPermsApi = null;
@@ -38,6 +50,72 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         }
     }
 
+    /**
+     * Subscribe to LuckPerms events so that when a user's permissions or group
+     * assignments change the Minecraft command tree is immediately re-sent to that
+     * player (or to all online players when a group is modified).  This ensures
+     * that permission-gated commands appear / disappear in tab-completion without
+     * requiring a relog or server restart.
+     */
+    private void registerEventListeners() {
+        if (luckPermsApi == null) return;
+
+        // A specific user's cached data was recalculated (e.g. added to a new group)
+        userDataSubscription = luckPermsApi.getEventBus().subscribe(UserDataRecalculateEvent.class, event -> {
+            UUID uuid = event.getUser().getUniqueId();
+            LOGGER.debug("LuckPerms UserDataRecalculate for {} — refreshing command tree", uuid);
+            resendCommandsToPlayer(uuid);
+        });
+
+        // A group's cached data was recalculated (e.g. permission added to a role)
+        // All online members of that group need their command tree refreshed.
+        groupDataSubscription = luckPermsApi.getEventBus().subscribe(GroupDataRecalculateEvent.class, event -> {
+            String groupName = event.getGroup().getName();
+            LOGGER.debug("LuckPerms GroupDataRecalculate for group '{}' — refreshing command trees", groupName);
+            resendCommandsToGroupMembers(groupName);
+        });
+    }
+
+    /**
+     * Re-sends the Brigadier command tree to a specific online player.
+     * Safe to call from any thread — schedules work on the server thread.
+     */
+    private void resendCommandsToPlayer(UUID uuid) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        // Schedule on the main server thread to avoid concurrent modification issues
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) {
+                server.getCommands().sendCommands(player);
+                LOGGER.debug("Command tree re-sent to player {} after LuckPerms permission change", uuid);
+            }
+        });
+    }
+
+    /**
+     * Re-sends the command tree to every online player that belongs to the
+     * given LuckPerms group, so group-level permission changes propagate
+     * immediately.
+     */
+    private void resendCommandsToGroupMembers(String groupName) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null || luckPermsApi == null) return;
+        server.execute(() -> {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                try {
+                    User lpUser = luckPermsApi.getUserManager().getUser(player.getUUID());
+                    if (lpUser != null && lpUser.getPrimaryGroup().equalsIgnoreCase(groupName)) {
+                        server.getCommands().sendCommands(player);
+                        LOGGER.debug("Command tree re-sent to {} (group '{}')", player.getName().getString(), groupName);
+                    }
+                } catch (Exception e) {
+                    LOGGER.debug("Could not refresh commands for {}: {}", player.getName().getString(), e.getMessage());
+                }
+            }
+        });
+    }
+
     @Override
     public boolean hasPermission(UUID uuid, String permission) {
         if (!luckPermsLoaded || luckPermsApi == null) {
@@ -45,13 +123,16 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         }
 
         try {
+            // For online players prefer their live, context-aware cached data
+            var server = ServerLifecycleHooks.getCurrentServer();
+            ServerPlayer onlinePlayer = server != null ? server.getPlayerList().getPlayer(uuid) : null;
+
             // Try to get cached user first (fast path)
             User user = luckPermsApi.getUserManager().getUser(uuid);
 
             // If user not cached, try to load them (for offline permission checks)
             if (user == null) {
                 try {
-                    // Load user data asynchronously with timeout
                     CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
                 } catch (Exception e) {
@@ -65,13 +146,20 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 return false;
             }
 
-            // Check permission using LuckPerms API
-            QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+            // Use the player's live query options when online (picks up world/server contexts)
+            // Fall back to default contextual options for offline checks
+            QueryOptions queryOptions;
+            if (onlinePlayer != null) {
+                queryOptions = luckPermsApi.getContextManager()
+                        .getQueryOptions(user)
+                        .orElse(QueryOptions.defaultContextualOptions());
+            } else {
+                queryOptions = QueryOptions.defaultContextualOptions();
+            }
+
             Tristate result = user.getCachedData().getPermissionData(queryOptions).checkPermission(permission);
 
             // Tristate: TRUE = has permission, FALSE = explicitly denied, UNDEFINED = not set
-            // When using external permissions (LuckPerms), we respect their decision completely
-            // UNDEFINED and FALSE both mean "no permission" - admin must explicitly grant permissions
             boolean hasPermission = result.asBoolean();
 
             LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={} ({})",

@@ -203,6 +203,8 @@ public class BanManager {
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
         saveBans();
+        // Also add to vanilla ban list so it is visible to /banlist and vanilla kick logic
+        addToVanillaBanList(playerId, playerName, reason, bannedBy, null);
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -255,7 +257,9 @@ public class BanManager {
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
         saveBans();
-
+        // Sync to vanilla ban list with expiry
+        java.util.Date expireDate = new java.util.Date(System.currentTimeMillis() + durationMillis);
+        addToVanillaBanList(playerId, playerName, reason, bannedBy, expireDate);
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -363,17 +367,19 @@ public class BanManager {
     }
 
     /**
-     * Unban a player
+     * Unban a player from NeoEssentials ban list AND vanilla ban list.
      */
     public boolean unbanPlayer(UUID playerId) {
         BanEntry removed = playerBans.remove(playerId);
-        if (removed != null) {
-            saveBans();
+        boolean removedFromVanilla = removeFromVanillaBanList(playerId);
+        if (removed != null || removedFromVanilla) {
+            if (removed != null) saveBans();
             // Broadcast to staff if enabled
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null && com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
                 String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
-                String staffMsg = "[NeoEssentials] Player " + removed.playerName + " was unbanned.";
+                String name = removed != null ? removed.playerName : playerId.toString();
+                String staffMsg = "[NeoEssentials] Player " + name + " was unbanned.";
                 for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
                     if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
                         staff.sendSystemMessage(Component.literal(staffMsg));
@@ -381,11 +387,73 @@ public class BanManager {
                 }
             }
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-                LOGGER.info("Player {} ({}) unbanned", removed.playerName, playerId);
+                String name = removed != null ? removed.playerName : playerId.toString();
+                LOGGER.info("Player {} ({}) unbanned", name, playerId);
             }
             return true;
         }
         return false;
+    }
+
+    // ── Vanilla ban list helpers ───────────────────────────────────────────────
+
+    /** Add a player to the vanilla UserBanList so vanilla kick/join blocking works. */
+    private void addToVanillaBanList(UUID playerId, String playerName, String reason,
+                                     String bannedBy, java.util.Date expires) {
+        try {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+            com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, playerName);
+            if (profile == null) return;
+            net.minecraft.server.players.UserBanList vanillaBans = server.getPlayerList().getBans();
+            if (!vanillaBans.isBanned(profile)) {
+                String src = bannedBy != null ? bannedBy : "NeoEssentials";
+                net.minecraft.server.players.UserBanListEntry entry = new net.minecraft.server.players.UserBanListEntry(
+                    profile, null, src, expires, reason != null ? reason : "Banned");
+                vanillaBans.add(entry);
+                LOGGER.debug("Added {} to vanilla ban list", playerName);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not sync ban to vanilla ban list for {}: {}", playerName, e.getMessage());
+        }
+    }
+
+    /** Remove a player from the vanilla UserBanList. Returns true if they were found. */
+    private boolean removeFromVanillaBanList(UUID playerId) {
+        try {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return false;
+            net.minecraft.server.players.UserBanList vanillaBans = server.getPlayerList().getBans();
+            // Try to resolve profile for removal
+            BanEntry ourBan = playerBans.get(playerId);
+            String name = ourBan != null ? ourBan.playerName : null;
+            com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, name);
+            if (profile != null && vanillaBans.isBanned(profile)) {
+                vanillaBans.remove(profile);
+                LOGGER.debug("Removed {} from vanilla ban list", playerId);
+                return true;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not remove {} from vanilla ban list: {}", playerId, e.getMessage());
+        }
+        return false;
+    }
+
+    /** Resolve a GameProfile from UUID + optional name using profile cache. */
+    private com.mojang.authlib.GameProfile resolveProfile(MinecraftServer server, UUID uuid, String name) {
+        // Try online player first
+        ServerPlayer online = server.getPlayerList().getPlayer(uuid);
+        if (online != null) return online.getGameProfile();
+        // Try profile cache
+        try {
+            var cached = server.getProfileCache().get(uuid);
+            if (cached.isPresent()) return cached.get();
+        } catch (Exception ignored) {}
+        // Fallback: construct a minimal profile
+        if (name != null && !name.isBlank()) {
+            return new com.mojang.authlib.GameProfile(uuid, name);
+        }
+        return null;
     }
     
     /**
@@ -404,20 +472,47 @@ public class BanManager {
     }
     
     /**
-     * Check if a player is banned (and not expired)
+     * Check if a player is banned (checks NeoEssentials list first, then vanilla ban list).
      */
     public boolean isPlayerBanned(UUID playerId) {
         BanEntry ban = playerBans.get(playerId);
         if (ban != null) {
             if (ban.isExpired()) {
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
-                    // Auto-remove expired ban
                     playerBans.remove(playerId);
                     saveBans();
                 }
                 return false;
             }
             return true;
+        }
+        // Fallback: check vanilla ban list (handles bans issued by /ban or operator tools)
+        try {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, null);
+                if (profile != null) {
+                    net.minecraft.server.players.UserBanList vanillaBans = server.getPlayerList().getBans();
+                    if (vanillaBans.isBanned(profile)) {
+                        // Import this vanilla ban into our list so it appears in /banlist
+                        net.minecraft.server.players.UserBanListEntry entry = vanillaBans.get(profile);
+                        if (entry != null) {
+                            String reason = entry.getReason() != null ? entry.getReason() : "Banned by operator";
+                            String source = entry.getSource() != null ? entry.getSource() : "Console";
+                            BanEntry imported = new BanEntry(profile.getName(), playerId, reason, source);
+                            if (entry.getExpires() != null) {
+                                imported.expireTime = entry.getExpires().getTime();
+                            }
+                            playerBans.put(playerId, imported);
+                            saveBans();
+                            LOGGER.info("Imported vanilla ban for {} into NeoEssentials ban list", profile.getName());
+                        }
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not check vanilla ban list for {}: {}", playerId, e.getMessage());
         }
         return false;
     }

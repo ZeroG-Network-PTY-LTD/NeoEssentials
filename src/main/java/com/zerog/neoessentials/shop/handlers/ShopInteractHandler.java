@@ -52,7 +52,13 @@ public class ShopInteractHandler {
 
         // ── Item autofill: owner right-clicks a pending "?" shop with item in hand ──
         if (shop.itemPending) {
-            if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+            // Admin shops have ownerUUID == null; any player with the admin-shop create
+            // permission can assign the item.  Player shops require UUID ownership.
+            boolean canAssign = shop.isAdminShop()
+                    ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
+                    : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
+
+            if (canAssign) {
                 net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
                 if (held.isEmpty()) {
                     player.sendSystemMessage(Component.literal(

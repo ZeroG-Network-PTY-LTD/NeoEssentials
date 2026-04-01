@@ -350,7 +350,19 @@
 | `/suicide` | `/suicide` | `neoessentials.suicide` | ✅ | Kill yourself. Broadcasts death message to all online players |
 | `/msgtoggle` | `/msgtoggle [on\|off] [player]` | `neoessentials.msgtoggle` / `.msgtoggle.others` | ✅ | Block or allow incoming private messages. Synced with `MsgToggleManager` |
 | `/rtoggle` | `/rtoggle [on\|off] [player]` | `neoessentials.rtoggle` / `.rtoggle.others` | ✅ | Toggle whether `/r` replies to the last sender (default on) |
-| `/motd` | `/motd` | `neoessentials.motd` | ✅ | Show the message of the day (configured in `config.json` → `general.motd`) |
+| `/motd` | `/motd` | `neoessentials.motd` | ✅ | Show the active message of the day |
+| `/motd set` | `/motd set <message>` | `neoessentials.motd.set` | 🔒 | Set the active profile's MOTD text |
+| `/motd clear` | `/motd clear` | `neoessentials.motd.set` | 🔒 | Clear the active profile's MOTD |
+| `/motd reload` | `/motd reload` | `neoessentials.motd.reload` | 🔒 | Reload all profiles from disk |
+| `/motd broadcast` | `/motd broadcast` | `neoessentials.motd.broadcast` | 🔒 | Broadcast active MOTD to all online players |
+| `/motd profile list` | `/motd profile list` | `neoessentials.motd.profile` | 🔒 | List all profiles |
+| `/motd profile create` | `/motd profile create <name> <message>` | `neoessentials.motd.profile` | 🔒 | Create or overwrite a profile |
+| `/motd profile delete` | `/motd profile delete <name>` | `neoessentials.motd.profile` | 🔒 | Delete a profile |
+| `/motd profile switch` | `/motd profile switch <name>` | `neoessentials.motd.profile` | 🔒 | Switch the active profile |
+| `/motd profile info` | `/motd profile info [name]` | `neoessentials.motd.profile` | 🔒 | Show profile details |
+| `/motd rotation enable` | `/motd rotation enable <minutes>` | `neoessentials.motd.rotation` | 🔒 | Enable auto-rotation |
+| `/motd rotation disable` | `/motd rotation disable` | `neoessentials.motd.rotation` | 🔒 | Disable auto-rotation |
+| `/motd rotation next` | `/motd rotation next` | `neoessentials.motd.rotation` | 🔒 | Rotate to next profile immediately |
 | `/rules` | `/rules` | `neoessentials.rules` | ✅ | Show server rules (configured in `config.json` → `general.rules`) |
 
 ---
@@ -420,7 +432,7 @@
 | `/compass` | `/compass` | `neoessentials.compass` | ✅ | Show your current facing direction |
 | `/direction` | alias for `/compass` | same | ✅ | Alias |
 | `/depth` | `/depth` | `neoessentials.depth` | ✅ | Show your current depth (Y level relative to sea level) |
-| `/motd` | `/motd` | `neoessentials.motd` | ✅ | View the server message of the day |
+| `/motd` | `/motd [set\|clear\|reload\|broadcast\|profile\|rotation]` | `neoessentials.motd` | ✅ | View / manage the server message of the day (see full table above) |
 | `/rules` | `/rules` | `neoessentials.rules` | ✅ | View the server rules |
 
 ### Player Actions

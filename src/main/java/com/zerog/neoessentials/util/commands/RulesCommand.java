@@ -35,6 +35,8 @@ public class RulesCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(RulesCommand.class);
     private static List<String> serverRules = new ArrayList<>();
     private static final Path RULES_DATA_FILE = Paths.get("config", "neoessentials", "rules_data.json");
+    // Legacy file name used in older NeoEssentials builds
+    private static final Path RULES_LEGACY_FILE = Paths.get("config", "neoessentials", "rules.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int RULES_PER_PAGE = 10;
     
@@ -342,24 +344,50 @@ public class RulesCommand {
      */
     private static void loadRulesData() {
         try {
-            if (!Files.exists(RULES_DATA_FILE)) {
-                // Create default rules file
-                createDefaultRules();
+            // Primary file
+            if (Files.exists(RULES_DATA_FILE)) {
+                String json = Files.readString(RULES_DATA_FILE);
+                JsonObject data = JsonParser.parseString(json).getAsJsonObject();
+                serverRules.clear();
+                if (data.has("rules")) {
+                    JsonArray rulesArray = data.getAsJsonArray("rules");
+                    for (JsonElement element : rulesArray) {
+                        serverRules.add(element.getAsString());
+                    }
+                }
                 return;
             }
-            
-            String json = Files.readString(RULES_DATA_FILE);
-            JsonObject data = JsonParser.parseString(json).getAsJsonObject();
-            
-            serverRules.clear();
-            
-            if (data.has("rules")) {
-                JsonArray rulesArray = data.getAsJsonArray("rules");
-                for (JsonElement element : rulesArray) {
-                    serverRules.add(element.getAsString());
+
+            // Legacy fallback: rules.json (used by NeoEssentials <1.0.2.6)
+            if (Files.exists(RULES_LEGACY_FILE)) {
+                LOGGER.info("Migrating legacy rules.json → rules_data.json");
+                String json = Files.readString(RULES_LEGACY_FILE);
+                JsonObject data = JsonParser.parseString(json).getAsJsonObject();
+                serverRules.clear();
+                // Legacy format may store rules directly as an array or under a "rules" key
+                if (data.has("rules")) {
+                    JsonElement el = data.get("rules");
+                    if (el.isJsonArray()) {
+                        for (JsonElement element : el.getAsJsonArray()) {
+                            serverRules.add(element.getAsString());
+                        }
+                    }
+                } else {
+                    // Treat every top-level string value as a rule
+                    for (var entry : data.entrySet()) {
+                        if (entry.getValue().isJsonPrimitive()) {
+                            serverRules.add(entry.getValue().getAsString());
+                        }
+                    }
                 }
+                // Save to new format
+                saveRulesData();
+                LOGGER.info("Migrated {} rules from rules.json to rules_data.json", serverRules.size());
+                return;
             }
-            
+
+            // No file found – create defaults
+            createDefaultRules();
         } catch (Exception e) {
             LOGGER.error("Failed to load rules data: {}", e.getMessage());
             createDefaultRules();

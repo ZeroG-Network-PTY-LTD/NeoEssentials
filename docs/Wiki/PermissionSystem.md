@@ -76,9 +76,18 @@
 | `neoessentials.chat.*` | All chat nodes |
 | `neoessentials.moderation.*` | All moderation nodes |
 | `neoessentials.permissions.*` | All permissions-command nodes |
+| `neoessentials.spawner.*` | Change a spawner to **any** mob type |
+| `neoessentials.fireball.*` | Shoot **any** projectile type via `/fireball` |
+| `neoessentials.warps.*` | Access **all** server warps regardless of per-warp restrictions |
 
 > **Negative permissions** — prefix a node with `-` to explicitly deny it even if a wildcard grants it.  
 > Example: give `neoessentials.*` then add `-neoessentials.item.enchant.unsafe` to deny unsafe enchanting.
+
+> **Note on startup warnings (fixed in v1.0.2.6+build.7):**  
+> Older builds logged `WARN: Invalid permission format: neoessentials.spawner.*` (and `fireball.*`,
+> `warps.*`) at startup because the internal permission validator did not recognise the `.*` suffix.
+> The permissions themselves **worked at runtime** in all versions; only the registration log was
+> wrong.  The validator is now fixed and no warnings are logged for valid wildcard nodes.
 
 ---
 
@@ -779,14 +788,102 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ## External Permission Mods
 
-NeoEssentials supports the following external permission systems when `useExternalPermissions: true`:
+### Overview — Three Permission Tiers
 
-| Mod | Notes |
+NeoEssentials supports three configurations:
+
+| Tier | Setup | What `permissions.json` controls |
+|---|---|---|
+| **Built-in + NeoForge bridge** *(default)* | No extra mods needed | All NeoEssentials commands **and** any mod that uses NeoForge's permission API (WorldEdit, FTB Chunks, etc.) |
+| **LuckPerms** | Install LuckPerms, set `useExternalPermissions: true` | Nothing — LuckPerms manages everything |
+| **FTB Ranks** | Install FTB Ranks, set `useExternalPermissions: true` | Nothing — FTB Ranks manages everything |
+
+---
+
+### Built-in Mode — NeoForge Permission Handler Bridge
+
+As of **v1.0.2.6**, when no competing permission mod is installed, NeoEssentials automatically
+registers itself as the active **NeoForge permission handler** (`neoessentials:handler`).
+
+This means that **any mod** that uses NeoForge's `PermissionAPI.getPermission(player, node)` API —
+including WorldEdit, FTB Chunks, WTHIT, and others — will have its Boolean permission nodes
+evaluated against `permissions.json`.
+
+#### Adding permissions for external mods
+
+Permissions are stored as **lowercase dot-separated strings**.
+
+```json
+{
+  "groups": [
+    {
+      "name": "admin",
+      "permissions": [
+        "neoessentials.*",
+        "worldedit.*",
+        "ftbchunks.*"
+      ]
+    },
+    {
+      "name": "builder",
+      "permissions": [
+        "neoessentials.player",
+        "worldedit.edit",
+        "worldedit.selection.*"
+      ]
+    }
+  ]
+}
+```
+
+> **Note:** Node names must be **lowercase**. `/permissions group add` converts input automatically.
+
+#### Finding a mod's permission node names
+
+1. Check the mod's documentation / GitHub for a list of permission nodes.
+2. The node name format is always `modid.path.to.node` (dots, not colons).
+3. Run `/permissions check user <player> <node>` to test a specific node.
+
+#### Manual handler selection
+
+The handler is selected in `config/neoforge-server.toml`:
+
+```toml
+# neoforge:default_handler  — vanilla OP-level only (no permissions.json for external mods)
+# neoessentials:handler      — NeoEssentials permissions.json for ALL mods (default when no LP/FTB Ranks)
+# luckperms:default          — LuckPerms (auto-selected by LuckPerms when installed)
+permissionHandler = "neoessentials:handler"
+```
+
+---
+
+### LuckPerms
+
+- Set `useExternalPermissions: true` in `config.json` and install LuckPerms.
+- All NeoEssentials permission nodes work normally — grant them in LuckPerms.
+- The built-in `permissions.json` is **not used** for permission checks.
+- Run `/permissions export luckperms` to generate a ready-to-import LuckPerms config.
+
+---
+
+### FTB Ranks
+
+- Set `useExternalPermissions: true` in `config.json` and install FTB Ranks.
+- All NeoEssentials permission nodes work normally — grant them via FTB Ranks commands.
+- The built-in `permissions.json` is **not used** for permission checks.
+
+---
+
+### Wildcard support for external mods
+
+The `.*` wildcard works for any mod prefix:
+
+| Wildcard | Effect |
 |---|---|
-| **FTB Ranks** | Full support — ranks map to groups, all nodes respected |
-| **LuckPerms** | Full support via the LuckPerms API adapter |
-| **YAWP** | Basic support |
+| `worldedit.*` | All WorldEdit permissions |
+| `worldedit.selection.*` | All WorldEdit selection permissions |
+| `ftbchunks.*` | All FTB Chunks permissions |
+| `neoessentials.*` | All NeoEssentials permissions |
 
-When an external system is active, the built-in `permissions.json` groups are **not used** for permission checks, but the registry still provides node metadata (descriptions, defaults) for export via `/permissions export`.
-
-> **Tip:** Run `/permissions export luckperms` or `/permissions export ftbranks` to generate a ready-to-import config file for your preferred permission mod.
+> **Tip:** Run `/permissions export luckperms` or `/permissions export yaml` to generate a
+> ready-to-import config for your preferred permission mod.

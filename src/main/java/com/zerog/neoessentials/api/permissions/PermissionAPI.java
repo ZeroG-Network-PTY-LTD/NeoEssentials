@@ -62,8 +62,18 @@ public class PermissionAPI {
         LOGGER.debug("Permission: {}", permission);
         LOGGER.debug("External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
 
-        // If using external permissions (LuckPerms, FTB Ranks), ONLY use external system
-        // Do NOT check ops bypass - let the external system handle that
+        // Always check OP bypass first when enabled — this acts as a safety fallback
+        // so server operators are never locked out even if external permissions fail.
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
+            if (isPlayerOpped(uuid)) {
+                LOGGER.debug("Player is OP - bypassing permission check (global fallback)");
+                LOGGER.debug("Result: TRUE (op bypass)");
+                LOGGER.debug("═══════════════════════");
+                return true;
+            }
+        }
+
+        // If using external permissions (LuckPerms, FTB Ranks), delegate to external system
         if (externalAdapter != null) {
             LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
             boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
@@ -73,19 +83,6 @@ public class PermissionAPI {
         }
         
         LOGGER.debug("Using INTERNAL permission system");
-
-        // Only use internal system if NO external adapter is configured
-        // Check ops bypass first (only for internal system)
-        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
-            if (isPlayerOpped(uuid)) {
-                LOGGER.debug("Player is OP - bypassing permission check");
-                LOGGER.debug("Result: TRUE (op bypass)");
-                LOGGER.debug("═══════════════════════");
-                return true;
-            }
-        }
-        
-        // Finally check internal permission manager
         if (manager == null) {
             LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null - returning false");
             LOGGER.debug("Result: FALSE (no manager)");

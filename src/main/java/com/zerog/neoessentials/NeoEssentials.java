@@ -13,6 +13,8 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
+import com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +173,53 @@ public class NeoEssentials {
     
     @EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
     public static class GameEvents {
-        
+
+        /**
+         * Register NeoEssentials as an available NeoForge permission handler.
+         *
+         * <p>This fires on the NeoForge game event bus BEFORE the server starts,
+         * during NeoForge's internal permission API initialisation.  We:
+         * <ol>
+         *   <li>Register the {@code neoessentials:handler} factory so admins can
+         *       select it explicitly in {@code config/neoforge-server.toml}.</li>
+         *   <li>When no competing permission mod (LuckPerms / FTB Ranks) is
+         *       loaded AND the config still has the default NeoForge handler, we
+         *       automatically switch to {@code neoessentials:handler}.  This makes
+         *       permissions stored in {@code permissions.json} take effect for
+         *       ALL installed mods (e.g. WorldEdit, WTHIT, etc.) out of the box.</li>
+         * </ol>
+         * </p>
+         */
+        @SubscribeEvent
+        public static void onPermissionGatherHandler(PermissionGatherEvent.Handler event) {
+            // 1. Register NeoEssentials' handler as an option
+            event.addPermissionHandler(
+                    NeoEssentialsPermissionHandler.IDENTIFIER,
+                    NeoEssentialsPermissionHandler::new);
+            LOGGER.debug("[Permissions] Registered NeoEssentials permission handler: {}",
+                    NeoEssentialsPermissionHandler.IDENTIFIER);
+
+            // 2. Auto-activate when no competing permission mod is present
+            boolean luckPermsPresent = net.neoforged.fml.ModList.get().isLoaded("luckperms");
+            boolean ftbRanksPresent  = net.neoforged.fml.ModList.get().isLoaded("ftbranks");
+            if (!luckPermsPresent && !ftbRanksPresent) {
+                try {
+                    String current = net.neoforged.neoforge.common.NeoForgeConfig.SERVER.permissionHandler.get();
+                    // Only switch if the server is still on the default NeoForge handler
+                    if ("neoforge:default_handler".equals(current)) {
+                        net.neoforged.neoforge.common.NeoForgeConfig.SERVER.permissionHandler.set(
+                                NeoEssentialsPermissionHandler.IDENTIFIER.toString());
+                        LOGGER.info("[Permissions] Auto-activated NeoEssentials permission handler " +
+                                "(neoessentials:handler).  External mod permissions in permissions.json " +
+                                "will now apply to ALL installed mods.  To revert, set " +
+                                "'permissionHandler = \"neoforge:default_handler\"' in config/neoforge-server.toml.");
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("[Permissions] Could not auto-configure NeoForge permission handler: {}", e.getMessage());
+                }
+            }
+        }
+
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
             LOGGER.info("════════════════════════════════════════════════════════════════");

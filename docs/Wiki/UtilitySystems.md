@@ -22,7 +22,65 @@ Miscellaneous quality-of-life commands covering player info, server admin tools,
 | `/realname` | `/realname <nick>` | `neoessentials.realname` | Look up real username from nickname |
 | `/list` | `/list` | `neoessentials.list` | List online players with count |
 | `/who` | alias | same | Alias |
-| `/motd` | `/motd` | `neoessentials.motd` | Display server MOTD |
+| `/motd` | `/motd` | `neoessentials.motd` | Display the active server MOTD |
+
+---
+
+## MOTD System
+
+The MOTD (Message of the Day) system supports **multiple named profiles**, **auto-rotation**, and **web-dashboard management**.
+
+### Commands
+
+| Command | Permission | Description |
+|---|---|---|
+| `/motd` | `neoessentials.motd` | Show the active MOTD |
+| `/motd set <message>` | `neoessentials.motd.set` | Set the active profile's MOTD text |
+| `/motd clear` | `neoessentials.motd.set` | Clear the active profile's MOTD |
+| `/motd reload` | `neoessentials.motd.reload` | Reload all profiles from disk |
+| `/motd broadcast` | `neoessentials.motd.broadcast` | Broadcast active MOTD to all online players |
+| `/motd profile list` | `neoessentials.motd.profile` | List all profiles and the active one |
+| `/motd profile create <name> <message>` | `neoessentials.motd.profile` | Create or overwrite a named profile |
+| `/motd profile delete <name>` | `neoessentials.motd.profile` | Delete a profile (at least one must remain) |
+| `/motd profile switch <name>` | `neoessentials.motd.profile` | Switch the active profile |
+| `/motd profile info [name]` | `neoessentials.motd.profile` | Show details for a profile (defaults to active) |
+| `/motd rotation enable <minutes>` | `neoessentials.motd.rotation` | Enable auto-rotation every N minutes |
+| `/motd rotation disable` | `neoessentials.motd.rotation` | Disable auto-rotation |
+| `/motd rotation next` | `neoessentials.motd.rotation` | Rotate to the next profile immediately |
+
+### Color codes
+
+Use `&` color codes in MOTD messages (e.g. `&aGreen text &cRed text`). They are converted to `§` automatically.
+
+### Profiles
+
+Profiles are stored in `config/neoessentials/motd_data.json`. Example:
+
+```json
+{
+  "activeProfile": "default",
+  "rotation": { "enabled": false, "intervalMinutes": 60, "currentIndex": 0 },
+  "profiles": {
+    "default": { "motd": "§aWelcome to the server!", "author": "Admin", "timestamp": "01/01/2026 12:00" },
+    "event":   { "motd": "§6Special event is running!", "author": "Admin", "timestamp": "01/01/2026 12:00" }
+  }
+}
+```
+
+### Dashboard API
+
+The dashboard exposes `/api/motd` for full profile management:
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/motd` | Get all profiles + rotation settings |
+| `GET` | `/api/motd/active` | Get the active profile only |
+| `POST` | `/api/motd/profiles` | Create/update a profile `{name, motd, author?}` |
+| `DELETE` | `/api/motd/profiles/{name}` | Delete a profile |
+| `PUT` | `/api/motd/active` | Switch active profile `{name}` |
+| `PUT` | `/api/motd/rotation` | Update rotation `{enabled, intervalMinutes}` |
+| `POST` | `/api/motd/rotation/next` | Rotate to next profile immediately |
+| `POST` | `/api/motd/broadcast` | Broadcast active MOTD to online players |
 | `/rules` | `/rules` | `neoessentials.rules` | Display server rules |
 | `/helpop` | `/helpop <message>` | `neoessentials.helpop` | Send message to online staff |
 | `/suicide` | `/suicide` | `neoessentials.suicide` | Kill yourself |

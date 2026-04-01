@@ -32,6 +32,10 @@ public class HelpCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("help")) return;
 
+        // NOTE: Vanilla Minecraft registers /help <command:string> before any mod.
+        // Brigadier matches children in insertion order, so a separate int-argument branch
+        // would never be reached (the vanilla string branch grabs the number first).
+        // Solution: use a single optional string argument and detect page numbers inside.
         dispatcher.register(Commands.literal("help")
             .requires(src -> {
                 var p = src.getPlayer();
@@ -39,17 +43,20 @@ public class HelpCommand {
             })
             // /help
             .executes(ctx -> executeHelp(ctx, null, 1))
-            // /help <page>
-            .then(Commands.argument("page", IntegerArgumentType.integer(1))
-                .executes(ctx -> executeHelp(ctx, null, IntegerArgumentType.getInteger(ctx, "page")))
-            )
-            // /help <command>
-            .then(Commands.argument("command", StringArgumentType.word())
-                .executes(ctx -> executeHelp(ctx, StringArgumentType.getString(ctx, "command"), 1))
+            // /help <page_or_command>  — handles both "/help 2" and "/help warp"
+            .then(Commands.argument("page_or_command", StringArgumentType.word())
+                .executes(ctx -> {
+                    String arg = StringArgumentType.getString(ctx, "page_or_command");
+                    try {
+                        int pageNum = Integer.parseInt(arg);
+                        if (pageNum >= 1) return executeHelp(ctx, null, pageNum);
+                    } catch (NumberFormatException ignored) {}
+                    return executeHelp(ctx, arg, 1);
+                })
                 // /help <command> <page>
                 .then(Commands.argument("page", IntegerArgumentType.integer(1))
                     .executes(ctx -> executeHelp(ctx,
-                        StringArgumentType.getString(ctx, "command"),
+                        StringArgumentType.getString(ctx, "page_or_command"),
                         IntegerArgumentType.getInteger(ctx, "page")))
                 )
             )
@@ -61,8 +68,15 @@ public class HelpCommand {
                 return p == null || PermissionAPI.hasPermission(p.getUUID(), PERMISSION);
             })
             .executes(ctx -> executeHelp(ctx, null, 1))
-            .then(Commands.argument("page", IntegerArgumentType.integer(1))
-                .executes(ctx -> executeHelp(ctx, null, IntegerArgumentType.getInteger(ctx, "page")))
+            .then(Commands.argument("page_or_command", StringArgumentType.word())
+                .executes(ctx -> {
+                    String arg = StringArgumentType.getString(ctx, "page_or_command");
+                    try {
+                        int pageNum = Integer.parseInt(arg);
+                        if (pageNum >= 1) return executeHelp(ctx, null, pageNum);
+                    } catch (NumberFormatException ignored) {}
+                    return executeHelp(ctx, arg, 1);
+                })
             )
         );
     }

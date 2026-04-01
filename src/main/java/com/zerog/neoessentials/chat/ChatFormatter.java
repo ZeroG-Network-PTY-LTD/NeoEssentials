@@ -95,20 +95,25 @@ public class ChatFormatter {
                 LOGGER.info("After cleanup: [{}]", formatted);
             }
 
-            // Phase 4: Apply rich text effects (gradients, rainbow)
-            Component richTextResult = RichTextFormatter.processRichText(formatted);
+            // Phase 4: Pre-process rich text tags (gradient/rainbow → &#RRGGBB hex codes).
+            // We keep the result as a String so that & color codes are preserved for the
+            // enhancement phase.  componentToFormattedString() used to call getString()
+            // here, which stripped all formatting and produced white-only chat output.
+            String richPreProcessed = RichTextFormatter.preprocessTags(formatted);
             if (debugEnabled) {
-                LOGGER.info("After rich text: [{}]", richTextResult.getString());
+                LOGGER.info("After rich text tag pre-processing: [{}]", richPreProcessed);
             }
 
             // Apply Phase 2 enhancements if enabled
             Component result;
             if (isChatEnhancementsEnabled()) {
-                // Convert component back to string for enhancement processing
-                String richTextString = componentToFormattedString(richTextResult);
-                result = enhanceMessage(richTextString, player, player.getServer());
+                // Pass the string with & color codes intact; buildComponentFromMarkup will
+                // call parseColorCodes on each plain-text segment so all & and &#RRGGBB
+                // codes are honoured correctly.
+                result = enhanceMessage(richPreProcessed, player, player.getServer());
             } else {
-                result = richTextResult;
+                // No enhancements – do full rich text processing (parseColorCodes included).
+                result = RichTextFormatter.processRichText(formatted);
             }
 
             if (debugEnabled) {
@@ -670,15 +675,5 @@ public class ChatFormatter {
             // Ignore
         }
         return 1.0f;
-    }
-
-    /**
-     * Convert component back to formatted string for further processing.
-     * This is a simple conversion - for complex components, use getString().
-     */
-    private static String componentToFormattedString(Component component) {
-        // For now, just get the plain string
-        // In future, could preserve formatting codes
-        return component.getString();
     }
 }

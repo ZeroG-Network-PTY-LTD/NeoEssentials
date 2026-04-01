@@ -531,6 +531,32 @@ public class PermissionsCommand {
                 return 0;
             }
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added", perm, groupName), false);
+
+            // If the permission is for an external mod, give a helpful note about the handler
+            boolean isExternal = !perm.startsWith("neoessentials.");
+            if (isExternal) {
+                // Check whether the NeoEssentials handler is currently active
+                boolean neoessentialsHandlerActive;
+                try {
+                    var activeHandler = net.neoforged.neoforge.server.permission.PermissionAPI.getActivePermissionHandler();
+                    neoessentialsHandlerActive = activeHandler != null &&
+                            activeHandler.equals(com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler.IDENTIFIER);
+                } catch (Exception ex) {
+                    neoessentialsHandlerActive = false;
+                }
+                if (neoessentialsHandlerActive) {
+                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(
+                            "§7[Info] NeoEssentials permission handler is active — §a" + perm +
+                            "§7 will apply to all mods that use NeoForge's permission API."), false);
+                } else {
+                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(
+                            "§e[Note] §7Permission §f" + perm + " §7is stored in permissions.json but will only " +
+                            "affect NeoEssentials commands right now.  " +
+                            "To apply it to external mods (e.g. WorldEdit), NeoEssentials must be the active " +
+                            "NeoForge permission handler.  Set §f'permissionHandler = \"neoessentials:handler\"' " +
+                            "§7in §fconfig/neoforge-server.toml §7(or install LuckPerms and manage permissions there)."), false);
+                }
+            }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Unexpected error in addGroupPermission command", e);
