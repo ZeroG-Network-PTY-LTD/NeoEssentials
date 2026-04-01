@@ -4,6 +4,16 @@
 
 ---
 
+## 1.0.2.6+build.21 — 2026-04-01
+
+### 🔍 New Feature — Permission Debugging Tools
+
+- **Added** `/permissions debug <player>` — in-game permission resolution trace. Shows system mode (internal / external adapter / emergency), adapter health and version, active config flags (`opsBypassPermissions`, `vanillaOpFallback`), OP status, assigned group, direct user permissions, group inheritance chain, and a numbered 4-step resolution summary. Requires `neoessentials.permissions.debug`. No log diving needed.
+- **Added** `neoessentials.permissions.debug` permission node registered in `PermissionRegistry`.
+- **Fixed** `/permissions user check` was calling the internal manager directly, bypassing the external adapter (LuckPerms/FTB Ranks), `opsBypassPermissions`, and `vanillaOpFallback`. Now uses the full 5-step resolution chain — results are now consistent with what actually happens at runtime.
+
+---
+
 ## 1.0.2.6+build.19 — 2026-04-01
 
 ### 📖 Documentation — `allowUnsafeCommands` & Security Configuration

@@ -623,6 +623,7 @@ public class PermissionRegistry {
 
         // ── Permissions sub-command nodes ─────────────────────────────────────
         register("neoessentials.permissions.check", "Check a player's permissions", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.debug", "Full permission resolution trace for a player", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.search", "Search permissions", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.list.groups", "List permission groups", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.list.users", "List permission users", PermissionCategory.ADMIN, false);

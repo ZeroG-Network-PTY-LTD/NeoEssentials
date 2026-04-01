@@ -361,7 +361,15 @@ public class PermissionsCommand {
                             })
                             .executes(ctx -> removeUserPermission(ctx))))
                     .then(Commands.literal("clear")
-                        .executes(ctx -> clearUserPermissions(ctx)))));
+                        .executes(ctx -> clearUserPermissions(ctx)))))
+            .then(Commands.literal("debug")
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                        ctx.getSource().getServer().getPlayerList().getPlayers().stream()
+                            .map(p -> p.getGameProfile().getName()),
+                        builder
+                    ))
+                    .executes(ctx -> debugPlayerPermissions(ctx))));
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
@@ -979,7 +987,9 @@ public class PermissionsCommand {
         }
 
         UUID playerUUID = uuidOpt.get();
-        boolean hasPermission = PermissionAPI.getManager().hasPermission(playerUUID, permission);
+        // Use the full PermissionAPI chain (OP-bypass → external adapter → internal manager
+        // → vanillaOpFallback) so the result matches what the player actually experiences.
+        boolean hasPermission = PermissionAPI.hasPermission(playerUUID, permission);
 
         if (hasPermission) {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("✓ " + playerName + " has permission: " + permission), false);
@@ -1381,6 +1391,188 @@ public class PermissionsCommand {
             ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
             return 0;
         }
+    }
+
+    // ── Permission Debug ──────────────────────────────────────────────────────
+
+    /**
+     * /permissions debug <player>
+     *
+     * <p>Prints a full permission-resolution trace for the named player so that
+     * administrators can understand exactly why a player does or does not have a
+     * given permission. Covers:
+     * <ul>
+     *   <li>Active permission system mode (internal / external / emergency)</li>
+     *   <li>Adapter health and version (when external)</li>
+     *   <li>Current config flags: opsBypassPermissions, vanillaOpFallback</li>
+     *   <li>Player OP status (level 2+)</li>
+     *   <li>Assigned group, direct user permissions</li>
+     *   <li>Full group inheritance chain with each group's permissions</li>
+     *   <li>A summary of which step in the chain would grant/deny for this player</li>
+     * </ul>
+     */
+    private static int debugPlayerPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.debug");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        String playerName = StringArgumentType.getString(ctx, "player");
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+        UUID uuid = uuidOpt.get();
+
+        // ── Header ──────────────────────────────────────────────────────────
+        send(ctx, "§8━━━━━━━━━ §bPermission Debug: §f" + playerName + " §8━━━━━━━━━");
+
+        // ── System state ─────────────────────────────────────────────────────
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        boolean emergencyMode  = PermissionAPI.isEmergencyMode();
+        boolean usingExternal  = PermissionAPI.isUsingExternal();
+        var externalAdapter    = PermissionAPI.getExternalAdapter();
+
+        String modeLabel = emergencyMode ? "§cEMERGENCY (OP-only fallback)"
+                         : usingExternal && externalAdapter != null ? "§a" + externalAdapter.getName()
+                         : "§eInternal permissions.json";
+        send(ctx, "§7System mode    : " + modeLabel);
+
+        if (usingExternal && externalAdapter != null) {
+            String healthLabel = externalAdapter.isHealthy()
+                    ? "§a✓ healthy"
+                    : "§c✗ UNHEALTHY (" + externalAdapter.getConsecutiveFailures() + " failures)";
+            send(ctx, "§7Adapter health : " + healthLabel);
+            send(ctx, "§7Adapter version: §f" + externalAdapter.getVersion());
+        }
+
+        send(ctx, "§7opsBypassPermissions : §f" + cfg.isOpsBypassPermissionsEnabled());
+        send(ctx, "§7vanillaOpFallback    : §f" + cfg.isVanillaOpFallbackEnabled());
+
+        // ── OP status ────────────────────────────────────────────────────────
+        boolean isOp = false;
+        try {
+            ServerPlayer onlinePlayer = server.getPlayerList().getPlayer(uuid);
+            if (onlinePlayer != null) {
+                isOp = onlinePlayer.hasPermissions(2);
+            } else {
+                var profileCache = server.getProfileCache();
+                if (profileCache != null) {
+                    var profile = profileCache.get(uuid).orElse(null);
+                    if (profile != null) isOp = server.getPlayerList().isOp(profile);
+                }
+            }
+        } catch (Exception ignored) {}
+        send(ctx, "§7OP (level 2+)        : " + (isOp ? "§aYes" : "§cNo"));
+
+        // ── Internal-system details ──────────────────────────────────────────
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager != null) {
+            PermissionUser user = manager.getUser(uuid);
+            String groupName = (user != null && user.getGroup() != null)
+                    ? user.getGroup() : manager.getDefaultGroup();
+            send(ctx, "§7Assigned group       : §f" + groupName);
+
+            // Direct user permissions
+            if (user != null && !user.getPermissions().isEmpty()) {
+                send(ctx, "§7Direct user permissions (§f" + user.getPermissions().size() + "§7):");
+                int count = 0;
+                for (String perm : user.getPermissions()) {
+                    if (count++ >= 10) {
+                        send(ctx, "§7  §8... " + (user.getPermissions().size() - 10) + " more");
+                        break;
+                    }
+                    send(ctx, "§7  " + (perm.startsWith("-") ? "§c" : "§f") + perm);
+                }
+            } else {
+                send(ctx, "§7Direct user permissions: §8none");
+            }
+
+            // Group chain
+            send(ctx, "§7Group chain:");
+            showGroupChain(ctx, manager, groupName, new java.util.LinkedHashSet<>(), 1);
+        } else {
+            send(ctx, "§7Internal manager: §cnot loaded");
+        }
+
+        // ── Resolution chain summary ─────────────────────────────────────────
+        send(ctx, "§8--- §7Resolution chain for this player §8---");
+        if (emergencyMode) {
+            send(ctx, (isOp ? "§a[1] EMERGENCY MODE + OP → GRANT" : "§c[1] EMERGENCY MODE, not OP → DENY"));
+        } else {
+            if (cfg.isOpsBypassPermissionsEnabled()) {
+                send(ctx, isOp
+                    ? "§a[1] opsBypassPermissions: OP → GRANT (node never checked)"
+                    : "§8[1] opsBypassPermissions: not OP, continues...");
+            } else {
+                send(ctx, "§8[1] opsBypassPermissions: disabled");
+            }
+            if (usingExternal && externalAdapter != null) {
+                String adapterStatus = externalAdapter.isHealthy()
+                        ? "§e[2] " + externalAdapter.getName() + ": checks specific node"
+                        : "§c[2] " + externalAdapter.getName() + " UNHEALTHY → falls through to internal";
+                send(ctx, adapterStatus);
+            } else {
+                send(ctx, "§8[2] External adapter: not configured");
+            }
+            send(ctx, "§e[3] Internal manager: group / user / wildcard check");
+            if (cfg.isVanillaOpFallbackEnabled()) {
+                send(ctx, isOp
+                    ? "§a[4] vanillaOpFallback: OP → GRANT (if all above returned false)"
+                    : "§8[4] vanillaOpFallback: not OP → no effect");
+            } else {
+                send(ctx, "§8[4] vanillaOpFallback: disabled");
+            }
+        }
+        send(ctx, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return 1;
+    }
+
+    /**
+     * Recursively prints a group's permissions and inheritance chain.
+     */
+    private static void showGroupChain(CommandContext<CommandSourceStack> ctx,
+                                       PermissionManager manager,
+                                       String groupName,
+                                       java.util.Set<String> visited,
+                                       int depth) {
+        if (groupName == null || visited.contains(groupName.toLowerCase())) return;
+        visited.add(groupName.toLowerCase());
+
+        String indent = "  ".repeat(depth);
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) {
+            send(ctx, "§7" + indent + "§cGroup '" + groupName + "' not found");
+            return;
+        }
+
+        String prefixInfo = (group.getPrefix() != null && !group.getPrefix().isEmpty())
+                ? " §8(prefix: §r" + group.getPrefix() + "§8)" : "";
+        send(ctx, "§7" + indent + "§f" + groupName + " §8[" + group.getPermissions().size() + " nodes]" + prefixInfo);
+
+        int count = 0;
+        for (String perm : group.getPermissions()) {
+            if (count++ >= 8) {
+                send(ctx, "§7" + indent + "  §8... " + (group.getPermissions().size() - 8) + " more");
+                break;
+            }
+            send(ctx, "§7" + indent + "  " + (perm.startsWith("-") ? "§c" : "§f") + perm);
+        }
+
+        for (String parent : group.getInherits()) {
+            send(ctx, "§7" + indent + "  §8↳ inherits §e" + parent + "§8:");
+            showGroupChain(ctx, manager, parent, visited, depth + 1);
+        }
+    }
+
+    /** Sends a plain-text (§-colour) line to the command source. */
+    private static void send(CommandContext<CommandSourceStack> ctx, String text) {
+        ctx.getSource().sendSuccess(
+                () -> net.minecraft.network.chat.Component.literal(text), false);
     }
 }
 

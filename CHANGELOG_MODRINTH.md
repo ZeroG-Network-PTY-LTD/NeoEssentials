@@ -4,6 +4,16 @@
 
 ---
 
+## 1.0.2.6+build.21 — 2026-04-01
+
+### 🔍 New — Permission Debugging Tools
+
+- **Permissions** — New `/permissions debug <player>` command (requires `neoessentials.permissions.debug`). Shows system mode, adapter health/version, config flags, OP status, direct user permissions, group chain with inheritance, and a numbered resolution summary — diagnose permission issues in-game without touching logs.
+- **Permissions** — New `neoessentials.permissions.debug` permission node registered.
+- **Fixed** — `/permissions user check` now uses the full 5-step resolution chain (was bypassing external adapter, `opsBypassPermissions`, and `vanillaOpFallback` by calling the internal manager directly).
+
+---
+
 ## 1.0.2.6+build.19 — 2026-04-01
 
 ### 📖 Documentation — `allowUnsafeCommands` & Security Config
