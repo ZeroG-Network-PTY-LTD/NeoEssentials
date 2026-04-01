@@ -340,14 +340,12 @@
     Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
     Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
     Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
-    Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group's permissions/prefixes/suffixes are used.
     Permission Expiry: Support temporary permissions that expire after a set time or event.
     API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
     Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.
     Audit Logging: Log permission changes, grants, and denials for security and debugging.
     GUI Management: Provide a web or in-game GUI for managing permissions, groups, and users.
     Integration with External Systems: Improve and document integration with LuckPerms, FTB Ranks, and other permission mods, including fallback logic.
-    Permission Suggestions: When a command is denied, suggest the required permission node in the error message.
     Fine-Grained Command Control: Allow per-argument or per-subcommand permissions (e.g., /home set vs /home delete).
     Custom Permission Conditions: Allow custom logic for permission checks (e.g., based on player stats, inventory, or server state).
 - **Documentation Update: allowUnsafeCommands Config**  
@@ -358,6 +356,16 @@
     - Feedback from community (JJ {MrWhiteFlamesYT}, Chaz) highlighted that split JSON configs can be confusing, so clearer docs would help.
 
 # Improvements Done 
+
+- **Permission Groups & Priorities + Permission Suggestions** *(build #22)*
+    - ✅ Added `priority` (int, default `0`) field to `PermissionGroup`. Higher priority groups are checked first during inheritance resolution — both the positive-grant and negative-deny passes sort inherited groups by `priority` descending before recursing.
+    - ✅ `PermissionStorage` saves and loads `priority` in `permissions.json` (backwards-compatible — missing key defaults to `0`).
+    - ✅ Added `/permissions group <name> setpriority <value>` (−999–999, requires `neoessentials.permissions.group.modify`) and `getpriority` (requires `neoessentials.permissions.info.group`) commands.
+    - ✅ `/permissions info group` output now includes the group's current priority.
+    - ✅ Registered `neoessentials.permissions.group.priority` in `PermissionRegistry`.
+    - ✅ **Permission Suggestions** — `PermissionValidator.validatePermission()` and `validateAnyPermission()` denial messages now look up the required node(s) in `PermissionRegistry` and append the human-friendly description in a dimmed line (e.g. `§8(Ban a player from the server)`), so staff know exactly which capability they're missing without consulting the wiki.
+    - ✅ `PermissionSystem.md` updated: new "Group Priorities" section with command table, priority scale, and worked example; example `groups.json` updated with priority values; ToC updated; denial-message format documented.
+    - ✅ `CommandsReference.md` updated: `setpriority` and `getpriority` rows added to Permissions Management table.
 
 - **Permission Debugging Tools** *(build #21)*
     - ✅ Added `/permissions debug <player>` subcommand (requires `neoessentials.permissions.debug`). Displays a full in-game diagnostic trace: system mode (internal / external adapter / emergency), adapter health and version, active config flags (`opsBypassPermissions`, `vanillaOpFallback`), OP status, assigned group, direct user permissions (up to 10 with overflow count), group inheritance chain (recursive with indentation, up to 8 permissions per group), and a numbered 4-step resolution chain summary showing exactly which step would GRANT or continue for that player.

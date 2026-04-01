@@ -6,6 +6,41 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.22] — 2026-04-01
+
+### Improvement — Permission Groups & Priorities + Permission Suggestions
+
+#### Group priorities (`priority` field on every group)
+- **Added** `priority` (int, default `0`) field to `PermissionGroup`. Higher values are checked **first** when resolving inherited groups, giving a deterministic order when multiple parent groups conflict.
+- **Updated** `PermissionManager` — inherited groups are now sorted by `priority` descending before the recursive permission walk, for both positive-grant and negative-deny passes.
+- **Updated** `PermissionStorage` — `priority` is saved/loaded in `permissions.json` (backwards-compatible: files without the key read as `0`).
+- **Added** Two new commands:
+  - `/permissions group <name> setpriority <value>` (−999–999) — requires `neoessentials.permissions.group.modify`
+  - `/permissions group <name> getpriority` — requires `neoessentials.permissions.info.group`
+- **Updated** `/permissions info group <name>` now shows the current priority in its output.
+- **Updated** `/permissions debug <player>` group-chain display already renders priorities via `showGroupChain` (priority shown in group info line).
+- **Added** `neoessentials.permissions.group.priority` registered in `PermissionRegistry` (description: *"Set/get group priority (used to order inheritance resolution)"*).
+
+#### Permission Suggestions — enriched denial messages
+- **Improved** `PermissionValidator.validatePermission()` denial message now looks up the required node in `PermissionRegistry` and appends its human-friendly description in a dimmed line:
+  ```
+  You don't have permission to use this command.
+  §7Required: §fneoessentials.moderation.ban
+  §8(Ban a player from the server)
+  ```
+- **Improved** `PermissionValidator.validateAnyPermission()` denial message similarly appends per-node descriptions for each candidate node listed.
+- This makes it possible for players/staff to immediately understand *which capability* they are missing without needing to cross-reference the wiki.
+
+#### Documentation
+- **Updated** `PermissionSystem.md`:
+  - New **Group Priorities** section with command table, how-it-works explanation, priority scale table, and a worked example.
+  - Updated Table of Contents to include the new section.
+  - Updated the example `groups.json` — all four groups (`default` 0, `vip` 10, `moderator` 50, `admin` 100) now include their `priority` field.
+  - Updated the "if denied" description to show the enriched message format.
+- **Updated** `CommandsReference.md` — added `setpriority` and `getpriority` rows to the Permissions Management table.
+
+---
+
 ## [1.0.2.6+build.21] — 2026-04-01
 
 ### New Feature — Permission Debugging Tools

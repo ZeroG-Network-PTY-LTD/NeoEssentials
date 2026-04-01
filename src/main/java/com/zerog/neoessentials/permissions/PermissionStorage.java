@@ -39,6 +39,7 @@ public class PermissionStorage {
             g.put("name", group.getName());
             g.put("prefix", group.getPrefix());
             g.put("suffix", group.getSuffix());
+            g.put("priority", group.getPriority());
             g.put("permissions", group.getPermissions());
             g.put("inherits", group.getInherits());
             groups.add(g);
@@ -95,6 +96,11 @@ public class PermissionStorage {
                             PermissionGroup group = new PermissionGroup(g.get("name").toString());
                             group.setPrefix((String) g.get("prefix"));
                             group.setSuffix((String) g.get("suffix"));
+                            // Priority (optional, defaults to 0)
+                            Object priorityObj = g.get("priority");
+                            if (priorityObj instanceof Number n) {
+                                group.setPriority(n.intValue());
+                            }
                             // Permissions
                             Object permsObj = g.get("permissions");
                             if (permsObj instanceof List<?>) {

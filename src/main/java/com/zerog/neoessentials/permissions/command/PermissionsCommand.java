@@ -199,6 +199,11 @@ public class PermissionsCommand {
                     .then(Commands.literal("setsuffix")
                         .then(Commands.argument("suffix", StringArgumentType.greedyString())
                             .executes(ctx -> setSuffix(ctx))))
+                    .then(Commands.literal("setpriority")
+                        .then(Commands.argument("priority", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-999, 999))
+                            .executes(ctx -> setGroupPriority(ctx))))
+                    .then(Commands.literal("getpriority")
+                        .executes(ctx -> getGroupPriority(ctx)))
                     .then(Commands.literal("add")
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
                             .suggests((ctx, builder) -> {
@@ -492,16 +497,65 @@ public class PermissionsCommand {
         }
     }
 
+    private static int setGroupPriority(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.modify");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        int priority = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "priority");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+        group.setPriority(priority);
+        PermissionAPI.getManager().clearCache();
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            LOGGER.info("Set priority {} for group '{}'", priority, groupName);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
+                "Priority for group '" + groupName + "' set to " + priority + "."), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save permissions after setting priority", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save priority: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int getGroupPriority(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.info.group");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+        int p = group.getPriority();
+        ctx.getSource().sendSuccess(() -> MessageUtil.info(
+            "Group '" + groupName + "' priority: " + p
+            + (p != 0 ? " §8(higher = checked first in inheritance)" : "")), false);
+        return 1;
+    }
+
     private static int addGroupPermission(CommandContext<CommandSourceStack> ctx) {
         try {
             // Validate admin permission for modifying group permissions
-            PermissionValidator.PermissionResult permResult = 
+            PermissionValidator.PermissionResult permResult =
                 PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.permissions");
             if (!permResult.hasPermission()) {
                 ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                 return 0;
             }
-            
+
             final String groupName = StringArgumentType.getString(ctx, "group");
             final String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
 
@@ -903,6 +957,7 @@ public class PermissionsCommand {
         ctx.getSource().sendSuccess(() -> MessageUtil.info("=== Group: " + group.getName() + " ==="), false);
         ctx.getSource().sendSuccess(() -> MessageUtil.info("Prefix: " + (group.getPrefix() != null ? group.getPrefix() : "None")), false);
         ctx.getSource().sendSuccess(() -> MessageUtil.info("Suffix: " + (group.getSuffix() != null ? group.getSuffix() : "None")), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("Priority: " + group.getPriority()), false);
         ctx.getSource().sendSuccess(() -> MessageUtil.info("Permissions (" + group.getPermissions().size() + "):"), false);
 
         if (group.getPermissions().isEmpty()) {

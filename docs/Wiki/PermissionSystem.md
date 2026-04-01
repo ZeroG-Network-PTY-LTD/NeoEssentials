@@ -11,9 +11,10 @@
 ## Table of Contents
 1. [Configuration](#configuration)
 2. [How Permissions Work](#how-permissions-work)
-3. [Wildcards & Inheritance](#wildcards--inheritance)
-4. [Dynamic Nodes](#dynamic-nodes)
-5. [Permission Nodes — Full Reference](#permission-nodes--full-reference)
+3. [Group Priorities](#group-priorities)
+4. [Wildcards & Inheritance](#wildcards--inheritance)
+5. [Dynamic Nodes](#dynamic-nodes)
+6. [Permission Nodes — Full Reference](#permission-nodes--full-reference)
    - [Core](#core)
    - [Economy](#economy)
    - [Teleportation](#teleportation)
@@ -67,7 +68,42 @@
    3. **External adapter** (LuckPerms / FTB Ranks) — if configured and healthy, its answer is used.  If it throws an exception or is marked unhealthy (5+ consecutive failures) execution falls through.
    4. **Internal `permissions.json`** — the built-in group/user engine is consulted.  Checks explicit grants, group membership, wildcard nodes, and inheritance.
    5. **`vanillaOpFallback`** — if enabled and the player is OP (level 2+), `true` is returned as a last resort regardless of what steps 3–4 said.  This fires only when *all* other systems returned `false` or failed.
-4. If denied, the player sees: `§cYou don't have permission to use this command. §7Required: §f<node>`
+4. If denied, the player sees:
+   ```
+   You don't have permission to use this command.
+   §7Required: §f<node>
+   §8(<human-friendly description of the node, if registered>)
+   ```
+
+---
+
+## Group Priorities
+
+Every group has an integer `priority` field (default `0`). When a group inherits from multiple parent groups, the parents are checked in **descending priority order** — the highest-priority group in the inheritance chain is consulted first.
+
+**Why it matters:** Negative permissions (e.g. `-neoessentials.teleport.tpr`) and positive grants in a higher-priority parent win over lower-priority parents. Without explicit priorities the check order is unspecified.
+
+**Commands:**
+
+| Command | Description |
+|---|---|
+| `/permissions group <name> setpriority <value>` | Set priority (−999 to 999). Requires `neoessentials.permissions.group.modify` |
+| `/permissions group <name> getpriority` | Read current priority. Requires `neoessentials.permissions.info.group` |
+| `/permissions info group <name>` | Shows all group details including current priority |
+
+**Example:** Group `vip` (priority 10) and group `donor` (priority 5) both inherited by `vip-donor`:
+- Permissions are checked: `vip-donor` own → `vip` (priority 10) → `donor` (priority 5) → `default` (priority 0)
+
+**Typical priority scale:**
+
+| Priority | Typical role |
+|---|---|
+| 100+ | admin / owner |
+| 50 | moderator |
+| 10 | vip / donor |
+| 1 | trusted |
+| 0 | default (unset) |
+| −1 to −999 | restricted / muted helper groups |
 
 ---
 
@@ -655,6 +691,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
       "name": "default",
       "prefix": "§7",
       "suffix": "",
+      "priority": 0,
       "permissions": [
         "neoessentials.use",
         "neoessentials.economy.balance",
@@ -722,6 +759,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
       "name": "vip",
       "prefix": "§6[VIP] §f",
       "suffix": "",
+      "priority": 10,
       "permissions": [
         "neoessentials.home.10",
         "neoessentials.teleport.top",
@@ -742,6 +780,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
       "name": "moderator",
       "prefix": "§2[Mod] §f",
       "suffix": "",
+      "priority": 50,
       "permissions": [
         "neoessentials.moderation.ban",
         "neoessentials.moderation.banip",
@@ -787,6 +826,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
       "name": "admin",
       "prefix": "§c[Admin] §f",
       "suffix": "",
+      "priority": 100,
       "permissions": [
         "neoessentials.*"
       ],

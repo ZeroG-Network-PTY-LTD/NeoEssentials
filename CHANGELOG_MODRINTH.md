@@ -4,6 +4,17 @@
 
 ---
 
+## 1.0.2.6+build.22 — 2026-04-01
+
+### ⚖️ Improvement — Group Priorities + Permission Suggestions
+
+- **Permissions** — New `priority` field on permission groups (default 0). Higher priority parents are consulted first in the inheritance walk — deterministic grant/deny ordering when multiple parents conflict. Set with `/permissions group <name> setpriority <value>` (−999 to 999).
+- **Permissions** — `priority` persisted in `permissions.json` (backwards-compatible).
+- **Permissions** — Denial messages now show the node's registered description: `§8(e.g. "Ban a player from the server")` — staff know immediately what capability they need without checking the wiki.
+- **Docs** — New "Group Priorities" section in `PermissionSystem.md`; example `groups.json` updated with priority values; `CommandsReference.md` updated.
+
+---
+
 ## 1.0.2.6+build.21 — 2026-04-01
 
 ### 🔍 New — Permission Debugging Tools

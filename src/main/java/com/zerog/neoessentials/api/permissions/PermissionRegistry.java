@@ -638,7 +638,8 @@ public class PermissionRegistry {
         register("neoessentials.permissions.group.clone", "Clone permission groups", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.inherit", "Set group inheritance", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.permissions", "Manage group permission nodes", PermissionCategory.ADMIN, false);
-        register("neoessentials.permissions.group.modify", "Modify group settings", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.modify", "Modify group settings (prefix, suffix, priority)", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.priority", "Set/get group priority (used to order inheritance resolution)", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.clear", "Clear all group permissions", PermissionCategory.ADMIN, false);
 
         // ── Player-state / admin tool commands ───────────────────────────────

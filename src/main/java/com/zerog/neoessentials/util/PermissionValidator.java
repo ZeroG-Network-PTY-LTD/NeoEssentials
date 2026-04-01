@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.util;
 
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.api.permissions.PermissionRegistry;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -37,8 +38,16 @@ public class PermissionValidator {
             if (!PermissionAPI.hasPermission(playerUuid, permission)) {
                 LOGGER.debug("Permission denied for player {} ({}): {}",
                     player.getGameProfile().getName(), playerUuid, permission);
-                return PermissionResult.failure(
-                    "You don't have permission to use this command.\n§7Required: §f" + permission);
+                String msg = "You don't have permission to use this command.\n§7Required: §f" + permission;
+                // Append human-friendly description from PermissionRegistry if available
+                try {
+                    PermissionRegistry.PermissionInfo info =
+                        PermissionRegistry.getInstance().getPermissionInfo(permission);
+                    if (info != null && info.getDescription() != null && !info.getDescription().isEmpty()) {
+                        msg += "\n§8(" + info.getDescription() + ")";
+                    }
+                } catch (Exception ignored) {}
+                return PermissionResult.failure(msg);
             }
             
             return PermissionResult.success(player);
@@ -73,9 +82,19 @@ public class PermissionValidator {
             
             LOGGER.debug("Permission denied for player {} ({}): none of {}",
                 player.getGameProfile().getName(), playerUuid, java.util.Arrays.toString(permissions));
-            return PermissionResult.failure(
-                "You don't have permission to use this command.\n§7Required (any): §f"
-                + String.join("§7 or §f", permissions));
+            StringBuilder msg = new StringBuilder("You don't have permission to use this command.\n§7Required (any): §f")
+                .append(String.join("§7 or §f", permissions));
+            // Append descriptions for each node from PermissionRegistry
+            try {
+                for (String perm : permissions) {
+                    PermissionRegistry.PermissionInfo info =
+                        PermissionRegistry.getInstance().getPermissionInfo(perm);
+                    if (info != null && info.getDescription() != null && !info.getDescription().isEmpty()) {
+                        msg.append("\n§8  ").append(perm).append(" — ").append(info.getDescription());
+                    }
+                }
+            } catch (Exception ignored) {}
+            return PermissionResult.failure(msg.toString());
 
         } catch (Exception e) {
             LOGGER.error("Error validating permissions {} for source: {}", 

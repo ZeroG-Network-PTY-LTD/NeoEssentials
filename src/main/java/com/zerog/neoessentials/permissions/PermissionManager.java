@@ -266,7 +266,9 @@ public class PermissionManager {
         PermissionGroup group = getGroup(groupName);
         if (group == null) return false;
         if (hasNegativePermission(group.getPermissions(), permission)) return true;
-        for (String parent : group.getInherits()) {
+        // Check inherited groups sorted by priority (highest first)
+        java.util.List<String> sorted = sortedInherits(group);
+        for (String parent : sorted) {
             if (hasGroupNegativePermission(parent, permission, visited)) return true;
         }
         return false;
@@ -302,10 +304,28 @@ public class PermissionManager {
         }
         LOGGER.debug("  Checking group '{}' with {} permissions", groupName, group.getPermissions().size());
         if (hasPermissionWithWildcards(group.getPermissions(), permission)) return true;
-        for (String parent : group.getInherits()) {
+        // Check inherited groups sorted by priority (highest first)
+        java.util.List<String> sorted = sortedInherits(group);
+        for (String parent : sorted) {
             LOGGER.debug("  Checking inherited group '{}'", parent);
             if (hasGroupPermission(parent, permission, visited)) return true;
         }
         return false;
+    }
+
+    /**
+     * Returns the inherited group names of the given group, sorted by their priority
+     * (highest priority first). Groups not found in the registry are treated as priority 0.
+     */
+    private java.util.List<String> sortedInherits(PermissionGroup group) {
+        return group.getInherits().stream()
+                .sorted((a, b) -> {
+                    PermissionGroup ga = getGroup(a);
+                    PermissionGroup gb = getGroup(b);
+                    int pa = (ga != null) ? ga.getPriority() : 0;
+                    int pb = (gb != null) ? gb.getPriority() : 0;
+                    return Integer.compare(pb, pa); // descending
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 }
