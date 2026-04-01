@@ -4,6 +4,17 @@
 
 ---
 
+## 1.0.2.6+build.18 — 2026-04-01
+
+### 🛡️ New Feature — Fallback to Vanilla OP Permissions
+
+- **Added** `permissions.vanillaOpFallback` config key (default `true`). After all permission systems (external adapter + internal manager) have been consulted and returned `false`, OPs (level 2+) are granted access as a last resort. Prevents lockouts when FTB Ranks crashes or `permissions.json` is corrupted.
+- **Added** Emergency mode: if the permission system fails to initialise at startup, the server no longer crashes. Instead, NeoEssentials activates emergency mode — OPs get all permissions, everyone else is denied — and logs a clear boxed error asking the admin to fix the config and run `/neoe reload`.
+- **Improved** `/neoe reload` now detects emergency mode and performs a full re-initialisation so the system can recover without a server restart.
+- **Docs** `PermissionSystem.md` updated with new config table row, comparison table (bypass vs fallback), and updated "How Permissions Work" section.
+
+---
+
 ## 1.0.2.6+build.17 — 2026-04-01
 
 ### 🔌 Improved — External Permissions Integration

@@ -6,6 +6,33 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.18] — 2026-04-01
+
+### New Feature — Fallback to Vanilla OP Permissions
+
+#### New config key: `permissions.vanillaOpFallback`
+- **Added** `vanillaOpFallback` (default `true`) in the `permissions` config section.  
+  Unlike `opsBypassPermissions` (which runs *before* any permission check), this new option runs *after* every system has been consulted. If the external adapter **and** the internal manager both returned `false` for an OP player, NeoEssentials grants access as a last-resort safety net.
+- **Purpose:** Prevents admin lockouts when FTB Ranks crashes, `permissions.json` is corrupted, or the external adapter becomes unhealthy at runtime.
+- **Distinction from `opsBypassPermissions`:**
+
+  | Setting | When it fires | Typical use |
+  |---|---|---|
+  | `opsBypassPermissions: true` | *Before* any check — OPs skip the permission system entirely | Fast-path for small/trusted servers |
+  | `vanillaOpFallback: true` | *After* all checks return `false` — OPs get in only when everything else fails | Strict environments using LuckPerms/FTB Ranks that still need a lockout-prevention net |
+
+#### Emergency mode on permission-system startup failure
+- **Added** `PermissionAPI.setEmergencyMode(true)` is now activated when `PermissionSystem.initialize()` encounters an unrecoverable exception at server start, **instead of** crashing the server with a `RuntimeException`.
+- In emergency mode every permission check immediately answers `true` for OPs and `false` for everyone else. A prominent boxed `ERROR` is logged at startup and on every check, prompting the admin to fix the config and run `/neoe reload`.
+- **Added** `/neoe reload` now detects emergency mode and performs a **full re-initialisation** (resets manager, adapter, flags) so the system can recover without a restart once the root cause is fixed.
+- **Added** `PermissionSystem.isEmergencyMode()` public accessor (useful for dashboard status displays).
+
+#### Documentation
+- **Updated** `PermissionSystem.md` config table: added `vanillaOpFallback` row with description and a comparison table explaining the difference between bypass and fallback modes.
+- **Updated** "How Permissions Work" section: now lists all five steps in order (emergency → bypass → external → internal → fallback) with explanations.
+
+---
+
 ## [1.0.2.6+build.17] — 2026-04-01
 
 ### Improvements — External Permissions Integration

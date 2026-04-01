@@ -38,9 +38,20 @@
 |---|---|---|
 | `useExternalPermissions` | `false` | Use LuckPerms / FTB Ranks instead of built-in engine |
 | `defaultGroup` | `"default"` | Group assigned to new players |
-| `opsBypassPermissions` | `true` | OPs (level 2+) bypass all permission checks |
+| `opsBypassPermissions` | `true` | OPs (level 2+) bypass all permission checks **before** they are evaluated (fast path) |
+| `vanillaOpFallback` | `true` | OPs (level 2+) are granted access as a **last resort after** all permission systems have been consulted — prevents lockouts when configs are corrupted or external mods crash |
 | `cachePermissions` | `true` | Cache permission lookups for performance |
 | `permissionCacheExpiryMinutes` | `5` | How long cached results are valid |
+
+> **`opsBypassPermissions` vs `vanillaOpFallback`**
+>
+> | Setting | When it fires | Effect |
+> |---|---|---|
+> | `opsBypassPermissions: true` | **Before** any permission check | OPs always get in, permission system not consulted at all |
+> | `vanillaOpFallback: true` | **After** all checks return false | OP gets in only when every other system denied or failed — a safety net, not a bypass |
+>
+> Most servers should keep **both** `true` (the defaults).  
+> Set `opsBypassPermissions: false` + `vanillaOpFallback: true` if you want OPs to be subject to normal permission management in LuckPerms/FTB Ranks, while still having a lockout-prevention net for when those systems fail.
 
 **Permission data file:** `neoessentials/permissions.json`
 
@@ -50,11 +61,12 @@
 
 1. When a player runs a command, `PermissionValidator.validatePermission()` is called.
 2. It checks `PermissionAPI.hasPermission(uuid, node)`.
-3. `PermissionAPI` checks (in order):
-   - Player's explicit node grants/denials
-   - Player's group (and inherited groups, highest priority first)
-   - Wildcard nodes (`neoessentials.*`, `neoessentials.teleport.*`, etc.)
-   - `opsBypassPermissions` — OPs skip the check entirely if enabled
+3. `PermissionAPI` checks in this order:
+   1. **Emergency mode** — if the permission system failed to initialise at startup, all checks immediately answer `true` for OPs and `false` for everyone else.  Run `/neoe reload` once the config is fixed to exit this mode.
+   2. **`opsBypassPermissions`** — if enabled and the player is OP (level 2+), `true` is returned immediately without consulting any permission system.
+   3. **External adapter** (LuckPerms / FTB Ranks) — if configured and healthy, its answer is used.  If it throws an exception or is marked unhealthy (5+ consecutive failures) execution falls through.
+   4. **Internal `permissions.json`** — the built-in group/user engine is consulted.  Checks explicit grants, group membership, wildcard nodes, and inheritance.
+   5. **`vanillaOpFallback`** — if enabled and the player is OP (level 2+), `true` is returned as a last resort regardless of what steps 3–4 said.  This fires only when *all* other systems returned `false` or failed.
 4. If denied, the player sees: `§cYou don't have permission to use this command. §7Required: §f<node>`
 
 ---
