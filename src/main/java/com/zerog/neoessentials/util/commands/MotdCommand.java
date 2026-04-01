@@ -1,308 +1,359 @@
 package com.zerog.neoessentials.util.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.util.motd.MotdManager;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+
 import java.util.List;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
- * Implements the /motd command - Message of the Day system
- * Shows and manages server message of the day
+ * Implements the /motd command family.
+ * <pre>
+ * /motd                                         – show active MOTD
+ * /motd set <message>                           – set active profile's MOTD
+ * /motd clear                                   – clear active profile's MOTD
+ * /motd reload                                  – reload profiles from disk
+ * /motd broadcast                               – broadcast to all players
+ * /motd profile list                            – list all profiles
+ * /motd profile create <name> <message>         – create / overwrite a profile
+ * /motd profile delete <name>                   – delete a profile
+ * /motd profile switch <name>                   – set active profile
+ * /motd profile info [name]                     – show profile details
+ * /motd rotation enable <intervalMinutes>       – enable auto-rotation
+ * /motd rotation disable                        – disable rotation
+ * /motd rotation next                           – rotate immediately
+ * </pre>
  */
 public class MotdCommand {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MotdCommand.class);
-    private static String currentMotd = "";
-    private static String motdAuthor = "Server";
-    private static String motdTimestamp = "";
-    private static final Path MOTD_DATA_FILE = Paths.get("config", "neoessentials", "motd_data.json");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-    
-    /**
-     * Register the /motd command
-     */
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("motd")) return;
-        
-        // Load MOTD data on registration
-        loadMotdData();
-        
+        // Ensure manager is initialised (loads data)
+        MotdManager.getInstance();
+
         dispatcher.register(
             Commands.literal("motd")
-                // /motd - Show current MOTD
-                .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
-                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.motd");
-                    if (!permResult.hasPermission()) {
-                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                        return 0;
-                    }
-                    
-                    return showMotd(ctx.getSource());
-                })
-                // /motd reload - Reload MOTD from file
-                .then(Commands.literal("reload")
-                    .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
-                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.motd.reload");
-                        if (!permResult.hasPermission()) {
-                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                            return 0;
-                        }
-                        
-                        return reloadMotd(ctx.getSource());
-                    })
-                )
-                // /motd set <message> - Set MOTD
+                .executes(ctx -> showMotd(ctx.getSource()))
+
                 .then(Commands.literal("set")
                     .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes(ctx -> {
-                            PermissionValidator.PermissionResult permResult = 
-                                PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.motd.set");
-                            if (!permResult.hasPermission()) {
-                                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                                return 0;
-                            }
-                            
-                            String message = StringArgumentType.getString(ctx, "message");
-                            String author = ctx.getSource().getEntity() instanceof ServerPlayer ? 
-                                ((ServerPlayer) ctx.getSource().getEntity()).getName().getString() : "Console";
-                            return setMotd(ctx.getSource(), message, author);
+                            if (!checkPerm(ctx.getSource(), "neoessentials.motd.set")) return 0;
+                            return setMotd(ctx.getSource(), StringArgumentType.getString(ctx, "message"));
                         })
                     )
                 )
-                // /motd clear - Clear MOTD
+
                 .then(Commands.literal("clear")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
-                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.motd.set");
-                        if (!permResult.hasPermission()) {
-                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                            return 0;
-                        }
-                        
-                        String author = ctx.getSource().getEntity() instanceof ServerPlayer ? 
-                            ((ServerPlayer) ctx.getSource().getEntity()).getName().getString() : "Console";
-                        return clearMotd(ctx.getSource(), author);
+                        if (!checkPerm(ctx.getSource(), "neoessentials.motd.set")) return 0;
+                        return clearMotd(ctx.getSource());
                     })
                 )
-                // /motd broadcast - Broadcast MOTD to all players
+
+                .then(Commands.literal("reload")
+                    .executes(ctx -> {
+                        if (!checkPerm(ctx.getSource(), "neoessentials.motd.reload")) return 0;
+                        return reloadMotd(ctx.getSource());
+                    })
+                )
+
                 .then(Commands.literal("broadcast")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
-                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.motd.broadcast");
-                        if (!permResult.hasPermission()) {
-                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                            return 0;
-                        }
-                        
+                        if (!checkPerm(ctx.getSource(), "neoessentials.motd.broadcast")) return 0;
                         return broadcastMotd(ctx.getSource());
                     })
                 )
+
+                // ── /motd profile … ──────────────────────────────────────────
+                .then(Commands.literal("profile")
+                    .then(Commands.literal("list")
+                        .executes(ctx -> {
+                            if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                            return listProfiles(ctx.getSource());
+                        })
+                    )
+                    .then(Commands.literal("create")
+                        .then(Commands.argument("name", StringArgumentType.word())
+                            .then(Commands.argument("message", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                                    return createProfile(ctx.getSource(),
+                                            StringArgumentType.getString(ctx, "name"),
+                                            StringArgumentType.getString(ctx, "message"));
+                                })
+                            )
+                        )
+                    )
+                    .then(Commands.literal("delete")
+                        .then(Commands.argument("name", StringArgumentType.word())
+                            .executes(ctx -> {
+                                if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                                return deleteProfile(ctx.getSource(), StringArgumentType.getString(ctx, "name"));
+                            })
+                        )
+                    )
+                    .then(Commands.literal("switch")
+                        .then(Commands.argument("name", StringArgumentType.word())
+                            .executes(ctx -> {
+                                if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                                return switchProfile(ctx.getSource(), StringArgumentType.getString(ctx, "name"));
+                            })
+                        )
+                    )
+                    .then(Commands.literal("info")
+                        .executes(ctx -> {
+                            if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                            return profileInfo(ctx.getSource(), null);
+                        })
+                        .then(Commands.argument("name", StringArgumentType.word())
+                            .executes(ctx -> {
+                                if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
+                                return profileInfo(ctx.getSource(), StringArgumentType.getString(ctx, "name"));
+                            })
+                        )
+                    )
+                )
+
+                // ── /motd rotation … ─────────────────────────────────────────
+                .then(Commands.literal("rotation")
+                    .then(Commands.literal("enable")
+                        .then(Commands.argument("intervalMinutes", IntegerArgumentType.integer(1, 10080))
+                            .executes(ctx -> {
+                                if (!checkPerm(ctx.getSource(), "neoessentials.motd.rotation")) return 0;
+                                return setRotation(ctx.getSource(), true,
+                                        IntegerArgumentType.getInteger(ctx, "intervalMinutes"));
+                            })
+                        )
+                    )
+                    .then(Commands.literal("disable")
+                        .executes(ctx -> {
+                            if (!checkPerm(ctx.getSource(), "neoessentials.motd.rotation")) return 0;
+                            return setRotation(ctx.getSource(), false, 60);
+                        })
+                    )
+                    .then(Commands.literal("next")
+                        .executes(ctx -> {
+                            if (!checkPerm(ctx.getSource(), "neoessentials.motd.rotation")) return 0;
+                            return rotateNext(ctx.getSource());
+                        })
+                    )
+                )
         );
     }
-    
-    /**
-     * Show the current MOTD
-     */
+
+    // ── Permission helper ──────────────────────────────────────────────────────
+
+    private static boolean checkPerm(CommandSourceStack source, String node) {
+        PermissionValidator.PermissionResult r = PermissionValidator.validatePermission(source, node);
+        if (!r.hasPermission()) {
+            source.sendFailure(MessageUtil.error(r.getErrorMessage()));
+            return false;
+        }
+        return true;
+    }
+
+    private static String senderName(CommandSourceStack source) {
+        return source.getEntity() instanceof ServerPlayer p ? p.getName().getString() : "Console";
+    }
+
+    // ── Commands ───────────────────────────────────────────────────────────────
+
     private static int showMotd(CommandSourceStack source) {
-        if (currentMotd.isEmpty()) {
+        if (!checkPerm(source, "neoessentials.motd")) return 0;
+        MotdManager mgr = MotdManager.getInstance();
+        if (!mgr.hasMotd()) {
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.motd.no_motd"), false);
             return 1;
         }
-        
-        // Header
+        MotdManager.MotdProfile p = mgr.getActiveProfile();
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.header"), false);
-        
-        // MOTD content (support color codes)
-        String formattedMotd = currentMotd.replace("&", "§");
-        Component motdComponent = Component.literal(formattedMotd);
-        source.sendSuccess(() -> motdComponent, false);
-        
-        // Footer with author and timestamp
-        if (!motdTimestamp.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.motd.footer", motdAuthor, motdTimestamp), false);
+        source.sendSuccess(() -> Component.literal(p.motd.replace("&", "§")), false);
+        if (!p.timestamp.isEmpty()) {
+            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp), false);
         }
-        
         return 1;
     }
-    
-    /**
-     * Set the MOTD
-     */
-    private static int setMotd(CommandSourceStack source, String message, String author) {
-        // Validate message length
-        if (message.length() > 500) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.too_long"));
+
+    private static int setMotd(CommandSourceStack source, String message) {
+        MotdManager mgr = MotdManager.getInstance();
+        String error = mgr.setProfile(mgr.getActiveProfileName(), message, senderName(source));
+        if (error != null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.save_error", error));
             return 0;
         }
-        
-        currentMotd = message;
-        motdAuthor = author;
-        motdTimestamp = LocalDateTime.now().format(TIME_FORMAT);
-        
-        // Save to file
-        saveMotdData();
-        
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.set"), false);
         return 1;
     }
-    
-    /**
-     * Clear the MOTD
-     */
-    private static int clearMotd(CommandSourceStack source, String author) {
-        currentMotd = "";
-        motdAuthor = author;
-        motdTimestamp = LocalDateTime.now().format(TIME_FORMAT);
-        
-        // Save to file
-        saveMotdData();
-        
+
+    private static int clearMotd(CommandSourceStack source) {
+        MotdManager mgr = MotdManager.getInstance();
+        String error = mgr.setProfile(mgr.getActiveProfileName(), "", senderName(source));
+        if (error != null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.save_error", error));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.cleared"), false);
         return 1;
     }
-    
-    /**
-     * Reload MOTD from file
-     */
+
     private static int reloadMotd(CommandSourceStack source) {
-        loadMotdData();
+        String error = MotdManager.getInstance().load();
+        if (error != null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.load_error", error));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.reloaded"), false);
         return 1;
     }
-    
-    /**
-     * Broadcast MOTD to all online players
-     */
+
     private static int broadcastMotd(CommandSourceStack source) {
-        if (currentMotd.isEmpty()) {
+        MotdManager mgr = MotdManager.getInstance();
+        if (!mgr.hasMotd()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.motd.no_motd_to_broadcast"));
             return 0;
         }
-        
-        // Get all online players
         List<ServerPlayer> players = source.getServer().getPlayerList().getPlayers();
-        
         if (players.isEmpty()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.motd.no_players_online"));
             return 0;
         }
-        
-        // Send MOTD to all players who have permission
-        String formattedMotd = currentMotd.replace("&", "§");
-        Component motdComponent = Component.literal(formattedMotd);
-        int sentCount = 0;
-        
+        MotdManager.MotdProfile p = mgr.getActiveProfile();
+        Component motdComp = Component.literal(p.motd.replace("&", "§"));
+        int sent = 0;
         for (ServerPlayer player : players) {
-            // Check if player has permission to see MOTD
-            PermissionValidator.PermissionResult permResult = 
-                PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.motd");
-            
-            if (permResult.hasPermission()) {
+            PermissionValidator.PermissionResult pr =
+                    PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.motd");
+            if (pr.hasPermission()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.broadcast_header"));
-                player.sendSystemMessage(motdComponent);
-                if (!motdTimestamp.isEmpty()) {
-                    player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", motdAuthor, motdTimestamp));
+                player.sendSystemMessage(motdComp);
+                if (!p.timestamp.isEmpty()) {
+                    player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp));
                 }
-                sentCount++;
+                sent++;
             }
         }
-        
-        final int finalSentCount = sentCount;
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.broadcasted", finalSentCount), false);
+        final int finalSent = sent;
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.broadcasted", finalSent), false);
         return 1;
     }
-    
-    /**
-     * Load MOTD data from file
-     */
-    private static void loadMotdData() {
-        try {
-            if (!Files.exists(MOTD_DATA_FILE)) {
-                Files.createDirectories(MOTD_DATA_FILE.getParent());
-                return;
-            }
-            
-            String json = Files.readString(MOTD_DATA_FILE);
-            JsonObject data = JsonParser.parseString(json).getAsJsonObject();
-            
-            currentMotd = data.has("motd") ? data.get("motd").getAsString() : "";
-            motdAuthor = data.has("author") ? data.get("author").getAsString() : "Server";
-            motdTimestamp = data.has("timestamp") ? data.get("timestamp").getAsString() : "";
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to load MOTD data: {}", e.getMessage());
-            // Set defaults
-            currentMotd = "";
-            motdAuthor = "Server";
-            motdTimestamp = "";
+
+    // ── Profile subcommands ────────────────────────────────────────────────────
+
+    private static int listProfiles(CommandSourceStack source) {
+        MotdManager mgr = MotdManager.getInstance();
+        String active = mgr.getActiveProfileName();
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.list_header"), false);
+        for (String name : mgr.getProfiles().keySet()) {
+            boolean isActive = name.equals(active);
+            source.sendSuccess(() -> Component.literal(
+                    (isActive ? "§a▶ " : "§7• ") + name + (isActive ? " §e(active)" : "")), false);
         }
+        return 1;
     }
-    
-    /**
-     * Save MOTD data to file
-     */
-    private static void saveMotdData() {
-        try {
-            JsonObject data = new JsonObject();
-            data.addProperty("motd", currentMotd);
-            data.addProperty("author", motdAuthor);
-            data.addProperty("timestamp", motdTimestamp);
-            
-            Files.createDirectories(MOTD_DATA_FILE.getParent());
-            Files.writeString(MOTD_DATA_FILE, GSON.toJson(data));
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to save MOTD data: {}", e.getMessage());
+
+    private static int createProfile(CommandSourceStack source, String name, String message) {
+        String error = MotdManager.getInstance().setProfile(name, message, senderName(source));
+        if (error != null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.save_error", error));
+            return 0;
         }
+        final String n = name.toLowerCase();
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.created", n), false);
+        return 1;
     }
-    
-    /**
-     * Get current MOTD for external use (like join messages)
-     */
+
+    private static int deleteProfile(CommandSourceStack source, String name) {
+        String error = MotdManager.getInstance().deleteProfile(name);
+        if (error != null) {
+            source.sendFailure(MessageUtil.error(error));
+            return 0;
+        }
+        final String n = name.toLowerCase();
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.deleted", n), false);
+        return 1;
+    }
+
+    private static int switchProfile(CommandSourceStack source, String name) {
+        String error = MotdManager.getInstance().switchProfile(name);
+        if (error != null) {
+            source.sendFailure(MessageUtil.error(error));
+            return 0;
+        }
+        final String n = name.toLowerCase();
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.switched", n), false);
+        return 1;
+    }
+
+    private static int profileInfo(CommandSourceStack source, String name) {
+        MotdManager mgr = MotdManager.getInstance();
+        String target = (name == null) ? mgr.getActiveProfileName() : name.toLowerCase();
+        if (!mgr.getProfiles().containsKey(target)) {
+            source.sendFailure(MessageUtil.error("Profile '" + target + "' does not exist"));
+            return 0;
+        }
+        MotdManager.MotdProfile p = mgr.getProfiles().get(target);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.info_header", target), false);
+        source.sendSuccess(() -> Component.literal("§7MOTD:   §f" + (p.motd.isEmpty() ? "(not set)" : p.motd)), false);
+        source.sendSuccess(() -> Component.literal("§7Author: §f" + p.author), false);
+        source.sendSuccess(() -> Component.literal("§7Saved:  §f" + p.timestamp), false);
+        return 1;
+    }
+
+    // ── Rotation subcommands ───────────────────────────────────────────────────
+
+    private static int setRotation(CommandSourceStack source, boolean enabled, int intervalMinutes) {
+        String error = MotdManager.getInstance().setRotation(enabled, intervalMinutes);
+        if (error != null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.motd.save_error", error));
+            return 0;
+        }
+        if (enabled) {
+            final int iv = intervalMinutes;
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.rotation.enabled", iv), false);
+        } else {
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.rotation.disabled"), false);
+        }
+        return 1;
+    }
+
+    private static int rotateNext(CommandSourceStack source) {
+        MotdManager.getInstance().rotateNext();
+        String now = MotdManager.getInstance().getActiveProfileName();
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.rotation.rotated", now), false);
+        return 1;
+    }
+
+    // ── Public helpers ─────────────────────────────────────────────────────────
+
+    /** @return active MOTD text (may be empty). */
     public static String getCurrentMotd() {
-        return currentMotd;
+        return MotdManager.getInstance().getActiveMotd();
     }
-    
-    /**
-     * Check if MOTD is set
-     */
+
+    /** @return {@code true} if there is a non-empty active MOTD. */
     public static boolean hasMotd() {
-        return !currentMotd.isEmpty();
+        return MotdManager.getInstance().hasMotd();
     }
-    
-    /**
-     * Show MOTD to a player (for join messages)
-     */
+
+    /** Show MOTD to a player on join. */
     public static void showMotdToPlayer(ServerPlayer player) {
-        if (!hasMotd()) return;
-        
+        MotdManager mgr = MotdManager.getInstance();
+        if (!mgr.hasMotd()) return;
+        MotdManager.MotdProfile p = mgr.getActiveProfile();
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.join_header"));
-        
-        String formattedMotd = currentMotd.replace("&", "§");
-        Component motdComponent = Component.literal(formattedMotd);
-        player.sendSystemMessage(motdComponent);
-        
-        if (!motdTimestamp.isEmpty()) {
-            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", motdAuthor, motdTimestamp));
+        player.sendSystemMessage(Component.literal(p.motd.replace("&", "§")));
+        if (!p.timestamp.isEmpty()) {
+            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp));
         }
     }
 }

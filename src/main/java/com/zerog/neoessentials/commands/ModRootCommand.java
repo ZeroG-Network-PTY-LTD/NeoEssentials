@@ -291,6 +291,36 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("Failed to reload jail system: " + e.getMessage()));
             }
 
+            // Reload TablistManager (was missing – fixes "disable tablist in config, reload, no effect")
+            totalCount++;
+            try {
+                com.zerog.neoessentials.tablist.TablistManager tablistMgr =
+                    com.zerog.neoessentials.tablist.TablistManager.getInstance();
+                tablistMgr.loadConfig();
+                // Push the updated header/footer to all online players immediately
+                net.minecraft.server.MinecraftServer reloadServer =
+                    net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (reloadServer != null) {
+                    tablistMgr.updateAll(reloadServer);
+                }
+                LOGGER.info("✓ Tablist system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload tablist system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload tablist system: " + e.getMessage()));
+            }
+
+            // Reload WorthManager (item sell prices)
+            totalCount++;
+            try {
+                com.zerog.neoessentials.economy.worth.WorthManager.getInstance().reload();
+                LOGGER.info("✓ Worth system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload worth system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload worth system: " + e.getMessage()));
+            }
+
             // Build success message
             String resultMessage = String.format("NeoEssentials reload complete: %d/%d systems reloaded successfully",
                 successCount, totalCount);
@@ -299,6 +329,24 @@ public class ModRootCommand {
                 source.sendSuccess(() -> MessageUtil.success(resultMessage), true);
             } else {
                 source.sendSuccess(() -> MessageUtil.warning(resultMessage + " (check console for errors)"), true);
+            }
+
+            // Re-send the Brigadier command tree to all online players so that any
+            // permission-gated commands appear/disappear correctly in tab-completion
+            // without requiring a relog.
+            try {
+                net.minecraft.server.MinecraftServer cmdServer =
+                    net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (cmdServer != null) {
+                    for (net.minecraft.server.level.ServerPlayer onlinePlayer :
+                            cmdServer.getPlayerList().getPlayers()) {
+                        cmdServer.getCommands().sendCommands(onlinePlayer);
+                    }
+                    LOGGER.info("✓ Command trees re-sent to {} online player(s)",
+                        cmdServer.getPlayerList().getPlayerCount());
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Could not re-sync command trees to players after reload: {}", e.getMessage());
             }
 
             LOGGER.info("Configuration reload completed: {}/{} systems reloaded successfully by {}",

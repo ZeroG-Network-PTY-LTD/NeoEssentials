@@ -979,7 +979,7 @@ public class ConfigManager {
      */
     public boolean isNewPlayerKitEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("newPlayerKit")) {
                 JsonObject npk = kits.getAsJsonObject("newPlayerKit");
@@ -996,7 +996,7 @@ public class ConfigManager {
      */
     public String getNewPlayerKitName() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("newPlayerKit")) {
                 JsonObject npk = kits.getAsJsonObject("newPlayerKit");
@@ -1013,7 +1013,7 @@ public class ConfigManager {
      */
     public int getMaxKitsPerPlayer() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("maxKitsPerPlayer")) {
                 try {
@@ -1117,7 +1117,7 @@ public class ConfigManager {
      */
     public boolean isAllowKitOverrideEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("allowKitOverride")) {
                 return kits.get("allowKitOverride").getAsBoolean();
@@ -1145,6 +1145,23 @@ public class ConfigManager {
                 JsonObject merged = ConfigSplitter.mergeSplitConfigs();
                 configCache.put(configName, merged);
                 return merged;
+            }
+
+            // If configName is a section name (no .json extension), extract it from the
+            // main config. This allows callers such as getConfig("chat") to work regardless
+            // of whether split configs are enabled, without needing to know the file layout.
+            if (!configName.endsWith(".json")) {
+                // ReentrantReadWriteLock allows same thread to re-acquire the read lock
+                JsonObject mainConfig = getConfig(MAIN_CONFIG);
+                if (mainConfig != null && mainConfig.has(configName)
+                        && mainConfig.get(configName).isJsonObject()) {
+                    JsonObject section = mainConfig.getAsJsonObject(configName);
+                    configCache.put(configName, section);
+                    return section;
+                }
+                // Section missing – return empty (do not cache so it retries after reload)
+                LOGGER.debug("Config section '{}' not found in main config, returning empty object", configName);
+                return new JsonObject();
             }
 
             File file = ResourceUtil.getConfigFile(configName);
@@ -1869,9 +1886,9 @@ public class ConfigManager {
      */
     public static double getKitCommandCost(String commandName) {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("commandCosts")) {
+            if (kits.has("commandCosts") && kits.get("commandCosts").isJsonObject()) {
                 JsonObject costs = kits.getAsJsonObject("commandCosts");
                 if (costs.has(commandName)) {
                     try {
@@ -1889,7 +1906,7 @@ public class ConfigManager {
      */
     public static boolean isPastebinCreatekitEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("pastebinCreatekit")) {
                 return kits.get("pastebinCreatekit").getAsBoolean();
@@ -1904,7 +1921,7 @@ public class ConfigManager {
      */
     public static boolean isSkipUsedOneTimeKitsFromKitList() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("skipUsedOneTimeKitsFromKitList")) {
                 return kits.get("skipUsedOneTimeKitsFromKitList").getAsBoolean();
@@ -1919,7 +1936,7 @@ public class ConfigManager {
      */
     public static boolean isKitAutoEquipEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("kitAutoEquip")) {
                 return kits.get("kitAutoEquip").getAsBoolean();
@@ -1934,7 +1951,7 @@ public class ConfigManager {
      */
     public static boolean isLogKitUsageEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
+        if (config.has("kits") && config.get("kits").isJsonObject()) {
             JsonObject kits = config.getAsJsonObject("kits");
             if (kits.has("logKitUsage")) {
                 return kits.get("logKitUsage").getAsBoolean();

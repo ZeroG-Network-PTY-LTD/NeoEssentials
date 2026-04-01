@@ -61,6 +61,52 @@ Full-featured chat system with format templates, rich text (gradients/rainbow), 
 
 ---
 
+## Color Codes in `chat-format`
+
+Color codes go in the **value** (the format string), **not** in the key.
+The key must remain a plain group identifier such as `group:fondateur`.
+
+### Legacy `&` codes
+
+| Code | Color/Effect |
+|---|---|
+| `&0` – `&9`, `&a` – `&f` | Standard Minecraft colors |
+| `&l` `&m` `&n` `&o` `&k` | Bold / Strike / Underline / Italic / Obfuscated |
+| `&r` | Reset all formatting |
+
+### Hex colors
+
+```
+&#RRGGBB
+```
+
+Example: `&#FF5500` for orange.
+
+### Per-group format example
+
+```json
+"chat-format": {
+  "default":           "&f[&eDresseur&f]   &f{neoessentials_username}&7: &f{MESSAGE}",
+  "group:streameur":   "&f[&bStreameur&f]  &f{neoessentials_username}&7: &f{MESSAGE}",
+  "group:moderateur":  "&f[&cModérateur&f] &f{neoessentials_username}&7: &f{MESSAGE}",
+  "group:fondateur":   "&f[&4Fondateur&f]  &f{neoessentials_username}&7: &f{MESSAGE}"
+}
+```
+
+> **Note** – Before v1.0.2.7 there was a bug where `&` color codes in format strings were
+> silently stripped when `enableChatEnhancements` was `true` (the default), causing all chat
+> text to appear white.  This is fixed in v1.0.2.7.
+
+### Common mistakes to avoid
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Color code in the **key**: `"group:&cFondateur"` | Keep the key as `"group:fondateur"` |
+| Unicode escapes in the key: `"\u0026cgroup:fondateur"` | Color codes belong in the value string |
+| Missing reset after colored text | Add `&f` (white) or `&r` (reset) after the group name |
+
+---
+
 ## Rich Text
 
 When `richText.enabled` is `true`, players (or players in `allowedRoles`) can use MiniMessage tags in chat:

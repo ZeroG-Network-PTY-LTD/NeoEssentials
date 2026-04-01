@@ -183,10 +183,45 @@ public class PermissionRegistry {
     }
     
     /**
-     * Validate permission format
+     * Validate permission format.
+     *
+     * <p>Accepts any well-formed dot-separated permission node, including those
+     * belonging to external mods (e.g. {@code worldedit.edit}, {@code ftbchunks.map.*}).
+     * The registry previously restricted auto-discovery to {@code neoessentials.*}
+     * nodes only; external nodes are now allowed so that they can be stored in
+     * {@code permissions.json} and enforced via the
+     * {@link com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler}.</p>
+     *
+     * <p>Valid formats:
+     * <ul>
+     *   <li>Fully-qualified: {@code neoessentials.spawn}, {@code worldedit.edit}</li>
+     *   <li>Wildcard suffix: {@code neoessentials.*}, {@code worldedit.*}, {@code ftbchunks.map.*}</li>
+     * </ul>
+     * </p>
      */
     private boolean isValidPermission(String permission) {
-        return permission.matches("^[a-z0-9._-]+$") && permission.startsWith("neoessentials.");
+        if (permission == null || permission.isEmpty()) return false;
+
+        // Negative permissions: strip the leading '-' and validate the rest
+        if (permission.startsWith("-")) {
+            return isValidPermission(permission.substring(1));
+        }
+
+        // Wildcard suffix (e.g. neoessentials.*, worldedit.*, modid.category.*)
+        if (permission.endsWith(".*")) {
+            String prefix = permission.substring(0, permission.length() - 2);
+            return !prefix.isEmpty()
+                && prefix.matches("^[a-z0-9._-]+$")
+                && !prefix.startsWith(".")
+                && !prefix.endsWith(".")
+                && !prefix.contains("..");
+        }
+
+        // Standard node: any lowercase alphanumeric + dots/underscores/hyphens
+        return permission.matches("^[a-z0-9._-]+$")
+            && !permission.startsWith(".")
+            && !permission.endsWith(".")
+            && !permission.contains("..");
     }
     
     /**
@@ -551,9 +586,11 @@ public class PermissionRegistry {
         register("neoessentials.nick.others", "Change other players' nicknames", PermissionCategory.MISC, false);
         register("neoessentials.staff", "Access staff chat and staff features", PermissionCategory.MISC, false);
         register("neoessentials.motd", "View MOTD", PermissionCategory.MISC, true);
-        register("neoessentials.motd.set", "Set MOTD", PermissionCategory.ADMIN, false);
-        register("neoessentials.motd.broadcast", "Broadcast MOTD", PermissionCategory.ADMIN, false);
-        register("neoessentials.motd.reload", "Reload MOTD", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.set", "Set MOTD on the active profile", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.broadcast", "Broadcast MOTD to all online players", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.reload", "Reload MOTD profiles from disk", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.profile", "Manage MOTD profiles (create/delete/switch/info)", PermissionCategory.ADMIN, false);
+        register("neoessentials.motd.rotation", "Control MOTD auto-rotation (enable/disable/next)", PermissionCategory.ADMIN, false);
 
         // ── Mail system ───────────────────────────────────────────────────────
         register("neoessentials.mail", "Use mail system (read, delete, status)", PermissionCategory.CHAT, true);

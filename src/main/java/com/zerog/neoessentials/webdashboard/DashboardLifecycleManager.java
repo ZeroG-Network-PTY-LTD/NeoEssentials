@@ -2,6 +2,7 @@ package com.zerog.neoessentials.webdashboard;
 
 import com.zerog.neoessentials.webdashboard.data.DataCollector;
 import com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer;
+import com.zerog.neoessentials.util.motd.MotdManager;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -95,6 +96,8 @@ public class DashboardLifecycleManager {
 
                 LOGGER.info("Dashboard shutdown complete (total: {}ms)", dashboardStopTime + collectorStopTime);
             }
+            // Always shut down the MOTD rotation scheduler on server stop
+            MotdManager.getInstance().shutdown();
         } catch (Exception e) {
             LOGGER.error("Error stopping dashboard", e);
         }

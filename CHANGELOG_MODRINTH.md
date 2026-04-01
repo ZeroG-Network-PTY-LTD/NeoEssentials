@@ -4,6 +4,37 @@
 
 ---
 
+## 1.0.2.6+build.12 — 2026-04-01
+
+### ✨ New Features
+
+- **MOTD – Multi-Profile Support** — Multiple named MOTD profiles with `/motd profile list|create|delete|switch|info`. Each profile persists independently in `config/neoessentials/motd_data.json`.
+- **MOTD – Auto-Rotation** — Cycle profiles automatically: `/motd rotation enable <minutes>|disable|next`.
+- **MOTD – Dashboard API** — REST endpoint `/api/motd` for full profile & rotation management from the web dashboard.
+- **MOTD – Error Feedback** — In-game error messages on save/load failures; `/motd reload` shows the exact problem.
+
+### 🔒 New Permissions
+- `neoessentials.motd.profile` (default: off)
+- `neoessentials.motd.rotation` (default: off)
+
+---
+
+## 1.0.2.6+build.5 — 2026-04-01
+
+
+### 🐛 Bug Fixes
+
+- **Config** – Fixed `ClassCastException` crash in all kit commands when split configs are enabled. Also fixed `getConfig("chat")` throwing `FileNotFoundException`, which broke chat formatting across the mod.
+- **Permissions** – Fixed OPs being denied commands when an external permission mod (FTB Ranks, LuckPerms) is installed. OP bypass is now checked before any external adapter.
+- **Permissions** – Fixed FTB Ranks adapter `NoSuchMethodException` on FTB Ranks 2101.1.x (new API `getPermission(ServerPlayer, String, boolean)` now probed automatically).
+- **ChestShop** – Fixed Admin Shops with `?` item — any admin with `neoessentials.shop.create.admin` can now right-click to assign the item.
+- **Help** – Fixed `/help 2` and other page numbers showing "No command found" (conflict with vanilla `/help` resolved).
+- **Moderation** – Fixed `/unban` not detecting vanilla-issued bans; NeoEssentials now syncs with `banned-players.json` in both directions.
+- **Rules** – Fixed `/rules` ignoring existing `rules.json` from older builds; auto-migrates to `rules_data.json`.
+- **MOTD** – Fixed MOTD resetting on restart due to an inconsistent save path.
+
+---
+
 ## 1.0.2.6+build.1 — 2026-03-06
 
 ### 🔁 Starting fresh from 1.0.2.6

@@ -258,23 +258,31 @@ public class PermissionScanner {
     }
     
     /**
-     * Validate permission format
+     * Validate permission format.
+     * Accepts fully-qualified nodes and wildcard suffixes (e.g. {@code neoessentials.spawner.*}).
      */
     private boolean isValidPermission(String permission) {
         if (permission == null || permission.trim().isEmpty()) return false;
-        
-        // Must start with neoessentials
+
+        // Allow ".*" wildcard suffix
+        if (permission.endsWith(".*")) {
+            String prefix = permission.substring(0, permission.length() - 2);
+            return prefix.startsWith("neoessentials")
+                && prefix.matches("^[a-z0-9._-]+$")
+                && !prefix.startsWith(".")
+                && !prefix.endsWith(".")
+                && !prefix.contains("..");
+        }
+
+        // Must start with neoessentials.
         if (!permission.startsWith("neoessentials.")) return false;
-        
-        // Check for valid characters
+
+        // Valid characters only
         if (!permission.matches("^[a-z0-9._-]+$")) return false;
-        
-        // Cannot end with dot
-        if (permission.endsWith(".")) return false;
-        
-        // Cannot have consecutive dots
-        if (permission.contains("..")) return false;
-        
+
+        // Cannot end with dot or have consecutive dots
+        if (permission.endsWith(".") || permission.contains("..")) return false;
+
         // Must have at least one part after neoessentials
         String[] parts = permission.split("\\.");
         return parts.length >= 2;

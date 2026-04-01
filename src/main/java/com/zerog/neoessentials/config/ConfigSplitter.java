@@ -31,12 +31,12 @@ public class ConfigSplitter {
         put("modules", "modules.json");
         put("logging", "main.json");
         put("permissions", "main.json");
+        put("kits", "main.json");  // kits SETTINGS live in main.json; kits.json is reserved for kit definitions (JsonArray)
         put("security", "security.json");
         put("commands", "commands.json");
         put("webDashboard", "webdashboard.json");
         put("items", "items.json");
         put("afk", "afk.json");
-        put("kits", "kits.json");  // Already separate
         put("teleportation", "teleportation.json");  // Already separate
         put("moderation", "moderation.json");
         put("chat", "chat.json");
@@ -267,6 +267,10 @@ public class ConfigSplitter {
             if (mainConfig.has("permissions")) {
                 result.add("permissions", mainConfig.get("permissions"));
             }
+            // kits SETTINGS (not definitions) also live in main.json to avoid conflict with kits.json
+            if (mainConfig.has("kits") && mainConfig.get("kits").isJsonObject()) {
+                result.add("kits", mainConfig.get("kits"));
+            }
         } else {
             // Single section per file
             if (mainConfig.has(sectionName)) {
@@ -308,6 +312,11 @@ public class ConfigSplitter {
                         }
                         if (fileConfig.has("permissions")) {
                             merged.add("permissions", fileConfig.get("permissions"));
+                        }
+                        // kits SETTINGS (commandCosts, newPlayerKit, etc.) — only merge if it's an Object,
+                        // never if it's a JsonArray (that would be kit definitions from kits.json leaking in)
+                        if (fileConfig.has("kits") && fileConfig.get("kits").isJsonObject()) {
+                            merged.add("kits", fileConfig.get("kits"));
                         }
                     } else {
                         // Single section

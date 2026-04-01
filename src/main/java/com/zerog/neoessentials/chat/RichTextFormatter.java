@@ -33,6 +33,33 @@ public class RichTextFormatter {
     };
 
     /**
+     * Pre-process rich text tags (gradient / rainbow) into &#RRGGBB hex codes and return
+     * the result as a plain String, leaving all {@code &} / {@code §} color codes untouched.
+     * <p>
+     * Use this instead of {@link #processRichText(String)} when the string must remain a
+     * String for further processing (e.g. URL / mention enhancement), so that {@code &}
+     * color codes are not prematurely converted to Component objects and then stripped by
+     * {@link Component#getString()}.
+     *
+     * @param text input string, may contain gradient/rainbow tags and {@code &} color codes
+     * @return string with gradient/rainbow tags replaced by {@code &#RRGGBB} sequences;
+     *         all other {@code &} codes are left intact
+     */
+    @SuppressWarnings("unused") // Called from ChatFormatter.formatMessage
+    public static String preprocessTags(String text) {
+        try {
+            if (isRichTextEnabled()) {
+                text = processGradients(text);
+                text = processRainbow(text);
+            }
+            return text;
+        } catch (Exception e) {
+            LOGGER.error("Error pre-processing rich text tags: {}", e.getMessage(), e);
+            return text;
+        }
+    }
+
+    /**
      * Process rich text formatting tags and convert to colored components.
      */
     public static Component processRichText(String text) {
