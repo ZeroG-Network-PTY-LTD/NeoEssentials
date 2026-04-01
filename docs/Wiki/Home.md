@@ -16,11 +16,12 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Teleportation System](TeleportationSystem) | Home, warp, TPA, RTP, spawn, safe teleport |
 | [Kit Management](KitManagement) | Kits, cooldowns, give-to-others, kitreset |
 | [Item Management](ItemManagement) | Repair, enchant, powertool, clearinv, condense |
-| [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited |
+| [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
 | [Permission System](PermissionSystem) | All permission nodes, groups, wildcards, external mods |
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders |
 | [Chat Channels](ChatChannels) | Channel config, permissions, Discord relay |
+| [**Split Config System**](SplitConfigs) | Split config files, validation, repair, migration guide |
 
 ---
 
@@ -28,12 +29,18 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 
 1. Drop `neoessentials-<version>.jar` into your server's `mods/` folder
 2. Start the server — config files are auto-generated in `config/neoessentials/`
-3. Key config files:
-   - `config.json` — main settings (or split into per-system files)
+3. Key config files (split config mode — recommended):
+   - `main.json` — modules, logging, permissions, kits settings, economy settings
+   - `commands.json` — enable/disable individual commands
+   - `chat.json` — chat formatting, channels, anti-spam
+   - `teleportation.json` — homes, warps, spawn, TPA
+   - `moderation.json` — ban, jail, freeze, kick
    - `tablist.json` — tablist header/footer/formatting
-   - `economy.json` — economy settings
+   - `webdashboard.json` — web dashboard port and auth
+   - `economy.json` — player balances (runtime data)
    - `permissions.json` — groups and permission nodes
    - `kits.json` — kit definitions
+   - See [Split Config System](SplitConfigs) for the complete reference
 4. Assign permissions to players/groups via `/permissions` or LuckPerms/FTBRanks
 
 ---

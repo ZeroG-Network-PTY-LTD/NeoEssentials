@@ -4,7 +4,26 @@
 
 ---
 
+## 1.0.2.6+build.15 — 2026-04-01
+
+### 🐛 Bug Fixes
+
+- **Split Configs** — Fixed split files never being created on fresh installs (JAR source was wrong).
+- **Split Configs** — Fixed `main.json` being overwritten with only one section.
+- **Split Configs** — Added missing `economy` section to `main.json`.
+
+### ✨ New Features
+
+- `/neoe config validate` — validate all split config files.
+- `/neoe config repair` — auto-fix missing or incomplete split config files.
+- `/neoe config status` — visual overview of config file health.
+- Clear boxed startup errors when split files are missing with `/neoe config repair` hint.
+- New `SplitConfigs.md` wiki documentation.
+
+---
+
 ## 1.0.2.6+build.12 — 2026-04-01
+
 
 ### ✨ New Features
 

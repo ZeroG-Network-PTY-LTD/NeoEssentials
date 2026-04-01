@@ -4,7 +4,26 @@
 
 ---
 
+## 1.0.2.6+build.15 — 2026-04-01
+
+### 🐛 Bug Fixes — Split Config System
+
+- **Fixed** Split config files (main.json, chat.json, etc.) never being created on fresh server installs. `createSplitConfigsFromJar()` previously looked for files that don't exist in the JAR — it now correctly extracts sections from the bundled monolithic `config.json`.
+- **Fixed** `main.json` being overwritten with only one section (e.g. only `modules` with `logging`/`permissions`/`kits` lost) when `ensureSplitConfigsUpToDate()` processed section entries instead of file entries.
+- **Fixed** The `economy` config section (currency, starting balance, sell multiplier) being completely absent from split configs.
+
+### ✨ New Features — Split Config System
+
+- **Added** `/neoe config validate` — checks all 10 split files for missing files, parse errors, and missing sections with clear remediation hints.
+- **Added** `/neoe config repair` — auto-regenerates missing split files and fills missing sections from JAR defaults without touching existing values.
+- **Added** `/neoe config status` — visual ✔/✘ overview of all split config files and overall health.
+- **Added** Boxed startup error messages when split config files cannot be regenerated, including exact command to fix.
+- **Added** `SplitConfigs.md` wiki — full documentation on the split config system.
+
+---
+
 ## 1.0.2.6+build.12 — 2026-04-01
+
 
 ### ✨ New Features
 
