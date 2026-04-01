@@ -362,12 +362,16 @@
     - Prevents lockouts when FTB Ranks or permissions.json misbehave.
     - Ensures server operators retain access to all commands without needing explicit nodes.
     - Reduces downtime and frustration when configs are corrupted or integrations fail.
-- **Improved External Permissions Integration**
-    - Update NeoEssentials adapters to match current APIs for FTB Ranks and other permission mods.
-    - Add version detection and compatibility warnings when APIs change.
-    - Provide fallback logic so OPs and admins retain access even if external permissions fail.
-
 # Improvements Done 
+
+- **Improved External Permissions Integration** *(build #17)*
+    - ✅ `FtbRanksAdapter` and `LuckPermsAdapter` detect the installed mod version via `ModList` at construction time and log it at `INFO` level.
+    - ✅ Boxed `WARN` emitted at startup when FTB Ranks is newer than the last-tested minor version, prompting admins to report the version mismatch.
+    - ✅ New `AdapterCompatibilityChecker` class generates a formatted compatibility table at startup listing all detected permission mods with ✓/⚠ status.
+    - ✅ FTB Ranks adapter probes four API signatures (current, legacy, future static, alternative naming) before giving up — significantly more resilient to version bumps.
+    - ✅ `ExternalPermissionAdapter` interface extended with `getVersion()`, `isHealthy()`, and `getConsecutiveFailures()` default methods (source-compatible; no changes required in existing implementations).
+    - ✅ Both adapters track consecutive runtime failures; after 5 failures the adapter declares itself unhealthy and a single boxed `WARN` is logged.
+    - ✅ `PermissionAPI.hasPermission()` now falls back to the internal `permissions.json` manager (and then OP-bypass) whenever the external adapter is unhealthy or throws — non-OP players can never be locked out purely because an external permission mod is broken.
 
 - **Rules Command Configuration Improvements** *(build #16)*
     - ✅ Added full `/rules` section to `UtilitySystems.md` — command table, colour codes, data-file format, legacy migration note, dashboard API reference, and console feedback examples.

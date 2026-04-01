@@ -3,7 +3,7 @@ package com.zerog.neoessentials.permissions;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import net.neoforged.fml.ModList;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
@@ -24,9 +24,17 @@ import org.slf4j.LoggerFactory;
  */
 public class LuckPermsAdapter implements ExternalPermissionAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LuckPermsAdapter.class);
+
+    /** Number of consecutive failures before we declare the adapter unhealthy. */
+    private static final int MAX_FAILURES = 5;
+
     private final boolean luckPermsLoaded;
+    private final String  detectedVersion;
     private LuckPerms luckPermsApi;
     private static final long USER_LOAD_TIMEOUT = 5; // seconds
+
+    /** Consecutive failure counter — reset on every successful check. */
+    private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
 
     // Held so the subscriptions stay active for the lifetime of this adapter
     @SuppressWarnings("unused")
@@ -36,7 +44,12 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
     public LuckPermsAdapter() {
         this.luckPermsLoaded = ModList.get().isLoaded("luckperms");
+        this.detectedVersion = ModList.get().getModContainerById("luckperms")
+                .map(c -> c.getModInfo().getVersion().toString())
+                .orElse("unknown");
+
         if (luckPermsLoaded) {
+            LOGGER.info("LuckPerms detected — version: {}", detectedVersion);
             try {
                 this.luckPermsApi = LuckPermsProvider.get();
                 LOGGER.info("LuckPerms API loaded successfully");
@@ -133,10 +146,11 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             // If user not cached, try to load them (for offline permission checks)
             if (user == null) {
                 try {
-                    CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
-                    user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                    java.util.concurrent.CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
+                    user = userFuture.get(USER_LOAD_TIMEOUT, java.util.concurrent.TimeUnit.SECONDS);
                 } catch (Exception e) {
                     LOGGER.debug("Could not load user {} from LuckPerms: {}", uuid, e.getMessage());
+                    consecutiveFailures.incrementAndGet();
                     return false;
                 }
             }
@@ -165,11 +179,20 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={} ({})",
                 uuid, permission, hasPermission, result);
 
+            consecutiveFailures.set(0); // reset on success
             return hasPermission;
 
         } catch (Exception e) {
-            LOGGER.error("Error checking permission '{}' for user {}: {}",
-                permission, uuid, e.getMessage(), e);
+            int failures = consecutiveFailures.incrementAndGet();
+            LOGGER.error("Error checking permission '{}' for user {}: {}", permission, uuid, e.getMessage(), e);
+            if (failures == MAX_FAILURES) {
+                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
+                LOGGER.warn("║  LUCKPERMS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
+                LOGGER.warn("║  Version     : {}                                   ║", padRight(detectedVersion, 21));
+                LOGGER.warn("║  NeoEssentials will fall back to internal permissions.       ║");
+                LOGGER.warn("║  Resolve the LuckPerms API issue and run /neoe reload.       ║");
+                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            }
             return false;
         }
     }
@@ -304,6 +327,22 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         LOGGER.debug("LuckPerms availability check: loaded={}, api={}, available={}",
             luckPermsLoaded, (luckPermsApi != null), available);
         return available;
+    }
+
+    @Override
+    public String getVersion() { return detectedVersion; }
+
+    @Override
+    public boolean isHealthy() { return consecutiveFailures.get() < MAX_FAILURES; }
+
+    @Override
+    public int getConsecutiveFailures() { return consecutiveFailures.get(); }
+
+    /** Right-pad a string to exactly {@code width} chars (for log alignment). */
+    private static String padRight(String s, int width) {
+        if (s == null) s = "";
+        if (s.length() >= width) return s.substring(0, width);
+        return s + " ".repeat(width - s.length());
     }
 
     /**

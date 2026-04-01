@@ -95,6 +95,9 @@ public class PermissionSystem {
             LOGGER.info("✓ Internal permission system initialized with {} groups",
                 manager.getGroups().size());
 
+            // Emit compatibility report even in internal mode (shows which perm mods are absent)
+            AdapterCompatibilityChecker.generateReport(null);
+
             // Log loaded groups for debugging
             if (!manager.getGroups().isEmpty()) {
                 LOGGER.info("Loaded permission groups:");

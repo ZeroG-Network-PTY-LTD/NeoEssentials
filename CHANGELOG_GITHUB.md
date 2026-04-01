@@ -6,6 +6,34 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.17] — 2026-04-01
+
+### Improvements — External Permissions Integration
+
+#### Version Detection & Compatibility Reports
+- **Added** `FtbRanksAdapter` and `LuckPermsAdapter` now read the mod version via `ModList` on construction and log it at `INFO` level (e.g. `FTB Ranks detected — version: 2101.1.3`).
+- **Added** `AdapterCompatibilityChecker` — a new startup utility that scans the mod list and emits a formatted compatibility table at `INFO`/`WARN` level, showing each detected permission mod, its installed version, the last-tested version, and a ✓/⚠ status.  Generated in both internal-mode and external-mode startup paths.
+- **Added** If the detected FTB Ranks version differs from the last-tested minor line, a prominent boxed `WARN` is emitted advising admins to watch for permission issues and report the version mismatch.
+
+#### Multi-Strategy API Probe (FTB Ranks)
+- **Improved** `FtbRanksAdapter` now probes **four** known API signatures in order instead of two:
+  1. `FTBRanksAPI.getPermission(ServerPlayer, String, boolean)` — current 2101.1.x
+  2. `instance.hasPermission(UUID, String)` — older builds via `INSTANCE`/`getInstance()`
+  3. `FTBRanksAPI.hasPermission(ServerPlayer, String)` — possible future static variant
+  4. `FTBRanksAPI.checkPermission(ServerPlayer, String)` — alternative naming / forks
+- **Added** When all four strategies fail, a boxed error is logged including the detected FTB Ranks version, so it's immediately clear why permission checks will fall back.
+
+#### Health Tracking & Fallback to Internal System
+- **Added** `ExternalPermissionAdapter` interface gains three default methods (source-compatible — no changes needed to existing adapters):
+  - `getVersion()` — returns the detected mod version string
+  - `isHealthy()` — returns `false` once consecutive runtime failures exceed the threshold (default 5)
+  - `getConsecutiveFailures()` — exposes the failure counter
+- **Added** Both `FtbRanksAdapter` and `LuckPermsAdapter` implement `isHealthy()` / `getConsecutiveFailures()` via an `AtomicInteger` failure counter.  On each successful permission check the counter resets to 0.
+- **Improved** `PermissionAPI.hasPermission()` now checks `externalAdapter.isHealthy()` before delegating. If the adapter is unhealthy **or** throws during a check, execution falls through to the **internal `permissions.json` manager** and then, as a last resort, to the OP-bypass check — so non-OP players are never locked out solely because an external permission mod is misbehaving.
+- **Added** A single `WARN` is emitted on the 5th consecutive failure naming the adapter and its version, asking the admin to fix the issue and run `/neoe reload`.
+
+---
+
 ## [1.0.2.6+build.16] — 2026-04-01
 
 ### New Features — Rules Command
