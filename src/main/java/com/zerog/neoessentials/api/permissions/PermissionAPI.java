@@ -16,6 +16,43 @@ public class PermissionAPI {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionAPI.class);
 
     /**
+     * When {@code true} the permission system failed to initialise at startup.
+     * All permission checks immediately fall back to vanilla OP status so that
+     * server operators are never locked out of administrative commands.
+     */
+    private static volatile boolean emergencyMode = false;
+
+    // ── Emergency mode ────────────────────────────────────────────────────────
+
+    /**
+     * Activates or deactivates emergency mode.  Called by {@link
+     * com.zerog.neoessentials.permissions.PermissionSystem} when initialisation
+     * fails so that OP players retain access instead of crashing the server.
+     */
+    @SuppressWarnings("unused") // called from PermissionSystem
+    public static void setEmergencyMode(boolean active) {
+        if (active != emergencyMode) {
+            emergencyMode = active;
+            if (active) {
+                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
+                LOGGER.warn("║  PERMISSION SYSTEM — EMERGENCY MODE ACTIVE                   ║");
+                LOGGER.warn("║  The permission system failed to initialise correctly.        ║");
+                LOGGER.warn("║  ALL permission checks will be answered by vanilla OP status. ║");
+                LOGGER.warn("║  Run /neoe reload once the config issue has been resolved.    ║");
+                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            } else {
+                LOGGER.info("Permission system emergency mode deactivated — normal checks resumed.");
+            }
+        }
+    }
+
+    /** Returns {@code true} when the system is running in emergency (OP-only) mode. */
+    @SuppressWarnings("unused") // called from PermissionSystem
+    public static boolean isEmergencyMode() {
+        return emergencyMode;
+    }
+
+    /**
      * Set the built-in permission manager (default system).
      */
     public static void setManager(PermissionManager m) {
@@ -56,26 +93,36 @@ public class PermissionAPI {
             LOGGER.warn("PermissionAPI.hasPermission: Permission string is null or empty");
             return false;
         }
-        
+
         LOGGER.debug("═══ PERMISSION CHECK ═══");
         LOGGER.debug("Player UUID: {}", uuid);
         LOGGER.debug("Permission: {}", permission);
         LOGGER.debug("External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
 
-        // Always check OP bypass first when enabled — this acts as a safety fallback
-        // so server operators are never locked out even if external permissions fail.
+        // ── Emergency mode — permission system failed to start ────────────────
+        // Grant access immediately by OP status so admins can fix the issue.
+        if (emergencyMode) {
+            boolean isOp = isPlayerOpped(uuid);
+            LOGGER.warn("EMERGENCY MODE active — {} for '{}' (player is OP: {})",
+                    isOp ? "GRANTED" : "DENIED", permission, isOp);
+            return isOp;
+        }
+
+        // ── Fast-path: OP bypass (runs BEFORE any permission system) ──────────
+        // opsBypassPermissions: true means OPs skip all checks entirely.
+        // Different from vanillaOpFallback (which runs AFTER all checks).
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
             if (isPlayerOpped(uuid)) {
-                LOGGER.debug("Player is OP - bypassing permission check (global fallback)");
+                LOGGER.debug("Player is OP - bypassing permission check (opsBypassPermissions)");
                 LOGGER.debug("Result: TRUE (op bypass)");
                 LOGGER.debug("═══════════════════════");
                 return true;
             }
         }
 
-        // If using external permissions (LuckPerms, FTB Ranks), try the external system first.
-        // If the external adapter is unhealthy (repeated runtime failures) or throws an
-        // exception, we fall through to the internal manager and, as a last resort, OP bypass.
+        // ── External permission adapter path ──────────────────────────────────
+        // Try external first. If unhealthy or throwing, fall through to internal
+        // and then to the vanilla-OP fallback.
         if (externalAdapter != null) {
             LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
             boolean externalAvailable = externalAdapter.isAvailable() && externalAdapter.isHealthy();
@@ -84,51 +131,87 @@ public class PermissionAPI {
                 try {
                     boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
                     LOGGER.debug("External system returned: {}", hasExternalPerm);
-                    LOGGER.debug("═══════════════════════");
-                    return hasExternalPerm;
+                    if (hasExternalPerm) {
+                        LOGGER.debug("Result: TRUE (external)");
+                        LOGGER.debug("═══════════════════════");
+                        return true;
+                    }
+                    // External said "no" — fall through to vanilla-OP fallback below.
+                    LOGGER.debug("External denied '{}', checking vanilla OP fallback", permission);
                 } catch (Exception ex) {
                     LOGGER.warn("External permission adapter '{}' threw during hasPermission('{}') — falling back: {}",
                             externalAdapter.getName(), permission, ex.getMessage());
-                    // fall through to internal manager
+                    // fall through to internal then vanilla-OP fallback
                 }
             } else {
                 LOGGER.warn("External permission adapter '{}' is UNHEALTHY (failures: {}) — using internal fallback",
                         externalAdapter.getName(), externalAdapter.getConsecutiveFailures());
-                // fall through to internal manager
             }
 
-            // ── Internal-manager fallback ─────────────────────────────────────────
+            // ── Internal-manager fallback (external failed or denied) ─────────
             if (manager != null) {
                 LOGGER.debug("Using internal permission system (external adapter fallback)");
                 boolean hasInternalPerm = manager.hasPermission(uuid, permission);
                 LOGGER.debug("Internal fallback returned: {}", hasInternalPerm);
-                LOGGER.debug("═══════════════════════");
-                return hasInternalPerm;
+                if (hasInternalPerm) {
+                    LOGGER.debug("Result: TRUE (internal fallback)");
+                    LOGGER.debug("═══════════════════════");
+                    return true;
+                }
+                // Internal also said "no" — fall through to vanilla-OP fallback.
             }
 
-            // ── Emergency OP fallback — last resort to prevent lockout ────────────
-            LOGGER.warn("No internal manager available — checking OP status as emergency fallback for '{}'", permission);
-            boolean opFallback = isPlayerOpped(uuid);
-            LOGGER.debug("Emergency OP fallback: {}", opFallback);
-            LOGGER.debug("═══════════════════════");
-            return opFallback;
+            // ── Vanilla OP fallback (last resort after external+internal both failed/denied) ──
+            return checkVanillaOpFallback(uuid, permission, "external+internal");
         }
-        
+
+        // ── Pure-internal path (no external adapter configured) ───────────────
         LOGGER.debug("Using INTERNAL permission system");
         if (manager == null) {
-            LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null - returning false");
-            LOGGER.debug("Result: FALSE (no manager)");
-            LOGGER.debug("═══════════════════════");
-            return false;
+            LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null");
+            // No manager at all — fall straight to vanilla-OP fallback
+            return checkVanillaOpFallback(uuid, permission, "no-manager");
         }
 
         boolean hasInternalPerm = manager.hasPermission(uuid, permission);
         LOGGER.debug("Internal system returned: {}", hasInternalPerm);
-        LOGGER.debug("Result: {}", hasInternalPerm);
-        LOGGER.debug("═══════════════════════");
-        return hasInternalPerm;
+        if (hasInternalPerm) {
+            LOGGER.debug("Result: TRUE (internal)");
+            LOGGER.debug("═══════════════════════");
+            return true;
+        }
+
+        // Internal said "no" — vanilla-OP fallback is the last resort.
+        return checkVanillaOpFallback(uuid, permission, "internal");
     }
-    
+
+    /**
+     * Vanilla-OP last-resort fallback.
+     *
+     * <p>Fires after <em>all</em> permission systems have been consulted and
+     * none granted the requested node.  If {@code vanillaOpFallback} is enabled
+     * in config and the player holds vanilla OP status, permission is granted and
+     * a {@code DEBUG} message is logged (first occurrence logged at {@code WARN}
+     * to alert admins that the fallback is in use).
+     *
+     * @param source short label for log messages, e.g. {@code "internal"} or
+     *               {@code "external+internal"}
+     */
+    private static boolean checkVanillaOpFallback(UUID uuid, String permission, String source) {
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isVanillaOpFallbackEnabled()) {
+            if (isPlayerOpped(uuid)) {
+                LOGGER.debug("Vanilla OP fallback (after {}): granting '{}' to OP {}", source, permission, uuid);
+                LOGGER.debug("Result: TRUE (vanillaOpFallback)");
+                LOGGER.debug("═══════════════════════");
+                return true;
+            }
+        }
+        LOGGER.debug("Result: FALSE ({} denied, no OP fallback triggered)", source);
+        LOGGER.debug("═══════════════════════");
+        return false;
+    }
+
+
     /**
      * Checks if a player is opped by their UUID.
      */

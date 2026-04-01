@@ -303,6 +303,7 @@
     "useExternalPermissions": true,
     "defaultGroup": "default",
     "opsBypassPermissions": true,
+    "vanillaOpFallback": true,
     "cachePermissions": true,
     "permissionCacheExpiryMinutes": 30
   },

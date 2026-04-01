@@ -357,12 +357,16 @@
     - Provide examples of usage and defaults.
     - Reduce confusion for server admins by making the config structure easier to follow.
     - Feedback from community (JJ {MrWhiteFlamesYT}, Chaz) highlighted that split JSON configs can be confusing, so clearer docs would help.
-- **Fallback to Vanilla OP Permissions**  
-  Add a feature so that NeoEssentials always respects vanilla OP status as a fallback, even if external ranks or configs fail.
-    - Prevents lockouts when FTB Ranks or permissions.json misbehave.
-    - Ensures server operators retain access to all commands without needing explicit nodes.
-    - Reduces downtime and frustration when configs are corrupted or integrations fail.
+
 # Improvements Done 
+
+- **Fallback to Vanilla OP Permissions** *(build #18)*
+    - ✅ Added `permissions.vanillaOpFallback` config key (default `true`). After all permission systems (external adapter + internal manager) have been consulted and returned `false`, OPs (level 2+) are granted access as a last-resort safety net — distinct from `opsBypassPermissions` which skips checks entirely.
+    - ✅ Permission system init failure no longer crashes the server with `RuntimeException`. Instead, `PermissionAPI.setEmergencyMode(true)` is activated: OPs get all permissions, non-OPs are denied, and a prominent boxed `ERROR` is logged at startup.
+    - ✅ `/neoe reload` detects emergency mode and performs a full re-initialisation (resets manager, adapter, and all flags), allowing recovery without a server restart once the config issue is resolved.
+    - ✅ `PermissionSystem.isEmergencyMode()` public accessor added.
+    - ✅ `PermissionSystem.md` updated: new `vanillaOpFallback` config row, bypass-vs-fallback comparison table, and updated "How Permissions Work" numbered flow.
+    - ✅ `vanillaOpFallback: true` added to the bundled `config.json` default template.
 
 - **Improved External Permissions Integration** *(build #17)*
     - ✅ `FtbRanksAdapter` and `LuckPermsAdapter` detect the installed mod version via `ModList` at construction time and log it at `INFO` level.

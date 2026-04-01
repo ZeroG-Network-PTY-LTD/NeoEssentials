@@ -4,6 +4,16 @@
 
 ---
 
+## 1.0.2.6+build.18 — 2026-04-01
+
+### 🛡️ New — Fallback to Vanilla OP Permissions
+
+- **Permissions** — New `permissions.vanillaOpFallback` (default `true`): OPs get access as a last resort after all permission systems return false. Prevents admin lockouts from corrupted configs or crashing external perm mods.
+- **Permissions** — Permission system init failure no longer crashes the server — activates emergency OP-only mode with a clear console error. `/neoe reload` exits emergency mode without a restart.
+- **Docs** — `PermissionSystem.md` updated with new config option, bypass-vs-fallback comparison, and updated permission-check flow.
+
+---
+
 ## 1.0.2.6+build.17 — 2026-04-01
 
 ### 🔌 Improved — External Permissions Integration

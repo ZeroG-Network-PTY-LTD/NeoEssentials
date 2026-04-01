@@ -1079,6 +1079,31 @@ public class ConfigManager {
         }
         return true; // Default to true for legacy behavior
     }
+
+    /**
+     * Check if vanilla OP status should act as a last-resort fallback when every
+     * permission system (external adapter + internal manager) is unavailable or
+     * returns {@code false}. (permissions.vanillaOpFallback)
+     *
+     * <p>Unlike {@link #isOpsBypassPermissionsEnabled()} which skips permission
+     * checks entirely, this fires <em>after</em> all checks have run — so the
+     * permission system is still consulted first in normal operation.  The fallback
+     * is designed to prevent admin lockouts when configs are corrupted or an
+     * external permission mod crashes.
+     *
+     * <p>Defaults to {@code true}.
+     */
+    public boolean isVanillaOpFallbackEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("vanillaOpFallback")) {
+                return perms.get("vanillaOpFallback").getAsBoolean();
+            }
+        }
+        return true; // Safe default — prevents lockouts
+    }
+
     /**
      * Get the default group name from config.json (permissions.defaultGroup).
      * Returns "default" if not set or empty.

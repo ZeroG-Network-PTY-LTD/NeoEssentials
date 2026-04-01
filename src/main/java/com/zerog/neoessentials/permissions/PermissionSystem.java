@@ -60,6 +60,8 @@ public class PermissionSystem {
                         LOGGER.info("✓ Detected permission plugin: {}", detectedPlugin);
                     }
                     LOGGER.info("✓ Using {} for ALL permission checks, prefixes, and suffixes", externalAdapter.getName());
+                    LOGGER.info("  ├─ Vanilla OP fallback: {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
+                    LOGGER.info("  └─ OP bypass (pre-check): {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
                     PermissionAPI.setExternalAdapter(externalAdapter);
                     usingExternal = true;
                     // Internal permission system is NOT loaded or used
@@ -107,9 +109,10 @@ public class PermissionSystem {
             }
             LOGGER.info("Permission System Configuration:");
             LOGGER.info("  ├─ Ops bypass permissions: {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
-            LOGGER.info("  ├─ Permission caching: {}", ConfigManager.getInstance().isPermissionCacheEnabled());
-            LOGGER.info("  ├─ Cache expiry: {} minutes", ConfigManager.getInstance().getPermissionCacheExpiryMinutes());
-            LOGGER.info("  └─ Default group: {}", manager.getDefaultGroup());
+            LOGGER.info("  ├─ Vanilla OP fallback:    {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
+            LOGGER.info("  ├─ Permission caching:     {}", ConfigManager.getInstance().isPermissionCacheEnabled());
+            LOGGER.info("  ├─ Cache expiry:           {} minutes", ConfigManager.getInstance().getPermissionCacheExpiryMinutes());
+            LOGGER.info("  └─ Default group:          {}", manager.getDefaultGroup());
             LOGGER.info("");
             // Validate permission nodes
             com.zerog.neoessentials.api.permissions.PermissionValidator.ValidationResult validation =
@@ -129,8 +132,16 @@ public class PermissionSystem {
             }
             LOGGER.info("═══════════════════════════════════════════════════════════");
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize permission system", e);
-            throw new RuntimeException("Permission system initialization failed", e);
+            LOGGER.error("╔══════════════════════════════════════════════════════════════╗");
+            LOGGER.error("║  PERMISSION SYSTEM FAILED TO INITIALIZE                      ║");
+            LOGGER.error("║  Error: {}  ║",
+                    padRight(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), 54));
+            LOGGER.error("║  Activating EMERGENCY MODE — OPs will have all permissions.  ║");
+            LOGGER.error("║  Fix the config/permission issue, then run: /neoe reload      ║");
+            LOGGER.error("╚══════════════════════════════════════════════════════════════╝");
+            LOGGER.error("Full stack trace:", e);
+            com.zerog.neoessentials.api.permissions.PermissionAPI.setEmergencyMode(true);
+            initialized = true; // Mark initialised so reload can recover later
         }
     }
 
@@ -255,6 +266,16 @@ public class PermissionSystem {
             return;
         }
 
+        // If emergency mode is active, a full re-initialisation is needed to recover.
+        if (com.zerog.neoessentials.api.permissions.PermissionAPI.isEmergencyMode()) {
+            LOGGER.info("Emergency mode active — running full permission system re-initialisation...");
+            initialized = false;
+            manager = null;
+            usingExternal = false;
+            initialize();
+            return;
+        }
+
         try {
             LOGGER.info("Reloading permission system...");
             if (isUsingExternal()) {
@@ -265,6 +286,8 @@ public class PermissionSystem {
             if (manager != null) {
                 manager.reload();
             }
+            // Deactivate emergency mode on a successful reload (edge case: mode set externally)
+            com.zerog.neoessentials.api.permissions.PermissionAPI.setEmergencyMode(false);
             LOGGER.info("Permission system reloaded successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to reload permission system", e);
@@ -298,6 +321,15 @@ public class PermissionSystem {
     }
 
     /**
+     * Returns {@code true} if the permission system is running in emergency
+     * (OP-only) mode due to an initialisation failure.
+     */
+    @SuppressWarnings("unused") // public API — may be queried by dashboard or commands
+    public static boolean isEmergencyMode() {
+        return com.zerog.neoessentials.api.permissions.PermissionAPI.isEmergencyMode();
+    }
+
+    /**
      * Shutdown the permission system (save data).
      */
     public static void shutdown() {
@@ -319,6 +351,15 @@ public class PermissionSystem {
         } catch (Exception e) {
             LOGGER.error("Failed to shutdown permission system", e);
         }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    @SuppressWarnings("SameParameterValue")
+    private static String padRight(String s, int width) {
+        if (s == null) s = "";
+        if (s.length() >= width) return s.substring(0, width);
+        return s + " ".repeat(width - s.length());
     }
 }
 
