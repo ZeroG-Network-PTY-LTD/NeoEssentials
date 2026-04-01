@@ -25,7 +25,8 @@
 14. [AFK](#afk)
 15. [Web Dashboard](#web-dashboard)
 16. [Permissions Management](#permissions-management)
-17. [Miscellaneous](#miscellaneous)
+17. [Mod Root Commands](#mod-root-commands)
+18. [Miscellaneous](#miscellaneous)
 
 ---
 
@@ -496,6 +497,24 @@ All commands can be individually enabled or disabled in `config.json` under the 
 Economy-related settings (currency symbol, sell multiplier, etc.) are under the `economy` section.  
 Teleportation settings (delays, safe teleport, random teleport) are under `teleportation`.  
 Web dashboard settings are under `webDashboard`.
+
+---
+
+## Mod Root Commands
+
+Commands for managing NeoEssentials itself — reload, split config management, and routing.
+
+| Command | Syntax | Permission | Default | Description |
+|---|---|---|---|---|
+| `/neoe` | `/neoe` | `neoessentials.use` | ✅ | Show list of available NeoEssentials commands |
+| `/neoe reload` | `/neoe reload` | `neoessentials.admin.reload` | 🔒 | Reload all configs and live systems (chat, kits, homes, tablist, etc.) |
+| `/neoe config split` | `/neoe config split` | `neoessentials.admin.reload` | 🔒 | Migrate monolithic config.json to split files |
+| `/neoe config status` | `/neoe config status` | `neoessentials.admin.reload` | 🔒 | Show ✔/✘ status of every split config file |
+| `/neoe config validate` | `/neoe config validate` | `neoessentials.admin.reload` | 🔒 | Check all split config files for problems |
+| `/neoe config repair` | `/neoe config repair` | `neoessentials.admin.reload` | 🔒 | Auto-regenerate missing/incomplete split config files |
+| `/neoessentials` | alias | same | ✅ | Alias for `/neoe` |
+
+> See [Split Config System](SplitConfigs.md) for the full split config documentation.
 
 ---
 

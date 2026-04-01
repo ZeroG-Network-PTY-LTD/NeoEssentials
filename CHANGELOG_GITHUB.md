@@ -6,7 +6,48 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.15] — 2026-04-01
+
+### Bug Fixes — Split Configuration System
+
+#### Root Cause Fixed: Split Files Never Created on Fresh Installs
+- **Fixed** `createSplitConfigsFromJar()` silently failing for every split file because it looked for pre-split files (e.g. `main.json`, `chat.json`) directly inside the mod JAR — but only the monolithic `config.json` exists in the JAR. All split-file creation on fresh servers would produce 0 files with no error.  
+  Fix: `createSplitConfigsFromJar()` now loads the JAR's `config.json`, then extracts each section group into the correct target file using the new `FILE_SECTIONS_MAP`.
+
+#### Root Cause Fixed: `main.json` Overwritten to Single Section
+- **Fixed** `ensureSplitConfigsUpToDate()` iterating over *section entries* instead of *file entries*. When three sections (`modules`, `logging`, `permissions`) all map to `main.json`, the file was written three times — each time with only one section — leaving only the last section on disk.  
+  Fix: the loop now iterates `FILE_SECTIONS_MAP` (file → all its sections) and writes each file exactly once containing all required sections.
+
+#### New: `economy` Section Added to Split Configs
+- **Fixed** The `economy` config section (currency symbol, starting balance, sell multiplier, etc.) was present in `config.json` but missing from `CONFIG_FILE_MAP` and therefore never extracted into any split file. It is now mapped to `main.json`.
+
+### New Features — Split Configuration System
+
+#### Validation & Repair Commands
+- **Added** `/neoe config validate` — checks all split config files for missing files, parse errors, and missing sections; prints a clear list of every problem with remediation instructions.
+- **Added** `/neoe config repair` — automatically regenerates missing files from the JAR default and fills missing sections into existing files without overwriting user-set values.
+- **Added** `/neoe config status` — dashboard-style overview showing each expected file with a ✔/✘ indicator and its section list; reports overall health.
+
+#### Clear Error Messages on Missing Files
+- When a split config file cannot be regenerated at startup, a prominent boxed error is now logged:
+  ```
+  ╔══════════════════════════════════════════════════════════╗
+  ║  MISSING SPLIT CONFIG: chat.json
+  ║  This file should contain: chat
+  ║  Run: /neoe config repair   to regenerate all missing files.
+  ╚══════════════════════════════════════════════════════════╝
+  ```
+
+#### `FILE_SECTIONS_MAP` — Authoritative File Layout
+- Added `ConfigSplitter.FILE_SECTIONS_MAP` (public, `LinkedHashMap<String, List<String>>`): the single source of truth for which sections each split file must contain. Used by generation, validation, repair, and the status command.
+
+#### Documentation
+- **Added** `docs/Wiki/SplitConfigs.md` — full reference covering: file layout table, migration guide, fresh-install behaviour, health-check commands with example output, automatic startup checks, version tracking, disabling split configs, and a complete command reference.
+
+---
+
 ## [1.0.2.6+build.12] — 2026-04-01
+
 
 ### New Features
 

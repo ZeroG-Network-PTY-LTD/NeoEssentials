@@ -9,6 +9,7 @@ import com.zerog.neoessentials.config.ConfigSplitter;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +84,15 @@ public class ModRootCommand {
                     .then(Commands.literal("split")
                         .executes(ModRootCommand::splitConfiguration)
                     )
+                    .then(Commands.literal("validate")
+                        .executes(ModRootCommand::validateConfiguration)
+                    )
+                    .then(Commands.literal("repair")
+                        .executes(ModRootCommand::repairConfiguration)
+                    )
+                    .then(Commands.literal("status")
+                        .executes(ModRootCommand::configStatus)
+                    )
                 )
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .suggests(ModRootCommand::suggestModCommands)
@@ -113,6 +123,15 @@ public class ModRootCommand {
                     })
                     .then(Commands.literal("split")
                         .executes(ModRootCommand::splitConfiguration)
+                    )
+                    .then(Commands.literal("validate")
+                        .executes(ModRootCommand::validateConfiguration)
+                    )
+                    .then(Commands.literal("repair")
+                        .executes(ModRootCommand::repairConfiguration)
+                    )
+                    .then(Commands.literal("status")
+                        .executes(ModRootCommand::configStatus)
                     )
                 )
                 .then(Commands.argument("command", StringArgumentType.greedyString())
@@ -358,6 +377,83 @@ public class ModRootCommand {
             source.sendFailure(MessageUtil.error("Failed to reload configuration: " + e.getMessage()));
             return 0;
         }
+    }
+
+    private static int validateConfiguration(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        List<String> problems = ConfigSplitter.validateSplitConfigs();
+        if (problems.isEmpty()) {
+            source.sendSuccess(() -> MessageUtil.success("§a✔ All split config files are valid and complete."), false);
+        } else {
+            source.sendSuccess(() -> MessageUtil.warning("§e⚠ Split config validation found " + problems.size() + " problem(s):"), false);
+            for (String problem : problems) {
+                source.sendSuccess(() -> Component.literal("  §c• " + problem), false);
+            }
+            source.sendSuccess(() -> MessageUtil.info("Run §e/neoe config repair§7 to fix automatically."), false);
+        }
+        return problems.isEmpty() ? 1 : 0;
+    }
+
+    private static int repairConfiguration(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        if (!ConfigSplitter.isSplittingEnabled()) {
+            source.sendFailure(MessageUtil.error("Split configs are not enabled. Run /neoe config split first."));
+            return 0;
+        }
+        source.sendSuccess(() -> MessageUtil.info("§eRepairing split config files…"), false);
+        int repaired = ConfigSplitter.repairSplitConfigs();
+        if (repaired == 0) {
+            source.sendSuccess(() -> MessageUtil.success("§a✔ No repairs needed — all split config files are complete."), false);
+        } else {
+            final int r = repaired;
+            source.sendSuccess(() -> MessageUtil.success(
+                "§a✔ Repaired " + r + " split config file(s). Run /neoe reload to apply."), false);
+        }
+        List<String> remaining = ConfigSplitter.validateSplitConfigs();
+        if (!remaining.isEmpty()) {
+            source.sendSuccess(() -> MessageUtil.warning(
+                "§e⚠ " + remaining.size() + " problem(s) could not be auto-repaired:"), false);
+            for (String p : remaining) {
+                source.sendSuccess(() -> Component.literal("  §c• " + p), false);
+            }
+        }
+        return 1;
+    }
+
+    private static int configStatus(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        boolean splitEnabled = ConfigSplitter.isSplittingEnabled();
+        source.sendSuccess(() -> Component.literal("§6§l━━━━━━━━━ Config Status ━━━━━━━━━"), false);
+        source.sendSuccess(() -> Component.literal("§7Mode: " +
+            (splitEnabled ? "§aSplit configs (recommended)" : "§eMonolithic config.json")), false);
+        if (splitEnabled) {
+            source.sendSuccess(() -> Component.literal("§7Files:"), false);
+            for (java.util.Map.Entry<String, java.util.List<String>> e :
+                    ConfigSplitter.FILE_SECTIONS_MAP.entrySet()) {
+                String file = e.getKey();
+                java.io.File f = com.zerog.neoessentials.util.ResourceUtil.getConfigFile(file);
+                boolean exists = f.exists();
+                source.sendSuccess(() -> Component.literal(
+                    (exists ? "  §a✔ " : "  §c✘ ") + file + " §8— " +
+                    String.join(", ", e.getValue())), false);
+            }
+            List<String> problems = ConfigSplitter.validateSplitConfigs();
+            if (problems.isEmpty()) {
+                source.sendSuccess(() -> Component.literal("§a✔ All files present and valid."), false);
+            } else {
+                final int n = problems.size();
+                source.sendSuccess(() -> Component.literal(
+                    "§c⚠ " + n + " problem(s). Run §e/neoe config repair§c."), false);
+            }
+        } else {
+            java.io.File mainCfg = com.zerog.neoessentials.util.ResourceUtil.getConfigFile("config.json");
+            source.sendSuccess(() -> Component.literal(
+                "§7config.json: " + (mainCfg.exists() ? "§a✔ present" : "§c✘ missing")), false);
+            source.sendSuccess(() -> Component.literal(
+                "§7Tip: Run §e/neoe config split§7 to use split configs."), false);
+        }
+        source.sendSuccess(() -> Component.literal("§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"), false);
+        return 1;
     }
 
     private static int splitConfiguration(CommandContext<CommandSourceStack> ctx) {
