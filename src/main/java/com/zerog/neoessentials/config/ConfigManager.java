@@ -1105,6 +1105,21 @@ public class ConfigManager {
     }
 
     /**
+     * Check if permission-change audit logging is enabled (permissions.auditLogging).
+     * Defaults to {@code true}.
+     */
+    public boolean isPermissionAuditEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("auditLogging")) {
+                return perms.get("auditLogging").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
      * Get the default group name from config.json (permissions.defaultGroup).
      * Returns "default" if not set or empty.
      */

@@ -305,7 +305,8 @@
     "opsBypassPermissions": true,
     "vanillaOpFallback": true,
     "cachePermissions": true,
-    "permissionCacheExpiryMinutes": 30
+    "permissionCacheExpiryMinutes": 30,
+    "auditLogging": true
   },
   "afk": {
     "enabled": true,

@@ -4,6 +4,15 @@
 
 ---
 
+## 1.0.2.6+build.23 — 2026-04-01
+
+### 📋 New — Permission Audit Logging
+
+- **Permissions** — New `PermissionAuditLogger` writes every permission change to `neoessentials/permissions_audit.log` (append-only, timestamped UTC). 17 action types tracked: user group/perm changes, group create/delete/rename/clone/perm/inherit/prefix/suffix/priority changes, and reload events. Executor name logged for player commands, "CONSOLE" for server-side.
+- **Config** — New `permissions.auditLogging` key (default `true`). Set `false` to disable.
+
+---
+
 ## 1.0.2.6+build.22 — 2026-04-01
 
 ### ⚖️ Improvement — Group Priorities + Permission Suggestions
