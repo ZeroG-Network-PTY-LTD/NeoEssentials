@@ -413,6 +413,19 @@
 |---|---|---|---|---|
 | `/permissions` | `/permissions <user\|group> <action> [args]` | `neoessentials.permissions` | 🔒 | Manage user and group permissions |
 | `/pex` | alias for `/permissions` | same | 🔒 | Alias |
+| `/permissions debug` | `/permissions debug <player>` | `neoessentials.permissions.debug` | 🔒 | Full permission resolution trace for a player (see below) |
+
+> **`/permissions debug <player>`**  
+> Prints a complete in-game diagnostic for the named player without requiring debug logging:
+> - System mode (Internal · External adapter · EMERGENCY)
+> - Adapter health, detected version, consecutive failures
+> - `opsBypassPermissions` and `vanillaOpFallback` on/off
+> - OP status (works for offline players via profile cache)
+> - Assigned group, direct user permission nodes
+> - Group inheritance chain (recursive, indented)
+> - Numbered resolution summary — shows which step would **GRANT** or **continue** for this player based on current config
+>
+> Useful when players report "I have the group but still can't use the command" — diagnose everything from in-game chat.
 
 ---
 

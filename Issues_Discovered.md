@@ -340,7 +340,6 @@
     Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
     Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
     Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
-    Permission Debugging Tools: Add commands to debug/check a user's effective permissions, showing where a permission is granted or denied.
     Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group's permissions/prefixes/suffixes are used.
     Permission Expiry: Support temporary permissions that expire after a set time or event.
     API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
@@ -359,6 +358,11 @@
     - Feedback from community (JJ {MrWhiteFlamesYT}, Chaz) highlighted that split JSON configs can be confusing, so clearer docs would help.
 
 # Improvements Done 
+
+- **Permission Debugging Tools** *(build #21)*
+    - ✅ Added `/permissions debug <player>` subcommand (requires `neoessentials.permissions.debug`). Displays a full in-game diagnostic trace: system mode (internal / external adapter / emergency), adapter health and version, active config flags (`opsBypassPermissions`, `vanillaOpFallback`), OP status, assigned group, direct user permissions (up to 10 with overflow count), group inheritance chain (recursive with indentation, up to 8 permissions per group), and a numbered 4-step resolution chain summary showing exactly which step would GRANT or continue for that player.
+    - ✅ Registered `neoessentials.permissions.debug` permission node in `PermissionRegistry` (between `check` and `search` nodes).
+    - ✅ **Fixed** `checkUserPermission()` in `PermissionsCommand` was calling `PermissionAPI.getManager().hasPermission()` directly, silently bypassing the external adapter (LuckPerms / FTB Ranks), `opsBypassPermissions`, and `vanillaOpFallback`. Now calls `PermissionAPI.hasPermission()` — the full 5-step chain — so `/permissions user check` output matches actual runtime behaviour.
 
 - **Documentation Update: allowUnsafeCommands Config** *(build #19)*
     - ✅ Fixed wrong `allowUnsafeCommands` description in `SplitConfigs.md` — it incorrectly said "Allow enchantments and item operations beyond vanilla limits" (that's `items.unsafe-enchantments`). Now accurately describes the command safety filter used by `/powertool`.

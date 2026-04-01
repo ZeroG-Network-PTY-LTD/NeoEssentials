@@ -6,6 +6,34 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.21] — 2026-04-01
+
+### New Feature — Permission Debugging Tools
+
+#### `/permissions debug <player>` — full permission resolution trace
+- **Added** New `debug` subcommand to `/permissions` (requires `neoessentials.permissions.debug`).
+- Displays a complete diagnostic trace for any player without needing to enable debug logging:
+  - **System mode** — Internal, External adapter name, or EMERGENCY (OP-only)
+  - **Adapter health** — healthy / UNHEALTHY (with consecutive failure count) and detected version
+  - **Active config flags** — `opsBypassPermissions` and `vanillaOpFallback` on/off
+  - **OP status** — checks live `ServerPlayer` (online) or `ProfileCache` (offline)
+  - **Assigned group** and every **direct user permission** node (up to 10, with overflow count)
+  - **Group inheritance chain** — recursive tree with indentation, up to 8 permissions per group with overflow count, prefix shown inline
+  - **Resolution chain summary** — numbered 4-step walkthrough showing which step would GRANT or continue for this specific player, based on current config and OP status
+- Result: admins can diagnose "why does player X not have permission Y" entirely in-game without touching logs.
+
+#### `neoessentials.permissions.debug` — new permission node
+- **Added** Registered in `PermissionRegistry` between the existing `check` and `search` nodes.
+
+#### Bug fix — `checkUserPermission` full-chain bypass
+- **Fixed** `checkUserPermission()` inside `PermissionsCommand` was calling `PermissionAPI.getManager().hasPermission(uuid, node)` directly, which silently bypassed:
+  - `opsBypassPermissions` fast-path
+  - The external adapter (LuckPerms / FTB Ranks)
+  - `vanillaOpFallback` last resort
+- **Fixed** Now calls `PermissionAPI.hasPermission(uuid, node)` — the full 5-step resolution chain — so that the in-game `/permissions user check` result is consistent with what actually happens at runtime.
+
+---
+
 ## [1.0.2.6+build.19] — 2026-04-01
 
 ### Documentation — `allowUnsafeCommands` & Security Configuration
