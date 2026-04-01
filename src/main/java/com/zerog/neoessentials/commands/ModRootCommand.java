@@ -340,6 +340,17 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("Failed to reload worth system: " + e.getMessage()));
             }
 
+            // Reload RulesCommand (server rules from rules_data.json)
+            totalCount++;
+            try {
+                com.zerog.neoessentials.util.commands.RulesCommand.reload();
+                LOGGER.info("✓ Rules system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload rules system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload rules: " + e.getMessage()));
+            }
+
             // Build success message
             String resultMessage = String.format("NeoEssentials reload complete: %d/%d systems reloaded successfully",
                 successCount, totalCount);

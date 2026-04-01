@@ -4,6 +4,17 @@
 
 ---
 
+## 1.0.2.6+build.16 — 2026-04-01
+
+### ✨ New Features — Rules Command
+
+- **Rules** — Console now logs a detailed boxed error with file path and fix steps when `rules_data.json` is corrupt or missing. Auto-generated defaults are logged with their exact path and edit instructions.
+- **Rules** — `/neoe reload` now reloads server rules.
+- **Rules** — Dashboard API `/api/rules` for full CRUD on server rules (list, add, edit, delete, replace all, reload from disk).
+- **Docs** — Full `/rules` section added to `UtilitySystems.md`; fixed stray `/rules`, `/helpop`, `/suicide` rows in the MOTD API table.
+
+---
+
 ## 1.0.2.6+build.15 — 2026-04-01
 
 ### 🐛 Bug Fixes

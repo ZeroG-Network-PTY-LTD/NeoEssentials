@@ -4,6 +4,19 @@
 
 ---
 
+## 1.0.2.6+build.16 — 2026-04-01
+
+### ✨ New Features — Rules Command
+
+- **Improved** Console feedback when `rules_data.json` fails to load — detailed boxed error with file path, exact error message, and step-by-step fix instructions.
+- **Improved** On first startup with no rules file, logs the generated file path and quick-start editing commands so admins know immediately how to configure their rules.
+- **Added** `/neoe reload` now reloads server rules alongside all other systems.
+- **Added** Dashboard API endpoint `/api/rules` — full CRUD for server rules from the web dashboard (list, add, edit, delete, replace all, reload).
+- **Added** Full `/rules` documentation section in `UtilitySystems.md` with command table, data-file format, console feedback examples, and dashboard API reference.
+- **Fixed** `/rules`, `/helpop`, and `/suicide` rows were incorrectly placed inside the MOTD Dashboard API table in the wiki — now in their own sections.
+
+---
+
 ## 1.0.2.6+build.15 — 2026-04-01
 
 ### 🐛 Bug Fixes — Split Config System

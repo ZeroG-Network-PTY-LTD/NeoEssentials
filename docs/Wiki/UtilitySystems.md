@@ -81,7 +81,90 @@ The dashboard exposes `/api/motd` for full profile management:
 | `PUT` | `/api/motd/rotation` | Update rotation `{enabled, intervalMinutes}` |
 | `POST` | `/api/motd/rotation/next` | Rotate to next profile immediately |
 | `POST` | `/api/motd/broadcast` | Broadcast active MOTD to online players |
-| `/rules` | `/rules` | `neoessentials.rules` | Display server rules |
+
+---
+
+## Rules System
+
+The Rules system stores server rules in `config/neoessentials/rules_data.json`.  
+Rules are **auto-generated with sensible defaults** on first startup if no file exists.
+
+### Commands
+
+| Command | Permission | Description |
+|---|---|---|
+| `/rules` | `neoessentials.rules` | Display rules (page 1) |
+| `/rules <page>` | `neoessentials.rules` | Show a specific page |
+| `/rules add <text>` | `neoessentials.rules.admin` | Append a new rule |
+| `/rules remove <n>` | `neoessentials.rules.admin` | Remove rule number *n* |
+| `/rules edit <n> <text>` | `neoessentials.rules.admin` | Replace rule number *n* |
+| `/rules insert <n> <text>` | `neoessentials.rules.admin` | Insert rule before position *n* |
+| `/rules clear` | `neoessentials.rules.admin` | Remove all rules |
+| `/rules reload` | `neoessentials.rules.admin` | Reload rules from disk without a server restart |
+
+### Color codes
+
+Use `&` color codes in rule text (e.g. `&cNo griefing`). They are converted to `§` automatically when displayed.
+
+### Data file
+
+Rules are stored in `config/neoessentials/rules_data.json`:
+
+```json
+{
+  "rules": [
+    "&6Be respectful to all players and staff members",
+    "&cNo griefing, stealing, or destroying other players' builds",
+    "&eNo spamming in chat or using excessive caps"
+  ]
+}
+```
+
+**Location:** `config/neoessentials/rules_data.json`  
+**Generated automatically:** Yes — 10 default rules are written on first start if the file is absent.  
+**Edit in-game:** Use `/rules add`, `/rules edit`, `/rules remove`.  
+**Edit on disk:** Modify `rules_data.json` directly, then run `/rules reload` in-game.
+
+> **Legacy migration:** Servers upgrading from NeoEssentials <1.0.2.6 may have `rules.json`.  
+> NeoEssentials automatically detects and migrates it to `rules_data.json` on first load — no manual action needed.
+
+### Console feedback
+
+NeoEssentials logs detailed guidance to the console when rules fail to load:
+
+```
+╔══════════════════════════════════════════════════════╗
+║  RULES LOAD ERROR: rules_data.json is corrupt JSON  ║
+║  File: config/neoessentials/rules_data.json         ║
+║  Error: Unexpected character ...                    ║
+║  Fix:  Delete the file and run /rules reload to     ║
+║        regenerate defaults, then re-add your rules. ║
+╚══════════════════════════════════════════════════════╝
+```
+
+If the file is simply missing, NeoEssentials creates it automatically and logs its absolute path along with quick-start edit instructions.
+
+### Dashboard API
+
+The dashboard exposes `/api/rules` for full rule management:
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/rules` | List all rules with 1-based index |
+| `POST` | `/api/rules` | Replace all rules `{"rules": ["...", ...]}` |
+| `POST` | `/api/rules/add` | Append a rule `{"rule": "..."}` |
+| `PUT` | `/api/rules/{n}` | Edit rule at position *n* `{"rule": "..."}` |
+| `DELETE` | `/api/rules/{n}` | Delete rule at position *n* |
+| `POST` | `/api/rules/reload` | Reload rules from disk |
+
+All `/api/rules` endpoints require Bearer-token authentication (same as every other dashboard endpoint).
+
+---
+
+## Other Utility Commands
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
 | `/helpop` | `/helpop <message>` | `neoessentials.helpop` | Send message to online staff |
 | `/suicide` | `/suicide` | `neoessentials.suicide` | Kill yourself |
 
