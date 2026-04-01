@@ -314,6 +314,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/files", withAuth(new FileManagementHandler()));
         apiServer.createContext("/api/permissions", withAuth(new PermissionEndpoint(server)));
         apiServer.createContext("/api/motd", withAuth(new MotdEndpoint(server)));
+        apiServer.createContext("/api/rules", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.RulesEndpoint()));
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
@@ -326,6 +327,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/files/* (browse, read, write, create, upload, delete, backup, restore, cloud) [AUTH REQUIRED]");
         LOGGER.info("  - /api/permissions/* (overview, groups, users, manage) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
 
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {

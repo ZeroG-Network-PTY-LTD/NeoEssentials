@@ -6,6 +6,36 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.16] — 2026-04-01
+
+### New Features — Rules Command
+
+#### Console Feedback on Load Failures
+- **Improved** `loadRulesData()` now logs a prominent boxed error to the console whenever `rules_data.json` is corrupt or unreadable, including the absolute file path, the exact parse error, and step-by-step remediation instructions.
+- **Improved** When no rules file exists at all, a clear `INFO` log is emitted with the auto-generated file path and quick-start editing instructions (`/rules add`, `/rules edit`, direct JSON edit + `/rules reload`), replacing the previous silent fall-through.
+
+#### Auto-Generation of `rules_data.json`
+- **Confirmed** `rules_data.json` is always written on first startup with 10 sensible default rules when neither `rules_data.json` nor the legacy `rules.json` is present. The generated file path is now logged so admins know exactly where to find it.
+
+#### `/neoe reload` Now Reloads Rules
+- **Added** `RulesCommand.reload()` is now called by `/neoe reload`, so server rules are refreshed alongside all other systems without a restart.
+
+#### Dashboard API — `/api/rules`
+- **Added** `RulesEndpoint` (`/api/rules`) providing full CRUD for server rules from the web dashboard, protected by Bearer-token auth:
+  - `GET /api/rules` — list all rules with 1-based index
+  - `POST /api/rules` — replace full rule list `{"rules": [...]}`
+  - `POST /api/rules/add` — append a single rule `{"rule": "..."}`
+  - `PUT /api/rules/{n}` — edit rule at position *n* `{"rule": "..."}`
+  - `DELETE /api/rules/{n}` — delete rule at position *n*
+  - `POST /api/rules/reload` — reload from disk without restart
+
+#### Documentation
+- **Added** Full `/rules` section in `docs/Wiki/UtilitySystems.md` covering: command table, colour codes, data-file format and location, console feedback examples, dashboard API table, and legacy migration note.
+- **Fixed** Three rows (`/rules`, `/helpop`, `/suicide`) that were accidentally merged into the MOTD dashboard API table — they are now in their own sections.
+- **Improved** `RulesCommand` now uses `ResourceUtil.getConfigPath()` for file paths (consistent with every other data file in the mod).
+
+---
+
 ## [1.0.2.6+build.15] — 2026-04-01
 
 ### Bug Fixes — Split Configuration System

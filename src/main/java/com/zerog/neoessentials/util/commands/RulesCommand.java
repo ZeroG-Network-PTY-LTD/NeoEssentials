@@ -13,6 +13,7 @@ import net.minecraft.network.chat.MutableComponent;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.util.ResourceUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Implements the /rules command - Displays server rules to players
@@ -34,9 +34,9 @@ import java.nio.file.Paths;
 public class RulesCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(RulesCommand.class);
     private static List<String> serverRules = new ArrayList<>();
-    private static final Path RULES_DATA_FILE = Paths.get("config", "neoessentials", "rules_data.json");
+    private static final Path RULES_DATA_FILE = ResourceUtil.getConfigPath("rules_data.json");
     // Legacy file name used in older NeoEssentials builds
-    private static final Path RULES_LEGACY_FILE = Paths.get("config", "neoessentials", "rules.json");
+    private static final Path RULES_LEGACY_FILE = ResourceUtil.getConfigPath("rules.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int RULES_PER_PAGE = 10;
     
@@ -332,9 +332,8 @@ public class RulesCommand {
      * Reload rules from file
      */
     private static int reloadRules(CommandSourceStack source) {
-        loadRulesData();
+        reload();
         int newCount = serverRules.size();
-        
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.reloaded", newCount), false);
         return 1;
     }
@@ -347,7 +346,20 @@ public class RulesCommand {
             // Primary file
             if (Files.exists(RULES_DATA_FILE)) {
                 String json = Files.readString(RULES_DATA_FILE);
-                JsonObject data = JsonParser.parseString(json).getAsJsonObject();
+                JsonObject data;
+                try {
+                    data = JsonParser.parseString(json).getAsJsonObject();
+                } catch (Exception parseEx) {
+                    LOGGER.error("╔══════════════════════════════════════════════════════╗");
+                    LOGGER.error("║  RULES LOAD ERROR: rules_data.json is corrupt JSON  ║");
+                    LOGGER.error("║  File: {}", RULES_DATA_FILE.toAbsolutePath());
+                    LOGGER.error("║  Error: {}", parseEx.getMessage());
+                    LOGGER.error("║  Fix:  Delete the file and run /rules reload to     ║");
+                    LOGGER.error("║        regenerate defaults, then re-add your rules. ║");
+                    LOGGER.error("╚══════════════════════════════════════════════════════╝");
+                    createDefaultRules();
+                    return;
+                }
                 serverRules.clear();
                 if (data.has("rules")) {
                     JsonArray rulesArray = data.getAsJsonArray("rules");
@@ -355,6 +367,7 @@ public class RulesCommand {
                         serverRules.add(element.getAsString());
                     }
                 }
+                LOGGER.debug("Loaded {} rules from {}", serverRules.size(), RULES_DATA_FILE.getFileName());
                 return;
             }
 
@@ -386,12 +399,40 @@ public class RulesCommand {
                 return;
             }
 
-            // No file found – create defaults
+            // No file found – create defaults and log guidance
+            LOGGER.info("No rules_data.json found — generating default rules file at: {}", RULES_DATA_FILE.toAbsolutePath());
+            LOGGER.info("  Edit rules in-game with:  /rules add <text>  |  /rules edit <n> <text>  |  /rules remove <n>");
+            LOGGER.info("  Or edit directly:  config/neoessentials/rules_data.json  then run /rules reload");
             createDefaultRules();
         } catch (Exception e) {
-            LOGGER.error("Failed to load rules data: {}", e.getMessage());
+            LOGGER.error("╔══════════════════════════════════════════════════════╗");
+            LOGGER.error("║  RULES LOAD ERROR — using built-in defaults         ║");
+            LOGGER.error("║  File: {}", RULES_DATA_FILE.toAbsolutePath());
+            LOGGER.error("║  Error: {}", e.getMessage());
+            LOGGER.error("║  Fix:                                                ║");
+            LOGGER.error("║   1. Check file permissions on config/neoessentials/ ║");
+            LOGGER.error("║   2. Verify rules_data.json is valid JSON            ║");
+            LOGGER.error("║   3. Run /rules reload after fixing                  ║");
+            LOGGER.error("╚══════════════════════════════════════════════════════╝");
             createDefaultRules();
         }
+    }
+
+    /**
+     * Public reload method — called by /neoe reload and the dashboard API.
+     */
+    public static void reload() {
+        loadRulesData();
+        LOGGER.info("Rules reloaded — {} rule(s) active", serverRules.size());
+    }
+
+    /**
+     * Replace the full rules list (called by the dashboard API after an edit).
+     * Persists to disk immediately.
+     */
+    public static void setRules(List<String> newRules) {
+        serverRules = new ArrayList<>(newRules);
+        saveRulesData();
     }
     
     /**
@@ -445,6 +486,7 @@ public class RulesCommand {
     /**
      * Show rules to a player (for join messages or other events)
      */
+    @SuppressWarnings("unused") // Public API method
     public static void showRulesToPlayer(ServerPlayer player) {
         showRules(player.createCommandSourceStack(), 1);
     }
