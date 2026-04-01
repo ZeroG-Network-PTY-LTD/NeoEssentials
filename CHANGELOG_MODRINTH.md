@@ -4,6 +4,17 @@
 
 ---
 
+## 1.0.2.6+build.17 — 2026-04-01
+
+### 🔌 Improved — External Permissions Integration
+
+- **Permissions** — FTB Ranks and LuckPerms adapters now detect mod version at startup and log it; a boxed `WARN` fires when the installed FTB Ranks version is newer than last tested.
+- **Permissions** — New `AdapterCompatibilityChecker` prints a formatted compatibility table at startup listing every detected permission mod, its version, and ✓/⚠ status.
+- **Permissions** — FTB Ranks adapter probes four API signatures so it survives version bumps without breaking.
+- **Permissions** — Both adapters track consecutive failures; after 5 failures they are marked unhealthy and `PermissionAPI` falls back to the internal `permissions.json` manager and then OP-bypass — no player lockouts from a broken external perm mod.
+
+---
+
 ## 1.0.2.6+build.16 — 2026-04-01
 
 ### ✨ New Features — Rules Command

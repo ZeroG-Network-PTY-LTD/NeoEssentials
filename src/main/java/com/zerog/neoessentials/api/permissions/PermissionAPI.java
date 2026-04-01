@@ -73,13 +73,45 @@ public class PermissionAPI {
             }
         }
 
-        // If using external permissions (LuckPerms, FTB Ranks), delegate to external system
+        // If using external permissions (LuckPerms, FTB Ranks), try the external system first.
+        // If the external adapter is unhealthy (repeated runtime failures) or throws an
+        // exception, we fall through to the internal manager and, as a last resort, OP bypass.
         if (externalAdapter != null) {
             LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
-            boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
-            LOGGER.debug("External system returned: {}", hasExternalPerm);
+            boolean externalAvailable = externalAdapter.isAvailable() && externalAdapter.isHealthy();
+
+            if (externalAvailable) {
+                try {
+                    boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
+                    LOGGER.debug("External system returned: {}", hasExternalPerm);
+                    LOGGER.debug("═══════════════════════");
+                    return hasExternalPerm;
+                } catch (Exception ex) {
+                    LOGGER.warn("External permission adapter '{}' threw during hasPermission('{}') — falling back: {}",
+                            externalAdapter.getName(), permission, ex.getMessage());
+                    // fall through to internal manager
+                }
+            } else {
+                LOGGER.warn("External permission adapter '{}' is UNHEALTHY (failures: {}) — using internal fallback",
+                        externalAdapter.getName(), externalAdapter.getConsecutiveFailures());
+                // fall through to internal manager
+            }
+
+            // ── Internal-manager fallback ─────────────────────────────────────────
+            if (manager != null) {
+                LOGGER.debug("Using internal permission system (external adapter fallback)");
+                boolean hasInternalPerm = manager.hasPermission(uuid, permission);
+                LOGGER.debug("Internal fallback returned: {}", hasInternalPerm);
+                LOGGER.debug("═══════════════════════");
+                return hasInternalPerm;
+            }
+
+            // ── Emergency OP fallback — last resort to prevent lockout ────────────
+            LOGGER.warn("No internal manager available — checking OP status as emergency fallback for '{}'", permission);
+            boolean opFallback = isPlayerOpped(uuid);
+            LOGGER.debug("Emergency OP fallback: {}", opFallback);
             LOGGER.debug("═══════════════════════");
-            return hasExternalPerm;
+            return opFallback;
         }
         
         LOGGER.debug("Using INTERNAL permission system");

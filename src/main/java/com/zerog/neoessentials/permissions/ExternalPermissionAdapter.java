@@ -43,4 +43,31 @@ public interface ExternalPermissionAdapter {
      * @return true if the external system is available, false otherwise.
      */
     boolean isAvailable();
+
+    // ── New default methods — source-compatible with all existing implementations ──
+
+    /**
+     * Returns the detected version string of the underlying mod/API,
+     * or {@code "unknown"} if it could not be determined.
+     */
+    default String getVersion() {
+        return "unknown";
+    }
+
+    /**
+     * Returns {@code false} when the adapter has encountered enough consecutive
+     * runtime failures that it should no longer be considered reliable.
+     * NeoEssentials uses this as a signal to activate the internal-system fallback.
+     */
+    default boolean isHealthy() {
+        return true;
+    }
+
+    /**
+     * Returns the number of consecutive permission-check failures recorded
+     * since the last successful check.  Zero means the adapter is operating normally.
+     */
+    default int getConsecutiveFailures() {
+        return 0;
+    }
 }
