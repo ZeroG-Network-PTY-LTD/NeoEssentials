@@ -414,6 +414,8 @@
 | `/permissions` | `/permissions <user\|group> <action> [args]` | `neoessentials.permissions` | 🔒 | Manage user and group permissions |
 | `/pex` | alias for `/permissions` | same | 🔒 | Alias |
 | `/permissions debug` | `/permissions debug <player>` | `neoessentials.permissions.debug` | 🔒 | Full permission resolution trace for a player (see below) |
+| `/permissions group … setpriority` | `/permissions group <name> setpriority <value>` | `neoessentials.permissions.group.modify` | 🔒 | Set group priority (−999 to 999; higher = checked first in inheritance) |
+| `/permissions group … getpriority` | `/permissions group <name> getpriority` | `neoessentials.permissions.info.group` | 🔒 | Read the current priority of a group |
 
 > **`/permissions debug <player>`**  
 > Prints a complete in-game diagnostic for the named player without requiring debug logging:

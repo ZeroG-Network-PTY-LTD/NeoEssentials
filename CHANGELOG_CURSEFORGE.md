@@ -4,6 +4,20 @@
 
 ---
 
+## 1.0.2.6+build.22 — 2026-04-01
+
+### ⚖️ Improvement — Permission Groups & Priorities + Permission Suggestions
+
+- **Added** `priority` field (int, default 0) to every permission group. Higher priority groups are checked first when the engine walks the inheritance chain — stops ambiguous grant/deny ordering when multiple parent groups conflict.
+- **Updated** `PermissionStorage` — `priority` is persisted in `permissions.json` (backwards-compatible; missing key reads as 0).
+- **Added** `/permissions group <name> setpriority <value>` and `getpriority` commands.
+- **Updated** `/permissions info group` now shows the group's current priority.
+- **Improved** Denial messages now include the **human-friendly description** of the required permission node (e.g. `§8(Ban a player from the server)`) pulled from `PermissionRegistry`, making it clear to staff exactly which capability they are missing.
+- **Docs** `PermissionSystem.md` — new "Group Priorities" section, updated example `groups.json` with priority values, and updated denial-message format description.
+- **Docs** `CommandsReference.md` — `setpriority`/`getpriority` rows added.
+
+---
+
 ## 1.0.2.6+build.21 — 2026-04-01
 
 ### 🔍 New Feature — Permission Debugging Tools

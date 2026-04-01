@@ -9,6 +9,8 @@ public class PermissionGroup {
     private final Set<String> inherits;
     private String prefix = "";
     private String suffix = "";
+    /** Higher priority groups are checked first in inheritance resolution. Default 0. */
+    private int priority = 0;
 
     public PermissionGroup(String name) {
         this.name = name;
@@ -42,6 +44,14 @@ public class PermissionGroup {
 
     public void setSuffix(String suffix) {
         this.suffix = suffix;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public void addPermission(String permission) {
