@@ -37,6 +37,9 @@ public class TeleportUtil {
      */
     public static CompletableFuture<TeleportResult> teleportPlayer(ServerPlayer player, TeleportLocation location, 
                                                                   int delayTicks, boolean findSafe) {
+        // This often leads to issues so hardcode to off.
+        findSafe = false;
+        
         CompletableFuture<TeleportResult> future = new CompletableFuture<>();
 
         // Enforce combat check if enabled in config
