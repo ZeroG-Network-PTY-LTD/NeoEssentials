@@ -332,7 +332,12 @@ public class DatabaseHandler implements HttpHandler {
                     os.write(bytes);
                 }
             } else if ("json".equalsIgnoreCase(format)) {
-                // Export as JSON
+                // Export as JSON — table name is validated by sanitizeTableName in executeQuery's SELECT check
+                // but also validate here to prevent injection in the constructed query
+                if (!tableName.matches("^[a-zA-Z0-9_\\-.]+$")) {
+                    sendBadRequest(exchange, "Invalid table name");
+                    return;
+                }
                 DatabaseManager.QueryResult result = 
                     DatabaseManager.getInstance().executeQuery(databaseId, 
                         "SELECT * FROM \"" + tableName + "\"", 1, 10000);
