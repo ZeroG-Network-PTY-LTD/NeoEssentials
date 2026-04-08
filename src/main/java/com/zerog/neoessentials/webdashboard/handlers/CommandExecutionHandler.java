@@ -78,7 +78,7 @@ public class CommandExecutionHandler implements HttpHandler {
     /**
      * Execute a server command
      * POST /api/commands/execute
-     * Body: {"command": "list", "checkPermissions": true}
+     * Body: {"command": "list"}
      */
     private void handleExecute(HttpExchange exchange) throws IOException {
         String requestBody = readRequestBody(exchange);
@@ -90,17 +90,16 @@ public class CommandExecutionHandler implements HttpHandler {
         }
         
         String command = request.get("command").getAsString().trim();
-        boolean checkPermissions = request.has("checkPermissions") && request.get("checkPermissions").getAsBoolean();
         
         // Remove leading slash if present
         if (command.startsWith("/")) {
             command = command.substring(1);
         }
         
-        // Check for restricted commands
+        // ALWAYS check for restricted commands server-side — never trust client
         String baseCommand = command.split(" ")[0];
-        if (checkPermissions && RESTRICTED_COMMANDS.contains(baseCommand.toLowerCase())) {
-            sendJsonResponse(exchange, 403, createErrorResponse("Command '" + baseCommand + "' requires elevated permissions"));
+        if (RESTRICTED_COMMANDS.contains(baseCommand.toLowerCase())) {
+            sendJsonResponse(exchange, 403, createErrorResponse("Command '" + baseCommand + "' is restricted and cannot be executed from the dashboard"));
             return;
         }
         
