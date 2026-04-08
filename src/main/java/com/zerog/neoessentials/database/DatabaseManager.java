@@ -221,6 +221,24 @@ public class DatabaseManager {
     }
     
     /**
+     * Sanitize table name to prevent SQL injection.
+     * Only allows alphanumeric characters, underscores, hyphens, and dots.
+     * Throws SQLException if the name contains invalid characters.
+     */
+    private static String sanitizeTableName(String tableName) throws SQLException {
+        if (tableName == null || tableName.isEmpty()) {
+            throw new SQLException("Table name cannot be null or empty");
+        }
+        if (!tableName.matches("^[a-zA-Z0-9_\\-.]+$")) {
+            throw new SQLException("Invalid table name: contains forbidden characters");
+        }
+        if (tableName.length() > 128) {
+            throw new SQLException("Invalid table name: exceeds maximum length");
+        }
+        return tableName;
+    }
+    
+    /**
      * Get tables in database
      */
     public List<TableInfo> getTables(String databaseId) throws SQLException {
@@ -258,6 +276,7 @@ public class DatabaseManager {
      */
     public List<ColumnInfo> getTableSchema(String databaseId, String tableName) throws SQLException {
         List<ColumnInfo> columns = new ArrayList<>();
+        tableName = sanitizeTableName(tableName);
         
         try (Connection conn = getConnection(databaseId);
              Statement stmt = conn.createStatement();
@@ -291,7 +310,12 @@ public class DatabaseManager {
         }
         
         // Prevent dangerous operations
-        if (trimmedQuery.contains("ATTACH") || trimmedQuery.contains("PRAGMA")) {
+        if (trimmedQuery.contains("ATTACH") || trimmedQuery.contains("PRAGMA") ||
+            trimmedQuery.contains("INSERT") || trimmedQuery.contains("UPDATE") ||
+            trimmedQuery.contains("DELETE") || trimmedQuery.contains("DROP") ||
+            trimmedQuery.contains("ALTER") || trimmedQuery.contains("CREATE") ||
+            trimmedQuery.contains("REPLACE") || trimmedQuery.contains("LOAD_EXTENSION") ||
+            trimmedQuery.contains("DETACH")) {
             throw new SQLException("Query contains forbidden operations");
         }
         
@@ -349,6 +373,7 @@ public class DatabaseManager {
      */
     public String exportTableAsCSV(String databaseId, String tableName) throws SQLException {
         StringBuilder csv = new StringBuilder();
+        tableName = sanitizeTableName(tableName);
         
         try (Connection conn = getConnection(databaseId);
              Statement stmt = conn.createStatement();
