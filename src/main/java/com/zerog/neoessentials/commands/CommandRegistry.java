@@ -128,8 +128,11 @@ public class CommandRegistry {
         
         // Then verify it exists in the actual Brigadier dispatcher
         try {
-            var parseResults = dispatcher.parse("/" + key, null);
-            return parseResults.getContext().getCommand() != null;
+            // No leading slash - Brigadier does not use slashes
+            // Use the root node directly instead of parsing with null source
+            var root = dispatcher.getRoot();
+            return root.getChildren().stream()
+                .anyMatch(node -> node.getName().equalsIgnoreCase(key));
         } catch (Exception e) {
             LOGGER.debug("Command '{}' not found in dispatcher: {}", key, e.getMessage());
             return false;
