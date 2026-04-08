@@ -65,8 +65,10 @@ public class PermissionSystem {
                     // Internal permission system is NOT loaded or used
                     LOGGER.warn("  ⚠ Internal permissions.json will be IGNORED for all permission checks");
                     LOGGER.warn("  ⚠ All permissions/groups MUST be managed in {}", externalAdapter.getName());
-                    // Do not load, create, or backup internal permissions.json
-                    manager = null;
+                    // Still load internal manager as fallback in case external fails
+                    manager = new PermissionManager();
+                    PermissionStorage.load(manager);
+                    PermissionAPI.setManager(manager);
                     initialized = true;
                     LOGGER.info("✓ Permission system initialized with {} (internal groups loaded but NOT USED)", externalAdapter.getName());
                     LOGGER.info("═══════════════════════════════════════════════════════════");
@@ -261,6 +263,10 @@ public class PermissionSystem {
             }
             if (manager != null) {
                 manager.reload();
+            } else {
+                LOGGER.warn("PermissionSystem.reload: manager is null, re-initializing...");
+                initialized = false;
+                initialize();
             }
             LOGGER.info("Permission system reloaded successfully");
         } catch (Exception e) {
