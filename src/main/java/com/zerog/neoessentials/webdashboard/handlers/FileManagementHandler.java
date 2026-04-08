@@ -452,11 +452,11 @@ public class FileManagementHandler implements HttpHandler {
             return;
         }
         Path targetPath = resolvePath(request.get("targetPath").getAsString());
-        Path backupPath = Paths.get(request.get("backupPath").getAsString());
+        Path backupPath = Paths.get(request.get("backupPath").getAsString()).normalize().toAbsolutePath();
         validatePath(targetPath);
-        // Only allow restore from backup directory
-        Path backupDir = Paths.get("neoessentials", "backups", "files").toAbsolutePath();
-        if (!backupPath.toAbsolutePath().startsWith(backupDir)) {
+        // Only allow restore from backup directory — normalize to prevent ../ traversal
+        Path backupDir = Paths.get("neoessentials", "backups", "files").toAbsolutePath().normalize();
+        if (!backupPath.startsWith(backupDir)) {
             sendJsonResponse(exchange, 403, createErrorResponse("Invalid backup path"));
             return;
         }
