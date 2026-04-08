@@ -269,24 +269,24 @@ public class HomeCommands {
         if (homeManager.getHome(player, homeName) != null) {
             String pending = pendingSetHomeConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.overwrite_already_pending", homeName));
-                return 0;
-            }
-            pendingSetHomeConfirmations.put(player.getUUID(), homeName);
-            player.sendSystemMessage(MessageUtil.homeConfirmComponent(
-                homeName,
-                "overwrite",
-                "/sethome " + homeName + " confirm",
-                "/sethome " + homeName + " deny"
-            ));
-            return 0;
-        }
-        pendingSetHomeConfirmations.remove(player.getUUID());
-        if (!pendingSetHomeConfirmations.containsKey(player.getUUID())) {
-            if (homeManager.setHome(player, homeName)) {
-                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, player.blockPosition().toShortString()));
+                // Player clicked [Confirm] — clear pending and fall through to actual set below
+                pendingSetHomeConfirmations.remove(player.getUUID());
+            } else {
+                // First call — just show the confirmation prompt
+                pendingSetHomeConfirmations.put(player.getUUID(), homeName);
+                player.sendSystemMessage(MessageUtil.homeConfirmComponent(
+                    homeName,
+                    "overwrite",
+                    "/sethome " + homeName,
+                    "/sethome " + homeName + " deny"
+                ));
                 return 1;
             }
+        }
+        pendingSetHomeConfirmations.remove(player.getUUID());
+        if (homeManager.setHome(player, homeName)) {
+            player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, player.blockPosition().toShortString()));
+            return 1;
         }
         return 0;
     }
@@ -353,25 +353,26 @@ public class HomeCommands {
         if (config.isRequireConfirmationForDeleteEnabled()) {
             String pending = pendingDeleteConfirmations.get(player.getUUID());
             if (pending != null && pending.equals(homeName)) {
-                player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.delete_already_pending", homeName));
-                return 0;
-            }
-            pendingDeleteConfirmations.put(player.getUUID(), homeName);
-            player.sendSystemMessage(MessageUtil.homeConfirmComponent(
-                homeName,
-                "delete",
-                "/delhome " + homeName + " confirm",
-                "/delhome " + homeName + " deny"
-            ));
-            return 0;
-        }
-        pendingDeleteConfirmations.remove(player.getUUID());
-        if (!pendingDeleteConfirmations.containsKey(player.getUUID())) {
-            if (homeManager.deleteHome(player, homeName)) {
-                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.delete_success", homeName));
+                // Player clicked [Confirm] — clear pending and fall through to actual delete below
+                pendingDeleteConfirmations.remove(player.getUUID());
+            } else {
+                // First call — just show the confirmation prompt, do NOT attempt delete
+                pendingDeleteConfirmations.put(player.getUUID(), homeName);
+                player.sendSystemMessage(MessageUtil.homeConfirmComponent(
+                    homeName,
+                    "delete",
+                    "/delhome " + homeName,
+                    "/delhome " + homeName + " deny"
+                ));
                 return 1;
             }
         }
+        // Actually delete the home (only reached if no confirmation needed, or confirmation was given)
+        if (homeManager.deleteHome(player, homeName)) {
+            player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.delete_success", homeName));
+            return 1;
+        }
+        player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_failed", homeName));
         return 0;
     }
 
