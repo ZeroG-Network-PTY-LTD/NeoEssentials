@@ -614,10 +614,15 @@ public class PermissionsCommand {
             }
             
             UUID uuid = uuidOpt.get();
+            if (PermissionAPI.getManager() == null) {
+                ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("\u00a7cPermission system not initialized. Run: neoe reload"));
+                return 0;
+            }
             PermissionUser user = PermissionAPI.getManager().getUser(uuid);
             if (user == null) {
-                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
-                return 0;
+                // Auto-create user with default group if not found
+                user = new com.zerog.neoessentials.permissions.PermissionUser(uuid, PermissionAPI.getManager().getDefaultGroup());
+                PermissionAPI.getManager().addUser(user);
             }
             
             // Check if group exists
