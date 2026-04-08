@@ -82,9 +82,8 @@ public class AuthenticationManager {
             return null;
         }
         
-        // Verify password
-        String passwordHash = hashPassword(password);
-        if (!passwordHash.equals(user.getPasswordHash())) {
+        // Verify password using secure comparison (supports both PBKDF2 and legacy SHA-256)
+        if (!verifyPassword(password, user.getPasswordHash())) {
             // Increment failed attempts
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             
@@ -105,6 +104,13 @@ public class AuthenticationManager {
         user.setLockoutUntil(0);
         user.setLastLoginAt(System.currentTimeMillis());
         user.setLastLoginIp(ipAddress);
+        
+        // Auto-upgrade legacy SHA-256 hash to PBKDF2 on successful login
+        if (!user.getPasswordHash().startsWith("PBKDF2:")) {
+            LOGGER.info("Upgrading password hash to PBKDF2 for user: {}", username);
+            user.setPasswordHash(hashPassword(password));
+        }
+        
         saveUsers();
         
         // Create session
@@ -391,23 +397,86 @@ public class AuthenticationManager {
     }
     
     /**
-     * Hash password with SHA-256
+     * Hash password with PBKDF2 and random salt for secure storage.
+     * Format: "PBKDF2:iterations:salt_hex:hash_hex"
+     * Falls back to legacy SHA-256 (unsalted) check for existing passwords.
      */
     public String hashPassword(String password) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            SecureRandom random = new SecureRandom();
+            byte[] salt = new byte[16];
+            random.nextBytes(salt);
+            int iterations = 65536;
+            int keyLength = 256;
             
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not found", e);
+            javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                password.toCharArray(), salt, iterations, keyLength);
+            javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] hash = factory.generateSecret(spec).getEncoded();
+            
+            return "PBKDF2:" + iterations + ":" + bytesToHex(salt) + ":" + bytesToHex(hash);
+        } catch (Exception e) {
+            throw new RuntimeException("PBKDF2 hashing failed", e);
         }
+    }
+    
+    /**
+     * Verify a password against a stored hash.
+     * Supports both new PBKDF2 format and legacy SHA-256 format.
+     */
+    public boolean verifyPassword(String password, String storedHash) {
+        if (storedHash == null || password == null) return false;
+        
+        if (storedHash.startsWith("PBKDF2:")) {
+            // New PBKDF2 format: "PBKDF2:iterations:salt_hex:hash_hex"
+            try {
+                String[] parts = storedHash.split(":");
+                if (parts.length != 4) return false;
+                int iterations = Integer.parseInt(parts[1]);
+                byte[] salt = hexToBytes(parts[2]);
+                byte[] expectedHash = hexToBytes(parts[3]);
+                
+                javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+                    password.toCharArray(), salt, iterations, expectedHash.length * 8);
+                javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+                byte[] actualHash = factory.generateSecret(spec).getEncoded();
+                
+                return MessageDigest.isEqual(expectedHash, actualHash);
+            } catch (Exception e) {
+                LOGGER.error("PBKDF2 verification failed", e);
+                return false;
+            }
+        } else {
+            // Legacy SHA-256 format (unsalted) — for backwards compatibility
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+                String legacyHash = bytesToHex(hash);
+                return legacyHash.equals(storedHash);
+            } catch (NoSuchAlgorithmException e) {
+                return false;
+            }
+        }
+    }
+    
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) sb.append('0');
+            sb.append(hex);
+        }
+        return sb.toString();
+    }
+    
+    private static byte[] hexToBytes(String hex) {
+        int len = hex.length();
+        byte[] bytes = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                                  + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return bytes;
     }
     
     /**
