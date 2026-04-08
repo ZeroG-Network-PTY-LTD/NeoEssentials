@@ -127,7 +127,6 @@ public class HomeCommands {
                 }
                 return false; // Console can't use homes
             })
-            .executes(HomeCommands::executeSetHomeDefault)
             .then(Commands.argument("name", StringArgumentType.word())
                 .executes(HomeCommands::executeSetHome)
                 .then(Commands.literal("confirm")
@@ -249,25 +248,15 @@ public class HomeCommands {
     }
     
     /**
-     * Execute /sethome (defaults to "home")
-     */
-    private static int executeSetHomeDefault(CommandContext<CommandSourceStack> context) {
-        return executeSetHomeWithName(context, "home");
-    }
-
-    /**
      * Execute /sethome <name>
      */
     private static int executeSetHome(CommandContext<CommandSourceStack> context) {
-        return executeSetHomeWithName(context, StringArgumentType.getString(context, "name"));
-    }
-
-    private static int executeSetHomeWithName(CommandContext<CommandSourceStack> context, String homeName) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
+        String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         // Enforce dynamic home limit
         int maxHomes = homeManager.getMaxHomesForPlayer(player);
@@ -359,6 +348,12 @@ public class HomeCommands {
             return 0;
         }
         String homeName = StringArgumentType.getString(context, "name");
+        // Guard against looping - if name ends with confirm strip it
+        if (homeName.endsWith(" confirm") || homeName.equals("confirm")) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_delete", homeName));
+            pendingDeleteConfirmations.remove(player.getUUID());
+            return 0;
+        }
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
         if (config.isRequireConfirmationForDeleteEnabled()) {
