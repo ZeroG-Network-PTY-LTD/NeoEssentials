@@ -102,6 +102,8 @@ public class TeleportUtil {
 
         // Find safe location if requested
         TeleportLocation finalLocation = location;
+        // This often leads to issues so hardcode to off.
+        findSafe = false;
         if (findSafe && !location.isSafe()) {
             finalLocation = location.findSafeLocation();
             if (finalLocation == null) {
