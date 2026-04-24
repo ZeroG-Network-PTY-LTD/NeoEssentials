@@ -29,19 +29,24 @@ public class CustomLanguageManager {
     private static final String LANG_FILE = "en_us.json";
     private final Path customLangDir;
     private final Path templatesDir;
+    private final Path overridesFile;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     // Track missing translation keys for template generation
     private final Set<String> missingKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<String, String>> customTranslations = new ConcurrentHashMap<>();
     private final Map<String, LanguageFileInfo> languageFiles = new ConcurrentHashMap<>();
+    /** Admin overrides — take priority over all language files and the JAR en_us.json. */
+    private final Map<String, String> overrides = new ConcurrentHashMap<>();
 
     private CustomLanguageManager() {
         // Always resolve relative to the server root, not 'run/'
         this.customLangDir = resolveModDataPath("languages", "custom");
         this.templatesDir = resolveModDataPath("languages", "templates");
+        this.overridesFile = resolveModDataPath("languages", "overrides.json");
         LOGGER.info("[LANG] Custom language directory set to: {}", this.customLangDir.toAbsolutePath());
         LOGGER.info("[LANG] Template directory set to: {}", this.templatesDir.toAbsolutePath());
+        LOGGER.info("[LANG] Overrides file set to: {}", this.overridesFile.toAbsolutePath());
     }
 
     public static CustomLanguageManager getInstance() {
@@ -126,6 +131,9 @@ public class CustomLanguageManager {
             // Scan for custom language files (will load the file)
             scanCustomLanguageFiles();
 
+            // Load admin overrides
+            loadOverrides();
+
             // Generate templates for common languages if they don't exist
             generateTemplatesIfNeeded();
 
@@ -190,9 +198,15 @@ public class CustomLanguageManager {
     }
 
     /**
-     * Get translation from custom language file, with fallback to MessageUtil
+     * Get translation from custom language file, with fallback to MessageUtil.
+     * Admin overrides take priority over everything.
      */
     public String getTranslation(String key, String languageCode) {
+        // Admin overrides take top priority
+        if (overrides.containsKey(key)) {
+            return overrides.get(key);
+        }
+
         // Try custom translation first
         Map<String, String> customLang = customTranslations.get(languageCode);
         if (customLang != null && customLang.containsKey(key)) {
@@ -342,7 +356,9 @@ public class CustomLanguageManager {
     public void reload() {
         customTranslations.clear();
         languageFiles.clear();
+        overrides.clear();
         scanCustomLanguageFiles();
+        loadOverrides();
         LOGGER.info("Reloaded custom languages: {}", languageFiles.keySet());
     }
 
@@ -354,6 +370,7 @@ public class CustomLanguageManager {
         stats.put("customLanguagesLoaded", customTranslations.size());
         stats.put("languageCodes", new ArrayList<>(customTranslations.keySet()));
         stats.put("missingKeysTracked", missingKeys.size());
+        stats.put("overrideCount", overrides.size());
         stats.put("customLanguageDirectory", customLangDir.toAbsolutePath().toString());
         stats.put("templateDirectory", templatesDir.toAbsolutePath().toString());
 
@@ -464,6 +481,237 @@ public class CustomLanguageManager {
         if (deployed > 0 || merged > 0) {
             LOGGER.info("Language deployment complete: {} deployed, {} merged", deployed, merged);
         }
+    }
+
+    // =========================================================================
+    // Admin Override Support
+    // =========================================================================
+
+    /**
+     * Load admin overrides from overrides.json.
+     * Overrides take priority over all language files.
+     */
+    private void loadOverrides() {
+        if (!Files.exists(overridesFile)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(overridesFile, StandardCharsets.UTF_8)) {
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> loaded = gson.fromJson(reader, type);
+            if (loaded != null) {
+                overrides.putAll(loaded);
+                LOGGER.info("Loaded {} admin translation override(s) from {}", loaded.size(), overridesFile);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to load translation overrides from {}: {}", overridesFile, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Save admin overrides to overrides.json.
+     */
+    private void saveOverrides() {
+        try {
+            Files.createDirectories(overridesFile.getParent());
+            try (Writer writer = Files.newBufferedWriter(overridesFile, StandardCharsets.UTF_8)) {
+                gson.toJson(overrides, writer);
+            }
+            LOGGER.info("Saved {} admin translation override(s) to {}", overrides.size(), overridesFile);
+        } catch (Exception e) {
+            LOGGER.error("Failed to save translation overrides: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Set an admin override for a translation key.
+     */
+    public void setOverride(String key, String value) {
+        overrides.put(key, value);
+        saveOverrides();
+    }
+
+    /**
+     * Remove an admin override.
+     * @return true if it existed and was removed
+     */
+    public boolean removeOverride(String key) {
+        boolean existed = overrides.containsKey(key);
+        overrides.remove(key);
+        if (existed) saveOverrides();
+        return existed;
+    }
+
+    /**
+     * Get all current admin overrides.
+     */
+    public Map<String, String> getOverrides() {
+        return new LinkedHashMap<>(overrides);
+    }
+
+    /**
+     * Get a specific override value, or null if not set.
+     */
+    public String getOverride(String key) {
+        return overrides.get(key);
+    }
+
+    /**
+     * Clear all admin overrides.
+     */
+    public void clearOverrides() {
+        overrides.clear();
+        saveOverrides();
+    }
+
+    // =========================================================================
+    // Validation & Regeneration
+    // =========================================================================
+
+    /**
+     * Validate a language file against the base English translations.
+     * Returns a report with coverage stats and lists of missing/extra keys.
+     */
+    public ValidationReport validateLanguage(String languageCode) {
+        Map<String, String> base = loadBaseTranslations();
+        Set<String> baseKeys = new LinkedHashSet<>();
+        for (String k : base.keySet()) {
+            if (!k.startsWith("_")) baseKeys.add(k);
+        }
+
+        Map<String, String> target = customTranslations.get(languageCode);
+        if (target == null) {
+            // Try loading from disk directly
+            Path filePath = customLangDir.resolve(languageCode + ".json");
+            if (Files.exists(filePath)) {
+                try (Reader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+                    Type type = new TypeToken<Map<String, String>>(){}.getType();
+                    target = gson.fromJson(reader, type);
+                } catch (Exception e) {
+                    return new ValidationReport(languageCode, 0, 0, 0,
+                        Collections.emptyList(), Collections.emptyList(),
+                        "Failed to read file: " + e.getMessage());
+                }
+            } else {
+                return new ValidationReport(languageCode, 0, 0, 0,
+                    Collections.emptyList(), Collections.emptyList(),
+                    "Language file not found: " + filePath.toAbsolutePath());
+            }
+        }
+
+        final Map<String, String> targetFinal = target;
+        Set<String> targetKeys = new LinkedHashSet<>();
+        for (String k : targetFinal.keySet()) {
+            if (!k.startsWith("_")) targetKeys.add(k);
+        }
+
+        List<String> missingFromTarget = new ArrayList<>();
+        for (String k : baseKeys) {
+            if (!targetKeys.contains(k)) missingFromTarget.add(k);
+        }
+
+        List<String> extraInTarget = new ArrayList<>();
+        for (String k : targetKeys) {
+            if (!baseKeys.contains(k)) extraInTarget.add(k);
+        }
+
+        int total = baseKeys.size();
+        int present = total - missingFromTarget.size();
+        int coverage = total > 0 ? (int) ((present * 100.0) / total) : 100;
+
+        return new ValidationReport(languageCode, total, present, coverage,
+            missingFromTarget, extraInTarget, null);
+    }
+
+    /**
+     * Regenerate a language file from the JAR, merging existing user translations.
+     * The current file is backed up to &lt;lang&gt;.json.bak before overwriting.
+     * @return the number of new keys added from the JAR
+     */
+    public int regenerate(String languageCode) throws IOException {
+        String fileName = languageCode + ".json";
+        Path target = customLangDir.resolve(fileName);
+        Path backup = customLangDir.resolve(languageCode + ".json.bak");
+
+        // Read existing disk file (may have user edits)
+        Map<String, String> existing = new LinkedHashMap<>();
+        if (Files.exists(target)) {
+            try (Reader reader = Files.newBufferedReader(target, StandardCharsets.UTF_8)) {
+                Type type = new TypeToken<Map<String, String>>(){}.getType();
+                Map<String, String> loaded = gson.fromJson(reader, type);
+                if (loaded != null) existing.putAll(loaded);
+            }
+            // Backup current file
+            Files.copy(target, backup, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            LOGGER.info("Backed up {} to {}", target, backup);
+        }
+
+        // Load fresh JAR version
+        Map<String, String> jarVersion;
+        try (InputStream in = findLangResource(fileName)) {
+            if (in == null) throw new IOException("JAR resource not found for language: " + languageCode);
+            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                Type type = new TypeToken<Map<String, String>>(){}.getType();
+                jarVersion = gson.fromJson(reader, type);
+            }
+        }
+        if (jarVersion == null) throw new IOException("Empty/invalid JAR language file for: " + languageCode);
+
+        // Merge: JAR keys + existing user values (user wins on conflict)
+        Map<String, String> merged = new LinkedHashMap<>(jarVersion);
+        int newKeys = 0;
+        for (Map.Entry<String, String> e : jarVersion.entrySet()) {
+            if (!existing.containsKey(e.getKey())) {
+                newKeys++;
+            } else {
+                merged.put(e.getKey(), existing.get(e.getKey())); // keep user value
+            }
+        }
+
+        Files.createDirectories(target.getParent());
+        try (Writer writer = Files.newBufferedWriter(target, StandardCharsets.UTF_8)) {
+            gson.toJson(merged, writer);
+        }
+        LOGGER.info("Regenerated {}: {} total keys, {} new from JAR, backup at {}", fileName, merged.size(), newKeys, backup);
+
+        // Reload translations for this language
+        loadCustomLanguageFile(target);
+
+        return newKeys;
+    }
+
+    /**
+     * Validation report from comparing a language file against the English base.
+     */
+    public static class ValidationReport {
+        private final String languageCode;
+        private final int totalKeys;
+        private final int presentKeys;
+        private final int coveragePercent;
+        private final List<String> missingKeys;
+        private final List<String> extraKeys;
+        private final String errorMessage;
+
+        public ValidationReport(String languageCode, int totalKeys, int presentKeys, int coveragePercent,
+                                List<String> missingKeys, List<String> extraKeys, String errorMessage) {
+            this.languageCode = languageCode;
+            this.totalKeys = totalKeys;
+            this.presentKeys = presentKeys;
+            this.coveragePercent = coveragePercent;
+            this.missingKeys = missingKeys;
+            this.extraKeys = extraKeys;
+            this.errorMessage = errorMessage;
+        }
+
+        public String getLanguageCode() { return languageCode; }
+        public int getTotalKeys() { return totalKeys; }
+        public int getPresentKeys() { return presentKeys; }
+        public int getCoveragePercent() { return coveragePercent; }
+        public List<String> getMissingKeys() { return missingKeys; }
+        public List<String> getExtraKeys() { return extraKeys; }
+        public boolean hasError() { return errorMessage != null; }
+        public String getErrorMessage() { return errorMessage; }
+        public int getMissingCount() { return missingKeys.size(); }
+        public int getExtraCount() { return extraKeys.size(); }
     }
 
     private InputStream findLangResource(String filename) {

@@ -603,7 +603,7 @@
     - References: Bungee Tablist Plus, TAB, Simple TabList.
     - Per-group and per-player customization.
 
-- **API & Placeholder System**  
+- ✅ **API & Placeholder System** *(build #58)*  
   Expand API and placeholder support:
     - Deeper PlaceholderAPI integration.
     - Ability to create custom placeholders.
@@ -820,8 +820,50 @@
 
 - **Chat Formatting Options** *(build #57)*
     - ✅ **Per-player override wired into chat pipeline** — `ChatHandler.onServerChat()` now consults `PlayerChatFormatManager.getInstance().getFormat(player.getUUID())` **before** calling `chatManager.getChatFormat(group, world)`. Per-player overrides set via `/chatformat set <player> <format>` are now the highest-priority step in the format resolution chain. Previously, `PlayerChatFormatManager` persisted overrides but they were never applied during actual chat.
-    - ✅ **Format priority chain (highest → lowest):** per-player override → group+world key → group key → world key → default format.
-    - ✅ **All rich-text features already implemented and now documented** — `RichTextFormatter` and `ChatFormatter` support: `&#RRGGBB` hex colors, `<gradient:RRGGBB-RRGGBB>text</gradient>`, `<rainbow>text</rainbow>`, `<hover:text:Tooltip>visible</hover>`, `<click:run_command:/cmd>`, `<click:open_url:...>`, `<bold>`, `<italic>`, and all legacy `&` codes. No new code needed.
-    - ✅ **`ChatSystem.md` fully rewritten** — Added: Format Priority Hierarchy diagram, `/chatformat` command reference table with all 5 subcommands and permission nodes, complete rich-text tag reference with copy-paste syntax examples, hex color and gradient usage, hover/click event examples, full config key reference table, placeholder list, and working format string examples.
+  - ✅ **Format priority chain (highest → lowest):** per-player override → group+world key → group key → world key → default format.
+  - ✅ **All rich-text features already implemented and now documented** — `RichTextFormatter` and `ChatFormatter` support: `&#RRGGBB` hex colors, `<gradient:RRGGBB-RRGGBB>text</gradient>`, `<rainbow>text</rainbow>`, `<hover:text:Tooltip>visible</hover>`, `<click:run_command:/cmd>`, `<click:open_url:...>`, `<bold>`, `<italic>`, and all legacy `&` codes. No new code needed.
+  - ✅ **`ChatSystem.md` fully rewritten** — Added: Format Priority Hierarchy diagram, `/chatformat` command reference table with all 5 subcommands and permission nodes, complete rich-text tag reference with copy-paste syntax examples, hex color and gradient usage, hover/click event examples, full config key reference table, placeholder list, and working format string examples.
+
+- **API & Placeholder System** *(build #58)*
+    - ✅ **`PlaceholderProvider` and `PlaceholderExpansion` made public** — extracted to `public` top-level types so external mods can implement/extend them (were previously package-private).
+    - ✅ **`NeoEssentialsAPI.getPlaceholderManager()`** added — exposes the singleton `PlaceholderManager` from the stable API entry-point. `API_VERSION` bumped to `"1.2.0"`.
+    - ✅ **`/api/placeholders` REST endpoints** — `PlaceholderEndpoint` added: `GET /api/placeholders/list`, `GET /api/placeholders/resolve?player=&text=`, `GET /api/placeholders/stats`. Registered with auth middleware in `DashboardAPI`.
+    - ✅ **`/api/docs` wired** — `DocumentationHandler` was implemented but never registered in `DashboardAPI`. Now wired to `/api/docs` context.
+    - ✅ **`/placeholder` command** — new in-game admin command with `list`, `info <id>` (tab-completes), `test <text>`, `stats` sub-commands. Permission: `neoessentials.admin.placeholders`.
+    - ✅ **`neoessentials.admin.placeholders`** registered in `PermissionRegistry` under `ADMIN` category.
+    - ✅ **`DocumentationManager`** updated with `placeholder-api` and `developer-api` sections, and API docs for all three `/api/placeholders/*` endpoints.
+    - ✅ **`docs/Wiki/APISystem.md`** completely rewritten — full built-in placeholder table (30+ tokens with short-form aliases), `PlaceholderProvider`/`PlaceholderExpansion` code examples, `NeoEssentialsAPI` full reference, REST endpoint tables, `/placeholder` command reference, versioning contract.
+
+- **Chat Formatting — `{neoessentials_username_hover}` unresolved + duplicate vanilla log line** *(build #59)*
+    - ✅ **Root cause fixed** — `ChatFormatter.formatMessage()` was replacing `{neoessentials_username}` with `{neoessentials_username_hover}` when "clickable player names" was enabled, but `username_hover` was never registered in `DefaultPlaceholderExpansion`. The placeholder passed through `PlaceholderAPI.setPlaceholders()` unresolved, leaving the literal string `{neoessentials_username_hover}` in the formatted Component.
+    - ✅ **New approach** — The `{username}` → `{username_hover}` substitution is replaced with a `§HNAME§name§/HNAME§` internal markup token (only injected when both `clickablePlayerNames` and `enableChatEnhancements` are true). `buildComponentFromMarkup()` now handles `§HNAME§` and `§HDNAME§` tokens to produce proper hover+click Components without touching the placeholder resolution pipeline.
+    - ✅ **Fallback safety** — `username_hover` and `displayname_hover` are now registered in `DefaultPlaceholderExpansion` as plain-text aliases for `username`/`displayname`. If the token ever appears in a raw config string it resolves to the player's name instead of showing unresolved.
+    - ✅ **Duplicate vanilla log removed** — `ChatHandler.onServerChat()` called `server.sendSystemMessage(formattedMessage)` which caused vanilla's `MinecraftServer` logger to emit a second log line: `<{neoessentials_username_hover}> message`. This call was redundant (chat was already logged via `LOGGER.info`) and is removed.
+    - **Affected files:** `ChatFormatter.java`, `ChatHandler.java`, `DefaultPlaceholderExpansion.java`
+
+---
+
+- **Localization Audit — 54 missing translation keys + missing fallback text for unknown keys** *(build #62)*
+    - ✅ **54 missing translation keys added to `en_us.json`** — A full audit of all `MessageUtil.localize()`/`component()`/`success()`/`error()`/`warning()` call-sites across ~130 Java source files identified 54 keys that were referenced in code but not present in the language file. The missing keys were concentrated in:
+        - Teleport request flow (`commands.neoessentials.teleport.request.*` — 25 keys for TPA sent/received/cancelled/expired/denied/failed)
+        - Misc teleport (`back_info`, `death_info`, `jump_success`, `jump_failed`, `no_open_space`)
+        - Spawn/warp coordinate validation (`teleport.spawn.invalid_coordinates`, `teleport.spawn.no_permission`, `teleport.warp.invalid_coordinates`)
+        - Home overwrite cancellation + no-pending-delete fallback
+        - Moderation (`player_only_command`, `reason_too_long`, `unfrozen_message`, `jail_success`, `unjail_success`)
+        - Dashboard command separator/title, channel error, mutelist format, near server error, gamemode changed_other
+    - ✅ **`MessageUtil.localize()` now generates human-readable fallback text** — Previously, if a key was not found in the loaded translations map, the raw key string (e.g. `commands.neoessentials.home.not_found`) was returned directly to the player's chat — making messages look broken. The fix strips the `commands.neoessentials.` prefix, replaces dots and underscores with spaces, and capitalises the first letter to produce a readable English fallback (e.g. `Home not found`). The old `key → key` identity fallback is gone.
+    - ✅ **New `MessageUtil.localize(key, fallback, args...)` overload** — Callers that know the expected English text can now pass it explicitly as a second argument. When the primary key is missing the explicit fallback is used verbatim, and a debug-level warning is logged.
+    - ✅ **New `/language validate <code>` command** — Compares a deployed language file against the base `en_us.json` key set and prints: total keys, translated keys, coverage %, missing key count (first 10 shown), extra keys. Colour-coded coverage indicator (green ≥90%, yellow ≥50%, red <50%).
+    - ✅ **New `/language regenerate <code>` command** — Copies a fresh version of the JAR language file to disk, merging existing user-translated values so no edits are lost. The previous disk file is backed up to `<lang>.json.bak` first.
+    - ✅ **New `/language override` subcommands** — Admins can now override individual message keys in-game without editing files. Overrides are persisted to `neoessentials/languages/overrides.json` and take priority over all other translation sources.  
+        - `/language override set <key> <value>` — set an override  
+        - `/language override get <key>` — view current value (override or default)  
+        - `/language override remove <key>` — remove specific override  
+        - `/language override list` — list all active overrides  
+        - `/language override clear` — remove all overrides  
+        - `/language override reload` — reload overrides from disk
+    - ✅ **`_langVersion` bumped 12 → 13** — triggers automatic key-merge on next server start for existing deployments.
+    - **Affected files:** `en_us.json`, `MessageUtil.java`, `CustomLanguageManager.java`, `LanguageCommand.java`
+
 
 

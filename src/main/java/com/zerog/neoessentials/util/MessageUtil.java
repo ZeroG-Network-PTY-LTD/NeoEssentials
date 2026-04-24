@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 12;
+    private static final int CURRENT_LANG_VERSION = 13;
 
     /**
      * Load translations from server directory, updating from JAR if needed.
@@ -219,28 +219,75 @@ public class MessageUtil {
     }
 
     /**
-     * Get a localized string with optional arguments
+     * Get a localized string with optional arguments.
+     * Falls back to a human-readable form of the key if the key is not found.
      */
     public static String localize(String key, Object... args) {
         loadTranslations();
-        String template = translations.getOrDefault(key, key);
-        
-        if (debugMode && !translations.containsKey(key)) {
-            LOGGER.warn("Missing translation key: {} (total keys loaded: {})", key, translations.size());
+        String template = translations.get(key);
+
+        if (template == null) {
+            if (debugMode) {
+                LOGGER.warn("Missing translation key: {} (total keys loaded: {})", key, translations.size());
+            }
+            // Generate human-readable fallback from the key name instead of showing the raw key
+            template = humanizeKey(key);
         }
-        
+
         try {
             String result = MessageFormat.format(template.replace("%s", "{0}"), args);
             if (debugMode) {
-                LOGGER.info("MessageFormat success - Key: {}, Template: '{}', Args: {}, Result: '{}'", 
+                LOGGER.info("MessageFormat success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
                     key, template, java.util.Arrays.toString(args), result);
             }
             return result;
         } catch (Exception e) {
-            LOGGER.error("Failed to format message - Key: {}, Template: '{}', Args: {}, Error: {}", 
+            LOGGER.error("Failed to format message - Key: {}, Template: '{}', Args: {}, Error: {}",
                 key, template, java.util.Arrays.toString(args), e.getMessage(), e);
             return template;
         }
+    }
+
+    /**
+     * Get a localized string with an explicit English fallback text.
+     * Use this when you know what the English text should be in case the key is missing.
+     */
+    public static String localize(String key, String fallback, Object... args) {
+        loadTranslations();
+        String template = translations.getOrDefault(key, fallback);
+
+        if (debugMode && !translations.containsKey(key)) {
+            LOGGER.warn("Missing translation key: {} — using provided fallback: '{}'", key, fallback);
+        }
+
+        try {
+            return MessageFormat.format(template.replace("%s", "{0}"), args);
+        } catch (Exception e) {
+            LOGGER.error("Failed to format message with fallback - Key: {}, Template: '{}', Error: {}",
+                key, template, e.getMessage(), e);
+            return template;
+        }
+    }
+
+    /**
+     * Convert a dotted translation key into a human-readable English string.
+     * E.g. "commands.neoessentials.home.not_found" → "Home not found"
+     */
+    private static String humanizeKey(String key) {
+        if (key == null || key.isEmpty()) return "";
+        // Strip common prefixes
+        String stripped = key;
+        if (stripped.startsWith("commands.neoessentials.")) {
+            stripped = stripped.substring("commands.neoessentials.".length());
+        } else if (stripped.startsWith("neoessentials.")) {
+            stripped = stripped.substring("neoessentials.".length());
+        }
+        // Replace dots and underscores with spaces, capitalize first letter
+        String readable = stripped.replace('.', ' ').replace('_', ' ');
+        if (!readable.isEmpty()) {
+            readable = Character.toUpperCase(readable.charAt(0)) + readable.substring(1);
+        }
+        return readable;
     }
 
     /**
