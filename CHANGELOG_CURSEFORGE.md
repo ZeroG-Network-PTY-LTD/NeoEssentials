@@ -4,7 +4,81 @@
 
 ---
 
-## 1.0.2.6+build.23 — 2026-04-01
+## 1.0.2.6+build.30 — 2026-04-01
+
+### ✨ Feature — Permissions GUI, External Systems & Fine-Grained Control
+
+**Web Dashboard API** — The `/api/permissions` REST endpoint now covers everything:
+- `POST /reload` — reload permissions from disk
+- `GET/POST/DELETE /group/{name}/context` — manage contextual overrides (world/time/gamemode)
+- `GET/POST /group/{name}/temp` + `DELETE /group/{name}/temp/{node}` — manage temp permissions
+- `GET/POST/DELETE /user/{name}/context` + `GET/POST /user/{name}/temp` — same for users
+- `GET/POST/DELETE /aliases` — manage permission aliases
+- `GET /system/status` — now shows emergency mode, external adapter health/version/failures, alias count
+
+**External System Integration** — Improved documentation and fallback logic:
+- Full 5-step fallback chain documented: emergency → OP bypass → external → internal → OP fallback
+- Adapter health tracking: 5 consecutive failures → `UNHEALTHY` → auto-fallback to `permissions.json`
+- LuckPerms context-aware checks via `QueryOptions`; FTB Ranks 4-API-signature probe
+- Startup compatibility report logged with adapter version and ⚠ warnings for newer versions
+- Compatibility table: LuckPerms, FTB Ranks, WorldEdit, FTB Chunks, any NeoForge mod
+
+**Fine-Grained Command Control** — Per-subcommand permission nodes fully documented:
+- Every Brigadier branch has its own node (e.g. `/home set` → `neoessentials.teleport.home.set`, `/home delete` → `neoessentials.teleport.home.delete`)
+- Home, Warp, Kit, Economy, Moderation, and Permission system all documented with full tables
+- Negative permissions (`-node`) documented for targeted deny without removing wildcards
+
+---
+
+## 1.0.2.6+build.28 — 2026-04-01
+
+### ✨ Feature — Permissions System Improvements
+
+**Contextual Permissions** — Grant or deny a permission node based on the player's current world, time of day, or gamemode. New commands:
+- `/permissions group <group> context add <contextKey> <node> allow|deny`
+- `/permissions user <player> context add <contextKey> <node> allow|deny`
+- Context keys: `world:overworld`, `world:the_nether`, `world:the_end`, `time:day`, `time:night`, `gamemode:survival/creative/spectator/adventure`
+
+**Permission Conditions** — Attach runtime conditions (e.g. `gamemode:survival AND time:day`) to any permission node. Grant is withheld if the condition fails at check time.
+
+**Permission Aliases** — Map legacy / short node names to canonical NeoEssentials equivalents via `config/neoessentials/permission_aliases.json`. Aliases resolve transparently on every permission check (e.g. `"essentials.fly" → "neoessentials.fly"`).
+
+**API for Other Mods** — `NeoEssentialsAPI.getPermissionsService()` returns a clean `PermissionsService` interface. Other mods can check permissions with context, register their own permission nodes, and register aliases — without importing internal NeoEssentials classes.
+
+**Storage** — Contextual permissions and conditions are now persisted in `permissions.json` (groups) and `permissions/playerdata.json` (users). Fully backward-compatible.
+
+**New permission nodes:** `neoessentials.permissions.user.context`, `neoessentials.permissions.group.context`
+
+---
+
+## 1.0.2.6+build.26 — 2026-04-01
+
+### 🔧 Improvement — Utility Systems Audit & Polish
+
+- **`/nick` / `/nickname`** — Storage path now uses the centralised `ResourceUtil.getConfigPath()` helper; `/nickname` alias registered as a Brigadier redirect so it works identically to `/nick`.
+- **`/seen`** — Storage path updated to `ResourceUtil.getConfigPath()`.
+- **Command registration** — Removed duplicate `registerCommand()` metadata entries in the "PLAYER INFO" block; every player-info command (`near`, `ping`, `seen`, `whois`, `realname`, `motd`, `rules`, `suicide`, etc.) is now registered exactly once by its dedicated class.
+- **Permission registry** — Eliminated stale duplicate `register()` calls that silently overrode correct values (e.g. `neoessentials.whois` was being reset from `ADMIN/false` to `MISC/true`; `neoessentials.ping.others` was being reset from `true` to `false`). All unique sub-nodes (`whois.detailed`, `rules.admin`, `motd.*`) are kept in their canonical positions.
+- **All core utility commands verified** — `/nick` `/nickname` `/setnick` `/near` `/nearby` `/ping` `/depth` `/helpop` `/motd` `/rules` `/suicide` `/killme` `/seen` `/whois` `/realname` `/msgtoggle` — fully present, registered once, and using `PermissionValidator` consistently.
+
+---
+
+## 1.0.2.6+build.25 — 2026-04-01
+
+### ⏳ New Feature — Temporary Permissions
+
+- **Permissions** — Grant time-limited permissions to players or groups that automatically expire and are revoked — no manual cleanup required.
+- **User commands:** `/permissions user <p> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.user.temp` / `info.user`).
+- **Group commands:** `/permissions group <g> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.group.temp` / `info.group`).
+- **Duration format:** combinations of `d`/`h`/`m`/`s` — e.g. `30m`, `12h`, `1d`, `7d`, `1d12h30m`.
+- **Auto-expiry:** server-tick handler checks every 30 s; expired entries are removed, affected online players notified, and each expiry written to the audit log (`USER_TEMP_PERM_EXPIRED` / `GROUP_TEMP_PERM_EXPIRED`).
+- **Persistence:** temp permissions survive server restarts (stored as `"tempPermissions": {"<node>": <expiryMs>}` in `playerdata.json` / `permissions.json`). Expired entries are stripped on load.
+- **Audit log:** 6 new action constants — `USER_TEMP_PERM_ADDED`, `USER_TEMP_PERM_REMOVED`, `USER_TEMP_PERM_EXPIRED`, `GROUP_TEMP_PERM_ADDED`, `GROUP_TEMP_PERM_REMOVED`, `GROUP_TEMP_PERM_EXPIRED`.
+- **New nodes:** `neoessentials.permissions.user.temp`, `neoessentials.permissions.group.temp`.
+
+---
+
+## 1.0.2.6+build.23 — 2026-04-01 · [`48763856`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/48763856)
 
 ### 📋 New Feature — Permission Audit Logging
 
@@ -14,7 +88,7 @@
 
 ---
 
-## 1.0.2.6+build.22 — 2026-04-01
+## 1.0.2.6+build.22 — 2026-04-01 · [`a2e1a7ed`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/a2e1a7ed)
 
 ### ⚖️ Improvement — Permission Groups & Priorities + Permission Suggestions
 
@@ -28,7 +102,7 @@
 
 ---
 
-## 1.0.2.6+build.21 — 2026-04-01
+## 1.0.2.6+build.21 — 2026-04-01 · [`81c7a55d`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/81c7a55d)
 
 ### 🔍 New Feature — Permission Debugging Tools
 
@@ -38,7 +112,7 @@
 
 ---
 
-## 1.0.2.6+build.19 — 2026-04-01
+## 1.0.2.6+build.19 — 2026-04-01 · [`a22d0323`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/a22d0323)
 
 ### 📖 Documentation — `allowUnsafeCommands` & Security Configuration
 
@@ -52,7 +126,7 @@
 
 ---
 
-## 1.0.2.6+build.18 — 2026-04-01
+## 1.0.2.6+build.18 — 2026-04-01 · [`4c534da6`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/4c534da6)
 
 ### 🛡️ New Feature — Fallback to Vanilla OP Permissions
 
@@ -63,7 +137,7 @@
 
 ---
 
-## 1.0.2.6+build.17 — 2026-04-01
+## 1.0.2.6+build.17 — 2026-04-01 · [`4d5cf1a1`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/4d5cf1a1)
 
 ### 🔌 Improved — External Permissions Integration
 
@@ -75,7 +149,7 @@
 
 ---
 
-## 1.0.2.6+build.16 — 2026-04-01
+## 1.0.2.6+build.16 — 2026-04-01 · [`c1cc26fa`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/c1cc26fa)
 
 ### ✨ New Features — Rules Command
 

@@ -1,6 +1,24 @@
 # Utility Systems
 
-> **Version:** 1.0.2.6
+> **Version:** 1.0.2.6+build.26
+
+---
+
+## Table of Contents
+
+1. [Player Info Commands](#player-info-commands)
+2. [Nicknames](#nicknames)
+3. [MOTD System](#motd-system)
+4. [Rules System](#rules-system)
+5. [Helpop](#helpop)
+6. [Suicide](#suicide)
+7. [Depth](#depth)
+8. [Player State Commands](#player-state-commands)
+9. [Per-Player Time & Weather](#per-player-time--weather)
+10. [Server Admin Commands](#server-admin-commands)
+11. [World Interaction](#world-interaction)
+12. [Fun Commands](#fun-commands)
+13. [Mail](#mail)
 
 ---
 
@@ -12,17 +30,53 @@ Miscellaneous quality-of-life commands covering player info, server admin tools,
 
 ## Player Info Commands
 
-| Command | Syntax | Permission | Description |
+| Command | Aliases | Permission | Description |
 |---|---|---|---|
-| `/seen` | `/seen <player>` | `neoessentials.seen` | Show online/offline status with location or last-seen time |
-| `/near` | `/near [radius]` | `neoessentials.near` | List nearby players and their distance (default 200 blocks) |
-| `/ping` | `/ping [player]` | `neoessentials.ping` | Show connection latency (colour-coded) |
-| `/playtime` | `/playtime [player]` | `neoessentials.playtime` | Show total play time in h/m/s |
-| `/whois` | `/whois <player>` | `neoessentials.whois` | Show UUID, dimension, coords, gamemode, ping, health, food |
-| `/realname` | `/realname <nick>` | `neoessentials.realname` | Look up real username from nickname |
-| `/list` | `/list` | `neoessentials.list` | List online players with count |
-| `/who` | alias | same | Alias |
-| `/motd` | `/motd` | `neoessentials.motd` | Display the active server MOTD |
+| `/seen <player>` | — | `neoessentials.seen` | Show online/offline status with location or last-seen time |
+| `/near [radius]` | `/nearby` | `neoessentials.near` | List nearby players and their distance (default 100 blocks, max 500) |
+| `/ping [player]` | `/pong` | `neoessentials.ping` | Show own latency (colour-coded). Checking others requires `neoessentials.ping.others` |
+| `/playtime [player]` | — | `neoessentials.playtime` | Show total play time in h/m/s. Others requires `neoessentials.playtime.others` |
+| `/whois <player>` | — | `neoessentials.whois` | Show UUID, dimension, coords, gamemode, ping, health, food. Detailed view requires `neoessentials.whois.detailed` |
+| `/realname <nick>` | — | `neoessentials.realname` | Look up real username from nickname |
+| `/list` | `/who`, `/online` | `neoessentials.list` | List online players with count |
+| `/motd` | — | `neoessentials.motd` | Display the active server MOTD |
+
+> **Permissions note:** `neoessentials.whois` is an **admin-only** node (`default: false`). Use `neoessentials.whois.detailed` for detailed diagnostics (IPs, internal flags). `neoessentials.ping.others` is granted to all players by default.
+
+---
+
+## Nicknames
+
+### Commands
+
+| Command | Permission | Description |
+|---|---|---|
+| `/nick` | `neoessentials.nick` | Show your current nickname |
+| `/nick <name>` | `neoessentials.nick` | Set your nickname |
+| `/nick reset` | `neoessentials.nick` | Remove your nickname |
+| `/nick off` | `neoessentials.nick` | Alias for `/nick reset` |
+| `/nickname …` | `neoessentials.nick` | Full alias — redirects to `/nick` |
+| `/setnick <player> <name>` | `neoessentials.nick.others` | Set another player's nickname (admin) |
+| `/setnick <player> reset` | `neoessentials.nick.others` | Remove another player's nickname (admin) |
+
+### Permission nodes
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.nick` | `true` | Set / clear own nickname |
+| `neoessentials.nick.color` | `false` | Use `&`-colour codes in nickname |
+| `neoessentials.nick.others` | `false` | Set / clear another player's nickname |
+
+### Nickname rules
+
+- **Length:** 3–16 characters (after stripping colour codes).
+- **Characters:** `a-z A-Z 0-9 _ & # §` only.
+- **Uniqueness:** case-insensitive; two players cannot share the same plain-text nick.
+- **Colour codes:** `&0–9`, `&a–f`, `&k–r`, and hex `&#RRGGBB` are all supported when the player has `neoessentials.nick.color`.
+
+### Storage
+
+Nicknames are persisted in `config/neoessentials/nickname_data.json` (UUID → raw nick string with `&` codes). They are loaded on server start and re-applied to all online players.
 
 ---
 
@@ -161,23 +215,69 @@ All `/api/rules` endpoints require Bearer-token authentication (same as every ot
 
 ---
 
-## Other Utility Commands
+## Helpop
 
-| Command | Syntax | Permission | Description |
+The `/helpop` command lets players send requests to online staff. Staff receive them if they have the `neoessentials.helpop.receive` permission.
+
+### Commands
+
+| Command | Aliases | Permission | Description |
 |---|---|---|---|
-| `/helpop` | `/helpop <message>` | `neoessentials.helpop` | Send message to online staff |
-| `/suicide` | `/suicide` | `neoessentials.suicide` | Kill yourself |
+| `/helpop <message>` | `/ac`, `/amsg` | `neoessentials.helpop` | Send a help request to all online staff |
+
+### Permission nodes
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.helpop` | `true` | Send a help request |
+| `neoessentials.helpop.receive` | `false` | Receive help requests (staff) |
+
+### Behaviour
+
+- Messages are broadcast to all online players who have `neoessentials.helpop.receive`.
+- The sender's name is prefixed in the staff notification (e.g. `[HelpOp] PlayerName: message`).
+- Console operators always receive helpop messages.
 
 ---
 
-## Nicknames
+## Suicide
 
-| Command | Syntax | Permission | Description |
+### Commands
+
+| Command | Aliases | Permission | Description |
 |---|---|---|---|
-| `/nick` | `/nick <name\|off> [player]` | `neoessentials.nick` | Set a nickname |
-| `/nickname` | alias | same | Alias |
+| `/suicide` | `/killme` | `neoessentials.suicide` | Kill yourself (requires confirmation) |
+| `/suicide confirm` | `/killme confirm` | `neoessentials.suicide` | Confirm the suicide within 10 seconds |
 
-Colour codes in nicks require `neoessentials.nick.color`. Setting others' nicks requires `neoessentials.nick.others`.
+### Behaviour
+
+1. `/suicide` displays a confirmation prompt. Players have **10 seconds** to type `/suicide confirm`.
+2. If the confirmation window expires, the prompt is silently cancelled.
+3. After a successful suicide, a **30-second cooldown** prevents spamming.
+4. `/suicide` is blocked in **Creative** and **Spectator** modes.
+5. Death uses `DamageTypes.GENERIC_KILL` (does not count as PvP; no attacker credited).
+
+> **Note:** `/kill` is the vanilla admin command (can target entities). NeoEssentials' `/suicide` is strictly self-only and is intentionally not aliased to `/kill`.
+
+---
+
+## Depth
+
+Shows Y-coordinate information including depth below sea level and height above bedrock.
+
+### Commands
+
+| Command | Permission | Description |
+|---|---|---|
+| `/depth` | `neoessentials.depth` | Show own depth/elevation info |
+| `/depth <player>` | `neoessentials.depth.others` | Show another player's depth info |
+
+### Output
+
+- Current Y level
+- Depth below / height above sea level (Y=63)
+- Height above bedrock (Y=−64)
+- Layer description (e.g. *Deepslate Region*, *Nether*, *Diamond Level*)
 
 ---
 

@@ -1,6 +1,10 @@
 package com.zerog.neoessentials.chat;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,42 +12,101 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Rich Text Formatter - Phase 4
+ * Rich Text Formatter - Phase 4 + Chat Formatting Options
+ *
  * Provides advanced text effects:
- * - Gradient text (<gradient:start-end>text</gradient>)
- * - Rainbow text (<rainbow>text</rainbow>)
- * - Animated text (future)
+ * - Gradient text   → {@code <gradient:START-END>text</gradient>}
+ * - Rainbow text    → {@code <rainbow>text</rainbow>}
+ * - Named colors    → {@code <red>text</red>}, {@code <gold>text</gold>}, …
+ * - Format codes    → {@code <bold>text</bold>}, {@code <italic>text</italic>}, …
+ * - Hex color span  → {@code <color:#RRGGBB>text</color>}
+ * - Hover events    → {@code <hover:HOVER_TEXT>VISIBLE</hover>}
+ * - Click events    → {@code <click:suggest_command:/cmd>VISIBLE</click>}
+ *                     Actions: suggest_command, run_command, open_url, copy_to_clipboard
+ *
+ * Named-color and format tags are converted to {@code &}-codes in the String preprocessing
+ * phase (so they survive the URL/mention enhancement pipeline intact).
+ * Hover/click events are wrapped with internal markers that
+ * {@link com.zerog.neoessentials.chat.ChatFormatter}'s component builder recognises.
  */
 public class RichTextFormatter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RichTextFormatter.class);
 
-    // Patterns for rich text tags
-    private static final Pattern GRADIENT_PATTERN = Pattern.compile("<gradient:([0-9a-fA-F]{6})-([0-9a-fA-F]{6})>(.*?)</gradient>", Pattern.CASE_INSENSITIVE);
-    private static final Pattern RAINBOW_PATTERN = Pattern.compile("<rainbow>(.*?)</rainbow>", Pattern.CASE_INSENSITIVE);
+    // ── Gradient / Rainbow ────────────────────────────────────────────────────
+    private static final Pattern GRADIENT_PATTERN = Pattern.compile(
+        "<gradient:([0-9a-fA-F]{6})-([0-9a-fA-F]{6})>(.*?)</gradient>",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern RAINBOW_PATTERN = Pattern.compile(
+        "<rainbow>(.*?)</rainbow>",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    // ── Named-color close tags (stripped) ────────────────────────────────────
+    private static final Pattern CLOSE_COLOR_TAG_PATTERN = Pattern.compile(
+        "</(black|dark_blue|dark_green|dark_aqua|dark_cyan|dark_red|dark_purple|gold|"
+        + "gray|grey|dark_gray|dark_grey|blue|green|aqua|cyan|red|light_purple|pink|yellow|white|"
+        + "color)>",
+        Pattern.CASE_INSENSITIVE);
+
+    // ── <color:#RRGGBB>…</color> ──────────────────────────────────────────────
+    private static final Pattern COLOR_HEX_TAG_PATTERN = Pattern.compile(
+        "<color:#([0-9a-fA-F]{6})>",
+        Pattern.CASE_INSENSITIVE);
+
+    // ── Format tags with closing counterparts ─────────────────────────────────
+    // Closing format tags are stripped; Minecraft has no "close-bold" code.
+    private static final Pattern CLOSE_FORMAT_TAG_PATTERN = Pattern.compile(
+        "</(bold|b|italic|i|underline|underlined|u|strikethrough|s|obfuscated|magic|reset|r)>",
+        Pattern.CASE_INSENSITIVE);
+
+    // ── Hover/Click event tags (format-template level) ────────────────────────
+    // <hover:HOVER_TEXT>VISIBLE</hover>
+    private static final Pattern HOVER_TAG_PATTERN = Pattern.compile(
+        "<hover:([^>]+)>(.*?)</hover>",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    // <click:ACTION:VALUE>VISIBLE</click>
+    private static final Pattern CLICK_TAG_PATTERN = Pattern.compile(
+        "<click:(suggest_command|run_command|open_url|copy_to_clipboard):([^>]+)>(.*?)</click>",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    /** Internal markers used to communicate hover/click events through the String pipeline */
+    public static final String HOVER_OPEN  = "§HOVS§";
+    public static final String HOVER_SEP   = "§HOVE§";
+    public static final String HOVER_CLOSE = "§HOVEND§";
+    public static final String CLICK_OPEN  = "§CLKS§";
+    public static final String CLICK_SEP   = "§CLKV§";
+    public static final String CLICK_CLOSE = "§CLKEND§";
+
+    // ── Player-name hover marker (injected by ChatFormatter) ──────────────────
+    public static final String PLAYER_HOVER_OPEN  = "§PLAYERHOVER§";
+    public static final String PLAYER_HOVER_CLOSE = "§/PLAYERHOVER§";
 
     // Rainbow color spectrum (HSV based)
     private static final int[] RAINBOW_COLORS = {
-        0xFF0000, // Red
-        0xFF7F00, // Orange
-        0xFFFF00, // Yellow
-        0x00FF00, // Green
-        0x0000FF, // Blue
-        0x4B0082, // Indigo
-        0x9400D3  // Violet
+        0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3
     };
 
+    // ==========================================================================
+    // Public API
+    // ==========================================================================
+
     /**
-     * Pre-process rich text tags (gradient / rainbow) into &#RRGGBB hex codes and return
-     * the result as a plain String, leaving all {@code &} / {@code §} color codes untouched.
-     * <p>
-     * Use this instead of {@link #processRichText(String)} when the string must remain a
-     * String for further processing (e.g. URL / mention enhancement), so that {@code &}
-     * color codes are not prematurely converted to Component objects and then stripped by
-     * {@link Component#getString()}.
+     * Pre-process all rich-text tags into either {@code &}-codes or internal markers,
+     * returning the result as a plain {@code String} so that {@code &} color codes
+     * are not yet consumed.
      *
-     * @param text input string, may contain gradient/rainbow tags and {@code &} color codes
-     * @return string with gradient/rainbow tags replaced by {@code &#RRGGBB} sequences;
-     *         all other {@code &} codes are left intact
+     * <p>Processed:
+     * <ul>
+     *   <li>Gradient / rainbow → {@code &#RRGGBB} per-character</li>
+     *   <li>Named color tags → {@code &X}</li>
+     *   <li>Format tags (bold/italic/…) → {@code &l} / {@code &o} / …</li>
+     *   <li>{@code <color:#RRGGBB>} → {@code &#RRGGBB}</li>
+     *   <li>{@code <hover:…>…</hover>} → internal markers</li>
+     *   <li>{@code <click:…:…>…</click>} → internal markers</li>
+     * </ul>
+     * </p>
+     *
+     * @param text input string; may contain any of the above tags plus {@code &} codes
+     * @return processed string with tags replaced by codes/markers
      */
     @SuppressWarnings("unused") // Called from ChatFormatter.formatMessage
     public static String preprocessTags(String text) {
@@ -52,6 +115,13 @@ public class RichTextFormatter {
                 text = processGradients(text);
                 text = processRainbow(text);
             }
+            // Named colors, format codes, hex-color spans, and hover/click events are
+            // always processed (they don't require the richText.enabled flag).
+            text = processNamedColorTags(text);
+            text = processFormatTags(text);
+            text = processColorHexTags(text);
+            text = processHoverTags(text);
+            text = processClickTags(text);
             return text;
         } catch (Exception e) {
             LOGGER.error("Error pre-processing rich text tags: {}", e.getMessage(), e);
@@ -60,24 +130,24 @@ public class RichTextFormatter {
     }
 
     /**
-     * Process rich text formatting tags and convert to colored components.
+     * Process rich text formatting tags and convert to colored Component.
+     * Used when {@code enableChatEnhancements} is {@code false}.
      */
     public static Component processRichText(String text) {
         try {
             if (isRichTextEnabled()) {
-                // Process gradients first
                 text = processGradients(text);
-
-                // Process rainbow
                 text = processRainbow(text);
             }
-
-            // Always parse color codes (even if rich text effects are disabled)
+            text = processNamedColorTags(text);
+            text = processFormatTags(text);
+            text = processColorHexTags(text);
+            // Note: hover/click markers are handled by the component builder in ChatFormatter.
+            // Strip them here to avoid garbage if the non-enhancement path is used.
+            text = stripHoverClickMarkers(text);
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
-
         } catch (Exception e) {
             LOGGER.error("Error processing rich text: {}", e.getMessage(), e);
-            // Still try to parse color codes on error
             try {
                 return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
             } catch (Exception e2) {
@@ -86,130 +156,235 @@ public class RichTextFormatter {
         }
     }
 
+    // ==========================================================================
+    // Named-color tags → & codes
+    // ==========================================================================
+
     /**
-     * Process gradient tags and convert to hex color codes.
+     * Convert named-color open-tags to their {@code &X} equivalents and strip
+     * matching close-tags (Minecraft formatting has no close concept).
      */
+    static String processNamedColorTags(String text) {
+        // Color name → & code mapping
+        text = replaceTag(text, "black",        "&0");
+        text = replaceTag(text, "dark_blue",    "&1");
+        text = replaceTag(text, "dark_green",   "&2");
+        text = replaceTag(text, "dark_aqua",    "&3");
+        text = replaceTag(text, "dark_cyan",    "&3");
+        text = replaceTag(text, "dark_red",     "&4");
+        text = replaceTag(text, "dark_purple",  "&5");
+        text = replaceTag(text, "gold",         "&6");
+        text = replaceTag(text, "gray",         "&7");
+        text = replaceTag(text, "grey",         "&7");
+        text = replaceTag(text, "dark_gray",    "&8");
+        text = replaceTag(text, "dark_grey",    "&8");
+        text = replaceTag(text, "blue",         "&9");
+        text = replaceTag(text, "green",        "&a");
+        text = replaceTag(text, "aqua",         "&b");
+        text = replaceTag(text, "cyan",         "&b");
+        text = replaceTag(text, "red",          "&c");
+        text = replaceTag(text, "light_purple", "&d");
+        text = replaceTag(text, "pink",         "&d");
+        text = replaceTag(text, "yellow",       "&e");
+        text = replaceTag(text, "white",        "&f");
+        // Strip all matching close-color tags
+        text = CLOSE_COLOR_TAG_PATTERN.matcher(text).replaceAll("");
+        return text;
+    }
+
+    /** Convert format open-tags to {@code &}-codes; strip close-tags. */
+    static String processFormatTags(String text) {
+        text = replaceTag(text, "bold",        "&l");
+        text = replaceTag(text, "b",           "&l");
+        text = replaceTag(text, "italic",      "&o");
+        text = replaceTag(text, "i",           "&o");
+        text = replaceTag(text, "underline",   "&n");
+        text = replaceTag(text, "underlined",  "&n");
+        text = replaceTag(text, "u",           "&n");
+        text = replaceTag(text, "strikethrough", "&m");
+        text = replaceTag(text, "s",           "&m");
+        text = replaceTag(text, "obfuscated",  "&k");
+        text = replaceTag(text, "magic",       "&k");
+        text = replaceTag(text, "reset",       "&r");
+        text = replaceTag(text, "r",           "&r");
+        // Strip close format tags
+        text = CLOSE_FORMAT_TAG_PATTERN.matcher(text).replaceAll("");
+        return text;
+    }
+
+    /** Convert {@code <color:#RRGGBB>} to {@code &#RRGGBB} and strip {@code </color>}. */
+    static String processColorHexTags(String text) {
+        Matcher m = COLOR_HEX_TAG_PATTERN.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(sb, Matcher.quoteReplacement("&#" + m.group(1).toUpperCase()));
+        }
+        m.appendTail(sb);
+        return sb.toString().replace("</color>", "");
+    }
+
+    // ==========================================================================
+    // Hover / Click event tags → internal markers
+    // ==========================================================================
+
+    /**
+     * Convert {@code <hover:HOVER_TEXT>VISIBLE</hover>} to
+     * {@code §HOVS§HOVER_TEXT§HOVE§VISIBLE§HOVEND§}.
+     */
+    static String processHoverTags(String text) {
+        Matcher m = HOVER_TAG_PATTERN.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String hoverText = m.group(1);
+            String visible   = m.group(2);
+            m.appendReplacement(sb, Matcher.quoteReplacement(
+                HOVER_OPEN + hoverText + HOVER_SEP + visible + HOVER_CLOSE));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * Convert {@code <click:ACTION:VALUE>VISIBLE</click>} to
+     * {@code §CLKS§ACTION§CLKV§VALUE§CLKEND§VISIBLE§CLKE§}.
+     *
+     * <p>Supported actions: {@code suggest_command}, {@code run_command},
+     * {@code open_url}, {@code copy_to_clipboard}.</p>
+     */
+    static String processClickTags(String text) {
+        Matcher m = CLICK_TAG_PATTERN.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String action  = m.group(1).toLowerCase();
+            String value   = m.group(2);
+            String visible = m.group(3);
+            m.appendReplacement(sb, Matcher.quoteReplacement(
+                CLICK_OPEN + action + CLICK_SEP + value + CLICK_CLOSE + visible + "§CLKE§"));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    /** Strip hover/click markers — used when we can't render them as Components. */
+    static String stripHoverClickMarkers(String text) {
+        // Remove hover markers
+        text = text.replace(HOVER_OPEN,  "").replace(HOVER_SEP, "").replace(HOVER_CLOSE, "");
+        // Remove click markers
+        text = text.replace(CLICK_OPEN,  "").replace(CLICK_SEP, "").replace(CLICK_CLOSE, "")
+                   .replace("§CLKE§", "");
+        // Remove player-hover markers
+        text = text.replace(PLAYER_HOVER_OPEN, "").replace(PLAYER_HOVER_CLOSE, "");
+        return text;
+    }
+
+    // ==========================================================================
+    // Gradient / Rainbow
+    // ==========================================================================
+
     private static String processGradients(String text) {
         Matcher matcher = GRADIENT_PATTERN.matcher(text);
         StringBuilder result = new StringBuilder();
-
         while (matcher.find()) {
             String startHex = matcher.group(1);
-            String endHex = matcher.group(2);
-            String content = matcher.group(3);
-
-            String gradientText = createGradient(content, startHex, endHex);
-            matcher.appendReplacement(result, Matcher.quoteReplacement(gradientText));
+            String endHex   = matcher.group(2);
+            String content  = matcher.group(3);
+            matcher.appendReplacement(result, Matcher.quoteReplacement(
+                createGradient(content, startHex, endHex)));
         }
         matcher.appendTail(result);
-
         return result.toString();
     }
 
-    /**
-     * Create gradient text with color interpolation.
-     */
     private static String createGradient(String text, String startHex, String endHex) {
         if (text.isEmpty()) return text;
-
         int startColor = Integer.parseInt(startHex, 16);
-        int endColor = Integer.parseInt(endHex, 16);
-
-        // Extract RGB components
-        int startR = (startColor >> 16) & 0xFF;
-        int startG = (startColor >> 8) & 0xFF;
-        int startB = startColor & 0xFF;
-
-        int endR = (endColor >> 16) & 0xFF;
-        int endG = (endColor >> 8) & 0xFF;
-        int endB = endColor & 0xFF;
-
-        StringBuilder gradientText = new StringBuilder();
+        int endColor   = Integer.parseInt(endHex,   16);
+        int startR = (startColor >> 16) & 0xFF, startG = (startColor >> 8) & 0xFF, startB = startColor & 0xFF;
+        int endR   = (endColor   >> 16) & 0xFF, endG   = (endColor   >> 8) & 0xFF, endB   = endColor   & 0xFF;
+        StringBuilder sb = new StringBuilder();
         int length = text.length();
-
         for (int i = 0; i < length; i++) {
             char c = text.charAt(i);
-
-            // Skip spaces (don't color them)
-            if (c == ' ') {
-                gradientText.append(c);
-                continue;
-            }
-
-            // Calculate color for this position
-            float progress = length > 1 ? (float) i / (length - 1) : 0;
-
-            int r = (int) (startR + (endR - startR) * progress);
-            int g = (int) (startG + (endG - startG) * progress);
-            int b = (int) (startB + (endB - startB) * progress);
-
-            // Convert to hex
-            String hexColor = String.format("%02X%02X%02X", r, g, b);
-
-            gradientText.append("&#").append(hexColor).append(c);
+            if (c == ' ') { sb.append(c); continue; }
+            float p = length > 1 ? (float) i / (length - 1) : 0;
+            int r = (int)(startR + (endR - startR) * p);
+            int g = (int)(startG + (endG - startG) * p);
+            int b = (int)(startB + (endB - startB) * p);
+            sb.append("&#").append(String.format("%02X%02X%02X", r, g, b)).append(c);
         }
-
-        return gradientText.toString();
+        return sb.toString();
     }
 
-    /**
-     * Process rainbow tags and convert to rainbow colored text.
-     */
     private static String processRainbow(String text) {
         Matcher matcher = RAINBOW_PATTERN.matcher(text);
         StringBuilder result = new StringBuilder();
-
         while (matcher.find()) {
-            String content = matcher.group(1);
-            String rainbowText = createRainbow(content);
-            matcher.appendReplacement(result, Matcher.quoteReplacement(rainbowText));
+            matcher.appendReplacement(result, Matcher.quoteReplacement(createRainbow(matcher.group(1))));
         }
         matcher.appendTail(result);
-
         return result.toString();
     }
 
-    /**
-     * Create rainbow colored text.
-     */
     private static String createRainbow(String text) {
         if (text.isEmpty()) return text;
-
-        StringBuilder rainbowText = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         int colorIndex = 0;
-
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-
-            // Skip spaces
-            if (c == ' ') {
-                rainbowText.append(c);
-                continue;
-            }
-
-            // Get color from rainbow spectrum
+            if (c == ' ') { sb.append(c); continue; }
             int color = RAINBOW_COLORS[colorIndex % RAINBOW_COLORS.length];
-            String hexColor = String.format("%06X", color);
-
-            rainbowText.append("&#").append(hexColor).append(c);
+            sb.append("&#").append(String.format("%06X", color)).append(c);
             colorIndex++;
         }
+        return sb.toString();
+    }
 
-        return rainbowText.toString();
+    // ==========================================================================
+    // Helpers
+    // ==========================================================================
+
+    /** Replace {@code <tagName>} with {@code replacement} (case-insensitive). */
+    private static String replaceTag(String text, String tagName, String replacement) {
+        return text.replace("<" + tagName + ">",        replacement)
+                   .replace("<" + tagName.toUpperCase() + ">", replacement)
+                   .replace("<" + tagName.toLowerCase() + ">", replacement);
     }
 
     /**
-     * Check if rich text is enabled in config.
+     * Build a hover-event Component from pre-processed hover markers.
+     * Expected format: {@code §HOVS§hoverText§HOVE§visibleText§HOVEND§}
      */
+    public static MutableComponent buildHoverComponent(String hoverText, String visibleText) {
+        Component hover = com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(hoverText);
+        MutableComponent visible = (MutableComponent)
+            com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(visibleText);
+        return visible.withStyle(style ->
+            style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+    }
+
+    /**
+     * Build a click-event Component from pre-processed click markers.
+     * Expected action values: suggest_command, run_command, open_url, copy_to_clipboard.
+     */
+    public static MutableComponent buildClickComponent(String action, String value, String visibleText) {
+        MutableComponent visible = (MutableComponent)
+            com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(visibleText);
+        ClickEvent.Action clickAction = switch (action.toLowerCase()) {
+            case "run_command"        -> ClickEvent.Action.RUN_COMMAND;
+            case "open_url"           -> ClickEvent.Action.OPEN_URL;
+            case "copy_to_clipboard"  -> ClickEvent.Action.COPY_TO_CLIPBOARD;
+            default                   -> ClickEvent.Action.SUGGEST_COMMAND;
+        };
+        return visible.withStyle(Style.EMPTY.withClickEvent(new ClickEvent(clickAction, value)));
+    }
+
     private static boolean isRichTextEnabled() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
             if (chatConfig.has("richText")) {
                 return chatConfig.getAsJsonObject("richText").get("enabled").getAsBoolean();
             }
-        } catch (Exception e) {
-            // Ignore
-        }
+        } catch (Exception e) { /* ignore */ }
         return false;
     }
 }

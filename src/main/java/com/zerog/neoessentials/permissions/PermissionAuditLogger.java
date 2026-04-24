@@ -56,6 +56,26 @@ public class PermissionAuditLogger {
     public static final String GROUP_PRIORITY_SET         = "GROUP_PRIORITY_SET";
     public static final String PERMISSIONS_RELOADED       = "PERMISSIONS_RELOADED";
 
+    // Temporary permission events
+    public static final String USER_TEMP_PERM_ADDED       = "USER_TEMP_PERM_ADDED";
+    public static final String USER_TEMP_PERM_REMOVED     = "USER_TEMP_PERM_REMOVED";
+    public static final String USER_TEMP_PERM_EXPIRED     = "USER_TEMP_PERM_EXPIRED";
+    public static final String GROUP_TEMP_PERM_ADDED      = "GROUP_TEMP_PERM_ADDED";
+    public static final String GROUP_TEMP_PERM_REMOVED    = "GROUP_TEMP_PERM_REMOVED";
+    public static final String GROUP_TEMP_PERM_EXPIRED    = "GROUP_TEMP_PERM_EXPIRED";
+
+    // Contextual permission events
+    public static final String USER_CONTEXT_PERM_ADDED    = "USER_CONTEXT_PERM_ADDED";
+    public static final String USER_CONTEXT_PERM_REMOVED  = "USER_CONTEXT_PERM_REMOVED";
+    public static final String GROUP_CONTEXT_PERM_ADDED   = "GROUP_CONTEXT_PERM_ADDED";
+    public static final String GROUP_CONTEXT_PERM_REMOVED = "GROUP_CONTEXT_PERM_REMOVED";
+
+    // Condition events
+    public static final String USER_CONDITION_SET         = "USER_CONDITION_SET";
+    public static final String USER_CONDITION_REMOVED     = "USER_CONDITION_REMOVED";
+    public static final String GROUP_CONDITION_SET        = "GROUP_CONDITION_SET";
+    public static final String GROUP_CONDITION_REMOVED    = "GROUP_CONDITION_REMOVED";
+
     // ── Public API ──────────────────────────────────────────────────────────
 
     /**

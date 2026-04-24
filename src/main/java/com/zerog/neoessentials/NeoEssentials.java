@@ -903,19 +903,10 @@ public class NeoEssentials {
         registry.registerCommand("bcastworld", "Broadcast to world (alias)");
         com.zerog.neoessentials.util.commands.WorldInteractionCommands.register(dispatcher);
 
-        // ========== PLAYER INFO & ADMIN TOOL COMMANDS ==========
-        registry.registerCommand("seen", "Show when a player was last online");
-        registry.registerCommand("near", "List nearby players");
-        registry.registerCommand("ping", "Show your network latency");
-        registry.registerCommand("playtime", "Show total play time");
-        registry.registerCommand("whois", "Show detailed player info");
-        registry.registerCommand("realname", "Look up real name from nickname");
-        registry.registerCommand("sudo", "Force a player to run a command");
-        registry.registerCommand("suicide", "Kill yourself");
-        registry.registerCommand("msgtoggle", "Toggle incoming private messages");
-        registry.registerCommand("rtoggle", "Toggle reply-to-last-sender");
-        registry.registerCommand("motd", "Show message of the day");
-        registry.registerCommand("rules", "Show server rules");
+        // ========== PLAYER INFO (msgtoggle only — all other commands registered above) ==========
+        // /msgtoggle is solely owned by PlayerInfoCommands; all other player-info commands
+        // (near, ping, seen, whois, realname, suicide, motd, rules, etc.) are registered
+        // by their own dedicated command classes above and must NOT be re-registered here.
         com.zerog.neoessentials.util.commands.PlayerInfoCommands.register(dispatcher);
 
         // /warpinfo → WarpCommands, /world+/spawner+/recipe → ServerAdminCommands

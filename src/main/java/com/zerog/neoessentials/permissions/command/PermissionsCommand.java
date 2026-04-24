@@ -294,7 +294,81 @@ public class PermissionsCommand {
                                         java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
                                         builder);
                                 })
-                                .executes(ctx -> removeGroupInheritance(ctx)))))))
+                                .executes(ctx -> removeGroupInheritance(ctx)))))
+                    .then(Commands.literal("addtemp")
+                        .then(Commands.argument("permission", StringArgumentType.string())
+                            .suggests((ctx, builder) -> {
+                                try {
+                                    java.util.List<String> perms =
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    return SharedSuggestionProvider.suggest(
+                                        perms.stream().filter(p -> p.toLowerCase().startsWith(input)).toList(), builder);
+                                } catch (Exception e) {
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList("neoessentials.*","neoessentials.admin.*"), builder);
+                                }
+                            })
+                            .then(Commands.argument("duration", StringArgumentType.word())
+                                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                    java.util.Arrays.asList("30m","1h","6h","12h","1d","7d","30d"), builder))
+                                .executes(ctx -> addGroupTempPermission(ctx)))))
+                    .then(Commands.literal("removetemp")
+                        .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> {
+                                try {
+                                    String groupName = StringArgumentType.getString(ctx, "group");
+                                    PermissionGroup g = PermissionAPI.getManager().getGroup(groupName);
+                                    if (g != null) return SharedSuggestionProvider.suggest(g.getTempPermissions().keySet(), builder);
+                                } catch (Exception ignored) {}
+                                return builder.buildFuture();
+                            })
+                            .executes(ctx -> removeGroupTempPermission(ctx))))
+                    .then(Commands.literal("listtemp")
+                        .executes(ctx -> listGroupTempPermissions(ctx)))
+                    .then(Commands.literal("context")
+                        .then(Commands.literal("add")
+                            .then(Commands.argument("contextKey", StringArgumentType.word())
+                                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                    com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder))
+                                .then(Commands.argument("permission", StringArgumentType.word())
+                                    .suggests((ctx, builder) -> {
+                                        try {
+                                            java.util.List<String> perms =
+                                                com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                            return SharedSuggestionProvider.suggest(
+                                                perms.stream().filter(p -> p.startsWith(builder.getRemaining().toLowerCase())).toList(), builder);
+                                        } catch (Exception e) { return builder.buildFuture(); }
+                                    })
+                                    .then(Commands.literal("allow")
+                                        .executes(ctx -> addGroupContextPermission(ctx, true)))
+                                    .then(Commands.literal("deny")
+                                        .executes(ctx -> addGroupContextPermission(ctx, false))))))
+                        .then(Commands.literal("remove")
+                            .then(Commands.argument("contextKey", StringArgumentType.word())
+                                .suggests((ctx, builder) -> {
+                                    try {
+                                        String gn = StringArgumentType.getString(ctx, "group");
+                                        PermissionGroup g = PermissionAPI.getManager().getGroup(gn);
+                                        if (g != null) return SharedSuggestionProvider.suggest(g.getContextualPermissions().keySet(), builder);
+                                    } catch (Exception ignored) {}
+                                    return SharedSuggestionProvider.suggest(
+                                        com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder);
+                                })
+                                .then(Commands.argument("permission", StringArgumentType.word())
+                                    .suggests((ctx, builder) -> {
+                                        try {
+                                            String gn = StringArgumentType.getString(ctx, "group");
+                                            String ck = StringArgumentType.getString(ctx, "contextKey");
+                                            PermissionGroup g = PermissionAPI.getManager().getGroup(gn);
+                                            if (g != null && g.getContextualPermissions().containsKey(ck))
+                                                return SharedSuggestionProvider.suggest(g.getContextualPermissions().get(ck).keySet(), builder);
+                                        } catch (Exception ignored) {}
+                                        return builder.buildFuture();
+                                    })
+                                    .executes(ctx -> removeGroupContextPermission(ctx)))))
+                        .then(Commands.literal("list")
+                            .executes(ctx -> listGroupContextPermissions(ctx))))))
             .then(Commands.literal("user")
                 .then(Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -367,7 +441,91 @@ public class PermissionsCommand {
                             })
                             .executes(ctx -> removeUserPermission(ctx))))
                     .then(Commands.literal("clear")
-                        .executes(ctx -> clearUserPermissions(ctx)))))
+                        .executes(ctx -> clearUserPermissions(ctx)))
+                    .then(Commands.literal("addtemp")
+                        .then(Commands.argument("permission", StringArgumentType.string())
+                            .suggests((ctx, builder) -> {
+                                try {
+                                    java.util.List<String> permissions =
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    java.util.List<String> filtered = permissions.stream()
+                                        .filter(p -> p.toLowerCase().startsWith(input)).toList();
+                                    return SharedSuggestionProvider.suggest(filtered, builder);
+                                } catch (Exception e) {
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList("neoessentials.*","neoessentials.admin.*"), builder);
+                                }
+                            })
+                            .then(Commands.argument("duration", StringArgumentType.word())
+                                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                    java.util.Arrays.asList("30m","1h","6h","12h","1d","7d","30d"), builder))
+                                .executes(ctx -> addUserTempPermission(ctx)))))
+                    .then(Commands.literal("removetemp")
+                        .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> {
+                                try {
+                                    String playerName = StringArgumentType.getString(ctx, "player");
+                                    Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+                                    if (uuidOpt.isPresent()) {
+                                        PermissionUser u = PermissionAPI.getManager().getUser(uuidOpt.get());
+                                        if (u != null) return SharedSuggestionProvider.suggest(u.getTempPermissions().keySet(), builder);
+                                    }
+                                } catch (Exception ignored) {}
+                                return builder.buildFuture();
+                            })
+                            .executes(ctx -> removeUserTempPermission(ctx))))
+                    .then(Commands.literal("listtemp")
+                        .executes(ctx -> listUserTempPermissions(ctx)))
+                    .then(Commands.literal("context")
+                        .then(Commands.literal("add")
+                            .then(Commands.argument("contextKey", StringArgumentType.word())
+                                .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                    com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder))
+                                .then(Commands.argument("permission", StringArgumentType.word())
+                                    .suggests((ctx, builder) -> {
+                                        try {
+                                            java.util.List<String> perms =
+                                                com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                            return SharedSuggestionProvider.suggest(
+                                                perms.stream().filter(p -> p.startsWith(builder.getRemaining().toLowerCase())).toList(), builder);
+                                        } catch (Exception e) { return builder.buildFuture(); }
+                                    })
+                                    .then(Commands.literal("allow")
+                                        .executes(ctx -> addUserContextPermission(ctx, true)))
+                                    .then(Commands.literal("deny")
+                                        .executes(ctx -> addUserContextPermission(ctx, false))))))
+                        .then(Commands.literal("remove")
+                            .then(Commands.argument("contextKey", StringArgumentType.word())
+                                .suggests((ctx, builder) -> {
+                                    try {
+                                        String playerName = StringArgumentType.getString(ctx, "player");
+                                        Optional<UUID> uOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+                                        if (uOpt.isPresent()) {
+                                            PermissionUser u = PermissionAPI.getManager().getUser(uOpt.get());
+                                            if (u != null) return SharedSuggestionProvider.suggest(u.getContextualPermissions().keySet(), builder);
+                                        }
+                                    } catch (Exception ignored) {}
+                                    return SharedSuggestionProvider.suggest(
+                                        com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder);
+                                })
+                                .then(Commands.argument("permission", StringArgumentType.word())
+                                    .suggests((ctx, builder) -> {
+                                        try {
+                                            String playerName = StringArgumentType.getString(ctx, "player");
+                                            String ck = StringArgumentType.getString(ctx, "contextKey");
+                                            Optional<UUID> uOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+                                            if (uOpt.isPresent()) {
+                                                PermissionUser u = PermissionAPI.getManager().getUser(uOpt.get());
+                                                if (u != null && u.getContextualPermissions().containsKey(ck))
+                                                    return SharedSuggestionProvider.suggest(u.getContextualPermissions().get(ck).keySet(), builder);
+                                            }
+                                        } catch (Exception ignored) {}
+                                        return builder.buildFuture();
+                                    })
+                                    .executes(ctx -> removeUserContextPermission(ctx)))))
+                        .then(Commands.literal("list")
+                            .executes(ctx -> listUserContextPermissions(ctx))))))
             .then(Commands.literal("debug")
                 .then(Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -1476,6 +1634,251 @@ public class PermissionsCommand {
         }
     }
 
+    // ── Temporary permissions — user ─────────────────────────────────────────
+
+    private static int addUserTempPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.temp");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        String perm  = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+        String durStr = StringArgumentType.getString(ctx, "duration");
+
+        if (!PermissionManager.isValidPermission(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
+            return 0;
+        }
+        long durationMs;
+        try { durationMs = PermissionManager.parseDurationMs(durStr); }
+        catch (IllegalArgumentException e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Invalid duration: " + e.getMessage()));
+            return 0;
+        }
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        long expiryMs = System.currentTimeMillis() + durationMs;
+        user.addTempPermission(perm, expiryMs);
+        PermissionAPI.getManager().clearCache();
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            String remaining = PermissionManager.formatDuration(durationMs);
+            LOGGER.info("Granted temp permission '{}' to {} for {}", perm, playerName, remaining);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_TEMP_PERM_ADDED,
+                playerName, "node=" + perm + " expires_in=" + remaining);
+            final String displayPerm = perm;
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
+                "Granted temporary permission §f" + displayPerm + "§a to §f" + playerName
+                + "§a for §f" + remaining + "§a."), false);
+            // Notify the target if online
+            net.minecraft.server.level.ServerPlayer onlineTarget = server.getPlayerList().getPlayer(uuidOpt.get());
+            if (onlineTarget != null) {
+                onlineTarget.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§eYou have been granted temporary permission §f" + perm + "§e for §f" + remaining + "§e."));
+            }
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save after addtemp", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int removeUserTempPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.temp");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+        MinecraftServer server = ctx.getSource().getServer();
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        if (!user.getTempPermissions().containsKey(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error(
+                "Player §f" + playerName + "§c has no temporary permission §f" + perm + "§c."));
+            return 0;
+        }
+        user.removeTempPermission(perm);
+        PermissionAPI.getManager().clearCache();
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            LOGGER.info("Removed temp permission '{}' from {}", perm, playerName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_TEMP_PERM_REMOVED,
+                playerName, "node=" + perm);
+            final String displayPerm = perm;
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
+                "Removed temporary permission §f" + displayPerm + "§a from §f" + playerName + "§a."), false);
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int listUserTempPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.info.user");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName));
+            return 0;
+        }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        java.util.Map<String, Long> temps = user.getTempPermissions();
+        if (temps.isEmpty()) {
+            send(ctx, "§7Player §f" + playerName + "§7 has no temporary permissions.");
+            return 1;
+        }
+        long now = System.currentTimeMillis();
+        send(ctx, "§8━━ §bTemp Permissions: §f" + playerName + " §8━━");
+        temps.entrySet().stream()
+            .sorted(java.util.Map.Entry.comparingByKey())
+            .forEach(e -> {
+                long remaining = e.getValue() - now;
+                String timeStr = remaining > 0
+                    ? "§a" + PermissionManager.formatDuration(remaining)
+                    : "§cexpired";
+                send(ctx, "§f  " + e.getKey() + " §8— expires in " + timeStr);
+            });
+        return 1;
+    }
+
+    // ── Temporary permissions — group ────────────────────────────────────────
+
+    private static int addGroupTempPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.temp");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String perm   = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+        String durStr = StringArgumentType.getString(ctx, "duration");
+
+        if (!PermissionManager.isValidPermission(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
+            return 0;
+        }
+        long durationMs;
+        try { durationMs = PermissionManager.parseDurationMs(durStr); }
+        catch (IllegalArgumentException e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Invalid duration: " + e.getMessage()));
+            return 0;
+        }
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+        long expiryMs = System.currentTimeMillis() + durationMs;
+        group.addTempPermission(perm, expiryMs);
+        PermissionAPI.getManager().clearCache();
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            String remaining = PermissionManager.formatDuration(durationMs);
+            LOGGER.info("Granted temp permission '{}' to group '{}' for {}", perm, groupName, remaining);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_TEMP_PERM_ADDED,
+                groupName, "node=" + perm + " expires_in=" + remaining);
+            final String displayPerm = perm;
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
+                "Granted temporary permission §f" + displayPerm + "§a to group §f" + groupName
+                + "§a for §f" + remaining + "§a."), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Failed to save after group addtemp", e);
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int removeGroupTempPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.temp");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+        if (!group.getTempPermissions().containsKey(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error(
+                "Group §f" + groupName + "§c has no temporary permission §f" + perm + "§c."));
+            return 0;
+        }
+        group.removeTempPermission(perm);
+        PermissionAPI.getManager().clearCache();
+        try {
+            PermissionStorage.save(PermissionAPI.getManager());
+            LOGGER.info("Removed temp permission '{}' from group '{}'", perm, groupName);
+            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_TEMP_PERM_REMOVED,
+                groupName, "node=" + perm);
+            final String displayPerm = perm;
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
+                "Removed temporary permission §f" + displayPerm + "§a from group §f" + groupName + "§a."), false);
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int listGroupTempPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult permResult =
+            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.permissions.info.group");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+            return 0;
+        }
+        java.util.Map<String, Long> temps = group.getTempPermissions();
+        if (temps.isEmpty()) {
+            send(ctx, "§7Group §f" + groupName + "§7 has no temporary permissions.");
+            return 1;
+        }
+        long now = System.currentTimeMillis();
+        send(ctx, "§8━━ §bTemp Permissions: group §f" + groupName + " §8━━");
+        temps.entrySet().stream()
+            .sorted(java.util.Map.Entry.comparingByKey())
+            .forEach(e -> {
+                long remaining = e.getValue() - now;
+                String timeStr = remaining > 0
+                    ? "§a" + PermissionManager.formatDuration(remaining)
+                    : "§cexpired";
+                send(ctx, "§f  " + e.getKey() + " §8— expires in " + timeStr);
+            });
+        return 1;
+    }
+
     // ── Permission Debug ──────────────────────────────────────────────────────
 
     /**
@@ -1656,6 +2059,139 @@ public class PermissionsCommand {
     private static void send(CommandContext<CommandSourceStack> ctx, String text) {
         ctx.getSource().sendSuccess(
                 () -> net.minecraft.network.chat.Component.literal(text), false);
+    }
+
+    // ── Contextual permission handlers — group ──────────────────────────────
+
+    private static int addGroupContextPermission(CommandContext<CommandSourceStack> ctx, boolean allow) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String contextKey = StringArgumentType.getString(ctx, "contextKey");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName)); return 0; }
+        group.addContextPermission(contextKey, permission, allow);
+        PermissionAPI.getManager().clearCache();
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage())); return 0; }
+        String action = allow ? "§aallow" : "§cdeny";
+        PermissionAuditLogger.log(getExecutorDisplay(ctx),
+            allow ? PermissionAuditLogger.GROUP_CONTEXT_PERM_ADDED : PermissionAuditLogger.GROUP_CONTEXT_PERM_REMOVED,
+            groupName, "context=" + contextKey + " node=" + permission + " value=" + allow);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success(
+            "Set contextual permission §f" + permission + "§a → " + action + "§a for group §f" + groupName +
+            "§a in context §f" + contextKey), false);
+        return 1;
+    }
+
+    private static int removeGroupContextPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        String contextKey = StringArgumentType.getString(ctx, "contextKey");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName)); return 0; }
+        boolean removed = group.removeContextPermission(contextKey, permission);
+        if (!removed) { ctx.getSource().sendFailure(MessageUtil.error("No contextual override found for §f" + permission + "§c in context §f" + contextKey)); return 0; }
+        PermissionAPI.getManager().clearCache();
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage())); return 0; }
+        PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CONTEXT_PERM_REMOVED,
+            groupName, "context=" + contextKey + " node=" + permission);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success(
+            "Removed contextual override for §f" + permission + "§a from group §f" + groupName +
+            "§a (context §f" + contextKey + "§a)"), false);
+        return 1;
+    }
+
+    private static int listGroupContextPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String groupName = StringArgumentType.getString(ctx, "group");
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName)); return 0; }
+        java.util.Map<String, java.util.Map<String, Boolean>> ctxPerms = group.getContextualPermissions();
+        send(ctx, "§6Contextual permissions for group §f" + groupName + "§6:");
+        if (ctxPerms.isEmpty()) { send(ctx, "  §7(none)"); return 1; }
+        ctxPerms.forEach((key, nodeMap) -> {
+            send(ctx, "  §e" + key + "§7:");
+            nodeMap.forEach((node, val) ->
+                send(ctx, "    " + (val ? "§a✔ " : "§c✘ ") + "§f" + node));
+        });
+        return 1;
+    }
+
+    // ── Contextual permission handlers — user ───────────────────────────────
+
+    private static int addUserContextPermission(CommandContext<CommandSourceStack> ctx, boolean allow) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        String contextKey = StringArgumentType.getString(ctx, "contextKey");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+        if (uuidOpt.isEmpty()) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName)); return 0; }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        user.addContextPermission(contextKey, permission, allow);
+        PermissionAPI.getManager().clearCache();
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage())); return 0; }
+        String action = allow ? "§aallow" : "§cdeny";
+        PermissionAuditLogger.log(getExecutorDisplay(ctx),
+            allow ? PermissionAuditLogger.USER_CONTEXT_PERM_ADDED : PermissionAuditLogger.USER_CONTEXT_PERM_REMOVED,
+            playerName, "context=" + contextKey + " node=" + permission + " value=" + allow);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success(
+            "Set contextual permission §f" + permission + "§a → " + action + "§a for §f" + playerName +
+            "§a in context §f" + contextKey), false);
+        return 1;
+    }
+
+    private static int removeUserContextPermission(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        String contextKey = StringArgumentType.getString(ctx, "contextKey");
+        String permission = StringArgumentType.getString(ctx, "permission");
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+        if (uuidOpt.isEmpty()) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName)); return 0; }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        boolean removed = user.removeContextPermission(contextKey, permission);
+        if (!removed) { ctx.getSource().sendFailure(MessageUtil.error("No contextual override for §f" + permission + "§c in context §f" + contextKey)); return 0; }
+        PermissionAPI.getManager().clearCache();
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            ctx.getSource().sendFailure(MessageUtil.error("Failed to save: " + e.getMessage())); return 0; }
+        PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_CONTEXT_PERM_REMOVED,
+            playerName, "context=" + contextKey + " node=" + permission);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success(
+            "Removed contextual override for §f" + permission + "§a from §f" + playerName +
+            "§a (context §f" + contextKey + "§a)"), false);
+        return 1;
+    }
+
+    private static int listUserContextPermissions(CommandContext<CommandSourceStack> ctx) {
+        PermissionValidator.PermissionResult pr =
+            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.context");
+        if (!pr.hasPermission()) { ctx.getSource().sendFailure(MessageUtil.error(pr.getErrorMessage())); return 0; }
+        String playerName = StringArgumentType.getString(ctx, "player");
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
+        if (uuidOpt.isEmpty()) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found", playerName)); return 0; }
+        PermissionUser user = PermissionAPI.getManager().getUser(uuidOpt.get());
+        java.util.Map<String, java.util.Map<String, Boolean>> ctxPerms = user.getContextualPermissions();
+        send(ctx, "§6Contextual permissions for §f" + playerName + "§6:");
+        if (ctxPerms.isEmpty()) { send(ctx, "  §7(none)"); return 1; }
+        ctxPerms.forEach((key, nodeMap) -> {
+            send(ctx, "  §e" + key + "§7:");
+            nodeMap.forEach((node, val) ->
+                send(ctx, "    " + (val ? "§a✔ " : "§c✘ ") + "§f" + node));
+        });
+        return 1;
     }
 }
 

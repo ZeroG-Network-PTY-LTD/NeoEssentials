@@ -100,7 +100,26 @@ public class TeleportUtil {
             return future;
         }
 
-        // Find safe location if requested
+        // Force-load the target chunk BEFORE doing safety checks.
+        // isSafe() returns false for unloaded chunks, so loading must happen first.
+        ChunkPos chunkPos = new ChunkPos(new BlockPos((int) location.getX(),
+                                                     (int) location.getY(),
+                                                     (int) location.getZ()));
+        if (!targetLevel.isLoaded(chunkPos.getWorldPosition())) {
+            LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
+                chunkPos.x, chunkPos.z, location.getWorldName());
+            // Add a ticket so the chunk stays loaded long enough for the teleport
+            targetLevel.getChunkSource().addRegionTicket(
+                net.minecraft.server.level.TicketType.PORTAL,
+                chunkPos,
+                3,
+                chunkPos.getWorldPosition()
+            );
+            // Also force-load synchronously so safety checks below work correctly
+            targetLevel.getChunk(chunkPos.x, chunkPos.z);
+        }
+
+        // Find safe location if requested (chunk is now loaded, isSafe() will work correctly)
         TeleportLocation finalLocation = location;
         if (findSafe && !location.isSafe()) {
             finalLocation = location.findSafeLocation();
@@ -108,22 +127,19 @@ public class TeleportUtil {
                 future.complete(TeleportResult.failure("No safe teleport location found"));
                 return future;
             }
+            // If safe location is in a different chunk, load that chunk too
+            ChunkPos safeChunkPos = new ChunkPos(new BlockPos((int) finalLocation.getX(),
+                                                              (int) finalLocation.getY(),
+                                                              (int) finalLocation.getZ()));
+            if (!safeChunkPos.equals(chunkPos) && !targetLevel.isLoaded(safeChunkPos.getWorldPosition())) {
+                targetLevel.getChunkSource().addRegionTicket(
+                    net.minecraft.server.level.TicketType.PORTAL,
+                    safeChunkPos, 3, safeChunkPos.getWorldPosition()
+                );
+                targetLevel.getChunk(safeChunkPos.x, safeChunkPos.z);
+            }
         }
 
-        // Load chunks if needed
-        ChunkPos chunkPos = new ChunkPos(new BlockPos((int) finalLocation.getX(), 
-                                                     (int) finalLocation.getY(), 
-                                                     (int) finalLocation.getZ()));
-
-        if (!targetLevel.isLoaded(chunkPos.getWorldPosition())) {
-            // Force load the chunk
-            targetLevel.getChunkSource().addRegionTicket(
-                net.minecraft.server.level.TicketType.PORTAL,
-                chunkPos,
-                3,
-                chunkPos.getWorldPosition()
-            );
-        }
 
         // Execute teleport (with delay if specified)
         TeleportLocation teleportTo = finalLocation;

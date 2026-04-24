@@ -9,6 +9,7 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.util.ResourceUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -19,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 /**
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public class NickCommand {
     private static final Map<UUID, String> NICKNAMES = new ConcurrentHashMap<>();
-    private static final Path NICK_DATA_FILE = Paths.get("config", "neoessentials", "nickname_data.json");
+    private static final Path NICK_DATA_FILE = ResourceUtil.getConfigPath("nickname_data.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     // Updated to allow hex color codes like &#5d6a2c
     private static final Pattern VALID_NICK_PATTERN = Pattern.compile("^[a-zA-Z0-9_&§#]{1,32}$");
@@ -143,6 +143,9 @@ public class NickCommand {
                     )
                 )
         );
+
+        // /nickname alias — mirrors /nick exactly
+        dispatcher.register(Commands.literal("nickname").redirect(dispatcher.getRoot().getChild("nick")));
     }
     
     /**

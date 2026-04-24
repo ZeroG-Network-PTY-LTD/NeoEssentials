@@ -511,18 +511,12 @@ public class PermissionRegistry {
         register("neoessentials.smithing", "Open portable smithing table", PermissionCategory.MISC, true);
         register("neoessentials.stonecutting", "Open portable stonecutter", PermissionCategory.MISC, true);
 
-        // Utility commands
-        register("neoessentials.realname", "Find player by nickname", PermissionCategory.MISC, true);
-        register("neoessentials.whois", "View player information", PermissionCategory.MISC, true);
-        register("neoessentials.whois.detailed", "View detailed player information", PermissionCategory.MISC, false);
-        register("neoessentials.seen", "Check when player was last seen", PermissionCategory.MISC, true);
+        // Utility commands (non-duplicate entries only; seen/near/ping/whois/realname/
+        // rules/suicide are already registered correctly in the Player Info section above)
+        register("neoessentials.whois.detailed", "View detailed player information", PermissionCategory.ADMIN, false);
         register("neoessentials.sign", "Edit sign text", PermissionCategory.MISC, true);
         register("neoessentials.sign.colors", "Use colors in signs", PermissionCategory.MISC, false);
-        register("neoessentials.rules", "View server rules", PermissionCategory.MISC, true);
         register("neoessentials.rules.admin", "Manage server rules", PermissionCategory.ADMIN, false);
-        register("neoessentials.suicide", "Use suicide command", PermissionCategory.MISC, true);
-        register("neoessentials.ping", "Check own ping", PermissionCategory.MISC, true);
-        register("neoessentials.ping.others", "Check others' ping", PermissionCategory.MISC, false);
         register("neoessentials.book", "Give yourself a writable book", PermissionCategory.MISC, true);
         register("neoessentials.book.unlock", "Unlock a written book for editing", PermissionCategory.MISC, false);
         register("neoessentials.book.title", "Set the title of a written book", PermissionCategory.MISC, false);
@@ -539,7 +533,9 @@ public class PermissionRegistry {
         register("neoessentials.permissions.reload", "Reload permissions", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.list", "List permissions", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.user", "User permission management", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.user.context", "Manage contextual overrides for users", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group", "Group permission management", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.context", "Manage contextual overrides for groups", PermissionCategory.ADMIN, false);
         
         // Debug and info
         register("neoessentials.debug", "Debug mode access", PermissionCategory.ADMIN, false);
@@ -578,14 +574,13 @@ public class PermissionRegistry {
         register("neoessentials.moderation.notifications", "Receive moderation event broadcasts", PermissionCategory.MODERATION, false);
         register("neoessentials.vanish.see", "See vanished players (alias)", PermissionCategory.MODERATION, false);
 
-        // ── Utility / misc commands not yet registered ────────────────────────
+        // ── Utility / misc commands ───────────────────────────────────────────
+        // (near, motd base node already registered in Player Info section above)
         register("neoessentials.list", "View online player list", PermissionCategory.MISC, true);
-        register("neoessentials.near", "View nearby players", PermissionCategory.MISC, true);
         register("neoessentials.nick", "Change own nickname", PermissionCategory.MISC, true);
         register("neoessentials.nick.color", "Use colour codes in nickname", PermissionCategory.MISC, false);
         register("neoessentials.nick.others", "Change other players' nicknames", PermissionCategory.MISC, false);
         register("neoessentials.staff", "Access staff chat and staff features", PermissionCategory.MISC, false);
-        register("neoessentials.motd", "View MOTD", PermissionCategory.MISC, true);
         register("neoessentials.motd.set", "Set MOTD on the active profile", PermissionCategory.ADMIN, false);
         register("neoessentials.motd.broadcast", "Broadcast MOTD to all online players", PermissionCategory.ADMIN, false);
         register("neoessentials.motd.reload", "Reload MOTD profiles from disk", PermissionCategory.ADMIN, false);
@@ -641,6 +636,8 @@ public class PermissionRegistry {
         register("neoessentials.permissions.group.modify", "Modify group settings (prefix, suffix, priority)", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.priority", "Set/get group priority (used to order inheritance resolution)", PermissionCategory.ADMIN, false);
         register("neoessentials.permissions.group.clear", "Clear all group permissions", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.user.temp", "Grant/revoke time-limited permissions for a user", PermissionCategory.ADMIN, false);
+        register("neoessentials.permissions.group.temp", "Grant/revoke time-limited permissions for a group", PermissionCategory.ADMIN, false);
 
         // ── Player-state / admin tool commands ───────────────────────────────
         register("neoessentials.fly", "Toggle flight mode", PermissionCategory.PLAYER, false);

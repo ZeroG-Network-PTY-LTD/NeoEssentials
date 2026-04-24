@@ -2582,7 +2582,8 @@ public class ConfigManager {
 
     /**
      * Returns true if home teleport safety is enabled in teleportation.homeSettings config section.
-     * (teleportation.homeSettings.enableHomeTeleportSafety)
+     * Accepts both "enableHomeTeleportSafety" (canonical) and "enableHomeSafety" (alias, consistent with enableWarpSafety).
+     * (teleportation.homeSettings.enableHomeTeleportSafety or teleportation.homeSettings.enableHomeSafety)
      */
     public boolean isHomeTeleportSafetyEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
@@ -2590,8 +2591,13 @@ public class ConfigManager {
             JsonObject tp = config.getAsJsonObject("teleportation");
             if (tp.has("homeSettings")) {
                 JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                // Accept canonical key first
                 if (homeSettings.has("enableHomeTeleportSafety")) {
                     return homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
+                }
+                // Also accept alias key (enableHomeSafety, consistent with enableWarpSafety naming)
+                if (homeSettings.has("enableHomeSafety")) {
+                    return homeSettings.get("enableHomeSafety").getAsBoolean();
                 }
             }
         }

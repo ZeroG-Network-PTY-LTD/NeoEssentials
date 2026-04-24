@@ -42,6 +42,19 @@ public class PermissionStorage {
             g.put("priority", group.getPriority());
             g.put("permissions", group.getPermissions());
             g.put("inherits", group.getInherits());
+            // Persist only unexpired group temp permissions
+            Map<String, Long> activeTemps = new HashMap<>();
+            long nowG = System.currentTimeMillis();
+            group.getTempPermissions().forEach((node, expiry) -> {
+                if (expiry > nowG) activeTemps.put(node, expiry);
+            });
+            if (!activeTemps.isEmpty()) g.put("tempPermissions", activeTemps);
+            // Contextual permissions
+            Map<String, Map<String, Boolean>> ctxPerms = group.getContextualPermissions();
+            if (!ctxPerms.isEmpty()) g.put("contextualPermissions", ctxPerms);
+            // Per-node conditions
+            Map<String, String> conditions = group.getConditions();
+            if (!conditions.isEmpty()) g.put("conditions", conditions);
             groups.add(g);
         }
         groupData.put("groups", groups);
@@ -56,6 +69,7 @@ public class PermissionStorage {
 
         // Save users to playerdata.json (atomic operation)
         List<Object> users = new ArrayList<>();
+        long now = System.currentTimeMillis();
         for (PermissionUser user : manager.getUsers()) {
             Map<String, Object> u = new HashMap<>();
             u.put("uuid", user.getUuid().toString());
@@ -63,6 +77,18 @@ public class PermissionStorage {
             u.put("permissions", user.getPermissions());
             if (!user.getPrefix().isEmpty()) u.put("prefix", user.getPrefix());
             if (!user.getSuffix().isEmpty()) u.put("suffix", user.getSuffix());
+            // Persist only unexpired temp permissions
+            Map<String, Long> activeTemps = new HashMap<>();
+            user.getTempPermissions().forEach((node, expiry) -> {
+                if (expiry > now) activeTemps.put(node, expiry);
+            });
+            if (!activeTemps.isEmpty()) u.put("tempPermissions", activeTemps);
+            // Contextual permissions
+            Map<String, Map<String, Boolean>> ctxPerms = user.getContextualPermissions();
+            if (!ctxPerms.isEmpty()) u.put("contextualPermissions", ctxPerms);
+            // Per-node conditions
+            Map<String, String> conds = user.getConditions();
+            if (!conds.isEmpty()) u.put("conditions", conds);
             users.add(u);
         }
         Map<String, Object> userData = new HashMap<>();
@@ -115,6 +141,42 @@ public class PermissionStorage {
                                     if (inh != null) group.addInheritance(inh.toString());
                                 }
                             }
+                            // Temp permissions (skip expired)
+                            Object tempPermsObj = g.get("tempPermissions");
+                            if (tempPermsObj instanceof Map<?, ?> tempMap) {
+                                long nowLoad = System.currentTimeMillis();
+                                for (Map.Entry<?, ?> entry : tempMap.entrySet()) {
+                                    if (entry.getKey() != null && entry.getValue() instanceof Number n) {
+                                        long expiry = n.longValue();
+                                        if (expiry > nowLoad) {
+                                            group.addTempPermission(entry.getKey().toString(), expiry);
+                                        }
+                                    }
+                                }
+                            }
+                            // Contextual permissions
+                            Object ctxObj = g.get("contextualPermissions");
+                            if (ctxObj instanceof Map<?, ?> ctxMap) {
+                                for (Map.Entry<?, ?> ctxEntry : ctxMap.entrySet()) {
+                                    if (ctxEntry.getValue() instanceof Map<?, ?> nodeMap) {
+                                        String ctxKey = ctxEntry.getKey().toString();
+                                        for (Map.Entry<?, ?> ne : nodeMap.entrySet()) {
+                                            if (ne.getKey() != null && ne.getValue() instanceof Boolean b) {
+                                                group.addContextPermission(ctxKey, ne.getKey().toString(), b);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Per-node conditions
+                            Object condObj = g.get("conditions");
+                            if (condObj instanceof Map<?, ?> condMap) {
+                                for (Map.Entry<?, ?> ce : condMap.entrySet()) {
+                                    if (ce.getKey() != null && ce.getValue() != null) {
+                                        group.setCondition(ce.getKey().toString(), ce.getValue().toString());
+                                    }
+                                }
+                            }
                             manager.addGroup(group);
                         }
                     }
@@ -139,6 +201,37 @@ public class PermissionStorage {
                         user.setPrefix(u.get("prefix").getAsString());
                     if (u.has("suffix") && !u.get("suffix").isJsonNull())
                         user.setSuffix(u.get("suffix").getAsString());
+                    // Load temp permissions (skip expired)
+                    if (u.has("tempPermissions") && u.get("tempPermissions").isJsonObject()) {
+                        long nowLoad = System.currentTimeMillis();
+                        for (Map.Entry<String, com.google.gson.JsonElement> entry :
+                                u.getAsJsonObject("tempPermissions").entrySet()) {
+                            long expiry = entry.getValue().getAsLong();
+                            if (expiry > nowLoad) {
+                                user.addTempPermission(entry.getKey(), expiry);
+                            }
+                        }
+                    }
+                    // Load contextual permissions
+                    if (u.has("contextualPermissions") && u.get("contextualPermissions").isJsonObject()) {
+                        for (Map.Entry<String, com.google.gson.JsonElement> ctxEntry :
+                                u.getAsJsonObject("contextualPermissions").entrySet()) {
+                            if (ctxEntry.getValue().isJsonObject()) {
+                                for (Map.Entry<String, com.google.gson.JsonElement> ne :
+                                        ctxEntry.getValue().getAsJsonObject().entrySet()) {
+                                    user.addContextPermission(ctxEntry.getKey(), ne.getKey(),
+                                        ne.getValue().getAsBoolean());
+                                }
+                            }
+                        }
+                    }
+                    // Load per-node conditions
+                    if (u.has("conditions") && u.get("conditions").isJsonObject()) {
+                        for (Map.Entry<String, com.google.gson.JsonElement> ce :
+                                u.getAsJsonObject("conditions").entrySet()) {
+                            user.setCondition(ce.getKey(), ce.getValue().getAsString());
+                        }
+                    }
                     manager.addUser(user);
                 }
             }

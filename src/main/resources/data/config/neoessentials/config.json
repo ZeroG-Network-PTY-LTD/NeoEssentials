@@ -379,7 +379,7 @@
       "requireConfirmationForDelete": true,
       "requireConfirmationForDelete_comment": "Require players to confirm home deletion to prevent accidents.",
       "enableHomeTeleportSafety": true,
-      "enableHomeTeleportSafety_comment": "Check if home location is safe before teleporting (no lava, void, etc.)",
+      "enableHomeTeleportSafety_comment": "Check if home location is safe before teleporting (no lava, void, etc.). Also accepted as 'enableHomeSafety' for compatibility.",
       "logHomeActions": true,
       "logHomeActions_comment": "Log home set/delete/teleport actions to server logs."
     },

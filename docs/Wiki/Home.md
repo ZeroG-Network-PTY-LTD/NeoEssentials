@@ -17,7 +17,6 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Kit Management](KitManagement) | Kits, cooldowns, give-to-others, kitreset |
 | [Item Management](ItemManagement) | Repair, enchant, powertool, clearinv, condense |
 | [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
-
 | [Permission System](PermissionSystem) | All permission nodes, groups, wildcards, external mods |
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders |

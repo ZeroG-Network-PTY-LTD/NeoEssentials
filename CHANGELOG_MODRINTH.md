@@ -4,6 +4,54 @@
 
 ---
 
+## 1.0.2.6+build.30 — 2026-04-01
+
+### ✨ Feature — Permissions GUI, External Systems & Fine-Grained Control
+
+**Web Dashboard REST API (extended)** — `/api/permissions` now handles context overrides, temp permissions, and aliases via REST. New endpoints: `POST /reload`, `GET|POST|DELETE /group/{name}/context`, `GET|POST /group/{name}/temp`, `DELETE /group/{name}/temp/{node}`, same for users, plus `GET|POST|DELETE /aliases`. Enhanced `/system/status` includes emergency mode, adapter health, failures, and alias count.
+
+**External System Integration** — Documented the full 5-step fallback chain, adapter health tracking (5 failures → UNHEALTHY → auto-fallback), LuckPerms context via QueryOptions, FTB Ranks 4-API probe, startup compatibility report, and a compatibility table covering all major permission mods.
+
+**Fine-Grained Command Control** — Every subcommand has its own node (`/home set` vs `/home delete`, `/warp` vs `/setwarp`, etc.). Documented comprehensive tables for Home, Warp, Kit, Economy, Moderation, and Permission system commands. Negative permission deny patterns documented.
+
+---
+
+## 1.0.2.6+build.28 — 2026-04-01
+
+### ✨ Feature — Permissions System Improvements
+
+**Contextual Permissions** — Permissions can now be world-specific, time-of-day specific, or gamemode-specific. New `/permissions group <group> context` and `/permissions user <player> context` subcommands let admins add/remove/list contextual overrides with tab-completion for all supported context keys.
+
+**Permission Conditions** — Optional condition expressions (e.g. `gamemode:survival AND time:day`, `health:above:10`, `op:true`) can be attached to permission nodes. The permission is only granted when the condition passes.
+
+**Permission Aliases** — `config/neoessentials/permission_aliases.json` maps legacy or short node names to canonical NeoEssentials nodes. Resolved transparently in every permission check.
+
+**Mod Interop API** — `NeoEssentialsAPI.getPermissionsService()` returns a `PermissionsService` interface that other mods can use to check permissions (with context), register their own nodes and aliases, and query group info without importing NeoEssentials internals.
+
+**Storage & Audit** — Contextual permissions and conditions persist across restarts. New audit log entries: `*_CONTEXT_PERM_ADDED/REMOVED`, `*_CONDITION_SET/REMOVED`.
+
+---
+
+## 1.0.2.6+build.26 — 2026-04-01
+
+### 🔧 Improvement — Utility Systems Audit & Polish
+
+- **`/nick` / `/nickname`** — Data file path uses centralised `ResourceUtil.getConfigPath()`. `/nickname` alias now registered as a proper Brigadier redirect (was a metadata-only entry with no actual command).
+- **`/seen`** — Data file path uses `ResourceUtil.getConfigPath()`.
+- **Duplicate registrations removed** — Stale duplicate `registerCommand()` metadata in `NeoEssentials.java` cleaned up; every player-info command is now registered exactly once.
+- **Permission registry de-duped** — Multiple permission nodes were registered twice with conflicting values; notably `neoessentials.whois` (was `ADMIN/false`, silently overridden to `MISC/true`) and `neoessentials.ping.others` (was `PLAYER/true`, overridden to `MISC/false`). Correct values now authoritative; unique sub-nodes (`whois.detailed`, `rules.admin`, `motd.*`) preserved.
+- All core utility commands verified functional: `/nick` `/nickname` `/setnick` `/near` `/nearby` `/ping` `/depth` `/helpop` `/motd` `/rules` `/suicide` `/seen` `/whois` `/realname` `/msgtoggle`.
+
+---
+
+## 1.0.2.6+build.25 — 2026-04-01
+
+### ⏳ New — Temporary Permissions
+
+- **Permissions** — Time-limited permissions for players and groups that expire automatically. Supports durations like `30m`, `12h`, `1d`, `7d`, `1d12h30m`. New commands: `addtemp`, `removetemp`, `listtemp` for both `/permissions user` and `/permissions group`. Expiry runs every 30 s server-side; online players are notified when a temp perm expires. Temp perms survive restarts (stored in `playerdata.json` / `permissions.json`, expired entries stripped on load). Six new audit events: `USER_TEMP_PERM_ADDED/REMOVED/EXPIRED` and `GROUP_TEMP_PERM_ADDED/REMOVED/EXPIRED`. Two new permission nodes: `neoessentials.permissions.user.temp`, `neoessentials.permissions.group.temp`.
+
+---
+
 ## 1.0.2.6+build.23 — 2026-04-01
 
 ### 📋 New — Permission Audit Logging

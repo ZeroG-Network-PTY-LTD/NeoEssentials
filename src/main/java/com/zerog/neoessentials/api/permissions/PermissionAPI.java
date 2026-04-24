@@ -84,6 +84,22 @@ public class PermissionAPI {
     }
 
     public static boolean hasPermission(UUID uuid, String permission) {
+        return hasPermission(uuid, permission, com.zerog.neoessentials.permissions.PermissionContext.EMPTY);
+    }
+
+    /**
+     * Context-aware permission check.  The permission node is first passed through the
+     * alias resolver ({@link com.zerog.neoessentials.permissions.PermissionAliasManager})
+     * before the 5-step resolution chain is executed.
+     *
+     * @param uuid       the player's UUID (must not be null)
+     * @param permission the permission node to check
+     * @param context    the player's runtime context; pass
+     *                   {@link com.zerog.neoessentials.permissions.PermissionContext#EMPTY}
+     *                   when no context is available
+     */
+    public static boolean hasPermission(UUID uuid, String permission,
+                                        com.zerog.neoessentials.permissions.PermissionContext context) {
         // Validate input parameters
         if (uuid == null) {
             LOGGER.warn("PermissionAPI.hasPermission: UUID is null");
@@ -94,10 +110,23 @@ public class PermissionAPI {
             return false;
         }
 
+        // ── Alias resolution ──────────────────────────────────────────────────
+        // Map legacy / short alias nodes to their canonical NeoEssentials equivalents
+        // before running any other check.
+        try {
+            permission = com.zerog.neoessentials.permissions.PermissionAliasManager
+                .getInstance().resolve(permission);
+        } catch (Exception e) {
+            LOGGER.debug("Alias resolution failed for '{}': {}", permission, e.getMessage());
+        }
+
         LOGGER.debug("═══ PERMISSION CHECK ═══");
         LOGGER.debug("Player UUID: {}", uuid);
         LOGGER.debug("Permission: {}", permission);
         LOGGER.debug("External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+        if (context != null && context != com.zerog.neoessentials.permissions.PermissionContext.EMPTY) {
+            LOGGER.debug("Context: world={} time={} gamemode={}", context.worldId, context.dayTime, context.gamemode);
+        }
 
         // ── Emergency mode — permission system failed to start ────────────────
         // Grant access immediately by OP status so admins can fix the issue.
@@ -151,7 +180,7 @@ public class PermissionAPI {
             // ── Internal-manager fallback (external failed or denied) ─────────
             if (manager != null) {
                 LOGGER.debug("Using internal permission system (external adapter fallback)");
-                boolean hasInternalPerm = manager.hasPermission(uuid, permission);
+                boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
                 LOGGER.debug("Internal fallback returned: {}", hasInternalPerm);
                 if (hasInternalPerm) {
                     LOGGER.debug("Result: TRUE (internal fallback)");
@@ -173,7 +202,7 @@ public class PermissionAPI {
             return checkVanillaOpFallback(uuid, permission, "no-manager");
         }
 
-        boolean hasInternalPerm = manager.hasPermission(uuid, permission);
+        boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
         LOGGER.debug("Internal system returned: {}", hasInternalPerm);
         if (hasInternalPerm) {
             LOGGER.debug("Result: TRUE (internal)");
