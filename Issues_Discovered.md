@@ -588,19 +588,6 @@
     - Hex color support, gradients, and hover/click events.
     - Easier configuration with examples in documentation.
 
-- **Inventory Management Tools**  
-  Add commands for:
-    - Viewing other players’ inventories (with permissions).
-    - Editing inventories and ender chests.
-    - Audit logs for inventory changes to prevent abuse.
-
-- **Inventory Command Security Improvements**
-  - Add explicit permission nodes for `/inv` and `/ec`.
-  - Ensure commands default to OP-only if permissions are not set.
-  - Add config options to enable/disable these commands entirely.
-  - Provide dashboard visibility for inventory-related permissions.
-  - Add anti-duplication safeguards when editing/viewing other players’ inventories.
-
 - **Minecraft Assets API Support**  
   Integrate with the Minecraft Assets API to:
     - Display item/block textures in the web dashboard.
@@ -628,15 +615,6 @@
     - REST API endpoints for external tools and dashboards.
     - Documentation for developers to extend NeoEssentials easily.
 
-- **Teleportation Improvements**
-    - Ensure disabling safety checks truly bypasses validation.
-    - Add option to force-load target chunks when teleporting.
-    - Provide clearer error messages when teleport fails due to unloaded chunks.
-    - Document how safety settings interact with chunk loading and teleportation.
-    - Add clear feedback messages when cooldown/warmup is applied (e.g., “Teleport available in X seconds”).
-    - Ensure cooldown/warmup values are logged on startup for verification.
-    - Provide dashboard controls to adjust cooldown/warmup settings dynamically.
-    - Add per-command and per-player cooldown/warmup customization.
 
 - **Localization Improvements**
     - Audit all NeoEssentials commands to ensure translation keys exist and are mapped correctly.
@@ -834,4 +812,15 @@
     - ✅ Registered `/api/teleport` endpoint in `DashboardAPI`; added `teleport.html` + `teleport.js` to `DashboardFileManager` managed file list.
     - ✅ Added "🌀 Teleport Settings" nav link (admin-only) to all dashboard pages (`index.html`, `admin.html`, `permissions.html`).
     - ✅ Dashboard script cache-bust version bumped to `419`.
+
+- **Teleportation — Per-Command Bypass Permissions & Safety/Chunk Documentation** *(build #55)*
+    - ✅ Registered all 8 per-command cooldown/warmup bypass permission nodes in `PermissionRegistry.java` (`neoessentials.teleport.home.bypass.cooldown`, `neoessentials.teleport.home.bypass.warmup`, `neoessentials.teleport.warp.bypass.cooldown`, `neoessentials.teleport.warp.bypass.warmup`, `neoessentials.teleport.spawn.bypass.cooldown`, `neoessentials.teleport.spawn.bypass.warmup`, `neoessentials.teleport.back.bypass.cooldown`, `neoessentials.teleport.back.bypass.warmup`). Code already checked them, but they were absent from the registry so tools (dashboard, `/neoe permissions`) could not discover them.
+    - ✅ Added **"Chunk Loading & Safety Interaction"** section to `docs/Wiki/TeleportationSystem.md` explaining: 3×3 chunk preload before every teleport, order of operations (chunks first, then safety scan), effect of disabling safety checks, error behavior on failed chunk loading, and a configuration quick-reference table.
+
+- **Inventory Management & Security Improvements** *(build #56)*
+    - ✅ **Config enable/disable wired** — `InventoryViewCommands` `requires()` predicates now check `ConfigManager.isCommandEnabled("invsee")` / `isCommandEnabled("invseeedit")` / `isCommandEnabled("enderchest")` / `isCommandEnabled("enderchestedit")`. When set to `false` in `config.json` the command vanishes from tab-completion and returns a permission error on use. Previously the config flags in `commands.*` were written but never read.
+    - ✅ **Anti-duplication concurrent-edit lock** — Two `ConcurrentHashMap<UUID targetId, UUID viewerId>` maps (`activeInvEdits`, `activeEcEdits`) enforce that only one staff member may hold an editable view of a given player's inventory or ender chest at a time. A second attempt is blocked with a message naming the current editor. Locks are cleaned up automatically on viewer disconnect via the new `InventoryEventHandler` (`@EventBusSubscriber`).
+    - ✅ **Persistent inventory audit log** — New `InventoryAuditLogger` writes every view/edit open event to `neoessentials/inventory_audit.log` (append-only, UTC timestamp). 7 action types: `INV_VIEWED`, `INV_EDIT_OPENED`, `INV_EDIT_CLOSED`, `EC_VIEWED`, `EC_EDIT_OPENED`, `EC_EDIT_CLOSED`, `EDIT_BLOCKED`. Controlled by new config key `items.inventoryAuditLog` (default `true`).
+    - ✅ **New language keys** — `commands.neoessentials.invsee.disabled`, `commands.neoessentials.invsee.concurrent_edit`, `commands.neoessentials.ec.disabled`, `commands.neoessentials.ec.concurrent_edit` added to `en_us.json`.
+    - ✅ **Permission nodes** — `neoessentials.invsee`, `neoessentials.invsee.edit`, `neoessentials.enderchest`, `neoessentials.enderchest.edit` already registered in `PermissionRegistry` (default `false` → OP-only without explicit grant). Dashboard can discover and display them via the permissions page.
 
