@@ -1,5 +1,12 @@
 # 👾 Issues That Were Discovered
-- **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5 -> fixed NeoForge 1.21.1, build.1.0.2.6.36)**  
+
+*(No open issues at this time — all known bugs have been resolved.)*
+
+---
+
+# ✅ Issues That Were Fixed
+
+- **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5) → ✅ FIXED in build.1.0.2.6+36**  
   Teleportation to `/home` fails with *"No safe teleport location found"* even when `teleportation.homeSettings.enableHomeSafety` is set to `false`.
     - Environment:
         - Mod Version: `neoessentials-1.0.2.5`
@@ -13,23 +20,22 @@
         3. Teleport to `/spawn` at `0, 124, 0`.
         4. Attempt `/home main`.
     - Observed Behavior:
-        - Teleport fails with error:
+        - Teleport failed with error:
           ```
           Failed to teleport player to home 'main': No safe teleport location found
-          ```  
-        - Teleport works only when player is close enough for the chunk to be loaded.
-    - Expected Behavior:
-        - Teleport should succeed regardless of chunk load state when safety checks are disabled.
-    - Speculation:
-        - Safety checks may still be running even when disabled.
-        - Teleportation may fail if the target chunk is unloaded, preventing location validation.
-    - Need to investigate:
-        - Whether disabling safety checks bypasses chunk validation.
-        - If teleportation should force-load the target chunk when safety is disabled.
-        - Possible fix: skip safety checks entirely when `enableHomeSafety=false` and allow teleportation to saved coordinates.
+          ```
+        - Teleport only worked when the player was close enough for the target chunk to already be loaded.
+    - Root Causes (found in investigation):
+        1. **Config flag not respected** — `teleportToHome()` was not reading `enableHomeSafety` from config at runtime; safety was always applied regardless of the setting.
+        2. **Unloaded chunk caused false failure** — `TeleportUtil` only force-loaded the single target chunk. `findSafeLocation()` scans up to ±16 blocks in X/Z, which can cross chunk boundaries. Neighbouring unloaded chunks caused every candidate position to fail `isSafe()`'s `level.isLoaded()` check, returning `null` → *"No safe teleport location found"*.
+    - Fix Applied (build.1.0.2.6+36):
+        - `teleportToHome()` now reads `isHomeTeleportSafetyEnabled()` from `ConfigManager` at runtime. Both `enableHomeTeleportSafety` (canonical) and `enableHomeSafety` (alias) key names are recognised.
+        - `TeleportUtil.preloadChunksForTeleport()` added — force-loads the 3×3 chunk grid (target + all 8 neighbours) **unconditionally**, before any safety check or teleport attempt.
+        - Safety check block (`isSafe()` / `findSafeLocation()`) is now **only executed when `requireSafe=true`**. When `enableHomeSafety=false`, the code skips all safety logic and teleports directly to the saved home coordinates, regardless of chunk load state.
 
 ---
-- **NeoEssentials Web Dashboard Permissions & Admin Control Blank (NeoForge 1.21.1, build.1.0.2.6)**  
+
+- **NeoEssentials Web Dashboard Permissions & Admin Control Blank (NeoForge 1.21.1, build.1.0.2.6) → ✅ FIXED in build.1.0.2.6+46**  
   The web dashboard shows blank menus for permissions and admin controls after login.
     - Environment:
         - Mod Version: `neoessentials-1.0.2.6`
@@ -41,23 +47,18 @@
         - Permissions menu is blank (expected if LuckPerms is used).
         - Admin control menu is also blank, even though dev tools show no errors and MC logs appear clean.
         - Refreshing the dashboard sometimes causes the buttons to appear briefly after login.
-    - Expected Behavior:
-        - Admin control menu should display available options (restart, stop, reload, save, etc.).
-        - Permissions menu should either integrate with LuckPerms or clearly indicate disabled state.
-    - Need to investigate:
-        - Whether LuckPerms integration disables both menus unintentionally.
-        - If dashboard API endpoints for `/api/admin/*` and `/api/permissions/*` are failing silently.
-        - Whether authentication or role assignment is not being applied correctly after login.
-        - Possible fix: ensure admin endpoints are always populated for authenticated admin accounts, regardless of external permissions integration.
+    - Root Causes (found in build.46 investigation):
+        1. `showLoginScreen()` hid `dashboardWrapper` on sub-pages that have no `loginContainer`, resulting in a completely blank page with no way back.
+        2. `permissions.js` init guard checked `window.location.hash` and `data-page`, neither of which ever matched on the standalone `permissions.html` page — `initPermissionSystem()` was never called.
+        3. Nine `fetchWithAuth()` calls in `permissions.js` were missing `.json()` — modal actions for groups/permissions always silently failed.
+        4. Username not shown on sub-page topbars (`id="userName"` vs `id="usernameDisplay"` mismatch).
+    - Fix Applied (build.1.0.2.6+46):
+        - `showLoginScreen()` now redirects to `index.html` when called on sub-pages.
+        - `permissions.js` init changed to use `document.getElementById('permOverviewTab')` as the reliable guard.
+        - All 9 `fetchWithAuth` calls fixed to call `.json()` on the response.
+        - `showDashboard()` username fallback added (`usernameDisplay` → `userName`).
 
 ---
-
-
-
-
----
-
-# ✅ Issues That Were Fixed
 
 - **NeoEssentials Teleportation Message Bug (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ Fixed in build.1.0.2.6+38**  
   Teleportation messages sometimes display raw translation keys instead of localized text.

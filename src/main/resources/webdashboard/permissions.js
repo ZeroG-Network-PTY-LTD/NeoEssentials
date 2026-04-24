@@ -100,9 +100,10 @@ async function loadTabData(tabName) {
 // Load permission system status
 async function loadPermissionSystemStatus() {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/system/status`);
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/system/status`);
+        const response = await resp.json();
         PermissionSystem.systemStatus = response;
-        PermissionSystem.usingExternal = response.usingExternal;
+        PermissionSystem.usingExternal = response.usingExternal || false;
 
         // Update system badge
         const badge = document.getElementById('permSystemBadge');
@@ -118,7 +119,7 @@ async function loadPermissionSystemStatus() {
                 <div class="alert-content alert-warning">
                     <span class="alert-icon">⚠️</span>
                     <span class="alert-text">
-                        Using external permission system: ${response.externalProvider}.
+                        Using external permission system: ${response.externalProvider || response.adapterName || response.systemType || 'External'}.
                         Permission management must be done through that system.
                     </span>
                 </div>
@@ -148,7 +149,8 @@ async function loadPermissionSystemStatus() {
 // Load permission overview
 async function loadPermissionOverview() {
     try {
-        const overview = await fetchWithAuth(`${API_BASE_URL}/permissions/overview`);
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/overview`);
+        const overview = await resp.json();
 
         // Update stats
         document.getElementById('totalGroupsStat').textContent = overview.totalGroups || 0;
@@ -195,7 +197,8 @@ async function loadAllGroups() {
     }
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/groups`);
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/groups`);
+        const response = await resp.json();
         PermissionSystem.groups = response.groups || [];
 
         renderGroupsTable(PermissionSystem.groups);
@@ -262,7 +265,8 @@ function renderGroupsTable(groups) {
 // Load all users
 async function loadAllUsers() {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/users`);
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/users`);
+        const response = await resp.json();
         PermissionSystem.users = response.users || [];
 
         renderUsersTable(PermissionSystem.users);
@@ -325,7 +329,8 @@ function renderUsersTable(users) {
 // Load all available permissions
 async function loadAllPermissions() {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/permissions/all`);
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/permissions/all`);
+        const response = await resp.json();
         PermissionSystem.permissions = response.categories || [];
 
         renderPermissionsCategories(PermissionSystem.permissions);
@@ -446,11 +451,12 @@ async function submitCreateGroup() {
     }
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/group/create`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, prefix, suffix, weight, isDefault })
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Group created successfully', 'success');
@@ -514,11 +520,12 @@ window.submitEditGroup = async function(groupName) {
     const weight = parseInt(document.getElementById('editGroupWeight').value);
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/update`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prefix, suffix, weight })
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Group updated successfully', 'success');
@@ -536,7 +543,8 @@ window.submitEditGroup = async function(groupName) {
 // View group permissions
 async function viewGroupPermissions(groupName) {
     try {
-        const group = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}`);
+        const groupResp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}`);
+        const group = await groupResp.json();
 
         const modalHTML = `
             <div class="modal" id="groupPermModal" style="display: flex;">
@@ -590,11 +598,12 @@ window.addGroupPermission = async function(groupName) {
     if (!permission) return;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/permission/add`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/permission/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ permission })
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Permission added', 'success');
@@ -612,9 +621,10 @@ window.removeGroupPermission = async function(groupName, permission) {
     if (!confirm(`Remove permission "${permission}" from group "${groupName}"?`)) return;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/permission/remove/${encodeURIComponent(permission)}`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}/permission/remove/${encodeURIComponent(permission)}`, {
             method: 'DELETE'
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Permission removed', 'success');
@@ -633,9 +643,10 @@ async function deleteGroup(groupName) {
     if (!confirm(`Are you sure you want to delete group "${groupName}"?`)) return;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/group/${groupName}`, {
             method: 'DELETE'
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Group deleted successfully', 'success');
@@ -652,7 +663,8 @@ async function deleteGroup(groupName) {
 // Edit user permissions
 async function editUserPermissions(username) {
     try {
-        const user = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}`);
+        const userResp = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}`);
+        const user = await userResp.json();
 
         const modalHTML = `
             <div class="modal" id="userPermModal" style="display: flex;">
@@ -711,11 +723,12 @@ window.addUserPermission = async function(username) {
     if (!permission) return;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/permission/add`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/permission/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ permission })
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Permission added', 'success');
@@ -733,9 +746,10 @@ window.removeUserPermission = async function(username, permission) {
     if (!confirm(`Remove permission "${permission}" from user "${username}"?`)) return;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/permission/remove/${encodeURIComponent(permission)}`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/permission/remove/${encodeURIComponent(permission)}`, {
             method: 'DELETE'
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Permission removed', 'success');
@@ -789,11 +803,12 @@ window.submitChangeGroup = async function(username) {
     const group = document.getElementById('newUserGroup').value;
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/group/set`, {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/permissions/user/${username}/group/set`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ group })
         });
+        const response = await resp.json();
 
         if (response.success) {
             showNotification('Group changed successfully', 'success');
@@ -859,12 +874,15 @@ window.changeUserGroup = changeUserGroup;
 window.filterUsers = filterUsers;
 window.copyPermission = copyPermission;
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPermissionSystem);
-} else {
-    // DOM already loaded, init immediately if on permissions page
-    if (window.location.hash === '#permissions' || document.querySelector('[data-page="permissions"].active')) {
+// Initialize when DOM is ready — detect the permissions page by a known element.
+function tryInitPermissions() {
+    if (document.getElementById('permOverviewTab')) {
         initPermissionSystem();
     }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInitPermissions);
+} else {
+    tryInitPermissions();
 }

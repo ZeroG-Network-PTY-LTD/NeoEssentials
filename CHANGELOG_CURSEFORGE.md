@@ -4,7 +4,22 @@
 
 ---
 
+## 1.0.2.6+build.46 — 2026-04-24
+
+### 🐛 Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank After Login
+
+Navigating to Admin Controls or Permissions from the sidebar produced a completely blank page. Pressing F5 would briefly show the buttons before they vanished.
+
+- **Fixed** `showLoginScreen()` in `dashboard.js` — on `admin.html` and `permissions.html` there is no login form, so calling this function previously blanked the whole page. It now redirects to `index.html` instead.
+- **Fixed** `permissions.js` initialisation — the old guard checked `window.location.hash` / `data-page` neither of which ever matched on the standalone `permissions.html` page, so tabs showed "Loading…" indefinitely. Now detects the correct page via `document.getElementById('permOverviewTab')`.
+- **Fixed** 9 `fetchWithAuth` calls in `permissions.js` that were missing `.json()` (e.g. `viewGroupPermissions`, `editUserPermissions`, `deleteGroup`, permission add/remove modals). Every modal action silently showed "Failed" because `response.success` was checked on the raw `Response` object.
+- **Fixed** username not displaying in the topbar on sub-pages (`admin.html`/`permissions.html` use `id="userName"` while `index.html` uses `id="usernameDisplay"`). `showDashboard()` now checks both IDs.
+- Dashboard JS/HTML cache-bust version bumped to `418`.
+
+---
+
 ## 1.0.2.6+build.44 — 2026-04-24
+
 
 ### 🐛 Bug Fix — Home Confirmation Buttons Append "confirm" to Name
 

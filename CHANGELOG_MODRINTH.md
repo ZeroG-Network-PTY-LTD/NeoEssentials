@@ -4,7 +4,18 @@
 
 ---
 
+## 1.0.2.6+build.46 — 2026-04-24
+
+### 🐛 Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank
+
+Admin Controls and Permissions pages showed a blank screen after login. F5 briefly revealed the content before it disappeared.
+
+Three root causes: (1) `showLoginScreen()` hid `dashboardWrapper` without redirecting — on these pages there is no login form, so the result was a blank page with no way forward. Fixed to redirect to `index.html`. (2) `permissions.js` never called `initPermissionSystem()` because its init guard checked `window.location.hash` / `[data-page="permissions"].active`, which never match on the standalone `permissions.html` page. Fixed with a reliable element check. (3) Nine `fetchWithAuth()` calls in `permissions.js` were missing `.json()`, so all modal actions (group edit, permission add/remove, etc.) silently failed by checking `.success` on a raw `Response` object. All fixed. Also fixed username not showing in the sub-page topbars.
+
+---
+
 ## 1.0.2.6+build.44 — 2026-04-24
+
 
 ### 🐛 Bug Fix — Home Confirmation Buttons Append "confirm" to Name
 

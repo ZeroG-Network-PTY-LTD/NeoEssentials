@@ -91,10 +91,26 @@ async function checkAuthentication() {
         
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('username', data.username);
-            localStorage.setItem('isAdmin', data.isAdmin);
-            localStorage.setItem('authType', data.authType);
-            showDashboard();
+            // Support both old AuthHandler format {success, username, isAdmin}
+            // and new AuthenticationHandler format {valid, session{username,role}, user{role}}
+            const username = data.username
+                || (data.session && data.session.username)
+                || (data.user && data.user.username);
+            const isAdmin = data.isAdmin !== undefined
+                ? data.isAdmin
+                : ((data.session && data.session.role === 'ADMIN') || (data.user && data.user.role === 'ADMIN') || false);
+            const authType = data.authType || (data.session && data.session.authType) || 'unknown';
+
+            if (data.success || data.valid) {
+                if (username) localStorage.setItem('username', username);
+                localStorage.setItem('isAdmin', String(isAdmin));
+                if (authType !== 'unknown') localStorage.setItem('authType', authType);
+                showDashboard();
+            } else {
+                // Token invalid or expired
+                localStorage.removeItem('authToken');
+                showLoginScreen();
+            }
         } else {
             // Token invalid or expired
             localStorage.removeItem('authToken');
@@ -109,7 +125,16 @@ async function checkAuthentication() {
 function showLoginScreen() {
     const loginContainer = document.getElementById('loginContainer');
     const dashboardWrapper = document.getElementById('dashboardWrapper');
-    
+
+    // On sub-pages (admin.html, permissions.html) there is no login form.
+    // Redirect to index.html so the user can log in there instead of
+    // silently blanking the page.
+    if (!loginContainer) {
+        console.warn('No login form on this page - redirecting to index.html');
+        window.location.href = 'index.html';
+        return;
+    }
+
     if (loginContainer) loginContainer.style.display = 'flex';
     if (dashboardWrapper) dashboardWrapper.style.display = 'none';
 }
@@ -121,9 +146,9 @@ function showDashboard() {
     if (loginContainer) loginContainer.style.display = 'none';
     if (dashboardWrapper) dashboardWrapper.style.display = 'flex';
     
-    // Update username display
+    // Update username display (index.html uses 'usernameDisplay', subpages use 'userName')
     const username = localStorage.getItem('username');
-    const usernameDisplay = document.getElementById('usernameDisplay');
+    const usernameDisplay = document.getElementById('usernameDisplay') || document.getElementById('userName');
     if (usernameDisplay && username) {
         usernameDisplay.textContent = username;
     }
@@ -397,15 +422,16 @@ async function handleLogin() {
             localStorage.setItem('sessionId', data.sessionId);
             localStorage.setItem('authType', data.authType || 'password');
 
-            // Extract user data
+            // Extract user data - handle both new format (data.user) and legacy format (top-level)
             if (data.user) {
                 localStorage.setItem('username', data.user.username || username.trim());
-                localStorage.setItem('isAdmin', data.user.role === 'ADMIN' || data.user.isAdmin || false);
+                localStorage.setItem('isAdmin', String(data.user.role === 'ADMIN' || data.user.isAdmin === true));
                 localStorage.setItem('role', data.user.role || 'VIEWER');
             } else {
-                localStorage.setItem('username', username.trim());
-                localStorage.setItem('isAdmin', false);
-                localStorage.setItem('role', 'VIEWER');
+                // Legacy Minecraft auth returns {token, isAdmin, username} at top level (no data.user)
+                localStorage.setItem('username', data.username || username.trim());
+                localStorage.setItem('isAdmin', String(data.isAdmin === true));
+                localStorage.setItem('role', data.isAdmin ? 'ADMIN' : 'VIEWER');
             }
 
             // Show dashboard
@@ -1573,7 +1599,7 @@ async function handleSaveWorlds() {
     }
 }
 
-console.log('NeoEssentials Dashboard v2.1 loaded successfully - Build 417');
+console.log('NeoEssentials Dashboard v2.1 loaded successfully - Build 418');
 console.log('Auto-refresh interval: ' + (REFRESH_INTERVAL / 1000) + ' seconds');
 console.log('Press Ctrl+R or F5 to manually refresh data');
 console.log('Player modal functions loaded:', typeof window.openPlayerModal === 'function', typeof window.closePlayerModal === 'function');

@@ -11,6 +11,7 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.MotdEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PermissionEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
+import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -216,12 +217,22 @@ public class DashboardAPI {
      * Authentication + rate-limiting middleware wrapper.
      * - If webDashboard.security.requireAuthentication = true (default), validates Bearer token.
      * - If webDashboard.security.enableRateLimiting = true (default), enforces per-IP request cap.
+     * - Supports both new AuthenticationManager sessions and legacy AuthHandler sessions.
      */
     @SuppressWarnings("ConstantConditions")
     private HttpHandler withAuth(HttpHandler handler) {
         return exchange -> {
             try {
                 ConfigManager cfg = ConfigManager.getInstance();
+
+                // ── CORS preflight bypass ─────────────────────────────────────
+                if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
+                }
 
                 // ── Rate limiting ─────────────────────────────────────────────
                 if (cfg.isDashboardRateLimitingEnabled()) {
@@ -260,7 +271,33 @@ public class DashboardAPI {
                         token = authHeader.substring(7);
                     }
 
-                    if (!AuthHandler.validateToken(token)) {
+                    boolean authenticated = false;
+                    String authUsername = null;
+                    boolean authAdmin = false;
+
+                    if (token != null && !token.isEmpty()) {
+                        // Try new AuthenticationManager session first (password-based & Minecraft auth via AuthenticationHandler)
+                        try {
+                            com.zerog.neoessentials.webdashboard.security.Session newSession =
+                                com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance().validateSession(token);
+                            if (newSession != null) {
+                                authenticated = true;
+                                authUsername = newSession.getUsername();
+                                authAdmin = newSession.getRole() == com.zerog.neoessentials.webdashboard.security.User.Role.ADMIN;
+                            }
+                        } catch (Exception e) {
+                            LOGGER.debug("AuthenticationManager session check failed: {}", e.getMessage());
+                        }
+
+                        // Fallback: try legacy AuthHandler token (for existing Minecraft auth sessions)
+                        if (!authenticated && AuthHandler.validateToken(token)) {
+                            authenticated = true;
+                            authUsername = AuthHandler.getUsername(token);
+                            authAdmin = AuthHandler.isAdmin(token);
+                        }
+                    }
+
+                    if (!authenticated) {
                         LOGGER.debug("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
                         String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";
                         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
@@ -271,9 +308,9 @@ public class DashboardAPI {
                         return;
                     }
 
-                    exchange.setAttribute("auth-username", AuthHandler.getUsername(token));
-                    exchange.setAttribute("auth-admin", AuthHandler.isAdmin(token));
-                    LOGGER.debug("Authenticated API request to {} by {}", exchange.getRequestURI(), AuthHandler.getUsername(token));
+                    exchange.setAttribute("auth-username", authUsername);
+                    exchange.setAttribute("auth-admin", authAdmin);
+                    LOGGER.debug("Authenticated API request to {} by {}", exchange.getRequestURI(), authUsername);
                 }
 
                 handler.handle(exchange);
@@ -302,7 +339,8 @@ public class DashboardAPI {
      */
     private void registerEndpoints() {
         // Register authentication endpoints (no auth required)
-        apiServer.createContext("/api/auth", new AuthHandler(server));
+        // AuthenticationHandler supports password-based, Minecraft, and Discord OAuth auth
+        apiServer.createContext("/api/auth", new AuthenticationHandler());
 
 
         // Register API endpoint handlers with authentication middleware
