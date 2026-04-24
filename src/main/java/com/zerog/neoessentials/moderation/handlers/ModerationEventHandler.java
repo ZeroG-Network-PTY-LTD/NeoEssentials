@@ -47,6 +47,17 @@ public class ModerationEventHandler {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+
+        // Vanish on-join: restore tab-list hiding and show vanish reminder if applicable
+        try {
+            if (ConfigManager.getInstance().isVanishSystemEnabled()) {
+                VanishManager.getInstance().onPlayerJoin(player);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling vanish on player login", e);
+        }
+
+        // Jail on-join: check expiry and teleport to jail if still jailed
         try {
             if (!JailManager.isJailSystemEnabled()) return;
             JailManager jailManager = JailManager.getInstance();
@@ -151,7 +162,8 @@ public class ModerationEventHandler {
             }
 
             // Vanish interact check
-            if (ConfigManager.isVanishPreventInteractionEnabled()) {
+            if (ConfigManager.getInstance().isVanishSystemEnabled()
+                    && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
                 if (vanishManager.isPlayerVanished(playerId)) {
                     String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();
@@ -225,7 +237,8 @@ public class ModerationEventHandler {
                 return;
             }
 
-            if (ConfigManager.isVanishPreventInteractionEnabled()) {
+            if (ConfigManager.getInstance().isVanishSystemEnabled()
+                    && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
                 if (vanishManager.isPlayerVanished(playerId)) {
                     String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();
@@ -258,7 +271,8 @@ public class ModerationEventHandler {
                 return;
             }
 
-            if (ConfigManager.isVanishPreventInteractionEnabled()) {
+            if (ConfigManager.getInstance().isVanishSystemEnabled()
+                    && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
                 if (vanishManager.isPlayerVanished(playerId)) {
                     String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();

@@ -4,7 +4,17 @@
 
 ---
 
-## 1.0.2.6+build.40 — 2026-04-24
+## 1.0.2.6+build.41 — 2026-04-24
+
+### 🐛 Bug Fix — Vanish Module Cannot Be Disabled
+
+Setting `moderation.vanishSettings.enableVanishSystem: false` in config had no effect. Commands remained registered and players who were already vanished couldn't break/place blocks or interact, because the config flag was silently ignored.
+
+Root causes: (1) `isVanishSystemEnabled()` read from the wrong JSON path — always returned `true`; (2) interaction-prevention guards never checked `isVanishSystemEnabled()`; (3) `VanishManager.onPlayerJoin()` was defined but never called, breaking vanish-state restoration on reconnect. All three issues fixed.
+
+---
+
+
 
 ### 🔒 Security Fix — `/inv` and `/ec` Permission Bypass
 

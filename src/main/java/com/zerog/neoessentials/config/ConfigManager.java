@@ -417,13 +417,17 @@ public class ConfigManager {
         return false;
     }
     /**
-     * Returns true if the vanish system is enabled in the config (enableVanishSystem).
+     * Returns true if the vanish system is enabled in the config
+     * (moderation.vanishSettings.enableVanishSystem).
      * Defaults to true if not set.
      */
     public boolean isVanishSystemEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("enableVanishSystem")) {
-            return config.get("enableVanishSystem").getAsBoolean();
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("enableVanishSystem")) {
+                return vanishSettings.get("enableVanishSystem").getAsBoolean();
+            }
         }
         return true;
     }

@@ -95,7 +95,7 @@
 
 ---
 
-- **NeoEssentials Vanish Cannot Be Disabled (NeoForge 1.21.1, builds 1.0.2.5 & 1.0.2.6+21)**  
+- **NeoEssentials Vanish Cannot Be Disabled (NeoForge 1.21.1, builds 1.0.2.5 & 1.0.2.6+21)** ✅ **FIXED in build.41**
   Disabling the vanish module in config does not actually disable it, causing conflicts with other vanish mods.
     - Environment:
         - NeoEssentials Versions: `1.0.2.5` and `1.0.2.6 build 21`
@@ -109,10 +109,23 @@
         - Multiple users confirmed the same issue when attempting to disable NeoEssentials vanish.
     - Expected Behavior:
         - Disabling vanish in config should fully disable the module, allowing other vanish mods to function.
-    - Need to investigate:
-        - Whether vanish module ignores config flags.
-        - If vanish is hard-coded to load regardless of config state.
-        - Possible fix: ensure vanish respects `enableVanish=false` and does not register commands/events when disabled.
+    - **Root Causes (3 bugs):**
+        1. **`ConfigManager.isVanishSystemEnabled()` read from the wrong config path.**
+           Checked `config.has("enableVanishSystem")` at the root of `config.json`, but the key lives at
+           `moderation.vanishSettings.enableVanishSystem`. Since the root key was never present, the method
+           always returned `true` — making it impossible to ever disable vanish.
+        2. **`ModerationEventHandler` interaction guards did not check `isVanishSystemEnabled()`.**
+           Block-break / block-place / item-use cancellation for vanished players only checked
+           `isVanishPreventInteractionEnabled()`, not whether the vanish system was enabled at all.
+           This meant players who were already vanished before vanish was disabled could not interact.
+        3. **`VanishManager.onPlayerJoin()` was never called.**
+           The method that restores a vanished player's tab-list state on reconnect and sends the "you are
+           vanished" reminder existed but had no call-site. Fixed by adding the call in
+           `ModerationEventHandler.onPlayerLogin()`, gated by `isVanishSystemEnabled()`.
+    - **Fix (build.41):**
+        - `ConfigManager.java`: Fixed `isVanishSystemEnabled()` to navigate to `moderation.vanishSettings.enableVanishSystem`.
+        - `ModerationEventHandler.java`: Added `isVanishSystemEnabled()` check to all three vanish interaction guards.
+        - `ModerationEventHandler.java`: Added `VanishManager.getInstance().onPlayerJoin(player)` call in `onPlayerLogin`, gated by the enabled check.
 
 ---
 

@@ -4,7 +4,19 @@
 
 ---
 
-## 1.0.2.6+build.40 — 2026-04-24
+## 1.0.2.6+build.41 — 2026-04-24
+
+### 🐛 Bug Fix — Vanish Module Cannot Be Disabled
+
+Setting `moderation.vanishSettings.enableVanishSystem: false` had no effect — commands stayed registered and interaction prevention remained active.
+
+- **Fixed** `ConfigManager.isVanishSystemEnabled()` reading from the wrong config path (was checking root-level, key is actually at `moderation.vanishSettings.enableVanishSystem`).
+- **Fixed** `ModerationEventHandler` vanish interaction guards now check `isVanishSystemEnabled()` before blocking block-break / block-place / item-use.
+- **Fixed** `VanishManager.onPlayerJoin()` is now called from `ModerationEventHandler.onPlayerLogin()` (gated by the enabled flag), so vanish state is correctly restored and the vanish reminder is shown when a vanished player reconnects.
+
+---
+
+
 
 ### 🔒 Security Fix — `/inv` and `/ec` Bypass Permission Checks
 
