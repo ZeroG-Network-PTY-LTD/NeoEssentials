@@ -939,6 +939,10 @@ public class NeoEssentials {
         registry.registerCommand("vault", "NeoEssentials Vault API info and management");
         com.zerog.neoessentials.vault.command.VaultCommand.register(dispatcher);
 
+        // ========== PLACEHOLDER COMMANDS ==========
+        registry.registerCommand("placeholder", "Inspect and test the NeoEssentials placeholder system");
+        com.zerog.neoessentials.commands.utility.PlaceholderCommand.register(dispatcher);
+
         // ========== CHEST SHOP COMMANDS ==========
         registry.registerCommand("chestshop", "Sign-based chest shop system");
         registry.registerCommand("cshop", "Sign-based chest shop (alias)");
