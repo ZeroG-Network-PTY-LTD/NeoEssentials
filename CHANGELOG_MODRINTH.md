@@ -4,6 +4,43 @@
 
 ---
 
+## 1.0.2.6+build.69 — 2026-04-24
+
+### ✨ Feature — Custom Player Tablist: Refinements
+
+Follow-up pass on the tablist system from build.67.
+
+**What's new:**
+
+- **`RichTextFormatter.processTablistText()`** — dedicated tablist text processor that strips hover/click events (which tab-list packets cannot display) while running the full gradient → rainbow → named-color → format-tag → hex-color pipeline. Enabled unconditionally regardless of the `enableChatEnhancements` flag.
+- **Hex colors and gradients in player prefix/suffix column** — `updatePlayerTeam()` now routes prefix/suffix through `processTablistText()` so group prefixes like `&#FF5500[Admin] ` or `<gradient:FF0000-FF8C00>[Mod] </gradient>` render as actual colored text in the player list column.
+- **Color deferral fix** — `applyPlaceholders()` no longer pre-converts `&` → `§`; the full color pass is deferred to `processTablistText()` so `&#RRGGBB` tokens and `<gradient:…>` tags survive placeholder substitution intact.
+
+---
+
+## 1.0.2.6+build.67 — 2026-04-24
+
+### ✨ Feature — Custom Player Tablist
+
+Complete rewrite of the tablist with full rich-text support, per-group/per-player customisation, animated frames, and extended placeholders.  **Inspired by: TAB, BungeeTabListPlus, Simple TabList.**
+
+**What's new:**
+
+- **Hex colors & gradients** — header, footer, and player prefix/suffix support `&#RRGGBB`, `<gradient:FF0000-0000FF>text</gradient>`, `<rainbow>text</rainbow>`, named color/format tags, and legacy `&X` codes
+- **Animated header/footer** — `header`/`footer` in `tablist.json` accept arrays; each refresh tick advances one frame for smooth animations
+- **Per-group header/footer** — `"groups"` section in `tablist.json` lets you give each permission group its own header/footer frames (e.g. an admin-only panel)
+- **Per-player header/footer** — `"players"` UUID section in `tablist.json` + new runtime commands:
+  - `/tablist player <name> header <text>` — set custom header
+  - `/tablist player <name> footer <text>` — set custom footer
+  - `/tablist player <name> reset` — clear overrides
+- **Per-group runtime commands** — `/tablist group <group> header|footer|reset`
+- **Extended placeholders** — `{displayname}`, `{server_name}`, `{x}/{y}/{z}`, `{balance}`, `{time}`, `{bar}` added alongside existing `{player}`, `{online}`, `{max}`, `{ping}`, `{world}`, `{tps}`, `{prefix}`, `{suffix}`, `{group}`, `{newline}`
+- **groupColors map** — per-group color override applied to `{displayname}` in headers
+- **Vanish + AFK integration** — vanished players excluded from `{online}` for non-staff; configurable AFK suffix appended to player rows
+- **`tablist.json` template** updated with gradient example, group/player sections, and syntax reference
+
+---
+
 ## 1.0.2.6+build.66 — 2026-04-24
 
 ### 🐛 Bug Fix — Tablist prefix, Warn console logging, WarnManager compile error
