@@ -10,10 +10,12 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.MotdEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PermissionEndpoint;
+import com.zerog.neoessentials.webdashboard.endpoints.PlaceholderEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.TeleportEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler;
+import com.zerog.neoessentials.docs.DocumentationHandler;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -355,6 +357,8 @@ public class DashboardAPI {
         apiServer.createContext("/api/motd", withAuth(new MotdEndpoint(server)));
         apiServer.createContext("/api/rules", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.RulesEndpoint()));
         apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
+        apiServer.createContext("/api/placeholders", withAuth(new PlaceholderEndpoint(server)));
+        apiServer.createContext("/api/docs", new DocumentationHandler());
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
@@ -369,6 +373,8 @@ public class DashboardAPI {
         LOGGER.info("  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
         LOGGER.info("  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
         LOGGER.info("  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
+        LOGGER.info("  - /api/placeholders/* (list, resolve, stats) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {

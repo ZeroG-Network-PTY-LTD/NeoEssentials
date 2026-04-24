@@ -688,7 +688,8 @@ public class PermissionRegistry {
         register("neoessentials.playtime", "View own playtime", PermissionCategory.PLAYER, true);
         register("neoessentials.playtime.others", "View another player's playtime", PermissionCategory.PLAYER, false);
 
-        // ── Dashboard ────────────────────────────────────────────────────────        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
+        // ── Dashboard ────────────────────────────────────────────────────────
+        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
         register("neoessentials.dashboard.access", "Register and access the web dashboard", PermissionCategory.MISC, false);
         register("neoessentials.dashboard.view", "View-only dashboard access", PermissionCategory.MISC, false);
         register("neoessentials.dashboard.manage", "Manage dashboard settings", PermissionCategory.ADMIN, false);
@@ -704,6 +705,9 @@ public class PermissionRegistry {
         register("neoessentials.moderation.jailinfo", "View jail location info", PermissionCategory.MODERATION, false);
         register("neoessentials.powertooltoggle", "Toggle all powertools on/off globally", PermissionCategory.ITEMS, true);
         register("neoessentials.tablist.admin", "Manage the custom tablist system", PermissionCategory.ADMIN, false);
+
+        // ── Placeholder system ────────────────────────────────────────────────
+        register("neoessentials.admin.placeholders", "Manage and test the placeholder system (/placeholder)", PermissionCategory.ADMIN, false);
 
         // ── Fun / miscellaneous commands ─────────────────────────────────────
         register("neoessentials.firework", "Edit held firework rockets", PermissionCategory.PLAYER, false);

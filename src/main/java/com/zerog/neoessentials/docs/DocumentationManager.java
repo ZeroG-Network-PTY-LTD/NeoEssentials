@@ -328,6 +328,306 @@ public class DocumentationManager {
                 4
         ));
         
+        // ── Placeholder API ──────────────────────────────────────────────────
+        sections.put("placeholder-api", new DocumentationSection(
+                "placeholder-api",
+                "Placeholder API",
+                "Register custom placeholders from your mod or plugin",
+                """
+                # Placeholder API
+                
+                NeoEssentials provides a thread-safe placeholder system that any mod can integrate with.
+                Placeholders are resolved in chat format strings, MOTD, join/quit messages, tablist
+                headers/footers, and any config value that passes through `PlaceholderManager.setPlaceholders()`.
+                
+                ## Syntax
+                
+                Placeholders use curly-brace syntax: `{identifier}` or `{identifier:params}`.
+                
+                External mods are encouraged to prefix identifiers with their mod id, e.g. `{mymod_kills}`.
+                
+                ## Registering a single placeholder
+                
+                Call during your mod's init event or `ServerStartingEvent`:
+                
+                ```java
+                import com.zerog.neoessentials.api.NeoEssentialsAPI;
+                import com.zerog.neoessentials.api.PlaceholderManager;
+                
+                PlaceholderManager pm = NeoEssentialsAPI.getPlaceholderManager();
+                
+                pm.registerPlaceholder("mymod_kills", (player, params) ->
+                    player != null ? String.valueOf(MyStats.getKills(player.getUUID())) : "0"
+                );
+                ```
+                
+                Or via the static façade:
+                
+                ```java
+                import com.zerog.neoessentials.api.PlaceholderAPI;
+                
+                PlaceholderAPI.registerPlaceholder("mymod_kills", (player, params) -> "42");
+                ```
+                
+                ## Registering a PlaceholderExpansion (multiple placeholders)
+                
+                ```java
+                import com.zerog.neoessentials.api.PlaceholderExpansion;
+                import com.zerog.neoessentials.api.PlaceholderAPI;
+                
+                public class MyModExpansion extends PlaceholderExpansion {
+                
+                    @Override public String getIdentifier() { return "mymod"; }
+                    @Override public String getVersion()    { return "1.0.0"; }
+                    @Override public String getAuthor()     { return "YourName"; }
+                
+                    @Override
+                    public java.util.Set<String> getPlaceholders() {
+                        return java.util.Set.of("kills", "deaths", "playtime");
+                    }
+                
+                    @Override
+                    public String onPlaceholderRequest(ServerPlayer player, String id, String params) {
+                        if (player == null) return null;
+                        return switch (id) {
+                            case "kills"    -> String.valueOf(MyStats.getKills(player.getUUID()));
+                            case "deaths"   -> String.valueOf(MyStats.getDeaths(player.getUUID()));
+                            case "playtime" -> MyStats.getFormattedPlaytime(player.getUUID());
+                            default         -> null;
+                        };
+                    }
+                }
+                
+                // Registration
+                PlaceholderAPI.registerExpansion(new MyModExpansion());
+                ```
+                
+                The expansion above registers `{mymod_kills}`, `{mymod_deaths}`, `{mymod_playtime}`.
+                
+                ## Resolving placeholders
+                
+                ```java
+                PlaceholderManager pm = NeoEssentialsAPI.getPlaceholderManager();
+                
+                // Resolve all placeholders in a string
+                String formatted = pm.setPlaceholders(player, "Hello {neoessentials_name}, you have {mymod_kills} kills!");
+                
+                // Resolve a single placeholder
+                String value = pm.getPlaceholderValue(player, "mymod_kills", null);
+                ```
+                
+                ## Built-in NeoEssentials placeholders
+                
+                All NeoEssentials placeholders use the `neoessentials` expansion prefix:
+                
+                | Placeholder | Description |
+                |---|---|
+                | `{neoessentials_name}` | Player username |
+                | `{neoessentials_displayname}` | Player display name / nickname |
+                | `{neoessentials_prefix}` | Permission group prefix |
+                | `{neoessentials_suffix}` | Permission group suffix |
+                | `{neoessentials_group}` | Primary permission group |
+                | `{neoessentials_balance}` | Economy balance (raw) |
+                | `{neoessentials_balance_formatted}` | Economy balance (formatted) |
+                | `{neoessentials_world}` | Current dimension name |
+                | `{neoessentials_x}` | Player X coordinate |
+                | `{neoessentials_y}` | Player Y coordinate |
+                | `{neoessentials_z}` | Player Z coordinate |
+                | `{neoessentials_biome}` | Current biome |
+                | `{neoessentials_health}` | Current health |
+                | `{neoessentials_max_health}` | Max health |
+                | `{neoessentials_food}` | Food level |
+                | `{neoessentials_level}` | Experience level |
+                | `{neoessentials_exp}` | Experience progress (%) |
+                | `{neoessentials_gamemode}` | Current gamemode |
+                | `{neoessentials_ping}` | Connection latency (ms) |
+                | `{neoessentials_online_players}` | Online player count |
+                | `{neoessentials_max_players}` | Max player slots |
+                | `{neoessentials_server_name}` | Server MOTD / name |
+                | `{neoessentials_time}` | Server time (12h) |
+                | `{neoessentials_time_24}` | Server time (24h) |
+                | `{neoessentials_date}` | Current date (yyyy-MM-dd) |
+                | `{neoessentials_afk}` | AFK status ("AFK" or blank) |
+                | `{neoessentials_afk_time}` | Time AFK (e.g. "5m 30s") |
+                | `{neoessentials_afk_reason}` | AFK reason text |
+                
+                ## Short-form placeholders (legacy)
+                
+                The following short-form placeholders (without expansion prefix) also work and map
+                to common values for backwards compatibility in chat config strings:
+                `{player}`, `{prefix}`, `{suffix}`, `{group}`, `{world}`, `{balance}`, `{ping}`.
+                
+                ## REST API
+                
+                The placeholder system is also accessible via REST:
+                
+                - `GET /api/placeholders/list` — all registered identifiers
+                - `GET /api/placeholders/resolve?player=<name>&text=<str>` — server-side resolution
+                - `GET /api/placeholders/stats` — registry statistics
+                
+                ## In-game admin command
+                
+                ```
+                /placeholder list                  — list all registered identifiers
+                /placeholder info <id>             — check if an identifier is registered
+                /placeholder test <text>           — resolve placeholders live (uses your player context)
+                /placeholder stats                 — show registry statistics
+                ```
+                
+                Permission: `neoessentials.admin.placeholders`
+                """,
+                5
+        ));
+
+        // ── Developer API ─────────────────────────────────────────────────────
+        sections.put("developer-api", new DocumentationSection(
+                "developer-api",
+                "Developer API",
+                "Extend NeoEssentials from your own NeoForge mod",
+                """
+                # NeoEssentials Developer API
+                
+                **API Version:** 1.2.0
+                
+                NeoEssentials ships a stable public API that other NeoForge 1.21.1 mods can depend on
+                to integrate with its economy, permission, and placeholder systems without any transitive
+                dependencies beyond the mod jar itself.
+                
+                ## Adding NeoEssentials as a dependency
+                
+                ### build.gradle
+                
+                ```groovy
+                dependencies {
+                    // NeoEssentials mod jar on the local libs/ path, or via a file dep
+                    implementation files('libs/neoessentials-<version>.jar')
+                }
+                ```
+                
+                Mark the dependency as `compileOnly` if your mod is designed to work without
+                NeoEssentials present and you check `isAvailable()` at runtime.
+                
+                ## API entry-point
+                
+                ```java
+                import com.zerog.neoessentials.api.NeoEssentialsAPI;
+                
+                if (NeoEssentialsAPI.isAvailable()) {
+                    // safe to call any API method
+                }
+                
+                // API version (SemVer)
+                String version = NeoEssentialsAPI.API_VERSION; // "1.2.0"
+                ```
+                
+                ## Economy API
+                
+                ```java
+                import com.zerog.neoessentials.api.economy.EconomyService;
+                
+                EconomyService eco = NeoEssentialsAPI.getEconomyService();
+                
+                eco.deposit(uuid, 100.0);
+                eco.withdraw(uuid, 50.0);
+                double balance = eco.getBalance(uuid);
+                boolean has    = eco.has(uuid, 30.0);
+                ```
+                
+                ### Economy Events (NeoForge event bus)
+                
+                ```java
+                @SubscribeEvent
+                public void onDeposit(EconomyDepositEvent event) {
+                    UUID player      = event.getPlayerUUID();
+                    double amount    = event.getAmount();
+                    double newBal    = event.getNewBalance();
+                    event.setCanceled(true); // optional — cancels the deposit
+                }
+                
+                @SubscribeEvent
+                public void onWithdraw(EconomyWithdrawEvent event) { ... }
+                ```
+                
+                ## Permissions API
+                
+                ```java
+                import com.zerog.neoessentials.api.permissions.PermissionsService;
+                
+                PermissionsService perms = NeoEssentialsAPI.getPermissionsService();
+                
+                // Check permission
+                boolean canFly = perms.hasPermission(playerUUID, "neoessentials.fly");
+                
+                // Group info
+                String group  = perms.getGroup(playerUUID);
+                String prefix = perms.getPrefix(playerUUID);
+                String suffix = perms.getSuffix(playerUUID);
+                
+                // Register your mod's permission nodes (shown in /permissions search)
+                perms.registerPermission("mymod.feature", "Enables my mod's cool feature");
+                
+                // Register a legacy alias
+                perms.registerAlias("oldmod.fly", "neoessentials.fly");
+                ```
+                
+                ## Placeholder API
+                
+                See the **Placeholder API** section for full details with code examples.
+                
+                Quick reference:
+                
+                ```java
+                import com.zerog.neoessentials.api.PlaceholderManager;
+                import com.zerog.neoessentials.api.PlaceholderExpansion;
+                import com.zerog.neoessentials.api.PlaceholderAPI;
+                
+                // Single placeholder
+                PlaceholderAPI.registerPlaceholder("mymod_value", (player, params) -> "hello");
+                
+                // Expansion (multiple)
+                PlaceholderAPI.registerExpansion(new MyModExpansion());
+                
+                // Resolve
+                String out = PlaceholderManager.getInstance().setPlaceholders(player, "{mymod_value}");
+                ```
+                
+                ## REST API access
+                
+                All REST endpoints exposed by the dashboard (see API Reference section) are accessible
+                from external tools using a Bearer token obtained from `POST /api/auth/login`.
+                
+                ```bash
+                # Login
+                curl -X POST http://localhost:8080/api/auth/login \\
+                     -H "Content-Type: application/json" \\
+                     -d '{"username":"admin","password":"secret"}'
+                # Response: {"token":"abc123..."}
+                
+                # Use token
+                curl http://localhost:8080/api/placeholders/list \\
+                     -H "Authorization: Bearer abc123..."
+                ```
+                
+                ## Versioning contract
+                
+                NeoEssentials follows SemVer for API changes:
+                - **PATCH** — bug fixes only, fully backward compatible
+                - **MINOR** — new methods/classes added, backward compatible
+                - **MAJOR** — breaking changes (rare, announced in advance)
+                
+                Use `NeoEssentialsAPI.API_VERSION` (String, SemVer) to guard version-specific calls:
+                
+                ```java
+                String[] parts = NeoEssentialsAPI.API_VERSION.split("\\\\.");
+                int minor = Integer.parseInt(parts[1]);
+                if (minor >= 2) {
+                    // use getPlaceholderManager(), available since 1.2.0
+                }
+                ```
+                """,
+                6
+        ));
+
         LOGGER.info("Loaded {} documentation sections", sections.size());
     }
     
@@ -422,6 +722,81 @@ public class DocumentationManager {
                 "Admin"
         ));
         
+        // ── Placeholder API endpoints ──────────────────────────────────────────
+        apiEndpoints.put("/api/placeholders/list", new ApiEndpoint(
+                "/api/placeholders/list",
+                "List Placeholders",
+                "GET",
+                "Return all registered placeholder identifiers (sorted alphabetically)",
+                List.of(
+                        new ApiExample("GET", "/api/placeholders/list", null, "Get all placeholders", """
+                                {
+                                  "success": true,
+                                  "count": 30,
+                                  "placeholders": [
+                                    "neoessentials_afk",
+                                    "neoessentials_balance",
+                                    "neoessentials_displayname",
+                                    "neoessentials_group",
+                                    "..."
+                                  ]
+                                }""")
+                ),
+                "Auth"
+        ));
+
+        apiEndpoints.put("/api/placeholders/resolve", new ApiEndpoint(
+                "/api/placeholders/resolve",
+                "Resolve Placeholders",
+                "GET",
+                "Resolve all placeholders in a text string server-side. "
+                + "Optional query param `player` provides a player context (must be online).",
+                List.of(
+                        new ApiExample("GET",
+                                "/api/placeholders/resolve?player=Steve&text=Hello+{neoessentials_name}!",
+                                null,
+                                "Resolve with player context",
+                                """
+                                {
+                                  "success": true,
+                                  "player": "Steve",
+                                  "input": "Hello {neoessentials_name}!",
+                                  "resolved": "Hello Steve!"
+                                }"""),
+                        new ApiExample("GET",
+                                "/api/placeholders/resolve?text=Server+has+{neoessentials_online_players}+players.",
+                                null,
+                                "Resolve without player (server-wide only)",
+                                """
+                                {
+                                  "success": true,
+                                  "player": null,
+                                  "input": "Server has {neoessentials_online_players} players.",
+                                  "resolved": "Server has 12 players."
+                                }""")
+                ),
+                "Auth"
+        ));
+
+        apiEndpoints.put("/api/placeholders/stats", new ApiEndpoint(
+                "/api/placeholders/stats",
+                "Placeholder Statistics",
+                "GET",
+                "Return placeholder registry statistics: total counts, expansion counts, etc.",
+                List.of(
+                        new ApiExample("GET", "/api/placeholders/stats", null, "Get stats", """
+                                {
+                                  "success": true,
+                                  "stats": {
+                                    "total_placeholders": 5,
+                                    "total_expansions": 2,
+                                    "registered_placeholders": 30
+                                  }
+                                }""")
+                ),
+                "Auth"
+        ));
+
         // Internationalization API
         apiEndpoints.put("/api/i18n/languages", new ApiEndpoint(
                 "/api/i18n/languages",
