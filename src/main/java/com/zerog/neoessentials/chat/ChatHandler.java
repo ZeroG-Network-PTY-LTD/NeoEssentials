@@ -282,11 +282,10 @@ public class ChatHandler {
                         }
                     }
 
-                    // Also send to server console as a system message so it appears exactly
-                    // like vanilla chat in the dedicated server terminal
-                    if (server != null && isConsoleLoggingEnabled()) {
-                        server.sendSystemMessage(formattedMessage);
-                    }
+                    // Note: chat is already logged above via LOGGER.info().
+                    // Do NOT call server.sendSystemMessage(formattedMessage) here — it would
+                    // route the formatted Component through vanilla's MinecraftServer logger
+                    // producing a duplicate (and potentially unresolved-placeholder) log line.
                 }
 
                 // Send message to Discord integration (if available and enabled for this channel)

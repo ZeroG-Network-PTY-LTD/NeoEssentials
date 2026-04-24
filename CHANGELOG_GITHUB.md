@@ -6,6 +6,94 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.62] — 2026-04-24
+
+### Improvement — Localization Audit & Tooling
+
+Full audit of all in-game translation key usage across 130+ source files.  
+54 missing keys added, fallback text improved, and a new suite of `/language` sub-commands added for server admins.
+
+**54 missing translation keys added to `en_us.json`:**
+
+| Category | Keys Added |
+|---|---|
+| TPA / Teleport Requests | `teleport.request.*` — 25 keys (sent, received, denied, expired, cancelled, failed, etc.) |
+| Misc Teleport | `back_info`, `death_info`, `jump_success`, `jump_failed`, `no_open_space` |
+| Pending TPA info | `teleport.request.pending_info` |
+| Spawn / Warp errors | `teleport.spawn.invalid_coordinates`, `teleport.spawn.no_permission`, `teleport.warp.invalid_coordinates` |
+| Warp list | `warp.list_statistics`, `warp.playerwarps_list_header` |
+| Home | `home.no_pending_delete_generic`, `home.overwrite_cancelled` |
+| Moderation | `player_only_command`, `reason_too_long`, `unfrozen_message`, `jail_success`, `unjail_success` |
+| General | `neoessentials.error.no_server`, `channel.error`, `command.player_only`, `error.player_only`, `near.server_error` |
+| Dashboard | `dashboard.separator`, `dashboard.title` |
+| Gamemode | `gamemode.changed_other` |
+| Mutelist | `mutelist.list` |
+
+**`MessageUtil` improvements:**
+
+- `localize(key, args...)` — when a key is not found, generates a human-readable English fallback by stripping the `commands.neoessentials.` prefix and capitalising. Players no longer see raw key strings like `commands.neoessentials.home.not_found` in chat.
+- New `localize(key, String fallback, args...)` overload — callers that know the English text can pass it as an explicit fallback.
+
+**New `/language` sub-commands:**
+
+| Command | Description |
+|---|---|
+| `/language validate <code>` | Compare a language file vs `en_us.json`; shows coverage %, missing keys (first 10), extra keys |
+| `/language regenerate <code>` | Refresh a language file from the JAR (backup to `.bak`, merge user values) |
+| `/language override set <key> <value>` | Override any message key in-game |
+| `/language override get <key>` | View current value for a key |
+| `/language override remove <key>` | Remove a specific override |
+| `/language override list` | List all active overrides |
+| `/language override clear` | Remove all overrides |
+| `/language override reload` | Reload overrides from disk |
+
+Overrides are persisted to `neoessentials/languages/overrides.json` and take priority over all language files.  
+`_langVersion` bumped **12 → 13** (triggers automatic key-merge on existing deployments).
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `en_us.json` | 54 new keys added, `_langVersion` 12 → 13 |
+| `MessageUtil.java` | Human-readable fallback for missing keys; new `localize(key, fallback, args)` overload; `CURRENT_LANG_VERSION` 12 → 13 |
+| `CustomLanguageManager.java` | Override CRUD (`setOverride`, `removeOverride`, `getOverride`, `getOverrides`, `clearOverrides`); `ValidationReport` class + `validateLanguage()`; `regenerate()` with automatic backup; `loadOverrides()` / `saveOverrides()`; overrides loaded on `initialize()` and `reload()` |
+| `LanguageCommand.java` | Added `validate`, `regenerate`, `override set/get/remove/list/clear/reload` sub-commands |
+
+---
+
+## [1.0.2.6+build.59] — 2026-04-24
+
+### Bug Fix — Chat: `{neoessentials_username_hover}` unresolved + duplicate vanilla log line
+
+Two related chat-formatting bugs fixed.
+
+**Bug 1 — Unresolved placeholder in formatted chat:**
+
+`ChatFormatter.formatMessage()` replaced `{neoessentials_username}` with `{neoessentials_username_hover}`
+when the `clickablePlayerNames` config option was enabled. `username_hover` was never registered in
+`DefaultPlaceholderExpansion`, so `PlaceholderAPI.setPlaceholders()` left the token as literal text in
+the Component. Players saw the placeholder text instead of the player's name, and the server console
+showed the unresolved token in the formatted output.
+
+**Bug 2 — Duplicate vanilla log line:**
+
+`ChatHandler.onServerChat()` called `server.sendSystemMessage(formattedMessage)` after already logging
+via `LOGGER.info(...)`. `MinecraftServer.sendSystemMessage()` writes to vanilla's own logger, producing
+a second log line in the format `<component.getString()>` — e.g. `<{neoessentials_username_hover}> chuj`.
+This was purely cosmetic (log noise) but made the bug visible and confused server admins.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `ChatFormatter.java` | Lines 70-74: Replaced `{neoessentials_username_hover}` placeholder substitution with `§HNAME§<name>§/HNAME§` and `§HDNAME§<dname>§/HDNAME§` internal markup tokens. Tokens are only injected when **both** `clickablePlayerNames` and `enableChatEnhancements` are true — otherwise `{neoessentials_username}` is left for PlaceholderAPI to resolve to plain text. |
+| `ChatFormatter.java` | `buildComponentFromMarkup()`: Added handling for `§HNAME§` and `§HDNAME§` tokens (with corresponding entries in the markers array). Each token produces a `MutableComponent` with a `SUGGEST_COMMAND` click event (`/msg playerName `) and a `SHOW_TEXT` hover event. |
+| `ChatFormatter.java` | Added `createClickablePlayerNameComponent(String displayText, ServerPlayer player)` helper method. |
+| `DefaultPlaceholderExpansion.java` | Added `username_hover` and `displayname_hover` to the placeholder set, resolving to the same plain text as `username` and `displayname` respectively. Safety net for any config string that uses the `_hover` token directly. |
+| `ChatHandler.java` | Removed `server.sendSystemMessage(formattedMessage)` block. Chat is already logged via `LOGGER.info(...)` in the proximity/permission/global branches above. The removed call was producing the duplicate `[net.minecraft.server.MinecraftServer/]: <...> message` log line. |
+
+---
+
 ## [1.0.2.6+build.58] — 2026-04-24
 
 ### Feature — API & Placeholder System

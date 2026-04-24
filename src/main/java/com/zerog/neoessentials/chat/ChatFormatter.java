@@ -66,11 +66,17 @@ public class ChatFormatter {
                 LOGGER.debug("After normalization: {}", normalizedTemplate);
             }
 
-            // Inject clickable player-name placeholder when feature is enabled
-            if (isClickablePlayerNamesEnabled()) {
+            // Inject clickable player-name markers when both features are enabled.
+            // We substitute the placeholder with an internal §HNAME§/§HDNAME§ marker
+            // so that buildComponentFromMarkup() can create proper hover+click Components.
+            // When enhancements are disabled the placeholder is left alone and resolved
+            // to plain text by PlaceholderAPI below.
+            if (isClickablePlayerNamesEnabled() && isChatEnhancementsEnabled()) {
+                String uname = player.getName().getString();
+                String dname = player.getDisplayName().getString();
                 normalizedTemplate = normalizedTemplate
-                    .replace("{neoessentials_username}", "{neoessentials_username_hover}")
-                    .replace("{neoessentials_displayname}", "{neoessentials_displayname_hover}");
+                    .replace("{neoessentials_username}", "§HNAME§" + uname + "§/HNAME§")
+                    .replace("{neoessentials_displayname}", "§HDNAME§" + dname + "§/HDNAME§");
             }
 
             // Phase 3: Apply badges and icons to template
@@ -543,12 +549,38 @@ public class ChatFormatter {
                 }
             }
 
+            // Check for HNAME (clickable username) marker
+            int hnameStart = markup.indexOf("§HNAME§", index);
+            if (hnameStart == index) {
+                int hnameEnd = markup.indexOf("§/HNAME§", hnameStart);
+                if (hnameEnd != -1) {
+                    String name = markup.substring(hnameStart + 7, hnameEnd);
+                    result.append(createClickablePlayerNameComponent(name, sender));
+                    index = hnameEnd + 8;
+                    continue;
+                }
+            }
+
+            // Check for HDNAME (clickable displayname) marker
+            int hdnameStart = markup.indexOf("§HDNAME§", index);
+            if (hdnameStart == index) {
+                int hdnameEnd = markup.indexOf("§/HDNAME§", hdnameStart);
+                if (hdnameEnd != -1) {
+                    String name = markup.substring(hdnameStart + 8, hdnameEnd);
+                    result.append(createClickablePlayerNameComponent(name, sender));
+                    index = hdnameEnd + 9;
+                    continue;
+                }
+            }
+
             // Find next marker
             int nextMarker = markup.length();
             int[] markers = {
                 markup.indexOf("§ITEM§", index),
                 markup.indexOf("§URL§", index),
-                markup.indexOf("§MENTION§", index)
+                markup.indexOf("§MENTION§", index),
+                markup.indexOf("§HNAME§", index),
+                markup.indexOf("§HDNAME§", index)
             };
 
             for (int m : markers) {
@@ -602,6 +634,24 @@ public class ChatFormatter {
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     Component.literal("Click to message " + playerName).withStyle(ChatFormatting.GRAY)))
             );
+    }
+
+    /**
+     * Create a clickable player-name component (hover = player info, click = /msg).
+     * Used when the {@code clickablePlayerNames} config option is enabled.
+     */
+    private static Component createClickablePlayerNameComponent(String displayText, ServerPlayer player) {
+        Component base = com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(displayText);
+        // Wrap into a MutableComponent so we can attach events
+        MutableComponent comp = Component.empty().append(base);
+        comp.withStyle(style -> style
+            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                "/msg " + player.getName().getString() + " "))
+            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Component.literal("✉ Click to message " + player.getName().getString())
+                    .withStyle(ChatFormatting.GRAY)))
+        );
+        return comp;
     }
 
     /**

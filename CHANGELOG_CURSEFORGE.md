@@ -4,6 +4,38 @@
 
 ---
 
+## 1.0.2.6+build.62 — 2026-04-24
+
+### 🌐 Improvement — Localization Audit & Admin Tooling
+
+Full audit of all in-game translation key usage, 54 missing keys added, and a new `/language` tooling suite for server admins.
+
+**What's new / fixed:**
+
+- **54 missing translation keys** added to `en_us.json` — primarily in the TPA/teleport-request flow (`request.sent`, `request.received`, `request.denied`, `request.expired`, `request.failed`, etc.), misc teleport (`/jumpto`, `/back` info), spawn/warp coordinate errors, moderation (`unfrozen_message`, `reason_too_long`), and several general/utility messages
+- **Human-readable fallbacks** — if a translation key is missing, players now see a readable English phrase (e.g. `Home not found`) instead of the raw key string (`commands.neoessentials.home.not_found`)
+- **`/language validate <code>`** — compare any language file against `en_us.json`, get coverage % and a list of missing/extra keys
+- **`/language regenerate <code>`** — refresh a language file from the bundled JAR copy, merge user translations, auto-backup to `.bak`
+- **`/language override`** — override individual message keys in-game; persisted to `overrides.json` and take priority over all language files (`set`, `get`, `remove`, `list`, `clear`, `reload` sub-commands)
+- `_langVersion` bumped **12 → 13** — new keys auto-merged on existing deployments at next server start
+
+---
+
+## 1.0.2.6+build.59 — 2026-04-24
+
+### 🐛 Bug Fix — Chat: Unresolved `{neoessentials_username_hover}` & duplicate server log
+
+Two related chat-formatting bugs fixed that caused `{neoessentials_username_hover}` to appear literally in player chat (instead of the player's name) and produced a duplicate log line from vanilla's `MinecraftServer` logger.
+
+**Root cause:** When "clickable player names" was enabled, `ChatFormatter` swapped `{neoessentials_username}` for `{neoessentials_username_hover}` — a placeholder that was never registered, so it was never resolved.
+
+**Fixes:**
+- Replaced the broken placeholder-swap with an internal markup token (`§HNAME§name§/HNAME§`) that `buildComponentFromMarkup()` now resolves into a proper hover+click `Component` — no placeholder resolution step needed
+- Added `username_hover` / `displayname_hover` to `DefaultPlaceholderExpansion` as plain-text fallbacks
+- Removed the redundant `server.sendSystemMessage(formattedMessage)` call in `ChatHandler` that was causing vanilla's logger to emit a second `<{neoessentials_username_hover}> message` line
+
+---
+
 ## 1.0.2.6+build.58 — 2026-04-24
 
 ### 🔌 Feature — API & Placeholder System

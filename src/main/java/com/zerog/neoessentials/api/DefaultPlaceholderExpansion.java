@@ -32,6 +32,10 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("displayname");
         placeholders.add("username");
         placeholders.add("name"); // alias for username
+        // Hover/click variants — resolved to plain text here; ChatFormatter applies
+        // the actual click/hover component when chat enhancements are enabled
+        placeholders.add("username_hover");
+        placeholders.add("displayname_hover");
         
         // Permission system placeholders
         placeholders.add("prefix");
@@ -108,6 +112,9 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 // Player identity
                 case "displayname" -> player != null ? player.getDisplayName().getString() : null;
                 case "username", "name" -> player != null ? player.getName().getString() : null;
+                // Hover variants — plain text fallback (ChatFormatter handles the Component side)
+                case "username_hover" -> player != null ? player.getName().getString() : null;
+                case "displayname_hover" -> player != null ? player.getDisplayName().getString() : null;
                 
                 // Permission system
                 case "prefix" -> getPlayerPrefix(player);
