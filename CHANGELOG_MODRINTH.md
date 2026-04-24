@@ -4,6 +4,30 @@
 
 ---
 
+## 1.0.2.6+build.44 — 2026-04-24
+
+### 🐛 Bug Fix — Home Confirmation Buttons Append "confirm" to Name
+
+Clicking `[Confirm]` on a `/sethome` overwrite or `/delhome` deletion prompt failed with *"Invalid home name: Colony confirm"*. Each subsequent click appended another `" confirm"`, making it impossible to confirm the action.
+
+Root cause: `confirm`/`deny` literals were Brigadier children of the `<name>` word-argument. In Minecraft 1.21+, `RUN_COMMAND` click events re-validate against the client-side command tree; the nested literal structure was not preserved, so `"Colony confirm"` was consumed as the full name value.
+
+Fixed by promoting `confirm` and `deny` to top-level literal siblings of `<name>` (Brigadier literals always take priority over argument nodes). Confirm/deny handlers now read the pending home name from the server-side pending map — no name is embedded in the button command. Also fixed `{HOME}`/`{home}` placeholders in message keys (were never substituted) to `{0}` and added missing message keys. Lang version `11 → 12`.
+
+---
+
+## 1.0.2.6+build.42 — 2026-04-24
+
+### 🐛 Bug Fix — `/back` Fails in Unloaded Chunks
+
+`/back` failed with *"No safe teleport location found"* whenever the death point or previous location was in an unloaded chunk — even though the destination was perfectly safe.
+
+Root causes: (1) `TeleportUtil` only force-loaded the single target chunk, but `findSafeLocation()` scans up to ±16 blocks in X/Z, which can cross chunk boundaries. Neighbouring unloaded chunks caused every candidate to fail `isSafe()`'s `level.isLoaded()` check. (2) `MiscTeleportManager.teleportDelay` was hardcoded to `3` — the field was never populated from config, so the configured warm-up delay was silently ignored.
+
+Fixed by adding `preloadChunksForTeleport()` (3×3 chunk grid loaded with `PORTAL` tickets before any safety check) and a new `loadConfig()` method in `MiscTeleportManager` that reads `teleportDelay`, `enableDeathBack`, and `enableTeleportBack` from `ConfigManager`.
+
+---
+
 ## 1.0.2.6+build.41 — 2026-04-24
 
 ### 🐛 Bug Fix — Vanish Module Cannot Be Disabled

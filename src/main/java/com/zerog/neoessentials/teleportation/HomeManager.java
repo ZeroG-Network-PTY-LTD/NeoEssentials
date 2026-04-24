@@ -438,20 +438,16 @@ public class HomeManager {
             }
         }
 
-        // Force-load target chunk before any safety check or teleport.
-        // isSafe() returns false for unloaded chunks, so we must ensure the chunk
-        // is loaded first to prevent false "unsafe location" failures.
+        // Force-load the target chunk AND its 8 neighbours (3×3 grid) before any safety
+        // check or teleport.  findSafeLocation() searches up to ±16 blocks in X/Z which
+        // can cross chunk boundaries, so loading only the centre chunk is insufficient.
         net.minecraft.server.level.ServerLevel homeLevel = home.getLevel();
         if (homeLevel != null) {
-            net.minecraft.world.level.ChunkPos homeChunkPos = new net.minecraft.world.level.ChunkPos(
-                new net.minecraft.core.BlockPos((int) home.getX(), (int) home.getY(), (int) home.getZ())
-            );
-            if (!homeLevel.isLoaded(homeChunkPos.getWorldPosition())) {
-                if (debug) LOGGER.info("[DEBUG] Target chunk ({},{}) is not loaded, force-loading before home teleport to '{}'.",
-                    homeChunkPos.x, homeChunkPos.z, homeName);
-                // Force-load synchronously so safety checks and teleport work correctly
-                homeLevel.getChunk(homeChunkPos.x, homeChunkPos.z);
-            }
+            net.minecraft.core.BlockPos homeBlockPos = new net.minecraft.core.BlockPos(
+                (int) home.getX(), (int) home.getY(), (int) home.getZ());
+            if (debug) LOGGER.info("[DEBUG] Pre-loading 3×3 chunk grid around ({},{}) for home teleport to '{}'.",
+                homeBlockPos.getX() >> 4, homeBlockPos.getZ() >> 4, homeName);
+            TeleportUtil.preloadChunksForTeleport(homeLevel, homeBlockPos);
         }
 
         // If safety is required, check for safe location (chunk is now loaded)

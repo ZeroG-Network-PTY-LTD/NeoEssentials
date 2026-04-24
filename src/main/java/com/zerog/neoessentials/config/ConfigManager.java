@@ -2561,6 +2561,73 @@ public class ConfigManager {
     }
 
     /**
+     * Returns the teleport delay (in seconds) for the /back command.
+     * Reads from teleportation.backSettings.teleportDelay first, then falls back to
+     * teleportation.generalSettings.teleportDelay.  Default: 3.
+     */
+    public int getBackTeleportDelay() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("backSettings")) {
+                JsonObject bs = tp.getAsJsonObject("backSettings");
+                if (bs.has("teleportDelay")) {
+                    try {
+                        int val = bs.get("teleportDelay").getAsInt();
+                        if (val >= 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (tp.has("generalSettings")) {
+                JsonObject gs = tp.getAsJsonObject("generalSettings");
+                if (gs.has("teleportDelay")) {
+                    try {
+                        int val = gs.get("teleportDelay").getAsInt();
+                        if (val >= 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return 3;
+    }
+
+    /**
+     * Returns whether death locations should be saved for /back.
+     * Reads from teleportation.backSettings.enableDeathBack.  Default: true.
+     */
+    public boolean isDeathBackEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("backSettings")) {
+                JsonObject bs = tp.getAsJsonObject("backSettings");
+                if (bs.has("enableDeathBack")) {
+                    return bs.get("enableDeathBack").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns whether the previous location is saved before each teleport (for /back).
+     * Reads from teleportation.backSettings.enableTeleportBack.  Default: true.
+     */
+    public boolean isTeleportBackEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("backSettings")) {
+                JsonObject bs = tp.getAsJsonObject("backSettings");
+                if (bs.has("enableTeleportBack")) {
+                    return bs.get("enableTeleportBack").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Save config changes. If split configs are enabled, only write to split files, never to config.json.
      */
     public void saveConfig(String configName, JsonObject config) {

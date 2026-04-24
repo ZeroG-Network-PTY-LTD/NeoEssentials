@@ -6,6 +6,69 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.44] — 2026-04-24
+
+### Bug Fix — `/sethome` and `/delhome` Confirmation Buttons Append "confirm" to Home Name
+
+Clicking the `[Confirm]` button on a `/sethome <name>` overwrite prompt or a `/delhome` deletion
+prompt failed with *"Invalid home name: Colony confirm"*. Each subsequent click appended another
+`" confirm"`, producing names like *"Colony confirm confirm confirm"*. The action never completed.
+
+**Root cause:**
+
+The `confirm` and `deny` literals were registered as Brigadier **child nodes of the `<name>`
+word-argument** (`/sethome <name> confirm`). The confirmation button's `RUN_COMMAND` click event
+sent `/sethome Colony confirm`. In Minecraft 1.21+, when the client processes a `RUN_COMMAND` string
+it re-validates the command against the client-side Brigadier tree that the server sent via
+`ClientboundCommandsPacket`. The client-side tree does not correctly represent the nested literal
+structure, so the full remaining input `"Colony confirm"` is consumed as a single word-argument
+value. The server then receives `"Colony confirm"` as the `name` argument, `setHome()` rejects it
+(space not allowed), the confirmation prompt is re-shown with `"Colony confirm"` as the new pending
+name, and the loop repeats on every click.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `HomeCommands.java` | Moved `confirm` and `deny` from being Brigadier children of `<name>` to **top-level literal siblings** under `sethome`/`createhome` and `delhome`/`deletehome`/`removehome`/`rhome`. Brigadier gives literals priority over argument nodes, so `/sethome confirm` routes to the handler while `/sethome Colony` routes to the name argument. |
+| `HomeCommands.java` | Updated `executeSetHomeConfirm`, `executeSetHomeDeny`, `executeDelHomeConfirm`, `executeDelHomeDeny` to retrieve the pending home name from the server-side pending map instead of parsing it from command arguments. Removed all `StringArgumentType.getString(context, "name")` calls from the four handlers. |
+| `HomeCommands.java` | Updated `executeSetHome` and `executeDelHome` to emit clean buttons (`/sethome confirm` / `/sethome deny`, `/delhome confirm` / `/delhome deny`) instead of embedding the home name in the button command. |
+| `en_us.json` | Fixed `delete_success`, `delete_cancelled`, `delete_failed`, `overwrite_success`, `overwrite_failed` to use `{0}` (valid `MessageFormat` pattern) instead of `{HOME}`/`{home}` (were silently unsubstituted). Added `overwrite_already_pending`, `no_pending_overwrite_generic`, `delete_already_pending`, `delete_no_pending_generic`, `delete_no_confirm_required`, `limit_exceeded` keys. |
+| `MessageUtil.java` | `CURRENT_LANG_VERSION` bumped `11 → 12`; new keys are auto-merged into existing server language files on next startup. |
+
+---
+
+## [1.0.2.6+build.42] — 2026-04-24
+
+### Bug Fix — `/back` Fails with "No Safe Teleport Location Found" in Unloaded Chunks
+
+Using `/back` (to return to a death point or previous location) failed whenever the target
+was in an unloaded chunk, producing the error *"No safe teleport location found"* even when
+the destination was perfectly valid.
+
+**Root causes:**
+
+1. **`TeleportUtil` only force-loaded the single target chunk.** `findSafeLocation()` scans
+   up to ±16 blocks in X/Z from the target, which can cross into neighbouring chunks.
+   Those neighbouring chunks were never loaded, so every candidate position inside them
+   returned `false` from `level.isLoaded(pos)` → `isSafe()` = false →
+   `findSafeLocation()` returned `null` → teleport failed.
+
+2. **`MiscTeleportManager.teleportDelay` was hardcoded to `3`.** The field was never
+   populated from config (`teleportation.backSettings.teleportDelay` /
+   `teleportation.generalSettings.teleportDelay`), so the configured warm-up delay was
+   silently ignored for all `/back` and implicit death-back teleports.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `TeleportUtil.java` | Added `preloadChunksForTeleport(ServerLevel, BlockPos)` — loads a 3×3 chunk grid (target + 8 neighbours) with `PORTAL` tickets before any `isSafe()` / `findSafeLocation()` call runs. Second call added after `findSafeLocation()` resolves to ensure the safe-landing chunk is also loaded. All `teleportPlayer()` paths benefit automatically. |
+| `ConfigManager.java` | Added `getBackTeleportDelay()` (reads `teleportation.backSettings.teleportDelay`, falls back to `generalSettings.teleportDelay`, default 3), `isDeathBackEnabled()`, and `isTeleportBackEnabled()`. |
+| `MiscTeleportManager.java` | Added `loadConfig()` — reads `teleportDelay`, `enableDeathBack`, and `enableTeleportBack` from `ConfigManager`; called at construction so config values are honoured from the first use. |
+
+---
+
 ## [1.0.2.6+build.41] — 2026-04-24
 
 ### Bug Fix — Vanish Module Cannot Be Disabled

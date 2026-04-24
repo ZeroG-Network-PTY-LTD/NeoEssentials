@@ -100,26 +100,15 @@ public class TeleportUtil {
             return future;
         }
 
-        // Force-load the target chunk BEFORE doing safety checks.
-        // isSafe() returns false for unloaded chunks, so loading must happen first.
-        ChunkPos chunkPos = new ChunkPos(new BlockPos((int) location.getX(),
-                                                     (int) location.getY(),
-                                                     (int) location.getZ()));
-        if (!targetLevel.isLoaded(chunkPos.getWorldPosition())) {
-            LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
-                chunkPos.x, chunkPos.z, location.getWorldName());
-            // Add a ticket so the chunk stays loaded long enough for the teleport
-            targetLevel.getChunkSource().addRegionTicket(
-                net.minecraft.server.level.TicketType.PORTAL,
-                chunkPos,
-                3,
-                chunkPos.getWorldPosition()
-            );
-            // Also force-load synchronously so safety checks below work correctly
-            targetLevel.getChunk(chunkPos.x, chunkPos.z);
-        }
+        // Force-load the target chunk AND its 8 neighbours (3×3 grid) BEFORE doing
+        // safety checks.  findSafeLocation() may search up to ±16 blocks in X/Z which
+        // can cross chunk boundaries, so just loading the centre chunk is not enough.
+        BlockPos targetBlockPos = new BlockPos((int) location.getX(),
+                                              (int) location.getY(),
+                                              (int) location.getZ());
+        preloadChunksForTeleport(targetLevel, targetBlockPos);
 
-        // Find safe location if requested (chunk is now loaded, isSafe() will work correctly)
+        // Find safe location if requested (surrounding chunks are now loaded)
         TeleportLocation finalLocation = location;
         if (findSafe && !location.isSafe()) {
             finalLocation = location.findSafeLocation();
@@ -127,17 +116,12 @@ public class TeleportUtil {
                 future.complete(TeleportResult.failure("No safe teleport location found"));
                 return future;
             }
-            // If safe location is in a different chunk, load that chunk too
-            ChunkPos safeChunkPos = new ChunkPos(new BlockPos((int) finalLocation.getX(),
-                                                              (int) finalLocation.getY(),
-                                                              (int) finalLocation.getZ()));
-            if (!safeChunkPos.equals(chunkPos) && !targetLevel.isLoaded(safeChunkPos.getWorldPosition())) {
-                targetLevel.getChunkSource().addRegionTicket(
-                    net.minecraft.server.level.TicketType.PORTAL,
-                    safeChunkPos, 3, safeChunkPos.getWorldPosition()
-                );
-                targetLevel.getChunk(safeChunkPos.x, safeChunkPos.z);
-            }
+            // Ensure the safe-landing chunk is also loaded (it is covered by the 3×3
+            // grid if the safe location is within ±1 chunk, but preload just in case).
+            BlockPos safeBlockPos = new BlockPos((int) finalLocation.getX(),
+                                                (int) finalLocation.getY(),
+                                                (int) finalLocation.getZ());
+            preloadChunksForTeleport(targetLevel, safeBlockPos);
         }
 
 
@@ -176,8 +160,11 @@ public class TeleportUtil {
             com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.registerPendingTeleport(player, cancelAction);
         }
 
-        // Schedule the teleport
-        player.getServer().tell(new net.minecraft.server.TickTask(delayTicks, () -> {
+        // Schedule the teleport.
+        // IMPORTANT: TickTask's first arg is an ABSOLUTE server tick count (not a
+        // relative delay), so we must add the current tick to get the correct future tick.
+        int wantedTick = player.getServer().getTickCount() + delayTicks;
+        player.getServer().tell(new net.minecraft.server.TickTask(wantedTick, () -> {
             // Unregister damage cancel (teleport completed or cancelled)
             if (cancelOnDamage) {
                 com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.unregisterPendingTeleport(player);
@@ -195,6 +182,14 @@ public class TeleportUtil {
             if (player.hasDisconnected()) {
                 future.complete(TeleportResult.failure("Player disconnected"));
                 return;
+            }
+            // Re-ensure the target chunk is still loaded at execution time.
+            // The PORTAL ticket we added earlier lasts 300 ticks, but for very long
+            // warmup delays we reload proactively to prevent "no safe location" errors.
+            ServerLevel execLevel = location.getLevel();
+            if (execLevel != null) {
+                preloadChunksForTeleport(execLevel, new BlockPos(
+                    (int) location.getX(), (int) location.getY(), (int) location.getZ()));
             }
             executeTeleport(player, location, future);
         }));
@@ -317,6 +312,40 @@ public class TeleportUtil {
         }
     }
     
+    /**
+     * Force-load a 3×3 grid of chunks around the given block position.
+     *
+     * <p>This ensures that both the target chunk and all immediate neighbours are
+     * fully loaded before any safety check or teleport.  {@code findSafeLocation()}
+     * can search up to ±16 blocks in X/Z which may cross into a neighbouring chunk;
+     * loading the surrounding 8 chunks prevents those positions from being falsely
+     * reported as unsafe (because {@code isLoaded()} returns {@code false} for
+     * unloaded chunks).</p>
+     *
+     * <p>Each chunk receives a {@link net.minecraft.server.level.TicketType#PORTAL}
+     * ticket (timeout ≈ 300 ticks / 15 s) and is loaded synchronously so it is
+     * immediately accessible for block-state queries and teleportation.</p>
+     */
+    public static void preloadChunksForTeleport(ServerLevel level, BlockPos pos) {
+        ChunkPos center = new ChunkPos(pos);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
+                // Always add a fresh ticket to reset the 300-tick expiry counter.
+                level.getChunkSource().addRegionTicket(
+                    net.minecraft.server.level.TicketType.PORTAL,
+                    cp, 3, cp.getWorldPosition()
+                );
+                if (!level.isLoaded(cp.getWorldPosition())) {
+                    LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
+                        cp.x, cp.z, level.dimension().location());
+                    // getChunk() with FULL status loads the chunk synchronously.
+                    level.getChunk(cp.x, cp.z);
+                }
+            }
+        }
+    }
+
     /**
      * Get the highest safe Y coordinate at the given X,Z in the world.
      * Scans top-down for a solid, non-dangerous ground with two clear blocks above.

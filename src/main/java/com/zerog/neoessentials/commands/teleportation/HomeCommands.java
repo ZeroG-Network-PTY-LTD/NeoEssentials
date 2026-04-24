@@ -127,14 +127,17 @@ public class HomeCommands {
                 }
                 return false; // Console can't use homes
             })
+            // confirm/deny are top-level literals so Brigadier never confuses them with
+            // the <name> argument.  The home name is retrieved from the server-side pending
+            // map — it never travels through the command string.
+            .then(Commands.literal("confirm")
+                .executes(HomeCommands::executeSetHomeConfirm)
+            )
+            .then(Commands.literal("deny")
+                .executes(HomeCommands::executeSetHomeDeny)
+            )
             .then(Commands.argument("name", StringArgumentType.word())
                 .executes(HomeCommands::executeSetHome)
-                .then(Commands.literal("confirm")
-                    .executes(HomeCommands::executeSetHomeConfirm)
-                )
-                .then(Commands.literal("deny")
-                    .executes(HomeCommands::executeSetHomeDeny)
-                )
             )
         );
     }
@@ -161,15 +164,16 @@ public class HomeCommands {
                 }
                 return false; // Console can't use homes
             })
+            // confirm/deny are top-level literals — home name comes from the pending map.
+            .then(Commands.literal("confirm")
+                .executes(HomeCommands::executeDelHomeConfirm)
+            )
+            .then(Commands.literal("deny")
+                .executes(HomeCommands::executeDelHomeDeny)
+            )
             .then(Commands.argument("name", StringArgumentType.word())
                 .suggests(HOME_SUGGESTIONS)
                 .executes(HomeCommands::executeDelHome)
-                .then(Commands.literal("confirm")
-                    .executes(HomeCommands::executeDelHomeConfirm)
-                )
-                .then(Commands.literal("deny")
-                    .executes(HomeCommands::executeDelHomeDeny)
-                )
             )
         );
     }
@@ -273,11 +277,12 @@ public class HomeCommands {
                 return 0;
             }
             pendingSetHomeConfirmations.put(player.getUUID(), homeName);
+            // Confirm/deny buttons run top-level commands — home name is held server-side.
             player.sendSystemMessage(MessageUtil.homeConfirmComponent(
                 homeName,
                 "overwrite",
-                "/sethome " + homeName + " confirm",
-                "/sethome " + homeName + " deny"
+                "/sethome confirm",
+                "/sethome deny"
             ));
             return 0;
         }
@@ -292,7 +297,7 @@ public class HomeCommands {
     }
 
     /**
-     * Execute /sethome <name> confirm
+     * Execute /sethome confirm  (home name read from the server-side pending map)
      */
     private static int executeSetHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
@@ -300,11 +305,11 @@ public class HomeCommands {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
-        String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
-        String pending = pendingSetHomeConfirmations.get(player.getUUID());
-        if (pending == null || !pending.equals(homeName)) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_overwrite", homeName));
+        // Read the home name from the pending map — it is NOT passed through the command string.
+        String homeName = pendingSetHomeConfirmations.get(player.getUUID());
+        if (homeName == null) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_overwrite_generic"));
             return 0;
         }
         pendingSetHomeConfirmations.remove(player.getUUID());
@@ -319,7 +324,7 @@ public class HomeCommands {
     }
 
     /**
-     * Execute /sethome <name> deny
+     * Execute /sethome deny  (home name read from the server-side pending map)
      */
     private static int executeSetHomeDeny(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
@@ -327,14 +332,12 @@ public class HomeCommands {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
-        String homeName = StringArgumentType.getString(context, "name");
-        String pending = pendingSetHomeConfirmations.get(player.getUUID());
-        if (pending != null && pending.equals(homeName)) {
-            pendingSetHomeConfirmations.remove(player.getUUID());
+        String homeName = pendingSetHomeConfirmations.remove(player.getUUID());
+        if (homeName != null) {
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.overwrite_cancelled", homeName));
             return 1;
         }
-        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_overwrite", homeName));
+        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_overwrite_generic"));
         return 0;
     }
 
@@ -357,11 +360,12 @@ public class HomeCommands {
                 return 0;
             }
             pendingDeleteConfirmations.put(player.getUUID(), homeName);
+            // Confirm/deny buttons run top-level commands — home name is held server-side.
             player.sendSystemMessage(MessageUtil.homeConfirmComponent(
                 homeName,
                 "delete",
-                "/delhome " + homeName + " confirm",
-                "/delhome " + homeName + " deny"
+                "/delhome confirm",
+                "/delhome deny"
             ));
             return 0;
         }
@@ -376,7 +380,7 @@ public class HomeCommands {
     }
 
     /**
-     * Execute /delhome <name> confirm
+     * Execute /delhome confirm  (home name read from the server-side pending map)
      */
     private static int executeDelHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
@@ -384,23 +388,18 @@ public class HomeCommands {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
-        String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
-        // Guard: Only allow a single confirm, do not allow repeated confirm arguments
-        String pending = pendingDeleteConfirmations.get(player.getUUID());
         if (!config.isRequireConfirmationForDeleteEnabled()) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_no_confirm_required"));
             return 0;
         }
-        if (pending == null || !pending.equals(homeName)) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_delete", homeName));
-            // Always clear any accidental stacking
-            pendingDeleteConfirmations.remove(player.getUUID());
+        // Read the home name from the pending map — it is NOT passed through the command string.
+        String homeName = pendingDeleteConfirmations.remove(player.getUUID());
+        if (homeName == null) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.no_pending_delete_generic"));
             return 0;
         }
-        // Remove pending confirmation before attempting deletion to prevent stacking
-        pendingDeleteConfirmations.remove(player.getUUID());
         boolean success = homeManager.deleteHome(player, homeName);
         if (success) {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.delete_success", homeName));
@@ -427,21 +426,19 @@ public class HomeCommands {
         return 1;
     }
 
-    // Add handler for /delhome <name> deny
+    // Add handler for /delhome deny  (home name read from the server-side pending map)
     private static int executeDelHomeDeny(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         if (player == null) {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.command.player_only"));
             return 0;
         }
-        String homeName = StringArgumentType.getString(context, "name");
-        String pending = pendingDeleteConfirmations.get(player.getUUID());
-        if (pending != null && pending.equals(homeName)) {
-            pendingDeleteConfirmations.remove(player.getUUID());
+        String homeName = pendingDeleteConfirmations.remove(player.getUUID());
+        if (homeName != null) {
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.delete_cancelled", homeName));
             return 1;
         }
-        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_delete", homeName));
+        player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.no_pending_delete_generic"));
         return 0;
     }
 
