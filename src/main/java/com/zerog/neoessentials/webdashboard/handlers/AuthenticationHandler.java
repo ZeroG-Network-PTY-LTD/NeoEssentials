@@ -971,15 +971,20 @@ public class AuthenticationHandler implements HttpHandler {
         }
         
         JsonObject response = new JsonObject();
+        response.addProperty("success", true);
         response.addProperty("valid", true);
+        // Top-level fields for backwards-compatibility with dashboard.js checkAuthentication()
+        response.addProperty("username", session.getUsername());
+        response.addProperty("isAdmin", session.getRole() == User.Role.ADMIN);
+        response.addProperty("authType", "password");
         response.add("session", session.toJson());
-        
+
         // Get user details
         User user = authManager.getUser(session.getUserId());
         if (user != null) {
             response.add("user", user.toJson());
         }
-        
+
         sendJsonResponse(exchange, 200, response);
     }
     

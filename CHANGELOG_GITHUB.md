@@ -6,7 +6,59 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.46] — 2026-04-24
+
+### Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank After Login
+
+Navigating to `admin.html` or `permissions.html` after logging in on `index.html` would show a
+blank page. Pressing F5 would briefly reveal the buttons before they disappeared again.
+
+**Root causes:**
+
+1. **`showLoginScreen()` has no redirect on sub-pages.**  
+   On `index.html`, `showLoginScreen()` hides `dashboardWrapper` and shows `loginContainer`.
+   On `admin.html` and `permissions.html` there is no `loginContainer`, so only `dashboardWrapper`
+   was hidden — leaving the user with a completely blank page and no way to log back in.
+   If anything caused the auth check or any subsequent `fetchWithAuth` call to fail (expired
+   session, server reload clearing in-memory sessions, transient network error), the page went
+   blank silently. The brief flash visible on hard-refresh was the HTML rendering before the
+   async auth check completed.
+
+2. **`permissions.js` never initialised on `permissions.html`.**  
+   The init guard at the bottom of `permissions.js` checked
+   `window.location.hash === '#permissions'` or
+   `document.querySelector('[data-page="permissions"].active')`.
+   Neither condition is ever true on the standalone `permissions.html` page, so
+   `initPermissionSystem()` was never called — all permission tabs showed their "Loading…"
+   placeholder forever.
+
+3. **Multiple `fetchWithAuth` calls in `permissions.js` were missing `.json()`.**  
+   `viewGroupPermissions`, `editUserPermissions`, `submitEditGroup`, `addGroupPermission`,
+   `removeGroupPermission`, `deleteGroup`, `addUserPermission`, `removeUserPermission`, and
+   `submitChangeGroup` all called `fetchWithAuth(...)` and then checked `response.success` or
+   read `response.group` etc. directly on the raw `Response` object (which has no `.success`
+   property). Every modal action silently failed instead of succeeding.
+
+4. **Username not shown in topbar on sub-pages.**  
+   `showDashboard()` only looked for `id="usernameDisplay"` (exists on `index.html`).
+   `admin.html` and `permissions.html` use `id="userName"`, so the username was always "Guest"
+   on those pages.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `dashboard.js` | `showLoginScreen()`: when `loginContainer` is absent (sub-pages), redirect to `index.html` instead of just hiding `dashboardWrapper`. |
+| `dashboard.js` | `showDashboard()`: username display now tries `id="usernameDisplay"` first, then falls back to `id="userName"`, so the topbar shows the correct username on both index and sub-pages. |
+| `dashboard.js` | Version string bumped to Build 418 (cache-bust). |
+| `permissions.js` | Replaced the unreliable hash/data-page init guard with `tryInitPermissions()` — checks for `id="permOverviewTab"` which is always present on `permissions.html`. |
+| `permissions.js` | Added `.json()` parsing to the raw `Response` in `viewGroupPermissions`, `editUserPermissions`, `submitEditGroup`, `addGroupPermission`, `removeGroupPermission`, `deleteGroup`, `addUserPermission`, `removeUserPermission`, and `submitChangeGroup`. |
+| `admin.html`, `permissions.html`, `index.html` | Script `?v=` cache-bust query bumped to `418`. |
+
+---
+
 ## [1.0.2.6+build.44] — 2026-04-24
+
 
 ### Bug Fix — `/sethome` and `/delhome` Confirmation Buttons Append "confirm" to Home Name
 
