@@ -32,10 +32,10 @@ public class NeoEssentials {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentials.class);
     
     // Build and version information
-    private static final String MOD_VERSION = "1.0.2.5";
+    private static final String MOD_VERSION = "1.0.2.6";
     private static final String MOD_NAME = "NeoEssentials";
     private static final String BUILD_NUMBER = readBuildNumber();
-    private static final String MINECRAFT_VERSION = "1.21.1-1.21.10";
+    private static final String MINECRAFT_VERSION = "1.21.1-26.1.2";
     private static final String NEOFORGE_VERSION = "21.1.179+";
 
     @SuppressWarnings("unused") // modEventBus parameter required by NeoForge @Mod constructor
