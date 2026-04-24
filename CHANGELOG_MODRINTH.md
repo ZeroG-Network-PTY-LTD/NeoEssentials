@@ -4,6 +4,34 @@
 
 ---
 
+## 1.0.2.6+build.57 — 2026-04-24
+
+### ✨ Feature — Chat Formatting: Per-Player Overrides Now Applied
+
+Per-player format overrides set via `/chatformat set <player> <format>` were stored correctly but **never actually applied** — `ChatHandler` always resolved the chat format from the group/world lookup, silently ignoring any stored per-player override. `PlayerChatFormatManager.getFormat()` is now called first, making it the highest-priority step in the chain (per-player → group+world → group → world → default).
+
+All rich-text features were already implemented (`RichTextFormatter`, `ChatFormatter`) and remain unchanged: hex colors (`&#RRGGBB`), gradients (`<gradient:FF0000-0000FF>`), rainbow, hover tooltips, click events, bold/italic, and legacy `&` codes. `ChatSystem.md` has been fully rewritten with a format priority diagram, `/chatformat` command table, complete tag reference with examples, placeholder list, and config key reference.
+
+---
+
+## 1.0.2.6+build.56 — 2026-04-24
+
+### ✨ Feature — Inventory Management & Security Improvements
+
+Config flags for `/invsee`, `/inv`, `/invseeedit`, `/enderchest`, `/ec`, `/enderchestedit`, `/ecedit` existed in `config.json` but were never read — the commands were always available regardless of the flag. All `requires()` predicates now check the corresponding `isCommandEnabled()` flag.
+
+Added a concurrent-edit lock: only one staff member can hold an editable view of a player's inventory or ender chest at a time (second attempt is blocked with an informational message; lock releases on viewer disconnect). Added `InventoryAuditLogger` writing every view/edit open to `neoessentials/inventory_audit.log` (7 action types, controlled by new `items.inventoryAuditLog` config key). Added 4 new language keys for disabled and concurrent-edit error messages.
+
+---
+
+## 1.0.2.6+build.55 — 2026-04-24
+
+### 🔧 Improvement — Per-Command Teleport Bypass Perms & Chunk Loading Docs
+
+8 per-command bypass permission nodes (`neoessentials.teleport.home.bypass.cooldown/warmup`, `warp.*`, `spawn.*`, `back.*`) were already checked in code but absent from `PermissionRegistry`, so the dashboard and permission tools couldn't discover them. All 8 are now registered. Added a "Chunk Loading & Safety Interaction" section to `TeleportationSystem.md` explaining the 3×3 chunk preload and safety-scan order of operations.
+
+---
+
 ## 1.0.2.6+build.50 — 2026-04-24
 
 ### ✨ Teleportation Improvements — Dashboard Settings Page, Language Keys & Permission Docs

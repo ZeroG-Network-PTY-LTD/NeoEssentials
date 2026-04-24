@@ -208,8 +208,9 @@ public class ChatHandler {
 
             // Only apply custom chat formatting if enabled in config
             if (com.zerog.neoessentials.config.ConfigManager.isChatFormattingEnabled()) {
-                // Get the configured chat format for group/world
-                String chatFormat = chatManager.getChatFormat(group, world);
+                // Format priority: per-player override > group+world > group > world > default
+                String perPlayerFormat = PlayerChatFormatManager.getInstance().getFormat(player.getUUID());
+                String chatFormat = (perPlayerFormat != null) ? perPlayerFormat : chatManager.getChatFormat(group, world);
                 // Cancel the original event to apply custom formatting
                 event.setCanceled(true);
                 // Format the message using our custom formatter
