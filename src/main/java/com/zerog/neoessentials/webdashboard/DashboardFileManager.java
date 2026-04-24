@@ -28,8 +28,10 @@ public class DashboardFileManager {
         "index.html",
         "permissions.html",
         "admin.html",
+        "teleport.html",
         "dashboard.js",
         "permissions.js",
+        "teleport.js",
         "styles.css"
     );
 
