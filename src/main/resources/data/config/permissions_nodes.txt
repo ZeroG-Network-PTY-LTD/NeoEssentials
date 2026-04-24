@@ -133,6 +133,20 @@ neoessentials.teleport.home.unsafe - Set home in unsafe locations (default: fals
 neoessentials.teleport.warp.unsafe - Use warp to unsafe locations (default: false)
 neoessentials.teleport.spawn.unsafe - Use spawn in unsafe locations (default: false)
 
+### Cooldown & Warmup Bypass
+# Global bypass (admin-level): affects all teleport commands
+neoessentials.teleport.bypass.cooldown - Bypass ALL teleport cooldowns (default: false)
+neoessentials.teleport.bypass.warmup - Bypass ALL teleport warmups, instant teleport (default: false)
+# Per-command bypass:
+neoessentials.teleport.home.bypass.cooldown - Bypass /home teleport & set cooldowns (default: false)
+neoessentials.teleport.home.bypass.warmup - Bypass /home warmup delay (default: false)
+neoessentials.teleport.warp.bypass.cooldown - Bypass /warp use cooldown (default: false)
+neoessentials.teleport.warp.bypass.warmup - Bypass /warp warmup delay (default: false)
+neoessentials.teleport.spawn.bypass.cooldown - Bypass /spawn cooldown (default: false)
+neoessentials.teleport.spawn.bypass.warmup - Bypass /spawn warmup delay (default: false)
+neoessentials.teleport.back.bypass.cooldown - Bypass /back cooldown (default: false)
+neoessentials.teleport.back.bypass.warmup - Bypass /back warmup delay (default: false)
+
 ## ═══════════════════════════════════════════════════════════
 ## KIT SYSTEM PERMISSIONS
 ## ═══════════════════════════════════════════════════════════

@@ -10,6 +10,7 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.MotdEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PermissionEndpoint;
+import com.zerog.neoessentials.webdashboard.endpoints.TeleportEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler;
@@ -353,6 +354,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/permissions", withAuth(new PermissionEndpoint(server)));
         apiServer.createContext("/api/motd", withAuth(new MotdEndpoint(server)));
         apiServer.createContext("/api/rules", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.RulesEndpoint()));
+        apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
@@ -366,6 +368,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/permissions/* (overview, groups, users, manage) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
         LOGGER.info("  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
 
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {

@@ -607,4 +607,12 @@ public class MiscTeleportManager {
         deathLocations.clear();
         LOGGER.info("Cleared all misc teleport data");
     }
+
+    /**
+     * Reload configuration (called by dashboard teleport settings endpoint or /reload command).
+     */
+    public void reload() {
+        LOGGER.info("Reloading MiscTeleportManager config...");
+        loadConfig();
+    }
 }
