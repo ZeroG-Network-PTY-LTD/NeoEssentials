@@ -416,6 +416,18 @@
 | `/permissions debug` | `/permissions debug <player>` | `neoessentials.permissions.debug` | 🔒 | Full permission resolution trace for a player (see below) |
 | `/permissions group … setpriority` | `/permissions group <name> setpriority <value>` | `neoessentials.permissions.group.modify` | 🔒 | Set group priority (−999 to 999; higher = checked first in inheritance) |
 | `/permissions group … getpriority` | `/permissions group <name> getpriority` | `neoessentials.permissions.info.group` | 🔒 | Read the current priority of a group |
+| `/permissions user … addtemp` | `/permissions user <player> addtemp <node> <duration>` | `neoessentials.permissions.user.temp` | 🔒 | Grant a time-limited permission to a player (e.g. `1d`, `12h`, `30m`) |
+| `/permissions user … removetemp` | `/permissions user <player> removetemp <node>` | `neoessentials.permissions.user.temp` | 🔒 | Revoke a temporary permission before it expires |
+| `/permissions user … listtemp` | `/permissions user <player> listtemp` | `neoessentials.permissions.info.user` | 🔒 | List all active temporary permissions with time remaining |
+| `/permissions group … addtemp` | `/permissions group <name> addtemp <node> <duration>` | `neoessentials.permissions.group.temp` | 🔒 | Grant a time-limited permission to a group |
+| `/permissions group … removetemp` | `/permissions group <name> removetemp <node>` | `neoessentials.permissions.group.temp` | 🔒 | Revoke a temporary group permission early |
+| `/permissions group … listtemp` | `/permissions group <name> listtemp` | `neoessentials.permissions.info.group` | 🔒 | List all active group temp permissions with time remaining |
+| `/permissions user … context add` | `/permissions user <player> context add <contextKey> <node> allow\|deny` | `neoessentials.permissions.user.context` | 🔒 | Grant or deny a permission node in a specific context (world / time / gamemode) |
+| `/permissions user … context remove` | `/permissions user <player> context remove <contextKey> <node>` | `neoessentials.permissions.user.context` | 🔒 | Remove a contextual override |
+| `/permissions user … context list` | `/permissions user <player> context list` | `neoessentials.permissions.user.context` | 🔒 | List all contextual overrides for a player |
+| `/permissions group … context add` | `/permissions group <name> context add <contextKey> <node> allow\|deny` | `neoessentials.permissions.group.context` | 🔒 | Grant or deny a permission node in a specific context for a group |
+| `/permissions group … context remove` | `/permissions group <name> context remove <contextKey> <node>` | `neoessentials.permissions.group.context` | 🔒 | Remove a contextual group override |
+| `/permissions group … context list` | `/permissions group <name> context list` | `neoessentials.permissions.group.context` | 🔒 | List all contextual overrides for a group |
 
 > **`/permissions debug <player>`**  
 > Prints a complete in-game diagnostic for the named player without requiring debug logging:
@@ -459,8 +471,9 @@
 ### Player Actions
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/nick` | `/nick <nickname\|off>` | `neoessentials.nick` | 🔒 | Set your display nickname |
-| `/nickname` | alias for `/nick` | same | 🔒 | Alias |
+| `/nick` | `/nick [<name>\|reset\|off]` | `neoessentials.nick` | ✅ | Set / clear / show your display nickname |
+| `/nickname` | Brigadier redirect → `/nick` | same | ✅ | Functional alias for `/nick` |
+| `/setnick` | `/setnick <player> <name\|reset>` | `neoessentials.nick.others` | 🔒 | Set or clear another player's nickname (admin) |
 | `/realname` | `/realname <nickname>` | `neoessentials.realname` | ✅ | Find a player's real name from their nickname |
 | `/suicide` | `/suicide` | `neoessentials.suicide` | ✅ | Kill yourself |
 | `/killme` | alias for `/suicide` | same | ✅ | Alias |

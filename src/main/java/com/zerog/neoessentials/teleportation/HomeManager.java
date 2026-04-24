@@ -113,8 +113,11 @@ public class HomeManager {
                     JsonObject tp = config.getAsJsonObject("teleportation");
                     if (tp.has("homeSettings")) {
                         JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                        // Accept both "enableHomeTeleportSafety" (canonical) and "enableHomeSafety" (alias)
                         if (homeSettings.has("enableHomeTeleportSafety")) {
                             safe = homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
+                        } else if (homeSettings.has("enableHomeSafety")) {
+                            safe = homeSettings.get("enableHomeSafety").getAsBoolean();
                         }
                         if (homeSettings.has("maxHomes")) {
                             try {
@@ -409,7 +412,24 @@ public class HomeManager {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return;
         }
-        // If safety is required, check for safe location
+
+        // Force-load target chunk before any safety check or teleport.
+        // isSafe() returns false for unloaded chunks, so we must ensure the chunk
+        // is loaded first to prevent false "unsafe location" failures.
+        net.minecraft.server.level.ServerLevel homeLevel = home.getLevel();
+        if (homeLevel != null) {
+            net.minecraft.world.level.ChunkPos homeChunkPos = new net.minecraft.world.level.ChunkPos(
+                new net.minecraft.core.BlockPos((int) home.getX(), (int) home.getY(), (int) home.getZ())
+            );
+            if (!homeLevel.isLoaded(homeChunkPos.getWorldPosition())) {
+                if (debug) LOGGER.info("[DEBUG] Target chunk ({},{}) is not loaded, force-loading before home teleport to '{}'.",
+                    homeChunkPos.x, homeChunkPos.z, homeName);
+                // Force-load synchronously so safety checks and teleport work correctly
+                homeLevel.getChunk(homeChunkPos.x, homeChunkPos.z);
+            }
+        }
+
+        // If safety is required, check for safe location (chunk is now loaded)
         if (requireSafe) {
             if (!home.isSafe()) {
                 TeleportLocation safeLocation = home.findSafeLocation();

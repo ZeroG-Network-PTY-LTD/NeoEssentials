@@ -1,6 +1,6 @@
 # NeoEssentials — Permission System
 
-> **Last updated:** 2026-03-06 · **Version:** 1.0.2.6  
+> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28  
 > **Source of truth:** `PermissionRegistry.registerAllPermissions()` in the mod source.  
 > All nodes listed here are **actively registered** and recognised by the permission engine.  
 > Nodes marked `✅ default` are granted to every player automatically (including non-OP).  
@@ -12,22 +12,27 @@
 1. [Configuration](#configuration)
 2. [How Permissions Work](#how-permissions-work)
 3. [Group Priorities](#group-priorities)
-4. [Wildcards & Inheritance](#wildcards--inheritance)
-5. [Dynamic Nodes](#dynamic-nodes)
-6. [Permission Nodes — Full Reference](#permission-nodes--full-reference)
-   - [Core](#core)
-   - [Economy](#economy)
-   - [Teleportation](#teleportation)
-   - [Kits](#kits)
-   - [Items](#items)
-   - [Chat & Messaging](#chat--messaging)
-   - [Moderation](#moderation)
-   - [Miscellaneous Utilities](#miscellaneous-utilities)
-   - [Admin & Config](#admin--config)
-   - [Permission System Commands](#permission-system-commands)
-   - [Web Dashboard](#web-dashboard)
-6. [Example groups.json](#example-groupsjson)
-7. [External Permission Mods](#external-permission-mods)
+4. [Temporary Permissions](#temporary-permissions)
+5. [Contextual Permissions](#contextual-permissions)
+6. [Permission Conditions](#permission-conditions)
+7. [Permission Aliases](#permission-aliases)
+8. [API for Other Mods](#api-for-other-mods)
+9. [Wildcards & Inheritance](#wildcards--inheritance)
+10. [Dynamic Nodes](#dynamic-nodes)
+11. [Permission Nodes — Full Reference](#permission-nodes--full-reference)
+    - [Core](#core)
+    - [Economy](#economy)
+    - [Teleportation](#teleportation)
+    - [Kits](#kits)
+    - [Items](#items)
+    - [Chat & Messaging](#chat--messaging)
+    - [Moderation](#moderation)
+    - [Miscellaneous Utilities](#miscellaneous-utilities)
+    - [Admin & Config](#admin--config)
+    - [Permission System Commands](#permission-system-commands)
+    - [Web Dashboard](#web-dashboard)
+12. [Example groups.json](#example-groupsjson)
+13. [External Permission Mods](#external-permission-mods)
 
 ---
 
@@ -104,6 +109,332 @@ Every group has an integer `priority` field (default `0`). When a group inherits
 | 1 | trusted |
 | 0 | default (unset) |
 | −1 to −999 | restricted / muted helper groups |
+
+---
+
+## Temporary Permissions
+
+Temporary permissions are time-limited grants that **expire automatically** — no manual revocation needed. They work for both individual players and groups.
+
+### Duration format
+
+Combine `d` (days), `h` (hours), `m` (minutes), `s` (seconds) in any order:
+
+| Duration string | Meaning |
+|---|---|
+| `30m` | 30 minutes |
+| `12h` | 12 hours |
+| `1d` | 1 day |
+| `7d` | 7 days |
+| `1d12h30m` | 1 day, 12 hours, 30 minutes |
+| `2h30m15s` | 2 hours, 30 minutes, 15 seconds |
+
+### Commands — users
+
+| Command | Permission required | Description |
+|---|---|---|
+| `/permissions user <player> addtemp <node> <duration>` | `neoessentials.permissions.user.temp` | Grant a temporary permission |
+| `/permissions user <player> removetemp <node>` | `neoessentials.permissions.user.temp` | Revoke a temporary permission early |
+| `/permissions user <player> listtemp` | `neoessentials.permissions.info.user` | List all active temp permissions with time remaining |
+
+### Commands — groups
+
+| Command | Permission required | Description |
+|---|---|---|
+| `/permissions group <name> addtemp <node> <duration>` | `neoessentials.permissions.group.temp` | Grant a temporary permission to every member of the group |
+| `/permissions group <name> removetemp <node>` | `neoessentials.permissions.group.temp` | Revoke a temporary group permission early |
+| `/permissions group <name> listtemp` | `neoessentials.permissions.info.group` | List all active group temp permissions with time remaining |
+
+### How it works
+
+1. The expiry timestamp (UTC epoch-ms) is stored alongside the permission node.
+2. **Resolution order** — temp permissions are evaluated *after* negative-permission (`-node`) denials but *before* regular user and group permissions. An explicit `-node` deny still wins.
+3. **Auto-expiry** — a server-tick handler runs every 30 seconds. When an entry's timestamp has passed:
+   - The entry is removed from memory and from disk (`playerdata.json` / `permissions.json`).
+   - If the affected player is online they receive the chat message `§eYour temporary permission §f<node>§e has expired.`
+   - The expiry is written to the audit log with executor `SYSTEM` and action `USER_TEMP_PERM_EXPIRED` / `GROUP_TEMP_PERM_EXPIRED`.
+4. **Restart safety** — temp permissions are persisted on disk. On reload, only entries whose expiry is still in the future are loaded; expired entries are silently discarded.
+
+### Worked example
+
+```
+# Grant a player event-only creative permissions for 2 hours:
+/permissions user Steve addtemp neoessentials.fly 2h
+/permissions user Steve addtemp neoessentials.gamemode.creative 2h
+
+# Give the vip group a bonus ability for 24 hours:
+/permissions group vip addtemp neoessentials.fly 1d
+
+# Check what's active:
+/permissions user Steve listtemp
+# → neoessentials.fly          — expires in 1h 58m 32s
+# → neoessentials.gamemode.creative — expires in 1h 58m 32s
+```
+
+### Audit log events
+
+| Action constant | Trigger |
+|---|---|
+| `USER_TEMP_PERM_ADDED` | `/permissions user <p> addtemp` |
+| `USER_TEMP_PERM_REMOVED` | `/permissions user <p> removetemp` |
+| `USER_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
+| `GROUP_TEMP_PERM_ADDED` | `/permissions group <g> addtemp` |
+| `GROUP_TEMP_PERM_REMOVED` | `/permissions group <g> removetemp` |
+| `GROUP_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
+
+---
+
+## Contextual Permissions
+
+Contextual permissions are per-world, per-gamemode, or time-of-day overrides layered **on top of** the regular permission resolution chain. They let you do things like:
+
+- Give players `neoessentials.fly` only while they are in a creative-mode world.
+- Deny `neoessentials.chat.color` during night-time on a hardcore-PvP server.
+- Grant VIP `neoessentials.teleport.tpr` only in the Overworld.
+
+### Resolution order with context
+
+When a `PermissionContext` is supplied the resolution chain becomes:
+
+1. **Context deny** (user) → return `false`
+2. **Context deny** (group, inheritance-aware) → return `false`
+3. Regular negative deny (user) → return `false`
+4. Regular negative deny (group) → return `false`
+5. User temp-permission grant → return `true` (then evaluate condition)
+6. **Context grant** (user) → return `true` (then evaluate condition)
+7. Regular user permission grant → return `true` (then evaluate condition)
+8. **Context grant** (group, inheritance-aware) → return `true` (then evaluate condition)
+9. Regular group permission grant → return `true` (then evaluate condition)
+
+Context **denies always win** over regular grants — they cannot be overridden from below.
+
+### Supported context keys
+
+| Key | Meaning |
+|---|---|
+| `world:overworld` | Player is in the Overworld |
+| `world:the_nether` | Player is in the Nether |
+| `world:the_end` | Player is in the End |
+| `world:<dim-path>` | Any custom dimension by path (e.g. `world:mymod/dim1`) |
+| `time:day` | Server day-time ticks 0–12 999 |
+| `time:night` | Server day-time ticks 13 000–23 999 |
+| `gamemode:survival` | Player is in Survival |
+| `gamemode:creative` | Player is in Creative |
+| `gamemode:adventure` | Player is in Adventure |
+| `gamemode:spectator` | Player is in Spectator |
+
+All keys have tab-completion in `/permissions`.
+
+### Commands — groups
+
+| Command | Permission | Description |
+|---|---|---|
+| `/permissions group <g> context add <contextKey> <node> allow` | `neoessentials.permissions.group.context` | Grant node in context |
+| `/permissions group <g> context add <contextKey> <node> deny` | `neoessentials.permissions.group.context` | Deny node in context |
+| `/permissions group <g> context remove <contextKey> <node>` | `neoessentials.permissions.group.context` | Remove override |
+| `/permissions group <g> context list` | `neoessentials.permissions.group.context` | List all overrides |
+
+### Commands — users
+
+| Command | Permission | Description |
+|---|---|---|
+| `/permissions user <p> context add <contextKey> <node> allow` | `neoessentials.permissions.user.context` | Grant node in context |
+| `/permissions user <p> context add <contextKey> <node> deny` | `neoessentials.permissions.user.context` | Deny node in context |
+| `/permissions user <p> context remove <contextKey> <node>` | `neoessentials.permissions.user.context` | Remove override |
+| `/permissions user <p> context list` | `neoessentials.permissions.user.context` | List all overrides |
+
+### Worked example
+
+```
+# Give the vip group fly only in the creative world:
+/permissions group vip context add world:creative_world neoessentials.fly allow
+
+# Deny everyone chat colours during night-time:
+/permissions group default context add time:night neoessentials.chat.color deny
+
+# Give a player creative-only permissions, then check them:
+/permissions user Steve context add gamemode:creative neoessentials.more allow
+/permissions user Steve context list
+```
+
+### Storage
+
+Contextual overrides are saved in:
+- Groups → `neoessentials/permissions.json` under `"contextualPermissions"`
+- Users → `neoessentials/permissions/playerdata.json` under `"contextualPermissions"`
+
+Existing files without the key are treated as having no overrides — fully backward-compatible.
+
+### Audit log events
+
+| Action constant | Trigger |
+|---|---|
+| `USER_CONTEXT_PERM_ADDED` | User context `add … allow/deny` |
+| `USER_CONTEXT_PERM_REMOVED` | User context `remove` |
+| `GROUP_CONTEXT_PERM_ADDED` | Group context `add … allow/deny` |
+| `GROUP_CONTEXT_PERM_REMOVED` | Group context `remove` |
+
+---
+
+## Permission Conditions
+
+Conditions are optional runtime expressions attached to a permission node. When the permission would otherwise be **granted**, the condition is re-evaluated against the player's current context. If the condition fails the grant is withheld (the player does **not** see a "no permission" message — the permission is simply absent at that moment).
+
+> Conditions are a **secondary filter** on top of the regular grant. They cannot make a denied permission succeed.
+
+### Condition syntax
+
+```
+atom     ::= "time:day" | "time:night"
+           | "world:<name>"           e.g. world:overworld
+           | "gamemode:<mode>"        e.g. gamemode:survival
+           | "health:above:<0-20>"    e.g. health:above:10
+           | "health:below:<0-20>"    e.g. health:below:5
+           | "op:true" | "op:false"
+compound ::= atom (" AND " atom)*    — ALL atoms must match
+           | atom (" OR "  atom)*    — ANY atom must match
+```
+
+### Examples
+
+| Expression | Passes when… |
+|---|---|
+| `time:day` | Server time is day |
+| `gamemode:survival AND time:day` | Player is in Survival AND it is day |
+| `world:overworld OR world:the_nether` | Player is in Overworld or Nether |
+| `health:above:10` | Player has more than 10 HP |
+| `op:false` | Player is **not** OP |
+
+### How to set a condition
+
+Conditions are set programmatically via `PermissionsService` (see [API for Other Mods](#api-for-other-mods)) or directly via the `PermissionUser`/`PermissionGroup` Java API. In-game `/permissions condition` commands are planned for a future build.
+
+### Storage
+
+Conditions are persisted under `"conditions"` in the same JSON files as regular permissions.
+
+---
+
+## Permission Aliases
+
+The alias system maps **short or legacy node names** to their canonical NeoEssentials equivalents. Aliases are resolved transparently **before every permission check** — neither the player nor the admin needs to know whether a legacy name was used.
+
+### Configuration file
+
+`config/neoessentials/permission_aliases.json`
+
+```json
+{
+  "essentials.fly"      : "neoessentials.fly",
+  "essentials.warp"     : "neoessentials.teleport.warp",
+  "essentials.home"     : "neoessentials.teleport.home",
+  "efly"                : "neoessentials.fly",
+  "mymmod.feature"      : "neoessentials.admin"
+}
+```
+
+- The file is **loaded on start and reload** (`/permissions reload`).
+- Missing file → no aliases active (silently ignored).
+- Changes are applied instantly after a `/permissions reload`.
+- Aliases are **one-directional** (alias → canonical). The canonical node itself is never affected.
+
+### Registering aliases via API
+
+```java
+NeoEssentialsAPI.getPermissionsService().registerAlias("essentials.fly", "neoessentials.fly");
+```
+
+See [API for Other Mods](#api-for-other-mods) for the full API reference.
+
+---
+
+## API for Other Mods
+
+Other NeoForge mods can interact with NeoEssentials' permission system using the clean
+`PermissionsService` interface — no need to import internal NeoEssentials classes.
+
+### Getting the service
+
+```java
+import com.zerog.neoessentials.api.NeoEssentialsAPI;
+import com.zerog.neoessentials.api.permissions.PermissionsService;
+import com.zerog.neoessentials.permissions.PermissionContext;
+
+PermissionsService perms = NeoEssentialsAPI.getPermissionsService();
+```
+
+### Permission checks
+
+```java
+// Simple check (no context)
+boolean canFly = perms.hasPermission(player.getUUID(), "neoessentials.fly");
+
+// Convenience overload — builds context automatically
+boolean canFly = perms.hasPermission(player, "neoessentials.fly");
+
+// Full context-aware check
+PermissionContext ctx = perms.contextFor(player);
+boolean granted = perms.hasPermission(player.getUUID(), "mymod.feature", ctx);
+```
+
+### Registering your mod's permission nodes
+
+Registered nodes appear in `/permissions search` and tab-completion:
+
+```java
+// Single node
+perms.registerPermission("mymod.feature.use", "Enables the cool feature");
+
+// Bulk
+perms.registerPermissions(Map.of(
+    "mymod.admin",   "Admin access",
+    "mymod.edit",    "Edit items",
+    "mymod.view",    "View items"
+));
+```
+
+### Registering aliases
+
+```java
+perms.registerAlias("mymod-legacy.feature", "mymod.feature.use");
+```
+
+### Querying player info
+
+```java
+String group  = perms.getGroup(player.getUUID());   // e.g. "vip"
+String prefix = perms.getPrefix(player.getUUID());  // e.g. "§6[VIP] "
+String suffix = perms.getSuffix(player.getUUID());  // e.g. " §7✦"
+Set<String> nodes = perms.getPlayerPermissions(player.getUUID());
+Collection<String> groups = perms.getGroupNames();
+```
+
+### System state
+
+```java
+boolean emergency = perms.isEmergencyMode();        // true = OP-fallback-only mode
+boolean external  = perms.isUsingExternalAdapter(); // true = LuckPerms/FTB Ranks active
+```
+
+### Full method reference
+
+| Method | Description |
+|---|---|
+| `hasPermission(UUID, String)` | Check permission (no context) |
+| `hasPermission(UUID, String, PermissionContext)` | Check permission with context |
+| `hasPermission(ServerPlayer, String)` | Convenience — builds context from live player |
+| `getGroup(UUID)` | Get player's permission group name |
+| `getPrefix(UUID)` | Get player's display prefix |
+| `getSuffix(UUID)` | Get player's display suffix |
+| `registerPermission(String, String)` | Register a single permission node |
+| `registerPermissions(Map<String, String>)` | Bulk-register permission nodes |
+| `registerAlias(String, String)` | Register an alias |
+| `getAliases()` | Get all current aliases |
+| `isEmergencyMode()` | Query emergency mode state |
+| `isUsingExternalAdapter()` | Query external adapter state |
+| `getGroupNames()` | Get all group names |
+| `getPlayerPermissions(UUID)` | Get a player's direct permission nodes |
+| `contextFor(ServerPlayer)` | Build a `PermissionContext` from a live player |
 
 ---
 
@@ -852,6 +1183,27 @@ NeoEssentials supports three configurations:
 
 ---
 
+### Compatibility Report (startup log)
+
+At every startup NeoEssentials logs an **External Permissions Compatibility Report**:
+
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║        NeoEssentials — External Permissions Compatibility Report      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Active adapter  : FTB Ranks                    v2101.1.3           ║
+║  Health status   : ✓ HEALTHY                                         ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Installed permission mods:                                          ║
+║    ftbranks   detected: 2101.1.3   last tested: 2101.1.3   ✓ compatible  ║
+╚══════════════════════════════════════════════════════════════════════╝
+```
+
+A `⚠ NEWER THAN TESTED` warning is emitted if the installed version is newer than the
+last-tested minor line. This is informational only — permission checks still proceed.
+
+---
+
 ### Built-in Mode — NeoForge Permission Handler Bridge
 
 As of **v1.0.2.6**, when no competing permission mod is installed, NeoEssentials automatically
@@ -863,66 +1215,83 @@ evaluated against `permissions.json`.
 
 #### Adding permissions for external mods
 
-Permissions are stored as **lowercase dot-separated strings**.
-
 ```json
 {
   "groups": [
     {
       "name": "admin",
-      "permissions": [
-        "neoessentials.*",
-        "worldedit.*",
-        "ftbchunks.*"
-      ]
+      "permissions": ["neoessentials.*", "worldedit.*", "ftbchunks.*"]
     },
     {
       "name": "builder",
-      "permissions": [
-        "neoessentials.player",
-        "worldedit.edit",
-        "worldedit.selection.*"
-      ]
+      "permissions": ["neoessentials.player", "worldedit.edit", "worldedit.selection.*"]
     }
   ]
 }
 ```
 
-> **Note:** Node names must be **lowercase**. `/permissions group add` converts input automatically.
-
-#### Finding a mod's permission node names
-
-1. Check the mod's documentation / GitHub for a list of permission nodes.
-2. The node name format is always `modid.path.to.node` (dots, not colons).
-3. Run `/permissions check user <player> <node>` to test a specific node.
+> Node names must be **lowercase**. `/permissions group add` converts input automatically.
 
 #### Manual handler selection
 
-The handler is selected in `config/neoforge-server.toml`:
-
+`config/neoforge-server.toml`:
 ```toml
-# neoforge:default_handler  — vanilla OP-level only (no permissions.json for external mods)
-# neoessentials:handler      — NeoEssentials permissions.json for ALL mods (default when no LP/FTB Ranks)
-# luckperms:default          — LuckPerms (auto-selected by LuckPerms when installed)
+# neoessentials:handler = NeoEssentials permissions.json for ALL mods (auto-selected by default)
+# neoforge:default_handler = vanilla OP-level only
+# luckperms:default = LuckPerms (selected automatically when LuckPerms is installed)
 permissionHandler = "neoessentials:handler"
 ```
 
 ---
 
+### Fallback Chain
+
+When an external adapter is in use, each permission check follows this fallback chain:
+
+```
+1. emergencyMode?        → YES → OP status only (failsafe)
+2. opsBypassPermissions? → YES + player is OP → GRANT (fast-path)
+3. External adapter      → healthy? → use its answer (grant or deny)
+                         → unhealthy / exception → fall through to step 4
+4. Internal permissions.json (fallback when external fails)
+5. vanillaOpFallback?    → YES + player is OP → GRANT (last resort)
+                         → NO or not OP → DENY
+```
+
+**Adapter health tracking:** After 5 consecutive runtime exceptions the adapter marks itself
+`UNHEALTHY`, internal `permissions.json` takes over, and a single boxed `WARN` is logged. The
+adapter is re-checked on the next `/permissions reload`.
+
+---
+
 ### LuckPerms
 
-- Set `useExternalPermissions: true` in `config.json` and install LuckPerms.
-- All NeoEssentials permission nodes work normally — grant them in LuckPerms.
-- The built-in `permissions.json` is **not used** for permission checks.
-- Run `/permissions export luckperms` to generate a ready-to-import LuckPerms config.
+| Step | Action |
+|---|---|
+| 1 | Install LuckPerms NeoForge |
+| 2 | Set `"useExternalPermissions": true` in `config/neoessentials/config.json` |
+| 3 | Run `/permissions reload` |
+| 4 | Add NeoEssentials nodes via `/lp group <name> permission set <node> true` |
+
+> All NeoEssentials permission nodes work normally inside LuckPerms. The built-in
+> `permissions.json` is **not used** for checks, but keeps accumulating edits if you switch back.
+
+**Context support:** When LuckPerms is active, world and server contexts are evaluated using the
+player's live `QueryOptions` (updated since build.4).
 
 ---
 
 ### FTB Ranks
 
-- Set `useExternalPermissions: true` in `config.json` and install FTB Ranks.
-- All NeoEssentials permission nodes work normally — grant them via FTB Ranks commands.
-- The built-in `permissions.json` is **not used** for permission checks.
+| Step | Action |
+|---|---|
+| 1 | Install FTB Ranks NeoForge |
+| 2 | Set `"useExternalPermissions": true` in `config/neoessentials/config.json` |
+| 3 | Run `/permissions reload` |
+| 4 | Add NeoEssentials nodes via FTB Ranks commands |
+
+**API probe order:** NeoEssentials tries four FTB Ranks API signatures at startup to handle
+version differences (current, legacy static, alternative naming, older instance method).
 
 ---
 
@@ -937,5 +1306,176 @@ The `.*` wildcard works for any mod prefix:
 | `ftbchunks.*` | All FTB Chunks permissions |
 | `neoessentials.*` | All NeoEssentials permissions |
 
-> **Tip:** Run `/permissions export luckperms` or `/permissions export yaml` to generate a
-> ready-to-import config for your preferred permission mod.
+---
+
+### Compatibility table
+
+| Mod | Tested version | Integration type | Notes |
+|---|---|---|---|
+| **LuckPerms** | 5.4.x | Full — `LuckPermsAdapter` | Context-aware via QueryOptions |
+| **FTB Ranks** | 2101.1.3 | Full — `FtbRanksAdapter` | 4-API-signature probe for compatibility |
+| **WorldEdit** (NeoForge) | Any | Passive — NeoForge handler bridge | Grant `worldedit.*` in `permissions.json` |
+| **FTB Chunks** | Any | Passive — NeoForge handler bridge | Grant `ftbchunks.*` in `permissions.json` |
+| Any NeoForge mod using `PermissionAPI` | Any | Passive — NeoForge handler bridge | Add their nodes to `permissions.json` |
+
+---
+
+## Fine-Grained Command Control
+
+NeoEssentials uses **per-subcommand permission nodes** throughout. Every branch of every command
+tree has its own node, so you can grant or deny individual subcommands without granting the whole
+command.
+
+### How it works
+
+Every Brigadier branch checks `PermissionValidator.validatePermission(source, node)` (or
+`validateAnyPermission`) before executing. The node is shown in the denied-access message so
+admins know exactly what to grant.
+
+### Examples by system
+
+#### Home system
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/home` (teleport) | `neoessentials.teleport.home` | ✅ |
+| `/home set` | `neoessentials.teleport.home.set` | ✅ |
+| `/home delete` | `neoessentials.teleport.home.delete` | ✅ |
+| `/home list` | `neoessentials.teleport.home.list` | ✅ |
+| `/home <name> <player>` (others) | `neoessentials.teleport.home.others` | 🔒 |
+
+#### Warp system
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/warp <name>` | `neoessentials.teleport.warp` | ✅ |
+| `/warp <name> <player>` | `neoessentials.teleport.warp.others` | 🔒 |
+| `/setwarp` | `neoessentials.teleport.warp.create` | 🔒 |
+| `/delwarp` | `neoessentials.teleport.warp.delete` | 🔒 |
+| `/warps` (list) | `neoessentials.teleport.warp.list` | ✅ |
+
+#### Kit system
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/kit` | `neoessentials.kits.use` | ✅ |
+| `/kit <name>` | `neoessentials.kits.use` + `neoessentials.kits.<kitname>` | ✅ |
+| `/kit <name> <player>` | `neoessentials.kit.others` | 🔒 |
+| `/kitcreate` | `neoessentials.kits.admin.create` | 🔒 |
+| `/kitdelete` | `neoessentials.kits.admin.delete` | 🔒 |
+| `/kitreset` | `neoessentials.kitreset` | 🔒 |
+| `/kitreset <player>` | `neoessentials.kitreset.others` | 🔒 |
+
+#### Economy
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/balance` | `neoessentials.economy.balance` | ✅ |
+| `/balance <player>` | `neoessentials.economy.balance.others` | 🔒 |
+| `/pay` | `neoessentials.economy.pay` | ✅ |
+| `/pay <offline>` | `neoessentials.economy.pay.offline` | 🔒 |
+| `/eco give/take/set` | `neoessentials.economy.eco` | 🔒 |
+
+#### Moderation
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/ban` | `neoessentials.moderation.ban` | 🔒 |
+| `/banip` | `neoessentials.moderation.banip` | 🔒 |
+| `/tempban` | `neoessentials.moderation.tempban` | 🔒 |
+| `/jail` | `neoessentials.moderation.jail` | 🔒 |
+| `/jailfor` | `neoessentials.moderation.jail.timed` | 🔒 |
+| `/vanish` | `neoessentials.moderation.vanish` | 🔒 |
+| `/vanish <player>` | `neoessentials.moderation.vanish.others` | 🔒 |
+
+#### Permission system commands
+
+| Subcommand | Node | Default |
+|---|---|---|
+| `/permissions group add/remove` | `neoessentials.permissions.group.permissions` | 🔒 |
+| `/permissions group setprefix/setsuffix` | `neoessentials.permissions.group.modify` | 🔒 |
+| `/permissions group setpriority` | `neoessentials.permissions.group.modify` | 🔒 |
+| `/permissions group context add/remove/list` | `neoessentials.permissions.group.context` | 🔒 |
+| `/permissions group addtemp/removetemp` | `neoessentials.permissions.group.temp` | 🔒 |
+| `/permissions group create` | `neoessentials.permissions.group.create` | 🔒 |
+| `/permissions group delete` | `neoessentials.permissions.group.delete` | 🔒 |
+| `/permissions user setgroup` | `neoessentials.permissions.user.group` | 🔒 |
+| `/permissions user add/remove` | `neoessentials.permissions.user.permissions` | 🔒 |
+| `/permissions user context add/remove/list` | `neoessentials.permissions.user.context` | 🔒 |
+| `/permissions user addtemp/removetemp` | `neoessentials.permissions.user.temp` | 🔒 |
+| `/permissions reload` | `neoessentials.permissions.reload` | 🔒 |
+| `/permissions debug <player>` | `neoessentials.permissions.debug` | 🔒 |
+
+### Negative permissions as fine-grained deny
+
+Use a `-` prefix on any node to explicitly deny a subcommand even when a wildcard grants the parent:
+
+```
+neoessentials.*                       # grant all
+-neoessentials.item.enchant.unsafe    # but deny unsafe enchanting specifically
+-neoessentials.moderation.banip       # and deny IP banning
+```
+
+---
+
+## GUI Management — Web Dashboard API
+
+The web dashboard exposes a full REST API for permission management.
+All endpoints require Bearer token authentication (`Authorization: Bearer <token>`).
+
+**Base URL:** `http://<server>:<port>/api/permissions`
+
+### Quick reference
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/overview` | Summary: total groups, users, system type |
+| `GET` | `/system/status` | Detailed system state: emergency mode, adapter health, alias count |
+| `GET` | `/groups` | List all groups |
+| `GET` | `/group/{name}` | Get group detail |
+| `POST` | `/group/create` | Create group `{name, prefix?, suffix?}` |
+| `PUT` | `/group/{name}/update` | Update group `{prefix?, suffix?, priority?}` |
+| `DELETE` | `/group/{name}` | Delete group |
+| `POST` | `/group/{name}/permission/add` | Add permission `{permission}` |
+| `DELETE` | `/group/{name}/permission/remove/{node}` | Remove permission |
+| `GET` | `/group/{name}/context` | List contextual overrides |
+| `POST` | `/group/{name}/context` | Add override `{contextKey, node, allow}` |
+| `DELETE` | `/group/{name}/context` | Remove override `{contextKey, node}` (body) |
+| `GET` | `/group/{name}/temp` | List temp permissions with time remaining |
+| `POST` | `/group/{name}/temp` | Add temp permission `{node, duration}` |
+| `DELETE` | `/group/{name}/temp/{node}` | Remove temp permission |
+| `GET` | `/users` | List all known users |
+| `GET` | `/user/{name}` | Get user detail |
+| `PUT` | `/user/{name}/update` | Update user permissions |
+| `POST` | `/user/{name}/group/set` | Set user group `{group}` |
+| `POST` | `/user/{name}/permission/add` | Add permission `{permission}` |
+| `DELETE` | `/user/{name}/permission/remove/{node}` | Remove permission |
+| `GET` | `/user/{name}/context` | List user contextual overrides |
+| `POST` | `/user/{name}/context` | Add user override `{contextKey, node, allow}` |
+| `DELETE` | `/user/{name}/context` | Remove user override `{contextKey, node}` (body) |
+| `GET` | `/user/{name}/temp` | List user temp permissions |
+| `POST` | `/user/{name}/temp` | Add user temp permission `{node, duration}` |
+| `DELETE` | `/user/{name}/temp/{node}` | Remove user temp permission |
+| `GET` | `/permissions/all` | All registered permission nodes |
+| `GET` | `/aliases` | List all registered aliases |
+| `POST` | `/aliases` | Register alias `{alias, canonical}` |
+| `DELETE` | `/aliases/{alias}` | Remove alias |
+| `POST` | `/reload` | Reload all permissions from disk |
+
+### Example: add a contextual permission via the API
+
+```bash
+curl -X POST http://localhost:8080/api/permissions/group/vip/context \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"contextKey":"world:overworld","node":"neoessentials.fly","allow":true}'
+```
+
+### Example: register an alias
+
+```bash
+curl -X POST http://localhost:8080/api/permissions/aliases \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"alias":"essentials.fly","canonical":"neoessentials.fly"}'
+```

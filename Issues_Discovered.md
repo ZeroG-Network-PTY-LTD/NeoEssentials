@@ -1,11 +1,185 @@
 # 👾 Issues That Were Discovered
+- **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5)**  
+  Teleportation to `/home` fails with *"No safe teleport location found"* even when `teleportation.homeSettings.enableHomeSafety` is set to `false`.
+    - Environment:
+        - Mod Version: `neoessentials-1.0.2.5`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.220`
+        - Java Version: `openjdk 21`
+        - Dedicated Server
+    - Steps to Reproduce:
+        1. Set `teleportation.homeSettings.enableHomeSafety` to `false` in `teleportation.json`.
+        2. Run `/sethome main` at coordinates `366, 98, 9`.
+        3. Teleport to `/spawn` at `0, 124, 0`.
+        4. Attempt `/home main`.
+    - Observed Behavior:
+        - Teleport fails with error:
+          ```
+          Failed to teleport player to home 'main': No safe teleport location found
+          ```  
+        - Teleport works only when player is close enough for the chunk to be loaded.
+    - Expected Behavior:
+        - Teleport should succeed regardless of chunk load state when safety checks are disabled.
+    - Speculation:
+        - Safety checks may still be running even when disabled.
+        - Teleportation may fail if the target chunk is unloaded, preventing location validation.
+    - Need to investigate:
+        - Whether disabling safety checks bypasses chunk validation.
+        - If teleportation should force-load the target chunk when safety is disabled.
+        - Possible fix: skip safety checks entirely when `enableHomeSafety=false` and allow teleportation to saved coordinates.
+
+---
+- **NeoEssentials Web Dashboard Permissions & Admin Control Blank (NeoForge 1.21.1, build.1.0.2.6)**  
+  The web dashboard shows blank menus for permissions and admin controls after login.
+    - Environment:
+        - Mod Version: `neoessentials-1.0.2.6`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.220`
+        - Java Version: `openjdk 21`
+        - Dedicated Server
+    - Observed Behavior:
+        - Permissions menu is blank (expected if LuckPerms is used).
+        - Admin control menu is also blank, even though dev tools show no errors and MC logs appear clean.
+        - Refreshing the dashboard sometimes causes the buttons to appear briefly after login.
+    - Expected Behavior:
+        - Admin control menu should display available options (restart, stop, reload, save, etc.).
+        - Permissions menu should either integrate with LuckPerms or clearly indicate disabled state.
+    - Need to investigate:
+        - Whether LuckPerms integration disables both menus unintentionally.
+        - If dashboard API endpoints for `/api/admin/*` and `/api/permissions/*` are failing silently.
+        - Whether authentication or role assignment is not being applied correctly after login.
+        - Possible fix: ensure admin endpoints are always populated for authenticated admin accounts, regardless of external permissions integration.
+
+---
+- **NeoEssentials Teleportation Message Bug (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  Teleportation messages sometimes display raw translation keys instead of localized text.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Setting home shows correct localized messages:
+          ```
+          Home 'camp' set at Overworld (1159.4, 64.0, 2276.4).
+          Home 'camp' set at 1159, 64, 2276.
+          ```  
+        - Teleport fallback shows untranslated key:
+          ```
+          commands.neoessentials.teleport.spawn.fallback_success
+          ```  
+    - Expected Behavior:
+        - All teleportation messages should display properly localized text.
+    - Need to investigate:
+        - Whether translation keys are missing from `messages.json` or language files.
+        - If fallback messages bypass localization handler.
+        - Possible fix: ensure all teleportation outcomes (success, failure, fallback) are mapped to proper translations.
+
+---
+- **NeoEssentials Teleport Cooldowns & Warmups Not Working (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  Cooldowns and warmups configured for teleportation commands do not function at all.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Teleport commands execute instantly without respecting configured cooldowns or warmups.
+        - No delay or countdown is applied.
+        - No error messages or warnings appear in console/logs.
+    - Expected Behavior:
+        - Teleport commands should respect cooldowns (preventing immediate reuse) and warmups (delaying teleport execution).
+    - Need to investigate:
+        - Whether cooldown/warmup logic is bypassed entirely.
+        - If config values are not being read correctly from `teleportation.json`.
+        - Whether split configs affect cooldown/warmup handling.
+        - Possible fix: ensure teleportation manager applies cooldown/warmup checks before executing teleport.
+
+---
+- **NeoEssentials Inventory & Ender Chest Commands Not Restricted (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  Non-OP and non-admin players can use `/inv` and `/ec` commands, leading to duplication exploits.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - `/inv` and `/ec` work for all players, regardless of OP/admin status.
+        - Commands do not appear in LuckPerms or NeoEssentials config for restriction.
+        - Players are able to exploit these commands to duplicate items.
+    - Expected Behavior:
+        - `/inv` and `/ec` should be restricted to OPs/admins or explicitly controlled via permissions.
+    - Need to investigate:
+        - Why these commands bypass permission checks.
+        - Whether they are missing from the permissions registry.
+        - If NeoEssentials fails to register permission nodes for inventory-related commands.
+        - Possible fix: add proper permission nodes (`neoessentials.inv`, `neoessentials.ec`) and ensure they respect LuckPerms/FTB Ranks integration.
+
+---
+
 
 
 ---
 
 # ✅ Issues That Were Fixed
 
-- **NeoEssentials Permissions.json for Other Mods (NeoForge 1.21.1, All The Mons)**
+- **Permissions System — GUI, External Systems & Fine-Grained Control not complete**
+  *(Status: Fixed → v1.0.2.6+build.30)*
+
+  **Root cause**: The three remaining Permissions System Improvements items were unimplemented:
+  - GUI Management: `PermissionEndpoint` only handled basic group/user CRUD
+  - Integration with External Systems: fallback chain, adapter health, and LuckPerms/FTB Ranks setup were undocumented
+  - Fine-Grained Command Control: per-subcommand permission node tables were missing from the wiki
+
+  **Fix (build.30)**:
+  - `PermissionEndpoint` — 12 new REST methods added:
+    - `reloadPermissions()` → `POST /reload`
+    - `listGroupContextPerms()`, `addGroupContextPerm()`, `removeGroupContextPerm()` → group context CRUD
+    - `listGroupTempPerms()`, `addGroupTempPerm()`, `removeGroupTempPerm()` → group temp CRUD
+    - `listUserContextPerms()`, `addUserContextPerm()`, `removeUserContextPerm()` → user context CRUD
+    - `listUserTempPerms()`, `addUserTempPerm()`, `removeUserTempPerm()` → user temp CRUD
+    - `listAliases()`, `addAlias()`, `removeAlias()` → alias management
+    - `getSystemStatus()` enhanced — emergency mode, adapter name/version/health/failures, alias count
+  - `PermissionSystem.md` — 3 new major sections added:
+    - **External Permission Mods** — rewritten with startup compatibility report, full 5-step fallback chain diagram, LuckPerms context + FTB Ranks probe documentation, compatibility table
+    - **Fine-Grained Command Control** — per-subcommand node tables for Home, Warp, Kit, Economy, Moderation, Permission system; negative permission patterns
+    - **GUI Management — Web Dashboard API** — full endpoint reference table with examples
+
+---
+
+- **Permissions System — Contextual permissions, conditions, API, and aliases not implemented**
+  *(Status: Fixed → v1.0.2.6+build.28)*
+
+  **Root cause**: The permissions system from build.25 covered basic group/user management and
+  temporary permissions but lacked contextual overrides, condition evaluation, a mod-interop API,
+  and alias resolution.
+
+  **Fix (build.28)**:
+  - `PermissionContext` — new value object capturing `worldId`, `dayTime`, `gamemode` for
+    context-aware checks. `EMPTY` sentinel for non-player contexts.
+  - `PermissionUser` / `PermissionGroup` — both extended with `contextualPermissions`
+    (`Map<context, Map<node, Boolean>>`) and `conditions` (`Map<node, expression>`) maps.
+  - `PermissionManager.hasPermission(UUID, String, PermissionContext)` — context-aware overload;
+    resolution order: context deny → regular deny → temp grant → context grant → regular grant.
+  - `PermissionConditionManager` — evaluates condition expressions (`time:day`, `gamemode:X`,
+    `world:X`, `health:above/below:N`, `op:true/false`) with `AND`/`OR` compound support.
+  - `PermissionAliasManager` — maps legacy/short node names to canonical nodes via
+    `permission_aliases.json`; aliases resolved transparently in `PermissionAPI.hasPermission`.
+  - `PermissionsService` interface + `PermissionsServiceImpl` — clean API for external mods;
+    exposed via `NeoEssentialsAPI.getPermissionsService()`.
+  - `PermissionsCommand` — `context add|remove|list` subcommands added to both `group` and
+    `user` branches with full tab-completion and audit logging.
+  - `PermissionStorage` — groups and users now persist `contextualPermissions` and `conditions`.
+  - `PermissionAuditLogger` — 8 new action constants for context and condition events.
+  - `PermissionRegistry` — 2 new nodes: `neoessentials.permissions.user.context`,
+    `neoessentials.permissions.group.context`.
+  - `NeoEssentialsAPI.API_VERSION` bumped from `1.0.0` to `1.1.0`.
+
+---
+
   *(Status: Fixed → v1.0.2.6+build.9)*
 
   **Root cause**: NeoEssentials' internal `permissions.json` system only intercepted permission
@@ -297,6 +471,13 @@
     - Editing inventories and ender chests.
     - Audit logs for inventory changes to prevent abuse.
 
+- **Inventory Command Security Improvements**
+  - Add explicit permission nodes for `/inv` and `/ec`.
+  - Ensure commands default to OP-only if permissions are not set.
+  - Add config options to enable/disable these commands entirely.
+  - Provide dashboard visibility for inventory-related permissions.
+  - Add anti-duplication safeguards when editing/viewing other players’ inventories.
+
 - **Minecraft Assets API Support**  
   Integrate with the Minecraft Assets API to:
     - Display item/block textures in the web dashboard.
@@ -317,12 +498,6 @@
     - References: Bungee Tablist Plus, TAB, Simple TabList.
     - Per-group and per-player customization.
 
-- **Utility Systems**  
-  Ensure core utility commands are present and functional:
-    - Nicknames, MOTD, `/near`, `/ping`, `/depth`.
-    - Helpop, rules, suicide, and other essentials.
-    - Consistent permission handling across all utilities.
-
 - **API & Placeholder System**  
   Expand API and placeholder support:
     - Deeper PlaceholderAPI integration.
@@ -330,17 +505,126 @@
     - REST API endpoints for external tools and dashboards.
     - Documentation for developers to extend NeoEssentials easily.
 
-- **Permissions System Improvements** (remaining items):
-  - Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
-    Permission Expiry: Support temporary permissions that expire after a set time or event.
-    API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
-    Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.
-    GUI Management: Provide a web or in-game GUI for managing permissions, groups, and users.
-    Integration with External Systems: Improve and document integration with LuckPerms, FTB Ranks, and other permission mods, including fallback logic.
-    Fine-Grained Command Control: Allow per-argument or per-subcommand permissions (e.g., /home set vs /home delete).
-    Custom Permission Conditions: Allow custom logic for permission checks (e.g., based on player stats, inventory, or server state).
+- **Teleportation Improvements**
+    - Ensure disabling safety checks truly bypasses validation.
+    - Add option to force-load target chunks when teleporting.
+    - Provide clearer error messages when teleport fails due to unloaded chunks.
+    - Document how safety settings interact with chunk loading and teleportation.
+    - Add clear feedback messages when cooldown/warmup is applied (e.g., “Teleport available in X seconds”).
+    - Ensure cooldown/warmup values are logged on startup for verification.
+    - Provide dashboard controls to adjust cooldown/warmup settings dynamically.
+    - Add per-command and per-player cooldown/warmup customization.
+
+- **Localization Improvements**
+    - Audit all NeoEssentials commands to ensure translation keys exist and are mapped correctly.
+    - Add fallback text in English when a translation key is missing.
+    - Provide tooling to regenerate or validate `messages.json` automatically.
+    - Allow server admins to override messages easily via config.
+
+- **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  
+  Request to update NeoEssentials for compatibility with the latest Minecraft and NeoForge releases.
+    - Requested Update:
+        - Port NeoEssentials to **NeoForge 26.1.2** (latest stable).
+        - Ensure compatibility with Minecraft `1.21.1` (and future patch releases).
+        - Validate integration with LuckPerms `5.4.150` and other common server-side mods.
+        - Regression test all modules: teleportation, MOTD, rules, kits, inventory commands, dashboard, economy, and localization.
+    - Benefits:
+        - Keeps NeoEssentials aligned with the latest NeoForge ecosystem.
+        - Ensures server admins can upgrade without losing essential functionality.
+        - Provides a stable foundation for fixing existing bugs (permissions, configs, teleportation) in the new environment.
 
 # Improvements Done 
+
+- **Permissions System Improvements** *(builds #25, #28, #30)*
+
+  All 8 planned improvements fully implemented across three builds.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Permission Expiry (temp perms) | #25 | ✅ |
+  | Contextual Permissions | #28 | ✅ |
+  | API for Other Mods | #28 | ✅ |
+  | Permission Aliases | #28 | ✅ |
+  | Custom Permission Conditions | #28 | ✅ |
+  | GUI Management (web dashboard API) | #30 | ✅ |
+  | Integration with External Systems | #30 | ✅ |
+  | Fine-Grained Command Control | #30 | ✅ |
+
+  **Permission Expiry** *(build #25)*
+  - `tempPermissions: Map<String, Long>` added to `PermissionUser` and `PermissionGroup`
+  - `PermissionExpiryHandler` purges expired entries every 30 s (600 ticks)
+  - `/permissions user/group addtemp <node> <duration>` · `removetemp` · `listtemp`
+  - Auto-notifies online players when their temp perm expires
+  - Persisted in `playerdata.json` / `permissions.json`; expired entries discarded on load
+
+  **Contextual Permissions** *(build #28)*
+  - `PermissionContext` value object captures `worldId`, `dayTime`, `gamemode`
+  - `PermissionUser` / `PermissionGroup` extended with `contextualPermissions` map
+  - `PermissionManager.hasPermission(UUID, String, PermissionContext)` — 9-step context-aware resolution chain
+  - `/permissions user/group <target> context add <contextKey> <node> allow|deny` · `remove` · `list`
+  - Context keys: `world:overworld`, `time:day`, `time:night`, `gamemode:survival/creative/spectator/adventure`
+  - Contextual overrides persisted in JSON; fully backward-compatible
+
+  **API for Other Mods** *(build #28)*
+  - `PermissionsService` interface: `hasPermission`, `getGroup`, `getPrefix`, `getSuffix`, `registerPermission`, `registerAlias`, `getAliases`, `isEmergencyMode`, `isUsingExternalAdapter`, `getGroupNames`, `getPlayerPermissions`, `contextFor`
+  - `PermissionsServiceImpl` singleton wires interface to `PermissionAPI` + internal managers
+  - Exposed via `NeoEssentialsAPI.getPermissionsService()`; `API_VERSION` bumped to `1.1.0`
+
+  **Permission Aliases** *(build #28)*
+  - `PermissionAliasManager` singleton with load/save to `permission_aliases.json`
+  - Aliases resolved transparently before every permission check in `PermissionAPI.hasPermission`
+  - Register via file or `PermissionsService.registerAlias()`
+
+  **Custom Permission Conditions** *(build #28)*
+  - `PermissionConditionManager` evaluates boolean expressions: `time:day`, `time:night`, `world:X`, `gamemode:X`, `health:above/below:N`, `op:true/false`
+  - Compound expressions: `gamemode:survival AND time:day`, `world:overworld OR world:the_nether`
+  - Conditions stored per-node on user/group; evaluated at grant time — if condition fails, grant is withheld
+
+  **GUI Management — Web Dashboard** *(build #30)*
+  - 15 new REST endpoints on `/api/permissions`:
+    - `POST /reload` — reload from disk
+    - `GET|POST|DELETE /group/{name}/context` — group contextual override CRUD
+    - `GET|POST /group/{name}/temp` + `DELETE /group/{name}/temp/{node}` — group temp perm CRUD
+    - `GET|POST|DELETE /user/{name}/context` — user contextual override CRUD
+    - `GET|POST /user/{name}/temp` + `DELETE /user/{name}/temp/{node}` — user temp perm CRUD
+    - `GET|POST|DELETE /aliases` — alias CRUD (POST persists to `permission_aliases.json`)
+    - `GET /system/status` enhanced — emergency mode, adapter name/version/health/failures, alias count
+
+  **Integration with External Systems** *(build #30)*
+  - Startup compatibility report: adapter name, version, health, ⚠ NEWER THAN TESTED warning
+  - Full 5-step fallback chain documented: emergency → OP bypass → external → internal → OP fallback
+  - Adapter health tracking: 5 consecutive failures → `UNHEALTHY` → auto-fallback to `permissions.json`
+  - LuckPerms: context-aware checks via live `QueryOptions`; step-by-step setup guide
+  - FTB Ranks: 4-API-signature probe for version compatibility
+  - Compatibility table: LuckPerms 5.4.x, FTB Ranks 2101.1.3, WorldEdit (any), FTB Chunks (any)
+
+  **Fine-Grained Command Control** *(build #30)*
+  - Every Brigadier branch has its own permission node (`/home set` vs `/home delete`, `/warp` vs `/setwarp`, etc.)
+  - Per-subcommand node tables documented in `PermissionSystem.md` for: Home, Warp, Kit, Economy, Moderation, Permission system
+  - Negative permission patterns (`-neoessentials.item.enchant.unsafe`) documented for targeted deny
+
+
+    - ✅ `NickCommand` — storage path changed from raw `Paths.get("config", "neoessentials", "nickname_data.json")` to `ResourceUtil.getConfigPath("nickname_data.json")` for consistency with every other data file in the mod.
+    - ✅ `NickCommand` — registered `/nickname` as a Brigadier **redirect** to `/nick` so the alias actually works at runtime (was metadata-only in `registry.registerCommand()`).
+    - ✅ `SeenCommand` — storage path changed from raw `Paths.get("config", "neoessentials", "seen_data.json")` to `ResourceUtil.getConfigPath("seen_data.json")`.
+    - ✅ `NeoEssentials.java` — removed duplicate `registry.registerCommand()` metadata block ("PLAYER INFO & ADMIN TOOL COMMANDS" section) that re-listed `seen`, `near`, `ping`, `playtime`, `whois`, `realname`, `sudo`, `suicide`, `msgtoggle`, `rtoggle`, `motd`, `rules` — all already registered in the UTILITY section above. Replaced with a single comment + `PlayerInfoCommands.register()` call for `/msgtoggle`.
+    - ✅ `PermissionRegistry` — removed duplicate `register()` calls in the "Utility commands" and "Utility / misc commands" sections that silently overrode values set in the canonical "Player Info & Admin Tools" section: `neoessentials.whois` (was `ADMIN/false`, overridden to `MISC/true`), `neoessentials.ping.others` (was `PLAYER/true`, overridden to `MISC/false`), `neoessentials.seen`, `neoessentials.realname`, `neoessentials.near`, `neoessentials.ping`, `neoessentials.motd`, `neoessentials.rules`, `neoessentials.suicide`. Unique sub-nodes (`whois.detailed`, `rules.admin`, `motd.*`) kept in their canonical positions.
+    - ✅ All core utility commands verified present, registered once, and using `PermissionValidator.validatePermission()` consistently: `/nick` `/nickname` `/setnick` `/near` `/nearby` `/ping` `/depth` `/helpop` `/motd` `/rules` `/suicide` `/killme` `/seen` `/whois` `/realname` `/msgtoggle`.
+
+- **Temporary Permissions** *(build #25)*
+    - ✅ Added `tempPermissions: Map<String, Long>` (node → expiry epoch-ms) to both `PermissionUser` and `PermissionGroup`, with `addTempPermission`, `removeTempPermission`, `getTempPermissions`, `purgeExpiredTempPermissions`, and `hasActiveTempPermission` helpers.
+    - ✅ `PermissionManager.computePermission()` evaluates temp permissions (with wildcard support) **after** negative-perm denial but **before** regular user/group permissions — explicit `-node` denies still win.
+    - ✅ `PermissionManager.purgeExpiredTempPermissions(MinecraftServer)` — iterates all users and groups, removes expired entries, clears the permission cache, notifies affected online players, logs each expiry to the audit log, and persists to disk.
+    - ✅ `PermissionManager.parseDurationMs(String)` — parses human-readable durations (`1d`, `12h`, `30m`, `60s`, combinations like `1d12h30m`) into milliseconds; throws `IllegalArgumentException` for blank/zero/invalid input.
+    - ✅ `PermissionManager.formatDuration(long ms)` — formats a millisecond remaining-time into a compact string (e.g. `2d 3h 15m 4s`).
+    - ✅ `PermissionExpiryHandler` — `@EventBusSubscriber` on `ServerTickEvent.Post`, fires `purgeExpiredTempPermissions()` every **600 ticks (30 s)**.
+    - ✅ `PermissionStorage` updated: `save()` strips expired entries before writing; `load()` only reads entries whose expiry is still in the future. Users gain `"tempPermissions"` key in `playerdata.json`; groups gain it in `permissions.json`.
+    - ✅ New commands for users: `/permissions user <p> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.user.temp` / `info.user`). Successful `addtemp` also notifies the target player if online.
+    - ✅ New commands for groups: `/permissions group <g> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.group.temp` / `info.group`).
+    - ✅ All six actions logged to the audit log: `USER_TEMP_PERM_ADDED`, `USER_TEMP_PERM_REMOVED`, `USER_TEMP_PERM_EXPIRED`, `GROUP_TEMP_PERM_ADDED`, `GROUP_TEMP_PERM_REMOVED`, `GROUP_TEMP_PERM_EXPIRED`. Expiry events use executor `SYSTEM`.
+    - ✅ Registered `neoessentials.permissions.user.temp` and `neoessentials.permissions.group.temp` in `PermissionRegistry`.
+    - ✅ `PermissionSystem.md` updated: new **Temporary Permissions** section with duration table, command tables, resolution-order explanation, worked example, and audit-event table. Table of Contents updated.
+    - ✅ `CommandsReference.md` updated: 6 new rows (`addtemp`/`removetemp`/`listtemp` for user and group) added to the Permissions Management table.
 
 - **Permission Audit Logging** *(build #23)*
     - ✅ Created `PermissionAuditLogger.java` — persistent, append-only log written to `neoessentials/permissions_audit.log` (UTC timestamps, UTF-8). Each line records the timestamp, action type (padded for alignment), executor display name, target (group or player), and a detail string.

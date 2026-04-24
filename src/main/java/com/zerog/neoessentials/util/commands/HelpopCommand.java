@@ -30,10 +30,10 @@ public class HelpopCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("helpop")) return;
         
-        // Register main command and aliases
+        // Register main command and aliases matching the registry entries
         registerHelpopCommand(dispatcher, "helpop");
-        registerHelpopCommand(dispatcher, "adminhelp");
-        registerHelpopCommand(dispatcher, "request");
+        registerHelpopCommand(dispatcher, "ac");    // admin chat alias
+        registerHelpopCommand(dispatcher, "amsg");  // admin message alias
     }
     
     private static void registerHelpopCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {

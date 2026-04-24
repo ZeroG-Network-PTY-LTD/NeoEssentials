@@ -6,7 +6,255 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.23] — 2026-04-01
+## [1.0.2.6+build.30] — 2026-04-01
+
+### Feature — Permissions System Improvements (Part 2): GUI, External Systems & Fine-Grained Control
+
+Completes the Permissions System Improvements milestone with three remaining items.
+
+#### GUI Management — Web Dashboard REST API (extended)
+
+The existing `/api/permissions` endpoint has been extended with full support for contextual
+permissions, temporary permissions, aliases, and a reload action.
+
+**New endpoints added to `/api/permissions`:**
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/reload` | Reload all permissions from disk |
+| `GET` | `/system/status` | Enhanced — now includes emergency mode, adapter health, adapter version, consecutive failures, alias count |
+| `GET/POST/DELETE` | `/group/{name}/context` | Manage group contextual overrides (`{contextKey, node, allow}`) |
+| `GET/POST` | `/group/{name}/temp` | List / add group temp permissions (`{node, duration}`) |
+| `DELETE` | `/group/{name}/temp/{node}` | Remove group temp permission |
+| `GET/POST/DELETE` | `/user/{name}/context` | Manage user contextual overrides |
+| `GET/POST` | `/user/{name}/temp` | List / add user temp permissions |
+| `DELETE` | `/user/{name}/temp/{node}` | Remove user temp permission |
+| `GET` | `/aliases` | List all registered permission aliases |
+| `POST` | `/aliases` | Register alias `{alias, canonical}` — persists to `permission_aliases.json` |
+| `DELETE` | `/aliases/{alias}` | Remove alias |
+
+All endpoints return `{success: true/false, message?, ...}` JSON and require Bearer auth.
+
+#### Integration with External Systems — Improved Documentation & Fallback
+
+- **Compatibility report** documented: logged at every startup with adapter name, version, health, and a `⚠ NEWER THAN TESTED` warning when the installed version exceeds last-tested.
+- **Full fallback chain** documented: emergency mode → OP bypass → external adapter → internal `permissions.json` → vanilla-OP fallback. Adapter health tracking (5 consecutive failures → `UNHEALTHY`, fallback activates) documented.
+- **LuckPerms**: context-aware check via live `QueryOptions` documented; step-by-step setup guide added.
+- **FTB Ranks**: 4-API-signature probe for version compatibility documented.
+- **Compatibility table** added: LuckPerms 5.4.x, FTB Ranks 2101.1.3, WorldEdit (any), FTB Chunks (any), any NeoForge-`PermissionAPI` mod.
+
+#### Fine-Grained Command Control — Per-Subcommand Permission Nodes
+
+Every Brigadier branch in every NeoEssentials command tree has its own permission node.
+Documented with per-system tables covering:
+
+- **Home**: `.home`, `.home.set`, `.home.delete`, `.home.list`, `.home.others`
+- **Warp**: `.warp`, `.warp.others`, `.warp.create`, `.warp.delete`, `.warp.list`
+- **Kit**: `.kits.use`, `.kits.<name>`, `.kit.others`, `.kits.admin.create/delete`, `.kitreset`, `.kitreset.others`
+- **Economy**: `.balance`, `.balance.others`, `.pay`, `.pay.offline`, `.economy.eco`
+- **Moderation**: `.ban`, `.banip`, `.tempban`, `.jail`, `.jail.timed`, `.vanish`, `.vanish.others`
+- **Permission system**: full sub-node table for every `/permissions` action
+
+Full tables in [PermissionSystem.md — Fine-Grained Command Control](docs/Wiki/PermissionSystem.md#fine-grained-command-control).
+
+---
+
+## [1.0.2.6+build.28] — 2026-04-01
+
+### Feature — Permissions System Improvements
+
+Complete overhaul of the permissions subsystem with contextual overrides, condition expressions, a clean mod-interop API, alias resolution, and persistent storage of all new data.
+
+#### Contextual Permissions
+
+Grant or deny a permission node only when the player is in a specific world, time-of-day, or gamemode. Contextual rules are layered on top of the regular permission resolution chain — context denies always win, context grants are checked before regular grants.
+
+```
+/permissions group <group> context add <contextKey> <node> allow|deny
+/permissions group <group> context remove <contextKey> <node>
+/permissions group <group> context list
+
+/permissions user <player> context add <contextKey> <node> allow|deny
+/permissions user <player> context remove <contextKey> <node>
+/permissions user <player> context list
+```
+
+Supported context keys (with tab-completion):
+
+| Key | Meaning |
+|---|---|
+| `world:overworld` / `world:the_nether` / `world:the_end` | Current dimension |
+| `time:day` | Day phase (ticks 0–12 999) |
+| `time:night` | Night phase (ticks 13 000–23 999) |
+| `gamemode:survival` / `gamemode:creative` / `gamemode:spectator` / `gamemode:adventure` | Player gamemode |
+
+#### Permission Conditions
+
+Optional runtime conditions can be attached to any permission node on a user or group. When the permission would otherwise be granted, the condition is re-evaluated; if it fails, the grant is withheld.
+
+Condition syntax:
+```
+time:day
+gamemode:survival AND time:day
+world:overworld OR world:the_nether
+health:above:10
+op:true
+```
+
+Supports `AND` / `OR` compound expressions with atoms: `time:day`, `time:night`, `world:<name>`, `gamemode:<mode>`, `health:above:<n>`, `health:below:<n>`, `op:true`, `op:false`.
+
+#### Permission Aliases
+
+Map legacy or short node names to their canonical NeoEssentials equivalents via `config/neoessentials/permission_aliases.json`. Aliases are resolved transparently in every permission check.
+
+Example `permission_aliases.json`:
+```json
+{
+  "essentials.fly": "neoessentials.fly",
+  "essentials.warp": "neoessentials.teleport.warp",
+  "efly": "neoessentials.fly"
+}
+```
+
+#### API for Other Mods — `PermissionsService`
+
+Other NeoForge mods can now interact with NeoEssentials permissions without importing internal classes:
+
+```java
+PermissionsService perms = NeoEssentialsAPI.getPermissionsService();
+
+// Simple check
+boolean canFly = perms.hasPermission(player, "neoessentials.fly");
+
+// Context-aware check
+PermissionContext ctx = perms.contextFor(player);
+boolean granted = perms.hasPermission(player.getUUID(), "mymod.feature", ctx);
+
+// Register your mod's own nodes (appear in /permissions search)
+perms.registerPermission("mymod.feature", "Enables the feature");
+perms.registerPermissions(Map.of("mymod.a", "...", "mymod.b", "..."));
+
+// Register a legacy alias
+perms.registerAlias("essentials.fly", "neoessentials.fly");
+```
+
+Full method list: `hasPermission`, `getGroup`, `getPrefix`, `getSuffix`, `registerPermission`, `registerPermissions`, `registerAlias`, `getAliases`, `isEmergencyMode`, `isUsingExternalAdapter`, `getGroupNames`, `getPlayerPermissions`, `contextFor`.
+
+#### Storage
+
+Contextual permissions and conditions are now persisted in `permissions.json` (groups) and `permissions/playerdata.json` (users). Existing files are backward-compatible — no migration required.
+
+#### Audit Log
+
+New action constants written to `permissions_audit.log`:
+`USER_CONTEXT_PERM_ADDED`, `USER_CONTEXT_PERM_REMOVED`, `GROUP_CONTEXT_PERM_ADDED`, `GROUP_CONTEXT_PERM_REMOVED`, `USER_CONDITION_SET`, `USER_CONDITION_REMOVED`, `GROUP_CONDITION_SET`, `GROUP_CONDITION_REMOVED`
+
+#### New Permission Nodes
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.permissions.user.context` | OP only | Manage contextual overrides for users |
+| `neoessentials.permissions.group.context` | OP only | Manage contextual overrides for groups |
+
+#### Internal changes
+
+- `PermissionManager.hasPermission(UUID, String, PermissionContext)` — new context-aware overload; the existing `hasPermission(UUID, String)` delegates to it with `PermissionContext.EMPTY`
+- `PermissionAPI.hasPermission(UUID, String, PermissionContext)` — context threaded through the full 5-step resolution chain; alias resolution runs before every check
+- `PermissionStorage` — groups and users now save/load `contextualPermissions` and `conditions`
+- `NeoEssentialsAPI.API_VERSION` bumped to `1.1.0`
+
+---
+
+## [1.0.2.6+build.26] — 2026-04-01
+
+### Improvement — Utility Systems Audit & Polish
+
+Audited all core utility commands for correctness, consistency, and clean registration.
+
+#### Fixes & changes
+
+| Area | Change |
+|---|---|
+| `NickCommand` | Storage path now uses `ResourceUtil.getConfigPath()` (was raw `Paths.get()`); registered `/nickname` alias via Brigadier redirect so `/nickname` works identically to `/nick` |
+| `SeenCommand` | Storage path now uses `ResourceUtil.getConfigPath()` for `seen_data.json` |
+| `NeoEssentials.java` | Removed duplicate `registry.registerCommand()` entries from the old "PLAYER INFO" metadata block; all player-info commands (`near`, `ping`, `seen`, `whois`, etc.) are now registered exactly once by their dedicated command classes |
+| `PermissionRegistry` | Removed stale duplicate `register()` calls for `neoessentials.whois`, `neoessentials.seen`, `neoessentials.realname`, `neoessentials.near`, `neoessentials.ping`, `neoessentials.ping.others`, `neoessentials.motd`, `neoessentials.rules`, `neoessentials.suicide` — earlier duplicates incorrectly overrode canonical values (e.g. `whois` was silently changed from `ADMIN/false` to `MISC/true`); correct values are now authoritative |
+| `PermissionRegistry` | `neoessentials.whois.detailed`, `neoessentials.rules.admin`, and all `neoessentials.motd.*` sub-nodes moved to their canonical positions and kept unique |
+
+#### Commands verified as present and fully functional
+
+`/nick` · `/nickname` · `/setnick` · `/near` · `/nearby` · `/ping` · `/depth` · `/helpop` (`/ac` `/amsg`) · `/motd` · `/rules` · `/suicide` · `/killme` · `/seen` · `/whois` · `/realname` · `/msgtoggle`
+
+---
+
+
+
+### New Feature — Temporary Permissions
+
+Time-limited permission grants for both users and groups. A permission granted with a duration automatically expires and is revoked — no manual cleanup required.
+
+#### Duration format
+Combinations of `d` (days), `h` (hours), `m` (minutes), `s` (seconds):
+
+| Example | Meaning |
+|---|---|
+| `30m` | 30 minutes |
+| `12h` | 12 hours |
+| `1d` | 1 day |
+| `7d` | 7 days |
+| `1d12h30m` | 1 day, 12 hours, 30 minutes |
+
+#### New commands — users
+
+| Command | Permission | Description |
+|---|---|---|
+| `/permissions user <p> addtemp <node> <duration>` | `neoessentials.permissions.user.temp` | Grant a time-limited permission to a player |
+| `/permissions user <p> removetemp <node>` | `neoessentials.permissions.user.temp` | Revoke a temporary permission before it expires |
+| `/permissions user <p> listtemp` | `neoessentials.permissions.info.user` | List all active temp permissions with time remaining |
+
+#### New commands — groups
+
+| Command | Permission | Description |
+|---|---|---|
+| `/permissions group <g> addtemp <node> <duration>` | `neoessentials.permissions.group.temp` | Grant a time-limited permission to a group |
+| `/permissions group <g> removetemp <node>` | `neoessentials.permissions.group.temp` | Revoke a temporary group permission early |
+| `/permissions group <g> listtemp` | `neoessentials.permissions.info.group` | List all active group temp permissions with time remaining |
+
+#### Auto-expiry engine
+- **Added** `PermissionExpiryHandler` — `@EventBusSubscriber` class that hooks `ServerTickEvent.Post` and calls `PermissionManager.purgeExpiredTempPermissions()` every **30 seconds** (600 ticks).
+- When a temp permission expires the affected **online player** is notified with a chat message: `§eYour temporary permission §f<node>§e has expired.`
+- Every expiry is written to the **audit log** as `USER_TEMP_PERM_EXPIRED` / `GROUP_TEMP_PERM_EXPIRED` with executor `SYSTEM`.
+- Expired entries are **never loaded from disk** — `PermissionStorage` skips entries whose expiry timestamp has already passed on load.
+
+#### Persistence
+- **`playerdata.json`** — users gain an optional `"tempPermissions": {"<node>": <expiryMs>}` key.
+- **`permissions.json`** — groups gain an optional `"tempPermissions"` key with the same format.
+- Only unexpired entries are written on save; expired entries are stripped automatically.
+
+#### Resolution order
+Temp permissions are evaluated **after** negative-permission denial and **before** regular user/group permissions in the full resolution chain, so they cannot override explicit `-node` denials.
+
+#### New permission nodes
+
+| Node | Description |
+|---|---|
+| `neoessentials.permissions.user.temp` | Grant/revoke time-limited permissions for a user |
+| `neoessentials.permissions.group.temp` | Grant/revoke time-limited permissions for a group |
+
+#### New audit log events
+
+| Action constant | Trigger |
+|---|---|
+| `USER_TEMP_PERM_ADDED` | `/permissions user <p> addtemp` |
+| `USER_TEMP_PERM_REMOVED` | `/permissions user <p> removetemp` |
+| `USER_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
+| `GROUP_TEMP_PERM_ADDED` | `/permissions group <g> addtemp` |
+| `GROUP_TEMP_PERM_REMOVED` | `/permissions group <g> removetemp` |
+| `GROUP_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
+
+---
+
+## [1.0.2.6+build.23] — 2026-04-01 · [`48763856`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/48763856)
 
 ### New Feature — Permission Audit Logging
 
@@ -44,7 +292,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.22] — 2026-04-01
+## [1.0.2.6+build.22] — 2026-04-01 · [`a2e1a7ed`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/a2e1a7ed)
 
 ### Improvement — Permission Groups & Priorities + Permission Suggestions
 
@@ -79,7 +327,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.21] — 2026-04-01
+## [1.0.2.6+build.21] — 2026-04-01 · [`81c7a55d`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/81c7a55d)
 
 ### New Feature — Permission Debugging Tools
 
@@ -107,7 +355,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.19] — 2026-04-01
+## [1.0.2.6+build.19] — 2026-04-01 · [`a22d0323`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/a22d0323)
 
 ### Documentation — `allowUnsafeCommands` & Security Configuration
 
@@ -137,7 +385,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.18] — 2026-04-01
+## [1.0.2.6+build.18] — 2026-04-01 · [`4c534da6`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/4c534da6)
 
 ### New Feature — Fallback to Vanilla OP Permissions
 
@@ -164,7 +412,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.17] — 2026-04-01
+## [1.0.2.6+build.17] — 2026-04-01 · [`4d5cf1a1`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/4d5cf1a1)
 
 ### Improvements — External Permissions Integration
 
@@ -192,7 +440,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.16] — 2026-04-01
+## [1.0.2.6+build.16] — 2026-04-01 · [`c1cc26fa`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/c1cc26fa)
 
 ### New Features — Rules Command
 
@@ -222,7 +470,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.15] — 2026-04-01
+## [1.0.2.6+build.15] — 2026-04-01 · [`e3bb4dd2`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/e3bb4dd2)
 
 ### Bug Fixes — Split Configuration System
 
@@ -262,7 +510,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.12] — 2026-04-01
+## [1.0.2.6+build.12] — 2026-04-01 · [`1cebc781`](https://github.com/ZeroG-Network-Org/NeoEssentials/commit/1cebc781)
 
 
 ### New Features

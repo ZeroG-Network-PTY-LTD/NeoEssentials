@@ -71,11 +71,23 @@ public class PermissionEndpoint implements HttpHandler {
             return getPermissionOverview();
         } else if (path.equals("/groups")) {
             return getAllGroups();
+        } else if (path.startsWith("/group/") && path.endsWith("/context")) {
+            String groupName = path.substring(7, path.length() - 8);
+            return listGroupContextPerms(groupName);
+        } else if (path.startsWith("/group/") && path.endsWith("/temp")) {
+            String groupName = path.substring(7, path.length() - 5);
+            return listGroupTempPerms(groupName);
         } else if (path.startsWith("/group/")) {
             String groupName = path.substring(7);
             return getGroup(groupName);
         } else if (path.equals("/users")) {
             return getAllUsers();
+        } else if (path.startsWith("/user/") && path.endsWith("/context")) {
+            String username = path.substring(6, path.length() - 8);
+            return listUserContextPerms(username);
+        } else if (path.startsWith("/user/") && path.endsWith("/temp")) {
+            String username = path.substring(6, path.length() - 5);
+            return listUserTempPerms(username);
         } else if (path.startsWith("/user/")) {
             String username = path.substring(6);
             return getUser(username);
@@ -83,6 +95,8 @@ public class PermissionEndpoint implements HttpHandler {
             return getAllAvailablePermissions();
         } else if (path.equals("/system/status")) {
             return getSystemStatus();
+        } else if (path.equals("/aliases")) {
+            return listAliases();
         }
 
         return createErrorResponse("Unknown endpoint: " + path);
@@ -90,19 +104,35 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject handlePost(String path, HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject data = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
 
-        if (path.equals("/group/create")) {
+        if (path.equals("/reload")) {
+            return reloadPermissions();
+        } else if (path.equals("/group/create")) {
             return createGroup(data);
         } else if (path.startsWith("/group/") && path.endsWith("/permission/add")) {
             String groupName = extractGroupName(path, "/permission/add");
             return addPermissionToGroup(groupName, data);
+        } else if (path.startsWith("/group/") && path.endsWith("/context")) {
+            String groupName = extractGroupName(path, "/context");
+            return addGroupContextPerm(groupName, data);
+        } else if (path.startsWith("/group/") && path.endsWith("/temp")) {
+            String groupName = extractGroupName(path, "/temp");
+            return addGroupTempPerm(groupName, data);
         } else if (path.startsWith("/user/") && path.endsWith("/group/set")) {
             String username = extractUsername(path, "/group/set");
             return setUserGroup(username, data);
         } else if (path.startsWith("/user/") && path.endsWith("/permission/add")) {
             String username = extractUsername(path, "/permission/add");
             return addPermissionToUser(username, data);
+        } else if (path.startsWith("/user/") && path.endsWith("/context")) {
+            String username = extractUsername(path, "/context");
+            return addUserContextPerm(username, data);
+        } else if (path.startsWith("/user/") && path.endsWith("/temp")) {
+            String username = extractUsername(path, "/temp");
+            return addUserTempPerm(username, data);
+        } else if (path.equals("/aliases")) {
+            return addAlias(data);
         }
 
         return createErrorResponse("Unknown POST endpoint: " + path);
@@ -124,6 +154,39 @@ public class PermissionEndpoint implements HttpHandler {
     }
 
     private JsonObject handleDelete(String path, HttpExchange exchange) throws IOException {
+        // /group/{name}/context  — body contains {contextKey, node}
+        if (path.startsWith("/group/") && path.endsWith("/context")) {
+            String groupName = extractGroupName(path, "/context");
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
+            return removeGroupContextPerm(groupName, data);
+        }
+        // /group/{name}/temp/{node}
+        if (path.startsWith("/group/") && path.contains("/temp/")) {
+            int idx = path.lastIndexOf("/temp/");
+            String groupName = path.substring(7, idx);
+            String node = path.substring(idx + 6);
+            return removeGroupTempPerm(groupName, node);
+        }
+        // /user/{name}/context — body contains {contextKey, node}
+        if (path.startsWith("/user/") && path.endsWith("/context")) {
+            String username = extractUsername(path, "/context");
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
+            return removeUserContextPerm(username, data);
+        }
+        // /user/{name}/temp/{node}
+        if (path.startsWith("/user/") && path.contains("/temp/")) {
+            int idx = path.lastIndexOf("/temp/");
+            String username = path.substring(6, idx);
+            String node = path.substring(idx + 6);
+            return removeUserTempPerm(username, node);
+        }
+        // /aliases/{alias}
+        if (path.startsWith("/aliases/")) {
+            String alias = path.substring(9);
+            return removeAlias(alias);
+        }
         if (path.startsWith("/group/") && !path.contains("/permission/")) {
             String groupName = path.substring(7);
             return deleteGroup(groupName);
@@ -397,19 +460,35 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject getSystemStatus() {
         JsonObject status = new JsonObject();
-        boolean usingExternal = PermissionAPI.getManager() == null;
+        boolean usingExternal = PermissionAPI.isUsingExternal();
+        boolean emergencyMode = PermissionAPI.isEmergencyMode();
 
+        status.addProperty("emergencyMode", emergencyMode);
         status.addProperty("usingExternal", usingExternal);
-        status.addProperty("systemType", usingExternal ? "External" : "Internal");
-        status.addProperty("canManage", !usingExternal);
+        status.addProperty("canManage", !usingExternal && !emergencyMode);
 
-        if (!usingExternal) {
-            PermissionManager manager = PermissionAPI.getManager();
-            status.addProperty("groupCount", manager.getGroups().size());
-            status.addProperty("defaultGroup", manager.getDefaultGroup());
+        if (emergencyMode) {
+            status.addProperty("systemType", "EMERGENCY (OP-only fallback)");
+            status.addProperty("message", "Permission system failed to initialise. All checks use vanilla OP status. Run /permissions reload once fixed.");
+        } else if (usingExternal) {
+            com.zerog.neoessentials.permissions.ExternalPermissionAdapter adapter = PermissionAPI.getExternalAdapter();
+            status.addProperty("systemType", "External");
+            if (adapter != null) {
+                status.addProperty("adapterName", adapter.getName());
+                status.addProperty("adapterVersion", adapter.getVersion());
+                status.addProperty("adapterHealthy", adapter.isHealthy());
+                status.addProperty("adapterFailures", adapter.getConsecutiveFailures());
+            }
+            status.addProperty("message", "Permission management is handled by external adapter. Internal groups/users are not active.");
         } else {
-            status.addProperty("externalProvider", "LuckPerms/FTB Ranks");
-            status.addProperty("message", "Permission management is handled by external plugin");
+            PermissionManager manager = PermissionAPI.getManager();
+            status.addProperty("systemType", "Internal");
+            if (manager != null) {
+                status.addProperty("groupCount", manager.getGroups().size());
+                status.addProperty("defaultGroup", manager.getDefaultGroup());
+                int aliasCount = com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance().getAll().size();
+                status.addProperty("aliasCount", aliasCount);
+            }
         }
 
         status.addProperty("success", true);
@@ -699,6 +778,284 @@ public class PermissionEndpoint implements HttpHandler {
             response.addProperty("message", "Failed to remove permission: " + e.getMessage());
         }
 
+        return response;
+    }
+
+    // ========== Reload ==========
+
+    private JsonObject reloadPermissions() {
+        JsonObject response = new JsonObject();
+        try {
+            com.zerog.neoessentials.permissions.PermissionSystem.reload();
+            response.addProperty("success", true);
+            response.addProperty("message", "Permissions reloaded successfully");
+        } catch (Exception e) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Failed to reload: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // ========== Context Permissions ==========
+
+    private JsonObject listGroupContextPerms(String groupName) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        JsonObject ctxObj = new JsonObject();
+        group.getContextualPermissions().forEach((ctxKey, nodeMap) -> {
+            JsonObject nodes = new JsonObject();
+            nodeMap.forEach(nodes::addProperty);
+            ctxObj.add(ctxKey, nodes);
+        });
+        response.add("contextualPermissions", ctxObj);
+        response.addProperty("success", true);
+        return response;
+    }
+
+    private JsonObject addGroupContextPerm(String groupName, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        if (!data.has("contextKey") || !data.has("node") || !data.has("allow"))
+            return createErrorResponse("Required fields: contextKey, node, allow (boolean)");
+        String contextKey = data.get("contextKey").getAsString();
+        String node = data.get("node").getAsString();
+        boolean allow = data.get("allow").getAsBoolean();
+        group.addContextPermission(contextKey, node, allow);
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Contextual override set: " + node + " → " + (allow ? "allow" : "deny") + " in " + contextKey + " for group " + groupName);
+        return response;
+    }
+
+    private JsonObject removeGroupContextPerm(String groupName, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        if (!data.has("contextKey") || !data.has("node"))
+            return createErrorResponse("Required fields: contextKey, node");
+        boolean removed = group.removeContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString());
+        if (!removed) return createErrorResponse("No such contextual override");
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Contextual override removed");
+        return response;
+    }
+
+    private JsonObject listUserContextPerms(String username) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        JsonObject ctxObj = new JsonObject();
+        user.getContextualPermissions().forEach((ctxKey, nodeMap) -> {
+            JsonObject nodes = new JsonObject();
+            nodeMap.forEach(nodes::addProperty);
+            ctxObj.add(ctxKey, nodes);
+        });
+        response.add("contextualPermissions", ctxObj);
+        response.addProperty("success", true);
+        return response;
+    }
+
+    private JsonObject addUserContextPerm(String username, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        if (!data.has("contextKey") || !data.has("node") || !data.has("allow"))
+            return createErrorResponse("Required fields: contextKey, node, allow");
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        user.addContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString(), data.get("allow").getAsBoolean());
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Contextual override set for user " + username);
+        return response;
+    }
+
+    private JsonObject removeUserContextPerm(String username, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        if (!data.has("contextKey") || !data.has("node"))
+            return createErrorResponse("Required fields: contextKey, node");
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        boolean removed = user.removeContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString());
+        if (!removed) return createErrorResponse("No such contextual override");
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Contextual override removed for user " + username);
+        return response;
+    }
+
+    // ========== Temporary Permissions ==========
+
+    private JsonObject listGroupTempPerms(String groupName) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        JsonArray arr = new JsonArray();
+        long now = System.currentTimeMillis();
+        group.getTempPermissions().forEach((node, expiry) -> {
+            if (expiry > now) {
+                JsonObject entry = new JsonObject();
+                entry.addProperty("node", node);
+                entry.addProperty("expiryMs", expiry);
+                entry.addProperty("remaining", com.zerog.neoessentials.permissions.PermissionManager.formatDuration(expiry - now));
+                arr.add(entry);
+            }
+        });
+        response.add("tempPermissions", arr);
+        response.addProperty("success", true);
+        return response;
+    }
+
+    private JsonObject addGroupTempPerm(String groupName, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        if (!data.has("node") || !data.has("duration"))
+            return createErrorResponse("Required fields: node, duration (e.g. 1d, 12h, 30m)");
+        try {
+            long ms = com.zerog.neoessentials.permissions.PermissionManager.parseDurationMs(data.get("duration").getAsString());
+            group.addTempPermission(data.get("node").getAsString(), System.currentTimeMillis() + ms);
+            manager.clearCache();
+            PermissionStorage.save(manager);
+            response.addProperty("success", true);
+            response.addProperty("message", "Temp permission added to group " + groupName + " for " + data.get("duration").getAsString());
+        } catch (Exception e) { return createErrorResponse(e.getMessage()); }
+        return response;
+    }
+
+    private JsonObject removeGroupTempPerm(String groupName, String node) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        PermissionGroup group = manager.getGroup(groupName);
+        if (group == null) return createErrorResponse("Group not found: " + groupName);
+        group.removeTempPermission(node);
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Temp permission " + node + " removed from group " + groupName);
+        return response;
+    }
+
+    private JsonObject listUserTempPerms(String username) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        JsonArray arr = new JsonArray();
+        long now = System.currentTimeMillis();
+        user.getTempPermissions().forEach((node, expiry) -> {
+            if (expiry > now) {
+                JsonObject entry = new JsonObject();
+                entry.addProperty("node", node);
+                entry.addProperty("expiryMs", expiry);
+                entry.addProperty("remaining", com.zerog.neoessentials.permissions.PermissionManager.formatDuration(expiry - now));
+                arr.add(entry);
+            }
+        });
+        response.add("tempPermissions", arr);
+        response.addProperty("success", true);
+        return response;
+    }
+
+    private JsonObject addUserTempPerm(String username, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        if (!data.has("node") || !data.has("duration"))
+            return createErrorResponse("Required fields: node, duration");
+        try {
+            long ms = com.zerog.neoessentials.permissions.PermissionManager.parseDurationMs(data.get("duration").getAsString());
+            com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+            user.addTempPermission(data.get("node").getAsString(), System.currentTimeMillis() + ms);
+            manager.clearCache();
+            PermissionStorage.save(manager);
+            response.addProperty("success", true);
+            response.addProperty("message", "Temp permission added to " + username + " for " + data.get("duration").getAsString());
+        } catch (Exception e) { return createErrorResponse(e.getMessage()); }
+        return response;
+    }
+
+    private JsonObject removeUserTempPerm(String username, String node) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) return createErrorResponse("Permission manager not available");
+        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        if (player == null) return createErrorResponse("Player not online: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        user.removeTempPermission(node);
+        manager.clearCache();
+        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Temp permission " + node + " removed from " + username);
+        return response;
+    }
+
+    // ========== Aliases ==========
+
+    private JsonObject listAliases() {
+        JsonObject response = new JsonObject();
+        JsonObject aliasObj = new JsonObject();
+        com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance()
+            .getAll().forEach(aliasObj::addProperty);
+        response.add("aliases", aliasObj);
+        response.addProperty("count", aliasObj.size());
+        response.addProperty("success", true);
+        return response;
+    }
+
+    private JsonObject addAlias(JsonObject data) {
+        JsonObject response = new JsonObject();
+        if (!data.has("alias") || !data.has("canonical"))
+            return createErrorResponse("Required fields: alias, canonical");
+        String alias = data.get("alias").getAsString();
+        String canonical = data.get("canonical").getAsString();
+        com.zerog.neoessentials.permissions.PermissionAliasManager mgr =
+            com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance();
+        mgr.addAlias(alias, canonical);
+        try { mgr.save(); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Alias registered: " + alias + " → " + canonical);
+        return response;
+    }
+
+    private JsonObject removeAlias(String alias) {
+        JsonObject response = new JsonObject();
+        com.zerog.neoessentials.permissions.PermissionAliasManager mgr =
+            com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance();
+        boolean removed = mgr.removeAlias(alias);
+        if (!removed) return createErrorResponse("Alias not found: " + alias);
+        try { mgr.save(); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        response.addProperty("success", true);
+        response.addProperty("message", "Alias removed: " + alias);
         return response;
     }
 

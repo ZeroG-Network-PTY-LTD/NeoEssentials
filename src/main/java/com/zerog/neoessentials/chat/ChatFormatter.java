@@ -30,6 +30,13 @@ public class ChatFormatter {
     private static final Pattern AMPERSAND_CODE_PATTERN = Pattern.compile("&([0-9a-fk-or])");
     private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&([0-9a-f])");
     private static final Pattern FORMAT_CODE_PATTERN = Pattern.compile("&([k-or])");
+    // Named-color / format tags (stripped from player messages without permission)
+    private static final Pattern NAMED_TAG_PATTERN = Pattern.compile(
+        "<(black|dark_blue|dark_green|dark_aqua|dark_cyan|dark_red|dark_purple|gold|"
+        + "gray|grey|dark_gray|dark_grey|blue|green|aqua|cyan|red|light_purple|pink|yellow|white|"
+        + "bold|b|italic|i|underline|underlined|u|strikethrough|s|obfuscated|magic|reset|r|color"
+        + "|hover|click|gradient|rainbow)([^>]*)>",
+        Pattern.CASE_INSENSITIVE);
     
     // Phase 2: Enhancement patterns
     @SuppressWarnings("RegExpDuplicateCharacterInClass") // Period in char class is intentional
@@ -57,6 +64,13 @@ public class ChatFormatter {
             String normalizedTemplate = normalizePlaceholders(template);
             if (debugEnabled) {
                 LOGGER.debug("After normalization: {}", normalizedTemplate);
+            }
+
+            // Inject clickable player-name placeholder when feature is enabled
+            if (isClickablePlayerNamesEnabled()) {
+                normalizedTemplate = normalizedTemplate
+                    .replace("{neoessentials_username}", "{neoessentials_username_hover}")
+                    .replace("{neoessentials_displayname}", "{neoessentials_displayname_hover}");
             }
 
             // Phase 3: Apply badges and icons to template
@@ -199,6 +213,15 @@ public class ChatFormatter {
             } else {
                 result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
             }
+        }
+
+        // Strip named color/format tags (e.g. <red>, <bold>) unless player has appropriate perm
+        boolean hasNamedTagPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.namedcolors");
+        if (!hasNamedTagPerm) {
+            // Also strip hover/click tags (those always require namedcolors perm in player messages)
+            result = NAMED_TAG_PATTERN.matcher(result).replaceAll("");
+            // Strip matching close-tags
+            result = result.replaceAll("</(\\w+)>", "");
         }
         
         if (debugEnabled) {

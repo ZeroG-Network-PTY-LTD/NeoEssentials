@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,58 +107,149 @@ public class PermissionManager {
     }
 
     public boolean hasPermission(UUID uuid, String permission) {
+        return hasPermission(uuid, permission, PermissionContext.EMPTY);
+    }
+
+    /**
+     * Context-aware permission check.  When {@code context} is not {@link PermissionContext#EMPTY},
+     * contextual overrides are evaluated (deny wins; then grant; then fall through to regular check).
+     */
+    public boolean hasPermission(UUID uuid, String permission, PermissionContext context) {
         permission = permission.toLowerCase();
+        // Context-aware checks bypass the cache to ensure fresh evaluation
+        boolean noContext = (context == null || context == PermissionContext.EMPTY);
         String cacheKey = uuid + ":" + permission;
-        boolean cacheEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isPermissionCacheEnabled();
+        boolean cacheEnabled = noContext
+            && com.zerog.neoessentials.config.ConfigManager.getInstance().isPermissionCacheEnabled();
         long cacheTtl = getCacheTtlMs();
         if (cacheEnabled) {
-            // Check cache first
             CachedPermission cached = permissionCache.get(cacheKey);
             if (cached != null && !cached.isExpired(cacheTtl)) {
                 return cached.result;
             }
         }
-        // Compute permission
-        boolean result = computePermission(uuid, permission);
+        boolean result = computePermission(uuid, permission, context);
         if (cacheEnabled) {
-            // Cache the result
             permissionCache.put(cacheKey, new CachedPermission(result));
-            // Clean expired entries periodically (every 100 checks)
             if (permissionCache.size() % 100 == 0) {
                 cleanExpiredCache();
             }
         }
         return result;
     }
-    
-    private boolean computePermission(UUID uuid, String permission) {
-        LOGGER.debug("Computing permission '{}' for UUID {}", permission, uuid);
+
+
+    private boolean computePermission(UUID uuid, String permission, PermissionContext context) {
+        LOGGER.debug("Computing permission '{}' for UUID {} (context={})", permission, uuid,
+                context == PermissionContext.EMPTY ? "NONE" : context.worldId);
         PermissionUser user = getUser(uuid);
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : defaultGroup;
-        LOGGER.debug("  User group: {}", groupName);
-        
-        // Check user negative permissions
+        boolean hasCtx = (context != null && context != PermissionContext.EMPTY);
+
+        // ── 1. Contextual denies (user) ──────────────────────────────────────
+        if (hasCtx && user != null) {
+            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                    user.getContextualPermissions().entrySet()) {
+                if (context.matches(entry.getKey())) {
+                    Boolean ctxVal = entry.getValue().get(permission);
+                    if (ctxVal == null) {
+                        // wildcard check
+                        ctxVal = wildcardLookup(entry.getValue(), permission);
+                    }
+                    if (Boolean.FALSE.equals(ctxVal)) {
+                        LOGGER.debug("  -> Denied by user contextual permission ({})", entry.getKey());
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // ── 2. Contextual denies (group, with inheritance) ───────────────────
+        if (hasCtx && hasGroupContextualDeny(groupName, permission, context, new HashSet<>())) {
+            LOGGER.debug("  -> Denied by group contextual permission");
+            return false;
+        }
+
+        // ── 3. Regular negative permissions (user) ───────────────────────────
         if (user != null && hasNegativePermission(user.getPermissions(), permission)) {
             LOGGER.debug("  -> Denied by user negative permission");
             return false;
         }
-        
-        // Check group negative permissions (with inheritance)
+
+        // ── 4. Regular negative permissions (group, with inheritance) ─────────
         if (hasGroupNegativePermission(groupName, permission, new HashSet<>())) {
             LOGGER.debug("  -> Denied by group negative permission");
             return false;
         }
-        
-        // Check user permissions (including wildcards)
+
+        // ── 5. User temporary permissions ────────────────────────────────────
+        if (user != null && hasTempPermissionWithWildcards(user.getTempPermissions(), permission)) {
+            LOGGER.debug("  -> Granted by user temp permission");
+            return applyCondition(uuid, permission, context, user.getCondition(permission));
+        }
+
+        // ── 6. Contextual grants (user) ───────────────────────────────────────
+        if (hasCtx && user != null) {
+            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                    user.getContextualPermissions().entrySet()) {
+                if (context.matches(entry.getKey())) {
+                    Boolean ctxVal = entry.getValue().get(permission);
+                    if (ctxVal == null) {
+                        ctxVal = wildcardLookup(entry.getValue(), permission);
+                    }
+                    if (Boolean.TRUE.equals(ctxVal)) {
+                        LOGGER.debug("  -> Granted by user contextual permission ({})", entry.getKey());
+                        return applyCondition(uuid, permission, context, user.getCondition(permission));
+                    }
+                }
+            }
+        }
+
+        // ── 7. Regular user permissions ───────────────────────────────────────
         if (user != null && hasPermissionWithWildcards(user.getPermissions(), permission)) {
             LOGGER.debug("  -> Granted by user permission");
-            return true;
+            return applyCondition(uuid, permission, context, user.getCondition(permission));
         }
-        
-        // Check group permissions (with inheritance and wildcards)
-        boolean result = hasGroupPermission(groupName, permission, new HashSet<>());
+
+        // ── 8. Group permissions (context + regular, with inheritance) ────────
+        boolean result = hasGroupPermission(groupName, permission, context, new HashSet<>());
         LOGGER.debug("  -> Group permission check result: {}", result);
         return result;
+    }
+
+    /**
+     * Applies a condition expression to a would-be grant.  Returns {@code true}
+     * if the condition passes (or there is no condition), {@code false} if it fails.
+     */
+    private boolean applyCondition(UUID uuid, String permission, PermissionContext context, String condExpr) {
+        if (condExpr == null || condExpr.isBlank()) return true;
+        try {
+            net.minecraft.server.level.ServerPlayer player = null;
+            if (uuid != null) {
+                net.minecraft.server.MinecraftServer server =
+                    net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (server != null) player = server.getPlayerList().getPlayer(uuid);
+            }
+            return PermissionConditionManager.getInstance().evaluate(condExpr, context, player);
+        } catch (Exception e) {
+            LOGGER.warn("Condition evaluation failed for node '{}': {}", permission, e.getMessage());
+            return true; // fail-open: if we can't evaluate, grant
+        }
+    }
+
+    /**
+     * Wildcard lookup: returns the first value in {@code map} whose key is a
+     * wildcard pattern that covers {@code permission}, or {@code null} if none.
+     */
+    private static Boolean wildcardLookup(java.util.Map<String, Boolean> map, String permission) {
+        for (Map.Entry<String, Boolean> e : map.entrySet()) {
+            String key = e.getKey();
+            if (key.endsWith(".*")) {
+                String prefix = key.substring(0, key.length() - 2);
+                if (permission.startsWith(prefix + ".")) return e.getValue();
+            }
+        }
+        return null;
     }
     
     /**
@@ -294,7 +387,8 @@ public class PermissionManager {
         return false;
     }
 
-    private boolean hasGroupPermission(String groupName, String permission, Set<String> visited) {
+
+    private boolean hasGroupPermission(String groupName, String permission, PermissionContext context, Set<String> visited) {
         if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
         visited.add(groupName.toLowerCase());
         PermissionGroup group = getGroup(groupName);
@@ -303,12 +397,62 @@ public class PermissionManager {
             return false;
         }
         LOGGER.debug("  Checking group '{}' with {} permissions", groupName, group.getPermissions().size());
-        if (hasPermissionWithWildcards(group.getPermissions(), permission)) return true;
-        // Check inherited groups sorted by priority (highest first)
+
+        // ── Contextual grants (this group) ────────────────────────────────────
+        boolean hasCtx = (context != null && context != PermissionContext.EMPTY);
+        if (hasCtx) {
+            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                    group.getContextualPermissions().entrySet()) {
+                if (context.matches(entry.getKey())) {
+                    Boolean ctxVal = entry.getValue().get(permission);
+                    if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
+                    if (Boolean.TRUE.equals(ctxVal)) return true;
+                }
+            }
+        }
+
+        // ── Group temp permissions ─────────────────────────────────────────────
+        if (hasTempPermissionWithWildcards(group.getTempPermissions(), permission)) {
+            String cond = group.getCondition(permission);
+            // conditions for groups are currently always evaluated against EMPTY UUID;
+            // group UUIDs don't exist — conditions are a user-side feature for groups
+            return applyCondition(null, permission, context, cond);
+        }
+
+        // ── Regular group permissions ──────────────────────────────────────────
+        if (hasPermissionWithWildcards(group.getPermissions(), permission)) {
+            return applyCondition(null, permission, context, group.getCondition(permission));
+        }
+
+        // ── Inherited groups ───────────────────────────────────────────────────
         java.util.List<String> sorted = sortedInherits(group);
         for (String parent : sorted) {
             LOGGER.debug("  Checking inherited group '{}'", parent);
-            if (hasGroupPermission(parent, permission, visited)) return true;
+            if (hasGroupPermission(parent, permission, context, visited)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if any group in the hierarchy has a contextual
+     * {@code false} override for the given permission + context.
+     */
+    private boolean hasGroupContextualDeny(String groupName, String permission,
+                                           PermissionContext context, Set<String> visited) {
+        if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
+        visited.add(groupName.toLowerCase());
+        PermissionGroup group = getGroup(groupName);
+        if (group == null) return false;
+        for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                group.getContextualPermissions().entrySet()) {
+            if (context.matches(entry.getKey())) {
+                Boolean ctxVal = entry.getValue().get(permission);
+                if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
+                if (Boolean.FALSE.equals(ctxVal)) return true;
+            }
+        }
+        for (String parent : sortedInherits(group)) {
+            if (hasGroupContextualDeny(parent, permission, context, visited)) return true;
         }
         return false;
     }
@@ -327,5 +471,141 @@ public class PermissionManager {
                     return Integer.compare(pb, pa); // descending
                 })
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    // ── Temporary permission checks ───────────────────────────────────────────
+
+    /**
+     * Returns {@code true} if the node (or a covering wildcard) exists in the temp map
+     * AND its expiry has not yet elapsed.
+     */
+    private boolean hasTempPermissionWithWildcards(Map<String, Long> temps, String permission) {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, Long> e : temps.entrySet()) {
+            if (e.getValue() <= now) continue; // expired
+            String perm = e.getKey();
+            if (perm.equals(permission)) return true;
+            if (perm.endsWith(".*")) {
+                String prefix = perm.substring(0, perm.length() - 2);
+                if (permission.startsWith(prefix + ".")) return true;
+            }
+        }
+        return false;
+    }
+
+    // ── Purge expired temp permissions ────────────────────────────────────────
+
+    /**
+     * Remove all expired temp permissions from every user and group.
+     * Called periodically from {@link PermissionExpiryHandler} (every 30 s).
+     *
+     * @param server live server reference used to notify online players
+     * @return total number of expired entries removed
+     */
+    public int purgeExpiredTempPermissions(net.minecraft.server.MinecraftServer server) {
+        int total = 0;
+        long now = System.currentTimeMillis();
+
+        // ── Users ────────────────────────────────────────────────────────────
+        for (PermissionUser user : users.values()) {
+            Map<String, Long> snapshot = new java.util.HashMap<>(user.getTempPermissions());
+            int removed = user.purgeExpiredTempPermissions();
+            if (removed > 0) {
+                total += removed;
+                clearCache();
+                if (server != null) {
+                    net.minecraft.server.level.ServerPlayer online =
+                        server.getPlayerList().getPlayer(user.getUuid());
+                    for (Map.Entry<String, Long> e : snapshot.entrySet()) {
+                        if (e.getValue() <= now) {
+                            String node = e.getKey();
+                            if (online != null) {
+                                online.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                                    "§eYour temporary permission §f" + node + "§e has expired."));
+                            }
+                            String playerName = online != null
+                                ? online.getGameProfile().getName()
+                                : user.getUuid().toString();
+                            LOGGER.info("[TempPerms] Expired user temp permission: {} -> {}", playerName, node);
+                            PermissionAuditLogger.log("SYSTEM",
+                                PermissionAuditLogger.USER_TEMP_PERM_EXPIRED, playerName, "node=" + node);
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Groups ───────────────────────────────────────────────────────────
+        for (PermissionGroup group : groups.values()) {
+            Map<String, Long> snapshot = new java.util.HashMap<>(group.getTempPermissions());
+            int removed = group.purgeExpiredTempPermissions();
+            if (removed > 0) {
+                total += removed;
+                clearCache();
+                for (Map.Entry<String, Long> e : snapshot.entrySet()) {
+                    if (e.getValue() <= now) {
+                        LOGGER.info("[TempPerms] Expired group temp permission: {} -> {}",
+                            group.getName(), e.getKey());
+                        PermissionAuditLogger.log("SYSTEM",
+                            PermissionAuditLogger.GROUP_TEMP_PERM_EXPIRED,
+                            group.getName(), "node=" + e.getKey());
+                    }
+                }
+            }
+        }
+
+        if (total > 0) {
+            LOGGER.info("[TempPerms] Purged {} expired temporary permission(s)", total);
+            try { PermissionStorage.save(this); }
+            catch (Exception e) { LOGGER.warn("[TempPerms] Failed to persist after purge: {}", e.getMessage()); }
+        }
+        return total;
+    }
+
+    // ── Duration utilities ────────────────────────────────────────────────────
+
+    private static final Pattern DURATION_PATTERN =
+            Pattern.compile("^(?:(\\d+)d)?(?:(\\d+)h)?(?:(\\d+)m)?(?:(\\d+)s)?$",
+                            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Parse a human-readable duration (e.g. {@code 1d}, {@code 12h}, {@code 30m},
+     * {@code 1d12h30m}) into milliseconds.
+     *
+     * @throws IllegalArgumentException if blank, all-zero, or syntactically invalid
+     */
+    public static long parseDurationMs(String input) {
+        if (input == null || input.isBlank())
+            throw new IllegalArgumentException("Duration cannot be empty");
+        Matcher m = DURATION_PATTERN.matcher(input.trim());
+        if (!m.matches())
+            throw new IllegalArgumentException(
+                "Invalid duration '" + input + "'. Use combinations of: 1d 12h 30m 60s");
+        long days  = m.group(1) != null ? Long.parseLong(m.group(1)) : 0;
+        long hours = m.group(2) != null ? Long.parseLong(m.group(2)) : 0;
+        long mins  = m.group(3) != null ? Long.parseLong(m.group(3)) : 0;
+        long secs  = m.group(4) != null ? Long.parseLong(m.group(4)) : 0;
+        long totalSeconds = days * 86400L + hours * 3600L + mins * 60L + secs;
+        if (totalSeconds <= 0)
+            throw new IllegalArgumentException("Duration must be positive");
+        return totalSeconds * 1000L;
+    }
+
+    /**
+     * Format a remaining-time duration (ms) into a compact human string,
+     * e.g. {@code "2d 3h 15m 4s"}.
+     */
+    public static String formatDuration(long ms) {
+        if (ms <= 0) return "expired";
+        long secs  = ms / 1000;
+        long days  = secs / 86400; secs %= 86400;
+        long hours = secs / 3600;  secs %= 3600;
+        long mins  = secs / 60;    secs %= 60;
+        StringBuilder sb = new StringBuilder();
+        if (days  > 0) sb.append(days).append("d ");
+        if (hours > 0) sb.append(hours).append("h ");
+        if (mins  > 0) sb.append(mins).append("m ");
+        if (secs  > 0 || sb.length() == 0) sb.append(secs).append("s");
+        return sb.toString().trim();
     }
 }

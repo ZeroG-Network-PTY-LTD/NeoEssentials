@@ -30,9 +30,9 @@ public class SuicideCommand {
         if (!ConfigManager.getInstance().isCommandEnabled("suicide")) return;
         
         // Register main command and aliases
+        // NOTE: /kill is a vanilla Minecraft admin command (kills entities) — do NOT alias it here.
         registerSuicideCommand(dispatcher, "suicide");
-        registerSuicideCommand(dispatcher, "kill");
-        registerSuicideCommand(dispatcher, "die");
+        registerSuicideCommand(dispatcher, "killme");
     }
     
     private static void registerSuicideCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
