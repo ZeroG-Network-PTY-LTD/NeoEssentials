@@ -45,6 +45,10 @@ public class MiscTeleportManager {
     private int teleportDelay = 3;
     private boolean enableDeathBack = true;
     private boolean enableTeleportBack = true;
+    private int backCooldownSeconds = 0; // 0 = no cooldown
+
+    // Cooldown tracking for /back
+    private final Map<UUID, Long> lastBackTimestamps = new ConcurrentHashMap<>();
     
     private MiscTeleportManager() {
         loadConfig();
@@ -59,6 +63,21 @@ public class MiscTeleportManager {
             teleportDelay = cfg.getBackTeleportDelay();
             enableDeathBack = cfg.isDeathBackEnabled();
             enableTeleportBack = cfg.isTeleportBackEnabled();
+            // Read back cooldown from config (optional field)
+            try {
+                com.google.gson.JsonObject config = cfg.getConfig(ConfigManager.MAIN_CONFIG);
+                if (config.has("teleportation")) {
+                    com.google.gson.JsonObject tp = config.getAsJsonObject("teleportation");
+                    if (tp.has("miscSettings")) {
+                        com.google.gson.JsonObject misc = tp.getAsJsonObject("miscSettings");
+                        if (misc.has("backCooldown")) {
+                            backCooldownSeconds = misc.get("backCooldown").getAsInt();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+            LOGGER.info("[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}",
+                teleportDelay, backCooldownSeconds, enableDeathBack, enableTeleportBack);
         } catch (Exception e) {
             LOGGER.warn("Failed to load MiscTeleportManager config, using defaults: {}", e.getMessage());
         }
@@ -197,10 +216,33 @@ public class MiscTeleportManager {
             return false;
         }
 
+        // Enforce /back cooldown (skip if player has bypass permission)
+        boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.cooldown")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.back.bypass.cooldown");
+        if (backCooldownSeconds > 0 && !bypassCooldown) {
+            long now = System.currentTimeMillis();
+            Long lastBack = lastBackTimestamps.putIfAbsent(playerId, now);
+            if (lastBack != null) {
+                long elapsed = (now - lastBack) / 1000L;
+                if (elapsed < backCooldownSeconds) {
+                    long wait = backCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_cooldown", wait));
+                    return false;
+                }
+                lastBackTimestamps.put(playerId, now);
+            }
+        }
+
         // Save current location before teleporting back
         TeleportLocation currentLocation = new TeleportLocation(player);
         final TeleportLocation finalTargetLocation = targetLocation;
-        int delayTicks = teleportDelay * 20;
+        // Bypass warmup for players with the permission
+        boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.warmup")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.back.bypass.warmup");
+        int delayTicks = bypassWarmup ? 0 : teleportDelay * 20;
+        if (delayTicks > 0) {
+            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.back_warmup", teleportDelay));
+        }
         TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
                 // Update back location to where they just came from

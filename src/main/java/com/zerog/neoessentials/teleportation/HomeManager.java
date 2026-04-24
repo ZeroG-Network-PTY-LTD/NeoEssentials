@@ -161,6 +161,8 @@ public class HomeManager {
             setHomeSetCooldownSeconds(setCooldown);
             setHomeTeleportCooldownSeconds(tpCooldown);
             setHomeDeleteCooldownSeconds(delCooldown);
+            LOGGER.info("[HomeManager] Config loaded — safetyCheck={}, maxHomes={}, warmup={}s, tpCooldown={}s, setCooldown={}s, delCooldown={}s, crossDimension={}",
+                safe, maxHomes, teleportDelay, tpCooldown, setCooldown, delCooldown, allowCrossDimensionHomes);
         } catch (Exception e) {
             LOGGER.warn("Failed to load home config, using defaults: {}", e.getMessage());
         }
@@ -186,8 +188,10 @@ public class HomeManager {
             LOGGER.info("[DEBUG] Home set safety: {} (from config)", requireSafe);
         }
 
-        // Enforce set home cooldown - atomic check
-        if (homeSetCooldownSeconds > 0) {
+        // Enforce set home cooldown - atomic check (skip if player has bypass permission)
+        boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.cooldown")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.home.bypass.cooldown");
+        if (homeSetCooldownSeconds > 0 && !bypassCooldown) {
             long now = System.currentTimeMillis();
             // Use putIfAbsent to atomically check and update cooldown
             Long lastSet = lastHomeSetTimestamps.putIfAbsent(playerId, now);
@@ -422,8 +426,10 @@ public class HomeManager {
             return;
         }
 
-        // Enforce home teleport cooldown - atomic check
-        if (homeTeleportCooldownSeconds > 0) {
+        // Enforce home teleport cooldown - atomic check (skip if player has bypass permission)
+        boolean bypassTpCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.cooldown")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.home.bypass.cooldown");
+        if (homeTeleportCooldownSeconds > 0 && !bypassTpCooldown) {
             long now = System.currentTimeMillis();
             Long lastTp = lastHomeTeleportTimestamps.putIfAbsent(playerId, now);
             if (lastTp != null) {
@@ -478,8 +484,11 @@ public class HomeManager {
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
         // Show warmup countdown message if delay is configured and warmup messages are enabled
-        int delayTicks = teleportDelay * 20;
-        if (teleportDelay > 0) {
+        // Admins with bypass permission skip the warmup entirely
+        boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.warmup")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.home.bypass.warmup");
+        int delayTicks = bypassWarmup ? 0 : teleportDelay * 20;
+        if (delayTicks > 0) {
             boolean showWarmup = true;
             try {
                 com.google.gson.JsonObject generalSettings = com.zerog.neoessentials.config.ConfigManager.getInstance()

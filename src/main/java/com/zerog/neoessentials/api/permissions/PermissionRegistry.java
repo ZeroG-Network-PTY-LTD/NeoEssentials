@@ -394,6 +394,8 @@ public class PermissionRegistry {
         register("neoessentials.teleport.home.delete", "Delete home locations", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.home.list", "List home locations", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.home.others", "Access others' homes", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.home.bypass.cooldown", "Bypass /home teleport & set cooldowns", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.home.bypass.warmup", "Bypass /home warmup delay", PermissionCategory.TELEPORT, false);
         
         // Dynamic home limit permissions
         // Pattern: neoessentials.home.<amount> where <amount> is 1-100
@@ -408,6 +410,8 @@ public class PermissionRegistry {
         register("neoessentials.teleport.warp.create", "Create warps", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.warp.delete", "Delete warps", PermissionCategory.TELEPORT, false);
         register("neoessentials.warps.*", "Access ALL warps regardless of per-warp permissions", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.warp.bypass.cooldown", "Bypass /warp use cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.warp.bypass.warmup", "Bypass /warp warmup delay", PermissionCategory.TELEPORT, false);
 
         // Dynamic player warp limit permissions
         // Pattern: neoessentials.warp.limit.<amount> where <amount> is 1-100
@@ -420,14 +424,22 @@ public class PermissionRegistry {
         register("neoessentials.teleport.spawn.set", "Set spawn location", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.spawn.info", "View spawn information", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.spawn.clear", "Clear spawn location", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.spawn.bypass.cooldown", "Bypass /spawn cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.spawn.bypass.warmup", "Bypass /spawn warmup delay", PermissionCategory.TELEPORT, false);
         
         // Misc teleport
         register("neoessentials.teleport.back", "Use back teleportation", PermissionCategory.TELEPORT, true);
+        register("neoessentials.teleport.back.bypass.cooldown", "Bypass /back cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.back.bypass.warmup", "Bypass /back warmup delay", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.death", "Teleport to death location", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.top", "Teleport to highest block", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.jump", "Teleport through walls", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.jumpto", "Teleport to looking at", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.tpr", "Random teleportation", PermissionCategory.TELEPORT, true);
+
+        // Global teleport bypass permissions (admin-level)
+        register("neoessentials.teleport.bypass.cooldown", "Bypass ALL teleport cooldowns", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.bypass.warmup", "Bypass ALL teleport warmups (instant teleport)", PermissionCategory.TELEPORT, false);
         
         // Direct teleport - others access
         register("neoessentials.teleport.admin.tpo", "Teleport other players to locations", PermissionCategory.TELEPORT, false);

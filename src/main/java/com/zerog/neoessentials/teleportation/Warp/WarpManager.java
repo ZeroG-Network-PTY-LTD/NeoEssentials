@@ -129,8 +129,8 @@ public class WarpManager {
                     }
                 }
             }
-            LOGGER.debug("Warp config loaded: requireSafe={}, maxWarps={}, delay={}",
-                requireSafeLocations, maxWarps, teleportDelay);
+            LOGGER.info("[WarpManager] Config loaded — safetyCheck={}, maxWarps={}, allowPlayerWarps={}, maxPlayerWarps={}, warmup={}s, useCooldown={}s, setCooldown={}s, crossDimension={}",
+                requireSafeLocations, maxWarps, allowPlayerWarps, maxPlayerWarps, teleportDelay, warpUseCooldown, warpSetCooldown, allowCrossDimensionWarps);
         } catch (Exception e) {
             LOGGER.warn("Failed to load warp config, using defaults: {}", e.getMessage());
         }
@@ -538,8 +538,10 @@ public class WarpManager {
             return;
         }
 
-        // Enforce warp USE cooldown - atomic check
-        if (warpUseCooldown > 0) {
+        // Enforce warp USE cooldown - atomic check (skip if player has bypass permission)
+        boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.bypass.cooldown")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.warp.bypass.cooldown");
+        if (warpUseCooldown > 0 && !bypassCooldown) {
             long now = System.currentTimeMillis();
             UUID playerId = player.getUUID();
             Long lastUse = lastWarpUseTimestamps.putIfAbsent(playerId, now);
@@ -604,8 +606,11 @@ public class WarpManager {
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
         // Show warmup countdown message if delay is configured and warmup messages are enabled
-        int delayTicks = teleportDelay * 20;
-        if (teleportDelay > 0) {
+        // Players with warmup bypass permission teleport instantly
+        boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.bypass.warmup")
+            || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.warp.bypass.warmup");
+        int delayTicks = bypassWarmup ? 0 : teleportDelay * 20;
+        if (delayTicks > 0) {
             boolean showWarmup = true;
             try {
                 JsonObject generalSettings = ConfigManager.getInstance()

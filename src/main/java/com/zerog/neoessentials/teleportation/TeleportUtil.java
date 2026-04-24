@@ -96,7 +96,11 @@ public class TeleportUtil {
 
         ServerLevel targetLevel = location.getLevel();
         if (targetLevel == null) {
-            future.complete(TeleportResult.failure("Target world not found or not loaded"));
+            String worldName = location.getWorldName();
+            LOGGER.warn("Teleport failed — world '{}' is not loaded or does not exist", worldName);
+            future.complete(TeleportResult.failure(
+                "Target world '" + worldName + "' is not loaded or has been removed. "
+                + "The world may need to be loaded before teleporting there."));
             return future;
         }
 
@@ -113,7 +117,14 @@ public class TeleportUtil {
         if (findSafe && !location.isSafe()) {
             finalLocation = location.findSafeLocation();
             if (finalLocation == null) {
-                future.complete(TeleportResult.failure("No safe teleport location found"));
+                String worldName = location.getWorldName();
+                int bx = (int) location.getX(), by = (int) location.getY(), bz = (int) location.getZ();
+                LOGGER.warn("No safe teleport location found at ({},{},{}) in '{}' — area may be solid, flooded, or over the void",
+                    bx, by, bz, worldName);
+                future.complete(TeleportResult.failure(
+                    "No safe landing spot found near " + bx + "," + by + "," + bz
+                    + " in '" + worldName + "'. The area may be solid, flooded, or above the void. "
+                    + "Try moving to a safer area first, or disable safety checks in config."));
                 return future;
             }
             // Ensure the safe-landing chunk is also loaded (it is covered by the 3×3
