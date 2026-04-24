@@ -6,6 +6,60 @@
 
 # ✅ Issues That Were Fixed
 
+- **NeoEssentials Freeze System Not Working (NeoForge 1.21.1, build.1.0.2.6+52) → ✅ FIXED in build.1.0.2.6+53**  
+  `/freeze <player>` reports success and the player receives a message, but they can still walk around freely, interact with blocks, and nothing prevents them from moving.
+    - Environment:
+        - Mod Version: `neoessentials-1.0.2.6+52`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.220`
+        - Java Version: `openjdk 21`
+        - Dedicated Server
+    - Observed Behavior:
+        - Frozen player can walk and move around the world freely — no position lock.
+        - Frozen player receives the notification message twice on `/freeze`.
+        - Frozen player's notification sometimes shows the raw key string `neoessentials.moderation.frozen_message` instead of the actual message.
+        - When a frozen player reconnects, they receive no reminder and no position lock is applied.
+        - When the Jail system is disabled in config, freeze enforcement also stops working entirely.
+    - Root Causes (5 bugs found across `ModerationEventHandler.java`, `FreezeManager.java`, `FreezeCommand.java`):
+        1. **`FreezeManager.enforceFreezePosition()` was never called** — the method exists and correctly teleports the player back if they have moved, but it had zero call-sites in the event handler. Frozen players could walk anywhere without restriction.
+        2. **`FreezeManager.onPlayerJoin()` was never called on login** — `ModerationEventHandler.onPlayerLogin()` called `VanishManager.onPlayerJoin()` and `JailManager.onPlayerJoin()` but had no equivalent call for `FreezeManager`. Reconnecting frozen players never got the reminder message and their `frozenPosition` was never initialised from their spawn position.
+        3. **`onServerTick` returned early on `!isJailSystemEnabled()`** — even if freeze enforcement had been wired in, the early `return` on jail being disabled would have prevented it from running. Freeze enforcement must run independently of the jail system's enabled flag.
+        4. **Wrong message key in `FreezeCommand`** — `executeFreeze()` checked `template.equals("commands.neoessentials.moderation.frozen_message")` but `ConfigManager.getFreezeMessage()` returns the default `"neoessentials.moderation.frozen_message"` (no `commands.` prefix). The condition always evaluated to `false` → the `else` branch ran `.replace()` on the raw fallback key → the player saw the literal string `neoessentials.moderation.frozen_message` as their notification. Same bug in `executeUnfreeze()` with `unfrozen_message`.
+        5. **Duplicate player notification on `/freeze`** — `FreezeManager.freezePlayer()` sent the frozen message to the player, and `FreezeCommand.executeFreeze()` also sent it → the player received two identical notifications.
+    - Fix Applied (build.1.0.2.6+53):
+        - **`ModerationEventHandler.onPlayerLogin()`**: Added `FreezeManager.getInstance().onPlayerJoin(player)` call, gated by `isFreezeSystemEnabled()`, matching the pattern already used for vanish and jail.
+        - **`ModerationEventHandler.onServerTick()`**: Added a separate freeze-enforcement loop that runs **before** the jail guard. Every online frozen player has `enforceFreezePosition()` called once per second (20-tick cycle). The loop is independently gated by `isFreezeSystemEnabled()` so it works regardless of whether jail is enabled or disabled.
+        - **`FreezeManager.freezePlayer()`**: Removed the player notification send. Commands (`executeFreeze`, `executeFreezeAll`) are the sole senders, eliminating the duplicate message.
+        - **`FreezeCommand.executeFreeze()`**: Fixed key check from `"commands.neoessentials.moderation.frozen_message"` → `"neoessentials.moderation.frozen_message"` to match `ConfigManager.getFreezeMessage()`'s actual fallback value.
+        - **`FreezeCommand.executeUnfreeze()`**: Fixed key check from `"commands.neoessentials.moderation.unfrozen_message"` → `"neoessentials.moderation.unfrozen_message"` to match `ConfigManager.getUnfreezeMessage()`'s actual fallback value.
+
+---
+
+- **NeoEssentials Vanish — Players Remain Visible Despite "You are now vanished" Message (NeoForge 1.21.1, build.1.0.2.6+50) → ✅ FIXED in build.1.0.2.6+52**  
+  After running `/vanish`, the confirmation message appears in chat but other players can still see the vanished player in the world. Reported as: *"I can see myself vanished, message appears in chat but players can see me — is this because of LuckPerms?"*
+    - Environment:
+        - Mod Version: `neoessentials-1.0.2.6+50`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.220`
+        - Java Version: `openjdk 21`
+        - Dedicated Server (LuckPerms present)
+    - Observed Behavior:
+        - `/vanish` sends the confirmation message successfully.
+        - Players can still see the vanished player's entity walking around in the world.
+        - (LuckPerms is not the cause — the bug is entirely server-side in VanishManager.)
+    - Root Causes (4 bugs found in `VanishManager.java`):
+        1. **Entity never removed from the world** — `hidePlayerFromOthers()` opened with `if (!isHideFromTabListEnabled()) return;`. When the config flag was `true` it only sent `ClientboundPlayerInfoRemovePacket` (removes the name from the tab-list / F3 overlay). It never sent `ClientboundRemoveEntitiesPacket`, so the player's body was always visible in the game world regardless of config.
+        2. **`showPlayerToSpecific()` was completely empty** — The method contained only a comment (`// For now, we'll rely on the client's natural player discovery`) and sent zero packets. Unvanishing therefore did nothing for observers who were already online, and staff with see-vanished permission could never actually see vanished players on join.
+        3. **Priority check logic was inverted / broken** — `hidePlayerFromOthers()` used `if (viewerPriority > vanishedPriority)` to decide who to hide from. Both the observer default and the vanished-player default are `10`, so `10 > 10 = false` → nobody was ever hidden by the default path.
+        4. **Newly joining players could always see vanished players** — `onPlayerJoin()` only handled hiding the vanished player from others (delayed), but never hid already-vanished players from the player who was just joining. The vanilla entity-tracking system unconditionally sent spawn packets for all nearby players during login, including vanished ones, and nothing ever suppressed them for the new observer.
+    - Fix Applied (build.1.0.2.6+51):
+        - **`hidePlayerFromSpecific()`**: Now sends both `ClientboundPlayerInfoRemovePacket` (conditional on `isHideFromTabListEnabled()`) **and** `ClientboundRemoveEntitiesPacket` (always, unconditionally) — this is the packet that actually removes the player entity from the observer's world.
+        - **`showPlayerToSpecific()`**: Fully implemented. Sends the complete packet sequence to restore the player in the observer's world: `ClientboundPlayerInfoUpdatePacket.createPlayerInitializing()` (tab-list), `ClientboundAddEntityPacket` (re-spawn entity), `ClientboundSetEntityDataPacket` (skin/metadata), `ClientboundSetEquipmentPacket` (armour/held items), `ClientboundRotateHeadPacket` (head yaw).
+        - **`hidePlayerFromOthers()`**: Removed the early `return` on tab-list config. Fixed priority check: an observer may see a vanished player only when they are **explicitly** in `viewerPriorities` AND their priority number is `<=` the vanished player's (i.e. equal or higher staff rank). All other observers are hidden from.
+        - **`onPlayerJoin()`**: Deferred the hide/show logic by 1 tick (`TickTask +1`) so that our `ClientboundRemoveEntitiesPacket` arrives on the client *after* the vanilla entity-spawn packets sent during the login sequence. Added the missing branch: when the joining player cannot see vanished, all currently-vanished players are hidden from them via `hidePlayerFromSpecific()`.
+
+---
+
 - **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5) → ✅ FIXED in build.1.0.2.6+36**  
   Teleportation to `/home` fails with *"No safe teleport location found"* even when `teleportation.homeSettings.enableHomeSafety` is set to `false`.
     - Environment:
@@ -770,3 +824,14 @@
     - ✅ Full REST endpoint at `/api/motd` for dashboard editing (CRUD profiles, switch active, rotation control, broadcast).
     - ✅ Clear in-game error feedback when MOTD fails to load (`/motd reload` shows the exact I/O error) or save (shows error in-game instead of silent log-only failure).
     - ✅ Legacy single-MOTD `motd_data.json` automatically migrated to multi-profile format on first load.
+
+- **Teleportation System Improvements** *(build #50)*
+    - ✅ Added missing `back_warmup` and `back_cooldown` language keys to `en_us.json` (were referenced in `MiscTeleportManager.java` but absent, causing raw key strings in chat).
+    - ✅ Documented all 10 cooldown/warmup bypass permission nodes in `permissions_nodes.txt` (`neoessentials.teleport.bypass.cooldown`, `neoessentials.teleport.bypass.warmup`, plus per-command home/warp/spawn/back variants).
+    - ✅ Created `TeleportEndpoint.java` — new REST API (`GET/PUT /api/teleport/settings`) for reading and live-writing all teleport config sections (General, Home, Warp, Spawn, Back/Misc) from the dashboard without a server restart.
+    - ✅ Created `teleport.html` + `teleport.js` — new "🌀 Teleport Settings" dashboard page with five settings sections and a Save & Apply button that reloads all managers instantly.
+    - ✅ Added `MiscTeleportManager.reload()` method to support live dashboard config reload.
+    - ✅ Registered `/api/teleport` endpoint in `DashboardAPI`; added `teleport.html` + `teleport.js` to `DashboardFileManager` managed file list.
+    - ✅ Added "🌀 Teleport Settings" nav link (admin-only) to all dashboard pages (`index.html`, `admin.html`, `permissions.html`).
+    - ✅ Dashboard script cache-bust version bumped to `419`.
+

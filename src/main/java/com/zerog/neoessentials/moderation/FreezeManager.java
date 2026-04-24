@@ -99,23 +99,15 @@ public class FreezeManager {
 
         FreezeEntry freeze = new FreezeEntry(playerName, playerId, reason, frozenBy);
 
-        // Store current position if online
+        // Store current position if online — notification is the command's responsibility
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
                 freeze.frozenPosition = player.blockPosition();
-
-                // Get freeze message from config, fallback to localization
-                String template = com.zerog.neoessentials.config.ConfigManager.getFreezeMessage();
-                String message;
-                if (template.equals("neoessentials.moderation.frozen_message")) {
-                    message = MessageUtil.localize(template, reason, frozenBy);
-                } else {
-                    message = template.replace("{reason}", reason != null ? reason : "")
-                                     .replace("{freezer}", frozenBy != null ? frozenBy : "");
-                }
-                player.sendSystemMessage(MessageUtil.warning(message));
+                // NOTE: do NOT send the frozen message here.
+                // FreezeCommand.executeFreeze() and executeFreezeAll() handle player
+                // notification to avoid the player receiving duplicate messages.
             }
         }
 

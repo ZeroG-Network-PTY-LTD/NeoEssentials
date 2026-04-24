@@ -6,6 +6,39 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.50] — 2026-04-24
+
+### Teleportation Improvements — Cooldown/Warmup Feedback, Dashboard Controls & Language Keys
+
+Comprehensive teleportation improvements across all managers, the web dashboard, and language files.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `en_us.json` | Added missing `commands.neoessentials.teleport.misc.back_warmup` and `commands.neoessentials.teleport.misc.back_cooldown` message keys (were referenced in Java but absent from the language file). |
+| `permissions_nodes.txt` | Added documentation for all 10 cooldown/warmup bypass permission nodes (`neoessentials.teleport.bypass.cooldown`, `neoessentials.teleport.bypass.warmup`, plus per-command variants for home/warp/spawn/back). |
+| `TeleportEndpoint.java` | New REST endpoint (`GET/PUT /api/teleport/settings`) — reads and writes all teleportation configuration sections (general, home, warp, spawn, back/misc) from config.json, then triggers a live reload of all four teleport managers. |
+| `MiscTeleportManager.java` | Added `public reload()` method so the dashboard endpoint can reload config without a server restart. |
+| `DashboardAPI.java` | Registered `/api/teleport` context backed by `TeleportEndpoint`; added import. |
+| `DashboardFileManager.java` | Added `teleport.html` and `teleport.js` to the managed dashboard files list. |
+| `teleport.html` | New dashboard page — five settings sections (General, Home, Warp, Spawn, Back) with number inputs, toggles, and Save/Reload buttons. |
+| `teleport.js` | Client-side JS for the new teleport settings page: loads settings via `GET /api/teleport/settings`, populates form, POSTs changes with validation. |
+| `index.html`, `admin.html`, `permissions.html` | Added "🌀 Teleport Settings" nav link (admin-only). Script `?v=` cache-bust query bumped to `419`. |
+
+**Summary of all teleportation improvements implemented across prior builds (build.36–build.50):**
+- Chunk pre-loading (3×3 grid) before every teleport via `TeleportUtil.preloadChunksForTeleport()`.
+- Safety flag bypass (`enableHomeSafety=false` correctly skips location validation).
+- Warmup countdown messages for home, warp, spawn, and /back with `enableTeleportWarmup` guard.
+- Cooldown enforcement for all teleport commands with `ConcurrentHashMap`-based tracking.
+- Global bypass permissions: `neoessentials.teleport.bypass.cooldown` / `.bypass.warmup`.
+- Per-command bypass permissions for home, warp, spawn, back.
+- Startup logging in `HomeManager`, `WarpManager`, `SpawnManager`, `MiscTeleportManager`.
+- Back command cooldown (`miscSettings.backCooldown`), warmup message, and persistence across restarts.
+- Dashboard teleport settings page for live, in-game config changes without server restart.
+
+---
+
 ## [1.0.2.6+build.46] — 2026-04-24
 
 ### Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank After Login
