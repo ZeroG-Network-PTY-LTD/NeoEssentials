@@ -6,7 +6,41 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.40] — 2026-04-24
+## [1.0.2.6+build.41] — 2026-04-24
+
+### Bug Fix — Vanish Module Cannot Be Disabled
+
+Disabling the vanish module via `moderation.vanishSettings.enableVanishSystem: false` had no effect.
+Commands remained registered and interaction prevention kept blocking previously-vanished players even
+after the flag was set.
+
+**Root causes:**
+
+1. **Wrong config path in `ConfigManager.isVanishSystemEnabled()`** — the method checked for
+   `enableVanishSystem` at the root of `config.json`, but the key lives at
+   `moderation.vanishSettings.enableVanishSystem`. The root-level key was never present, so the method
+   *always* returned `true`.
+
+2. **`ModerationEventHandler` vanish interaction guards did not check `isVanishSystemEnabled()`** —
+   even with the config flag corrected, players who were already vanished would still have block-break /
+   block-place / item-use interactions cancelled because the guards only checked
+   `isVanishPreventInteractionEnabled()`, not whether the vanish *system* was enabled.
+
+3. **`VanishManager.onPlayerJoin()` was never called** — the method that restores a vanished player's
+   tab-list hidden state on reconnect and sends the "you are vanished" reminder was defined but had no
+   call-site. Re-join behaviour was therefore broken regardless of whether vanish was enabled.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `ConfigManager.java` | Fixed `isVanishSystemEnabled()` to read `moderation.vanishSettings.enableVanishSystem` instead of root-level `enableVanishSystem` |
+| `ModerationEventHandler.java` | Added `isVanishSystemEnabled()` guard to all three vanish interaction-prevention blocks (`onPlayerRightClick`, `onBlockBreak`, `onBlockPlace`) |
+| `ModerationEventHandler.java` | Added `VanishManager.onPlayerJoin()` call in `onPlayerLogin`, gated by `isVanishSystemEnabled()`, so vanish state is correctly restored and the vanish reminder is shown on reconnect |
+
+---
+
+
 
 ### Security Fix — `/inv` and `/ec` Bypass Permission Checks
 
