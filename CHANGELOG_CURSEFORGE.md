@@ -4,6 +4,32 @@
 
 ---
 
+## 1.0.2.6+build.44 — 2026-04-24
+
+### 🐛 Bug Fix — Home Confirmation Buttons Append "confirm" to Name
+
+Clicking `[Confirm]` on a `/sethome` overwrite or `/delhome` deletion prompt failed with *"Invalid home name: Colony confirm"*, and each subsequent click appended another `" confirm"` to the name.
+
+- **Root cause**: `confirm`/`deny` literals were nested under the `<name>` word-argument in the Brigadier tree. In Minecraft 1.21+, the client re-validates `RUN_COMMAND` strings against the server-sent Brigadier tree; the nested literal was not recognised, so the full string `"Colony confirm"` was sent as the name argument.
+- **Fixed** by moving `confirm` and `deny` to top-level literal siblings of `<name>` in `sethome`/`createhome` and all `delhome` aliases. Brigadier always gives literals priority over argument nodes.
+- **Fixed** confirm/deny handlers to read the pending home name from the server-side map instead of the command argument — the home name is no longer embedded in the button click command.
+- **Fixed** `delete_success`, `delete_cancelled`, `overwrite_success`, `overwrite_failed` and related message keys to use `{0}` (`MessageFormat`-style) instead of `{HOME}`/`{home}` (which were never substituted). Added missing key variants for pending-state error messages.
+- Lang version bumped `11 → 12`; new keys auto-merge into existing deployments on next startup.
+
+---
+
+## 1.0.2.6+build.42 — 2026-04-24
+
+### 🐛 Bug Fix — `/back` Fails in Unloaded Chunks
+
+`/back` (return to death point or previous location) failed with *"No safe teleport location found"* whenever the target was in an unloaded chunk, even when the destination was completely safe.
+
+- **Fixed** `TeleportUtil` now pre-loads a 3×3 chunk grid (target chunk + all 8 neighbours) before running any safety check or `findSafeLocation()` scan. Previously only the single target chunk was loaded; the scan radius can cross chunk boundaries, so neighbouring unloaded chunks caused every candidate position to fail `isSafe()`.
+- **Fixed** `MiscTeleportManager.teleportDelay` was hardcoded to `3` and never read from config. A new `loadConfig()` method now reads `teleportation.backSettings.teleportDelay` (falling back to `generalSettings.teleportDelay`) so the configured warm-up delay is properly respected.
+- **Added** `ConfigManager.getBackTeleportDelay()`, `isDeathBackEnabled()`, and `isTeleportBackEnabled()` to expose the back-command config values.
+
+---
+
 ## 1.0.2.6+build.41 — 2026-04-24
 
 ### 🐛 Bug Fix — Vanish Module Cannot Be Disabled

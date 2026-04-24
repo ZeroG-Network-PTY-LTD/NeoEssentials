@@ -51,6 +51,14 @@
         - Possible fix: ensure admin endpoints are always populated for authenticated admin accounts, regardless of external permissions integration.
 
 ---
+
+
+
+
+---
+
+# ✅ Issues That Were Fixed
+
 - **NeoEssentials Teleportation Message Bug (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ Fixed in build.1.0.2.6+38**  
   Teleportation messages sometimes display raw translation keys instead of localized text.
     - Root Causes:
@@ -129,29 +137,8 @@
 
 ---
 
-- **NeoEssentials /back Command Fails in Unloaded Chunks (NeoForge 1.21.1, build.1.0.2.6+21)**  
-  The `/back` command cannot find last death points or previous locations if they are in unloaded chunks.
-    - Environment:
-        - NeoEssentials Version: `1.0.2.6 build 21`
-        - Minecraft Version: `1.21.1`
-        - NeoForge Version: `21.1.222`
-        - Java Version: `openjdk 21.0.10`
-        - Dedicated Server
-    - Observed Behavior:
-        - Running `/back` after dying or teleporting fails when the target chunk is unloaded.
-        - Error message: *"No safe teleport location found"* or failure to locate last death point.
-        - Works correctly when the chunk is already loaded (e.g., when nearby).
-    - Expected Behavior:
-        - `/back` should teleport to the last death point or location regardless of chunk load state.
-    - Need to investigate:
-        - Whether `/back` relies on safety checks that fail when chunks are unloaded.
-        - If teleportation manager requires chunk preloading before resolving coordinates.
-        - Possible fix: force-load target chunks when using `/back`, or bypass safety checks when configured.
-
----
-
-- **NeoEssentials Home Confirmation Actions Broken (NeoForge 1.21.1, build.1.0.2.6+21)**  
-  Confirmation prompts for `/sethome <home>` (overwriting) and `/delhome` do not work correctly, causing invalid home names to be appended with “confirm” repeatedly.
+- **NeoEssentials Home Confirmation Actions Broken (NeoForge 1.21.1, build.1.0.2.6+21)** ✅ **FIXED in build.44**
+  Confirmation prompts for `/sethome <home>` (overwriting) and `/delhome` do not work correctly, causing invalid home names to be appended with "confirm" repeatedly.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 21`
         - Minecraft Version: `1.21.1`
@@ -167,27 +154,46 @@
           ```
           Invalid home name: Colony confirm. Use letters, numbers, - or _ only (max 20 chars).
           ```  
-        - Each subsequent confirm appends “confirm” to the home name:
+        - Each subsequent confirm appends "confirm" to the home name:
             - Colony confirm
             - Colony confirm confirm
             - Colony confirm confirm confirm
         - The action never completes successfully.
     - Expected Behavior:
         - Confirmation should execute the overwrite/delete action without altering the home name.
-    - Need to investigate:
-        - Whether the confirmation handler is incorrectly parsing the button click as part of the home name.
-        - If chat component events are not mapped properly to command execution.
-        - Possible fix: ensure confirm/deny buttons trigger the intended action directly, without modifying the home string.
+    - **Root Cause:**
+      The `confirm` and `deny` literals were registered as Brigadier child nodes **under** the `<name>` word-argument node (i.e. `/sethome <name> confirm`). The confirmation button's `RUN_COMMAND` click event sent `/sethome Colony confirm`. In Minecraft 1.21+, when the client dispatches a `RUN_COMMAND` string, it re-evaluates the command through the client-side Brigadier tree sent by the server. The client-side tree does not correctly represent the nested literal structure, so the full remaining input "Colony confirm" is consumed as a single word-argument value. The server receives "Colony confirm" as the value of `name`, passes it to `setHome()`, which rejects it as invalid (space not allowed), re-triggers the confirmation prompt with the new (invalid) name as the pending entry, and the cycle continues — appending "confirm" on every subsequent click.
+    - **Fix (build.44):**
+        - **`HomeCommands.java`**: Moved `confirm` and `deny` from being Brigadier children of the `<name>` argument to being **top-level literal siblings** of `<name>` under `sethome`/`createhome` and `delhome`/`deletehome`/`removehome`/`rhome`. In Brigadier, literals always take priority over argument nodes, so `/sethome confirm` reliably routes to the confirm handler while `/sethome Colony` (any non-reserved word) routes to the name argument. The home name is no longer embedded in the confirm/deny button commands — it is held server-side and retrieved from the existing pending maps in the handler.
+        - **`HomeCommands.java`**: Updated `executeSetHomeConfirm`, `executeSetHomeDeny`, `executeDelHomeConfirm`, `executeDelHomeDeny` to read the pending home name from the server-side map instead of from command arguments; removed all `StringArgumentType.getString(context, "name")` calls from these four methods.
+        - **`HomeCommands.java`**: Updated `executeSetHome` and `executeDelHome` to emit clean confirm/deny buttons (`/sethome confirm` / `/sethome deny`, `/delhome confirm` / `/delhome deny`) instead of `/sethome Colony confirm` etc.
+        - **`en_us.json`**: Fixed `delete_success`, `delete_cancelled`, `delete_failed`, `overwrite_success`, `overwrite_failed` to use `{0}` (valid `MessageFormat` pattern) instead of `{HOME}`/`{home}` (were never substituted). Added `overwrite_already_pending`, `no_pending_overwrite_generic`, `delete_already_pending`, `delete_no_pending_generic`, `delete_no_confirm_required`, `limit_exceeded` keys. Lang version bumped `11 → 12`; new keys are auto-merged into existing deployments on next startup.
 
 ---
 
-
-
+- **NeoEssentials /back Command Fails in Unloaded Chunks (NeoForge 1.21.1, build.1.0.2.6+21)** ✅ **FIXED in build.42**
+  The `/back` command cannot find last death points or previous locations if they are in unloaded chunks.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Running `/back` after dying or teleporting fails when the target chunk is unloaded.
+        - Error message: *"No safe teleport location found"* or failure to locate last death point.
+        - Works correctly when the chunk is already loaded (e.g., when nearby).
+    - Expected Behavior:
+        - `/back` should teleport to the last death point or location regardless of chunk load state.
+    - **Root Causes (2 bugs):**
+        1. **`TeleportUtil` only force-loaded the single target chunk.** `findSafeLocation()` scans up to ±16 blocks in X/Z from the target position, which can cross chunk boundaries into adjacent chunks. Those neighbouring chunks were never loaded, so every candidate block position in them failed the `level.isLoaded(pos)` check in `TeleportLocation.isSafe()` → `isSafe()` returned `false` → `findSafeLocation()` returned `null` → teleport failed with "No safe teleport location found".
+        2. **`MiscTeleportManager.teleportDelay` was hardcoded to `3`.** The field was never read from config (`teleportation.backSettings.teleportDelay` / `teleportation.generalSettings.teleportDelay`), so the configured warm-up delay was silently ignored for all `/back` and `/death` teleports.
+    - **Fix (build.42):**
+        - `TeleportUtil.java`: Added `preloadChunksForTeleport(ServerLevel, BlockPos)` public method that loads a 3×3 grid of chunks (target chunk + all 8 neighbours) using `TicketType.PORTAL` tickets before any safety check or `findSafeLocation()` scan runs. Also added a second call after `findSafeLocation()` resolves, to ensure the safe-landing chunk is also loaded. All `teleportPlayer()` calls (immediate and delayed) benefit automatically.
+        - `ConfigManager.java`: Added `getBackTeleportDelay()`, `isDeathBackEnabled()`, and `isTeleportBackEnabled()` — the new config-reading methods that read from `teleportation.backSettings.*` with a fallback to `teleportation.generalSettings.teleportDelay`.
+        - `MiscTeleportManager.java`: Added `loadConfig()` method that reads `teleportDelay`, `enableDeathBack`, and `enableTeleportBack` from `ConfigManager`; called at construction time and on reload.
 
 ---
-
-# ✅ Issues That Were Fixed
-
 - **Permissions System — GUI, External Systems & Fine-Grained Control not complete**
   *(Status: Fixed → v1.0.2.6+build.30)*
 

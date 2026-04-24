@@ -1,8 +1,11 @@
 package com.zerog.neoessentials.teleportation.Misc;
 
+import com.google.gson.JsonObject;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PlayerDataStore;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -30,20 +33,102 @@ public class MiscTeleportManager {
         return SingletonHolder.INSTANCE;
     }
     
-    // Storage for back locations
+    // Storage for back locations (in-memory cache; backed by PlayerDataStore on disk)
     private final Map<UUID, TeleportLocation> backLocations = new ConcurrentHashMap<>();
     private final Map<UUID, TeleportLocation> deathLocations = new ConcurrentHashMap<>();
+
+    // Persistent storage — survives server restarts
+    private final PlayerDataStore dataStore = new PlayerDataStore("back_locations");
     
-    // Configuration
-    private int maxBackHistory = 5; // Number of back locations to remember
-    private int teleportDelay = 3; // 3 second delay for back teleports
-    private boolean enableDeathBack = true; // Allow /back after death
-    private boolean enableTeleportBack = true; // Save location before teleporting
+    // Configuration (loaded lazily from ConfigManager)
+    private int maxBackHistory = 5;
+    private int teleportDelay = 3;
+    private boolean enableDeathBack = true;
+    private boolean enableTeleportBack = true;
     
     private MiscTeleportManager() {
-        // Private constructor for singleton
+        loadConfig();
     }
-    
+
+    /**
+     * (Re)load configuration values from ConfigManager.
+     */
+    private void loadConfig() {
+        try {
+            ConfigManager cfg = ConfigManager.getInstance();
+            teleportDelay = cfg.getBackTeleportDelay();
+            enableDeathBack = cfg.isDeathBackEnabled();
+            enableTeleportBack = cfg.isTeleportBackEnabled();
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load MiscTeleportManager config, using defaults: {}", e.getMessage());
+        }
+    }
+
+    // ── Persistence helpers ───────────────────────────────────────────────────
+
+    /**
+     * Return the death location for {@code playerId}, loading from disk if not in memory.
+     */
+    private TeleportLocation loadDeathLocation(UUID playerId) {
+        TeleportLocation inMemory = deathLocations.get(playerId);
+        if (inMemory != null) return inMemory;
+
+        JsonObject data = dataStore.load(playerId);
+        if (data.has("deathLocation") && data.get("deathLocation").isJsonObject()) {
+            TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("deathLocation"));
+            if (loc != null) {
+                deathLocations.put(playerId, loc);
+            }
+            return loc;
+        }
+        return null;
+    }
+
+    /**
+     * Return the back location for {@code playerId}, loading from disk if not in memory.
+     */
+    private TeleportLocation loadBackLocation(UUID playerId) {
+        TeleportLocation inMemory = backLocations.get(playerId);
+        if (inMemory != null) return inMemory;
+
+        JsonObject data = dataStore.load(playerId);
+        if (data.has("backLocation") && data.get("backLocation").isJsonObject()) {
+            TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("backLocation"));
+            if (loc != null) {
+                backLocations.put(playerId, loc);
+            }
+            return loc;
+        }
+        return null;
+    }
+
+    /**
+     * Persist the current in-memory back + death locations for {@code playerId} to disk.
+     */
+    private void persistLocations(UUID playerId) {
+        try {
+            JsonObject data = dataStore.load(playerId);
+            TeleportLocation backLoc  = backLocations.get(playerId);
+            TeleportLocation deathLoc = deathLocations.get(playerId);
+
+            if (backLoc != null) {
+                data.add("backLocation", backLoc.toJson());
+            } else {
+                data.remove("backLocation");
+            }
+            if (deathLoc != null) {
+                data.add("deathLocation", deathLoc.toJson());
+            } else {
+                data.remove("deathLocation");
+            }
+            dataStore.save(playerId, data);
+        } catch (Exception e) {
+            LOGGER.error("Failed to persist back/death locations for {}: {}", playerId, e.getMessage());
+        }
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
     /**
      * Save a player's current location as their back location
      */
@@ -56,7 +141,8 @@ public class MiscTeleportManager {
         TeleportLocation backLocation = new TeleportLocation(player);
         
         backLocations.put(playerId, backLocation);
-        
+        persistLocations(playerId);
+
         LOGGER.debug("Saved back location for {}: {}", 
                     player.getName().getString(), backLocation);
     }
@@ -73,7 +159,8 @@ public class MiscTeleportManager {
         TeleportLocation deathLocation = new TeleportLocation(player);
         
         deathLocations.put(playerId, deathLocation);
-        
+        persistLocations(playerId);
+
         player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved"));
         
         LOGGER.info("Saved death location for {}: {}", 
@@ -81,12 +168,16 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Teleport player back to their previous location or death location (prioritizing death location, but clear death location after successful teleport)
+     * Teleport player back to their previous location or death location
+     * (prioritizes death location; clears it after a successful teleport).
+     * Loads persisted locations from disk if no in-memory entry is found so
+     * that /back continues to work after a server restart.
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        TeleportLocation deathLocation = deathLocations.get(playerId);
-        TeleportLocation backLocation = backLocations.get(playerId);
+        // Load from disk if not in memory (survives server restarts)
+        TeleportLocation deathLocation = loadDeathLocation(playerId);
+        TeleportLocation backLocation  = loadBackLocation(playerId);
         TeleportLocation targetLocation = null;
         final boolean usedDeath;
 
@@ -121,6 +212,7 @@ public class MiscTeleportManager {
                 } else {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
                 }
+                persistLocations(playerId);
                 LOGGER.info("Player {} teleported back to {}", player.getName().getString(), finalTargetLocation);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_failed", result.getMessage()));
@@ -147,7 +239,8 @@ public class MiscTeleportManager {
     public boolean teleportToDeathLocation(ServerPlayer player) {
         UUID playerId = player.getUUID();
         
-        TeleportLocation deathLocation = deathLocations.get(playerId);
+        // Load from disk if not in memory (survives server restarts)
+        TeleportLocation deathLocation = loadDeathLocation(playerId);
         if (deathLocation == null) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_death_location"));
             return false;
@@ -157,13 +250,14 @@ public class MiscTeleportManager {
         saveBackLocation(player);
         
         // Perform the teleport
-        int delayTicks = teleportDelay * 20; // Convert seconds to ticks
+        int delayTicks = teleportDelay * 20;
         TeleportUtil.teleportPlayer(player, deathLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
                 
                 // Clear death location after successful teleport
                 deathLocations.remove(playerId);
+                persistLocations(playerId);
                 
                 LOGGER.info("Player {} teleported to death location: {}", 
                            player.getName().getString(), deathLocation);
@@ -179,22 +273,28 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Clear a player's back location
+     * Clear a player's back location (memory + disk)
      */
     public void clearBackLocation(ServerPlayer player) {
         UUID playerId = player.getUUID();
         backLocations.remove(playerId);
         deathLocations.remove(playerId);
+        dataStore.delete(playerId);
         
         LOGGER.debug("Cleared back locations for {}", player.getName().getString());
     }
     
     /**
-     * Check if player has a back location
+     * Check if player has a back location (checks disk if not in memory)
      */
     public boolean hasBackLocation(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        return backLocations.containsKey(playerId) || deathLocations.containsKey(playerId);
+        if (backLocations.containsKey(playerId) || deathLocations.containsKey(playerId)) {
+            return true;
+        }
+        // Check disk
+        JsonObject data = dataStore.load(playerId);
+        return data.has("backLocation") || data.has("deathLocation");
     }
     
     /**
@@ -203,14 +303,14 @@ public class MiscTeleportManager {
     public String getBackLocationInfo(ServerPlayer player) {
         UUID playerId = player.getUUID();
         
-        TeleportLocation backLocation = backLocations.get(playerId);
+        TeleportLocation backLocation = loadBackLocation(playerId);
         if (backLocation != null) {
             return MessageUtil.localize("commands.neoessentials.teleport.misc.back_info", 
                                        backLocation.getWorldName(), 
                                        String.format("%.1f %.1f %.1f", backLocation.getX(), backLocation.getY(), backLocation.getZ()));
         }
         
-        TeleportLocation deathLocation = deathLocations.get(playerId);
+        TeleportLocation deathLocation = loadDeathLocation(playerId);
         if (deathLocation != null) {
             return MessageUtil.localize("commands.neoessentials.teleport.misc.death_info", 
                                        deathLocation.getWorldName(), 
@@ -221,13 +321,10 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Handle player disconnect - clean up data
+     * Handle player disconnect - no-op since data is persisted to disk
      */
     public void onPlayerDisconnect(ServerPlayer player) {
-        // Keep back locations for reconnection, but remove from memory after some time
-        // For now, we'll keep them until server restart
-        
-        LOGGER.debug("Player {} disconnected, keeping back location data", player.getName().getString());
+        LOGGER.debug("Player {} disconnected; back/death locations are persisted to disk.", player.getName().getString());
     }
     
     /**
@@ -278,7 +375,7 @@ public class MiscTeleportManager {
      * Get statistics
      */
     public String getStatistics() {
-        return String.format("MiscTeleport Statistics: %d back locations, %d death locations, delay=%ds", 
+        return String.format("MiscTeleport Statistics: %d back locations (in-memory), %d death locations (in-memory), delay=%ds", 
                            backLocations.size(), deathLocations.size(), teleportDelay);
     }
     
@@ -296,8 +393,7 @@ public class MiscTeleportManager {
         // Find the highest solid block
         for (int y = maxY; y >= player.level().getMinBuildHeight(); y--) {
             if (!player.level().getBlockState(new net.minecraft.core.BlockPos(currentX, y, currentZ)).isAir()) {
-                // Found solid block, teleport to one block above it
-                final int targetY = y + 1; // Make final for lambda
+                final int targetY = y + 1;
                 TeleportLocation topLocation = new TeleportLocation(
                     player.level().dimension().location().toString(),
                     currentX + 0.5, targetY, currentZ + 0.5,
@@ -464,15 +560,9 @@ public class MiscTeleportManager {
      * Clear all data (for server shutdown)
      */
     public void clearAllData() {
+        dataStore.flushAll();
         backLocations.clear();
         deathLocations.clear();
         LOGGER.info("Cleared all misc teleport data");
     }
 }
-
-
-
-
-
-
-
