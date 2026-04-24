@@ -4,7 +4,43 @@
 
 ---
 
-## 1.0.2.6+build.30 — 2026-04-01
+## 1.0.2.6+build.40 — 2026-04-24
+
+### 🔒 Security Fix — `/inv` and `/ec` Bypass Permission Checks
+
+`/inv` and `/ec` aliases were registered as Brigadier `redirect()` nodes with **no `requires()` predicate**, meaning any player could open other players' inventories/ender chests regardless of permissions. Brigadier redirect nodes only check their own predicate — not their target's.
+
+- Replaced redirect aliases with full command registrations that include explicit `requires()` checks.
+- Fixed typo in `/ecedit` alias (`"enderchestdit"` → `"enderchestedit"`).
+- Added `neoessentials.invsee` and `neoessentials.enderchest` to the `moderator` group in `permissions.json`.
+- Added missing translation keys for all invsee/ec messages.
+
+**Permission nodes:** `neoessentials.invsee` (moderator), `neoessentials.invsee.edit` (admin), `neoessentials.enderchest` (moderator), `neoessentials.enderchest.edit` (admin)
+
+---
+
+## 1.0.2.6+build.38 — 2026-04-24
+
+
+### 🐛 Fix — Teleportation Messages & Cooldown/Warmup System
+
+**Teleport messages showing raw keys**
+- Added all missing `commands.neoessentials.teleport.spawn.*` message keys to `en_us.json` — spawn success, fallback, failure, info, safety, cooldown, warmup, etc.
+- Added missing warp and home warmup message keys.
+- Lang version bumped to `11`; new keys are auto-merged into existing server language files on startup.
+
+**Cooldowns and warmup delays now fully enforced**
+- `HomeManager`: reads `teleportDelay` from config; enforces `homeTeleportCooldown` before each `/home` use.
+- `WarpManager`: enforces `warpCooldown` (use cooldown, not just set cooldown) before each `/warp` use.
+- `SpawnManager`: enforces `spawnCooldown` before each `/spawn` use; teleport delay now driven by config.json (spawn.json delay override removed).
+- All managers now show a countdown warmup message when `teleportDelay > 0` and `enableTeleportWarmup=true`.
+
+**Config keys:**  
+`generalSettings.teleportDelay`, `homeSettings.homeTeleportCooldown`, `warpSettings.warpCooldown`, `spawnSettings.spawnCooldown`, `generalSettings.enableTeleportWarmup`
+
+---
+
+
 
 ### ✨ Feature — Permissions GUI, External Systems & Fine-Grained Control
 

@@ -145,6 +145,15 @@ public class HomeManager {
                             } catch (Exception ignored) {}
                         }
                     }
+                    // Read teleport delay (warmup) from generalSettings
+                    if (tp.has("generalSettings")) {
+                        JsonObject generalSettings = tp.getAsJsonObject("generalSettings");
+                        if (generalSettings.has("teleportDelay")) {
+                            try {
+                                teleportDelay = generalSettings.get("teleportDelay").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                    }
                 }
             }
             setRequireSafeLocations(safe);
@@ -413,6 +422,22 @@ public class HomeManager {
             return;
         }
 
+        // Enforce home teleport cooldown - atomic check
+        if (homeTeleportCooldownSeconds > 0) {
+            long now = System.currentTimeMillis();
+            Long lastTp = lastHomeTeleportTimestamps.putIfAbsent(playerId, now);
+            if (lastTp != null) {
+                long elapsed = (now - lastTp) / 1000L;
+                if (elapsed < homeTeleportCooldownSeconds) {
+                    long wait = homeTeleportCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.teleport_cooldown", wait));
+                    return;
+                }
+                // Update timestamp atomically
+                lastHomeTeleportTimestamps.put(playerId, now);
+            }
+        }
+
         // Force-load target chunk before any safety check or teleport.
         // isSafe() returns false for unloaded chunks, so we must ensure the chunk
         // is loaded first to prevent false "unsafe location" failures.
@@ -456,9 +481,26 @@ public class HomeManager {
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        // Show warmup countdown message if delay is configured and warmup messages are enabled
         int delayTicks = teleportDelay * 20;
-        TeleportUtil.teleportPlayer(player, home, delayTicks, false).thenAccept(result -> {
+        if (teleportDelay > 0) {
+            boolean showWarmup = true;
+            try {
+                com.google.gson.JsonObject generalSettings = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG)
+                    .getAsJsonObject("teleportation").getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableTeleportWarmup")) {
+                    showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
+                }
+            } catch (Exception ignored) {}
+            if (showWarmup) {
+                player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.warmup", homeName, teleportDelay));
+            }
+        }
+
+        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        TeleportLocation finalHome = home;
+        TeleportUtil.teleportPlayer(player, finalHome, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.success", homeName));
                 // Log home teleport if enabled in config

@@ -6,7 +6,88 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.30] — 2026-04-01
+## [1.0.2.6+build.40] — 2026-04-24
+
+### Security Fix — `/inv` and `/ec` Bypass Permission Checks
+
+`/inv` and `/ec` (aliases for `/invsee` and `/enderchest`) were accessible by **all** players regardless of
+permission because they were registered as Brigadier `redirect()` nodes with no `requires()` predicate.
+Brigadier does **not** re-evaluate the redirect target's `requires()` for the alias node itself —
+only the alias's own predicate is checked at dispatch time. Since the aliases had none, every player
+could open any other player's inventory.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `InventoryViewCommands.java` | Replaced all `redirect()`-based aliases (`/inv`, `/ec`, `/ecedit`) with full command registrations that include their own `requires()` predicate |
+| `InventoryViewCommands.java` | Fixed typo: `"enderchestdit"` → `"enderchestedit"` (prevented `/ecedit` from working) |
+| `InventoryViewCommands.java` | Replaced hardcoded message strings with proper `MessageUtil` translation key calls |
+| `permissions.json` | Added `neoessentials.invsee` and `neoessentials.enderchest` to the `moderator` group |
+| `en_us.json` | Added `commands.neoessentials.invsee.*` and `commands.neoessentials.ec.*` message keys |
+
+**Permission nodes:**
+
+| Node | Description | Default group |
+|---|---|---|
+| `neoessentials.invsee` | View another player's inventory (read-only) | moderator |
+| `neoessentials.invsee.edit` | View and edit another player's inventory | admin |
+| `neoessentials.enderchest` | View another player's ender chest (read-only) | moderator |
+| `neoessentials.enderchest.edit` | View and edit another player's ender chest | admin |
+
+---
+
+## [1.0.2.6+build.38] — 2026-04-24
+
+
+### Bug Fix — Teleportation Message Keys & Cooldown/Warmup System
+
+Fixes two related teleportation issues reported on build 1.0.2.6+21.
+
+#### Fix 1 — Raw Translation Keys Displayed to Players
+
+Previously, teleportation messages related to `/spawn` (and its fallback path to world spawn) would
+show raw translation key strings like `commands.neoessentials.teleport.spawn.fallback_success` in
+chat instead of the correct localized message. This happened because the entire
+`commands.neoessentials.teleport.spawn.*` key group was missing from `en_us.json`, and
+`MessageUtil.localize()` returns the raw key when no entry is found.
+
+**Keys added to `en_us.json`:**
+- `teleport.spawn.success`, `teleport.spawn.fallback_success`, `teleport.spawn.failed`, `teleport.spawn.fallback_failed`
+- `teleport.spawn.cleared`, `teleport.spawn.set`, `teleport.spawn.info`, `teleport.spawn.info_not_set`
+- `teleport.spawn.invalid_location`, `teleport.spawn.no_nether`, `teleport.spawn.no_end`
+- `teleport.spawn.unsafe`, `teleport.spawn.unsafe_location`, `teleport.spawn.moved_to_safety`
+- `teleport.spawn.critical_failure`, `teleport.spawn.distance_exceeded`
+- `teleport.spawn.cooldown`, `teleport.spawn.warmup`
+- `teleport.warp.cooldown`, `teleport.warp.warmup`
+- `teleport.home.warmup`
+
+`_langVersion` bumped from `10` → `11`; `CURRENT_LANG_VERSION` constant updated in `MessageUtil.java`.
+Existing server deployments will auto-merge all new keys on the next startup without overwriting user edits.
+
+#### Fix 2 — Teleport Cooldowns & Warmup Delays Not Applied
+
+Multiple root causes prevented cooldowns and warmup delays from working:
+
+| Manager | Problem | Fix |
+|---|---|---|
+| `HomeManager` | `teleportDelay` hardcoded to `3`, never read from config | Now reads `teleportation.generalSettings.teleportDelay` |
+| `HomeManager` | `homeTeleportCooldownSeconds` read from config but never checked | Cooldown check added in `teleportToHome()` with `lastHomeTeleportTimestamps` |
+| `WarpManager` | `warpCooldown` config key ignored — no use-cooldown enforcement | Added `warpUseCooldown` field + `lastWarpUseTimestamps`, enforced in `teleportToWarp()` |
+| `SpawnManager` | `spawnCooldown` config key ignored — no cooldown enforcement | Added `spawnCooldownSeconds` field + `lastSpawnTimestamps`, enforced in `teleportToSpawn()` |
+| `SpawnManager` | `loadSpawn()` read `teleportDelay: 0` from spawn.json, overriding config.json value | Removed `teleportDelay` from spawn.json loading; now driven exclusively by `generalSettings.teleportDelay` |
+| All managers | No warmup countdown message shown to players | Warmup message sent when `teleportDelay > 0` and `enableTeleportWarmup=true` |
+
+**Config keys now fully wired up:**
+- `teleportation.generalSettings.teleportDelay` — warmup delay for home/spawn teleports (default: `3` seconds)
+- `teleportation.homeSettings.homeTeleportCooldown` — home use cooldown (default: `5` seconds)
+- `teleportation.warpSettings.warpCooldown` — warp use cooldown (default: `10` seconds)
+- `teleportation.spawnSettings.spawnCooldown` — spawn use cooldown (default: `5` seconds)
+- `teleportation.generalSettings.enableTeleportWarmup` — whether to show countdown message (default: `true`)
+
+---
+
+
 
 ### Feature — Permissions System Improvements (Part 2): GUI, External Systems & Fine-Grained Control
 

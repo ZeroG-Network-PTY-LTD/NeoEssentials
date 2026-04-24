@@ -67,12 +67,32 @@ public class InventoryViewCommands {
                 )
         );
 
-        // Aliases
-        dispatcher.register(Commands.literal("inv").redirect(dispatcher.getRoot().getChild("invsee")));
-        dispatcher.register(Commands.literal("ec").redirect(dispatcher.getRoot().getChild("enderchest")));
-        dispatcher.register(Commands.literal("ecedit").redirect(dispatcher.getRoot().getChild("enderchestdit")));
+        // Aliases — registered as full commands (NOT as redirects) so that
+        // Brigadier applies the requires() check before any dispatch occurs.
+        // Using .redirect() alone does NOT re-evaluate the target's requires().
+        dispatcher.register(
+            Commands.literal("inv")
+                .requires(source -> hasPermission(source, "neoessentials.invsee"))
+                .then(Commands.argument("target", EntityArgument.player())
+                    .executes(ctx -> viewInventory(ctx, false))
+                )
+        );
+        dispatcher.register(
+            Commands.literal("ec")
+                .requires(source -> hasPermission(source, "neoessentials.enderchest"))
+                .then(Commands.argument("target", EntityArgument.player())
+                    .executes(ctx -> viewEnderChest(ctx, false))
+                )
+        );
+        dispatcher.register(
+            Commands.literal("ecedit")
+                .requires(source -> hasPermission(source, "neoessentials.enderchest.edit"))
+                .then(Commands.argument("target", EntityArgument.player())
+                    .executes(ctx -> viewEnderChest(ctx, true))
+                )
+        );
 
-        LOGGER.info("Registered inventory view commands: /invsee, /invseeedit, /enderchest, /enderchest");
+        LOGGER.info("Registered inventory view commands: /invsee, /invseeedit, /enderchest, /enderchestedit (/inv, /ec, /ecedit)");
     }
 
     /**
@@ -97,18 +117,18 @@ public class InventoryViewCommands {
 
         // Don't allow viewing own inventory (use regular 'E' key)
         if (viewer.getUUID().equals(target.getUUID())) {
-            viewer.sendSystemMessage(MessageUtil.error("You cannot view your own inventory with this command!"));
+            viewer.sendSystemMessage(MessageUtil.error("commands.neoessentials.invsee.self"));
             return 0;
         }
 
         // Open the inventory view
         if (editable) {
             openEditableInventory(viewer, target);
-            viewer.sendSystemMessage(MessageUtil.success("Opening editable inventory of " + target.getName().getString()));
+            viewer.sendSystemMessage(MessageUtil.success("commands.neoessentials.invsee.edit_success", target.getName().getString()));
             LOGGER.info("{} is viewing and editing {}'s inventory", viewer.getName().getString(), target.getName().getString());
         } else {
             openReadOnlyInventory(viewer, target);
-            viewer.sendSystemMessage(MessageUtil.success("Viewing inventory of " + target.getName().getString()));
+            viewer.sendSystemMessage(MessageUtil.success("commands.neoessentials.invsee.view_success", target.getName().getString()));
             LOGGER.info("{} is viewing {}'s inventory (read-only)", viewer.getName().getString(), target.getName().getString());
         }
 
@@ -128,12 +148,12 @@ public class InventoryViewCommands {
                 (id, playerInventory, player) -> ChestMenu.threeRows(id, playerInventory, target.getEnderChestInventory()),
                 Component.literal(target.getName().getString() + "'s Ender Chest (Editable)")
             ));
-            viewer.sendSystemMessage(MessageUtil.success("Opening editable ender chest of " + target.getName().getString()));
+            viewer.sendSystemMessage(MessageUtil.success("commands.neoessentials.ec.edit_success", target.getName().getString()));
             LOGGER.info("{} is viewing and editing {}'s ender chest", viewer.getName().getString(), target.getName().getString());
         } else {
             // For read-only, we create a copy of the ender chest
             openReadOnlyEnderChest(viewer, target);
-            viewer.sendSystemMessage(MessageUtil.success("Viewing ender chest of " + target.getName().getString()));
+            viewer.sendSystemMessage(MessageUtil.success("commands.neoessentials.ec.view_success", target.getName().getString()));
             LOGGER.info("{} is viewing {}'s ender chest (read-only)", viewer.getName().getString(), target.getName().getString());
         }
 

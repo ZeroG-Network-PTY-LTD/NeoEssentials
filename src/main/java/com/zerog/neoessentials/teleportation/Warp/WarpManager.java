@@ -33,6 +33,9 @@ public class WarpManager {
     // Cooldown for setting warps (seconds) and per-player last set timestamps
     private final Map<UUID, Long> lastWarpSetTimestamps = new ConcurrentHashMap<>();
     private int warpSetCooldown = 0;
+    // Cooldown for USING warps (seconds) and per-player last use timestamps
+    private final Map<UUID, Long> lastWarpUseTimestamps = new ConcurrentHashMap<>();
+    private int warpUseCooldown = 0;
     // --- Persistence for player warps ---
     // private static final String PLAYER_WARPS_FILE = "playerwarps.json";
 
@@ -101,6 +104,11 @@ public class WarpManager {
                         if (warpSettings.has("warpSetCooldown")) {
                             try {
                                 warpSetCooldown = warpSettings.get("warpSetCooldown").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                        if (warpSettings.has("warpCooldown")) {
+                            try {
+                                warpUseCooldown = warpSettings.get("warpCooldown").getAsInt();
                             } catch (Exception ignored) {}
                         }
                         if (warpSettings.has("allowCrossDimensionWarps")) {
@@ -530,6 +538,22 @@ public class WarpManager {
             return;
         }
 
+        // Enforce warp USE cooldown - atomic check
+        if (warpUseCooldown > 0) {
+            long now = System.currentTimeMillis();
+            UUID playerId = player.getUUID();
+            Long lastUse = lastWarpUseTimestamps.putIfAbsent(playerId, now);
+            if (lastUse != null) {
+                long elapsed = (now - lastUse) / 1000L;
+                if (elapsed < warpUseCooldown) {
+                    long wait = warpUseCooldown - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.cooldown", wait));
+                    return;
+                }
+                lastWarpUseTimestamps.put(playerId, now);
+            }
+        }
+
         // Enforce maxTeleportDistance if set in config
         int maxDistance = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxTeleportDistance();
         if (maxDistance > 0) {
@@ -579,9 +603,26 @@ public class WarpManager {
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        // Show warmup countdown message if delay is configured and warmup messages are enabled
         int delayTicks = teleportDelay * 20;
-        TeleportUtil.teleportPlayer(player, warp, delayTicks, false).thenAccept(result -> {
+        if (teleportDelay > 0) {
+            boolean showWarmup = true;
+            try {
+                JsonObject generalSettings = ConfigManager.getInstance()
+                    .getConfig(ConfigManager.MAIN_CONFIG)
+                    .getAsJsonObject("teleportation").getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableTeleportWarmup")) {
+                    showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
+                }
+            } catch (Exception ignored) {}
+            if (showWarmup) {
+                player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.warp.warmup", warpName, teleportDelay));
+            }
+        }
+
+        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        TeleportLocation finalWarp = warp;
+        TeleportUtil.teleportPlayer(player, finalWarp, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.success", warpName));
                 LOGGER.info("Player {} teleported to warp '{}'", player.getName().getString(), warpName);

@@ -68,7 +68,9 @@
         "neoessentials.teleport.spawn.set",
         "neoessentials.teleport.jump",
         "neoessentials.teleport.jumpto",
-        "neoessentials.teleport.tpr"
+        "neoessentials.teleport.tpr",
+        "neoessentials.invsee",
+        "neoessentials.enderchest"
       ],
       "inherits": ["default"]
     },

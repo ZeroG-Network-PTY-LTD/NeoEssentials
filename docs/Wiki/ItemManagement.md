@@ -1,4 +1,4 @@
-e# Item Management
+# Item Management
 
 > **Version:** 1.0.2.6
 
@@ -28,10 +28,16 @@ Item management commands for repair, disposal, enchanting, inventory management,
 | `/clearinventory` | `/clearinventory [player]` | `neoessentials.item.clearinventory` | Clear inventory |
 | `/ci` | alias | same | Alias |
 | `/ciconfirmtoggle` | `/ciconfirmtoggle` | same | Toggle confirmation prompt for `/ci` |
-| `/invsee` | `/invsee <player>` | `neoessentials.invsee` | View a player's inventory |
+| `/invsee` | `/invsee <player>` | `neoessentials.invsee` | View a player's inventory (read-only) |
 | `/inv` | alias | same | Alias |
-| `/enderchest` | `/enderchest [player]` | `neoessentials.enderchest` | View a player's ender chest |
+| `/invseeedit` | `/invseeedit <player>` | `neoessentials.invsee.edit` | View and **edit** a player's inventory |
+| `/enderchest` | `/enderchest [player]` | `neoessentials.enderchest` | View a player's ender chest (read-only) |
 | `/ec` | alias | same | Alias |
+| `/enderchestedit` | `/enderchestedit <player>` | `neoessentials.enderchest.edit` | View and **edit** a player's ender chest |
+| `/ecedit` | alias | same | Alias |
+
+> **⚠️ Security fix (build.40)** — Prior to build.40, `/inv` and `/ec` were registered as Brigadier `redirect()` nodes with no `requires()` predicate, which meant any player could bypass permission checks and open another player's inventory or ender chest. This has been fixed; each alias now carries its own permission check.  
+> `neoessentials.invsee` and `neoessentials.enderchest` are granted to the **moderator** group by default.
 | `/condense` | `/condense [item]` | `neoessentials.condense` | Compact loose items to storage blocks |
 
 ### Item Customisation

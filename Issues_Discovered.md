@@ -1,5 +1,5 @@
 # 👾 Issues That Were Discovered
-- **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5)**  
+- **NeoEssentials Teleportation Safety Bug (NeoForge 1.21.1, build.1.0.2.5 -> fixed NeoForge 1.21.1, build.1.0.2.6.36)**  
   Teleportation to `/home` fails with *"No safe teleport location found"* even when `teleportation.homeSettings.enableHomeSafety` is set to `false`.
     - Environment:
         - Mod Version: `neoessentials-1.0.2.5`
@@ -51,34 +51,73 @@
         - Possible fix: ensure admin endpoints are always populated for authenticated admin accounts, regardless of external permissions integration.
 
 ---
-- **NeoEssentials Teleportation Message Bug (NeoForge 1.21.1, build.1.0.2.6+21)**  
+- **NeoEssentials Teleportation Message Bug (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ Fixed in build.1.0.2.6+38**  
   Teleportation messages sometimes display raw translation keys instead of localized text.
-    - Environment:
-        - NeoEssentials Version: `1.0.2.6 build 21`
-        - Minecraft Version: `1.21.1`
-        - NeoForge Version: `21.1.222`
-        - Java Version: `openjdk 21.0.10`
-        - Dedicated Server
-    - Observed Behavior:
-        - Setting home shows correct localized messages:
-          ```
-          Home 'camp' set at Overworld (1159.4, 64.0, 2276.4).
-          Home 'camp' set at 1159, 64, 2276.
-          ```  
-        - Teleport fallback shows untranslated key:
-          ```
-          commands.neoessentials.teleport.spawn.fallback_success
-          ```  
-    - Expected Behavior:
-        - All teleportation messages should display properly localized text.
-    - Need to investigate:
-        - Whether translation keys are missing from `messages.json` or language files.
-        - If fallback messages bypass localization handler.
-        - Possible fix: ensure all teleportation outcomes (success, failure, fallback) are mapped to proper translations.
+    - Root Causes:
+        1. All `commands.neoessentials.teleport.spawn.*` message keys were missing from `en_us.json` (including `fallback_success`, `success`, `cleared`, `cooldown`, `warmup`, etc.).
+        2. `MessageUtil.localize()` returns the raw key when not found, so players see keys like `commands.neoessentials.teleport.spawn.fallback_success` verbatim.
+    - Fix Applied:
+        - Added all missing spawn message keys to `en_us.json`.
+        - Added `commands.neoessentials.teleport.warp.cooldown`, `warp.warmup`, `home.warmup`, `spawn.warmup`, and `spawn.cooldown` message keys.
+        - Bumped `_langVersion` from `10` to `11` so existing server deployments auto-merge the new keys on next startup.
+        - Updated `CURRENT_LANG_VERSION` constant in `MessageUtil.java` to `11`.
 
 ---
-- **NeoEssentials Teleport Cooldowns & Warmups Not Working (NeoForge 1.21.1, build.1.0.2.6+21)**  
+- **NeoEssentials Teleport Cooldowns & Warmups Not Working (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ Fixed in build.1.0.2.6+38**  
   Cooldowns and warmups configured for teleportation commands do not function at all.
+    - Root Causes:
+        1. **HomeManager warmup not reading config**: `teleportDelay` was hardcoded to `3` and never read from `teleportation.generalSettings.teleportDelay` in config.json.
+        2. **HomeManager teleport cooldown not checked**: `homeTeleportCooldownSeconds` was read from config but never checked against `lastHomeTeleportTimestamps` in `teleportToHome()`.
+        3. **WarpManager missing use cooldown**: `teleportation.warpSettings.warpCooldown` config key was present but never read or enforced in WarpManager. Only the *set* cooldown was tracked.
+        4. **SpawnManager missing cooldown**: `teleportation.spawnSettings.spawnCooldown` was never read or enforced.
+        5. **SpawnManager warmup overridden**: `loadSpawn()` read `teleportDelay` from spawn.json (stored as `0`) overriding any config.json value.
+        6. **No warmup countdown messages**: Warmup messages were never sent to players before delayed teleports.
+    - Fix Applied:
+        - `HomeManager.loadConfig()`: Now reads `teleportDelay` from `teleportation.generalSettings.teleportDelay`.
+        - `HomeManager.teleportToHome()`: Added atomically-checked cooldown using `lastHomeTeleportTimestamps`; displays `teleport_cooldown` message. Added warmup message when `teleportDelay > 0` and `enableTeleportWarmup=true`.
+        - `WarpManager`: Added `warpUseCooldown` field and `lastWarpUseTimestamps` map. Reads `warpSettings.warpCooldown` from config. Cooldown check inserted before warp use. Added warmup message.
+        - `SpawnManager`: Added `spawnCooldownSeconds` field and `lastSpawnTimestamps` map. Reads `spawnSettings.spawnCooldown` from config. Cooldown check inserted before spawn teleport. Added warmup message. Removed `teleportDelay` override from `loadSpawn()` — it is now driven exclusively by `generalSettings.teleportDelay` in config.json.
+
+---
+- **NeoEssentials Inventory & Ender Chest Commands Not Restricted (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ Fixed in build.1.0.2.6+40**  
+  Non-OP and non-admin players could use `/inv` and `/ec` commands, leading to duplication exploits.
+    - Root Causes:
+        1. **Brigadier redirect does not re-evaluate `requires()`**: `/inv` and `/ec` were registered as `dispatcher.register(Commands.literal("inv").redirect(...))` with no `requires()` call on the alias node itself. In Brigadier, the `requires()` predicate of the redirect *target* is not automatically re-checked when the redirect is followed; only the alias node's own predicate is evaluated. Since the alias had no `requires()`, all players could use it.
+        2. **Typo**: Line 73 used `.getChild("enderchestdit")` (missing 'e') instead of `"enderchestedit"`, which would return `null` and cause a `NullPointerException` when `/ecedit` was dispatched.
+        3. **Missing permission nodes**: `neoessentials.invsee` and `neoessentials.enderchest` were not listed in `permissions.json`'s moderator group, so even if the checks ran they had no default group assignment.
+        4. **Hardcoded raw message strings**: `viewInventory()` and `viewEnderChest()` used `MessageUtil.error("You cannot view your own inventory with this command!")` and `MessageUtil.success("Opening editable inventory of ...")` instead of translation keys.
+    - Fix Applied:
+        - **`InventoryViewCommands.java`**: Removed all `redirect()`-based aliases. Replaced with full command registrations for `/inv`, `/ec`, and `/ecedit` that include their own `requires()` predicate matching the underlying commands (`neoessentials.invsee`, `neoessentials.enderchest`, `neoessentials.enderchest.edit`). This guarantees the permission check runs on every execution path.
+        - **Typo fixed**: `/ecedit` now correctly targets the `enderchestedit` logic.
+        - **`permissions.json`**: Added `neoessentials.invsee` and `neoessentials.enderchest` to the `moderator` group. `neoessentials.invsee.edit` and `neoessentials.enderchest.edit` remain admin-only (covered by `neoessentials.*`).
+        - **Translation keys added**: Added `commands.neoessentials.invsee.*` and `commands.neoessentials.ec.*` keys to `en_us.json` for all invsee/ec messages.
+
+
+---
+
+- **NeoEssentials Vanish Cannot Be Disabled (NeoForge 1.21.1, builds 1.0.2.5 & 1.0.2.6+21)**  
+  Disabling the vanish module in config does not actually disable it, causing conflicts with other vanish mods.
+    - Environment:
+        - NeoEssentials Versions: `1.0.2.5` and `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Versions: `21.1.221` and `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Vanish remains active even when disabled in config.
+        - Other vanish mods cannot take priority because NeoEssentials overrides them.
+        - Multiple users confirmed the same issue when attempting to disable NeoEssentials vanish.
+    - Expected Behavior:
+        - Disabling vanish in config should fully disable the module, allowing other vanish mods to function.
+    - Need to investigate:
+        - Whether vanish module ignores config flags.
+        - If vanish is hard-coded to load regardless of config state.
+        - Possible fix: ensure vanish respects `enableVanish=false` and does not register commands/events when disabled.
+
+---
+
+- **NeoEssentials /back Command Fails in Unloaded Chunks (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  The `/back` command cannot find last death points or previous locations if they are in unloaded chunks.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 21`
         - Minecraft Version: `1.21.1`
@@ -86,20 +125,20 @@
         - Java Version: `openjdk 21.0.10`
         - Dedicated Server
     - Observed Behavior:
-        - Teleport commands execute instantly without respecting configured cooldowns or warmups.
-        - No delay or countdown is applied.
-        - No error messages or warnings appear in console/logs.
+        - Running `/back` after dying or teleporting fails when the target chunk is unloaded.
+        - Error message: *"No safe teleport location found"* or failure to locate last death point.
+        - Works correctly when the chunk is already loaded (e.g., when nearby).
     - Expected Behavior:
-        - Teleport commands should respect cooldowns (preventing immediate reuse) and warmups (delaying teleport execution).
+        - `/back` should teleport to the last death point or location regardless of chunk load state.
     - Need to investigate:
-        - Whether cooldown/warmup logic is bypassed entirely.
-        - If config values are not being read correctly from `teleportation.json`.
-        - Whether split configs affect cooldown/warmup handling.
-        - Possible fix: ensure teleportation manager applies cooldown/warmup checks before executing teleport.
+        - Whether `/back` relies on safety checks that fail when chunks are unloaded.
+        - If teleportation manager requires chunk preloading before resolving coordinates.
+        - Possible fix: force-load target chunks when using `/back`, or bypass safety checks when configured.
 
 ---
-- **NeoEssentials Inventory & Ender Chest Commands Not Restricted (NeoForge 1.21.1, build.1.0.2.6+21)**  
-  Non-OP and non-admin players can use `/inv` and `/ec` commands, leading to duplication exploits.
+
+- **NeoEssentials Home Confirmation Actions Broken (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  Confirmation prompts for `/sethome <home>` (overwriting) and `/delhome` do not work correctly, causing invalid home names to be appended with “confirm” repeatedly.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 21`
         - Minecraft Version: `1.21.1`
@@ -107,18 +146,28 @@
         - Java Version: `openjdk 21.0.10`
         - Dedicated Server
     - Observed Behavior:
-        - `/inv` and `/ec` work for all players, regardless of OP/admin status.
-        - Commands do not appear in LuckPerms or NeoEssentials config for restriction.
-        - Players are able to exploit these commands to duplicate items.
+        - When overwriting or deleting a home, the chat shows:
+          ```
+          Are you sure you want to overwrite home 'Colony'? [Confirm] [Deny]
+          ```  
+        - Clicking confirm results in:
+          ```
+          Invalid home name: Colony confirm. Use letters, numbers, - or _ only (max 20 chars).
+          ```  
+        - Each subsequent confirm appends “confirm” to the home name:
+            - Colony confirm
+            - Colony confirm confirm
+            - Colony confirm confirm confirm
+        - The action never completes successfully.
     - Expected Behavior:
-        - `/inv` and `/ec` should be restricted to OPs/admins or explicitly controlled via permissions.
+        - Confirmation should execute the overwrite/delete action without altering the home name.
     - Need to investigate:
-        - Why these commands bypass permission checks.
-        - Whether they are missing from the permissions registry.
-        - If NeoEssentials fails to register permission nodes for inventory-related commands.
-        - Possible fix: add proper permission nodes (`neoessentials.inv`, `neoessentials.ec`) and ensure they respect LuckPerms/FTB Ranks integration.
+        - Whether the confirmation handler is incorrectly parsing the button click as part of the home name.
+        - If chat component events are not mapped properly to command execution.
+        - Possible fix: ensure confirm/deny buttons trigger the intended action directly, without modifying the home string.
 
 ---
+
 
 
 

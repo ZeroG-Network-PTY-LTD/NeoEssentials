@@ -4,7 +4,32 @@
 
 ---
 
-## 1.0.2.6+build.30 — 2026-04-01
+## 1.0.2.6+build.40 — 2026-04-24
+
+### 🔒 Security Fix — `/inv` and `/ec` Permission Bypass
+
+`/inv` and `/ec` were registered as Brigadier `redirect()` nodes with no `requires()` predicate. Since Brigadier only evaluates the alias node's own predicate (not the target's), every player bypassed permission checks and could open any other player's inventory or ender chest.
+
+Fixed by replacing redirect-based aliases with full command registrations that each carry their own `requires()` predicate. Also fixed a typo that prevented `/ecedit` from working, added `neoessentials.invsee` + `neoessentials.enderchest` to the moderator group, and added missing translation keys.
+
+---
+
+## 1.0.2.6+build.38 — 2026-04-24
+
+
+### 🐛 Fix — Teleportation Messages & Cooldown/Warmup System
+
+**Missing localisation keys** — All `commands.neoessentials.teleport.spawn.*` message keys were missing from `en_us.json`, causing raw key strings (e.g. `commands.neoessentials.teleport.spawn.fallback_success`) to appear in chat. Added all spawn, warmup, cooldown, and warp/home warmup keys. Lang version bumped to `11` — auto-merges into existing server language files on next startup.
+
+**Cooldowns not enforced** — Multiple root causes fixed:
+- `HomeManager` now reads `teleportDelay` from config and enforces `homeTeleportCooldown` on each `/home` use.
+- `WarpManager` now reads and enforces `warpCooldown` (use cooldown) before each `/warp` use.
+- `SpawnManager` now reads and enforces `spawnCooldown` before each `/spawn` use; `teleportDelay` moved from spawn.json override to `generalSettings.teleportDelay` in config.json.
+- All TP managers now display a warmup countdown message to players when `teleportDelay > 0` and `enableTeleportWarmup=true`.
+
+---
+
+
 
 ### ✨ Feature — Permissions GUI, External Systems & Fine-Grained Control
 

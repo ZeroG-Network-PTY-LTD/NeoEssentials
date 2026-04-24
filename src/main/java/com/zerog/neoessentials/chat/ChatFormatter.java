@@ -699,4 +699,20 @@ public class ChatFormatter {
         }
         return 1.0f;
     }
+
+    /**
+     * Returns true if clickable player names are enabled in the chat config.
+     * Config key: chat.clickablePlayerNames
+     */
+    private static boolean isClickablePlayerNamesEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("clickablePlayerNames")) {
+                return chatConfig.get("clickablePlayerNames").getAsBoolean();
+            }
+        } catch (Exception ignored) {
+            // Default to enabled on any error
+        }
+        return true;
+    }
 }
