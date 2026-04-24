@@ -4,6 +4,24 @@
 
 ---
 
+## 1.0.2.6+build.58 — 2026-04-24
+
+### 🔌 Feature — API & Placeholder System
+
+Exposes the NeoEssentials placeholder system as a fully public Java API for external mods, adds in-game admin tooling, REST endpoints, and rewrites developer documentation.
+
+**What's new:**
+
+- **`PlaceholderProvider`** and **`PlaceholderExpansion`** are now `public` top-level types — external mods can implement/extend them to register custom placeholders
+- **`NeoEssentialsAPI.getPlaceholderManager()`** — new entry-point to the thread-safe `PlaceholderManager` (API version bumped to `1.2.0`)
+- **`/api/placeholders/list`**, **`/api/placeholders/resolve`**, **`/api/placeholders/stats`** — new authenticated REST endpoints
+- **`/api/docs`** now serves the built-in documentation system (was implemented but never wired)
+- **`/placeholder`** in-game command — `list`, `info <id>`, `test <text>`, `stats` sub-commands (permission: `neoessentials.admin.placeholders`)
+- **`neoessentials.admin.placeholders`** permission node registered
+- **`APISystem.md`** completely rewritten with full placeholder table, code examples for `PlaceholderProvider`/`PlaceholderExpansion`, REST endpoint reference, versioning contract
+
+---
+
 ## 1.0.2.6+build.57 — 2026-04-24
 
 ### ✨ Feature — Chat Formatting: Per-Player Overrides Now Applied
