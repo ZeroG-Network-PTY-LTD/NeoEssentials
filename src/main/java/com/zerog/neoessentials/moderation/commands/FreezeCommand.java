@@ -127,7 +127,7 @@ public class FreezeCommand {
                 // Notify the target player (config-driven message)
                 String template = com.zerog.neoessentials.config.ConfigManager.getFreezeMessage();
                 String targetMessage;
-                if (template.equals("commands.neoessentials.moderation.frozen_message")) {
+                if (template.equals("neoessentials.moderation.frozen_message")) {
                     targetMessage = MessageUtil.localize(template, reason, frozenBy);
                 } else {
                     targetMessage = template.replace("{reason}", reason != null ? reason : "")
@@ -208,7 +208,7 @@ public class FreezeCommand {
                 if (targetPlayer != null) {
                     String template = com.zerog.neoessentials.config.ConfigManager.getUnfreezeMessage();
                     String targetMessage;
-                    if (template.equals("commands.neoessentials.moderation.unfrozen_message")) {
+                    if (template.equals("neoessentials.moderation.unfrozen_message")) {
                         targetMessage = MessageUtil.localize(template, unfrozenBy);
                     } else {
                         targetMessage = template.replace("{unfreezer}", unfrozenBy != null ? unfrozenBy : "Staff");

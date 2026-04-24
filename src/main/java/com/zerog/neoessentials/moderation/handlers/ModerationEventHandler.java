@@ -57,6 +57,15 @@ public class ModerationEventHandler {
             LOGGER.error("Error handling vanish on player login", e);
         }
 
+        // Freeze on-join: remind the player they are frozen and lock their position
+        try {
+            if (ConfigManager.isFreezeSystemEnabled()) {
+                FreezeManager.getInstance().onPlayerJoin(player);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling freeze on player login", e);
+        }
+
         // Jail on-join: check expiry and teleport to jail if still jailed
         try {
             if (!JailManager.isJailSystemEnabled()) return;
@@ -299,6 +308,22 @@ public class ModerationEventHandler {
         if (++tickCounter < 20) return;
         tickCounter = 0;
 
+        // ── Freeze enforcement ────────────────────────────────────────────────
+        // Must run independently of jail so it works even when jail is disabled.
+        if (ConfigManager.isFreezeSystemEnabled()) {
+            FreezeManager freezeManager = FreezeManager.getInstance();
+            for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+                try {
+                    if (freezeManager.isPlayerFrozen(player.getUUID())) {
+                        freezeManager.enforceFreezePosition(player);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Error enforcing freeze for player {}", player.getName().getString(), e);
+                }
+            }
+        }
+
+        // ── Jail enforcement ──────────────────────────────────────────────────
         if (!JailManager.isJailSystemEnabled()) return;
         JailManager jailManager = JailManager.getInstance();
 

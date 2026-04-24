@@ -4,6 +4,19 @@
 
 ---
 
+## 1.0.2.6+build.50 — 2026-04-24
+
+### ✨ Teleportation Improvements — Dashboard Settings Page, Language Keys & Permission Docs
+
+- **Added** `/api/teleport/settings` REST endpoint — view and live-update all teleport cooldowns, warmup delays, safety flags, and max-homes/warps from the web dashboard without restarting the server.
+- **Added** "🌀 Teleport Settings" dashboard page (`teleport.html`) with sections for General, Home, Warp, Spawn, and Back settings. Save & Apply reloads all managers instantly.
+- **Added** missing language keys `teleport.misc.back_warmup` and `teleport.misc.back_cooldown` (were referenced in Java but absent from `en_us.json`, causing fallback raw-key display).
+- **Added** documentation for all 10 cooldown/warmup bypass permission nodes to `permissions_nodes.txt` (`neoessentials.teleport.bypass.cooldown`, `neoessentials.teleport.bypass.warmup`, plus per-command home/warp/spawn/back variants).
+- **Added** `MiscTeleportManager.reload()` so the new dashboard endpoint can apply config changes without a restart.
+- Dashboard `?v=` cache-bust bumped to `419`; new files added to managed dashboard file list.
+
+---
+
 ## 1.0.2.6+build.46 — 2026-04-24
 
 ### 🐛 Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank After Login

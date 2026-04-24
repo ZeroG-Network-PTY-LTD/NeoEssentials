@@ -5,12 +5,25 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.mojang.datafixers.util.Pair;
 import com.zerog.neoessentials.util.MessageUtil;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import java.io.File;
@@ -275,31 +288,57 @@ public class VanishManager {
     }
     
     /**
-     * Handle player join - set up vanish state
+     * Handle player join - set up vanish state.
+     *
+     * Packets are deferred by 1 tick so that vanilla entity-spawn packets sent
+     * during the login sequence (ChunkMap entity tracking) arrive on the client
+     * BEFORE our remove/add overrides.  Without the delay our packets can be
+     * overwritten by the subsequent vanilla spawn packet, causing vanished
+     * players to remain visible to the joining observer.
      */
     public void onPlayerJoin(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        
-        // If player is vanished, hide them from others
+        MinecraftServer server = player.getServer();
+
+        // If this player is vanished, hide them from every other online player
+        // (use a 1-tick delay so our hide packet arrives after the vanilla spawn
+        // packets that the server sends while placing the new player in the world).
         if (isPlayerVanished(playerId)) {
-            hidePlayerFromOthers(player);
-            String message = MessageUtil.localize("neoessentials.moderation.vanish_reminder");
-            player.sendSystemMessage(MessageUtil.info(message));
+            player.sendSystemMessage(MessageUtil.info(
+                MessageUtil.localize("neoessentials.moderation.vanish_reminder")));
+            if (server != null) {
+                server.tell(new TickTask(server.getTickCount() + 1,
+                    () -> hidePlayerFromOthers(player)));
+            }
         }
-        // If player can see vanished, show all vanished players to them (priority check)
-        if (canPlayerSeeVanished(playerId)) {
-            int viewerPriority = viewerPriorities.getOrDefault(playerId, 10);
-            for (UUID vanishedId : vanishedPlayers.keySet()) {
-                if (!vanishedId.equals(playerId)) {
-                    int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
-                    if (viewerPriority <= vanishedPriority) {
-                        ServerPlayer vanishedPlayer = player.getServer().getPlayerList().getPlayer(vanishedId);
+
+        // After 1 tick, handle what the joining player should (or should not) see.
+        if (server != null) {
+            server.tell(new TickTask(server.getTickCount() + 1, () -> {
+                if (canPlayerSeeVanished(playerId)) {
+                    // Show all vanished players whose priority is >= this observer's priority
+                    int viewerPriority = viewerPriorities.getOrDefault(playerId, 10);
+                    for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
+                        if (vanishedId.equals(playerId)) continue;
+                        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
+                        if (viewerPriority <= vanishedPriority) {
+                            ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
+                            if (vanishedPlayer != null) {
+                                showPlayerToSpecific(vanishedPlayer, player);
+                            }
+                        }
+                    }
+                } else {
+                    // Hide every vanished player from this newly joined observer
+                    for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
+                        if (vanishedId.equals(playerId)) continue;
+                        ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
                         if (vanishedPlayer != null) {
-                            showPlayerToSpecific(vanishedPlayer, player);
+                            hidePlayerFromSpecific(vanishedPlayer, player);
                         }
                     }
                 }
-            }
+            }));
         }
     }
     
@@ -312,25 +351,34 @@ public class VanishManager {
     }
     
     /**
-     * Hide a player from all other players (except those who can see vanished)
+     * Hide a player from all other players (except those who can see vanished).
+     *
+     * Previously this method returned early when isHideFromTabListEnabled() was
+     * false, meaning the player's entity was NEVER removed from the world — only
+     * the tab-list removal was ever attempted.  Now the entity is always removed
+     * from every observer who does not have see-vanished permission, and the
+     * tab-list removal is performed conditionally on the config flag.
+     *
+     * Priority rule: an observer can see a vanished player only when the observer
+     * is explicitly in viewerPriorities AND their priority number is <= the vanished
+     * player's priority (i.e. equal or higher staff rank).
      */
     private void hidePlayerFromOthers(ServerPlayer vanishedPlayer) {
-        // Only hide from tab list if enabled in config
-    boolean hideFromTabList = com.zerog.neoessentials.config.ConfigManager.isHideFromTabListEnabled();
-        if (!hideFromTabList) return;
-
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
 
         UUID vanishedId = vanishedPlayer.getUUID();
-        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10); // Default priority 10 if not set
+        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
+
         for (ServerPlayer otherPlayer : server.getPlayerList().getPlayers()) {
-            if (otherPlayer != vanishedPlayer) {
-                int viewerPriority = viewerPriorities.getOrDefault(otherPlayer.getUUID(), 10);
-                // Only show if viewerPriority <= vanishedPriority
-                if (viewerPriority > vanishedPriority) {
-                    hidePlayerFromSpecific(vanishedPlayer, otherPlayer);
-                }
+            if (otherPlayer == vanishedPlayer) continue;
+            UUID otherId = otherPlayer.getUUID();
+            // The observer may only keep seeing the vanished player if they are
+            // registered as a see-vanished viewer with sufficient rank.
+            boolean canSee = viewerPriorities.containsKey(otherId)
+                    && viewerPriorities.get(otherId) <= vanishedPriority;
+            if (!canSee) {
+                hidePlayerFromSpecific(vanishedPlayer, otherPlayer);
             }
         }
     }
@@ -350,13 +398,28 @@ public class VanishManager {
     }
     
     /**
-     * Hide a specific player from a specific observer
+     * Hide a specific player from a specific observer.
+     *
+     * Previously this ONLY sent ClientboundPlayerInfoRemovePacket (tab-list removal).
+     * The player's entity was never actually removed from the observer's world —
+     * meaning players could still see the vanished player walking around even
+     * though they were off the tab list.
+     *
+     * Fix: also send ClientboundRemoveEntitiesPacket so the entity disappears from
+     * the world.  Tab-list removal is still config-gated; entity removal is not.
      */
     private void hidePlayerFromSpecific(ServerPlayer vanishedPlayer, ServerPlayer observer) {
         try {
-            // Use NeoForge networking to hide player
-            observer.connection.send(new net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket(
-                List.of(vanishedPlayer.getUUID())
+            // Remove from tab list if configured to do so
+            if (com.zerog.neoessentials.config.ConfigManager.isHideFromTabListEnabled()) {
+                observer.connection.send(new ClientboundPlayerInfoRemovePacket(
+                    List.of(vanishedPlayer.getUUID())
+                ));
+            }
+            // Always remove the entity from the observer's world view — this is
+            // the actual "invisible" part that was previously missing entirely.
+            observer.connection.send(new ClientboundRemoveEntitiesPacket(
+                vanishedPlayer.getId()
             ));
         } catch (Exception e) {
             LOGGER.error("Failed to hide player {} from {}", vanishedPlayer.getName().getString(), observer.getName().getString(), e);
@@ -364,12 +427,67 @@ public class VanishManager {
     }
     
     /**
-     * Show a specific player to a specific observer
+     * Show a specific player to a specific observer.
+     *
+     * Previously this method contained only a comment and never sent any packets,
+     * making it completely non-functional.  Unvanishing therefore never worked for
+     * observers who were already online, and see-vanished staff joining the server
+     * could never actually see vanished players.
+     *
+     * Fix: send the full set of packets needed to restore the player in the
+     * observer's world: tab-list update → entity spawn → entity data → equipment
+     * → head rotation.
      */
     private void showPlayerToSpecific(ServerPlayer unvanishedPlayer, ServerPlayer observer) {
         try {
-            // Player will be re-added to tab list automatically on respawn/rejoin
-            // For now, we'll rely on the client's natural player discovery
+            // 1. Re-add player to the tab list (safe to send even if never removed)
+            observer.connection.send(ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(
+                List.of(unvanishedPlayer)
+            ));
+
+            // 2. Re-spawn the player entity in the observer's world
+            observer.connection.send(new ClientboundAddEntityPacket(
+                unvanishedPlayer.getId(),
+                unvanishedPlayer.getUUID(),
+                unvanishedPlayer.getX(),
+                unvanishedPlayer.getY(),
+                unvanishedPlayer.getZ(),
+                unvanishedPlayer.getXRot(),
+                unvanishedPlayer.getYRot(),
+                EntityType.PLAYER,
+                0,
+                unvanishedPlayer.getDeltaMovement(),
+                unvanishedPlayer.getYHeadRot()
+            ));
+
+            // 3. Send entity metadata (skin flags, display name visibility, etc.)
+            List<net.minecraft.network.syncher.SynchedEntityData.DataValue<?>> entityData =
+                unvanishedPlayer.getEntityData().getNonDefaultValues();
+            if (entityData != null && !entityData.isEmpty()) {
+                observer.connection.send(new ClientboundSetEntityDataPacket(
+                    unvanishedPlayer.getId(), entityData
+                ));
+            }
+
+            // 4. Send equipment (held items, armour)
+            List<Pair<EquipmentSlot, ItemStack>> equipment = new ArrayList<>();
+            for (EquipmentSlot slot : EquipmentSlot.values()) {
+                ItemStack stack = unvanishedPlayer.getItemBySlot(slot);
+                if (!stack.isEmpty()) {
+                    equipment.add(Pair.of(slot, stack.copy()));
+                }
+            }
+            if (!equipment.isEmpty()) {
+                observer.connection.send(new ClientboundSetEquipmentPacket(
+                    unvanishedPlayer.getId(), equipment
+                ));
+            }
+
+            // 5. Sync head yaw so the model faces the right direction
+            observer.connection.send(new ClientboundRotateHeadPacket(
+                unvanishedPlayer,
+                (byte) Math.floor(unvanishedPlayer.getYHeadRot() * 256.0F / 360.0F)
+            ));
         } catch (Exception e) {
             LOGGER.error("Failed to show player {} to {}", unvanishedPlayer.getName().getString(), observer.getName().getString(), e);
         }

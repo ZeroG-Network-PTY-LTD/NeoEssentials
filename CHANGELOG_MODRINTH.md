@@ -4,6 +4,19 @@
 
 ---
 
+## 1.0.2.6+build.50 — 2026-04-24
+
+### ✨ Teleportation Improvements — Dashboard Settings Page, Language Keys & Permission Docs
+
+Added a live teleport settings page to the web dashboard, fixed missing `/back` language keys, and documented all bypass permission nodes.
+
+- New **Teleport Settings** page in the dashboard — edit cooldowns, warmup delays, safety flags, and home/warp limits without restarting. Saves instantly reload all teleport managers.
+- Fixed `/back` warmup and cooldown messages that showed raw key names instead of text (keys were used in Java but not defined in the language file).
+- Documented 10 cooldown/warmup bypass permission nodes in `permissions_nodes.txt`.
+- Added `MiscTeleportManager.reload()` for dashboard live-reload support.
+
+---
+
 ## 1.0.2.6+build.46 — 2026-04-24
 
 ### 🐛 Bug Fix — Web Dashboard Admin Controls & Permissions Page Blank
