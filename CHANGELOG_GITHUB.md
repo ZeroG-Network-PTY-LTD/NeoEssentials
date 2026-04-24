@@ -6,6 +6,131 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.69] — 2026-04-24
+
+### Feature — Custom Player Tablist: Refinements & `processTablistText`
+
+Follow-up polish pass on the Custom Player Tablist system introduced in build.67.
+
+**Changes:**
+
+- **`RichTextFormatter.processTablistText(String)`** — new dedicated entry point for tablist-specific
+  rich-text processing.  Unlike `processRichText()` (which may emit hover/click events), this method
+  strips any hover/click markers that tab-list packets cannot render, then delegates to
+  `ChatComponentUtil.parseColorCodes()` for the final color pass.  All five processing layers
+  (gradient, rainbow, named-color tags, format tags, `<color:#RRGGBB>` spans) run unconditionally
+  regardless of the server's `enableChatEnhancements` flag.
+- **`TablistManager`** — replaced remaining `Component.literal()` calls in `updatePlayer()` and
+  `updatePlayerTeam()` with `RichTextFormatter.processTablistText()`.  Hex colors and gradient tags
+  now render correctly in both the header/footer area **and** the per-player prefix/suffix column.
+- **`applyPlaceholders()`** — `&` → `§` conversion removed from this method; color processing is
+  deferred entirely to `processTablistText()` so that `&#RRGGBB` tokens and `<gradient:…>` tags
+  survive placeholder substitution intact.
+
+| File | Change |
+|---|---|
+| `RichTextFormatter.java` | Added `processTablistText()` with full tag pipeline + hover/click strip |
+| `TablistManager.java` | All Component building now routed through `processTablistText()` |
+
+---
+
+## [1.0.2.6+build.67] — 2026-04-24
+
+### Feature — Custom Player Tablist (full implementation)
+
+Complete rewrite and feature expansion of the tablist system.  **References: TAB [1.7–1.21.x], BungeeTabListPlus, Simple TabList.**
+
+**New features:**
+
+**1 — Hex colors & gradients everywhere**
+
+Header, footer, and per-player prefix/suffix now support the same rich-text syntax as chat:
+
+| Syntax | Effect |
+|---|---|
+| `&#RRGGBB` | Inline hex color |
+| `<gradient:FF0000-0000FF>text</gradient>` | Per-character smooth gradient (2+ color stops) |
+| `<rainbow>text</rainbow>` | Cycling rainbow |
+| `<red>text</red>`, `<gold>`, … | Named Minecraft colors |
+| `<bold>`, `<italic>`, `<underline>`, … | Format tags |
+| `<color:#RRGGBB>text</color>` | Arbitrary hex color span |
+| `&X` | Legacy `§` codes |
+
+**2 — Animated header/footer**
+
+`header` and `footer` in `tablist.json` accept either a single string or a JSON array of strings.
+Each tick cycle advances to the next frame, creating smooth animations.  `refreshInterval` controls
+how many server ticks between frame advances (default `20` = 1 s).
+
+**3 — Per-group header/footer**
+
+`tablist.json` accepts a `"groups"` object.  Each key is a permission group name; each value can
+supply its own `"header"` and/or `"footer"` (string or array).  Priority: **per-player → per-group → global**.
+
+```json
+"groups": {
+  "admin": {
+    "header": "<gradient:FF0000-FF8C00>&lAdmin Panel&r\n&#FFFFFF{online}&8/&7{max} online",
+    "footer": "&7TPS: {tps} &8| &7{world} &8| &3Admin mode active"
+  }
+}
+```
+
+**4 — Per-player header/footer overrides**
+
+- **Config:** `"players"` object in `tablist.json` with UUID keys, same `header`/`footer` schema.
+- **In-game runtime commands (new `/tablist player` branch):**
+  - `/tablist player <name> header <text>` — set per-player header
+  - `/tablist player <name> footer <text>` — set per-player footer
+  - `/tablist player <name> reset` — clear all per-player overrides
+
+**5 — Per-group runtime commands**
+
+- `/tablist group <group> header <text>` — runtime per-group header override
+- `/tablist group <group> footer <text>` — runtime per-group footer override
+- `/tablist group <group> reset` — clear group overrides
+- `/tablist info` now lists all active group overrides
+
+**6 — Extended placeholder set**
+
+| Placeholder | Value |
+|---|---|
+| `{player}` | Raw player name |
+| `{displayname}` | Display name (respects nick + per-group colour override) |
+| `{online}` | Visible online count (vanished excluded for non-staff) |
+| `{max}` | Server player slots |
+| `{ping}` | Player latency ms |
+| `{world}` | Dimension path (e.g. `overworld`) |
+| `{tps}` | Server TPS, pre-coloured `&a`/`&e`/`&c` |
+| `{time}` | Real-world server time `HH:mm` |
+| `{server_name}` | Server MOTD |
+| `{x}` `{y}` `{z}` | Player block coordinates |
+| `{balance}` | Player balance (EconomyManager) |
+| `{prefix}` `{suffix}` | Permission group prefix/suffix |
+| `{group}` | Permission group name |
+| `{newline}` | Line break |
+| `{bar}` | Decorative `&8&m` separator |
+
+**7 — Vanish & AFK integration**
+
+- `hideVanished: true` excludes vanished players from the `{online}` count for non-staff viewers.
+- `showAfkIndicator: true` appends `afkSuffix` (default `&7[AFK]`) to the player's tab row.
+
+**8 — tablist.json config template**
+
+Default config file expanded with rich-text examples, per-group section, per-player UUID section,
+gradient/hex syntax reference comments, and `groupColors` override map.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `TablistManager.java` | Full rewrite: animated frames, per-player/group overrides, extended placeholders, rich-text pipeline, vanish/AFK integration, null-safe permission helpers |
+| `TablistCommand.java` | Added `player` and `group` subcommand trees; updated help text with syntax examples |
+| `tablist.json` (bundled) | Expanded template with gradient header example, per-group section, per-player section, groupColors map |
+
+---
+
 ## [1.0.2.6+build.66] — 2026-04-24
 
 ### Bug Fix — Tablist prefix, Warn console logging, WarnManager duplicate method

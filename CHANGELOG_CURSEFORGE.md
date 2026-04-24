@@ -4,6 +4,35 @@
 
 ---
 
+## 1.0.2.6+build.69 — 2026-04-24
+
+### ✨ Feature — Custom Player Tablist: Polish Pass
+
+- **New `processTablistText()` method** in `RichTextFormatter` — a tablist-safe rich-text processor that strips hover/click events and runs the full gradient/rainbow/hex/format pipeline, enabled regardless of the `enableChatEnhancements` setting.
+- **Player prefix/suffix column now supports hex colors and gradients** — group prefixes defined with `&#RRGGBB` or gradient tags now render as true colored text in the tab-list player rows.
+- **Color processing deferred correctly** — placeholder substitution no longer converts `&`→`§` prematurely; color parsing is fully deferred to `processTablistText()` so complex color codes survive intact.
+
+---
+
+## 1.0.2.6+build.67 — 2026-04-24
+
+### ✨ Feature — Custom Player Tablist
+
+Full rewrite of the tablist system with rich-text, animations, and per-group/per-player customisation.
+
+**New features:**
+
+- **Hex colors & gradients** — use `&#RRGGBB`, `<gradient:FF0000-0000FF>text</gradient>`, `<rainbow>`, named color/format tags in any header, footer, or group prefix
+- **Animated header/footer** — set `header`/`footer` to a JSON array for smooth frame-by-frame animations (speed set by `refreshInterval`)
+- **Per-group header/footer** — `"groups"` section in `tablist.json` gives each permission group its own frames (e.g. a staff-only header panel)
+- **Per-player header/footer** — `"players"` UUID section in `tablist.json`; also settable at runtime with new `/tablist player <name> header|footer|reset` commands
+- **Per-group runtime commands** — `/tablist group <group> header|footer|reset` for live adjustments without reloading the config
+- **Extended placeholders** — `{displayname}`, `{server_name}`, `{x}`, `{y}`, `{z}`, `{balance}`, `{time}`, `{bar}` added (full list in `tablist.json` template comments)
+- **Vanish + AFK support** — `{online}` excludes vanished players for non-staff viewers; configurable AFK suffix shown next to AFK players
+- **Updated `tablist.json` config template** — gradient header example, annotated group/player sections, color syntax reference
+
+---
+
 ## 1.0.2.6+build.66 — 2026-04-24
 
 ### 🐛 Bug Fix — Tablist prefix, Warn logging, WarnManager compile error

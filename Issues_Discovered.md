@@ -1,10 +1,95 @@
 # 👾 Issues That Were Discovered
 
-*(No open issues at this time — all known bugs have been resolved.)*
+- **NeoEssentials FTB Ranks Adapter Permission Check Failure (NeoForge 1.21.1, build.1.0.2.5+1074)**  
+  NeoEssentials fails to check permissions via FTB Ranks due to a missing method in the API.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.5 build 1074`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.219`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Error Log:
+      ```
+      Failed to check FTB Ranks permission
+      java.lang.NoSuchMethodException: dev.ftb.mods.ftbranks.api.FTBRanksAPI.hasPermission(java.util.UUID,java.lang.String)
+      at com.zerog.neoessentials.permissions.FtbRanksAdapter.hasPermission(FtbRanksAdapter.java:54)
+      ...
+      ```  
+    - Observed Behavior:
+        - Permission checks through FTB Ranks throw `NoSuchMethodException`.
+        - Commands relying on FTB Ranks integration may fail or bypass permissions.
+    - Expected Behavior:
+        - NeoEssentials should correctly call FTB Ranks API methods to validate permissions.
+    - Need to investigate:
+        - Whether NeoEssentials is calling an outdated or removed method (`hasPermission(UUID, String)`).
+        - If FTB Ranks API changed its signature (e.g., requiring `ServerPlayer` or context objects).
+        - Possible fix: update `FtbRanksAdapter` to use the current FTB Ranks API methods and ensure compatibility with version `2101.1.3`.
+
+---
 
 ---
 
 # ✅ Issues That Were Fixed
+
+## ✨ Build #69 — 2026-04-24 — Custom Player Tablist: Polish Pass
+
+- **Tablist player-row prefix/suffix not rendering hex/gradient colors → ✅ FIXED in build.69**  
+  After build.67 introduced rich-text header/footer support, the per-player prefix and suffix rendered in the tab-list **player column** (set via scoreboard teams) still used `Component.literal()` — hex or gradient codes in group prefixes therefore appeared as literal text rather than colors.
+    - Root Cause: `updatePlayerTeam()` called `Component.literal(prefix)` / `Component.literal(suffix)` and had no rich-text conversion step.
+    - Fix Applied (build.69): Routed both calls through the new `RichTextFormatter.processTablistText()` so group prefixes/suffixes (e.g. `&#FF5500[Admin] ` or `<gradient:FF0000-FF8C00>[Mod] </gradient>`) now render as proper colored Components in the player-name column.
+    - Affected file: `TablistManager.java` — `updatePlayerTeam()`
+
+---
+
+- **Color codes inside placeholders corrupted after substitution → ✅ FIXED in build.69**  
+  `applyPlaceholders()` was internally converting `&` → `§` *before* returning the frame text. This caused `&#RRGGBB` hex tokens to become `§#RRGGBB` (invalid) and `<gradient:…>` tags to pass through unchanged to the `processTablistText()` pipeline where `&`-codes had already been consumed.
+    - Fix Applied (build.69): Removed the early `&` → `§` conversion from `applyPlaceholders()`. Color processing is now deferred entirely to `RichTextFormatter.processTablistText()` so all color syntax survives placeholder substitution intact.
+    - Affected file: `TablistManager.java` — `applyPlaceholders()`
+
+---
+
+- **`RichTextFormatter` lacked a tablist-safe text processor → ✅ ADDED in build.69**  
+  The existing `processRichText()` method could emit hover/click event markers (used in chat) that are silently dropped by `ClientboundTabListPacket`, causing malformed output.
+    - Fix Applied (build.69): Added `RichTextFormatter.processTablistText(String)` — runs the full gradient → rainbow → named-color → format-tag → `<color:#RRGGBB>` pipeline, strips any hover/click markers, then calls `ChatComponentUtil.parseColorCodes()`. Enabled unconditionally (does not depend on the `enableChatEnhancements` server flag).
+    - Affected file: `RichTextFormatter.java`
+
+---
+
+## ✨ Build #67 — 2026-04-24 — Custom Player Tablist (full feature)
+
+- **Custom Player Tablist system implemented → ✅ Build #67**  
+  Full rewrite and feature expansion of the tablist subsystem. Implements the `Custom Player Tablist` feature milestone. Inspired by TAB, BungeeTabListPlus, and Simple TabList.
+
+  **What was built:**
+
+  1. **Hex colors & gradients in header/footer**  
+     `TablistManager.updatePlayer()` now builds header and footer through `RichTextFormatter` (build.69 refined this further with the dedicated `processTablistText()` method). Supports `&#RRGGBB`, `<gradient:FF0000-0000FF>text</gradient>`, `<rainbow>text</rainbow>`, named color tags (`<red>`, `<gold>`, …), and format tags (`<bold>`, `<italic>`, …).
+
+  2. **Animated header/footer frames**  
+     `header` and `footer` in `tablist.json` accept a JSON array. Each refresh tick advances one frame creating smooth text animations. `refreshInterval` (ticks, default 20) controls speed.
+
+  3. **Per-group header/footer**  
+     New `"groups"` section in `tablist.json` — each permission group (e.g. `admin`, `moderator`) can define its own `header`/`footer` arrays. Priority: **per-player → per-group → global**.
+
+  4. **Per-player header/footer overrides**  
+     - `"players"` UUID map in `tablist.json` for persistent per-player frames.
+     - New runtime commands: `/tablist player <name> header <text>`, `/tablist player <name> footer <text>`, `/tablist player <name> reset`.
+
+  5. **Per-group runtime commands**  
+     `/tablist group <group> header|footer|reset` — adjust groups live without reloading config.
+
+  6. **Extended placeholder set**  
+     Added `{displayname}`, `{server_name}`, `{x}`, `{y}`, `{z}`, `{balance}`, `{time}`, `{bar}` alongside the existing 12 placeholders. Per-group `groupColors` map applies a color prefix to `{displayname}`.
+
+  7. **Vanish + AFK integration**  
+     `hideVanished: true` excludes vanished players from `{online}` for non-staff viewers. `showAfkIndicator: true` appends configurable `afkSuffix` (default `&7[AFK]`) to AFK players in the tab row.
+
+  8. **`tablist.json` config template**  
+     Bundled default config updated with gradient header example, per-group and per-player sections, `groupColors` map, and inline syntax reference comments.
+
+  - Affected files: `TablistManager.java`, `TablistCommand.java`, `tablist.json`
+
+---
 
 ## 🔧 Build #66 — 2026-04-24
 
@@ -639,7 +724,7 @@
   Expand shop systems with:
     - Chest sign shops, player chest shops, and entity-based shops.
     - Dynamic pricing support with configurable rules.
-    - CSV import/export for bulk pricing adjustments.
+    - CSV import/export for bulk pricing adjustments. {Other Modded Support}
     - Future-proofing for more advanced economy plugins and integrations.
 
 - **Holographic Displays**  
@@ -662,26 +747,6 @@
     - Improved user management with role-based access control.
     - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
 
-- **Custom Player Tablist**  
-  Implement a highly customizable tablist system:
-    - Support for animated headers/footers.
-    - Hex colors and gradients.
-    - References: Bungee Tablist Plus, TAB, Simple TabList.
-    - Per-group and per-player customization.
-
-- ✅ **API & Placeholder System** *(build #58)*  
-  Expand API and placeholder support:
-    - Deeper PlaceholderAPI integration.
-    - Ability to create custom placeholders.
-    - REST API endpoints for external tools and dashboards.
-    - Documentation for developers to extend NeoEssentials easily.
-
-- **Localization Improvements**
-    - Audit all NeoEssentials commands to ensure translation keys exist and are mapped correctly.
-    - Add fallback text in English when a translation key is missing.
-    - Provide tooling to regenerate or validate `messages.json` automatically.
-    - Allow server admins to override messages easily via config.
-
 - **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  
   Request to update NeoEssentials for compatibility with the latest Minecraft and NeoForge releases.
     - Requested Update:
@@ -695,6 +760,54 @@
         - Provides a stable foundation for fixing existing bugs (permissions, configs, teleportation) in the new environment.
 
 # Improvements Done 
+
+- **Custom Player Tablist** *(builds #67, #69)*
+
+  Full rewrite of the tablist system — all four checklist items delivered.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Animated header/footer (frame arrays, `refreshInterval`) | #67 | ✅ |
+  | Hex colors & gradients (`&#RRGGBB`, `<gradient:…>`, `<rainbow>`) | #67 | ✅ |
+  | Per-group customisation (header/footer, prefix/suffix, runtime commands) | #67 | ✅ |
+  | Per-player customisation (header/footer, runtime commands, UUID config section) | #67 | ✅ |
+  | Rich-text in player-row prefix/suffix column (scoreboard teams) | #69 | ✅ |
+  | Dedicated `RichTextFormatter.processTablistText()` (tablist-safe pipeline) | #69 | ✅ |
+
+  **build.67 — core feature**
+  - `TablistManager` fully rewritten: animated frame cycling, per-player/group override maps, extended placeholder set (`{displayname}`, `{server_name}`, `{x}/{y}/{z}`, `{balance}`, `{time}`, `{bar}`), `groupColors` map, vanish + AFK integration, null-safe permission helpers
+  - `TablistCommand` expanded: `/tablist player <name> header|footer|reset` and `/tablist group <group> header|footer|reset` branches added; help text updated with color/gradient syntax examples
+  - `tablist.json` bundled template updated with gradient header example, per-group and per-player UUID sections, `groupColors` map
+
+  **build.69 — polish**
+  - `RichTextFormatter.processTablistText(String)` added — strips hover/click markers (invalid in tablist packets), runs full gradient → rainbow → color-tag → format-tag pipeline unconditionally
+  - `updatePlayerTeam()` routed through `processTablistText()` — hex/gradient group prefixes now render in the player-name column
+  - `applyPlaceholders()` early `&`→`§` conversion removed — color processing fully deferred to `processTablistText()` so `&#RRGGBB` and `<gradient:…>` survive placeholder substitution
+
+---
+
+- **Localization Improvements** *(build #64)*
+
+  All four checklist items delivered.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Audit all commands for missing translation keys (54 keys added) | #64 | ✅ |
+  | Fallback text in English when a key is missing | #64 | ✅ |
+  | Tooling to regenerate/validate language files | #64 | ✅ |
+  | Server-admin override of messages via config (`/language override`) | #64 | ✅ |
+
+  **54 missing translation keys** added to `en_us.json` — TPA/teleport-request flow (25 keys), misc teleport, spawn/warp coordinate errors, home overwrite/delete fallbacks, moderation messages, dashboard, channel, mutelist, near, gamemode.
+
+  **`MessageUtil` improvements:** `localize()` now strips `commands.neoessentials.` prefix and capitalises to produce a readable English fallback when a key is missing. New `localize(key, fallback, args...)` overload for callers that know the expected English text.
+
+  **New `/language` admin commands:** `validate <code>` (coverage % + missing/extra key diff), `regenerate <code>` (refresh + merge from JAR, auto-backup), `override set|get|remove|list|clear|reload` (per-key runtime overrides persisted to `overrides.json`).
+
+  **`_langVersion` bumped 12 → 13** — new keys auto-merged into existing deployments at next server start.
+
+  Affected files: `en_us.json`, `MessageUtil.java`, `CustomLanguageManager.java`, `LanguageCommand.java`
+
+---
 
 - **Permissions System Improvements** *(builds #25, #28, #30)*
 
