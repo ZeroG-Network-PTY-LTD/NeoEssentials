@@ -1,6 +1,6 @@
 # Teleportation System
 
-> **Version:** 1.0.2.6 · **Config:** `config.json` → `teleportation` section
+> **Version:** 1.0.2.6+build.38 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
 
 ---
 
@@ -41,8 +41,23 @@ All teleport destinations are checked for safety:
 | `maxHomes` | `5` | Max homes per player |
 | `allowCrossDimensionHomes` | `true` | Allow homes in other dimensions |
 | `enableHomeTeleportSafety` | `true` | Check safe location on home TP |
-| `teleportDelay` | `3` | Seconds before teleport completes |
-| `cancelOnMovement` | `true` | Cancel if player moves during delay |
+| `homeTeleportCooldown` | `0` | Seconds a player must wait between `/home` uses (0 = disabled) |
+| `cancelOnMovement` | `true` | Cancel if player moves during warm-up delay |
+
+> `teleportDelay` (warmup before the teleport fires) is a **global** setting in `generalSettings.teleportDelay`, not per-feature.
+
+---
+
+## Warmup & Cooldown Behaviour
+
+| Setting | Config key | Section | Description |
+|---|---|---|---|
+| Warmup delay | `generalSettings.teleportDelay` | `config.json` | Seconds to wait before any teleport completes. `0` = instant. |
+| Warmup countdown | `generalSettings.enableTeleportWarmup` | `config.json` | Show a countdown message to the player during the warmup. |
+| Cancel on move | `teleportation.homeSettings.cancelOnMovement` | same for warp/spawn | Cancel teleport if the player moves during warmup. |
+| Home cooldown | `teleportation.homeSettings.homeTeleportCooldown` | `config.json` | Seconds between successive `/home` uses. `0` = no cooldown. |
+| Warp cooldown | `teleportation.warpSettings.warpCooldown` | `config.json` | Seconds between successive `/warp` uses. `0` = no cooldown. |
+| Spawn cooldown | `teleportation.spawnSettings.spawnCooldown` | `config.json` | Seconds between successive `/spawn` uses. `0` = no cooldown. |
 
 ---
 
@@ -65,6 +80,8 @@ All teleport destinations are checked for safety:
 
 Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` per warp.
 
+> **Warp cooldown** is configured via `teleportation.warpSettings.warpCooldown` in `config.json` (seconds; `0` = no cooldown).
+
 ---
 
 ## Spawn
@@ -73,6 +90,9 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 |---|---|---|---|
 | `/spawn` | `/spawn [player]` | `neoessentials.teleport.spawn` | Teleport to server spawn |
 | `/setspawn` | `/setspawn` | `neoessentials.teleport.spawn.set` | Set spawn at current location |
+
+> **Spawn cooldown** is configured via `teleportation.spawnSettings.spawnCooldown` in `config.json` (seconds; `0` = no cooldown).
+> **Warmup** is controlled globally by `generalSettings.teleportDelay` + `generalSettings.enableTeleportWarmup`.
 
 ---
 
@@ -146,6 +166,7 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | `neoessentials/homes.json` | Player UUID → named home locations |
 | `neoessentials/warps.json` | Server warp locations |
 | `neoessentials/player_warps.json` | Player-created warp locations |
+| `neoessentials/spawn.json` | Spawn location (coordinates & world) |
 
 ---
 

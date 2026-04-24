@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages server spawn location with setting and teleportation functionality
@@ -39,6 +42,10 @@ public class SpawnManager {
     private boolean requireSafeLocation = true;
     private boolean allowSetSpawnInNether = false;
     private boolean allowSetSpawnInEnd = false;
+    private int spawnCooldownSeconds = 0;
+
+    // Cooldown tracking: player UUID -> last spawn teleport time (ms)
+    private final Map<UUID, Long> lastSpawnTimestamps = new ConcurrentHashMap<>();
 
     private SpawnManager() {
         loadConfig();
@@ -60,6 +67,20 @@ public class SpawnManager {
                         JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
                         if (spawnSettings.has("enableSpawnSafety")) {
                             safe = spawnSettings.get("enableSpawnSafety").getAsBoolean();
+                        }
+                        if (spawnSettings.has("spawnCooldown")) {
+                            try {
+                                spawnCooldownSeconds = spawnSettings.get("spawnCooldown").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    // Read teleport delay (warmup) from generalSettings
+                    if (tp.has("generalSettings")) {
+                        JsonObject generalSettings = tp.getAsJsonObject("generalSettings");
+                        if (generalSettings.has("teleportDelay")) {
+                            try {
+                                teleportDelay = generalSettings.get("teleportDelay").getAsInt();
+                            } catch (Exception ignored) {}
                         }
                     }
                 }
@@ -151,6 +172,22 @@ public class SpawnManager {
      * Teleport player to spawn
      */
     public void teleportToSpawn(ServerPlayer player) {
+        // Enforce spawn cooldown - atomic check
+        if (spawnCooldownSeconds > 0) {
+            long now = System.currentTimeMillis();
+            UUID playerId = player.getUUID();
+            Long lastUse = lastSpawnTimestamps.putIfAbsent(playerId, now);
+            if (lastUse != null) {
+                long elapsed = (now - lastUse) / 1000L;
+                if (elapsed < spawnCooldownSeconds) {
+                    long wait = spawnCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.cooldown", wait));
+                    return;
+                }
+                lastSpawnTimestamps.put(playerId, now);
+            }
+        }
+
         if (spawnLocation == null) {
             // Fallback to world spawn
             teleportToWorldSpawn(player);
@@ -191,8 +228,24 @@ public class SpawnManager {
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-        // Perform teleportation
+        // Show warmup countdown message if delay is configured and warmup messages are enabled
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
+        if (teleportDelay > 0) {
+            boolean showWarmup = true;
+            try {
+                JsonObject generalSettings = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG)
+                    .getAsJsonObject("teleportation").getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableTeleportWarmup")) {
+                    showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
+                }
+            } catch (Exception ignored) {}
+            if (showWarmup) {
+                player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.spawn.warmup", teleportDelay));
+            }
+        }
+
+        // Perform teleportation
         TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, requireSafeLocation).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.success"));
@@ -304,13 +357,10 @@ public class SpawnManager {
                 }
             }
             
-            // Load configuration
+            // Load configuration (legacy support from spawn.json — settings now in config.json)
             if (root.has("config")) {
                 JsonObject config = root.getAsJsonObject("config");
-                
-                if (config.has("teleportDelay")) {
-                    teleportDelay = config.get("teleportDelay").getAsInt();
-                }
+                // teleportDelay is now read from config.json (generalSettings.teleportDelay), not spawn.json
                 if (config.has("requireSafeLocation")) {
                     requireSafeLocation = config.get("requireSafeLocation").getAsBoolean();
                 }

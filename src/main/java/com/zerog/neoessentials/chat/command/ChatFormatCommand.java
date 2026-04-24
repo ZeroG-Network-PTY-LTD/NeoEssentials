@@ -37,7 +37,7 @@ public class ChatFormatCommand {
                     .then(Commands.argument("format", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             CommandSourceStack source = ctx.getSource();
-                            if (!PermissionValidator.validatePermission(source, PERM)) return 0;
+                            if (!PermissionValidator.validatePermission(source, PERM).hasPermission()) return 0;
                             ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
                             String format = StringArgumentType.getString(ctx, "format");
                             PlayerChatFormatManager.getInstance().setFormat(target.getUUID(), format);
@@ -55,7 +55,7 @@ public class ChatFormatCommand {
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         CommandSourceStack source = ctx.getSource();
-                        if (!PermissionValidator.validatePermission(source, PERM)) return 0;
+                        if (!PermissionValidator.validatePermission(source, PERM).hasPermission()) return 0;
                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
                         boolean had = PlayerChatFormatManager.getInstance().clearFormat(target.getUUID());
                         if (had) {
@@ -75,7 +75,7 @@ public class ChatFormatCommand {
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         CommandSourceStack source = ctx.getSource();
-                        if (!PermissionValidator.validatePermission(source, PERM)) return 0;
+                        if (!PermissionValidator.validatePermission(source, PERM).hasPermission()) return 0;
                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
                         String fmt = PlayerChatFormatManager.getInstance().getFormat(target.getUUID());
                         if (fmt != null) {
@@ -95,7 +95,7 @@ public class ChatFormatCommand {
             .then(Commands.literal("list")
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();
-                    if (!PermissionValidator.validatePermission(source, PERM)) return 0;
+                    if (!PermissionValidator.validatePermission(source, PERM).hasPermission()) return 0;
                     PlayerChatFormatManager mgr = PlayerChatFormatManager.getInstance();
                     int count = mgr.getCount();
                     if (count == 0) {
@@ -126,7 +126,7 @@ public class ChatFormatCommand {
             .then(Commands.literal("reload")
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();
-                    if (!PermissionValidator.validatePermission(source, PERM)) return 0;
+                    if (!PermissionValidator.validatePermission(source, PERM).hasPermission()) return 0;
                     PlayerChatFormatManager.getInstance().load();
                     int count = PlayerChatFormatManager.getInstance().getCount();
                     source.sendSuccess(() -> Component.literal(

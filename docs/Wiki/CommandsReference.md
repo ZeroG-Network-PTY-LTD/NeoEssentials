@@ -1,6 +1,6 @@
 # NeoEssentials — Complete Commands Reference
 
-> **Last Updated:** 2026-03-06 · **Version:** 1.0.2.6  
+> **Last Updated:** 2026-04-24 · **Version:** 1.0.2.6
 > All commands are prefixed with `/`. Permission nodes follow `neoessentials.<node>` pattern.  
 > `🔒` = op-only by default · `✅` = available to all players by default  
 > Square brackets `[x]` = optional · Angle brackets `<x>` = required · `|` = or
@@ -268,13 +268,18 @@
 > Set `allowUnsafeCommands: true` in `security.json` (or `config.json → security`) and run `/neoe reload` to unlock all patterns.  
 > See [Security Configuration](SplitConfigs#security-configuration-securityjson) for the full list of blocked patterns and examples.
 
-| `/invsee` | `/invsee <player>` | `neoessentials.item.invsee` | 🔒 | View another player's inventory (read-only) |
+| `/invsee` | `/invsee <player>` | `neoessentials.invsee` | 🔒 | View another player's inventory (read-only) |
 | `/inv` | alias for `/invsee` | same | 🔒 | Alias |
-| `/invseeedit` | `/invseeedit <player>` | `neoessentials.item.invsee.edit` | 🔒 | View and edit another player's inventory |
-| `/enderchest` | `/enderchest <player>` | `neoessentials.item.enderchest` | 🔒 | View another player's ender chest |
+| `/invseeedit` | `/invseeedit <player>` | `neoessentials.invsee.edit` | 🔒 | View and edit another player's inventory |
+| `/enderchest` | `/enderchest <player>` | `neoessentials.enderchest` | 🔒 | View another player's ender chest |
 | `/ec` | alias for `/enderchest` | same | 🔒 | Alias |
-| `/enderchestedit` | `/enderchestedit <player>` | `neoessentials.item.enderchest.edit` | 🔒 | View and edit another player's ender chest |
+| `/enderchestedit` | `/enderchestedit <player>` | `neoessentials.enderchest.edit` | 🔒 | View and edit another player's ender chest |
 | `/ecedit` | alias for `/enderchestedit` | same | 🔒 | Alias |
+
+> **⚠️ Security note (build.40)** — `/inv` and `/ec` now require explicit permission. Prior to build.40 these aliases
+> bypassed permission checks due to a Brigadier redirect registration issue.  
+> `neoessentials.invsee` and `neoessentials.enderchest` are granted to the **moderator** group by default.  
+> `neoessentials.invsee.edit` and `neoessentials.enderchest.edit` are **admin-only** (not granted by default).
 
 ### Portable Workstations
 | Command | Syntax | Permission | Default | Description |
