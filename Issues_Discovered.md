@@ -6,6 +6,72 @@
 
 # ✅ Issues That Were Fixed
 
+## 🔧 Build #66 — 2026-04-24
+
+- **Tablist prefix not appearing before username → ✅ FIXED in build.66**  
+  Group prefix/suffix set in `permissions.json` was not displaying before player names in the tab list. Reported during post-build.64 testing.
+    - Root Causes:
+        1. `getPermissionPrefix()` / `getPermissionSuffix()` called `PermissionSystem.getManager()` which throws `IllegalStateException` before the permission system is fully initialised; the exception was silently swallowed in the `catch`, returning `""` every time.
+        2. All three helpers (`getPermissionPrefix`, `getPermissionSuffix`, `getPermissionGroup`) had inconsistent fallback behaviour — `getPermissionGroup()` returned `"default"` when the user record was absent, but the prefix/suffix helpers returned `""` instead of looking up the default group's values.
+    - Fix Applied (build.66):
+        - Switched all three helpers to use `PermissionAPI.getManager()` (returns `null` instead of throwing), with an explicit null guard.
+        - When the player has no explicit user entry (or `user.getGroup()` is `null`), all three helpers now fall back to `mgr.getDefaultGroup()` before looking up the group's prefix/suffix. The scoreboard team (and thus the tab list prefix row) now reliably shows the correct group prefix for every player, including freshly-joined players whose user entry was auto-created.
+    - Affected file: `TablistManager.java` — `getPermissionPrefix()`, `getPermissionSuffix()`, `getPermissionGroup()`
+
+---
+
+- **Warn command not logging to server console → ✅ FIXED in build.66**  
+  `/warn <player> <reason>` used `source.sendSuccess(..., broadcastToOps=true)` but had no explicit `LOGGER.info()` call — unlike `executeClearWarnings()` and `executeRemoveWarn()` which both had direct logger calls. On some server configurations (particularly when stdin is not a terminal, or the server uses a custom logging appender), `sendSuccess` feedback is not routed to the persistent log file.
+    - Observed: Warn records were being saved correctly to `warns.json`, but no timestamped console/log line appeared for `/warn` specifically. Other warn commands (`/clearwarnings`, `/removewarn`) did log correctly.
+    - Fix Applied (build.66): Added `LOGGER.info("[Warn] {} warned {} for: {} (warn #{}, ID: {})", warnedBy, playerName, reason, total, shortId)` in `WarnCommand.executeWarn()`, matching the style of the other warn-management commands.
+    - Affected file: `WarnCommand.java` — `executeWarn()`
+
+---
+
+- **WarnManager failed to compile — duplicate `getInstance()` method → ✅ FIXED in build.66**  
+  `WarnManager.java` contained two identical `public static WarnManager getInstance()` declarations (lines 28 and 44), causing `error: method getInstance() is already defined in class WarnManager` at compile time. The mod JAR could not be built until this was resolved.
+    - Fix Applied (build.66): Removed the duplicate declaration at line 44 (line 28 is the canonical definition, adjacent to the `INSTANCE` field).
+    - Affected file: `WarnManager.java`
+
+---
+
+## 🔧 Build #64 — 2026-04-24
+
+- **`/help [page]` returns "no permission" for regular players → ✅ FIXED in build.64**  
+  Non-operator players received a "no permission" response when running `/help` or `/help <page>`. The `HelpCommand` guards the command with `PermissionAPI.hasPermission(uuid, "neoessentials.help")`, but this node was absent from the `default` group in `permissions.json`, so all non-op players were blocked.
+    - Root Cause: `neoessentials.help` was missing from the `default` group's `permissions` array in both the bundled `src/main/resources/data/config/neoessentials/permissions.json` and the deployed `run/config/neoessentials/permissions.json`.
+    - Fix Applied (build.64): Added `"neoessentials.help"` to the `default` group's permission list in `permissions.json`. Help is now accessible to all players by default with no operator status required.
+    - Affected file: `permissions.json` — `default` group
+
+---
+
+- **Localization Audit — 54 missing translation keys + no fallback for unknown keys → ✅ FIXED in build.64**  
+  *(See full entry further below in this file)*
+
+---
+
+## 📝 Configuration Notes (not code bugs)
+
+- **`/kick` and `/ban` returning "no permission" for moderators**  
+  Reported during post-build.64 testing. Investigation confirmed this is **not a code bug** — the permission nodes `neoessentials.moderation.kick` and `neoessentials.moderation.ban` are correctly present in the `moderator` group in `permissions.json`.  
+  The cause is that players must be **explicitly assigned** to the `moderator` (or `admin`) group before those permissions apply. New players are auto-created in the `default` group; the `default` group intentionally does not include moderation permissions.  
+    - **Resolution**: Assign the player to the correct group in-game:
+      ```
+      /permissions user <playername> setgroup moderator
+      ```
+      Or promote to admin:
+      ```
+      /permissions user <playername> setgroup admin
+      ```
+      Changes take effect immediately without a server restart. Use `/permissions user <playername> info` to verify the current group assignment.
+
+- **Chat color codes / formatting**  
+  Reported during post-build.64 testing. Confirmed working — `ChatFormatter` correctly processes `&` codes and `§` codes via `ChatComponentUtil.parseColorCodes()`. No code change required.
+
+---
+
+## ✅ Previously Fixed Issues (older builds)
+
 - **NeoEssentials Freeze System Not Working (NeoForge 1.21.1, build.1.0.2.6+52) → ✅ FIXED in build.1.0.2.6+53**  
   `/freeze <player>` reports success and the player receives a message, but they can still walk around freely, interact with blocks, and nothing prevents them from moving.
     - Environment:
@@ -843,7 +909,7 @@
 
 ---
 
-- **Localization Audit — 54 missing translation keys + missing fallback text for unknown keys** *(build #62)*
+- **Localization Audit — 54 missing translation keys + missing fallback text for unknown keys** *(build #64)*
     - ✅ **54 missing translation keys added to `en_us.json`** — A full audit of all `MessageUtil.localize()`/`component()`/`success()`/`error()`/`warning()` call-sites across ~130 Java source files identified 54 keys that were referenced in code but not present in the language file. The missing keys were concentrated in:
         - Teleport request flow (`commands.neoessentials.teleport.request.*` — 25 keys for TPA sent/received/cancelled/expired/denied/failed)
         - Misc teleport (`back_info`, `death_info`, `jump_success`, `jump_failed`, `no_open_space`)

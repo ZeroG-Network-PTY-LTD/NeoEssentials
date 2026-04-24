@@ -33,8 +33,9 @@ public class RichTextFormatter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RichTextFormatter.class);
 
     // ── Gradient / Rainbow ────────────────────────────────────────────────────
+    // Supports 2+ color stops: <gradient:FF0000-FFFF00-00FF00>text</gradient>
     private static final Pattern GRADIENT_PATTERN = Pattern.compile(
-        "<gradient:([0-9a-fA-F]{6})-([0-9a-fA-F]{6})>(.*?)</gradient>",
+        "<gradient:((?:[0-9a-fA-F]{6})(?:-[0-9a-fA-F]{6})+)>(.*?)</gradient>",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern RAINBOW_PATTERN = Pattern.compile(
         "<rainbow>(.*?)</rainbow>",
@@ -126,6 +127,49 @@ public class RichTextFormatter {
         } catch (Exception e) {
             LOGGER.error("Error pre-processing rich text tags: {}", e.getMessage(), e);
             return text;
+        }
+    }
+
+    /**
+     * Process rich text for tablist headers/footers.
+     * <p>
+     * Unlike {@link #processRichText(String)}, this method <em>always</em> enables
+     * gradient and rainbow processing regardless of the {@code chat.richText.enabled}
+     * config setting. Hover/click markers are stripped because the tablist packet
+     * does not support interactive components.
+     *
+     * <p>Supported syntax (same as chat rich text):
+     * <ul>
+     *   <li>{@code <gradient:RRGGBB-RRGGBB>text</gradient>} — 2- or multi-stop gradient</li>
+     *   <li>{@code <rainbow>text</rainbow>} — cycling rainbow</li>
+     *   <li>{@code <red>text</red>}, {@code <gold>}, … — named colors</li>
+     *   <li>{@code <bold>text</bold>}, {@code <italic>}, … — format tags</li>
+     *   <li>{@code <color:#RRGGBB>text</color>} — arbitrary hex color span</li>
+     *   <li>{@code &#RRGGBB} — inline hex color</li>
+     *   <li>{@code &X} — legacy Minecraft color/format codes</li>
+     * </ul>
+     *
+     * @param text raw frame text (after placeholder substitution)
+     * @return fully colored Minecraft {@link Component}
+     */
+    public static Component processTablistText(String text) {
+        try {
+            // Gradient and rainbow are ALWAYS enabled for tablist
+            text = processGradients(text);
+            text = processRainbow(text);
+            text = processNamedColorTags(text);
+            text = processFormatTags(text);
+            text = processColorHexTags(text);
+            // Tablist cannot render hover/click events — strip them cleanly
+            text = stripHoverClickMarkers(text);
+            return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
+        } catch (Exception e) {
+            LOGGER.error("Error processing tablist text: {}", e.getMessage(), e);
+            try {
+                return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
+            } catch (Exception e2) {
+                return Component.literal(text);
+            }
         }
     }
 
@@ -285,34 +329,68 @@ public class RichTextFormatter {
         Matcher matcher = GRADIENT_PATTERN.matcher(text);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
-            String startHex = matcher.group(1);
-            String endHex   = matcher.group(2);
-            String content  = matcher.group(3);
+            String stopsRaw = matcher.group(1);   // e.g. "FF0000-FFFF00-00FF00"
+            String content  = matcher.group(2);
+            String[] stops  = stopsRaw.split("-");
             matcher.appendReplacement(result, Matcher.quoteReplacement(
-                createGradient(content, startHex, endHex)));
+                createMultiStopGradient(content, stops)));
         }
         matcher.appendTail(result);
         return result.toString();
     }
 
-    private static String createGradient(String text, String startHex, String endHex) {
-        if (text.isEmpty()) return text;
-        int startColor = Integer.parseInt(startHex, 16);
-        int endColor   = Integer.parseInt(endHex,   16);
-        int startR = (startColor >> 16) & 0xFF, startG = (startColor >> 8) & 0xFF, startB = startColor & 0xFF;
-        int endR   = (endColor   >> 16) & 0xFF, endG   = (endColor   >> 8) & 0xFF, endB   = endColor   & 0xFF;
+    /**
+     * Creates a per-character gradient string supporting 2+ color stops.
+     * Spaces are passed through without coloring to preserve word separation.
+     */
+    private static String createMultiStopGradient(String text, String[] stops) {
+        if (text.isEmpty() || stops.length == 0) return text;
+        if (stops.length == 1) {
+            // Solid color
+            String hex = stops[0].toUpperCase();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (c == ' ') { sb.append(c); continue; }
+                sb.append("&#").append(hex).append(c);
+            }
+            return sb.toString();
+        }
+
+        // Count non-space characters for interpolation
+        int visibleLen = 0;
+        for (int i = 0; i < text.length(); i++) if (text.charAt(i) != ' ') visibleLen++;
+        if (visibleLen == 0) return text;
+
+        int segmentCount = stops.length - 1;
         StringBuilder sb = new StringBuilder();
-        int length = text.length();
-        for (int i = 0; i < length; i++) {
+        int visibleIdx = 0;
+        for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == ' ') { sb.append(c); continue; }
-            float p = length > 1 ? (float) i / (length - 1) : 0;
-            int r = (int)(startR + (endR - startR) * p);
-            int g = (int)(startG + (endG - startG) * p);
-            int b = (int)(startB + (endB - startB) * p);
+
+            float globalP = visibleLen > 1 ? (float) visibleIdx / (visibleLen - 1) : 0f;
+            // Which segment does this character fall in?
+            float scaled = globalP * segmentCount;
+            int seg = Math.min((int) scaled, segmentCount - 1);
+            float segP = scaled - seg;
+
+            int startColor = Integer.parseInt(stops[seg], 16);
+            int endColor   = Integer.parseInt(stops[seg + 1], 16);
+            int sR = (startColor >> 16) & 0xFF, sG = (startColor >> 8) & 0xFF, sB = startColor & 0xFF;
+            int eR = (endColor   >> 16) & 0xFF, eG = (endColor   >> 8) & 0xFF, eB = endColor   & 0xFF;
+            int r = (int)(sR + (eR - sR) * segP);
+            int g = (int)(sG + (eG - sG) * segP);
+            int b = (int)(sB + (eB - sB) * segP);
             sb.append("&#").append(String.format("%02X%02X%02X", r, g, b)).append(c);
+            visibleIdx++;
         }
         return sb.toString();
+    }
+
+    // Keep the legacy 2-stop variant for any direct internal use
+    private static String createGradient(String text, String startHex, String endHex) {
+        return createMultiStopGradient(text, new String[]{startHex, endHex});
     }
 
     private static String processRainbow(String text) {

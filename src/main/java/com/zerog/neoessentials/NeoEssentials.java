@@ -658,6 +658,11 @@ public class NeoEssentials {
         com.zerog.neoessentials.moderation.commands.JailCommand.register(dispatcher);
         com.zerog.neoessentials.moderation.commands.FreezeCommand.register(dispatcher);
         com.zerog.neoessentials.moderation.commands.VanishCommand.register(dispatcher);
+        registry.registerCommand("warn", "Issue a warning to a player");
+        registry.registerCommand("warnings", "View warnings for a player");
+        registry.registerCommand("clearwarnings", "Clear all warnings for a player");
+        registry.registerCommand("removewarn", "Remove a specific warning by ID");
+        com.zerog.neoessentials.moderation.commands.WarnCommand.register(dispatcher);
 
         // ========== CHAT/MESSAGING COMMANDS ==========
         registry.registerCommand("msg", "Send a private message");

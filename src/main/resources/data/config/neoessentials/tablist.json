@@ -1,99 +1,137 @@
 {
-  "_configVersion": 1,
-  "_comment": "==========================================================",
-  "_comment2": "  NeoEssentials — Tablist Configuration (tablist.json)",
-  "_comment3": "  Reload in-game with: /tablist reload",
-  "_comment4": "==========================================================",
+  "_configVersion": 2,
+  "_comment":  "================================================================",
+  "_comment2": "  NeoEssentials — Tablist Configuration  (tablist.json)",
+  "_comment3": "  Reload in-game:  /tablist reload",
+  "_comment4": "================================================================",
 
   "tablist": {
-    "_doc_enabled": "Set to true to enable the custom tablist header/footer system. False restores vanilla tablist.",
+
+    "_doc_enabled": "Set false to restore vanilla tablist appearance.",
     "enabled": true,
 
-    "_doc_refreshInterval": "How often the tablist header/footer is updated, in ticks. 20 ticks = 1 second. Lower = smoother animation but more network traffic.",
+    "_doc_refreshInterval": "How often the tablist header/footer updates, in ticks (20 = 1 s). Lower → smoother animation, more network traffic.",
     "refreshInterval": 20,
 
+    "_doc_color_syntax": [
+      "Color / formatting reference",
+      "  &0–&9, &a–&f  — legacy color codes (black → white)",
+      "  &k &l &m &n &o &r  — obfuscated, bold, strike, underline, italic, reset",
+      "  &#RRGGBB       — inline hex color  e.g. &#FF5500",
+      "  <color:#RRGGBB>text</color>  — hex span",
+      "  <gradient:RRGGBB-RRGGBB>text</gradient>  — 2-stop gradient",
+      "  <gradient:RRGGBB-RRGGBB-RRGGBB>text</gradient>  — multi-stop gradient",
+      "  <rainbow>text</rainbow>  — rainbow cycling colors",
+      "  <red>, <gold>, <green>, <aqua>, <blue>, etc.  — named colors",
+      "  <bold>, <italic>, <underline>, <strikethrough>  — formatting tags"
+    ],
+
     "_doc_header": [
-      "The text displayed ABOVE the player list.",
-      "Supports an array of strings for animated frames (each frame shown for refreshInterval ticks).",
-      "Use a single string for a static header.",
-      "Colour codes: use & followed by the code (0-9, a-f, k, l, m, n, o, r).",
-      "Available placeholders:",
-      "  {player}        — the viewing player's name",
-      "  {displayname}   — the viewing player's display name (nickname/prefix)",
-      "  {online}        — online player count (respects vanish hide setting)",
-      "  {max}           — server max player slots",
-      "  {ping}          — viewing player's ping in ms",
-      "  {world}         — current dimension path (overworld / the_nether / the_end)",
-      "  {tps}           — server TPS, colour-coded (green/yellow/red)",
-      "  {time}          — real-world server time (HH:mm)",
-      "  {server_name}   — server name from server.properties MOTD",
-      "  {x} {y} {z}     — viewing player's block coordinates",
-      "  {balance}       — viewing player's economy balance",
-      "  {prefix}        — viewing player's permission group prefix",
-      "  {suffix}        — viewing player's permission group suffix",
-      "  {group}         — viewing player's permission group name",
-      "  {newline}       — inserts a line break",
-      "  {bar}           — decorative separator line"
+      "Text displayed ABOVE the player list.",
+      "Array → animated frames (one frame shown per refreshInterval ticks).",
+      "Single string → static header.",
+      "Placeholders: {player} {displayname} {online} {max} {ping} {world}",
+      "              {tps} {time} {server_name} {x} {y} {z}",
+      "              {balance} {prefix} {suffix} {group} {newline} {bar}"
     ],
     "header": [
-      "&6&l{server_name} &8| &e{online}&8/&e{max} &7players",
-      "&6&l{server_name} &8| &eTPS: {tps}",
-      "&6&l{server_name} &8| &e{time}"
+      "<gradient:FFD700-FF8C00>&l✦ {server_name} ✦&r &8| &e{online}&8/&e{max} &7players",
+      "<gradient:FF8C00-FFD700>&l✦ {server_name} ✦&r &8| &eTPS: {tps}",
+      "<gradient:FFD700-FF8C00>&l✦ {server_name} ✦&r &8| &e{time}"
     ],
 
     "_doc_footer": [
-      "The text displayed BELOW the player list.",
-      "Same array animation and placeholder support as header."
+      "Text displayed BELOW the player list. Supports same syntax as header."
     ],
     "footer": [
-      "&7TPS: {tps} &8| &7Ping: &a{ping}ms &8| &7{world}",
-      "&7Your coords: &e{x}&7, &e{y}&7, &e{z}",
-      "&7Balance: &a{balance} &8| &7Group: &e{group}"
+      "&7TPS: {tps} &8| &7Ping: &a{ping}&7ms &8| <green>{world}",
+      "&7Coords: &e{x}&7, &e{y}&7, &e{z} &8| &7World: &e{world}",
+      "&7Balance: &a{balance} &8| &7Group: &#FFD700{group}"
     ],
 
     "_doc_playerFormat": [
-      "How each player's name appears in the player list rows.",
-      "Placeholders: {prefix}, {player}, {suffix}, {displayname}, {group}",
-      "This controls the display name shown next to the player's head in the tablist."
+      "How each player's name appears in the player list rows (via scoreboard teams).",
+      "Placeholders: {prefix} {player} {suffix} {displayname} {group}",
+      "Supports all color/format syntax above."
     ],
     "playerFormat": "&f{prefix}&r{player}{suffix}",
 
-    "_doc_hideVanished": "When true, vanished players are hidden from the {online} count and from other players' tablists. Players with 'neoessentials.vanish.see' still see vanished players.",
+    "_doc_hideVanished": "Hide vanished players from other players' tablists and {online} count. Staff with 'neoessentials.vanish.see' always see them.",
     "hideVanished": true,
 
-    "_doc_showAfkIndicator": "When true, AFK players have the afkSuffix appended to their name in the tablist.",
+    "_doc_showAfkIndicator": "Append afkSuffix to AFK players' names in the tablist.",
     "showAfkIndicator": true,
 
-    "_doc_afkSuffix": "The text appended to AFK players' names in the tablist. Supports colour codes with &.",
+    "_doc_afkSuffix": "Suffix appended to AFK players' names. Supports all color syntax.",
     "afkSuffix": " &7[AFK]",
 
     "_doc_groupColors": [
-      "Optional: per-group colour overrides for player names in the tablist.",
-      "If a player's group matches a key here, their name in the tablist is prefixed with that colour code.",
-      "Leave empty ({}) to use the default playerFormat only."
+      "Quick per-group color override for {displayname} in header/footer.",
+      "Value is a color prefix prepended to the player's display name.",
+      "Supports &#RRGGBB hex.  Use '' (empty string) to disable for a group."
     ],
     "groupColors": {
+      "owner":   "&#FF4444",
       "admin":   "&c",
       "mod":     "&6",
-      "vip":     "&b",
+      "vip":     "&#00CFFF",
       "default": "&f"
     },
 
-    "_doc_layout_examples": [
-      "--- Example: Simple static header/footer ---",
-      "  header: \"&6Welcome to My Server!\"",
-      "  footer: \"&7{online}/{max} online | {tps} TPS\"",
+    "_doc_groups": [
+      "Per-group header/footer overrides.",
+      "Players in matching groups see these frames instead of the global ones.",
+      "Priority: per-player > per-group > global.",
+      "Supports animated arrays and all color syntax."
+    ],
+    "groups": {
+      "admin": {
+        "header": [
+          "<gradient:FF0000-AA0000>&l⚑ ADMIN PANEL ⚑&r {newline}&8{player} — ping &e{ping}ms &8| tps {tps}",
+          "<gradient:AA0000-FF0000>&l⚑ ADMIN PANEL ⚑&r {newline}&8Coords &e{x}&8, &e{y}&8, &e{z}"
+        ],
+        "footer": "&cAdmin tools: &f/vanish /kick /ban /mute &8| &7{world}"
+      },
+      "mod": {
+        "header": "<gradient:FFA500-FFD700>&l✪ Moderator ✪&r &8| &e{online}&8/&e{max} &7online",
+        "footer": "&6Staff tools: &f/mute /warn /tempban &8| &7{world}"
+      },
+      "vip": {
+        "header": [
+          "<gradient:00CFFF-0080FF>&l★ VIP ★&r &8| &e{online}&8/&e{max} &7players",
+          "<gradient:0080FF-00CFFF>&l★ VIP ★&r &8| &7Welcome back, &b{player}!"
+        ],
+        "footer": "&#00CFFF{player}&7 — &aBalance: &f{balance} &8| &7Ping: &a{ping}ms"
+      }
+    },
+
+    "_doc_players": [
+      "Per-player header/footer overrides, keyed by player UUID.",
+      "These take the highest priority over group and global settings.",
+      "Runtime overrides via /tablist player <name> are not persisted here —",
+      "add them manually if you want them to survive /tablist reload."
+    ],
+    "players": {
+    },
+
+    "_doc_examples": [
+      "--- Hex color example ---",
+      "  \"header\": \"&#FF5500My &lServer &#00AAFF{online}/{max}\"",
       "",
-      "--- Example: Multi-line header using {newline} ---",
-      "  header: \"&6&lMy Server{newline}&7{online}/{max} players online\"",
+      "--- 2-stop gradient ---",
+      "  \"header\": \"<gradient:FF0000-0000FF>Hello, {player}!</gradient>\"",
       "",
-      "--- Example: Animated frames (cycles every refreshInterval ticks) ---",
-      "  header: [",
-      "    \"&6&l★ My Server ★\",",
-      "    \"&e&l★ My Server ★\",",
-      "    \"&a&l★ My Server ★\"",
-      "  ]"
+      "--- Multi-stop gradient (red → yellow → green) ---",
+      "  \"header\": \"<gradient:FF0000-FFFF00-00FF00>Server Status: GOOD</gradient>\"",
+      "",
+      "--- Rainbow ---",
+      "  \"header\": \"<rainbow>Welcome to My Server!</rainbow>\"",
+      "",
+      "--- Named color + bold tag ---",
+      "  \"header\": \"<gold><bold>My Server</bold></gold> &8| &e{online}/{max}\"",
+      "",
+      "--- Multi-line with {newline} ---",
+      "  \"header\": \"<gradient:FFD700-FF8C00>&lMy Server</gradient>{newline}&7{online}/{max} players\""
     ]
   }
 }
-
