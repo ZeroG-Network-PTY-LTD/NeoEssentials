@@ -22,6 +22,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders |
 | [Chat Channels](ChatChannels) | Channel config, permissions, Discord relay |
 | [**Split Config System**](SplitConfigs) | Split config files, validation, repair, migration guide |
+| [**Tablist System**](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player |
 
 ---
 
