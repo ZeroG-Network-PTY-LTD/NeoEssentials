@@ -6,6 +6,32 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.58] — 2026-04-24
+
+### Feature — API & Placeholder System
+
+Completes the API & Placeholder System milestone. Exposes the placeholder system as a fully public,
+thread-safe Java API for external mods; adds `/placeholder` in-game admin command; adds
+`/api/placeholders` REST endpoints; wires the documentation handler to `/api/docs`; and rewrites
+`APISystem.md` with comprehensive developer documentation.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `PlaceholderProvider.java` | Extracted to a `public` top-level `@FunctionalInterface` so external mods can implement it. Previously the type was embedded as a package-private inner type in `PlaceholderAPI.java`. |
+| `PlaceholderExpansion.java` | Extracted to a `public` top-level abstract class. Same fix — was package-private, preventing any external mod from extending it. |
+| `NeoEssentialsAPI.java` | Added `getPlaceholderManager()` returning `PlaceholderManager.getInstance()`. Bumped `API_VERSION` to `"1.2.0"`. Added Javadoc changelog block. |
+| `PlaceholderEndpoint.java` | New REST handler: `GET /api/placeholders/list`, `GET /api/placeholders/resolve?player=&text=`, `GET /api/placeholders/stats`. All routes authenticated by `DashboardAPI.withAuth()`. |
+| `DashboardAPI.java` | Registered `/api/placeholders` → `PlaceholderEndpoint` and `/api/docs` → `DocumentationHandler` (was never wired). Added both to startup log. |
+| `PlaceholderCommand.java` | New in-game command `/placeholder` with sub-commands: `list`, `info <id>` (tab-completes), `test <text>`, `stats`. Permission: `neoessentials.admin.placeholders`. |
+| `NeoEssentials.java` | Registered `PlaceholderCommand` in `registerAllCommands()`. |
+| `PermissionRegistry.java` | Registered `neoessentials.admin.placeholders` ("Manage and test the placeholder system") in `ADMIN` category. Fixed a formatting bug on the `neoessentials.admin.dashboard` line (was concatenated with the section comment). |
+| `DocumentationManager.java` | Added `placeholder-api` and `developer-api` sections. Added `/api/placeholders/list`, `/api/placeholders/resolve`, `/api/placeholders/stats` entries to API documentation. |
+| `docs/Wiki/APISystem.md` | Full rewrite: built-in placeholder table with all 30+ tokens and short-form aliases, `PlaceholderProvider` and `PlaceholderExpansion` code examples, `NeoEssentialsAPI` full reference (Economy/Permissions/Placeholder), REST endpoint tables for all routes, `/placeholder` command reference, versioning contract. |
+
+---
+
 ## [1.0.2.6+build.57] — 2026-04-24
 
 ### Feature — Chat Formatting Options: Per-Player Overrides, Rich Text & Documentation
