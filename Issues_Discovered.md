@@ -582,12 +582,6 @@
     - Customizable text, icons, and animations.
     - Integration with permissions and PlaceholderAPI for dynamic content.
 
-- **Chat Formatting Options**  
-  Provide more customization for chat formats:
-    - Per-group and per-player formatting.
-    - Hex color support, gradients, and hover/click events.
-    - Easier configuration with examples in documentation.
-
 - **Minecraft Assets API Support**  
   Integrate with the Minecraft Assets API to:
     - Display item/block textures in the web dashboard.
@@ -600,6 +594,7 @@
     - Integration with cloud storage (Google Drive, Dropbox, etc.).
     - More detailed statistics (economy, player activity, performance).
     - Improved user management with role-based access control.
+    - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
 
 - **Custom Player Tablist**  
   Implement a highly customizable tablist system:
@@ -614,7 +609,6 @@
     - Ability to create custom placeholders.
     - REST API endpoints for external tools and dashboards.
     - Documentation for developers to extend NeoEssentials easily.
-
 
 - **Localization Improvements**
     - Audit all NeoEssentials commands to ensure translation keys exist and are mapped correctly.
@@ -823,4 +817,11 @@
     - ✅ **Persistent inventory audit log** — New `InventoryAuditLogger` writes every view/edit open event to `neoessentials/inventory_audit.log` (append-only, UTC timestamp). 7 action types: `INV_VIEWED`, `INV_EDIT_OPENED`, `INV_EDIT_CLOSED`, `EC_VIEWED`, `EC_EDIT_OPENED`, `EC_EDIT_CLOSED`, `EDIT_BLOCKED`. Controlled by new config key `items.inventoryAuditLog` (default `true`).
     - ✅ **New language keys** — `commands.neoessentials.invsee.disabled`, `commands.neoessentials.invsee.concurrent_edit`, `commands.neoessentials.ec.disabled`, `commands.neoessentials.ec.concurrent_edit` added to `en_us.json`.
     - ✅ **Permission nodes** — `neoessentials.invsee`, `neoessentials.invsee.edit`, `neoessentials.enderchest`, `neoessentials.enderchest.edit` already registered in `PermissionRegistry` (default `false` → OP-only without explicit grant). Dashboard can discover and display them via the permissions page.
+
+- **Chat Formatting Options** *(build #57)*
+    - ✅ **Per-player override wired into chat pipeline** — `ChatHandler.onServerChat()` now consults `PlayerChatFormatManager.getInstance().getFormat(player.getUUID())` **before** calling `chatManager.getChatFormat(group, world)`. Per-player overrides set via `/chatformat set <player> <format>` are now the highest-priority step in the format resolution chain. Previously, `PlayerChatFormatManager` persisted overrides but they were never applied during actual chat.
+    - ✅ **Format priority chain (highest → lowest):** per-player override → group+world key → group key → world key → default format.
+    - ✅ **All rich-text features already implemented and now documented** — `RichTextFormatter` and `ChatFormatter` support: `&#RRGGBB` hex colors, `<gradient:RRGGBB-RRGGBB>text</gradient>`, `<rainbow>text</rainbow>`, `<hover:text:Tooltip>visible</hover>`, `<click:run_command:/cmd>`, `<click:open_url:...>`, `<bold>`, `<italic>`, and all legacy `&` codes. No new code needed.
+    - ✅ **`ChatSystem.md` fully rewritten** — Added: Format Priority Hierarchy diagram, `/chatformat` command reference table with all 5 subcommands and permission nodes, complete rich-text tag reference with copy-paste syntax examples, hex color and gradient usage, hover/click event examples, full config key reference table, placeholder list, and working format string examples.
+
 

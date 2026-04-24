@@ -6,6 +6,138 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.57] — 2026-04-24
+
+### Feature — Chat Formatting Options: Per-Player Overrides, Rich Text & Documentation
+
+Completes the Chat Formatting Options milestone. All rich-text infrastructure (gradients, rainbow,
+hex colors, hover/click events) was already implemented in `RichTextFormatter` and `ChatFormatter`.
+This build wires per-player format overrides into the live chat pipeline and fully documents the system.
+
+**Bug fixed — per-player format overrides were stored but never applied:**
+
+`PlayerChatFormatManager` already had full CRUD + persistence for per-player format strings, and
+`ChatFormatCommand` provided the admin commands to set/clear them. However, `ChatHandler.onServerChat()`
+never consulted `PlayerChatFormatManager` when resolving the format string — every chat line always
+fell through to the group/world lookup regardless of any stored override.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `ChatHandler.java` | `onServerChat()` now checks `PlayerChatFormatManager.getInstance().getFormat(player.getUUID())` **before** calling `chatManager.getChatFormat(group, world)`. Per-player overrides are now the highest-priority step in the format resolution chain: per-player → group+world → group → world → default. |
+| `ChatSystem.md` | Full rewrite and expansion: added Format Priority Hierarchy section, `/chatformat` command reference table, complete rich-text tag reference (all `RichTextFormatter` and `ChatFormatter` tags with syntax and examples), hex color and gradient examples, hover/click event examples, full config key reference table, placeholder list, and copy-paste format string examples. |
+
+**Format resolution priority (highest → lowest):**
+1. Per-player override (`/chatformat set <player> <format>`)
+2. Group + World key (`group:admin+world:overworld`)
+3. Group key (`group:admin`)
+4. World key (`world:overworld`)
+5. Default format
+
+**Rich text tags (all already implemented, now fully documented):**
+
+| Tag | Example |
+|---|---|
+| Hex color | `&#FF5500text` or `<color:#FF5500>text</color>` |
+| Legacy codes | `&cred &agreen &lbold` |
+| Gradient | `<gradient:FF0000-0000FF>colorful text</gradient>` |
+| Rainbow | `<rainbow>text</rainbow>` |
+| Bold/italic/etc | `<bold>text</bold>` `<italic>text</italic>` |
+| Hover tooltip | `<hover:text:Tooltip here>visible text</hover>` |
+| Click command | `<click:run_command:/spawn>click me</click>` |
+| Click URL | `<click:open_url:https://example.com>link</click>` |
+
+**Per-player format commands:**
+
+| Command | Permission | Description |
+|---|---|---|
+| `/chatformat set <player> <format>` | `neoessentials.chat.format.set` | Set a per-player format override |
+| `/chatformat clear <player>` | `neoessentials.chat.format.set` | Remove per-player override (reverts to group format) |
+| `/chatformat check <player>` | `neoessentials.chat.format.check` | View current override for a player |
+| `/chatformat list` | `neoessentials.chat.format.check` | List all active per-player overrides |
+| `/chatformat reload` | `neoessentials.chat.format.reload` | Reload per-player format data from disk |
+
+---
+
+## [1.0.2.6+build.56] — 2026-04-24
+
+### Feature — Inventory Management & Security Improvements
+
+Completes the Inventory Management Tools and Inventory Command Security Improvements milestones.
+
+**What was already implemented:**
+Commands `/invsee`, `/inv`, `/invseeedit`, `/enderchest`, `/ec`, `/enderchestedit`, `/ecedit` existed with permission nodes registered in `PermissionRegistry`. Config flags in `commands.*` were present in `config.json`.
+
+**What was missing (now fixed):**
+
+| Gap | Fix |
+|---|---|
+| Config flags never read at runtime | `InventoryViewCommands` `requires()` predicates now check `ConfigManager.isCommandEnabled(...)` for all four command groups |
+| No concurrent-edit protection | Two `ConcurrentHashMap<UUID targetId, UUID viewerId>` maps (`activeInvEdits`, `activeEcEdits`) enforce single-editor-at-a-time; blocked editors receive a message naming the current holder |
+| No audit log | New `InventoryAuditLogger` appends every view/edit open to `neoessentials/inventory_audit.log` |
+| Locks not released on disconnect | New `InventoryEventHandler` (`@EventBusSubscriber`) calls `releaseEditLocks(uuid)` on `PlayerLoggedOutEvent` |
+| Missing language keys | Added `invsee.disabled`, `invsee.concurrent_edit`, `ec.disabled`, `ec.concurrent_edit` to `en_us.json` |
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `InventoryViewCommands.java` | `requires()` for all commands checks `isCommandEnabled()` flag; `ConcurrentHashMap` locks added; `InventoryAuditLogger` called on every action |
+| `InventoryAuditLogger.java` | New — append-only audit log, 7 action types: `INV_VIEWED`, `INV_EDIT_OPENED`, `INV_EDIT_CLOSED`, `EC_VIEWED`, `EC_EDIT_OPENED`, `EC_EDIT_CLOSED`, `EDIT_BLOCKED` |
+| `InventoryEventHandler.java` | New — `@EventBusSubscriber`; releases edit locks and logs `*_CLOSED` on `PlayerLoggedOutEvent` |
+| `en_us.json` | 4 new translation keys for disabled and concurrent-edit scenarios |
+| `config.json` | Added `items.inventoryAuditLog: true` config key |
+
+**Permission nodes (all OP-only by default, no change):**
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.invsee` | false | View another player's inventory (read-only) |
+| `neoessentials.invsee.edit` | false | Edit another player's inventory |
+| `neoessentials.enderchest` | false | View another player's ender chest (read-only) |
+| `neoessentials.enderchest.edit` | false | Edit another player's ender chest |
+
+---
+
+## [1.0.2.6+build.55] — 2026-04-24
+
+### Improvement — Teleportation Per-Command Bypass Permissions & Chunk Loading Documentation
+
+**Per-command bypass permission nodes registered:**
+
+All 8 per-command cooldown/warmup bypass nodes were already checked in code but were absent from
+`PermissionRegistry`, making them invisible to the dashboard and `/neoe permissions`.
+
+| Node registered | Description |
+|---|---|
+| `neoessentials.teleport.home.bypass.cooldown` | Skip home teleport cooldown |
+| `neoessentials.teleport.home.bypass.warmup` | Skip home teleport warmup |
+| `neoessentials.teleport.warp.bypass.cooldown` | Skip warp use cooldown |
+| `neoessentials.teleport.warp.bypass.warmup` | Skip warp teleport warmup |
+| `neoessentials.teleport.spawn.bypass.cooldown` | Skip spawn teleport cooldown |
+| `neoessentials.teleport.spawn.bypass.warmup` | Skip spawn teleport warmup |
+| `neoessentials.teleport.back.bypass.cooldown` | Skip /back cooldown |
+| `neoessentials.teleport.back.bypass.warmup` | Skip /back warmup |
+
+**Documentation added:**
+
+Added **"Chunk Loading & Safety Interaction"** section to `docs/Wiki/TeleportationSystem.md` explaining:
+- 3×3 chunk preload before every teleport
+- Order of operations (chunk load → optional safety scan → teleport)
+- Effect of disabling safety checks (`enableHomeSafety: false` skips `findSafeLocation()`)
+- Error behaviour on failed chunk loading
+- Configuration quick-reference table
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `PermissionRegistry.java` | Added 8 `register()` calls for per-command bypass nodes after the existing global bypass pair |
+| `TeleportationSystem.md` | New "Chunk Loading & Safety Interaction" section |
+
+---
+
 ## [1.0.2.6+build.50] — 2026-04-24
 
 ### Teleportation Improvements — Cooldown/Warmup Feedback, Dashboard Controls & Language Keys

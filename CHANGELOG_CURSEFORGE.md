@@ -4,6 +4,43 @@
 
 ---
 
+## 1.0.2.6+build.57 — 2026-04-24
+
+### ✨ Feature — Chat Formatting: Per-Player Overrides Now Applied
+
+**Bug fixed:** Per-player chat format overrides were stored by `/chatformat set` but **never applied** — `ChatHandler` always used the group/world format. `PlayerChatFormatManager.getFormat()` is now checked first in the format resolution chain.
+
+**Format priority (highest → lowest):** per-player override → group+world → group → world → default
+
+- **Fixed** `ChatHandler.onServerChat()` to check `PlayerChatFormatManager.getInstance().getFormat(uuid)` before falling through to `chatManager.getChatFormat(group, world)`.
+- **All rich-text features already implemented** and now fully documented: hex colors (`&#RRGGBB`), `<gradient:RRGGBB-RRGGBB>`, `<rainbow>`, `<hover:text:Tooltip>`, `<click:run_command:/cmd>`, `<bold>`, `<italic>`, legacy `&` codes.
+- **Updated** `ChatSystem.md` — format priority diagram, `/chatformat` command table, complete rich-text tag reference with copy-paste examples, placeholder list, and full config key reference.
+
+**Per-player format commands:** `/chatformat set <player> <format>` · `/chatformat clear <player>` · `/chatformat check <player>` · `/chatformat list` · `/chatformat reload`
+
+---
+
+## 1.0.2.6+build.56 — 2026-04-24
+
+### ✨ Feature — Inventory Management & Security Improvements
+
+- **Fixed** Config enable/disable flags for inventory commands were present in `config.json` but never read at runtime. `/invsee`, `/inv`, `/invseeedit`, `/enderchest`, `/ec`, `/enderchestedit`, `/ecedit` now check their respective `commands.*` flags — setting one to `false` hides the command from tab-completion and blocks execution.
+- **Added** Concurrent-edit lock: only one staff member may hold an editable inventory view of a given player at a time. A second attempt is blocked with a message naming the current editor. Locks release automatically on viewer disconnect.
+- **Added** `InventoryAuditLogger` — every inventory view or edit open is appended to `neoessentials/inventory_audit.log` (UTC timestamp, 7 action types: `INV_VIEWED`, `INV_EDIT_OPENED`, `INV_EDIT_CLOSED`, `EC_VIEWED`, `EC_EDIT_OPENED`, `EC_EDIT_CLOSED`, `EDIT_BLOCKED`). Controlled by new `items.inventoryAuditLog` config key (default `true`).
+- **Added** 4 new language keys: `invsee.disabled`, `invsee.concurrent_edit`, `ec.disabled`, `ec.concurrent_edit`.
+- **Permission nodes** `neoessentials.invsee`, `neoessentials.invsee.edit`, `neoessentials.enderchest`, `neoessentials.enderchest.edit` remain OP-only by default (unchanged).
+
+---
+
+## 1.0.2.6+build.55 — 2026-04-24
+
+### 🔧 Improvement — Per-Command Teleport Bypass Permissions & Chunk Loading Docs
+
+- **Fixed** 8 per-command cooldown/warmup bypass permission nodes were already enforced in code but absent from `PermissionRegistry` — they were invisible to the dashboard and `/neoe permissions`. All 8 nodes now registered: `neoessentials.teleport.home.bypass.cooldown`, `.warmup`, `warp.bypass.cooldown`, `.warmup`, `spawn.bypass.cooldown`, `.warmup`, `back.bypass.cooldown`, `.warmup`.
+- **Added** "Chunk Loading & Safety Interaction" section to `TeleportationSystem.md` — explains the 3×3 chunk preload, safety-scan order of operations, what happens when safety is disabled, and a config quick-reference table.
+
+---
+
 ## 1.0.2.6+build.50 — 2026-04-24
 
 ### ✨ Teleportation Improvements — Dashboard Settings Page, Language Keys & Permission Docs
