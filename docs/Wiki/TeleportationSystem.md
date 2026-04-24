@@ -21,6 +21,37 @@ All teleport destinations are checked for safety:
 
 ---
 
+## Chunk Loading & Safety Interaction
+
+Before any teleport fires, NeoEssentials **force-loads the destination chunks** to ensure the target location is fully loaded in memory. This happens regardless of whether safety checks are enabled.
+
+### How it works
+
+1. A **3×3 grid of chunks** centred on the destination is loaded via `ServerLevel.getChunkSource().addRegionTicket()` using the `FORCED` ticket type.
+2. Safety validation (if enabled) runs **after** chunk loading, so the safety scanner always has valid block data to work with.
+3. Once the teleport completes the forced-load tickets are released; normal chunk unloading resumes.
+
+### Disabling safety checks
+
+Setting `enableHomeTeleportSafety`, `enableWarpSafety`, or `enableSpawnSafety` to `false` in `config.json` **completely bypasses** the block-level validation step. The chunks are still preloaded, but the player is teleported directly to the stored coordinates without any safe-location search.
+
+> **Warning:** Disabling safety can land players inside blocks or above the void if the destination has changed since the location was saved.
+
+### When teleport fails due to unloaded chunks
+
+If chunk loading itself fails (e.g., the target dimension is unavailable or the world is being unloaded), the teleport is cancelled with a descriptive error message that includes the **world name** and **coordinates** so the player knows exactly where the failed destination was.
+
+### Configuration quick-reference
+
+| Config key | Section | Effect on chunk loading |
+|---|---|---|
+| `enableHomeTeleportSafety` | `homeSettings` | Disables safety scan; chunks still preloaded |
+| `enableWarpSafety` | `warpSettings` | Disables safety scan; chunks still preloaded |
+| `enableSpawnSafety` | `spawnSettings` | Disables safety scan; chunks still preloaded |
+| `teleportDelay` (`generalSettings`) | `generalSettings` | Chunks are preloaded at warmup start, not at fire time |
+
+---
+
 ## Homes
 
 ### Commands

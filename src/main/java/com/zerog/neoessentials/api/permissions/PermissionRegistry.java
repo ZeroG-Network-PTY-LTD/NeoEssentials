@@ -440,6 +440,16 @@ public class PermissionRegistry {
         // Global teleport bypass permissions (admin-level)
         register("neoessentials.teleport.bypass.cooldown", "Bypass ALL teleport cooldowns", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.bypass.warmup", "Bypass ALL teleport warmups (instant teleport)", PermissionCategory.TELEPORT, false);
+
+        // Per-command teleport bypass permissions
+        register("neoessentials.teleport.home.bypass.cooldown", "Bypass /home teleport & set cooldowns", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.home.bypass.warmup", "Bypass /home warmup delay (instant teleport)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.warp.bypass.cooldown", "Bypass /warp use cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.warp.bypass.warmup", "Bypass /warp warmup delay (instant teleport)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.spawn.bypass.cooldown", "Bypass /spawn cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.spawn.bypass.warmup", "Bypass /spawn warmup delay (instant teleport)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.back.bypass.cooldown", "Bypass /back cooldown", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.back.bypass.warmup", "Bypass /back warmup delay (instant teleport)", PermissionCategory.TELEPORT, false);
         
         // Direct teleport - others access
         register("neoessentials.teleport.admin.tpo", "Teleport other players to locations", PermissionCategory.TELEPORT, false);

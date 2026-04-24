@@ -297,7 +297,9 @@
       "minecraft:debug_stick",
       "minecraft:knowledge_book"
     ],
-    "item-spawn-blacklist_comment": "List of items that cannot be spawned via commands, even with permissions"
+    "item-spawn-blacklist_comment": "List of items that cannot be spawned via commands, even with permissions",
+    "inventoryAuditLog": true,
+    "inventoryAuditLog_comment": "Log every /invsee and /enderchest view/edit action to neoessentials/inventory_audit.log. Set false to disable."
   },
   "permissions": {
     "useExternalPermissions": true,
