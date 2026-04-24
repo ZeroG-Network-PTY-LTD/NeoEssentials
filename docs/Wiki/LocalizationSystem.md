@@ -247,5 +247,6 @@ Component info    = MessageUtil.info("commands.neoessentials.home.list_header", 
 
 ---
 
-*Last updated: build.62 — 2026-04-24*
+*Last updated: build.64 — 2026-04-24*
+
 

@@ -1,5 +1,5 @@
 {
-  "_configVersion": 5,
+  "_configVersion": 6,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "defaultGroup": "default",
   "groups": [
@@ -37,7 +37,8 @@
         "neoessentials.teleport.request.cancel",
         "neoessentials.teleport.back",
         "neoessentials.teleport.top",
-        "neoessentials.info"
+        "neoessentials.info",
+        "neoessentials.help"
       ],
       "inherits": []
     },
@@ -70,7 +71,30 @@
         "neoessentials.teleport.jumpto",
         "neoessentials.teleport.tpr",
         "neoessentials.invsee",
-        "neoessentials.enderchest"
+        "neoessentials.enderchest",
+        "neoessentials.moderation.kick",
+        "neoessentials.moderation.kickall",
+        "neoessentials.moderation.ban",
+        "neoessentials.moderation.banip",
+        "neoessentials.moderation.banlist",
+        "neoessentials.moderation.tempban",
+        "neoessentials.moderation.tempbanip",
+        "neoessentials.moderation.unban",
+        "neoessentials.moderation.unbanip",
+        "neoessentials.moderation.mute",
+        "neoessentials.moderation.unmute",
+        "neoessentials.moderation.freeze",
+        "neoessentials.moderation.unfreeze",
+        "neoessentials.moderation.freezelist",
+        "neoessentials.moderation.vanish",
+        "neoessentials.moderation.seevanished",
+        "neoessentials.moderation.jail",
+        "neoessentials.moderation.unjail",
+        "neoessentials.moderation.jaillist",
+        "neoessentials.moderation.jailinfo",
+        "neoessentials.moderation.notifications",
+        "neoessentials.moderation.warn",
+        "neoessentials.moderation.warnings"
       ],
       "inherits": ["default"]
     },

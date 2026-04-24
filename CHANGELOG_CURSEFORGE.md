@@ -4,7 +4,17 @@
 
 ---
 
-## 1.0.2.6+build.62 — 2026-04-24
+## 1.0.2.6+build.66 — 2026-04-24
+
+### 🐛 Bug Fix — Tablist prefix, Warn logging, WarnManager compile error
+
+- **Tablist prefix now shows correctly** — Group prefix/suffix no longer silently returns empty; the system falls back to the configured default group when a player has no explicit user record.
+- **Warn console logging restored** — `/warn` now always logs to the server console/log file regardless of op-broadcast settings.
+- **WarnManager compile error fixed** — Removed duplicate `getInstance()` method that prevented the mod from building.
+
+---
+
+## 1.0.2.6+build.64 — 2026-04-24
 
 ### 🌐 Improvement — Localization Audit & Admin Tooling
 

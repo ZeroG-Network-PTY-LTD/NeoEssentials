@@ -4,7 +4,19 @@
 
 ---
 
-## 1.0.2.6+build.62 — 2026-04-24
+## 1.0.2.6+build.66 — 2026-04-24
+
+### 🐛 Bug Fix — Tablist prefix, Warn console logging, WarnManager compile error
+
+**What's fixed:**
+
+- **Tablist prefix not showing** — Group prefix/suffix was silently returning `""` for players whose user entry had not yet been explicitly loaded in the permission manager. `getPermissionPrefix/Suffix/Group` now use the null-safe `PermissionAPI.getManager()` and fall back to the configured default group so freshly-joined players also show the correct prefix in the tab list.
+- **Warn command not logging to console** — `/warn <player> <reason>` lacked an explicit `LOGGER.info()` call; on some server setups the op-broadcast feedback wasn't routed to the log file. Warn actions now always appear in the server console.
+- **Compile error: duplicate `getInstance()` in `WarnManager`** — Two identical `getInstance()` declarations were present, causing a build failure. Duplicate removed.
+
+---
+
+## 1.0.2.6+build.64 — 2026-04-24
 
 ### 🌐 Improvement — Localization Audit & Admin Tooling
 

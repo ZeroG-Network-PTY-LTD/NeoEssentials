@@ -6,7 +6,52 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.62] — 2026-04-24
+## [1.0.2.6+build.66] — 2026-04-24
+
+### Bug Fix — Tablist prefix, Warn console logging, WarnManager duplicate method
+
+**1 — Tablist prefix not showing before username** (`TablistManager`)
+
+`getPermissionPrefix()` and `getPermissionSuffix()` used `PermissionSystem.getManager()`, which throws
+`IllegalStateException` before the permission system initialises and silently returns `""` in the catch.
+Additionally, both helpers accessed `PermissionAPI.getManager()` rather than the null-safe accessor.
+
+*Fix:* Switched all three tablist permission helpers
+(`getPermissionPrefix`, `getPermissionSuffix`, `getPermissionGroup`) to `PermissionAPI.getManager()`, added
+an explicit `null` guard on the manager reference, and made the group fallback consistent: if a player has
+no explicit user entry (or their group is `null`), the code now correctly falls back to
+`mgr.getDefaultGroup()` before looking up the group prefix/suffix. The scoreboard team (and thus the tab list
+prefix row) now reliably shows the group prefix for every player, including freshly-joined players whose user
+entry was auto-created by the permission manager.
+
+**2 — Warn command not logging to console** (`WarnCommand`)
+
+`executeWarn()` called `source.sendSuccess(..., true)` (broadcasts to ops) but never called
+`LOGGER.info()` directly — unlike `executeClearWarnings` and `executeRemoveWarn` which had explicit
+log calls. On some server configurations `sendSuccess` feedback is not routed to the console log.
+
+*Fix:* Added an explicit `LOGGER.info("[Warn] {} warned {} for: {} (warn #{}, ID: {})", ...)` call in
+`executeWarn()` so every issued warn is always visible in the server console and log files.
+
+**3 — WarnManager compile error: duplicate `getInstance()` method** (`WarnManager`)
+
+`WarnManager.java` had two identical `public static WarnManager getInstance()` declarations (lines 28 and 44),
+causing a compile-time error (`method getInstance() is already defined in class WarnManager`). This prevented
+the mod from building.
+
+*Fix:* Removed the second duplicate declaration.
+
+**Changes:**
+
+| File | Change |
+|---|---|
+| `TablistManager.java` | `getPermissionPrefix/Suffix/Group` now use `PermissionAPI.getManager()` with null guard and consistent `defaultGroup` fallback |
+| `WarnCommand.java` | Added `LOGGER.info` to `executeWarn()` for guaranteed console output |
+| `WarnManager.java` | Removed duplicate `getInstance()` method |
+
+---
+
+## [1.0.2.6+build.64] — 2026-04-24
 
 ### Improvement — Localization Audit & Tooling
 

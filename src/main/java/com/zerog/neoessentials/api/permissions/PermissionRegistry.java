@@ -595,6 +595,9 @@ public class PermissionRegistry {
         register("neoessentials.moderation.notify", "Receive moderation notifications", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.notifications", "Receive moderation event broadcasts", PermissionCategory.MODERATION, false);
         register("neoessentials.vanish.see", "See vanished players (alias)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.warn", "Issue warnings to players (/warn)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.warnings", "View player warning history (/warnings)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.clearwarnings", "Clear all warnings for a player", PermissionCategory.MODERATION, false);
 
         // ── Utility / misc commands ───────────────────────────────────────────
         // (near, motd base node already registered in Player Info section above)
