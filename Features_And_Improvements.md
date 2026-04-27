@@ -31,26 +31,6 @@
     - Improved user management with role-based access control.
     - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
 
-- **NeoEssentials Proxy Integration with BungeeTabListPlus (Independent Mode)**  
-  Request to add support for hooking into [BungeeTabListPlus](https://github.com/CodeCrafter47/BungeeTabListPlus) when NeoEssentials is running behind a proxy, while also allowing NeoEssentials to operate independently without mimicking other tab plugins.
-    - Requested Update:
-        - Implement a hook into BungeeTabListPlus API for player list synchronization and proxy-aware features.
-        - Ensure NeoEssentials dashboard and commands respect proxy player states.
-        - Provide compatibility with BungeeTabListPlus features such as custom tab formatting, placeholders, and cross-server player visibility.
-        - Allow NeoEssentials to run in **independent mode**, managing its own tablist logic without relying on other tab plugins.
-        - Source code for BungeeTabListPlus will be downloaded and placed in the `docs/` folder for reference.
-    - Benefits:
-        - Seamless integration with proxy environments.
-        - Unified player list management across multiple servers.
-        - Independent functionality ensures NeoEssentials tablist logic is consistent and not dependent on external plugins.
-        - Enhances NeoEssentials usability for larger networks running behind proxies.
-
-- **Messaging & SocialSpy Improvements**
-    - Add support for named placeholders in message templates (`{neoessentials_displayname}`, `{MESSAGE}`).
-    - Provide fallback formatting if template parsing fails.
-    - Add debug logging to show which placeholders are missing or misparsed.
-    - Allow admins to customize SocialSpy formatting in config safely.
-
 - **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  
   Request to update NeoEssentials for compatibility with the latest Minecraft and NeoForge releases.
     - Requested Update:
@@ -66,6 +46,49 @@
 ---
 
 # ✅ Improvements Done
+
+- **Messaging & SocialSpy Improvements** *(build #73)*
+
+  Full enhancement pass on `/msg`, `/reply`, and SocialSpy — all four checklist items delivered.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Named placeholders in message templates (`{sender}`, `{receiver}`, `{message}`, `{neoessentials_displayname}`) | #73 | ✅ |
+  | Fallback formatting — `resolveTemplate()` never throws; returns original template on error | #73 | ✅ |
+  | Debug logging for unresolved placeholders and SocialSpy format resolution (requires `logging.enableDebugLogging`) | #73 | ✅ |
+  | Admin-configurable SocialSpy & PM formats in `config.json` (`chat.messaging` section) | #73 | ✅ |
+
+  - `MessageUtil.resolveTemplate()` — centralised helper replacing manual `.replace()` + PlaceholderAPI calls; case-insensitive token matching so `{MESSAGE}` and `{message}` both work
+  - `SocialSpyManager` — config-backed format, display-name pre-resolution (one PlaceholderAPI call per broadcast, not per spy player), debug logging
+  - `MsgCommand` + `ReplyCommand` — both use `resolveTemplate()`; `getMsgFormat()` config helper added
+  - `en_us.json` — `neoessentials.socialspy.format` updated from positional `{0}/{1}/{2}` to named `{sender}/{receiver}/{message}`; `_langVersion` 14→15
+  - `config.json` — `chat.messaging` section added (`socialspyFormat`, `msgFormatTo`, `msgFormatFrom`, `replyFormatTo`, `replyFormatFrom`); `_configVersion` 20→21
+
+---
+
+- **NeoEssentials Proxy Integration with BungeeTabListPlus (Independent Mode)** *(build #77)*
+
+  Complete overhaul of the NeoEssentials tablist system, inspired by BungeeTabListPlus (BTLP). NeoEssentials now manages its own tablist in **independent mode** (no proxy plugin required) while optionally integrating with BungeeCord/Velocity proxies for cross-server data. BungeeTabListPlus source code placed in `docs/BungeeTabListPlus/` for reference.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Independent mode — NeoEssentials owns tablist end-to-end, no proxy plugin needed | #77 | ✅ |
+  | BungeeCord plugin-messaging bridge (`GetServers`, `PlayerCount`, `GetServer`) | #77 | ✅ |
+  | `{network_online}`, `{server_online:NAME}`, `{current_server}` placeholders | #77 | ✅ |
+  | BTLP-style fake players (decorative/separator tab entries) via `FakePlayerManager` | #77 | ✅ |
+  | Layout & sorting — columns, group-weight sort, `groupSections`, `playersByServer` | #77 | ✅ |
+  | `excludeServers` / `hiddenServers` — multi-server visibility control | #77 | ✅ |
+  | `/tablist proxy`, `fakeplayer`, `layout`, `independent` sub-commands | #77 | ✅ |
+  | `tablist.json` `_configVersion` 2→3 with `independentMode`, `proxy`, `fakePlayers`, `layout` sections | #77 | ✅ |
+  | BungeeTabListPlus source placed in `docs/BungeeTabListPlus/` | #77 | ✅ |
+
+  **New files:** `TablistLayout.java`, `FakePlayerManager.java`, `ProxyIntegration.java`
+
+  **Updated files:** `TablistManager.java` (full BTLP-inspired rewrite), `TablistCommand.java` (new sub-commands), `TablistEventHandler.java` (session/proxy lifecycle), `tablist.json`
+
+  > ⚠️ **Known limitation:** Outbound BungeeCord plugin-messaging (polling proxy for counts) is a stub pending NeoForge `StreamCodec` registration. Inbound proxy responses and all independent-mode features work fully. Proxy integration is disabled by default (`proxy.enabled: false`).
+
+---
 
 - **Custom Player Tablist** *(builds #67, #69)*
 
