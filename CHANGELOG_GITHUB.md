@@ -6,6 +6,102 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.72] — 2026-04-27
+
+### Bug Fix — FTB Ranks Adapter: `NoSuchMethodException` on Permission Checks
+
+**Problem:** NeoEssentials threw `java.lang.NoSuchMethodException` for every FTB Ranks permission
+check, causing all FTB Ranks permission validation to silently fail and fall through to the internal
+permission system (or return `false`). Reported against NeoEssentials `1.0.2.5 build 1074`, still
+present in the 1.0.2.6 line.
+
+```
+Failed to check FTB Ranks permission
+java.lang.NoSuchMethodException: dev.ftb.mods.ftbranks.api.FTBRanksAPI.hasPermission(java.util.UUID,java.lang.String)
+at com.zerog.neoessentials.permissions.FtbRanksAdapter.hasPermission(FtbRanksAdapter.java:54)
+```
+
+**Root cause:** `FtbRanksAdapter.probeApi()` attempted these signatures in order:
+
+1. `FTBRanksAPI.getPermission(ServerPlayer, String, boolean)` ← **does not exist**
+2. `instance.hasPermission(UUID, String)` ← **does not exist in 2101.1.3**
+3. `FTBRanksAPI.hasPermission(ServerPlayer, String)` ← **does not exist**
+4. `FTBRanksAPI.checkPermission(ServerPlayer, String)` ← **does not exist**
+
+All four probes failed, so `resolvedMethod` stayed `null`, `isAvailable()` returned `false`, and
+every subsequent call quietly returned `false`. The FTB Ranks API jar (`2101.1.3`) was inspected
+directly and the actual public method is:
+
+```
+public static PermissionValue FTBRanksAPI.getPermissionValue(ServerPlayer, String)
+```
+
+**Changes:**
+
+- **`FtbRanksAdapter.java`** — Strategy table rewritten with correct signatures:
+
+| # | Method | Target | Notes |
+|---|---|---|---|
+| 1 | `FTBRanksAPI.getPermissionValue(ServerPlayer, String)` | static | ✅ **Confirmed 2101.1.x** |
+| 2 | `RankManager.getPermissionValue(ServerPlayer, String)` | instance via `getInstance().getManager()` | Secondary accessor |
+| 3 | `FTBRanksAPI.hasPermission(ServerPlayer, String)` | static | Legacy fallback |
+| 4 | `FTBRanksAPI.checkPermission(ServerPlayer, String)` | static | Naming-change fallback |
+| 5 | `instance.hasPermission(UUID, String)` | instance | Oldest builds |
+
+- `invokeResolvedMethod()` updated to dispatch strategies 1–5 correctly.
+- `extractBoolean()` updated to try `asBooleanOrFalse()` (the `PermissionValue` API) before other
+  coercion paths; `"MISSING"` added to the `toString()` deny-list.
+
+| File | Change |
+|---|---|
+| `FtbRanksAdapter.java` | Strategy 1 corrected; strategy 2 added; UUID strategy moved to 5; `extractBoolean()` improved |
+
+---
+
+## [1.0.2.6+build.70] — 2026-04-27
+
+### Bug Fix — `/msg` & `/reply` SocialSpy Formatting + Missing `neoessentials.socialspy.format` Key
+
+**Problem:** Every `/msg` and `/reply` execution produced a `java.lang.IllegalArgumentException` in the
+server console, and players received raw template text instead of formatted private messages:
+
+```
+Failed to format message - Key: commands.neoessentials.msg.format.to,
+  Template: '&7[&aTo &f{neoessentials_displayname}&7] &f{MESSAGE}',
+  Args: [], Error: can't parse argument number: neoessentials_displayname
+```
+
+**Root cause:** `MessageUtil.localize()` passed the raw translation template directly to
+`java.text.MessageFormat.format()`.  `MessageFormat` treats every `{…}` token as a positional
+argument index.  Templates for `/msg` and `/reply` contain NeoEssentials placeholder tokens
+(`{neoessentials_displayname}`, `{MESSAGE}`) that do not start with a digit, so `MessageFormat`
+tried to parse them as argument names and threw `IllegalArgumentException`.
+
+**Changes:**
+
+- **`MessageUtil.java`** — Added `escapeNamedPlaceholders(String)` private helper.  
+  Uses the regex `\{([^0-9'{}][^}]*)}` to detect non-numeric `{TOKEN}` placeholders and wraps
+  them in MessageFormat's single-quote literal escape: `'{'TOKEN'}'`.  After `MessageFormat.format()`
+  runs, these tokens are emitted verbatim as `{TOKEN}` and resolved later by `PlaceholderAPI`.  
+  Positional placeholders `{0}`, `{1}`, … (starting with a digit) are left untouched.  
+  Both overloads of `localize()` now call `escapeNamedPlaceholders()` before `MessageFormat.format()`.
+
+- **`en_us.json`** — Added the missing `neoessentials.socialspy.format` translation key:
+  ```
+  "neoessentials.socialspy.format": "&8[&eSocialSpy&8] &b{0} &7→ &b{1}&7: &f{2}"
+  ```
+  `{0}` = sender name · `{1}` = receiver name · `{2}` = message content.
+
+- **`_langVersion` bumped `13 → 14`** — `CURRENT_LANG_VERSION` in `MessageUtil.java` updated to
+  match.  Existing server deployments auto-merge the new key on next startup.
+
+| File | Change |
+|---|---|
+| `MessageUtil.java` | Added `escapeNamedPlaceholders()`; both `localize()` overloads updated |
+| `en_us.json` | Added `neoessentials.socialspy.format`; `_langVersion` → 14 |
+
+---
+
 ## [1.0.2.6+build.69] — 2026-04-24
 
 ### Feature — Custom Player Tablist: Refinements & `processTablistText`

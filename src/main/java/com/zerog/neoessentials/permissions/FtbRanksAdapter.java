@@ -13,10 +13,11 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Known API strategies probed in order:
  * <ol>
- *   <li>{@code FTBRanksAPI.getPermission(ServerPlayer, String, boolean)} — 2101.1.x (NeoForge)</li>
- *   <li>{@code instance.hasPermission(UUID, String)} — older builds via INSTANCE/getInstance()</li>
- *   <li>{@code FTBRanksAPI.hasPermission(ServerPlayer, String)} — possible future static variant</li>
+ *   <li>{@code FTBRanksAPI.getPermissionValue(ServerPlayer, String)} — 2101.1.x (NeoForge) ✓ confirmed</li>
+ *   <li>{@code RankManager.getPermissionValue(ServerPlayer, String)} — via getInstance().getManager()</li>
+ *   <li>{@code FTBRanksAPI.hasPermission(ServerPlayer, String)} — legacy static variant</li>
  *   <li>{@code FTBRanksAPI.checkPermission(ServerPlayer, String)} — possible future naming change</li>
+ *   <li>{@code instance.hasPermission(UUID, String)} — oldest builds via INSTANCE/getInstance()</li>
  * </ol>
  */
 public class FtbRanksAdapter implements ExternalPermissionAdapter {
@@ -35,10 +36,11 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
     private Method resolvedMethod   = null;
     private Object resolvedInstance = null;
     private int    resolvedStrategy = 0;
-    // 1 = getPermission(ServerPlayer,String,boolean)
-    // 2 = hasPermission(UUID,String)       [instance]
-    // 3 = hasPermission(ServerPlayer,String) [static]
-    // 4 = checkPermission(ServerPlayer,String) [static]
+    // 1 = getPermissionValue(ServerPlayer,String) [static FTBRanksAPI] — 2101.1.x confirmed
+    // 2 = getPermissionValue(ServerPlayer,String) [instance RankManager]
+    // 3 = hasPermission(ServerPlayer,String)      [static]
+    // 4 = checkPermission(ServerPlayer,String)    [static]
+    // 5 = hasPermission(UUID,String)              [instance — oldest builds]
 
     /** Consecutive failure counter — reset on every successful check. */
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
@@ -71,41 +73,38 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         try {
             Class<?> apiClass = Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
 
-            // ── Strategy 1: static getPermission(ServerPlayer, String, boolean) ─────
-            // Standard API in FTB Ranks 2101.1.x
+            // ── Strategy 1: static getPermissionValue(ServerPlayer, String) ──────────
+            // Confirmed API in FTB Ranks 2101.1.x — returns PermissionValue
             try {
-                Method m = apiClass.getMethod("getPermission",
-                        net.minecraft.server.level.ServerPlayer.class, String.class, boolean.class);
+                Method m = apiClass.getMethod("getPermissionValue",
+                        net.minecraft.server.level.ServerPlayer.class, String.class);
                 resolvedMethod   = m;
                 resolvedInstance = null;
                 resolvedStrategy = 1;
-                LOGGER.info("FTB Ranks adapter: strategy 1 — getPermission(ServerPlayer, String, boolean)");
+                LOGGER.info("FTB Ranks adapter: strategy 1 — getPermissionValue(ServerPlayer, String)");
                 return;
             } catch (NoSuchMethodException ignored) {}
 
-            // ── Strategy 2: instance hasPermission(UUID, String) ─────────────────────
-            // Older builds via INSTANCE / getInstance()
-            Object instance = null;
+            // ── Strategy 2: RankManager.getPermissionValue(ServerPlayer, String) ──────
+            // Via getInstance().getManager() — alternative accessor path
             try {
-                instance = apiClass.getField("INSTANCE").get(null);
-            } catch (NoSuchFieldException e) {
-                try {
-                    instance = apiClass.getMethod("getInstance").invoke(null);
-                } catch (Exception ignored2) {}
-            }
-            if (instance != null) {
-                try {
-                    Method m = instance.getClass().getMethod("hasPermission", UUID.class, String.class);
-                    resolvedMethod   = m;
-                    resolvedInstance = instance;
-                    resolvedStrategy = 2;
-                    LOGGER.info("FTB Ranks adapter: strategy 2 — instance.hasPermission(UUID, String)");
-                    return;
-                } catch (NoSuchMethodException ignored) {}
-            }
+                Object apiInstance = apiClass.getMethod("getInstance").invoke(null);
+                if (apiInstance != null) {
+                    Object rankManager = apiInstance.getClass().getMethod("getManager").invoke(apiInstance);
+                    if (rankManager != null) {
+                        Method m = rankManager.getClass().getMethod("getPermissionValue",
+                                net.minecraft.server.level.ServerPlayer.class, String.class);
+                        resolvedMethod   = m;
+                        resolvedInstance = rankManager;
+                        resolvedStrategy = 2;
+                        LOGGER.info("FTB Ranks adapter: strategy 2 — RankManager.getPermissionValue(ServerPlayer, String)");
+                        return;
+                    }
+                }
+            } catch (Exception ignored) {}
 
             // ── Strategy 3: static hasPermission(ServerPlayer, String) ───────────────
-            // Possible future static variant without the boolean default parameter
+            // Legacy static variant
             try {
                 Method m = apiClass.getMethod("hasPermission",
                         net.minecraft.server.level.ServerPlayer.class, String.class);
@@ -127,6 +126,27 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 LOGGER.info("FTB Ranks adapter: strategy 4 — checkPermission(ServerPlayer, String)");
                 return;
             } catch (NoSuchMethodException ignored) {}
+
+            // ── Strategy 5: instance hasPermission(UUID, String) ─────────────────────
+            // Oldest builds via INSTANCE / getInstance()
+            Object instance = null;
+            try {
+                instance = apiClass.getField("INSTANCE").get(null);
+            } catch (NoSuchFieldException e) {
+                try {
+                    instance = apiClass.getMethod("getInstance").invoke(null);
+                } catch (Exception ignored2) {}
+            }
+            if (instance != null) {
+                try {
+                    Method m = instance.getClass().getMethod("hasPermission", UUID.class, String.class);
+                    resolvedMethod   = m;
+                    resolvedInstance = instance;
+                    resolvedStrategy = 5;
+                    LOGGER.info("FTB Ranks adapter: strategy 5 — instance.hasPermission(UUID, String)");
+                    return;
+                } catch (NoSuchMethodException ignored) {}
+            }
 
             LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
             LOGGER.warn("║  FTB RANKS API NOT RESOLVED                                  ║");
@@ -162,11 +182,18 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         var server = ServerLifecycleHooks.getCurrentServer();
 
         if (resolvedStrategy == 1) {
-            // getPermission(ServerPlayer, String, boolean)
+            // getPermissionValue(ServerPlayer, String) — static on FTBRanksAPI
             if (server == null) return false;
             net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(uuid);
             if (player == null) return false;
-            return extractBoolean(resolvedMethod.invoke(null, player, permission, false));
+            return extractBoolean(resolvedMethod.invoke(null, player, permission));
+
+        } else if (resolvedStrategy == 2) {
+            // RankManager.getPermissionValue(ServerPlayer, String)  — instance call
+            if (server == null) return false;
+            net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+            if (player == null) return false;
+            return extractBoolean(resolvedMethod.invoke(resolvedInstance, player, permission));
 
         } else if (resolvedStrategy == 3 || resolvedStrategy == 4) {
             // hasPermission(ServerPlayer, String) or checkPermission(ServerPlayer, String)
@@ -175,8 +202,8 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
             if (player == null) return false;
             return extractBoolean(resolvedMethod.invoke(null, player, permission));
 
-        } else if (resolvedStrategy == 2) {
-            // instance.hasPermission(UUID, String)
+        } else if (resolvedStrategy == 5) {
+            // instance.hasPermission(UUID, String) — oldest builds
             Object result = resolvedMethod.invoke(resolvedInstance, uuid, permission);
             return result instanceof Boolean b && b;
         }
@@ -185,21 +212,28 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
 
     /**
      * Coerce the raw return value from the FTB Ranks API into a boolean.
-     * Handles Boolean, Optional&lt;Boolean&gt;, and TriState/enum return types.
+     * Handles {@code PermissionValue} (2101.1.x), Boolean, Optional&lt;Boolean&gt;,
+     * and TriState/enum return types.
      */
     private boolean extractBoolean(Object result) {
         if (result == null) return false;
         if (result instanceof Boolean b) return b;
+        // PermissionValue (FTB Ranks 2101.1.x) — try asBooleanOrFalse() first
+        try {
+            Object r = result.getClass().getMethod("asBooleanOrFalse").invoke(result);
+            if (r instanceof Boolean b) return b;
+        } catch (Exception ignored) {}
+        // Optional<Boolean> — e.g. PermissionValue.asBoolean()
         if (result instanceof java.util.Optional<?> opt) {
             Object inner = opt.orElse(null);
             if (inner instanceof Boolean b) return b;
         }
-        // TriState / enum — try a get() method first, then toString comparison
+        // TriState / enum — try a get() method, then toString comparison
         try {
             return (boolean) result.getClass().getMethod("get").invoke(result);
         } catch (Exception ignored) {}
         String s = result.toString().toUpperCase();
-        return !s.equals("FALSE") && !s.equals("UNDEFINED") && !s.equals("DENY");
+        return !s.equals("FALSE") && !s.equals("UNDEFINED") && !s.equals("DENY") && !s.equals("MISSING");
     }
 
     private void emitHealthWarnIfNeeded(int failures, String permission, Exception cause) {

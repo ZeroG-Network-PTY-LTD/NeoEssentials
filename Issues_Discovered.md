@@ -1,35 +1,51 @@
 # 👾 Issues That Were Discovered
 
-- **NeoEssentials FTB Ranks Adapter Permission Check Failure (NeoForge 1.21.1, build.1.0.2.5+1074)**  
-  NeoEssentials fails to check permissions via FTB Ranks due to a missing method in the API.
-    - Environment:
-        - NeoEssentials Version: `1.0.2.5 build 1074`
-        - Minecraft Version: `1.21.1`
-        - NeoForge Version: `21.1.219`
-        - Java Version: `openjdk 21.0.10`
-        - Dedicated Server
-    - Error Log:
-      ```
-      Failed to check FTB Ranks permission
-      java.lang.NoSuchMethodException: dev.ftb.mods.ftbranks.api.FTBRanksAPI.hasPermission(java.util.UUID,java.lang.String)
-      at com.zerog.neoessentials.permissions.FtbRanksAdapter.hasPermission(FtbRanksAdapter.java:54)
-      ...
-      ```  
-    - Observed Behavior:
-        - Permission checks through FTB Ranks throw `NoSuchMethodException`.
-        - Commands relying on FTB Ranks integration may fail or bypass permissions.
-    - Expected Behavior:
-        - NeoEssentials should correctly call FTB Ranks API methods to validate permissions.
-    - Need to investigate:
-        - Whether NeoEssentials is calling an outdated or removed method (`hasPermission(UUID, String)`).
-        - If FTB Ranks API changed its signature (e.g., requiring `ServerPlayer` or context objects).
-        - Possible fix: update `FtbRanksAdapter` to use the current FTB Ranks API methods and ensure compatibility with version `2101.1.3`.
-
----
-
 ---
 
 # ✅ Issues That Were Fixed
+
+## ✨ Build #72 — 2026-04-27 — FTB Ranks Adapter API Correction
+
+- **FTB Ranks Adapter Permission Check Failure (`NoSuchMethodException`) → ✅ FIXED in build.72**  
+  NeoEssentials was probing `FTBRanksAPI.getPermission(ServerPlayer, String, boolean)` and `FTBRanksAPI.hasPermission(UUID, String)` as its primary strategies — neither method exists in FTB Ranks `2101.1.3`. All four probed strategies fell through, leaving `resolvedMethod = null`, which caused every permission check to throw `NoSuchMethodException` and silently return `false`, effectively disabling FTB Ranks permission enforcement.
+    - Root Cause: The `probeApi()` method in `FtbRanksAdapter.java` was testing API signatures from an older/pre-release build of FTB Ranks. The actual public API in `2101.1.3` exposes `FTBRanksAPI.getPermissionValue(ServerPlayer, String)` (static) which returns a `PermissionValue` interface with `asBooleanOrFalse()`.
+    - Fix Applied (build.72):
+        - **Strategy 1** corrected to probe `FTBRanksAPI.getPermissionValue(ServerPlayer, String)` — the confirmed static method in FTB Ranks 2101.1.x.
+        - **Strategy 2** added: attempts `RankManager.getPermissionValue(ServerPlayer, String)` via `getInstance().getManager()` as a secondary path.
+        - Old strategies 3 & 4 (`hasPermission(ServerPlayer,String)` / `checkPermission(ServerPlayer,String)`) kept as fallbacks at positions 3 and 4.
+        - Old UUID-based strategy moved to position 5 as last-resort for oldest builds.
+        - `invokeResolvedMethod()` updated to handle the new strategy numbering correctly.
+        - `extractBoolean()` updated to call `asBooleanOrFalse()` first (before other coercion paths) when a `PermissionValue` instance is returned.
+        - `"MISSING"` added to the `toString()` deny-list in `extractBoolean()` to match `PermissionValue.MISSING.toString()`.
+    - Affected file: `FtbRanksAdapter.java`
+
+## ✨ Build #70 — 2026-04-27 — `/msg` & SocialSpy Formatting Fix
+
+- **`/msg` & `/reply` format templates broken by `MessageFormat` named-placeholder collision → ✅ FIXED in build.70**  
+  Every `/msg` and `/reply` attempt produced the following console error and sent raw template text to players instead of formatted messages:
+  ```
+  Failed to format message - Key: commands.neoessentials.msg.format.to,
+    Template: '&7[&aTo &f{neoessentials_displayname}&7] &f{MESSAGE}',
+    Args: [], Error: can't parse argument number: neoessentials_displayname
+  java.lang.IllegalArgumentException: can't parse argument number: neoessentials_displayname
+  ```
+    - Root Cause: `MessageUtil.localize()` passed the raw translation template directly to `MessageFormat.format()`.  
+      `MessageFormat` treats any `{…}` token as a numbered format argument.  Templates for `/msg` and `/reply` contain NeoEssentials placeholder tokens such as `{neoessentials_displayname}` and `{MESSAGE}` that do not begin with a digit, so `MessageFormat` tried to parse them as argument indices and threw `IllegalArgumentException`.
+    - Fix Applied (build.70):
+        - Added `MessageUtil.escapeNamedPlaceholders(String)` — uses the regex `\{([^0-9'{}][^}]*)}` to detect non-numeric `{TOKEN}` patterns and wraps them in MessageFormat's single-quote literal escape (`'{'TOKEN'}'`).  After `MessageFormat.format()` runs, these are output verbatim as `{TOKEN}` and can be resolved normally by `PlaceholderAPI.setPlaceholders()`.
+        - Both overloads of `localize()` now call `escapeNamedPlaceholders()` before `MessageFormat.format()`.
+        - Positional placeholders `{0}`, `{1}`, … (starting with a digit) are deliberately left untouched so existing positional substitutions continue to work.
+    - Affected file: `MessageUtil.java` — `localize(String, Object...)` and `localize(String, String, Object...)`
+
+---
+
+- **SocialSpy broadcast missing translation key `neoessentials.socialspy.format` → ✅ FIXED in build.70**  
+  `SocialSpyManager.broadcast()` called `MessageUtil.component("neoessentials.socialspy.format", ...)` but the key was absent from `en_us.json`, causing the spy message to display a raw humanized fallback string.
+    - Fix Applied (build.70): Added `"neoessentials.socialspy.format": "&8[&eSocialSpy&8] &b{0} &7→ &b{1}&7: &f{2}"` to `en_us.json`.  Arguments `{0}` = sender name, `{1}` = receiver name, `{2}` = message text.
+    - `_langVersion` bumped `13 → 14`; `CURRENT_LANG_VERSION` constant in `MessageUtil` updated to match — existing deployments will auto-merge the new key on next server start.
+    - Affected files: `en_us.json`, `MessageUtil.java`
+
+---
 
 ## ✨ Build #69 — 2026-04-24 — Custom Player Tablist: Polish Pass
 
@@ -377,7 +393,7 @@
 
 ---
 
-- **NeoEssentials /back Command Fails in Unloaded Chunks (NeoForge 1.21.1, build.1.0.2.6+21)** ✅ **FIXED in build.42**
+- **NeoEssentials /back Command Fails in Unloaded Chunks (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ FIXED in build.1.0.2.6+42**  
   The `/back` command cannot find last death points or previous locations if they are in unloaded chunks.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 21`
@@ -747,6 +763,26 @@
     - Improved user management with role-based access control.
     - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
 
+- **NeoEssentials Proxy Integration with BungeeTabListPlus (Independent Mode)**  
+  Request to add support for hooking into [BungeeTabListPlus](https://github.com/CodeCrafter47/BungeeTabListPlus) when NeoEssentials is running behind a proxy, while also allowing NeoEssentials to operate independently without mimicking other tab plugins.
+    - Requested Update:
+        - Implement a hook into BungeeTabListPlus API for player list synchronization and proxy-aware features.
+        - Ensure NeoEssentials dashboard and commands respect proxy player states.
+        - Provide compatibility with BungeeTabListPlus features such as custom tab formatting, placeholders, and cross-server player visibility.
+        - Allow NeoEssentials to run in **independent mode**, managing its own tablist logic without relying on other tab plugins.
+        - Source code for BungeeTabListPlus will be downloaded and placed in the `docs/` folder for reference.
+    - Benefits:
+        - Seamless integration with proxy environments.
+        - Unified player list management across multiple servers.
+        - Independent functionality ensures NeoEssentials tablist logic is consistent and not dependent on external plugins.
+        - Enhances NeoEssentials usability for larger networks running behind proxies.
+
+- **Messaging & SocialSpy Improvements**
+    - Add support for named placeholders in message templates (`{neoessentials_displayname}`, `{MESSAGE}`).
+    - Provide fallback formatting if template parsing fails.
+    - Add debug logging to show which placeholders are missing or misparsed.
+    - Allow admins to customize SocialSpy formatting in config safely.
+
 - **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  
   Request to update NeoEssentials for compatibility with the latest Minecraft and NeoForge releases.
     - Requested Update:
@@ -803,7 +839,7 @@
 
   **New `/language` admin commands:** `validate <code>` (coverage % + missing/extra key diff), `regenerate <code>` (refresh + merge from JAR, auto-backup), `override set|get|remove|list|clear|reload` (per-key runtime overrides persisted to `overrides.json`).
 
-  **`_langVersion` bumped 12 → 13** — new keys auto-merged into existing deployments at next server start.
+  **`_langVersion` bumped 12 → 13** — triggers automatic key-merge on next server start for existing deployments.
 
   Affected files: `en_us.json`, `MessageUtil.java`, `CustomLanguageManager.java`, `LanguageCommand.java`
 
@@ -863,83 +899,10 @@
     - `GET|POST /user/{name}/temp` + `DELETE /user/{name}/temp/{node}` — user temp perm CRUD
     - `GET|POST|DELETE /aliases` — alias CRUD (POST persists to `permission_aliases.json`)
     - `GET /system/status` enhanced — emergency mode, adapter name/version/health/failures, alias count
+  - `PermissionSystem.md` updated: new **Temporary Permissions** section with duration table, command tables, resolution-order explanation, worked example, and audit-event table.
+  - `CommandsReference.md` updated: 6 new rows (`addtemp`/`removetemp`/`listtemp` for user and group) added to the Permissions Management table.
 
-  **Integration with External Systems** *(build #30)*
-  - Startup compatibility report: adapter name, version, health, ⚠ NEWER THAN TESTED warning
-  - Full 5-step fallback chain documented: emergency → OP bypass → external → internal → OP fallback
-  - Adapter health tracking: 5 consecutive failures → `UNHEALTHY` → auto-fallback to `permissions.json`
-  - LuckPerms: context-aware checks via live `QueryOptions`; step-by-step setup guide
-  - FTB Ranks: 4-API-signature probe for version compatibility
-  - Compatibility table: LuckPerms 5.4.x, FTB Ranks 2101.1.3, WorldEdit (any), FTB Chunks (any)
-
-  **Fine-Grained Command Control** *(build #30)*
-  - Every Brigadier branch has its own permission node (`/home set` vs `/home delete`, `/warp` vs `/setwarp`, etc.)
-  - Per-subcommand node tables documented in `PermissionSystem.md` for: Home, Warp, Kit, Economy, Moderation, Permission system
-  - Negative permission patterns (`-neoessentials.item.enchant.unsafe`) documented for targeted deny
-
-
-    - ✅ `NickCommand` — storage path changed from raw `Paths.get("config", "neoessentials", "nickname_data.json")` to `ResourceUtil.getConfigPath("nickname_data.json")` for consistency with every other data file in the mod.
-    - ✅ `NickCommand` — registered `/nickname` as a Brigadier **redirect** to `/nick` so the alias actually works at runtime (was metadata-only in `registry.registerCommand()`).
-    - ✅ `SeenCommand` — storage path changed from raw `Paths.get("config", "neoessentials", "seen_data.json")` to `ResourceUtil.getConfigPath("seen_data.json")`.
-    - ✅ `NeoEssentials.java` — removed duplicate `registry.registerCommand()` metadata block ("PLAYER INFO & ADMIN TOOL COMMANDS" section) that re-listed `seen`, `near`, `ping`, `playtime`, `whois`, `realname`, `sudo`, `suicide`, `msgtoggle`, `rtoggle`, `motd`, `rules` — all already registered in the UTILITY section above. Replaced with a single comment + `PlayerInfoCommands.register()` call for `/msgtoggle`.
-    - ✅ `PermissionRegistry` — removed duplicate `register()` calls in the "Utility commands" and "Utility / misc commands" sections that silently overrode values set in the canonical "Player Info & Admin Tools" section: `neoessentials.whois` (was `ADMIN/false`, overridden to `MISC/true`), `neoessentials.ping.others` (was `PLAYER/true`, overridden to `MISC/false`), `neoessentials.seen`, `neoessentials.realname`, `neoessentials.near`, `neoessentials.ping`, `neoessentials.motd`, `neoessentials.rules`, `neoessentials.suicide`. Unique sub-nodes (`whois.detailed`, `rules.admin`, `motd.*`) kept in their canonical positions.
-    - ✅ All core utility commands verified present, registered once, and using `PermissionValidator.validatePermission()` consistently: `/nick` `/nickname` `/setnick` `/near` `/nearby` `/ping` `/depth` `/helpop` `/motd` `/rules` `/suicide` `/killme` `/seen` `/whois` `/realname` `/msgtoggle`.
-
-- **Temporary Permissions** *(build #25)*
-    - ✅ Added `tempPermissions: Map<String, Long>` (node → expiry epoch-ms) to both `PermissionUser` and `PermissionGroup`, with `addTempPermission`, `removeTempPermission`, `getTempPermissions`, `purgeExpiredTempPermissions`, and `hasActiveTempPermission` helpers.
-    - ✅ `PermissionManager.computePermission()` evaluates temp permissions (with wildcard support) **after** negative-perm denial but **before** regular user/group permissions — explicit `-node` denies still win.
-    - ✅ `PermissionManager.purgeExpiredTempPermissions(MinecraftServer)` — iterates all users and groups, removes expired entries, clears the permission cache, notifies affected online players, logs each expiry to the audit log, and persists to disk.
-    - ✅ `PermissionManager.parseDurationMs(String)` — parses human-readable durations (`1d`, `12h`, `30m`, `60s`, combinations like `1d12h30m`) into milliseconds; throws `IllegalArgumentException` for blank/zero/invalid input.
-    - ✅ `PermissionManager.formatDuration(long ms)` — formats a millisecond remaining-time into a compact string (e.g. `2d 3h 15m 4s`).
-    - ✅ `PermissionExpiryHandler` — `@EventBusSubscriber` on `ServerTickEvent.Post`, fires `purgeExpiredTempPermissions()` every **600 ticks (30 s)**.
-    - ✅ `PermissionStorage` updated: `save()` strips expired entries before writing; `load()` only reads entries whose expiry is still in the future. Users gain `"tempPermissions"` key in `playerdata.json`; groups gain it in `permissions.json`.
-    - ✅ New commands for users: `/permissions user <p> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.user.temp` / `info.user`). Successful `addtemp` also notifies the target player if online.
-    - ✅ New commands for groups: `/permissions group <g> addtemp <node> <duration>`, `removetemp <node>`, `listtemp` (requires `neoessentials.permissions.group.temp` / `info.group`).
-    - ✅ All six actions logged to the audit log: `USER_TEMP_PERM_ADDED`, `USER_TEMP_PERM_REMOVED`, `USER_TEMP_PERM_EXPIRED`, `GROUP_TEMP_PERM_ADDED`, `GROUP_TEMP_PERM_REMOVED`, `GROUP_TEMP_PERM_EXPIRED`. Expiry events use executor `SYSTEM`.
-    - ✅ Registered `neoessentials.permissions.user.temp` and `neoessentials.permissions.group.temp` in `PermissionRegistry`.
-    - ✅ `PermissionSystem.md` updated: new **Temporary Permissions** section with duration table, command tables, resolution-order explanation, worked example, and audit-event table. Table of Contents updated.
-    - ✅ `CommandsReference.md` updated: 6 new rows (`addtemp`/`removetemp`/`listtemp` for user and group) added to the Permissions Management table.
-
-- **Permission Audit Logging** *(build #23)*
-    - ✅ Created `PermissionAuditLogger.java` — persistent, append-only log written to `neoessentials/permissions_audit.log` (UTC timestamps, UTF-8). Each line records the timestamp, action type (padded for alignment), executor display name, target (group or player), and a detail string.
-    - ✅ 17 action constants tracked: `USER_GROUP_SET`, `USER_PERM_ADDED`, `USER_PERM_REMOVED`, `USER_PERMS_CLEARED`, `GROUP_CREATED`, `GROUP_DELETED`, `GROUP_RENAMED`, `GROUP_CLONED`, `GROUP_PERM_ADDED`, `GROUP_PERM_REMOVED`, `GROUP_PERMS_CLEARED`, `GROUP_INHERIT_ADDED`, `GROUP_INHERIT_REMOVED`, `GROUP_PREFIX_SET`, `GROUP_SUFFIX_SET`, `GROUP_PRIORITY_SET`, `PERMISSIONS_RELOADED`.
-    - ✅ `getExecutorDisplay()` helper added to `PermissionsCommand` — logs the player's name for in-game commands or `"CONSOLE"` for server-side execution.
-    - ✅ `PermissionAuditLogger.log()` calls added after every successful permission modification in `PermissionsCommand.java` (all 16 mutation paths + reload).
-    - ✅ Added `permissions.auditLogging` config key (default `true`) to `config.json`. `ConfigManager.isPermissionAuditEnabled()` public method added. When `false`, all log calls are no-ops.
-
-- **Permission Groups & Priorities + Permission Suggestions** *(build #22)*
-    - ✅ Added `priority` (int, default `0`) field to `PermissionGroup`. Higher priority groups are checked first during inheritance resolution — both the positive-grant and negative-deny passes sort inherited groups by `priority` descending before recursing.
-    - ✅ `PermissionStorage` saves and loads `priority` in `permissions.json` (backwards-compatible — missing key defaults to `0`).
-    - ✅ Added `/permissions group <name> setpriority <value>` (−999–999, requires `neoessentials.permissions.group.modify`) and `getpriority` (requires `neoessentials.permissions.info.group`) commands.
-    - ✅ `/permissions info group` output now includes the group's current priority.
-    - ✅ Registered `neoessentials.permissions.group.priority` in `PermissionRegistry`.
-    - ✅ **Permission Suggestions** — `PermissionValidator.validatePermission()` and `validateAnyPermission()` denial messages now look up the required node(s) in `PermissionRegistry` and append the human-friendly description in a dimmed line (e.g. `§8(Ban a player from the server)`), so staff know exactly which capability they're missing without consulting the wiki.
-    - ✅ `PermissionSystem.md` updated: new "Group Priorities" section with command table, priority scale, and worked example; example `groups.json` updated with priority values; ToC updated; denial-message format documented.
-    - ✅ `CommandsReference.md` updated: `setpriority` and `getpriority` rows added to Permissions Management table.
-
-- **Permission Debugging Tools** *(build #21)*
-    - ✅ Added `/permissions debug <player>` subcommand (requires `neoessentials.permissions.debug`). Displays a full in-game diagnostic trace: system mode (internal / external adapter / emergency), adapter health and version, active config flags (`opsBypassPermissions`, `vanillaOpFallback`), OP status, assigned group, direct user permissions (up to 10 with overflow count), group inheritance chain (recursive with indentation, up to 8 permissions per group), and a numbered 4-step resolution chain summary showing exactly which step would GRANT or continue for that player.
-    - ✅ Registered `neoessentials.permissions.debug` permission node in `PermissionRegistry` (between `check` and `search` nodes).
-    - ✅ **Fixed** `checkUserPermission()` in `PermissionsCommand` was calling `PermissionAPI.getManager().hasPermission()` directly, silently bypassing the external adapter (LuckPerms / FTB Ranks), `opsBypassPermissions`, and `vanillaOpFallback`. Now calls `PermissionAPI.hasPermission()` — the full 5-step chain — so `/permissions user check` output matches actual runtime behaviour.
-
-- **Documentation Update: allowUnsafeCommands Config** *(build #19)*
-    - ✅ Fixed wrong `allowUnsafeCommands` description in `SplitConfigs.md` — it incorrectly said "Allow enchantments and item operations beyond vanilla limits" (that's `items.unsafe-enchantments`). Now accurately describes the command safety filter used by `/powertool`.
-    - ✅ Added complete `security.json` reference table covering all six keys (`enableInputValidation`, `maxCommandLength`, `maxReasonLength`, `allowUnsafeCommands`, `enablePathTraversalProtection`, `enableXSSProtection`) with types, defaults, and descriptions.
-    - ✅ Documented every blocked substring in the dangerous-pattern check (destructive ops, code-execution, path traversal, shell operators, URL injection, reflection) with explanations.
-    - ✅ Documented the character allowlist and which common characters fall outside it (`@`, `{`, `%`, `=`, etc.).
-    - ✅ Explicitly called out that tilde `~` (Minecraft relative coordinates, e.g. `/tp ~ 100 ~`) is blocked by default — the most common cause of the confusing "dangerous operations" error for powertool users.
-    - ✅ Added tables of commands that work by default vs. commands requiring `allowUnsafeCommands: true`, with step-by-step enable instructions for both split-config and monolithic mode.
-    - ✅ Added "Command Safety Filter" subsection to `ItemManagement.md` under Powertool — exact error messages, quick-reference tables, config locations, and cross-link to `SplitConfigs.md`.
-    - ✅ Added warning callout on the `/powertool` row in `CommandsReference.md` naming the most common blocked patterns and linking to the full docs.
-    - ✅ Added `security.json` to the getting-started key files list in `Home.md`.
-
-- **Fallback to Vanilla OP Permissions** *(build #18)*
-    - ✅ Added `permissions.vanillaOpFallback` config key (default `true`). After all permission systems (external adapter + internal manager) have been consulted and returned `false`, OPs (level 2+) are granted access as a last-resort safety net — distinct from `opsBypassPermissions` which skips checks entirely.
-    - ✅ Permission system init failure no longer crashes the server with `RuntimeException`. Instead, `PermissionAPI.setEmergencyMode(true)` is activated: OPs get all permissions, non-OPs are denied, and a prominent boxed `ERROR` is logged at startup.
-    - ✅ `/neoe reload` detects emergency mode and performs a full re-initialisation (resets manager, adapter, and all flags), allowing recovery without a server restart once the config issue is resolved.
-    - ✅ `PermissionSystem.isEmergencyMode()` public accessor added.
-    - ✅ `PermissionSystem.md` updated: new `vanillaOpFallback` config row, bypass-vs-fallback comparison table, and updated "How Permissions Work" numbered flow.
-    - ✅ `vanillaOpFallback: true` added to the bundled `config.json` default template.
+---
 
 - **Improved External Permissions Integration** *(build #17)*
     - ✅ `FtbRanksAdapter` and `LuckPermsAdapter` detect the installed mod version via `ModList` at construction time and log it at `INFO` level.
@@ -1009,40 +972,19 @@
     - ✅ **`/api/placeholders` REST endpoints** — `PlaceholderEndpoint` added: `GET /api/placeholders/list`, `GET /api/placeholders/resolve?player=&text=`, `GET /api/placeholders/stats`. Registered with auth middleware in `DashboardAPI`.
     - ✅ **`/api/docs` wired** — `DocumentationHandler` was implemented but never registered in `DashboardAPI`. Now wired to `/api/docs` context.
     - ✅ **`/placeholder` command** — new in-game admin command with `list`, `info <id>` (tab-completes), `test <text>`, `stats` sub-commands. Permission: `neoessentials.admin.placeholders`.
-    - ✅ **`neoessentials.admin.placeholders`** registered in `PermissionRegistry` under `ADMIN` category.
+    - ✅ Registered `neoessentials.admin.placeholders` permission node in `PermissionRegistry` under `ADMIN` category.
     - ✅ **`DocumentationManager`** updated with `placeholder-api` and `developer-api` sections, and API docs for all three `/api/placeholders/*` endpoints.
     - ✅ **`docs/Wiki/APISystem.md`** completely rewritten — full built-in placeholder table (30+ tokens with short-form aliases), `PlaceholderProvider`/`PlaceholderExpansion` code examples, `NeoEssentialsAPI` full reference, REST endpoint tables, `/placeholder` command reference, versioning contract.
 
 - **Chat Formatting — `{neoessentials_username_hover}` unresolved + duplicate vanilla log line** *(build #59)*
     - ✅ **Root cause fixed** — `ChatFormatter.formatMessage()` was replacing `{neoessentials_username}` with `{neoessentials_username_hover}` when "clickable player names" was enabled, but `username_hover` was never registered in `DefaultPlaceholderExpansion`. The placeholder passed through `PlaceholderAPI.setPlaceholders()` unresolved, leaving the literal string `{neoessentials_username_hover}` in the formatted Component.
-    - ✅ **New approach** — The `{username}` → `{username_hover}` substitution is replaced with a `§HNAME§name§/HNAME§` internal markup token (only injected when both `clickablePlayerNames` and `enableChatEnhancements` are true). `buildComponentFromMarkup()` now handles `§HNAME§` and `§HDNAME§` tokens to produce proper hover+click Components without touching the placeholder resolution pipeline.
+    - ✅ **New approach** — The `{username}` → `{username_hover}` substitution is replaced with a `§HNAME§` and `§HDNAME§` internal markup token (only injected when both `clickablePlayerNames` and `enableChatEnhancements` are true). `buildComponentFromMarkup()` now handles `§HNAME§` and `§HDNAME§` tokens to produce proper hover+click Components without touching the placeholder resolution pipeline.
     - ✅ **Fallback safety** — `username_hover` and `displayname_hover` are now registered in `DefaultPlaceholderExpansion` as plain-text aliases for `username`/`displayname`. If the token ever appears in a raw config string it resolves to the player's name instead of showing unresolved.
     - ✅ **Duplicate vanilla log removed** — `ChatHandler.onServerChat()` called `server.sendSystemMessage(formattedMessage)` which caused vanilla's `MinecraftServer` logger to emit a second log line: `<{neoessentials_username_hover}> message`. This call was redundant (chat was already logged via `LOGGER.info`) and is removed.
     - **Affected files:** `ChatFormatter.java`, `ChatHandler.java`, `DefaultPlaceholderExpansion.java`
 
 ---
 
-- **Localization Audit — 54 missing translation keys + missing fallback text for unknown keys** *(build #64)*
-    - ✅ **54 missing translation keys added to `en_us.json`** — A full audit of all `MessageUtil.localize()`/`component()`/`success()`/`error()`/`warning()` call-sites across ~130 Java source files identified 54 keys that were referenced in code but not present in the language file. The missing keys were concentrated in:
-        - Teleport request flow (`commands.neoessentials.teleport.request.*` — 25 keys for TPA sent/received/cancelled/expired/denied/failed)
-        - Misc teleport (`back_info`, `death_info`, `jump_success`, `jump_failed`, `no_open_space`)
-        - Spawn/warp coordinate validation (`teleport.spawn.invalid_coordinates`, `teleport.spawn.no_permission`, `teleport.warp.invalid_coordinates`)
-        - Home overwrite cancellation + no-pending-delete fallback
-        - Moderation (`player_only_command`, `reason_too_long`, `unfrozen_message`, `jail_success`, `unjail_success`)
-        - Dashboard command separator/title, channel error, mutelist format, near server error, gamemode changed_other
-    - ✅ **`MessageUtil.localize()` now generates human-readable fallback text** — Previously, if a key was not found in the loaded translations map, the raw key string (e.g. `commands.neoessentials.home.not_found`) was returned directly to the player's chat — making messages look broken. The fix strips the `commands.neoessentials.` prefix, replaces dots and underscores with spaces, and capitalises the first letter to produce a readable English fallback (e.g. `Home not found`). The old `key → key` identity fallback is gone.
-    - ✅ **New `MessageUtil.localize(key, fallback, args...)` overload** — Callers that know the expected English text can now pass it explicitly as a second argument. When the primary key is missing the explicit fallback is used verbatim, and a debug-level warning is logged.
-    - ✅ **New `/language validate <code>` command** — Compares a deployed language file against the base `en_us.json` key set and prints: total keys, translated keys, coverage %, missing key count (first 10 shown), extra keys. Colour-coded coverage indicator (green ≥90%, yellow ≥50%, red <50%).
-    - ✅ **New `/language regenerate <code>` command** — Copies a fresh version of the JAR language file to disk, merging existing user-translated values so no edits are lost. The previous disk file is backed up to `<lang>.json.bak` first.
-    - ✅ **New `/language override` subcommands** — Admins can now override individual message keys in-game without editing files. Overrides are persisted to `neoessentials/languages/overrides.json` and take priority over all other translation sources.  
-        - `/language override set <key> <value>` — set an override  
-        - `/language override get <key>` — view current value (override or default)  
-        - `/language override remove <key>` — remove specific override  
-        - `/language override list` — list all active overrides  
-        - `/language override clear` — remove all overrides  
-        - `/language override reload` — reload overrides from disk
-    - ✅ **`_langVersion` bumped 12 → 13** — triggers automatic key-merge on next server start for existing deployments.
-    - **Affected files:** `en_us.json`, `MessageUtil.java`, `CustomLanguageManager.java`, `LanguageCommand.java`
 
 
 

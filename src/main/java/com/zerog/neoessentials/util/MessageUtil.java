@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 13;
+    private static final int CURRENT_LANG_VERSION = 14;
 
     /**
      * Load translations from server directory, updating from JAR if needed.
@@ -219,8 +219,32 @@ public class MessageUtil {
     }
 
     /**
+     * Escape non-numeric {@code {NAME}} placeholders so {@link MessageFormat} leaves them untouched.
+     *
+     * <p>MessageFormat uses single-quote pair escaping: {@code '{'NAME'}'} is rendered as the
+     * literal string {@code {NAME}}.  This lets NeoEssentials placeholders such as
+     * {@code {neoessentials_displayname}} and {@code {MESSAGE}} survive the localization call
+     * intact and be resolved later by {@link com.zerog.neoessentials.api.PlaceholderAPI}.</p>
+     *
+     * <p>Tokens that begin with a digit — e.g. {@code {0}}, {@code {1}} — are left unchanged
+     * so that positional {@code MessageFormat} substitution still works normally.</p>
+     */
+    private static String escapeNamedPlaceholders(String s) {
+        // Regex: match { followed by a non-digit non-special char, then any non-} chars, then }
+        // Examples matched: {neoessentials_displayname}, {MESSAGE}, {PLAYER}
+        // Examples NOT matched: {0}, {1,number}, {2,date} — starts with digit
+        return s.replaceAll("\\{([^0-9'{}][^}]*)}", "'{'$1'}'");
+    }
+
+    /**
      * Get a localized string with optional arguments.
      * Falls back to a human-readable form of the key if the key is not found.
+     *
+     * <p>Named placeholders (e.g. {@code {neoessentials_displayname}}, {@code {MESSAGE}}) are
+     * preserved verbatim so callers can resolve them via
+     * {@link com.zerog.neoessentials.api.PlaceholderAPI} after this call.
+     * Positional placeholders {@code {0}}, {@code {1}}, … are replaced by the supplied
+     * {@code args}.  Legacy {@code %s} tokens are treated as {@code {0}}.</p>
      */
     public static String localize(String key, Object... args) {
         loadTranslations();
@@ -235,7 +259,10 @@ public class MessageUtil {
         }
 
         try {
-            String result = MessageFormat.format(template.replace("%s", "{0}"), args);
+            // Escape named {TOKEN} placeholders so MessageFormat does not try to parse them
+            // as argument indices — they will be resolved later by PlaceholderAPI.
+            String escaped = escapeNamedPlaceholders(template.replace("%s", "{0}"));
+            String result = MessageFormat.format(escaped, args);
             if (debugMode) {
                 LOGGER.info("MessageFormat success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
                     key, template, java.util.Arrays.toString(args), result);
@@ -251,6 +278,8 @@ public class MessageUtil {
     /**
      * Get a localized string with an explicit English fallback text.
      * Use this when you know what the English text should be in case the key is missing.
+     *
+     * <p>Named placeholders are preserved verbatim (see {@link #localize(String, Object...)}).</p>
      */
     public static String localize(String key, String fallback, Object... args) {
         loadTranslations();
@@ -261,7 +290,8 @@ public class MessageUtil {
         }
 
         try {
-            return MessageFormat.format(template.replace("%s", "{0}"), args);
+            String escaped = escapeNamedPlaceholders(template.replace("%s", "{0}"));
+            return MessageFormat.format(escaped, args);
         } catch (Exception e) {
             LOGGER.error("Failed to format message with fallback - Key: {}, Template: '{}', Error: {}",
                 key, template, e.getMessage(), e);
