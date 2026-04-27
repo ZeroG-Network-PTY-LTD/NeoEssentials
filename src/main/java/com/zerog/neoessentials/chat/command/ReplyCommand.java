@@ -9,6 +9,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.ChatDebugUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 /**
  * Handles the /reply command for replying to the last private message sender.
@@ -99,16 +100,14 @@ public class ReplyCommand {
                         }
                     }
                     
-                    // Send reply messages using PlaceholderAPI for consistent placeholder support
-                    String toTemplate = MessageUtil.localize("commands.neoessentials.reply.format.to");
-                    String fromTemplate = MessageUtil.localize("commands.neoessentials.reply.format.from");
-                    
-                    // Add MESSAGE placeholder and resolve with PlaceholderAPI
-                    String toMessage = toTemplate.replace("{MESSAGE}", message);
-                    String fromMessage = fromTemplate.replace("{MESSAGE}", message);
-                    
-                    String resolvedToMessage = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(target, toMessage);
-                    String resolvedFromMessage = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(sender, fromMessage);
+                    // Send reply messages using resolveTemplate for uniform placeholder support
+                    String toTemplate  = MsgCommand.getMsgFormat("replyFormatTo",   "commands.neoessentials.reply.format.to");
+                    String fromTemplate = MsgCommand.getMsgFormat("replyFormatFrom", "commands.neoessentials.reply.format.from");
+
+                    // Pass target context for "To" (target's display name), sender for "From"
+                    Map<String, String> vars = Map.of("message", message, "MESSAGE", message);
+                    String resolvedToMessage   = MessageUtil.resolveTemplate(target, toTemplate,   vars);
+                    String resolvedFromMessage = MessageUtil.resolveTemplate(sender, fromTemplate, vars);
                     
                     target.sendSystemMessage(MessageUtil.coloredText(resolvedFromMessage));
                     sender.sendSystemMessage(MessageUtil.coloredText(resolvedToMessage));

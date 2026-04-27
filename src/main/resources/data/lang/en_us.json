@@ -1,5 +1,5 @@
 {
-  "_langVersion": "14",
+  "_langVersion": "15",
   "_comment_general": "=== General ===",
   "_comment_economy": "=== Economy System ===",
   "commands.neoessentials.balance": "Balance: {0}{1}",
@@ -390,7 +390,7 @@
   "commands.neoessentials.socialspy.disabled": "SocialSpy command is disabled.",
   "commands.neoessentials.socialspy.disabled_status": "SocialSpy disabled - you will no longer see private messages.",
   "commands.neoessentials.socialspy.enabled": "SocialSpy enabled - you will now see private messages.",
-  "neoessentials.socialspy.format": "&8[&eSocialSpy&8] &b{0} &7→ &b{1}&7: &f{2}",
+  "neoessentials.socialspy.format": "&8[&eSocialSpy&8] &b{sender} &7→ &b{receiver}&7: &f{message}",
   "commands.neoessentials.unignore.disabled": "§cThe ignore system is disabled.",
   "commands.neoessentials.unignore.not_ignored": "§cYou are not ignoring {0}.",
   "commands.neoessentials.unignore.player_not_found": "Player not found.",

@@ -1,5 +1,5 @@
 {
-  "_configVersion": 20,
+  "_configVersion": 21,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -817,6 +817,19 @@
     "logChatToConsole": true,
     "logChatToConsole_comment": "Log all chat messages to the server console and logs. When NeoEssentials handles chat formatting, vanilla console logging is replaced by this. Set to false to suppress chat from console/logs entirely.",
     "muteCommands": [],
+    "messaging": {
+      "messaging_comment": "Private-message and SocialSpy format overrides. Leave a value blank (\"\") to use the default from the language file (en_us.json). Named placeholders supported: {sender}, {receiver}, {message}, {sender_displayname}, {receiver_displayname}. Also supports {neoessentials_*} PlaceholderAPI tokens and & color codes. Changes take effect immediately without restart.",
+      "socialspyFormat": "",
+      "socialspyFormat_comment": "SocialSpy broadcast format. Default (lang key): \"&8[&eSocialSpy&8] &b{sender} &7→ &b{receiver}&7: &f{message}\". Named placeholders: {sender}, {receiver}, {message}, {sender_displayname}, {receiver_displayname}.",
+      "msgFormatTo": "",
+      "msgFormatTo_comment": "Format shown to the SENDER of a /msg. Default: \"&7[&aTo &f{neoessentials_displayname}&7] &f{message}\". Use {neoessentials_displayname} for target's name, {message} for the message text.",
+      "msgFormatFrom": "",
+      "msgFormatFrom_comment": "Format shown to the RECEIVER of a /msg. Default: \"&7[&bFrom &f{neoessentials_displayname}&7] &f{message}\". Use {neoessentials_displayname} for sender's name, {message} for the message text.",
+      "replyFormatTo": "",
+      "replyFormatTo_comment": "Format shown to the SENDER of a /reply. Defaults to msgFormatTo lang key if blank.",
+      "replyFormatFrom": "",
+      "replyFormatFrom_comment": "Format shown to the RECEIVER of a /reply. Defaults to msgFormatFrom lang key if blank."
+    },
     "playerChatPermissions": [],
     "sleepIgnoresAfkPlayers": true,
     "sleepIgnoresVanishedPlayers": true,
