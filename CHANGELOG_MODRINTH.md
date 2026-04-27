@@ -4,6 +4,32 @@
 
 ---
 
+## 1.0.2.6+build.73 — 2026-04-27
+
+### ✨ Feature — Messaging & SocialSpy Improvements
+
+Full enhancement pass on `/msg`, `/reply`, and SocialSpy formatting.
+
+**What's new:**
+
+- **`MessageUtil.resolveTemplate()`** — new centralized resolution helper used by `/msg`, `/reply`, and SocialSpy. Applies named vars first (case-insensitive), then runs PlaceholderAPI, then logs any still-unresolved `{TOKEN}` tokens in debug mode.
+- **Named placeholders in all message templates** — `{message}` / `{MESSAGE}`, `{sender}`, `{receiver}`, `{sender_displayname}`, `{receiver_displayname}`, and all `{neoessentials_*}` tokens are now supported universally.
+- **Safe fallback** — if PlaceholderAPI throws, the un-resolved template is returned instead of an error.
+- **Debug logging** — enable `logging.enableDebugLogging` to see per-template unresolved token warnings and SocialSpy format resolution trace.
+- **Config-based format overrides** — new `chat.messaging` section in `config.json`:
+  ```json
+  "socialspyFormat":  "&8[&eSocialSpy&8] &b{sender} &7→ &b{receiver}&7: &f{message}"
+  "msgFormatTo":      "&7[&aTo &f{neoessentials_displayname}&7] &f{message}"
+  "msgFormatFrom":    "&7[&bFrom &f{neoessentials_displayname}&7] &f{message}"
+  "replyFormatTo":    "" (uses lang default)
+  "replyFormatFrom":  "" (uses lang default)
+  ```
+  Leave blank to use language-file defaults. Config takes priority when set.
+- **SocialSpy lang key updated** — `neoessentials.socialspy.format` moved from positional `{0}/{1}/{2}` to named `{sender}/{receiver}/{message}` vars. `_langVersion` → 15, auto-merges on next start.
+- SocialSpy display-name lookup now runs **once per broadcast** not once per spy player.
+
+---
+
 ## 1.0.2.6+build.72 — 2026-04-27
 
 ### 🐛 Bug Fix — FTB Ranks Adapter: Permission Checks Failing
