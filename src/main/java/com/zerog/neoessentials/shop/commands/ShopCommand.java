@@ -25,6 +25,7 @@ import net.minecraft.world.phys.HitResult;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -141,6 +142,7 @@ public class ShopCommand {
 
     // ── /chestshop info ───────────────────────────────────────────────────────
 
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable; IntelliJ false positive
     private static int executeInfo(CommandSourceStack src) {
         try {
             ServerPlayer player = src.getPlayerOrException();
@@ -211,6 +213,7 @@ public class ShopCommand {
 
     // ── /chestshop remove <x> <y> <z> ────────────────────────────────────────
 
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable; IntelliJ false positive
     private static int executeRemove(CommandSourceStack src, int x, int y, int z) {
         boolean isAdmin = src.hasPermission(3) ||
             (src.getEntity() != null &&
@@ -314,11 +317,10 @@ public class ShopCommand {
             src.sendSuccess(() -> Component.literal("§eTotal shops:  §f" + myShops.size() + " §7(player: " + playerCount + ", admin: " + adminCount + ")"), false);
             src.sendSuccess(() -> Component.literal("§eTotal sales:  §f" + totalSales), false);
             if (!myShops.isEmpty()) {
-                ShopData top = myShops.stream().max((a, b) -> Long.compare(a.totalSalesCount, b.totalSalesCount)).orElse(null);
-                if (top != null) {
-                    src.sendSuccess(() -> Component.literal("§eTop seller:   §f" + top.itemId.replace("minecraft:", "") +
-                            " §7(" + top.totalSalesCount + " sales)"), false);
-                }
+                myShops.stream().max(Comparator.comparingLong(s -> s.totalSalesCount))
+                        .ifPresent(top -> src.sendSuccess(() -> Component.literal("§eTop seller:   §f" +
+                                top.itemId.replace("minecraft:", "") +
+                                " §7(" + top.totalSalesCount + " sales)"), false));
             }
             return 1;
         } catch (Exception e) {

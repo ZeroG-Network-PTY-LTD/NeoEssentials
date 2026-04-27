@@ -252,9 +252,8 @@ public class ShopSignHandler {
         for (int i = 0; i < 4 && i < lines.length; i++) {
             final String text = lines[i] != null ? lines[i] : "";
             Component component = net.minecraft.network.chat.Component.literal(text);
-            final int capturedI = i;
             var currentText = sign.getFrontText();
-            var newText = currentText.setMessage(capturedI, component);
+            var newText = currentText.setMessage(i, component);
             sign.updateText(s -> newText, true);
         }
         sign.setChanged();

@@ -6,7 +6,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -14,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerPlayer;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
@@ -50,14 +50,14 @@ public class ShopNpcEntity extends PathfinderMob {
     // ── Interaction ───────────────────────────────────────────────────────────
 
     @Override
-    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+    @Nonnull
+    @SuppressWarnings("resource") // Level is not AutoCloseable; IntelliJ false positive
+    protected InteractionResult mobInteract(@Nonnull Player player, @Nonnull InteractionHand hand) {
         if (!level().isClientSide() && player instanceof ServerPlayer sp && hand == InteractionHand.MAIN_HAND) {
             if (shopId != null) {
                 ShopEntityData shopData = ShopEntityManager.getInstance().getByShopId(shopId);
                 if (shopData != null && !shopData.listings.isEmpty()) {
-                    sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData, sp), buf -> {
-                        buf.writeUtf(shopId.toString());
-                    });
+                    sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData), buf -> buf.writeUtf(shopId.toString()));
                 } else {
                     sp.sendSystemMessage(Component.literal("§cThis NPC shop has no items configured yet."));
                 }
@@ -80,13 +80,13 @@ public class ShopNpcEntity extends PathfinderMob {
     // ── NBT ───────────────────────────────────────────────────────────────────
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@Nonnull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         if (shopId != null) nbt.putUUID(NBT_SHOP_ID, shopId);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@Nonnull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         if (nbt.hasUUID(NBT_SHOP_ID)) {
             this.shopId = nbt.getUUID(NBT_SHOP_ID);

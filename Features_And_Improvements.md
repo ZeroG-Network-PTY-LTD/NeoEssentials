@@ -29,6 +29,7 @@
     - Integration with cloud storage (Google Drive, Dropbox, etc.).
     - More detailed statistics (economy, player activity, performance).
     - Improved user management with role-based access control.
+    - Proper Login & Authentication system for secure access, discord auth using discord bot, and session management, other oauths .
     - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
 
 - **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  

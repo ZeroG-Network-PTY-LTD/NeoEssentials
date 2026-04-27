@@ -63,8 +63,8 @@ public class TablistManager {
      */
     private boolean independentMode = true;
     private int refreshIntervalTicks = 20;
-    private List<String> headerFrames = new ArrayList<>();
-    private List<String> footerFrames = new ArrayList<>();
+    private final List<String> headerFrames = new ArrayList<>();
+    private final List<String> footerFrames = new ArrayList<>();
     private String playerFormat = "&f{prefix}&r{player}{suffix}";
     private boolean hideVanished = true;
     private boolean showAfkIndicator = true;
@@ -353,6 +353,7 @@ public class TablistManager {
      *   <li>{@code {afk}}              — AFK label (blank when not AFK)</li>
      * </ul>
      */
+    @SuppressWarnings("resource") // ServerLevel is not AutoCloseable; IntelliJ false positive
     private String applyPlaceholders(String text, ServerPlayer player, MinecraftServer server) {
         if (text == null) return "";
 
@@ -615,6 +616,7 @@ public class TablistManager {
     }
 
     /** Set a per-player header override with multiple animated frames (runtime). */
+    @SuppressWarnings("unused")
     public void setPlayerHeaderFrames(UUID uuid, List<String> frames) {
         if (frames == null || frames.isEmpty()) playerHeaderFrames.remove(uuid);
         else playerHeaderFrames.put(uuid, new ArrayList<>(frames));
@@ -630,6 +632,7 @@ public class TablistManager {
     }
 
     /** Set a per-player footer override with multiple animated frames (runtime). */
+    @SuppressWarnings("unused")
     public void setPlayerFooterFrames(UUID uuid, List<String> frames) {
         if (frames == null || frames.isEmpty()) playerFooterFrames.remove(uuid);
         else playerFooterFrames.put(uuid, new ArrayList<>(frames));
@@ -666,6 +669,7 @@ public class TablistManager {
 
     // ── Nick system integration ───────────────────────────────────────────────
     /** Set a per-player custom tab display name (used by /nick). */
+    @SuppressWarnings("unused")
     public void setCustomName(UUID uuid, String name) {
         if (name == null || name.isEmpty()) customNames.remove(uuid);
         else customNames.put(uuid, name);
@@ -673,7 +677,9 @@ public class TablistManager {
 
     public void clearCustomName(UUID uuid) { customNames.remove(uuid); }
 
+    @SuppressWarnings("unused")
     public String getAfkSuffix() { return afkSuffix; }
+    @SuppressWarnings("unused")
     public boolean isShowAfkIndicator() { return showAfkIndicator; }
 
     /** Called when a player joins — record session start and send initial tablist update. */
