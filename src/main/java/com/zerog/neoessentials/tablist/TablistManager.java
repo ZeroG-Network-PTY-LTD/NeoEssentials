@@ -18,21 +18,33 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Custom Player Tablist system for NeoEssentials.
+ * NeoEssentials Tablist System — BungeeTabListPlus-inspired rewrite.
  *
- * Features:
- * - Animated header/footer with frame cycling
- * - Hex colors    — {@code &#RRGGBB} inline hex color codes
- * - Gradients     — {@code <gradient:RRGGBB-RRGGBB>text</gradient>} (2+ stops)
- * - Rainbow text  — {@code <rainbow>text</rainbow>}
- * - Named colors  — {@code <red>text</red>}, {@code <gold>text</gold>}, …
- * - Format tags   — {@code <bold>}, {@code <italic>}, {@code <underline>}, …
- * - Per-group header/footer, prefix/suffix display
- * - Per-player header/footer + custom name override (nick system)
- * - Placeholder support: {player}, {online}, {max}, {ping}, {world}, {tps}, {time}, …
- * - Configurable refresh interval
- * - Vanished player hiding for non-staff
- * - AFK indicator in tablist
+ * <h2>Feature parity with BungeeTabListPlus</h2>
+ * <ul>
+ *   <li>Animated header/footer with frame cycling</li>
+ *   <li>Extended placeholder set (network, proxy, server, health, XP, session, AFK)</li>
+ *   <li>Fake player decorative entries — {@link FakePlayerManager}</li>
+ *   <li>Proxy integration — {@link ProxyIntegration} (BungeeCord/Velocity channel)</li>
+ *   <li>BTLP-style group-sorted player list — {@link TablistLayout}</li>
+ *   <li>PlayersByServer grouping — {@link TablistLayout#isPlayersByServer()}</li>
+ *   <li>Independent mode: NeoEssentials owns the tab; no proxy plugin needed</li>
+ *   <li>Hex colors, gradients, rainbow, named colors via {@link RichTextFormatter}</li>
+ *   <li>Per-group header/footer, prefix/suffix display</li>
+ *   <li>Per-player header/footer + custom name override (nick system)</li>
+ *   <li>Vanished player hiding for non-staff</li>
+ *   <li>AFK indicator in tablist</li>
+ * </ul>
+ *
+ * <h2>Placeholder reference</h2>
+ * <pre>
+ * Standard : {player} {displayname} {online} {max} {ping} {world} {tps} {time}
+ *            {server_name} {x} {y} {z} {balance} {prefix} {suffix} {group}
+ * BTLP-style: {network_online} {server_online:NAME} {current_server} {server_label}
+ *             {rank_weight} {session_minutes} {session_hours}
+ *             {level} {health} {max_health} {afk}
+ * Decoration: {newline} {bar}
+ * </pre>
  *
  * References: TAB [1.7.x-1.21.x], BungeeTabListPlus, Simple TabList
  */
@@ -44,7 +56,13 @@ public class TablistManager {
 
     // ── Config ────────────────────────────────────────────────────────────────
     private boolean enabled = true;
-    private int refreshIntervalTicks = 20; // 1 second
+    /**
+     * Independent mode — when true, NeoEssentials is the sole owner of the tablist.
+     * No proxy plugin should be managing this server's tab simultaneously.
+     * Proxy integration ({@link ProxyIntegration}) is still used for data only.
+     */
+    private boolean independentMode = true;
+    private int refreshIntervalTicks = 20;
     private List<String> headerFrames = new ArrayList<>();
     private List<String> footerFrames = new ArrayList<>();
     private String playerFormat = "&f{prefix}&r{player}{suffix}";
@@ -68,6 +86,8 @@ public class TablistManager {
     // Per-player header/footer frame overrides (set via command or loaded from config)
     private final Map<UUID, List<String>> playerHeaderFrames = new ConcurrentHashMap<>();
     private final Map<UUID, List<String>> playerFooterFrames = new ConcurrentHashMap<>();
+    // Player session start times (for {session_minutes} / {session_hours})
+    private final Map<UUID, Long> sessionStartTimes = new ConcurrentHashMap<>();
 
     private TablistManager() {
         headerFrames.add("<gradient:FFD700-FF8C00>&l{server_name}&r &8| &e{online}&8/&e{max} &7players");
@@ -75,6 +95,7 @@ public class TablistManager {
     }
 
     // ── Initialisation ────────────────────────────────────────────────────────
+    /** Load all tablist config, including proxy, fake-players, and layout sub-sections. */
     public void loadConfig() {
         try {
             JsonObject tab = null;
@@ -106,6 +127,7 @@ public class TablistManager {
             }
 
             enabled              = !tab.has("enabled")           || tab.get("enabled").getAsBoolean();
+            independentMode      = !tab.has("independentMode")    || tab.get("independentMode").getAsBoolean();
             refreshIntervalTicks = tab.has("refreshInterval")    ? tab.get("refreshInterval").getAsInt() : 20;
             hideVanished         = !tab.has("hideVanished")       || tab.get("hideVanished").getAsBoolean();
             showAfkIndicator     = !tab.has("showAfkIndicator")   || tab.get("showAfkIndicator").getAsBoolean();
@@ -164,8 +186,15 @@ public class TablistManager {
             footerFrame = 0;
             tickCounter = 0;
 
-            LOGGER.info("TablistManager loaded — {} header frame(s), {} footer frame(s), {} group override(s), refresh every {} ticks.",
-                headerFrames.size(), footerFrames.size(), groupHeaderFrames.size(), refreshIntervalTicks);
+            // Delegate to sub-system configs
+            ProxyIntegration.getInstance().loadConfig();
+            FakePlayerManager.getInstance().loadConfig();
+            TablistLayout.getInstance().loadConfig();
+
+            LOGGER.info("TablistManager loaded — {} header frame(s), {} footer frame(s), {} group override(s), " +
+                "refresh every {} ticks. independentMode={}, proxyEnabled={}.",
+                headerFrames.size(), footerFrames.size(), groupHeaderFrames.size(), refreshIntervalTicks,
+                independentMode, ProxyIntegration.getInstance().isProxyEnabled());
         } catch (Exception e) {
             LOGGER.error("Failed to load tablist config: {}", e.getMessage());
         }
@@ -181,12 +210,17 @@ public class TablistManager {
         if (headerFrames.size() > 1) headerFrame = (headerFrame + 1) % headerFrames.size();
         if (footerFrames.size() > 1) footerFrame = (footerFrame + 1) % footerFrames.size();
 
+        // Tick proxy integration (polls proxy data at its own configured rate)
+        ProxyIntegration.getInstance().onTick(server);
+
         updateAll(server);
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
     public void updateAll(MinecraftServer server) {
         if (!enabled || server == null) return;
+        // Apply BTLP-style group weight sorting teams
+        TablistLayout.getInstance().applySortingTeams(server);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             updatePlayer(player, server);
         }
@@ -207,6 +241,10 @@ public class TablistManager {
             LOGGER.debug("Failed to send tablist packet to {}: {}", player.getName().getString(), e.getMessage());
         }
         updatePlayerTeam(player, server);
+        // Inject fake-player decorative entries (BTLP-style fakePlayers)
+        if (FakePlayerManager.getInstance().isEnabled()) {
+            FakePlayerManager.getInstance().injectForPlayer(player, server);
+        }
     }
 
     // ── Scoreboard Team Prefix (player name row) ──────────────────────────────
@@ -217,7 +255,21 @@ public class TablistManager {
             String suffix = getPermissionSuffix(player);
             String group  = getPermissionGroup(player);
 
-            String rawTeamName = "ne_" + group;
+            // Append AFK suffix to the team suffix when AFK
+            if (showAfkIndicator && isAfk(player)) {
+                suffix = suffix + afkSuffix;
+            }
+
+            // BTLP-style: encode group weight into team name for client-side sort order.
+            // Lower sortKey integer → displayed first.  Same pattern as BTLP's ContextAwareOrdering.
+            String rawTeamName;
+            if (TablistLayout.getInstance().isSortByGroupWeight()) {
+                int weight = getGroupWeight(player);
+                int sortKey = 9999 - Math.min(weight, 9999);
+                rawTeamName = String.format("ne_%04d_%s", sortKey, group);
+            } else {
+                rawTeamName = "ne_" + group;
+            }
             String teamName = rawTeamName.length() > 16 ? rawTeamName.substring(0, 16) : rawTeamName;
 
             ServerScoreboard scoreboard = server.getScoreboard();
