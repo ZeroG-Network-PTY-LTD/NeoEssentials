@@ -13,6 +13,7 @@ import com.zerog.neoessentials.util.ChatDebugUtil;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 /**
  * Handles the /msg command for private messaging between players.
@@ -135,16 +136,16 @@ public class MsgCommand {
                         
                         ChatDebugUtil.debug("MsgCommand - SUCCESS: All checks passed, sending message");
                         
-                        // Send message using PlaceholderAPI for consistent placeholder support
-                        String toTemplate = MessageUtil.localize("commands.neoessentials.msg.format.to");
-                        String fromTemplate = MessageUtil.localize("commands.neoessentials.msg.format.from");
-                        
-                        // Add MESSAGE placeholder and resolve with PlaceholderAPI
-                        String toMessage = toTemplate.replace("{MESSAGE}", message);
-                        String fromMessage = fromTemplate.replace("{MESSAGE}", message);
-                        
-                        String resolvedToMessage = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(target, toMessage);
-                        String resolvedFromMessage = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(sender, fromMessage);
+                        // Get templates (config override > lang key)
+                        String toTemplate  = getMsgFormat("msgFormatTo",  "commands.neoessentials.msg.format.to");
+                        String fromTemplate = getMsgFormat("msgFormatFrom", "commands.neoessentials.msg.format.from");
+
+                        // Resolve templates: {message}/{MESSAGE} + PlaceholderAPI for remaining tokens.
+                        // Pass target context for "To" message ({neoessentials_displayname} = target name)
+                        // Pass sender context for "From" message ({neoessentials_displayname} = sender name)
+                        Map<String, String> vars = Map.of("message", message, "MESSAGE", message);
+                        String resolvedToMessage   = MessageUtil.resolveTemplate(target, toTemplate,   vars);
+                        String resolvedFromMessage = MessageUtil.resolveTemplate(sender, fromTemplate, vars);
                         
                         target.sendSystemMessage(MessageUtil.coloredText(resolvedFromMessage));
                         sender.sendSystemMessage(MessageUtil.coloredText(resolvedToMessage));
@@ -165,5 +166,27 @@ public class MsgCommand {
                 )
             )
         );
+    }
+
+    /**
+     * Retrieves a private-message format template.
+     * Priority: {@code chat.messaging.<configKey>} in config.json → lang key fallback.
+     *
+     * @param configKey  Key name inside {@code chat.messaging} section of config.json
+     * @param langKey    Translation key fallback
+     */
+    static String getMsgFormat(String configKey, String langKey) {
+        try {
+            com.google.gson.JsonObject chatConfig =
+                com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig != null && chatConfig.has("messaging")) {
+                com.google.gson.JsonObject messaging = chatConfig.getAsJsonObject("messaging");
+                if (messaging != null && messaging.has(configKey)) {
+                    String fmt = messaging.get(configKey).getAsString();
+                    if (fmt != null && !fmt.isBlank()) return fmt;
+                }
+            }
+        } catch (Exception ignored) {}
+        return MessageUtil.localize(langKey);
     }
 }
