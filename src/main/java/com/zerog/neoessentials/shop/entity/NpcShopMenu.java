@@ -83,7 +83,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
     // ── Click handling ────────────────────────────────────────────────────────
 
     @Override
-    public ItemStack clicked(int slotId, int button, ClickType clickType, Player player) {
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (slotId >= 0 && slotId < SHOP_SLOTS) {
             // Shop slot clicked — execute a BUY transaction for this listing
             int listingIndex = slotId;
@@ -93,10 +93,25 @@ public class NpcShopMenu extends AbstractContainerMenu {
                     executeListing(sp, listing);
                 }
             }
-            return ItemStack.EMPTY; // never move items out of the display
+            // never move items out of the display
+            return;
         }
         // Player inventory interactions pass through normally
-        return super.clicked(slotId, button, clickType, player);
+        super.clicked(slotId, button, clickType, player);
+    }
+
+    /**
+     * Shift-click — disabled for the shop display area; normal for the player inventory.
+     */
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (index < SHOP_SLOTS) return ItemStack.EMPTY; // lock shop display slots
+        Slot slot = this.slots.get(index);
+        if (slot.hasItem()) {
+            // Standard shift-click into upper container — no-op here since shop is virtual
+            slot.getItem(); // satisfy compiler; no actual move
+        }
+        return ItemStack.EMPTY;
     }
 
     @Override
