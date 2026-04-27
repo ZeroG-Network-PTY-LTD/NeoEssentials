@@ -47,6 +47,38 @@
 
 # ✅ Improvements Done
 
+- **`/nick` Nickname System — Full Visibility Fix** *(build #86)*
+
+  Complete overhaul of the nickname display pipeline — all five failure points fixed.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Tab list shows nickname for all viewers | #86 | ✅ |
+  | Tab list nickname persists across relog | #86 | ✅ |
+  | `{neoessentials_displayname}` resolves to nickname in chat formats | #86 | ✅ |
+  | Hover/click name shows nickname (clickable player names mode) | #86 | ✅ |
+  | Tab header/footer `{displayname}` token shows nickname | #86 | ✅ |
+
+  - `NickCommand.updatePlayerDisplayName()` — replaced `player.setCustomName()` (entity cosmetic, no-op for tab/chat) with `ClientboundPlayerInfoUpdatePacket(UPDATE_DISPLAY_NAME)` broadcast to all connected players
+  - `NickCommand.onPlayerJoin()` — new public method called from `TablistEventHandler`; sends the tab display-name packet on every login to restore the persistent nickname
+  - `DefaultPlaceholderExpansion` — added `getNickOrDisplayName()` helper; `displayname` and `displayname_hover` cases now check `NickCommand.getNickname()` first
+  - `ChatFormatter.formatMessage()` — hover/click injection block reads `NickCommand.getNickname()` for the `§HDNAME§` markup token
+  - `TablistManager.getDisplayName()` — reads `NickCommand.getNickname()` for header/footer `{displayname}` token
+
+---
+
+- **Shop Entity / NPC Shop Compile Fixes** *(build #86)*
+
+  Fixed 11 pre-existing compile errors in the entity shop layer that blocked every build.
+
+  | File | Fix |
+  |---|---|
+  | `NpcShopMenu.java` | `clicked()` return type `ItemStack` → `void` (MC 1.21.1 API); added missing `quickMoveStack()` abstract override |
+  | `ShopNpcEntity.java` | Removed bogus `damageSources()` override (`DamageSource` ≠ `DamageSources`) |
+  | `ShopTransaction.java` | `resolveItem()`, `giveItems()`, `hasSpaceInContainer()` promoted to `public static` |
+
+---
+
 - **Messaging & SocialSpy Improvements** *(build #73)*
 
   Full enhancement pass on `/msg`, `/reply`, and SocialSpy — all four checklist items delivered.

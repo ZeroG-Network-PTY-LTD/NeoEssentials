@@ -4,6 +4,34 @@
 
 ---
 
+## 1.0.2.6+build.86 — 2026-04-27
+
+### 🐛 Bug Fix — `/nick` Nickname Not Showing in Tab List or Chat
+
+`/nick` sent a success message but the nickname was invisible everywhere — the tab list still showed the real username, and chat still showed the real name.
+
+**Root cause:** `updatePlayerDisplayName()` was calling `player.setCustomName()`, which is the entity cosmetic API for mob name tags. On player entities it adds a *second* floating label rather than replacing anything. The tab list, chat format, and all placeholders remained untouched.
+
+**What's fixed:**
+
+- **Tab list** — `NickCommand` now broadcasts `ClientboundPlayerInfoUpdatePacket(UPDATE_DISPLAY_NAME)` to every connected player whenever a nick is set or cleared. The player's row in the tab list shows the nickname immediately.
+- **Chat** — `{neoessentials_displayname}` placeholder now resolves to the player's nickname (if set) before falling back to the scoreboard display name. Works in all chat formats and SocialSpy.
+- **Hover/click names** — when `chat.clickablePlayerNames` is enabled, the hover component now shows the nickname.
+- **Tab header/footer** — `{displayname}` token in tablist layouts now shows the nickname.
+- **Reconnect persistence** — nick is re-applied to the tab list on every login (was lost on relog).
+
+---
+
+### 🐛 Bug Fix — Shop Entity Compile Errors (11 errors → 0)
+
+Pre-existing compile errors in the NPC Shop entity layer prevented the mod from building.
+
+- **`NpcShopMenu`** — `clicked()` return type fixed (`void` in MC 1.21.1, was incorrectly `ItemStack`); missing `quickMoveStack()` abstract override added.
+- **`ShopNpcEntity`** — removed bogus `damageSources()` override with incompatible return type (`DamageSource` vs `DamageSources`).
+- **`ShopTransaction`** — `resolveItem()`, `giveItems()`, `hasSpaceInContainer()` made `public` for cross-package access from `NpcShopMenu`.
+
+---
+
 ## 1.0.2.6+build.77 — 2026-04-27
 
 ### ✨ Feature — BungeeTabListPlus-Inspired Tablist (Independent Mode + Proxy Integration)

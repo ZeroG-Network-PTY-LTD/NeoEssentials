@@ -6,6 +6,49 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.86] — 2026-04-27
+
+### 🐛 Bug Fix — `/nick` Nickname System: Tab List, Chat & Placeholder Integration
+
+The `/nick` command confirmed the nickname was set (sent a success message) but had zero visible effect on the tab list, in chat, or above a player's head. Identical symptoms for self-nick and admin `/setnick`.
+
+#### Root Cause Analysis
+
+| Location | Bug | Impact |
+|---|---|---|
+| `NickCommand.updatePlayerDisplayName()` | Used `player.setCustomName()` — the entity cosmetic API. On players this adds a **second floating label** above the real name tag; it does not interact with the tab list or chat at all. | Tab list unchanged; chat unchanged |
+| `DefaultPlaceholderExpansion` | `{neoessentials_displayname}` resolved via `player.getDisplayName()` which queries the scoreboard — completely unaware of `NickCommand.NICKNAMES`. Same for `{displayname_hover}`. | Nickname invisible in any format using `{neoessentials_displayname}` |
+| `ChatFormatter.formatMessage()` | Hover/click name injection (clickable player names feature) hard-coded `player.getName()` and `player.getDisplayName()` for the `§HNAME§`/`§HDNAME§` markup tokens. | Hover popup showed real name even when a nickname was active |
+| `TablistManager.getDisplayName()` | Checked its own internal `customNames` map (never populated by NickCommand). | Header/footer `{displayname}` token showed real name |
+| Join handling | No packet was sent on reconnect to restore the tab-list display name. | Nickname disappeared from the tab list every relog |
+
+#### Changes
+
+| File | Change |
+|---|---|
+| `NickCommand.java` | `updatePlayerDisplayName()` rewritten: removed `setCustomName()`, now broadcasts `ClientboundPlayerInfoUpdatePacket(UPDATE_DISPLAY_NAME)` to all online players using the same reflection-based packet builder as `FakePlayerManager`. Added `onPlayerJoin(ServerPlayer)` public method to restore tab display name on reconnect. `applyNicknamesToOnlinePlayers()` also broadcasts packets instead of calling `setCustomName()`. Added `buildNickPacket()` helper (mirrors `FakePlayerManager.buildFakePacket()`). |
+| `DefaultPlaceholderExpansion.java` | Added `getNickOrDisplayName()` helper. `displayname` and `displayname_hover` cases now call `NickCommand.getNickname()` first; fall back to `player.getDisplayName()` only when no nick is set. `username`/`username_hover` remain the real game-profile name (correct for admin tools). |
+| `ChatFormatter.java` | Hover/click injection block now reads `NickCommand.getNickname()` for the `§HDNAME§` token, falling back to `player.getDisplayName()`. Ensures clickable nickname in chat when `chat.clickablePlayerNames = true`. |
+| `TablistManager.java` | `getDisplayName()` now checks `NickCommand.getNickname()` before the internal `customNames` map and the real player name. Header/footer `{displayname}` token now shows the nickname. |
+| `TablistEventHandler.java` | `onPlayerJoin()` now calls `NickCommand.onPlayerJoin(player)` after the tablist join handling, restoring the tab display-name packet on every login. |
+
+---
+
+### 🐛 Bug Fix — Shop Entity / NPC Shop Menu Compile Errors (11 errors → 0)
+
+Pre-existing compile errors in the entity shop layer prevented the project from building.
+
+#### Errors Fixed
+
+| File | Error | Fix |
+|---|---|---|
+| `NpcShopMenu.java` | `clicked()` declared `public ItemStack clicked(...)` — MC 1.21.1 changed the return type to `void`. | Changed to `public void clicked(...)`, replaced `return ItemStack.EMPTY` with early `return`, removed return value from `super.clicked()`. |
+| `NpcShopMenu.java` | Missing abstract method `quickMoveStack(Player, int)` — class would not compile without it. | Added `@Override public ItemStack quickMoveStack(Player player, int index)` — returns `ItemStack.EMPTY` for all shop display slots (no shift-click picking); delegates to normal flow for player inventory slots. |
+| `NpcShopMenu.java` | `ShopTransaction.resolveItem()`, `.giveItems()`, `.hasSpaceInContainer()` are package-private; `NpcShopMenu` is in a different package. | Made all three methods `public static` in `ShopTransaction.java`. |
+| `ShopNpcEntity.java` | `damageSources()` overridden with return type `DamageSource` — MC 1.21.1 signature returns `DamageSources` (the registry). Method was a pure no-op (`return super.damageSources()`). | Removed the override entirely. |
+
+---
+
 ## [1.0.2.6+build.77] — 2026-04-27
 
 ### Feature — BungeeTabListPlus-Inspired Tablist Rework (Independent Mode + Proxy Integration)
