@@ -6,6 +6,103 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.73] — 2026-04-27
+
+### Feature — Messaging & SocialSpy Improvements
+
+Full enhancement pass on `/msg`, `/reply`, and SocialSpy to make template formatting
+more robust, debuggable, and admin-configurable.
+
+#### What's New
+
+**1. Centralized `MessageUtil.resolveTemplate()` helper**
+
+New public utility method that replaces the manual `.replace("{MESSAGE}", …)` +
+`PlaceholderAPI.setPlaceholders()` pattern used across `/msg` and `/reply`:
+
+```java
+String out = MessageUtil.resolveTemplate(player, template, Map.of("message", text));
+```
+Resolution order:
+1. Apply `extraVars` — case-insensitive token replacement so both `{MESSAGE}` and `{message}` match.
+2. Run `PlaceholderAPI.setPlaceholders()` for remaining `{neoessentials_*}` and external tokens.
+3. **Debug mode only** — scan the result for any `{TOKEN}` tokens that remain unresolved and log them
+   with `WARN` so admins/developers can spot template misconfigurations immediately.
+
+**2. Improved fallback formatting**
+
+- `MessageUtil.localize()` already falls back to a human-readable key name on parse failure.
+- `resolveTemplate()` never throws — PlaceholderAPI errors are swallowed; the original
+  template is returned safely instead of the server crashing or logging a wall of stacktrace.
+
+**3. Debug logging for missing / misparsed placeholders**
+
+When `logging.enableDebugLogging = true` in `config.json`, the following are now logged:
+- Every `{TOKEN}` placeholder still unresolved after full resolution (per template, per call).
+- SocialSpy pre-resolution: `format='' → resolved=''` so admins can verify their templates.
+- SocialSpy config read: which source (config vs. lang key) was used for the format.
+
+**4. Admin-configurable SocialSpy & PM format in `config.json`**
+
+New `chat.messaging` section added:
+
+```json
+"messaging": {
+  "socialspyFormat":  "",   // Override neoessentials.socialspy.format lang key
+  "msgFormatTo":      "",   // Override commands.neoessentials.msg.format.to
+  "msgFormatFrom":    "",   // Override commands.neoessentials.msg.format.from
+  "replyFormatTo":    "",   // Override commands.neoessentials.reply.format.to
+  "replyFormatFrom":  ""    // Override commands.neoessentials.reply.format.from
+}
+```
+
+Leave any value blank (`""`) to use the language-file default. When set, the config value
+takes priority and changes are picked up on the next message send without restarting.
+
+Supported named placeholders in all five templates:
+
+| Placeholder | Meaning |
+|---|---|
+| `{sender}` | Raw username of message sender |
+| `{receiver}` | Raw username of message recipient |
+| `{message}` / `{MESSAGE}` | The private message text (case-insensitive) |
+| `{sender_displayname}` | Display name of sender (via PlaceholderAPI) |
+| `{receiver_displayname}` | Display name of recipient |
+| `{neoessentials_displayname}` | Context-player display name (resolved via PlaceholderAPI) |
+| Any `{neoessentials_*}` | Any registered PlaceholderAPI token |
+
+**5. SocialSpy format updated to named placeholders**
+
+`neoessentials.socialspy.format` in `en_us.json` updated from `{0}`, `{1}`, `{2}` positional
+args to named vars `{sender}`, `{receiver}`, `{message}`.  Existing customisations using `{0}`,
+`{1}`, `{2}` will stop working — admins should update their lang file or use the new
+`config.json` format override.
+
+SocialSpy broadcast now pre-resolves display names for sender and receiver before iterating
+spy recipients (one PlaceholderAPI call per broadcast instead of one per spy player).
+
+**6. `_configVersion` bumped `20 → 21`**
+
+New `chat.messaging` block added to the shipped `config.json` template.  Existing server
+configs are not auto-migrated (the section is simply absent — all values fall back to lang
+keys, preserving the previous behaviour).
+
+**7. `_langVersion` bumped `14 → 15`**
+
+Updated `neoessentials.socialspy.format` key auto-merges into existing deployments on next
+server start.
+
+| File | Change |
+|---|---|
+| `MessageUtil.java` | Added `resolveTemplate()`; `NAMED_PLACEHOLDER_PATTERN`; `CURRENT_LANG_VERSION` 14→15 |
+| `SocialSpyManager.java` | Config-backed format; named placeholders; display-name pre-resolution; debug logging; LOGGER added |
+| `MsgCommand.java` | Uses `resolveTemplate()`; added `getMsgFormat()` config helper |
+| `ReplyCommand.java` | Uses `resolveTemplate()` + `MsgCommand.getMsgFormat()` |
+| `config.json` | Added `chat.messaging` section; `_configVersion` 20→21 |
+| `en_us.json` | SocialSpy format `{0}/{1}/{2}` → `{sender}/{receiver}/{message}`; `_langVersion` 14→15 |
+
+---
+
 ## [1.0.2.6+build.72] — 2026-04-27
 
 ### Bug Fix — FTB Ranks Adapter: `NoSuchMethodException` on Permission Checks

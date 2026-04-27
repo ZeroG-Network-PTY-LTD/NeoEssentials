@@ -4,6 +4,32 @@
 
 # ✅ Issues That Were Fixed
 
+## ✨ Build #73 — 2026-04-27 — Messaging & SocialSpy Improvements
+
+- **Named placeholder support in message templates → ✅ Implemented in build.73**  
+  `/msg`, `/reply`, and SocialSpy now fully support named placeholders (`{message}`, `{MESSAGE}`, `{sender}`, `{receiver}`, `{sender_displayname}`, `{receiver_displayname}`, `{neoessentials_displayname}`, and any `{neoessentials_*}` PlaceholderAPI token) in all format templates. Both `{message}` and `{MESSAGE}` are accepted (case-insensitive).
+    - Implementation: New `MessageUtil.resolveTemplate(player, template, extraVars)` method: applies named vars first, then PlaceholderAPI, then logs unresolved tokens in debug mode.
+    - `MsgCommand` and `ReplyCommand` migrated to use `resolveTemplate()`.
+
+- **Fallback formatting if template parsing fails → ✅ Implemented in build.73**  
+  `resolveTemplate()` never throws. If PlaceholderAPI fails, the partially-resolved template is returned safely. `MessageUtil.localize()` already had a catch block; `resolveTemplate()` extends that safety to the PlaceholderAPI stage.
+
+- **Debug logging for missing/misparsed placeholders → ✅ Implemented in build.73**  
+  When `logging.enableDebugLogging = true`, any `{TOKEN}` tokens still present in a template after full resolution are logged as `WARN` with the original template and the list of unresolved tokens. SocialSpy adds format-resolution trace logs (which source selected, and the pre/post strings).
+
+- **Admin-configurable SocialSpy formatting in config → ✅ Implemented in build.73**  
+  New `chat.messaging` section in `config.json`:
+  ```json
+  "socialspyFormat":  "",   // override neoessentials.socialspy.format lang key
+  "msgFormatTo":      "",   // override commands.neoessentials.msg.format.to
+  "msgFormatFrom":    "",   // override commands.neoessentials.msg.format.from
+  "replyFormatTo":    "",   // override commands.neoessentials.reply.format.to
+  "replyFormatFrom":  ""    // override commands.neoessentials.reply.format.from
+  ```
+  Leave blank to use lang-file defaults. Config always takes priority when non-empty.
+  SocialSpy format updated to use `{sender}`, `{receiver}`, `{message}` named vars. `_langVersion` bumped 14→15 (auto-merges on start), `_configVersion` 20→21.
+    - Affected files: `MessageUtil.java`, `SocialSpyManager.java`, `MsgCommand.java`, `ReplyCommand.java`, `config.json`, `en_us.json`
+
 ## ✨ Build #72 — 2026-04-27 — FTB Ranks Adapter API Correction
 
 - **FTB Ranks Adapter Permission Check Failure (`NoSuchMethodException`) → ✅ FIXED in build.72**  

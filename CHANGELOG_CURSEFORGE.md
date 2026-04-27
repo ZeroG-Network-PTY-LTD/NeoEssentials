@@ -4,6 +4,27 @@
 
 ---
 
+## 1.0.2.6+build.73 — 2026-04-27
+
+### ✨ Feature — Messaging & SocialSpy Improvements
+
+- **Named placeholder support in all message templates** — `/msg`, `/reply`, and SocialSpy formats now support `{message}`, `{MESSAGE}`, `{sender}`, `{receiver}`, `{sender_displayname}`, `{receiver_displayname}`, and all `{neoessentials_*}` PlaceholderAPI tokens. Both `{message}` and `{MESSAGE}` are accepted (case-insensitive).
+- **Fallback formatting on template parse failures** — `MessageUtil.resolveTemplate()` never throws. If PlaceholderAPI fails, the original template is returned safely.
+- **Debug logging for unresolved placeholders** — when `logging.enableDebugLogging = true`, any `{TOKEN}` still present after full resolution is logged with a WARN, making template misconfigurations easy to diagnose.
+- **Admin-configurable formats in `config.json`** — new `chat.messaging` section lets admins override SocialSpy and PM format templates without editing language files:
+  ```json
+  "messaging": {
+    "socialspyFormat":  "&8[&eSocialSpy&8] &b{sender} &7→ &b{receiver}&7: &f{message}",
+    "msgFormatTo":    "", "msgFormatFrom":   "",
+    "replyFormatTo":  "", "replyFormatFrom":  ""
+  }
+  ```
+  Leave blank to use the language-file default.
+- **SocialSpy format updated** — `neoessentials.socialspy.format` in `en_us.json` now uses `{sender}`, `{receiver}`, `{message}` named vars instead of `{0}`, `{1}`, `{2}`.
+- `_langVersion` → 15 · `_configVersion` → 21
+
+---
+
 ## 1.0.2.6+build.72 — 2026-04-27
 
 ### 🐛 Bug Fix — FTB Ranks Permission Check (`NoSuchMethodException`)
