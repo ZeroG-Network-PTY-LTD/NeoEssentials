@@ -4,6 +4,35 @@
 
 ---
 
+## 1.0.2.6+build.86 — 2026-04-27
+
+### 🐛 Bug Fix — `/nick` Nickname Not Working (Tab List, Chat, Placeholders)
+
+Players were getting "Nickname set" confirmation but their nickname was invisible everywhere — the tab list showed the real username and chat showed the real name.
+
+**What was wrong:** The code was calling `player.setCustomName()`, the entity cosmetic API used for mob name tags. On player entities this adds a second floating label above the head; it has no effect on the tab list or chat.
+
+**What's fixed:**
+
+- **Tab list entry** — nickname now shown in the player list for all viewers immediately on `/nick`, and restored on every relog.
+- **Chat display** — `{neoessentials_displayname}` placeholder now returns the nickname. Works in all chat format strings and SocialSpy.
+- **Hover/click names** — nickname shown in the hover popup when `chat.clickablePlayerNames` is enabled.
+- **Tab header/footer** — `{displayname}` in tablist layouts now reflects the nickname.
+
+**Files changed:** `NickCommand.java`, `DefaultPlaceholderExpansion.java`, `ChatFormatter.java`, `TablistManager.java`, `TablistEventHandler.java`
+
+---
+
+### 🐛 Bug Fix — NPC Shop Compile Errors
+
+Fixed 11 compile errors in the entity shop layer that prevented the mod from building:
+
+- `NpcShopMenu`: `clicked()` return type corrected to `void` (MC 1.21.1); `quickMoveStack()` abstract override added.
+- `ShopNpcEntity`: removed `damageSources()` override with incompatible return type.
+- `ShopTransaction`: `resolveItem()`, `giveItems()`, `hasSpaceInContainer()` made `public`.
+
+---
+
 ## 1.0.2.6+build.77 — 2026-04-27
 
 ### ✨ Feature — BungeeTabListPlus-Inspired Tablist

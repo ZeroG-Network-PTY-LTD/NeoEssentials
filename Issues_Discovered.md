@@ -4,6 +4,52 @@
 
 # ✅ Issues That Were Fixed
 
+## ✨ Build #86 — 2026-04-27 — `/nick` System Non-Functional + Shop Entity Compile Errors
+
+- **`/nick` sets nickname but tab list and chat still show real username → ✅ FIXED in build.86**
+
+  Player reported: "I only get 'Nickname set successfully' but when I open chat or press tab I still have my original name. Others still see my original nickname."
+
+  Five root causes identified and fixed:
+
+  **Root Cause 1 — Wrong API: `player.setCustomName()` has no effect on tab list or chat:**  
+  `NickCommand.updatePlayerDisplayName()` called `player.setCustomName(Component)` — the entity cosmetic API designed for mob name tags. On `ServerPlayer` instances this adds a *second* floating label above the player's standard name tag; it does not touch the tab list, chat format pipelines, or any placeholder resolution. The actual tab list display name in Minecraft 1.21.1 is controlled by `ClientboundPlayerInfoUpdatePacket(UPDATE_DISPLAY_NAME)`.  
+  **Fix:** `updatePlayerDisplayName()` completely rewritten. Now builds a `ClientboundPlayerInfoUpdatePacket.Entry` with the formatted nickname as `displayName` and broadcasts it to every connected player using the same reflection-based packet construction already used by `FakePlayerManager`. When the nick is cleared, `displayName = null` reverts the entry to the game-profile name.  
+  Affected file: `NickCommand.java`
+
+  **Root Cause 2 — `{neoessentials_displayname}` placeholder ignored NickCommand:**  
+  `DefaultPlaceholderExpansion.onPlaceholderRequest()` resolved `displayname` via `player.getDisplayName()`, which queries the scoreboard (team prefix + real name). `NickCommand.NICKNAMES` was never consulted.  
+  **Fix:** Added `getNickOrDisplayName()` helper. `displayname` and `displayname_hover` cases now call `NickCommand.getNickname(player.getUUID())` first; fall back to `player.getDisplayName()` only when no nickname is set.  
+  Affected file: `DefaultPlaceholderExpansion.java`
+
+  **Root Cause 3 — Hover/click name injection bypassed nickname:**  
+  When `chat.clickablePlayerNames` is enabled, `ChatFormatter.formatMessage()` injected `§HDNAME§` markup using `player.getDisplayName().getString()` directly — not aware of nicknames.  
+  **Fix:** The `§HDNAME§` token now reads `NickCommand.getNickname()` first, falling back to `player.getDisplayName()`.  
+  Affected file: `ChatFormatter.java`
+
+  **Root Cause 4 — `TablistManager.getDisplayName()` checked its own unpopulated map:**  
+  `TablistManager` had an internal `customNames` map for player name overrides, but `NickCommand` never wrote to it. So `{displayname}` in tab header/footer always showed the real username.  
+  **Fix:** `getDisplayName()` now reads `NickCommand.getNickname()` directly before the internal map.  
+  Affected file: `TablistManager.java`
+
+  **Root Cause 5 — Nickname not re-applied on relog:**  
+  No packet was sent when a player joined the server, so the stored nickname was invisible until the next `/nick` execution.  
+  **Fix:** `NickCommand.onPlayerJoin(ServerPlayer)` public method added, called from `TablistEventHandler.onPlayerJoin()` after the tablist setup. Sends the display-name packet immediately on login.  
+  Affected files: `NickCommand.java`, `TablistEventHandler.java`
+
+---
+
+- **Shop entity layer — 11 compile errors blocked every build → ✅ FIXED in build.86**
+
+  | Error | File | Fix |
+  |---|---|---|
+  | `clicked()` return type `ItemStack` incompatible with `void` (MC 1.21.1) | `NpcShopMenu.java` | Changed return type to `void`; removed `ItemStack` return values |
+  | Missing abstract method `quickMoveStack(Player, int)` | `NpcShopMenu.java` | Added override; returns `ItemStack.EMPTY` for display slots |
+  | `resolveItem()`, `giveItems()`, `hasSpaceInContainer()` not accessible outside package | `NpcShopMenu.java` via `ShopTransaction.java` | Promoted all three to `public static` in `ShopTransaction` |
+  | `damageSources()` return type `DamageSource` incompatible with `DamageSources` | `ShopNpcEntity.java` | Removed no-op override entirely |
+
+---
+
 ## ✨ Build #78 — 2026-04-27 — /back History Chain Corruption Fix
 
 - **`/back` acting weird after using warps/tps/back multiple times → ✅ FIXED in build.78**  
