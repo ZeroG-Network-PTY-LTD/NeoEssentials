@@ -1,14 +1,23 @@
 {
-  "_configVersion": 2,
+  "_configVersion": 3,
   "_comment":  "================================================================",
   "_comment2": "  NeoEssentials — Tablist Configuration  (tablist.json)",
   "_comment3": "  Reload in-game:  /tablist reload",
-  "_comment4": "================================================================",
+  "_comment4": "  BungeeTabListPlus-inspired. Supports independent mode + proxy.",
+  "_comment5": "================================================================",
 
   "tablist": {
 
     "_doc_enabled": "Set false to restore vanilla tablist appearance.",
     "enabled": true,
+
+    "_doc_independentMode": [
+      "When true (default), NeoEssentials is the sole owner of the tablist.",
+      "Proxy integration (BungeeCord/Velocity) is used for data only —",
+      "NeoEssentials still renders the header/footer/player-rows itself.",
+      "Set false only if you want a proxy-side plugin to own the tablist."
+    ],
+    "independentMode": true,
 
     "_doc_refreshInterval": "How often the tablist header/footer updates, in ticks (20 = 1 s). Lower → smoother animation, more network traffic.",
     "refreshInterval": 20,
@@ -112,6 +121,48 @@
       "add them manually if you want them to survive /tablist reload."
     ],
     "players": {
+    },
+
+    "_doc_proxy": [
+      "BungeeTabListPlus-style proxy integration.",
+      "Enable when this server runs behind a BungeeCord or Velocity proxy.",
+      "Set enabled=true and configure serverLabel with a display name for this server.",
+      "Placeholders: {network_online} {server_online:NAME} {current_server} {server_label}"
+    ],
+    "proxy": {
+      "enabled": false,
+      "serverLabel": "Main",
+      "pollIntervalTicks": 100,
+      "showNetworkPlayers": false,
+      "knownServers": []
+    },
+
+    "_doc_fakePlayers": [
+      "BTLP-style fake (decorative) tab entries.",
+      "Use for separator rows, section headers, or padding slots.",
+      "Fields: name (display text), latency (ms; -1=no bar), id (unique slot key), listed (show in tab).",
+      "Supports all NeoEssentials color/format syntax in 'name'."
+    ],
+    "fakePlayers": [],
+
+    "_doc_layout": [
+      "BTLP-inspired tab layout and player-sorting options.",
+      "columns: 1–4 visual columns in the tab list.",
+      "sortByGroupWeight: sort players by permission group weight (admins first).",
+      "groupSections: insert separator rows between permission-group buckets.",
+      "playersByServer: group players by proxy server (requires proxy.enabled=true).",
+      "excludeServers: server names fully excluded from this tab (no players shown).",
+      "hiddenServers: server names whose players are hidden but the server may appear.",
+      "maxSlotsPerColumn: slots per column (default 20; 4×20 = 80-slot BTLP grid)."
+    ],
+    "layout": {
+      "columns": 1,
+      "sortByGroupWeight": true,
+      "groupSections": false,
+      "playersByServer": false,
+      "excludeServers": [],
+      "hiddenServers": [],
+      "maxSlotsPerColumn": 20
     },
 
     "_doc_examples": [

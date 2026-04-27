@@ -2,18 +2,13 @@ package com.zerog.neoessentials.tablist;
 
 import com.zerog.neoessentials.config.ConfigManager;
 import com.google.gson.JsonObject;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
-import net.minecraft.network.protocol.common.custom.DiscardedPayload;
-import io.netty.buffer.Unpooled;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,7 +47,8 @@ public class ProxyIntegration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyIntegration.class);
 
     /** BungeeCord plugin-messaging channel (modern ResourceLocation style). */
-    public static final ResourceLocation BUNGEE_CHANNEL = new ResourceLocation("bungeecord", "main");
+    public static final ResourceLocation BUNGEE_CHANNEL =
+        ResourceLocation.fromNamespaceAndPath("bungeecord", "main");
     /** Legacy channel name sent in the REGISTER payload. */
     public static final String BUNGEE_CHANNEL_LEGACY = "BungeeCord";
 
@@ -205,24 +201,22 @@ public class ProxyIntegration {
 
     /**
      * Sends a BungeeCord sub-channel message via plugin messaging.
-     * Sub-channel strings are UTF-encoded as per BungeeCord protocol.
+     *
+     * <p><strong>NeoForge 1.21.1 note:</strong> {@code CustomPacketPayload} no longer
+     * exposes a {@code write()} method — encoding is handled through the registered
+     * {@code StreamCodec}.  Full BungeeCord outbound messaging therefore requires
+     * registering a {@code StreamCodec} on the mod-event bus at startup, which is
+     * deferred to a future build. The proxy integration is <em>disabled by default</em>
+     * ({@code proxy.enabled=false} in {@code tablist.json}), so this stub only runs
+     * when explicitly opted in.
+     *
+     * <p>Inbound BungeeCord responses (plugin-message channel responses from the proxy)
+     * are received via the {@code onPluginMessage} callback and work independently of
+     * this method.
      */
     private void sendBungeeMessage(ServerPlayer player, String... parts) {
-        if (player == null) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(baos);
-            for (String part : parts) out.writeUTF(part);
-            byte[] payload = baos.toByteArray();
-
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.wrappedBuffer(payload));
-            // Use DiscardedPayload which wraps an arbitrary channel + bytes
-            player.connection.send(new ClientboundCustomPayloadPacket(
-                new DiscardedPayload(BUNGEE_CHANNEL, buf)
-            ));
-        } catch (Exception e) {
-            LOGGER.debug("ProxyIntegration: failed to send bungee message: {}", e.getMessage());
-        }
+        LOGGER.debug("ProxyIntegration: sendBungeeMessage stub called (channel=bungeecord:main, parts={}) — " +
+            "outbound BungeeCord messaging pending StreamCodec registration in a future build.", parts.length);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

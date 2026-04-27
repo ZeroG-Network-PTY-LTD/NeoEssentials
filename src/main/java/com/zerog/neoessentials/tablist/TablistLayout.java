@@ -2,7 +2,6 @@ package com.zerog.neoessentials.tablist;
 
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -221,8 +220,7 @@ public class TablistLayout {
             String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : mgr.getDefaultGroup();
             var grp = mgr.getGroup(groupName);
             if (grp != null) {
-                // Prefer explicit weight field; fall back to priority
-                try { return grp.getWeight(); } catch (Exception ignored) {}
+                // Use priority (NeoEssentials PermissionGroup uses priority, not weight)
                 try { return grp.getPriority(); } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}

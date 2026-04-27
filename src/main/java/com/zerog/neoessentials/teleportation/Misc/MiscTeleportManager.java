@@ -37,6 +37,10 @@ public class MiscTeleportManager {
     private final Map<UUID, TeleportLocation> backLocations = new ConcurrentHashMap<>();
     private final Map<UUID, TeleportLocation> deathLocations = new ConcurrentHashMap<>();
 
+    // Timestamps (ms) for when each location type was last saved — used to pick the most recent one
+    private final Map<UUID, Long> backLocationTimestamps = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> deathLocationTimestamps = new ConcurrentHashMap<>();
+
     // Persistent storage — survives server restarts
     private final PlayerDataStore dataStore = new PlayerDataStore("back_locations");
     
@@ -97,6 +101,10 @@ public class MiscTeleportManager {
             TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("deathLocation"));
             if (loc != null) {
                 deathLocations.put(playerId, loc);
+                // Restore persisted timestamp if available
+                if (data.has("deathLocationTs")) {
+                    deathLocationTimestamps.put(playerId, data.get("deathLocationTs").getAsLong());
+                }
             }
             return loc;
         }
@@ -115,6 +123,10 @@ public class MiscTeleportManager {
             TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("backLocation"));
             if (loc != null) {
                 backLocations.put(playerId, loc);
+                // Restore persisted timestamp if available
+                if (data.has("backLocationTs")) {
+                    backLocationTimestamps.put(playerId, data.get("backLocationTs").getAsLong());
+                }
             }
             return loc;
         }
@@ -132,13 +144,19 @@ public class MiscTeleportManager {
 
             if (backLoc != null) {
                 data.add("backLocation", backLoc.toJson());
+                Long ts = backLocationTimestamps.get(playerId);
+                if (ts != null) data.addProperty("backLocationTs", ts);
             } else {
                 data.remove("backLocation");
+                data.remove("backLocationTs");
             }
             if (deathLoc != null) {
                 data.add("deathLocation", deathLoc.toJson());
+                Long ts = deathLocationTimestamps.get(playerId);
+                if (ts != null) data.addProperty("deathLocationTs", ts);
             } else {
                 data.remove("deathLocation");
+                data.remove("deathLocationTs");
             }
             dataStore.save(playerId, data);
         } catch (Exception e) {
@@ -149,7 +167,9 @@ public class MiscTeleportManager {
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Save a player's current location as their back location
+     * Save a player's current location as their back location.
+     * Also records a timestamp so that /back always uses whichever location
+     * (death or teleport) was saved most recently — matching Essentials' behaviour.
      */
     public void saveBackLocation(ServerPlayer player) {
         if (!enableTeleportBack) {
@@ -160,6 +180,7 @@ public class MiscTeleportManager {
         TeleportLocation backLocation = new TeleportLocation(player);
         
         backLocations.put(playerId, backLocation);
+        backLocationTimestamps.put(playerId, System.currentTimeMillis());
         persistLocations(playerId);
 
         LOGGER.debug("Saved back location for {}: {}", 
@@ -167,7 +188,8 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Save a player's death location
+     * Save a player's death location.
+     * Also records a timestamp so /back picks whichever location was saved most recently.
      */
     public void saveDeathLocation(ServerPlayer player) {
         if (!enableDeathBack) {
@@ -178,6 +200,7 @@ public class MiscTeleportManager {
         TeleportLocation deathLocation = new TeleportLocation(player);
         
         deathLocations.put(playerId, deathLocation);
+        deathLocationTimestamps.put(playerId, System.currentTimeMillis());
         persistLocations(playerId);
 
         player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved"));
@@ -187,31 +210,37 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Teleport player back to their previous location or death location
-     * (prioritizes death location; clears it after a successful teleport).
-     * Loads persisted locations from disk if no in-memory entry is found so
-     * that /back continues to work after a server restart.
+     * Teleport player back to their previous location or death location.
+     *
+     * <p>Uses the <em>most recently saved</em> location — either a death point
+     * (saved on death) or a teleport origin (saved by /tp, /tpa, /home, etc.).
+     * This mirrors Essentials' behaviour where {@code setLastLocation()} is called
+     * by both the death listener and the teleport listener, and whichever happened
+     * last is the one used by {@code /back}.</p>
+     *
+     * <p>Disk-backed: loads persisted locations if not in memory so /back
+     * continues to work after a server restart.</p>
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
         // Load from disk if not in memory (survives server restarts)
         TeleportLocation deathLocation = loadDeathLocation(playerId);
         TeleportLocation backLocation  = loadBackLocation(playerId);
-        TeleportLocation targetLocation = null;
+        TeleportLocation targetLocation;
         final boolean usedDeath;
 
-        // If death location exists and player is not already at that location, prioritize it
-        if (deathLocation != null && !isPlayerAtLocation(player, deathLocation)) {
+        // Pick the most recently saved location. If timestamps are missing (e.g.
+        // loaded from a pre-fix save) fall back to death-first for safety.
+        long deathTs = deathLocationTimestamps.getOrDefault(playerId, 0L);
+        long backTs  = backLocationTimestamps.getOrDefault(playerId, 0L);
+
+        if (deathLocation != null && (backLocation == null || deathTs >= backTs)) {
             targetLocation = deathLocation;
             usedDeath = true;
         } else if (backLocation != null) {
             targetLocation = backLocation;
             usedDeath = false;
         } else {
-            usedDeath = false;
-        }
-
-        if (targetLocation == null) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_back_location"));
             return false;
         }
@@ -233,9 +262,11 @@ public class MiscTeleportManager {
             }
         }
 
-        // Save current location before teleporting back
+        // Capture current location BEFORE teleporting — this becomes the new back
+        // location so the player can /back again to undo the /back.
         TeleportLocation currentLocation = new TeleportLocation(player);
         final TeleportLocation finalTargetLocation = targetLocation;
+
         // Bypass warmup for players with the permission
         boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.warmup")
             || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.back.bypass.warmup");
@@ -245,11 +276,13 @@ public class MiscTeleportManager {
         }
         TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
-                // Update back location to where they just came from
+                // Store where the player was — lets them /back again to undo
                 backLocations.put(playerId, currentLocation);
+                backLocationTimestamps.put(playerId, System.currentTimeMillis());
                 if (usedDeath) {
-                    // Clear death location after successful teleport
+                    // Clear the death location after a successful /back to it
                     deathLocations.remove(playerId);
+                    deathLocationTimestamps.remove(playerId);
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
                 } else {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
@@ -288,8 +321,9 @@ public class MiscTeleportManager {
             return false;
         }
         
-        // Save current location as back location
-        saveBackLocation(player);
+        // Save current location as back location (with timestamp)
+        backLocations.put(playerId, new TeleportLocation(player));
+        backLocationTimestamps.put(playerId, System.currentTimeMillis());
         
         // Perform the teleport
         int delayTicks = teleportDelay * 20;
@@ -299,6 +333,7 @@ public class MiscTeleportManager {
                 
                 // Clear death location after successful teleport
                 deathLocations.remove(playerId);
+                deathLocationTimestamps.remove(playerId);
                 persistLocations(playerId);
                 
                 LOGGER.info("Player {} teleported to death location: {}", 
@@ -321,6 +356,8 @@ public class MiscTeleportManager {
         UUID playerId = player.getUUID();
         backLocations.remove(playerId);
         deathLocations.remove(playerId);
+        backLocationTimestamps.remove(playerId);
+        deathLocationTimestamps.remove(playerId);
         dataStore.delete(playerId);
         
         LOGGER.debug("Cleared back locations for {}", player.getName().getString());
@@ -605,6 +642,8 @@ public class MiscTeleportManager {
         dataStore.flushAll();
         backLocations.clear();
         deathLocations.clear();
+        backLocationTimestamps.clear();
+        deathLocationTimestamps.clear();
         LOGGER.info("Cleared all misc teleport data");
     }
 
