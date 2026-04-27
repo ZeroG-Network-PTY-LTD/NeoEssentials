@@ -663,15 +663,15 @@
       "resourcePackPrompt": "This server uses custom badge images. Please accept the resource pack for the best experience!",
       "resourcePackPrompt_comment": "Message shown to players when sending the resource pack.",
       "rankBadges": {
-        "owner": "👑",
+        "owner": "",
         "admin": "⭐",
-        "moderator": "🛡️",
-        "helper": "🔧",
-        "vip": "💎",
-        "vipplus": "💎💎",
-        "mvp": "🌟",
-        "builder": "🔨",
-        "developer": "💻"
+        "moderator": "️",
+        "helper": "",
+        "vip": "",
+        "vipplus": "",
+        "mvp": "",
+        "builder": "",
+        "developer": ""
       },
       "rankBadges_comment": "Badge emojis for each rank. If useCustomImages is true, the mod looks for <rankname>.png files in the badges folder.",
       "statusIcons": {
@@ -679,10 +679,10 @@
         "enabled_comment": "Show status icons (AFK, vanished, etc.) in chat.",
         "iconPosition": "after_name",
         "iconPosition_comment": "Where to show status icons: 'before_name', 'after_name', 'after_message'.",
-        "afk": "💤",
-        "vanished": "👻",
-        "streaming": "📺",
-        "muted": "🔇"
+        "afk": "",
+        "vanished": "",
+        "streaming": "",
+        "muted": ""
       }
     },
     "antiSpam": {

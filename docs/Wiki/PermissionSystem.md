@@ -1,10 +1,10 @@
 # NeoEssentials — Permission System
 
-> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28  
+> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28
 > **Source of truth:** `PermissionRegistry.registerAllPermissions()` in the mod source.  
 > All nodes listed here are **actively registered** and recognised by the permission engine.  
 > Nodes marked `✅ default` are granted to every player automatically (including non-OP).  
-> Nodes marked `🔒 op-only` require explicit grant or OP level 2+ unless overridden.
+> Nodes marked ` op-only` require explicit grant or OP level 2+ unless overridden.
 
 ---
 
@@ -56,7 +56,7 @@
 > | `opsBypassPermissions: true` | **Before** any permission check | OPs always get in, permission system not consulted at all |
 > | `vanillaOpFallback: true` | **After** all checks return false | OP gets in only when every other system denied or failed — a safety net, not a bypass |
 >
-> Most servers should keep **both** `true` (the defaults).  
+> Most servers should keep **both** `true` (the defaults).
 > Set `opsBypassPermissions: false` + `vanillaOpFallback: true` if you want OPs to be subject to normal permission management in LuckPerms/FTB Ranks, while still having a lockout-prevention net for when those systems fail.
 
 **Permission data file:** `neoessentials/permissions.json`
@@ -462,7 +462,7 @@ boolean external  = perms.isUsingExternalAdapter(); // true = LuckPerms/FTB Rank
 > **Negative permissions** — prefix a node with `-` to explicitly deny it even if a wildcard grants it.  
 > Example: give `neoessentials.*` then add `-neoessentials.item.enchant.unsafe` to deny unsafe enchanting.
 
-> **Note on startup warnings (fixed in v1.0.2.6+build.7):**  
+> **Note on startup warnings (fixed in v1.0.2.6+build.7):**
 > Older builds logged `WARN: Invalid permission format: neoessentials.spawner.*` (and `fireball.*`,
 > `warps.*`) at startup because the internal permission validator did not recognise the `.*` suffix.
 > The permissions themselves **worked at runtime** in all versions; only the registration log was
@@ -508,23 +508,23 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.economy.balance` | ✅ default | Check own balance | `/balance` |
-| `neoessentials.economy.balance.others` | 🔒 op-only | Check another player's balance | `/balance <player>` |
+| `neoessentials.economy.balance.others` |  op-only | Check another player's balance | `/balance <player>` |
 | `neoessentials.economy.pay` | ✅ default | Send money to online players | `/pay` |
-| `neoessentials.economy.pay.offline` | 🔒 op-only | Send money to offline players | `/pay` |
+| `neoessentials.economy.pay.offline` |  op-only | Send money to offline players | `/pay` |
 | `neoessentials.economy.pay.toggle` | ✅ default | Toggle receiving payments | `/paytoggle` |
 | `neoessentials.economy.baltop` | ✅ default | View balance leaderboard | `/baltop [page]` |
-| `neoessentials.economy.baltop.exempt` | 🔒 op-only | Exclude self from baltop ranking | |
-| `neoessentials.economy.eco` | 🔒 op-only | Run eco admin commands | `/eco` |
-| `neoessentials.economy.admin` | 🔒 op-only | Economy administration (parent node) | `/eco` |
-| `neoessentials.economy.admin.give` | 🔒 op-only | Give money to a player | `/eco give` |
-| `neoessentials.economy.admin.take` | 🔒 op-only | Take money from a player | `/eco take` |
-| `neoessentials.economy.admin.set` | 🔒 op-only | Set a player's balance | `/eco set` |
-| `neoessentials.economy.admin.reset` | 🔒 op-only | Reset a player's balance to starting balance | `/eco reset` |
+| `neoessentials.economy.baltop.exempt` |  op-only | Exclude self from baltop ranking | |
+| `neoessentials.economy.eco` |  op-only | Run eco admin commands | `/eco` |
+| `neoessentials.economy.admin` |  op-only | Economy administration (parent node) | `/eco` |
+| `neoessentials.economy.admin.give` |  op-only | Give money to a player | `/eco give` |
+| `neoessentials.economy.admin.take` |  op-only | Take money from a player | `/eco take` |
+| `neoessentials.economy.admin.set` |  op-only | Set a player's balance | `/eco set` |
+| `neoessentials.economy.admin.reset` |  op-only | Reset a player's balance to starting balance | `/eco reset` |
 | `neoessentials.worth` | ✅ default | Check sell value of item | `/worth [item] [amount]` |
 | `neoessentials.sell` | ✅ default | Use the sell command | `/sell` |
 | `neoessentials.sell.hand` | ✅ default | Sell item in hand | `/sell hand [amount]` |
 | `neoessentials.sell.bulk` | ✅ default | Sell entire inventory | `/sell inventory\|all` |
-| `neoessentials.setworth` | 🔒 op-only | Set item sell prices | `/setworth <item\|hand> <price\|remove>` |
+| `neoessentials.setworth` |  op-only | Set item sell prices | `/setworth <item\|hand> <price\|remove>` |
 
 ---
 
@@ -533,15 +533,15 @@ These are **registered automatically** when a kit is created via `/createkit`.
 #### Admin Teleport
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.teleport.admin` | 🔒 op-only | Admin teleport (parent node) | |
-| `neoessentials.teleport.admin.tp` | 🔒 op-only | Teleport a player to another | `/tp <player> <target>` |
-| `neoessentials.teleport.tp` | 🔒 op-only | Teleport self (alias) | `/tp <player>` |
-| `neoessentials.teleport.admin.tphere` | 🔒 op-only | Bring a player to you | `/tphere` |
-| `neoessentials.teleport.tphere` | 🔒 op-only | Bring a player to you (alias) | `/tphere` |
-| `neoessentials.teleport.admin.tpall` | 🔒 op-only | Teleport all players to a target | `/tpall` |
-| `neoessentials.teleport.admin.tppos` | 🔒 op-only | Teleport to coordinates | `/tppos` |
-| `neoessentials.teleport.tppos` | 🔒 op-only | Teleport to coordinates (alias) | `/tppos` |
-| `neoessentials.teleport.admin.tpo` | 🔒 op-only | Teleport to offline player's last location | `/tpo` |
+| `neoessentials.teleport.admin` |  op-only | Admin teleport (parent node) | |
+| `neoessentials.teleport.admin.tp` |  op-only | Teleport a player to another | `/tp <player> <target>` |
+| `neoessentials.teleport.tp` |  op-only | Teleport self (alias) | `/tp <player>` |
+| `neoessentials.teleport.admin.tphere` |  op-only | Bring a player to you | `/tphere` |
+| `neoessentials.teleport.tphere` |  op-only | Bring a player to you (alias) | `/tphere` |
+| `neoessentials.teleport.admin.tpall` |  op-only | Teleport all players to a target | `/tpall` |
+| `neoessentials.teleport.admin.tppos` |  op-only | Teleport to coordinates | `/tppos` |
+| `neoessentials.teleport.tppos` |  op-only | Teleport to coordinates (alias) | `/tppos` |
+| `neoessentials.teleport.admin.tpo` |  op-only | Teleport to offline player's last location | `/tpo` |
 
 #### Teleport Requests (TPA)
 | Node | Default | Description | Command |
@@ -559,7 +559,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.teleport.home.set` | ✅ default | Set a home location | `/sethome` |
 | `neoessentials.teleport.home.delete` | ✅ default | Delete a home | `/delhome` |
 | `neoessentials.teleport.home.list` | ✅ default | List homes | `/homes` |
-| `neoessentials.teleport.home.others` | 🔒 op-only | Access other players' homes | `/home <player>:<name>` |
+| `neoessentials.teleport.home.others` |  op-only | Access other players' homes | `/home <player>:<name>` |
 | `neoessentials.home.<number>` | — | **Dynamic** — sets home limit (see above) | |
 
 #### Warp System
@@ -567,25 +567,25 @@ These are **registered automatically** when a kit is created via `/createkit`.
 |---|---|---|---|
 | `neoessentials.teleport.warp` | ✅ default | Use warps | `/warp <name>` |
 | `neoessentials.teleport.warp.list` | ✅ default | List available warps | `/warps [page]`, `/warp` |
-| `neoessentials.teleport.warp.others` | 🔒 op-only | Warp another player to a warp | `/warp <name> <player>` |
-| `neoessentials.teleport.warp.create` | 🔒 op-only | Create a warp | `/setwarp` |
-| `neoessentials.teleport.warp.delete` | 🔒 op-only | Delete a warp | `/delwarp` |
+| `neoessentials.teleport.warp.others` |  op-only | Warp another player to a warp | `/warp <name> <player>` |
+| `neoessentials.teleport.warp.create` |  op-only | Create a warp | `/setwarp` |
+| `neoessentials.teleport.warp.delete` |  op-only | Delete a warp | `/delwarp` |
 | `neoessentials.warps.<name>` | — | **Per-warp** — access to specific warp (when `perWarpPermission: true` in config) | |
-| `neoessentials.warps.*` | 🔒 op-only | Access ALL warps regardless of per-warp permissions | |
+| `neoessentials.warps.*` |  op-only | Access ALL warps regardless of per-warp permissions | |
 | `neoessentials.teleport.pwarp` | ✅ default | Use player warps | `/pwarp` |
 | `neoessentials.teleport.pwarp.create` | ✅ default | Create a player warp | `/pwarp create` |
 | `neoessentials.teleport.pwarp.delete` | ✅ default | Delete a player warp | `/pwarp delete` |
 | `neoessentials.teleport.pwarp.list` | ✅ default | List player warps | `/pwarp list` |
 | `neoessentials.warp.limit.<number>` | — | **Dynamic** — sets player-warp limit | |
-| `neoessentials.warp.limit.unlimited` | 🔒 op-only | Unlimited player warps | |
+| `neoessentials.warp.limit.unlimited` |  op-only | Unlimited player warps | |
 
 #### Spawn System
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.teleport.spawn` | ✅ default | Teleport to spawn | `/spawn` |
-| `neoessentials.teleport.spawn.set` | 🔒 op-only | Set the server spawn | `/setspawn` |
-| `neoessentials.teleport.spawn.info` | 🔒 op-only | View spawn info | `/spawninfo` |
-| `neoessentials.teleport.spawn.clear` | 🔒 op-only | Clear spawn location | `/clearspawn` |
+| `neoessentials.teleport.spawn.set` |  op-only | Set the server spawn | `/setspawn` |
+| `neoessentials.teleport.spawn.info` |  op-only | View spawn info | `/spawninfo` |
+| `neoessentials.teleport.spawn.clear` |  op-only | Clear spawn location | `/clearspawn` |
 
 #### Misc Teleport
 | Node | Default | Description | Command |
@@ -596,7 +596,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.teleport.jump` | ✅ default | Teleport through walls | `/jump` |
 | `neoessentials.teleport.jumpto` | ✅ default | Teleport to block you're looking at | `/jumpto` |
 | `neoessentials.teleport.tpr` | ✅ default | Random teleport | `/tpr` |
-| `neoessentials.teleport.settpr` | 🔒 op-only | Set random teleport centre | `/settpr` |
+| `neoessentials.teleport.settpr` |  op-only | Set random teleport centre | `/settpr` |
 
 ---
 
@@ -606,17 +606,17 @@ These are **registered automatically** when a kit is created via `/createkit`.
 |---|---|---|---|
 | `neoessentials.kits.use` | ✅ default | Use the kit system | `/kit` |
 | `neoessentials.kits.list` | ✅ default | List available kits | `/kit`, `/listkits` |
-| `neoessentials.kits.nocooldown` | 🔒 op-only | Bypass all kit cooldowns | |
-| `neoessentials.kit.others` | 🔒 op-only | Give a kit to another player | `/kit <name> <player>` |
-| `neoessentials.kitreset` | 🔒 op-only | Reset own kit cooldown | `/kitreset <kit>` |
-| `neoessentials.kitreset.others` | 🔒 op-only | Reset another player's kit cooldown | `/kitreset <kit> <player>` |
-| `neoessentials.kits.create` | 🔒 op-only | Create a kit from inventory | `/createkit` |
-| `neoessentials.kits.delete` | 🔒 op-only | Delete a kit | `/delkit` |
-| `neoessentials.kits.override` | 🔒 op-only | Override all kit restrictions | |
-| `neoessentials.kits.admin` | 🔒 op-only | Kit administration (parent) | `/kit admin` |
-| `neoessentials.kits.admin.create` | 🔒 op-only | Admin kit creation | |
-| `neoessentials.kits.admin.delete` | 🔒 op-only | Admin kit deletion | |
-| `neoessentials.kits.admin.list` | 🔒 op-only | List all kits (admin) | |
+| `neoessentials.kits.nocooldown` |  op-only | Bypass all kit cooldowns | |
+| `neoessentials.kit.others` |  op-only | Give a kit to another player | `/kit <name> <player>` |
+| `neoessentials.kitreset` |  op-only | Reset own kit cooldown | `/kitreset <kit>` |
+| `neoessentials.kitreset.others` |  op-only | Reset another player's kit cooldown | `/kitreset <kit> <player>` |
+| `neoessentials.kits.create` |  op-only | Create a kit from inventory | `/createkit` |
+| `neoessentials.kits.delete` |  op-only | Delete a kit | `/delkit` |
+| `neoessentials.kits.override` |  op-only | Override all kit restrictions | |
+| `neoessentials.kits.admin` |  op-only | Kit administration (parent) | `/kit admin` |
+| `neoessentials.kits.admin.create` |  op-only | Admin kit creation | |
+| `neoessentials.kits.admin.delete` |  op-only | Admin kit deletion | |
+| `neoessentials.kits.admin.list` |  op-only | List all kits (admin) | |
 | `neoessentials.kits.<kitname>` | — | **Dynamic** — access to specific kit | |
 | `neoessentials.kits.<kitname>.nocooldown` | — | **Dynamic** — bypass cooldown for specific kit | |
 
@@ -626,31 +626,31 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.fly` | 🔒 op-only | Toggle flight mode | `/fly [on\|off]` |
-| `neoessentials.fly.others` | 🔒 op-only | Toggle flight for another player | `/fly <player> [on\|off]` |
-| `neoessentials.god` | 🔒 op-only | Toggle god mode (invincibility) | `/god [on\|off]` |
-| `neoessentials.god.others` | 🔒 op-only | Toggle god mode for another player | `/god <player> [on\|off]` |
-| `neoessentials.heal` | 🔒 op-only | Restore own health and hunger | `/heal` |
-| `neoessentials.heal.others` | 🔒 op-only | Restore another player's health | `/heal <player>` |
-| `neoessentials.feed` | 🔒 op-only | Restore own hunger | `/feed` |
-| `neoessentials.feed.others` | 🔒 op-only | Restore another player's hunger | `/feed <player>` |
-| `neoessentials.speed` | 🔒 op-only | Set own walk or fly speed (0–10) | `/speed [walk\|fly] <0-10>` |
-| `neoessentials.speed.others` | 🔒 op-only | Set another player's speed | `/speed [walk\|fly] <0-10> <player>` |
+| `neoessentials.fly` |  op-only | Toggle flight mode | `/fly [on\|off]` |
+| `neoessentials.fly.others` |  op-only | Toggle flight for another player | `/fly <player> [on\|off]` |
+| `neoessentials.god` |  op-only | Toggle god mode (invincibility) | `/god [on\|off]` |
+| `neoessentials.god.others` |  op-only | Toggle god mode for another player | `/god <player> [on\|off]` |
+| `neoessentials.heal` |  op-only | Restore own health and hunger | `/heal` |
+| `neoessentials.heal.others` |  op-only | Restore another player's health | `/heal <player>` |
+| `neoessentials.feed` |  op-only | Restore own hunger | `/feed` |
+| `neoessentials.feed.others` |  op-only | Restore another player's hunger | `/feed <player>` |
+| `neoessentials.speed` |  op-only | Set own walk or fly speed (0–10) | `/speed [walk\|fly] <0-10>` |
+| `neoessentials.speed.others` |  op-only | Set another player's speed | `/speed [walk\|fly] <0-10> <player>` |
 | `neoessentials.ext` | ✅ default | Extinguish own fire | `/ext` |
-| `neoessentials.ext.others` | 🔒 op-only | Extinguish another player | `/ext <player>` |
-| `neoessentials.burn` | 🔒 op-only | Set a player on fire | `/burn <player> [seconds]` |
-| `neoessentials.give` | 🔒 op-only | Give items to players | `/give <player> <item> [amount]` |
-| `neoessentials.more` | 🔒 op-only | Fill held stack to max | `/more [amount]` |
-| `neoessentials.hat` | 🔒 op-only | Wear held item as helmet | `/hat` |
+| `neoessentials.ext.others` |  op-only | Extinguish another player | `/ext <player>` |
+| `neoessentials.burn` |  op-only | Set a player on fire | `/burn <player> [seconds]` |
+| `neoessentials.give` |  op-only | Give items to players | `/give <player> <item> [amount]` |
+| `neoessentials.more` |  op-only | Fill held stack to max | `/more [amount]` |
+| `neoessentials.hat` |  op-only | Wear held item as helmet | `/hat` |
 | `neoessentials.exp` | ✅ default | View own XP info | `/exp [show]` |
-| `neoessentials.exp.set` | 🔒 op-only | Set own XP | `/exp set <amount>` |
-| `neoessentials.exp.set.others` | 🔒 op-only | Set another player's XP | `/exp set <amount> <player>` |
-| `neoessentials.exp.give` | 🔒 op-only | Give XP to self | `/exp give <amount>` |
-| `neoessentials.exp.give.others` | 🔒 op-only | Give XP to another player | `/exp give <amount> <player>` |
-| `neoessentials.sudo` | 🔒 op-only | Run a command as another player | `/sudo <player> <command>` |
-| `neoessentials.sudo.exempt` | 🔒 op-only | Cannot be sudo'd by non-console | |
+| `neoessentials.exp.set` |  op-only | Set own XP | `/exp set <amount>` |
+| `neoessentials.exp.set.others` |  op-only | Set another player's XP | `/exp set <amount> <player>` |
+| `neoessentials.exp.give` |  op-only | Give XP to self | `/exp give <amount>` |
+| `neoessentials.exp.give.others` |  op-only | Give XP to another player | `/exp give <amount> <player>` |
+| `neoessentials.sudo` |  op-only | Run a command as another player | `/sudo <player> <command>` |
+| `neoessentials.sudo.exempt` |  op-only | Cannot be sudo'd by non-console | |
 | `neoessentials.playtime` | ✅ default | View own playtime | `/playtime` |
-| `neoessentials.playtime.others` | 🔒 op-only | View another player's playtime | `/playtime <player>` |
+| `neoessentials.playtime.others` |  op-only | View another player's playtime | `/playtime <player>` |
 
 ---
 
@@ -660,18 +660,18 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.broadcast` | 🔒 op-only | Broadcast a message to all players | `/broadcast <msg>`, `/bc`, `/announce` |
-| `neoessentials.time` | 🔒 op-only | View current world time | `/time` |
-| `neoessentials.time.set` | 🔒 op-only | Set or add world time | `/time set\|add <value>`, `/day`, `/night` |
-| `neoessentials.weather` | 🔒 op-only | Set world weather | `/weather <sun\|storm\|thunder> [dur]`, `/sun`, `/storm`, `/thunder` |
-| `neoessentials.kill` | 🔒 op-only | Kill a player | `/kill <player>` |
-| `neoessentials.kill.exempt` | 🔒 op-only | Exempt from being killed by /kill | |
-| `neoessentials.kill.force` | 🔒 op-only | Force kill even exempt players | |
-| `neoessentials.gamemode` | 🔒 op-only | Change own gamemode | `/gamemode <mode>` |
-| `neoessentials.gamemode.others` | 🔒 op-only | Change another player's gamemode | `/gamemode <mode> <player>` |
-| `neoessentials.teleport.tpo` | 🔒 op-only | Teleport to player (bypass tptoggle) | `/tpo <player>` |
-| `neoessentials.teleport.tpohere` | 🔒 op-only | Bring player to you (bypass tptoggle) | `/tpohere <player>` |
-| `neoessentials.teleport.tpoffline` | 🔒 op-only | Teleport to offline player's last position | `/tpoffline <player>` |
+| `neoessentials.broadcast` |  op-only | Broadcast a message to all players | `/broadcast <msg>`, `/bc`, `/announce` |
+| `neoessentials.time` |  op-only | View current world time | `/time` |
+| `neoessentials.time.set` |  op-only | Set or add world time | `/time set\|add <value>`, `/day`, `/night` |
+| `neoessentials.weather` |  op-only | Set world weather | `/weather <sun\|storm\|thunder> [dur]`, `/sun`, `/storm`, `/thunder` |
+| `neoessentials.kill` |  op-only | Kill a player | `/kill <player>` |
+| `neoessentials.kill.exempt` |  op-only | Exempt from being killed by /kill | |
+| `neoessentials.kill.force` |  op-only | Force kill even exempt players | |
+| `neoessentials.gamemode` |  op-only | Change own gamemode | `/gamemode <mode>` |
+| `neoessentials.gamemode.others` |  op-only | Change another player's gamemode | `/gamemode <mode> <player>` |
+| `neoessentials.teleport.tpo` |  op-only | Teleport to player (bypass tptoggle) | `/tpo <player>` |
+| `neoessentials.teleport.tpohere` |  op-only | Bring player to you (bypass tptoggle) | `/tpohere <player>` |
+| `neoessentials.teleport.tpoffline` |  op-only | Teleport to offline player's last position | `/tpoffline <player>` |
 
 ---
 
@@ -679,16 +679,16 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.ptime` | 🔒 op-only | Set own per-player time override | `/ptime [reset\|day\|night\|<ticks>]` |
-| `neoessentials.ptime.others` | 🔒 op-only | Set another player's time override | `/ptime <value> <player>` |
-| `neoessentials.pweather` | 🔒 op-only | Set own per-player weather override | `/pweather [reset\|sun\|storm]` |
-| `neoessentials.pweather.others` | 🔒 op-only | Set another player's weather override | `/pweather <type> <player>` |
-| `neoessentials.effect` | 🔒 op-only | Apply potion effects to players | `/effect <player> <effect\|clear> [dur] [amp]` |
-| `neoessentials.spawnmob` | 🔒 op-only | Spawn entities at own location | `/spawnmob <mob> [amount]`, `/mob` |
-| `neoessentials.spawnmob.others` | 🔒 op-only | Spawn entities at another player | `/spawnmob <mob> [amount] <player>` |
-| `neoessentials.unlimited` | 🔒 op-only | Toggle unlimited item use | `/unlimited [list\|clear\|<item>]` |
-| `neoessentials.unlimited.others` | 🔒 op-only | Toggle unlimited items for another player | `/unlimited <item> <player>` |
-| `neoessentials.condense` | 🔒 op-only | Condense items to storage blocks | `/condense [item]` |
+| `neoessentials.ptime` |  op-only | Set own per-player time override | `/ptime [reset\|day\|night\|<ticks>]` |
+| `neoessentials.ptime.others` |  op-only | Set another player's time override | `/ptime <value> <player>` |
+| `neoessentials.pweather` |  op-only | Set own per-player weather override | `/pweather [reset\|sun\|storm]` |
+| `neoessentials.pweather.others` |  op-only | Set another player's weather override | `/pweather <type> <player>` |
+| `neoessentials.effect` |  op-only | Apply potion effects to players | `/effect <player> <effect\|clear> [dur] [amp]` |
+| `neoessentials.spawnmob` |  op-only | Spawn entities at own location | `/spawnmob <mob> [amount]`, `/mob` |
+| `neoessentials.spawnmob.others` |  op-only | Spawn entities at another player | `/spawnmob <mob> [amount] <player>` |
+| `neoessentials.unlimited` |  op-only | Toggle unlimited item use | `/unlimited [list\|clear\|<item>]` |
+| `neoessentials.unlimited.others` |  op-only | Toggle unlimited items for another player | `/unlimited <item> <player>` |
+| `neoessentials.condense` |  op-only | Condense items to storage blocks | `/condense [item]` |
 
 ---
 
@@ -698,16 +698,16 @@ These are **registered automatically** when a kit is created via `/createkit`.
 |---|---|---|---|
 | `neoessentials.me` | ✅ default | Broadcast action messages | `/me <action>` |
 | `neoessentials.tptoggle` | ✅ default | Toggle own teleport request acceptance | `/tptoggle [on\|off]` |
-| `neoessentials.tptoggle.others` | 🔒 op-only | Toggle tptoggle for another player | `/tptoggle <player> [on\|off]` |
-| `neoessentials.gc` | 🔒 op-only | View server TPS, memory, uptime, chunk info | `/gc`, `/mem` |
-| `neoessentials.lightning` | 🔒 op-only | Strike lightning at look target | `/lightning`, `/smite` |
-| `neoessentials.lightning.others` | 🔒 op-only | Strike lightning at a named player | `/lightning <player>` |
-| `neoessentials.skull` | 🔒 op-only | Get a player head item | `/skull [player]` |
-| `neoessentials.itemname` | 🔒 op-only | Rename the held item | `/itemname [name\|-]`, `/rename` |
-| `neoessentials.itemlore` | 🔒 op-only | Edit held item lore lines | `/itemlore add\|set\|remove\|clear` |
-| `neoessentials.remove` | 🔒 op-only | Remove entities in radius | `/remove <type> [radius]` |
-| `neoessentials.loom` | 🔒 op-only | Open portable loom | `/loom` |
-| `neoessentials.cartography` | 🔒 op-only | Open portable cartography table | `/cartography`, `/cartographytable` |
+| `neoessentials.tptoggle.others` |  op-only | Toggle tptoggle for another player | `/tptoggle <player> [on\|off]` |
+| `neoessentials.gc` |  op-only | View server TPS, memory, uptime, chunk info | `/gc`, `/mem` |
+| `neoessentials.lightning` |  op-only | Strike lightning at look target | `/lightning`, `/smite` |
+| `neoessentials.lightning.others` |  op-only | Strike lightning at a named player | `/lightning <player>` |
+| `neoessentials.skull` |  op-only | Get a player head item | `/skull [player]` |
+| `neoessentials.itemname` |  op-only | Rename the held item | `/itemname [name\|-]`, `/rename` |
+| `neoessentials.itemlore` |  op-only | Edit held item lore lines | `/itemlore add\|set\|remove\|clear` |
+| `neoessentials.remove` |  op-only | Remove entities in radius | `/remove <type> [radius]` |
+| `neoessentials.loom` |  op-only | Open portable loom | `/loom` |
+| `neoessentials.cartography` |  op-only | Open portable cartography table | `/cartography`, `/cartographytable` |
 
 ---
 
@@ -716,16 +716,16 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.renamehome` | ✅ default | Rename own home | `/renamehome <old> <new>` |
-| `neoessentials.renamehome.others` | 🔒 op-only | Rename another player's home | `/renamehome <player:old> <new>` |
+| `neoessentials.renamehome.others` |  op-only | Rename another player's home | `/renamehome <player:old> <new>` |
 | `neoessentials.warpinfo` | ✅ default | Show warp coordinates and world | `/warpinfo <name>` |
-| `neoessentials.world` | 🔒 op-only | Teleport to a world/dimension | `/world [name]` |
-| `neoessentials.world.others` | 🔒 op-only | Teleport another player to a world | `/world <name> <player>` |
-| `neoessentials.spawner` | 🔒 op-only | Change a mob spawner type | `/spawner <mob>` |
-| `neoessentials.spawner.*` | 🔒 op-only | Change spawner to any mob | wildcard — grants all mob types |
-| `neoessentials.spawner.<mob>` | 🔒 op-only | Change spawner to a specific mob | e.g. `neoessentials.spawner.zombie` |
+| `neoessentials.world` |  op-only | Teleport to a world/dimension | `/world [name]` |
+| `neoessentials.world.others` |  op-only | Teleport another player to a world | `/world <name> <player>` |
+| `neoessentials.spawner` |  op-only | Change a mob spawner type | `/spawner <mob>` |
+| `neoessentials.spawner.*` |  op-only | Change spawner to any mob | wildcard — grants all mob types |
+| `neoessentials.spawner.<mob>` |  op-only | Change spawner to a specific mob | e.g. `neoessentials.spawner.zombie` |
 | `neoessentials.recipe` | ✅ default | Show/unlock crafting recipe for an item | `/recipe [item]` |
 | `neoessentials.tpauto` | ✅ default | Auto-accept all incoming teleport requests | `/tpauto [on\|off]` |
-| `neoessentials.tpauto.others` | 🔒 op-only | Toggle tpauto for another player | `/tpauto <player> [on\|off]` |
+| `neoessentials.tpauto.others` |  op-only | Toggle tpauto for another player | `/tpauto <player> [on\|off]` |
 
 ---
 
@@ -733,19 +733,19 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.fireball` | 🔒 op-only | Shoot a projectile | `/fireball [type] [speed]` |
-| `neoessentials.fireball.*` | 🔒 op-only | Shoot any projectile type | wildcard |
-| `neoessentials.fireball.<type>` | 🔒 op-only | Shoot specific type (fireball/small/large/arrow/skull/egg/snowball/expbottle/dragon/trident/windcharge) | e.g. `neoessentials.fireball.arrow` |
-| `neoessentials.fireball.ride` | 🔒 op-only | Ride the shot projectile | `/fireball <type> <speed> ride` |
-| `neoessentials.tree` | 🔒 op-only | Grow a tree at look target | `/tree <type>`, `/bigtree` |
-| `neoessentials.break` | 🔒 op-only | Instantly break the looked-at block (no drops) | `/break` |
-| `neoessentials.break.bedrock` | 🔒 op-only | Break bedrock blocks | permission bypass |
-| `neoessentials.ice` | 🔒 op-only | Freeze self solid | `/ice` |
-| `neoessentials.ice.others` | 🔒 op-only | Freeze another player | `/ice <player>` |
-| `neoessentials.bottom` | 🔒 op-only | Teleport to world bottom at current XZ | `/bottom` |
-| `neoessentials.tpaall` | 🔒 op-only | Send tpa-here to all online players | `/tpaall [player]` |
-| `neoessentials.tpaall.others` | 🔒 op-only | Send tpaall on behalf of another player | `/tpaall <player>` |
-| `neoessentials.broadcastworld` | 🔒 op-only | Broadcast to players in your current world | `/broadcastworld`, `/bcastworld` |
+| `neoessentials.fireball` |  op-only | Shoot a projectile | `/fireball [type] [speed]` |
+| `neoessentials.fireball.*` |  op-only | Shoot any projectile type | wildcard |
+| `neoessentials.fireball.<type>` |  op-only | Shoot specific type (fireball/small/large/arrow/skull/egg/snowball/expbottle/dragon/trident/windcharge) | e.g. `neoessentials.fireball.arrow` |
+| `neoessentials.fireball.ride` |  op-only | Ride the shot projectile | `/fireball <type> <speed> ride` |
+| `neoessentials.tree` |  op-only | Grow a tree at look target | `/tree <type>`, `/bigtree` |
+| `neoessentials.break` |  op-only | Instantly break the looked-at block (no drops) | `/break` |
+| `neoessentials.break.bedrock` |  op-only | Break bedrock blocks | permission bypass |
+| `neoessentials.ice` |  op-only | Freeze self solid | `/ice` |
+| `neoessentials.ice.others` |  op-only | Freeze another player | `/ice <player>` |
+| `neoessentials.bottom` |  op-only | Teleport to world bottom at current XZ | `/bottom` |
+| `neoessentials.tpaall` |  op-only | Send tpa-here to all online players | `/tpaall [player]` |
+| `neoessentials.tpaall.others` |  op-only | Send tpaall on behalf of another player | `/tpaall <player>` |
+| `neoessentials.broadcastworld` |  op-only | Broadcast to players in your current world | `/broadcastworld`, `/bcastworld` |
 
 ---
 
@@ -759,15 +759,15 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.ping.others` | ✅ default | View another player's ping | `/ping <player>` |
 | `neoessentials.playtime` | ✅ default | View your total play time | `/playtime` |
 | `neoessentials.playtime.others` | ✅ default | View another player's play time | `/playtime <player>` |
-| `neoessentials.whois` | 🔒 op-only | View detailed player info (UUID, pos, gamemode, health) | `/whois <player>` |
+| `neoessentials.whois` |  op-only | View detailed player info (UUID, pos, gamemode, health) | `/whois <player>` |
 | `neoessentials.realname` | ✅ default | Look up real name from nickname | `/realname <nickname>` |
-| `neoessentials.sudo` | 🔒 op-only | Force a player to run a command | `/sudo <player> <command>` |
-| `neoessentials.sudo.exempt` | 🔒 op-only | Be immune to /sudo | permission node |
+| `neoessentials.sudo` |  op-only | Force a player to run a command | `/sudo <player> <command>` |
+| `neoessentials.sudo.exempt` |  op-only | Be immune to /sudo | permission node |
 | `neoessentials.suicide` | ✅ default | Kill yourself | `/suicide` |
 | `neoessentials.msgtoggle` | ✅ default | Toggle your incoming private messages on/off | `/msgtoggle [on\|off]` |
-| `neoessentials.msgtoggle.others` | 🔒 op-only | Toggle another player's messages | `/msgtoggle <player> [on\|off]` |
+| `neoessentials.msgtoggle.others` |  op-only | Toggle another player's messages | `/msgtoggle <player> [on\|off]` |
 | `neoessentials.rtoggle` | ✅ default | Toggle reply-to-last-sender for `/r` | `/rtoggle [on\|off]` |
-| `neoessentials.rtoggle.others` | 🔒 op-only | Toggle rtoggle for another player | `/rtoggle <player> [on\|off]` |
+| `neoessentials.rtoggle.others` |  op-only | Toggle rtoggle for another player | `/rtoggle <player> [on\|off]` |
 | `neoessentials.motd` | ✅ default | View the message of the day | `/motd` |
 | `neoessentials.rules` | ✅ default | View server rules | `/rules` |
 
@@ -775,21 +775,21 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.item.repair` | 🔒 op-only | Repair held item | `/repair` |
-| `neoessentials.item.enchant` | 🔒 op-only | Enchant held item | `/enchant` |
-| `neoessentials.item.enchant.unsafe` | 🔒 op-only | Apply enchants beyond vanilla limits | `/enchant` |
-| `neoessentials.item.enchant.others` | 🔒 op-only | Enchant another player's item | `/enchant <player>` |
-| `neoessentials.item.enchant.any` | 🔒 op-only | Enchant any item (ignore type restrictions) | `/enchant` |
-| `neoessentials.item.powertool` | 🔒 op-only | Use the powertool system | `/powertool` |
-| `neoessentials.item.powertool.toggle` | 🔒 op-only | Toggle powertool on/off | `/pttoggle` |
+| `neoessentials.item.repair` |  op-only | Repair held item | `/repair` |
+| `neoessentials.item.enchant` |  op-only | Enchant held item | `/enchant` |
+| `neoessentials.item.enchant.unsafe` |  op-only | Apply enchants beyond vanilla limits | `/enchant` |
+| `neoessentials.item.enchant.others` |  op-only | Enchant another player's item | `/enchant <player>` |
+| `neoessentials.item.enchant.any` |  op-only | Enchant any item (ignore type restrictions) | `/enchant` |
+| `neoessentials.item.powertool` |  op-only | Use the powertool system | `/powertool` |
+| `neoessentials.item.powertool.toggle` |  op-only | Toggle powertool on/off | `/pttoggle` |
 | `neoessentials.item.dispose` | ✅ default | Use the item disposal chest | `/dispose` |
-| `neoessentials.item.clearinventory` | 🔒 op-only | Clear own inventory | `/clearinv` |
-| `neoessentials.item.clearinventory.others` | 🔒 op-only | Clear another player's inventory | `/clearinv <player>` |
-| `neoessentials.item.spawn` | 🔒 op-only | Spawn items | `/spawnitem` |
-| `neoessentials.invsee` | 🔒 op-only | View another player's inventory | `/invsee` |
-| `neoessentials.invsee.edit` | 🔒 op-only | Edit another player's inventory | `/invsee` |
-| `neoessentials.enderchest` | 🔒 op-only | View another player's ender chest | `/ec <player>` |
-| `neoessentials.enderchest.edit` | 🔒 op-only | Edit another player's ender chest | `/ec <player>` |
+| `neoessentials.item.clearinventory` |  op-only | Clear own inventory | `/clearinv` |
+| `neoessentials.item.clearinventory.others` |  op-only | Clear another player's inventory | `/clearinv <player>` |
+| `neoessentials.item.spawn` |  op-only | Spawn items | `/spawnitem` |
+| `neoessentials.invsee` |  op-only | View another player's inventory | `/invsee` |
+| `neoessentials.invsee.edit` |  op-only | Edit another player's inventory | `/invsee` |
+| `neoessentials.enderchest` |  op-only | View another player's ender chest | `/ec <player>` |
+| `neoessentials.enderchest.edit` |  op-only | Edit another player's ender chest | `/ec <player>` |
 
 ---
 
@@ -803,9 +803,9 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.chat.ignore` | ✅ default | Ignore a player | `/ignore` |
 | `neoessentials.chat.unignore` | ✅ default | Unignore a player | `/unignore` |
 | `neoessentials.chat.msgtoggle` | ✅ default | Toggle receiving messages | `/msgtoggle` |
-| `neoessentials.chat.socialspy` | 🔒 op-only | See all private messages | `/socialspy` |
-| `neoessentials.chat.socialspy.exempt` | 🔒 op-only | Private messages not visible to socialspy | |
-| `neoessentials.chat.msgtoggle.bypass` | 🔒 op-only | Message players who have toggled off | |
+| `neoessentials.chat.socialspy` |  op-only | See all private messages | `/socialspy` |
+| `neoessentials.chat.socialspy.exempt` |  op-only | Private messages not visible to socialspy | |
+| `neoessentials.chat.msgtoggle.bypass` |  op-only | Message players who have toggled off | |
 
 #### Mail
 | Node | Default | Description | Command |
@@ -817,38 +817,38 @@ These are **registered automatically** when a kit is created via `/createkit`.
 #### Moderation Chat
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.chat.mute` | 🔒 op-only | Mute a player | `/mute` |
-| `neoessentials.chat.unmute` | 🔒 op-only | Unmute a player | `/unmute` |
-| `neoessentials.chat.mutelist` | 🔒 op-only | View muted players | `/mutelist` |
-| `neoessentials.chat.exempt` | 🔒 op-only | Exempt from being muted | |
+| `neoessentials.chat.mute` |  op-only | Mute a player | `/mute` |
+| `neoessentials.chat.unmute` |  op-only | Unmute a player | `/unmute` |
+| `neoessentials.chat.mutelist` |  op-only | View muted players | `/mutelist` |
+| `neoessentials.chat.exempt` |  op-only | Exempt from being muted | |
 
 #### Formatting & Colours
 | Node | Default | Description |
 |---|---|---|
-| `neoessentials.chat.color` | 🔒 op-only | Use `&0-9`, `&a-f` colour codes in chat |
-| `neoessentials.chat.color.hex` | 🔒 op-only | Use `&#RRGGBB` hex colours in chat |
-| `neoessentials.chat.format` | 🔒 op-only | Use `&k-o`, `&r` formatting codes in chat |
-| `neoessentials.chat.richtext` | 🔒 op-only | Use gradient/rainbow rich text effects |
-| `neoessentials.chat.gradient` | 🔒 op-only | Use gradient text effects |
-| `neoessentials.chat.rainbow` | 🔒 op-only | Use rainbow text effects |
+| `neoessentials.chat.color` |  op-only | Use `&0-9`, `&a-f` colour codes in chat |
+| `neoessentials.chat.color.hex` |  op-only | Use `&#RRGGBB` hex colours in chat |
+| `neoessentials.chat.format` |  op-only | Use `&k-o`, `&r` formatting codes in chat |
+| `neoessentials.chat.richtext` |  op-only | Use gradient/rainbow rich text effects |
+| `neoessentials.chat.gradient` |  op-only | Use gradient text effects |
+| `neoessentials.chat.rainbow` |  op-only | Use rainbow text effects |
 
 #### Chat Channels
 | Node | Default | Description |
 |---|---|---|
 | `neoessentials.chat.channel.local` | ✅ default | Use local chat channel |
 | `neoessentials.chat.channel.global` | ✅ default | Use global chat channel |
-| `neoessentials.chat.staff` | 🔒 op-only | Access staff chat channel |
+| `neoessentials.chat.staff` |  op-only | Access staff chat channel |
 | `neoessentials.chat.mention` | ✅ default | Mention players with `@name` |
-| `neoessentials.chat.mention.all` | 🔒 op-only | Mention everyone with `@everyone` |
+| `neoessentials.chat.mention.all` |  op-only | Mention everyone with `@everyone` |
 | `neoessentials.chat.itemlink` | ✅ default | Show held item in chat with `[item]` |
 
 #### Anti-Spam Bypasses
 | Node | Default | Description |
 |---|---|---|
-| `neoessentials.chat.caps.bypass` | 🔒 op-only | Bypass caps filter |
-| `neoessentials.chat.repeat.bypass` | 🔒 op-only | Bypass repeat-message filter |
-| `neoessentials.chat.links.bypass` | 🔒 op-only | Bypass link filter |
-| `neoessentials.chat.spam.bypass` | 🔒 op-only | Bypass spam rate limit |
+| `neoessentials.chat.caps.bypass` |  op-only | Bypass caps filter |
+| `neoessentials.chat.repeat.bypass` |  op-only | Bypass repeat-message filter |
+| `neoessentials.chat.links.bypass` |  op-only | Bypass link filter |
+| `neoessentials.chat.spam.bypass` |  op-only | Bypass spam rate limit |
 
 ---
 
@@ -857,36 +857,36 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | Node | Default | Description | Command |
 |---|---|---|---|
 | **Banning** | | | |
-| `neoessentials.moderation.ban` | 🔒 op-only | Ban a player | `/ban` |
-| `neoessentials.moderation.banip` | 🔒 op-only | Ban an IP address | `/banip` |
-| `neoessentials.moderation.banlist` | 🔒 op-only | View the ban list | `/banlist` |
-| `neoessentials.moderation.tempban` | 🔒 op-only | Temporarily ban a player | `/tempban` |
-| `neoessentials.moderation.unban` | 🔒 op-only | Unban a player | `/unban` |
-| `neoessentials.moderation.unbanip` | 🔒 op-only | Unban an IP address | `/unbanip` |
+| `neoessentials.moderation.ban` |  op-only | Ban a player | `/ban` |
+| `neoessentials.moderation.banip` |  op-only | Ban an IP address | `/banip` |
+| `neoessentials.moderation.banlist` |  op-only | View the ban list | `/banlist` |
+| `neoessentials.moderation.tempban` |  op-only | Temporarily ban a player | `/tempban` |
+| `neoessentials.moderation.unban` |  op-only | Unban a player | `/unban` |
+| `neoessentials.moderation.unbanip` |  op-only | Unban an IP address | `/unbanip` |
 | **Kicking** | | | |
-| `neoessentials.moderation.kick` | 🔒 op-only | Kick a player | `/kick` |
-| `neoessentials.moderation.kickall` | 🔒 op-only | Kick all players | `/kickall` |
+| `neoessentials.moderation.kick` |  op-only | Kick a player | `/kick` |
+| `neoessentials.moderation.kickall` |  op-only | Kick all players | `/kickall` |
 | **Freezing** | | | |
-| `neoessentials.moderation.freeze` | 🔒 op-only | Freeze a player | `/freeze` |
-| `neoessentials.moderation.unfreeze` | 🔒 op-only | Unfreeze a player | `/unfreeze` |
-| `neoessentials.moderation.freezeall` | 🔒 op-only | Freeze all players | `/freezeall` |
-| `neoessentials.moderation.unfreezeall` | 🔒 op-only | Unfreeze all players | `/unfreezeall` |
-| `neoessentials.moderation.freezelist` | 🔒 op-only | List frozen players | `/freezelist` |
+| `neoessentials.moderation.freeze` |  op-only | Freeze a player | `/freeze` |
+| `neoessentials.moderation.unfreeze` |  op-only | Unfreeze a player | `/unfreeze` |
+| `neoessentials.moderation.freezeall` |  op-only | Freeze all players | `/freezeall` |
+| `neoessentials.moderation.unfreezeall` |  op-only | Unfreeze all players | `/unfreezeall` |
+| `neoessentials.moderation.freezelist` |  op-only | List frozen players | `/freezelist` |
 | **Jailing** | | | |
-| `neoessentials.moderation.jail` | 🔒 op-only | Jail a player | `/jail` |
-| `neoessentials.moderation.unjail` | 🔒 op-only | Unjail a player | `/unjail` |
-| `neoessentials.moderation.setjail` | 🔒 op-only | Create a jail location | `/setjail` |
-| `neoessentials.moderation.jaillist` | 🔒 op-only | List jailed players | `/jaillist` |
-| `neoessentials.moderation.jailinfo` | 🔒 op-only | View jail info | `/jailinfo` |
+| `neoessentials.moderation.jail` |  op-only | Jail a player | `/jail` |
+| `neoessentials.moderation.unjail` |  op-only | Unjail a player | `/unjail` |
+| `neoessentials.moderation.setjail` |  op-only | Create a jail location | `/setjail` |
+| `neoessentials.moderation.jaillist` |  op-only | List jailed players | `/jaillist` |
+| `neoessentials.moderation.jailinfo` |  op-only | View jail info | `/jailinfo` |
 | **Vanish** | | | |
-| `neoessentials.moderation.vanish` | 🔒 op-only | Vanish yourself | `/vanish` |
-| `neoessentials.moderation.vanish.others` | 🔒 op-only | Vanish another player | `/vanish <player>` |
-| `neoessentials.moderation.seevanished` | 🔒 op-only | See vanished players | |
-| `neoessentials.vanish.see` | 🔒 op-only | See vanished players (alias) | |
-| `neoessentials.moderation.vanishlist` | 🔒 op-only | List vanished players | `/vanishlist` |
+| `neoessentials.moderation.vanish` |  op-only | Vanish yourself | `/vanish` |
+| `neoessentials.moderation.vanish.others` |  op-only | Vanish another player | `/vanish <player>` |
+| `neoessentials.moderation.seevanished` |  op-only | See vanished players | |
+| `neoessentials.vanish.see` |  op-only | See vanished players (alias) | |
+| `neoessentials.moderation.vanishlist` |  op-only | List vanished players | `/vanishlist` |
 | **Notifications** | | | |
-| `neoessentials.moderation.notify` | 🔒 op-only | Receive moderation action notifications | |
-| `neoessentials.moderation.notifications` | 🔒 op-only | Receive moderation event broadcasts | |
+| `neoessentials.moderation.notify` |  op-only | Receive moderation action notifications | |
+| `neoessentials.moderation.notifications` |  op-only | Receive moderation event broadcasts | |
 
 ---
 
@@ -899,23 +899,23 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.near` | ✅ default | View nearby players | `/near` |
 | `neoessentials.seen` | ✅ default | Check when a player was last seen | `/seen` |
 | `neoessentials.whois` | ✅ default | View player info | `/whois` |
-| `neoessentials.whois.detailed` | 🔒 op-only | View detailed player info | `/whois` |
+| `neoessentials.whois.detailed` |  op-only | View detailed player info | `/whois` |
 | `neoessentials.ping` | ✅ default | Check own ping | `/ping` |
-| `neoessentials.ping.others` | 🔒 op-only | Check another player's ping | `/ping <player>` |
+| `neoessentials.ping.others` |  op-only | Check another player's ping | `/ping <player>` |
 | `neoessentials.realname` | ✅ default | Look up a player's real name from nickname | `/realname` |
 | `neoessentials.depth` | ✅ default | View depth/Y-level info | `/depth` |
-| `neoessentials.depth.others` | 🔒 op-only | View another player's depth info | `/depth <player>` |
+| `neoessentials.depth.others` |  op-only | View another player's depth info | `/depth <player>` |
 | `neoessentials.compass` | ✅ default | View compass/direction info | `/compass` |
-| `neoessentials.compass.others` | 🔒 op-only | View compass info for another player | `/compass <player>` |
+| `neoessentials.compass.others` |  op-only | View compass info for another player | `/compass <player>` |
 | `neoessentials.getpos` | ✅ default | View own position | `/getpos` |
-| `neoessentials.getpos.others` | 🔒 op-only | View another player's position | `/getpos <player>` |
+| `neoessentials.getpos.others` |  op-only | View another player's position | `/getpos <player>` |
 
 #### Nicknames
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.nick` | ✅ default | Change own nickname | `/nick` |
-| `neoessentials.nick.color` | 🔒 op-only | Use colour codes in nickname | `/nick` |
-| `neoessentials.nick.others` | 🔒 op-only | Change another player's nickname | `/setnick` |
+| `neoessentials.nick.color` |  op-only | Use colour codes in nickname | `/nick` |
+| `neoessentials.nick.others` |  op-only | Change another player's nickname | `/setnick` |
 
 #### Server Info
 | Node | Default | Description | Command |
@@ -923,8 +923,8 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.motd` | ✅ default | View the message of the day | `/motd` |
 | `neoessentials.rules` | ✅ default | View server rules | `/rules` |
 | `neoessentials.helpop` | ✅ default | Send a help request to staff | `/helpop` |
-| `neoessentials.helpop.receive` | 🔒 op-only | Receive help-op requests | |
-| `neoessentials.staff` | 🔒 op-only | Access staff chat and features | |
+| `neoessentials.helpop.receive` |  op-only | Receive help-op requests | |
+| `neoessentials.staff` |  op-only | Access staff chat and features | |
 
 #### Portable Workstations
 | Node | Default | Description | Command |
@@ -939,20 +939,20 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.book` | ✅ default | Give yourself a writable book | `/book` |
-| `neoessentials.book.unlock` | 🔒 op-only | Unlock a written book for editing | `/book unlock` |
-| `neoessentials.book.title` | 🔒 op-only | Set a book's title | `/book title` |
-| `neoessentials.book.author` | 🔒 op-only | Set a book's author | `/book author` |
+| `neoessentials.book.unlock` |  op-only | Unlock a written book for editing | `/book unlock` |
+| `neoessentials.book.title` |  op-only | Set a book's title | `/book title` |
+| `neoessentials.book.author` |  op-only | Set a book's author | `/book author` |
 | `neoessentials.sign` | ✅ default | Edit sign text | `/sign` |
-| `neoessentials.sign.colors` | 🔒 op-only | Use colours on signs | `/sign` |
+| `neoessentials.sign.colors` |  op-only | Use colours on signs | `/sign` |
 
 #### AFK, Gamemode & Other
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.afk` | ✅ default | Use the AFK system | `/afk` |
-| `neoessentials.afk.exempt` | 🔒 op-only | Exempt from AFK kick | |
+| `neoessentials.afk.exempt` |  op-only | Exempt from AFK kick | |
 | `neoessentials.suicide` | ✅ default | Use the suicide command | `/suicide` |
-| `neoessentials.gamemode` | 🔒 op-only | Change own gamemode | `/gm`, `/gmc`, `/gms` |
-| `neoessentials.gamemode.others` | 🔒 op-only | Change another player's gamemode | `/gm <player>` |
+| `neoessentials.gamemode` |  op-only | Change own gamemode | `/gm`, `/gmc`, `/gms` |
+| `neoessentials.gamemode.others` |  op-only | Change another player's gamemode | `/gm <player>` |
 
 ---
 
@@ -960,13 +960,13 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.admin` | 🔒 op-only | General admin access | |
-| `neoessentials.reload` | 🔒 op-only | Reload the mod configuration | `/neoe reload` |
-| `neoessentials.debug` | 🔒 op-only | Enable debug logging | |
-| `neoessentials.rules.admin` | 🔒 op-only | Create/edit/delete server rules | `/rules add` etc. |
-| `neoessentials.motd.set` | 🔒 op-only | Set the message of the day | `/motd set` |
-| `neoessentials.motd.broadcast` | 🔒 op-only | Broadcast the MOTD to all players | `/motd broadcast` |
-| `neoessentials.motd.reload` | 🔒 op-only | Reload MOTD from file | `/motd reload` |
+| `neoessentials.admin` |  op-only | General admin access | |
+| `neoessentials.reload` |  op-only | Reload the mod configuration | `/neoe reload` |
+| `neoessentials.debug` |  op-only | Enable debug logging | |
+| `neoessentials.rules.admin` |  op-only | Create/edit/delete server rules | `/rules add` etc. |
+| `neoessentials.motd.set` |  op-only | Set the message of the day | `/motd set` |
+| `neoessentials.motd.broadcast` |  op-only | Broadcast the MOTD to all players | `/motd broadcast` |
+| `neoessentials.motd.reload` |  op-only | Reload MOTD from file | `/motd reload` |
 
 ---
 
@@ -974,28 +974,28 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.permissions.admin` | 🔒 op-only | Full permissions system access | `/permissions` |
-| `neoessentials.permissions.reload` | 🔒 op-only | Reload the permissions system | `/permissions reload` |
-| `neoessentials.permissions.list` | 🔒 op-only | List registered permission nodes | `/permissions list` |
-| `neoessentials.permissions.check` | 🔒 op-only | Check a player's effective permissions | `/permissions check` |
-| `neoessentials.permissions.search` | 🔒 op-only | Search permission nodes | `/permissions search` |
-| `neoessentials.permissions.user` | 🔒 op-only | User management (parent) | `/permissions user` |
-| `neoessentials.permissions.user.permissions` | 🔒 op-only | Add/remove user permission nodes | |
-| `neoessentials.permissions.user.groups` | 🔒 op-only | Add/remove user from groups | |
-| `neoessentials.permissions.user.clear` | 🔒 op-only | Clear all user permissions | |
-| `neoessentials.permissions.list.users` | 🔒 op-only | List all permission users | |
-| `neoessentials.permissions.info.user` | 🔒 op-only | View a user's permission info | |
-| `neoessentials.permissions.group` | 🔒 op-only | Group management (parent) | `/permissions group` |
-| `neoessentials.permissions.group.create` | 🔒 op-only | Create a new group | |
-| `neoessentials.permissions.group.delete` | 🔒 op-only | Delete a group | |
-| `neoessentials.permissions.group.rename` | 🔒 op-only | Rename a group | |
-| `neoessentials.permissions.group.clone` | 🔒 op-only | Clone a group | |
-| `neoessentials.permissions.group.inherit` | 🔒 op-only | Set group inheritance | |
-| `neoessentials.permissions.group.permissions` | 🔒 op-only | Manage group permission nodes | |
-| `neoessentials.permissions.group.modify` | 🔒 op-only | Modify group settings (prefix/suffix) | |
-| `neoessentials.permissions.group.clear` | 🔒 op-only | Clear all group permissions | |
-| `neoessentials.permissions.list.groups` | 🔒 op-only | List all groups | |
-| `neoessentials.permissions.info.group` | 🔒 op-only | View a group's info | |
+| `neoessentials.permissions.admin` |  op-only | Full permissions system access | `/permissions` |
+| `neoessentials.permissions.reload` |  op-only | Reload the permissions system | `/permissions reload` |
+| `neoessentials.permissions.list` |  op-only | List registered permission nodes | `/permissions list` |
+| `neoessentials.permissions.check` |  op-only | Check a player's effective permissions | `/permissions check` |
+| `neoessentials.permissions.search` |  op-only | Search permission nodes | `/permissions search` |
+| `neoessentials.permissions.user` |  op-only | User management (parent) | `/permissions user` |
+| `neoessentials.permissions.user.permissions` |  op-only | Add/remove user permission nodes | |
+| `neoessentials.permissions.user.groups` |  op-only | Add/remove user from groups | |
+| `neoessentials.permissions.user.clear` |  op-only | Clear all user permissions | |
+| `neoessentials.permissions.list.users` |  op-only | List all permission users | |
+| `neoessentials.permissions.info.user` |  op-only | View a user's permission info | |
+| `neoessentials.permissions.group` |  op-only | Group management (parent) | `/permissions group` |
+| `neoessentials.permissions.group.create` |  op-only | Create a new group | |
+| `neoessentials.permissions.group.delete` |  op-only | Delete a group | |
+| `neoessentials.permissions.group.rename` |  op-only | Rename a group | |
+| `neoessentials.permissions.group.clone` |  op-only | Clone a group | |
+| `neoessentials.permissions.group.inherit` |  op-only | Set group inheritance | |
+| `neoessentials.permissions.group.permissions` |  op-only | Manage group permission nodes | |
+| `neoessentials.permissions.group.modify` |  op-only | Modify group settings (prefix/suffix) | |
+| `neoessentials.permissions.group.clear` |  op-only | Clear all group permissions | |
+| `neoessentials.permissions.list.groups` |  op-only | List all groups | |
+| `neoessentials.permissions.info.group` |  op-only | View a group's info | |
 
 ---
 
@@ -1003,12 +1003,12 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 | Node | Default | Description |
 |---|---|---|
-| `neoessentials.admin.dashboard` | 🔒 op-only | Access the admin dashboard command |
-| `neoessentials.dashboard.access` | 🔒 op-only | Register an account and log in to the dashboard |
-| `neoessentials.dashboard.view` | 🔒 op-only | View-only dashboard access |
-| `neoessentials.dashboard.manage` | 🔒 op-only | Manage dashboard settings |
-| `neoessentials.dashboard.moderator` | 🔒 op-only | Moderator-level dashboard access |
-| `neoessentials.dashboard.admin` | 🔒 op-only | Full admin dashboard access |
+| `neoessentials.admin.dashboard` |  op-only | Access the admin dashboard command |
+| `neoessentials.dashboard.access` |  op-only | Register an account and log in to the dashboard |
+| `neoessentials.dashboard.view` |  op-only | View-only dashboard access |
+| `neoessentials.dashboard.manage` |  op-only | Manage dashboard settings |
+| `neoessentials.dashboard.moderator` |  op-only | Moderator-level dashboard access |
+| `neoessentials.dashboard.admin` |  op-only | Full admin dashboard access |
 
 ---
 
@@ -1342,16 +1342,16 @@ admins know exactly what to grant.
 | `/home set` | `neoessentials.teleport.home.set` | ✅ |
 | `/home delete` | `neoessentials.teleport.home.delete` | ✅ |
 | `/home list` | `neoessentials.teleport.home.list` | ✅ |
-| `/home <name> <player>` (others) | `neoessentials.teleport.home.others` | 🔒 |
+| `/home <name> <player>` (others) | `neoessentials.teleport.home.others` |  |
 
 #### Warp system
 
 | Subcommand | Node | Default |
 |---|---|---|
 | `/warp <name>` | `neoessentials.teleport.warp` | ✅ |
-| `/warp <name> <player>` | `neoessentials.teleport.warp.others` | 🔒 |
-| `/setwarp` | `neoessentials.teleport.warp.create` | 🔒 |
-| `/delwarp` | `neoessentials.teleport.warp.delete` | 🔒 |
+| `/warp <name> <player>` | `neoessentials.teleport.warp.others` |  |
+| `/setwarp` | `neoessentials.teleport.warp.create` |  |
+| `/delwarp` | `neoessentials.teleport.warp.delete` |  |
 | `/warps` (list) | `neoessentials.teleport.warp.list` | ✅ |
 
 #### Kit system
@@ -1360,51 +1360,51 @@ admins know exactly what to grant.
 |---|---|---|
 | `/kit` | `neoessentials.kits.use` | ✅ |
 | `/kit <name>` | `neoessentials.kits.use` + `neoessentials.kits.<kitname>` | ✅ |
-| `/kit <name> <player>` | `neoessentials.kit.others` | 🔒 |
-| `/kitcreate` | `neoessentials.kits.admin.create` | 🔒 |
-| `/kitdelete` | `neoessentials.kits.admin.delete` | 🔒 |
-| `/kitreset` | `neoessentials.kitreset` | 🔒 |
-| `/kitreset <player>` | `neoessentials.kitreset.others` | 🔒 |
+| `/kit <name> <player>` | `neoessentials.kit.others` |  |
+| `/kitcreate` | `neoessentials.kits.admin.create` |  |
+| `/kitdelete` | `neoessentials.kits.admin.delete` |  |
+| `/kitreset` | `neoessentials.kitreset` |  |
+| `/kitreset <player>` | `neoessentials.kitreset.others` |  |
 
 #### Economy
 
 | Subcommand | Node | Default |
 |---|---|---|
 | `/balance` | `neoessentials.economy.balance` | ✅ |
-| `/balance <player>` | `neoessentials.economy.balance.others` | 🔒 |
+| `/balance <player>` | `neoessentials.economy.balance.others` |  |
 | `/pay` | `neoessentials.economy.pay` | ✅ |
-| `/pay <offline>` | `neoessentials.economy.pay.offline` | 🔒 |
-| `/eco give/take/set` | `neoessentials.economy.eco` | 🔒 |
+| `/pay <offline>` | `neoessentials.economy.pay.offline` |  |
+| `/eco give/take/set` | `neoessentials.economy.eco` |  |
 
 #### Moderation
 
 | Subcommand | Node | Default |
 |---|---|---|
-| `/ban` | `neoessentials.moderation.ban` | 🔒 |
-| `/banip` | `neoessentials.moderation.banip` | 🔒 |
-| `/tempban` | `neoessentials.moderation.tempban` | 🔒 |
-| `/jail` | `neoessentials.moderation.jail` | 🔒 |
-| `/jailfor` | `neoessentials.moderation.jail.timed` | 🔒 |
-| `/vanish` | `neoessentials.moderation.vanish` | 🔒 |
-| `/vanish <player>` | `neoessentials.moderation.vanish.others` | 🔒 |
+| `/ban` | `neoessentials.moderation.ban` |  |
+| `/banip` | `neoessentials.moderation.banip` |  |
+| `/tempban` | `neoessentials.moderation.tempban` |  |
+| `/jail` | `neoessentials.moderation.jail` |  |
+| `/jailfor` | `neoessentials.moderation.jail.timed` |  |
+| `/vanish` | `neoessentials.moderation.vanish` |  |
+| `/vanish <player>` | `neoessentials.moderation.vanish.others` |  |
 
 #### Permission system commands
 
 | Subcommand | Node | Default |
 |---|---|---|
-| `/permissions group add/remove` | `neoessentials.permissions.group.permissions` | 🔒 |
-| `/permissions group setprefix/setsuffix` | `neoessentials.permissions.group.modify` | 🔒 |
-| `/permissions group setpriority` | `neoessentials.permissions.group.modify` | 🔒 |
-| `/permissions group context add/remove/list` | `neoessentials.permissions.group.context` | 🔒 |
-| `/permissions group addtemp/removetemp` | `neoessentials.permissions.group.temp` | 🔒 |
-| `/permissions group create` | `neoessentials.permissions.group.create` | 🔒 |
-| `/permissions group delete` | `neoessentials.permissions.group.delete` | 🔒 |
-| `/permissions user setgroup` | `neoessentials.permissions.user.group` | 🔒 |
-| `/permissions user add/remove` | `neoessentials.permissions.user.permissions` | 🔒 |
-| `/permissions user context add/remove/list` | `neoessentials.permissions.user.context` | 🔒 |
-| `/permissions user addtemp/removetemp` | `neoessentials.permissions.user.temp` | 🔒 |
-| `/permissions reload` | `neoessentials.permissions.reload` | 🔒 |
-| `/permissions debug <player>` | `neoessentials.permissions.debug` | 🔒 |
+| `/permissions group add/remove` | `neoessentials.permissions.group.permissions` |  |
+| `/permissions group setprefix/setsuffix` | `neoessentials.permissions.group.modify` |  |
+| `/permissions group setpriority` | `neoessentials.permissions.group.modify` |  |
+| `/permissions group context add/remove/list` | `neoessentials.permissions.group.context` |  |
+| `/permissions group addtemp/removetemp` | `neoessentials.permissions.group.temp` |  |
+| `/permissions group create` | `neoessentials.permissions.group.create` |  |
+| `/permissions group delete` | `neoessentials.permissions.group.delete` |  |
+| `/permissions user setgroup` | `neoessentials.permissions.user.group` |  |
+| `/permissions user add/remove` | `neoessentials.permissions.user.permissions` |  |
+| `/permissions user context add/remove/list` | `neoessentials.permissions.user.context` |  |
+| `/permissions user addtemp/removetemp` | `neoessentials.permissions.user.temp` |  |
+| `/permissions reload` | `neoessentials.permissions.reload` |  |
+| `/permissions debug <player>` | `neoessentials.permissions.debug` |  |
 
 ### Negative permissions as fine-grained deny
 
@@ -1479,3 +1479,4 @@ curl -X POST http://localhost:8080/api/permissions/aliases \
   -H "Content-Type: application/json" \
   -d '{"alias":"essentials.fly","canonical":"neoessentials.fly"}'
 ```
+
