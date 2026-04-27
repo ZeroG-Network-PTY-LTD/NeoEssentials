@@ -6,6 +6,21 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.91] — 2026-04-27
+
+### Added
+- **Web Dashboard — Backup & Restore** (`/api/backup/*` + `backup.html`)
+  - `BackupManager` — creates named ZIP snapshots of `config/neoessentials/`, `neoessentials/`, and `world/playerdata/`; stores in `neoessentials/backups/`; writes `backup-manifest.json` inside each ZIP with name, timestamp, targets, and file count; auto-prunes oldest when count exceeds 20
+  - `BackupEndpoint` — REST handler: `GET /api/backup/status`, `GET /api/backup/list`, `GET /api/backup/download?name=…`, `POST /api/backup/create`, `POST /api/backup/restore`, `DELETE /api/backup/delete?name=…`; all mutating operations require admin role
+  - Restore flow creates an automatic pre-restore backup before overwriting live files
+  - New `💾 Backup & Restore` dashboard page with stat cards, create-snapshot panel (name + target checkboxes), snapshot table (name/date/size/targets/file-count), and confirmation modals for restore/delete
+  - `💾 Backup & Restore` nav link added to all existing dashboard pages (index, admin, permissions, teleport)
+
+### Fixed
+- Code quality pass (build #90): `@Nonnull` added to `ShopNpcEntity.mobInteract` return; `@SuppressWarnings("resource")` added to `applyPlaceholders`, `executeInfo`, `executeRemove` to suppress IntelliJ false-positive `Level`/`ServerLevel` try-with-resources warnings
+
+---
+
 ## [1.0.2.6+build.86] — 2026-04-27
 
 ### 🐛 Bug Fix — `/nick` Nickname System: Tab List, Chat & Placeholder Integration
