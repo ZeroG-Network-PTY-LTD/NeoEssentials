@@ -46,6 +46,8 @@ public class TablistEventHandler {
         MinecraftServer server = player.getServer();
         if (server == null) return;
         TablistManager.getInstance().onPlayerJoin(player, server);
+        // Restore the player's tab-list display name if they had a nickname stored
+        com.zerog.neoessentials.util.commands.NickCommand.onPlayerJoin(player);
     }
 
     @SubscribeEvent

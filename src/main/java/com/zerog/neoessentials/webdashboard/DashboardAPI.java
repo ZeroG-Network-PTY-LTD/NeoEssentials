@@ -358,6 +358,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/rules", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.RulesEndpoint()));
         apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
         apiServer.createContext("/api/placeholders", withAuth(new PlaceholderEndpoint(server)));
+        apiServer.createContext("/api/shops", withAuth(new com.zerog.neoessentials.shop.dashboard.ShopEndpoint()));
         apiServer.createContext("/api/docs", new DocumentationHandler());
 
         LOGGER.info("API endpoints registered:");
@@ -374,6 +375,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
         LOGGER.info("  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/placeholders/* (list, resolve, stats) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/shops/* (list, stats, npc, csv/export, csv/import, price) [AUTH REQUIRED]");
         LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
         // Check if dashboard resources are available

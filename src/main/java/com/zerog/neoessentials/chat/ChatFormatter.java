@@ -73,7 +73,11 @@ public class ChatFormatter {
             // to plain text by PlaceholderAPI below.
             if (isClickablePlayerNamesEnabled() && isChatEnhancementsEnabled()) {
                 String uname = player.getName().getString();
-                String dname = player.getDisplayName().getString();
+                // Use the player's nickname for displayname hover, falling back to the scoreboard name
+                String nickRaw = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
+                String dname = (nickRaw != null && !nickRaw.isEmpty())
+                    ? nickRaw.replace("&", "§")
+                    : player.getDisplayName().getString();
                 normalizedTemplate = normalizedTemplate
                     .replace("{neoessentials_username}", "§HNAME§" + uname + "§/HNAME§")
                     .replace("{neoessentials_displayname}", "§HDNAME§" + dname + "§/HDNAME§");

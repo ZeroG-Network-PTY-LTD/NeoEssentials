@@ -41,6 +41,13 @@ public class NeoEssentials {
     @SuppressWarnings("unused") // modEventBus parameter required by NeoForge @Mod constructor
     public NeoEssentials(IEventBus modEventBus) {
         long startTime = System.currentTimeMillis();
+
+        // Register NPC shop entity type on the MOD event bus (must happen in constructor)
+        try {
+            com.zerog.neoessentials.shop.entity.ShopEntityRegistry.register(modEventBus);
+        } catch (Exception e) {
+            LOGGER.error("✗ Failed to register ShopNpcEntity: {}", e.getMessage(), e);
+        }
         
         // Enhanced initialization logging with version and build info
         LOGGER.info("╔════════════════════════════════════════════════════════════════╗");
@@ -154,6 +161,14 @@ public class NeoEssentials {
             com.zerog.neoessentials.webdashboard.security.AuthenticationManager.class,
             com.zerog.neoessentials.webdashboard.security.AuthenticationManager::getInstance);
         
+        // Shop Managers
+        registry.registerManager("ShopManager", "shop",
+            com.zerog.neoessentials.shop.ShopManager.class,
+            com.zerog.neoessentials.shop.ShopManager::getInstance);
+        registry.registerManager("ShopEntityManager", "shop",
+            com.zerog.neoessentials.shop.entity.ShopEntityManager.class,
+            com.zerog.neoessentials.shop.entity.ShopEntityManager::getInstance);
+
         // API Managers
         registry.registerManager("PlaceholderManager", "api",
             com.zerog.neoessentials.api.PlaceholderManager.class,
@@ -257,10 +272,35 @@ public class NeoEssentials {
             try {
                 LOGGER.info("⚙ Initializing ChestShop system...");
                 com.zerog.neoessentials.shop.ShopManager.getInstance().initialize();
+                ManagerRegistry.getInstance().markInitialized("ShopManager");
                 LOGGER.info("✓ ChestShop system initialized ({} shop(s) loaded)",
                     com.zerog.neoessentials.shop.ShopManager.getInstance().getShopCount());
             } catch (Exception e) {
                 LOGGER.error("✗ ChestShop system failed to initialize: {}", e.getMessage(), e);
+                ManagerRegistry.getInstance().markFailed("ShopManager", e.getMessage());
+            }
+
+            // Initialize NPC shop system
+            try {
+                LOGGER.info("⚙ Initializing NPC Shop system...");
+                com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().initialize();
+                ManagerRegistry.getInstance().markInitialized("ShopEntityManager");
+                LOGGER.info("✓ NPC Shop system initialized ({} NPC shop(s) loaded)",
+                    com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().getShopCount());
+            } catch (Exception e) {
+                LOGGER.error("✗ NPC Shop system failed to initialize: {}", e.getMessage(), e);
+                ManagerRegistry.getInstance().markFailed("ShopEntityManager", e.getMessage());
+            }
+
+            // Initialize dynamic pricing engine
+            try {
+                LOGGER.info("⚙ Initializing Shop PricingEngine...");
+                com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().loadConfig();
+                LOGGER.info("✓ Shop PricingEngine initialized ({} rule(s) active, enabled={})",
+                    com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().getRuleCount(),
+                    com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().isEnabled());
+            } catch (Exception e) {
+                LOGGER.error("✗ Shop PricingEngine failed to initialize: {}", e.getMessage(), e);
             }
 
             // Initialize custom language system
@@ -457,8 +497,17 @@ public class NeoEssentials {
             // Shutdown ChestShop system
             try {
                 com.zerog.neoessentials.shop.ShopManager.getInstance().shutdown();
+                LOGGER.info("✓ ChestShop system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown ChestShop system", e);
+            }
+
+            // Shutdown NPC Shop system
+            try {
+                com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().shutdown();
+                LOGGER.info("✓ NPC Shop system shutdown.");
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown NPC Shop system", e);
             }
 
             // Shutdown Chat/AFK Managers
@@ -952,6 +1001,10 @@ public class NeoEssentials {
         registry.registerCommand("chestshop", "Sign-based chest shop system");
         registry.registerCommand("cshop", "Sign-based chest shop (alias)");
         com.zerog.neoessentials.shop.commands.ShopCommand.register(dispatcher);
+
+        // ========== NPC SHOP COMMANDS ==========
+        registry.registerCommand("npcshop", "NPC entity shop management");
+        com.zerog.neoessentials.shop.commands.NpcShopCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

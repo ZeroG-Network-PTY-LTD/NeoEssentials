@@ -153,6 +153,12 @@ public class ShopSignHandler {
         // Strip colour codes from line 0 before permission/admin check
         String ownerLine = lines[ShopData.NAME_LINE].replaceAll("§[0-9a-fA-FkKlLmMnNoOrRiI]", "").trim();
 
+        // [Shop] header → auto-assign to placing player (alternative to blank line)
+        if (SHOP_HEADER.equalsIgnoreCase(ownerLine)) {
+            ownerLine = player.getName().getString();
+            lines[ShopData.NAME_LINE] = ownerLine;
+        }
+
         // Blank line 0 → auto-assign this player
         if (ownerLine.isEmpty()) {
             ownerLine = player.getName().getString();
@@ -168,6 +174,17 @@ public class ShopSignHandler {
         if (!wantsAdmin && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create")) {
             player.sendSystemMessage(Component.literal("§cYou don't have permission to create shops."));
             return;
+        }
+
+        // Per-player shop limit (skip for admin shops)
+        if (!wantsAdmin) {
+            int used = ShopManager.getInstance().getShopsByOwner(player.getUUID()).size();
+            int max  = getMaxShopsPerPlayer();
+            if (max > 0 && used >= max) {
+                player.sendSystemMessage(Component.literal(
+                    "§cShop limit reached! You have §f" + used + "§c/§f" + max + " §cshops. Remove one to create another."));
+                return;
+            }
         }
 
         // Check for duplicate sign position before parsing
@@ -243,6 +260,23 @@ public class ShopSignHandler {
         sign.setChanged();
         BlockState state = level.getBlockState(pos);
         level.sendBlockUpdated(pos, state, state, 3);
+    }
+
+    // ── Config helpers ────────────────────────────────────────────────────────
+
+    /** Alternative trigger recognised on line 0 (in addition to owner name / blank). */
+    public static final String SHOP_HEADER = "[Shop]";
+
+    private static int getMaxShopsPerPlayer() {
+        try {
+            var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            if (cfg != null && cfg.has("shop")) {
+                var shopCfg = cfg.getAsJsonObject("shop");
+                if (shopCfg.has("maxShopsPerPlayer")) return shopCfg.get("maxShopsPerPlayer").getAsInt();
+            }
+        } catch (Exception ignored) {}
+        return 10; // default
     }
 }
 

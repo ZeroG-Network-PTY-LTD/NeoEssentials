@@ -73,6 +73,8 @@ public class ShopCommand {
                     (src.getEntity() != null &&
                      PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.reload")))
                 .executes(ctx -> executeReload(ctx.getSource())))
+            .then(Commands.literal("pricing")
+                .executes(ctx -> executePricingStatus(ctx.getSource())))
             .executes(ctx -> executeHelp(ctx.getSource()));
 
         dispatcher.register(node);
@@ -239,8 +241,9 @@ public class ShopCommand {
 
     private static int executeReload(CommandSourceStack src) {
         ShopManager.getInstance().reload();
+        com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().loadConfig();
         src.sendSuccess(() -> Component.literal("§aChestShop data reloaded. §f" +
-            ShopManager.getInstance().getShopCount() + " §ashop(s) loaded."), true);
+            ShopManager.getInstance().getShopCount() + " §ashop(s) loaded. Pricing engine updated."), true);
         return 1;
     }
 
@@ -413,16 +416,37 @@ public class ShopCommand {
         return 10;
     }
 
+    // ── /chestshop pricing ───────────────────────────────────────────────────
+
+    private static int executePricingStatus(CommandSourceStack src) {
+        var engine = com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance();
+        src.sendSuccess(() -> Component.literal("§6§l--- Shop Pricing Engine ---"), false);
+        src.sendSuccess(() -> Component.literal("§eEnabled:  §f" + engine.isEnabled()), false);
+        src.sendSuccess(() -> Component.literal("§eRules:    §f" + engine.getRuleCount()), false);
+        if (!engine.isEnabled()) {
+            src.sendSuccess(() -> Component.literal(
+                "§7Dynamic pricing is OFF. To enable, set §eshop.pricing.enabled=true §7in config.json " +
+                "and run §e/chestshop reload§7."), false);
+        }
+        return 1;
+    }
+
     // ── /chestshop (help) ─────────────────────────────────────────────────────
 
     private static int executeHelp(CommandSourceStack src) {
         src.sendSuccess(() -> Component.literal("§6§l=== ChestShop Commands ==="), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop list §7- List your shops"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop info §7- Info on looked-at shop"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop setprice <buy|sell|both> <price> §7- Set price on looked-at shop"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop stats §7- Your shop statistics"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop limit §7- Show your shop limit"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop pricing §7- Show dynamic pricing engine status"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop export §7- Admin: export shops to CSV"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop import [create] §7- Admin: import from CSV"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop convert §7- Register looked-at sign as shop"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop remove <x> <y> <z> §7- Admin: remove shop"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop reload §7- Admin: reload shop data"), false);
-        src.sendSuccess(() -> Component.literal("§7Signs: [Name] / [Qty] / [B buy:S sell] / [item]"), false);
+        src.sendSuccess(() -> Component.literal("§7Signs: [Name] / [Qty] / [B buy:S sell] / [item or ?]"), false);
         return 1;
     }
 }

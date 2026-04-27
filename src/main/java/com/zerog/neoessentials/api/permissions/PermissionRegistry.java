@@ -255,6 +255,19 @@ public class PermissionRegistry {
         register("neoessentials.sell.bulk", "Sell entire inventory (/sell inventory|all)", PermissionCategory.ECONOMY, true);
         register("neoessentials.setworth", "Set item sell prices (/setworth)", PermissionCategory.ECONOMY, false);
 
+        // ChestShop
+        register("neoessentials.shop.use",                 "Use (buy/sell at) shops",                        PermissionCategory.ECONOMY, true);
+        register("neoessentials.shop.create",              "Create player chest shops",                       PermissionCategory.ECONOMY, true);
+        register("neoessentials.shop.create.admin",        "Create admin chest shops",                        PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.setprice",            "Set price on own shop sign (/chestshop setprice)",PermissionCategory.ECONOMY, true);
+        register("neoessentials.shop.list.others",         "List shops owned by other players",               PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.admin.remove",        "Force-remove any shop",                           PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.admin.setprice",      "Set price on any shop sign",                      PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.admin.reload",        "Reload shop data from disk",                      PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.admin.csv.export",    "Export shops to CSV file",                        PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.admin.csv.import",    "Import shops from CSV file",                      PermissionCategory.ECONOMY, false);
+        register("neoessentials.shop.npc.manage",          "Create/remove/manage NPC shops (/npcshop)",       PermissionCategory.ECONOMY, false);
+
         // Player-state / admin tool permissions
         register("neoessentials.fly", "Toggle flight mode", PermissionCategory.PLAYER, false);
         register("neoessentials.fly.others", "Toggle flight for other players", PermissionCategory.PLAYER, false);

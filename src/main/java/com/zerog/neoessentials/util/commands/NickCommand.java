@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.CommandSourceHelper;
@@ -15,6 +17,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -312,19 +318,86 @@ public class NickCommand {
     }
     
     /**
-     * Update player's display name based on nickname
+     * Update player's visible name everywhere:
+     *   1. Tab-list display name — sent via ClientboundPlayerInfoUpdatePacket to all online players.
+     *   2. Chat & placeholder resolution — handled by DefaultPlaceholderExpansion reading NICKNAMES.
+     *
+     * Note: setCustomName() is intentionally NOT used here.  On players it only adds a floating
+     * second label above the real name, has no effect on the tab list, and is invisible in chat.
      */
     private static void updatePlayerDisplayName(ServerPlayer player) {
         String nickname = NICKNAMES.get(player.getUUID());
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        if (server == null) return;
 
-        if (nickname != null) {
-            String formattedNick = nickname.replace("&", "§");
-            player.setCustomName(com.zerog.neoessentials.util.MessageUtil.coloredText(formattedNick));
-            player.setCustomNameVisible(true);
-        } else {
-            player.setCustomName(null);
-            player.setCustomNameVisible(false);
+        // Build the tab-list display name: formatted nickname, or null to revert to real username
+        Component tabDisplayName = (nickname != null)
+            ? MessageUtil.coloredText(nickname.replace("&", "§"))
+            : null;
+
+        // Broadcast UPDATE_DISPLAY_NAME to every connected player (including the nick owner)
+        broadcastTabListDisplayName(player, tabDisplayName, server);
+    }
+
+    /**
+     * Sends a {@code ClientboundPlayerInfoUpdatePacket} that overwrites the tab-list
+     * display name for {@code subject} on every connected client.
+     *
+     * @param subject     the player whose tab entry should be updated
+     * @param displayName the new name to show, or {@code null} to revert to the game-profile name
+     * @param server      the running server instance
+     */
+    private static void broadcastTabListDisplayName(ServerPlayer subject,
+                                                     @Nullable Component displayName,
+                                                     net.minecraft.server.MinecraftServer server) {
+        try {
+            ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(
+                subject.getUUID(),
+                subject.getGameProfile(),
+                true,
+                subject.connection.latency(),
+                subject.gameMode.getGameModeForPlayer(),
+                displayName,   // null → client falls back to the profile name
+                null           // no chat session
+            );
+
+            EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions =
+                EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
+
+            ClientboundPlayerInfoUpdatePacket packet = buildNickPacket(actions, List.of(entry));
+            if (packet == null) return;
+
+            for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
+                viewer.connection.send(packet);
+            }
+        } catch (Exception e) {
+            System.err.println("[NeoEssentials] Failed to broadcast tab display name for "
+                + subject.getName().getString() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Builds a {@link ClientboundPlayerInfoUpdatePacket} with custom entries via reflection,
+     * using the same technique as {@code FakePlayerManager}.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static ClientboundPlayerInfoUpdatePacket buildNickPacket(
+            EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions,
+            List<ClientboundPlayerInfoUpdatePacket.Entry> entries) {
+        try {
+            ClientboundPlayerInfoUpdatePacket packet =
+                new ClientboundPlayerInfoUpdatePacket(actions, Collections.emptyList());
+            for (java.lang.reflect.Field f : ClientboundPlayerInfoUpdatePacket.class.getDeclaredFields()) {
+                if (List.class.isAssignableFrom(f.getType())) {
+                    f.setAccessible(true);
+                    f.set(packet, List.copyOf(entries));
+                    return packet;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[NeoEssentials] buildNickPacket reflection error: " + e.getMessage());
+        }
+        return null;
     }
     
     /**
@@ -424,10 +497,21 @@ public class NickCommand {
     }
     
     /**
-     * Apply nicknames to all online players (call on server start)
+     * Apply nicknames to all online players (call on server start / reload).
+     * Sends tab-list display-name packets so every viewer sees the correct nickname immediately.
      */
     public static void applyNicknamesToOnlinePlayers(net.minecraft.server.MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            updatePlayerDisplayName(player);
+        }
+    }
+
+    /**
+     * Called when a player joins the server.
+     * Restores their tab-list display name if they had a nickname before logging out.
+     */
+    public static void onPlayerJoin(ServerPlayer player) {
+        if (NICKNAMES.containsKey(player.getUUID())) {
             updatePlayerDisplayName(player);
         }
     }
