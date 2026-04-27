@@ -164,7 +164,7 @@ public class NickCommand {
         }
         
         // Validate nickname
-        if (!isValidNickname(nickname)) {
+        if (isInvalidNickname(nickname)) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.nick.invalid_format"));
             return 0;
         }
@@ -258,7 +258,7 @@ public class NickCommand {
         }
         
         // Validate nickname
-        if (!isValidNickname(nickname)) {
+        if (isInvalidNickname(nickname)) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.nick.invalid_format"));
             return 0;
         }
@@ -321,7 +321,6 @@ public class NickCommand {
      * Update player's visible name everywhere:
      *   1. Tab-list display name — sent via ClientboundPlayerInfoUpdatePacket to all online players.
      *   2. Chat & placeholder resolution — handled by DefaultPlaceholderExpansion reading NICKNAMES.
-     *
      * Note: setCustomName() is intentionally NOT used here.  On players it only adds a floating
      * second label above the real name, has no effect on the tab list, and is invisible in chat.
      */
@@ -380,7 +379,6 @@ public class NickCommand {
      * Builds a {@link ClientboundPlayerInfoUpdatePacket} with custom entries via reflection,
      * using the same technique as {@code FakePlayerManager}.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static ClientboundPlayerInfoUpdatePacket buildNickPacket(
             EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions,
             List<ClientboundPlayerInfoUpdatePacket.Entry> entries) {
@@ -401,10 +399,10 @@ public class NickCommand {
     }
     
     /**
-     * Check if nickname is valid format
+     * Check if nickname is invalid format
      */
-    private static boolean isValidNickname(String nickname) {
-        return VALID_NICK_PATTERN.matcher(nickname).matches();
+    private static boolean isInvalidNickname(String nickname) {
+        return !VALID_NICK_PATTERN.matcher(nickname).matches();
     }
     
     /**

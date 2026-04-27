@@ -908,6 +908,7 @@ public class PermissionRegistry {
      * This makes NeoEssentials permissions appear in LuckPerms autocomplete and web UI.
      * Call this after all permissions are registered.
      */
+    @SuppressWarnings("unused")
     public void syncWithLuckPerms() {
         try {
             // Check if we're using LuckPerms

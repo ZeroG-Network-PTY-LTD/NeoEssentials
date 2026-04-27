@@ -12,16 +12,12 @@ import com.zerog.neoessentials.shop.csv.ShopCsvSerializer;
 import com.zerog.neoessentials.shop.entity.ShopEntityData;
 import com.zerog.neoessentials.shop.entity.ShopEntityManager;
 import com.zerog.neoessentials.shop.model.ShopData;
-import com.zerog.neoessentials.util.ResourceUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
-import java.util.UUID;
 
 /**
  * REST endpoint for the web dashboard — mounted at {@code /api/shops/}.

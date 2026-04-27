@@ -16,14 +16,13 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.NeoForge;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Virtual 6-row chest GUI that displays NPC shop listings.
@@ -41,21 +40,17 @@ public class NpcShopMenu extends AbstractContainerMenu {
 
     private static final int SHOP_ROWS           = 6;
     private static final int SHOP_SLOTS          = SHOP_ROWS * 9; // 54
-    private static final int PLAYER_INV_START    = SHOP_SLOTS;
 
-    private final Container shopContainer;
     private final ShopEntityData shopData;
-    private final UUID viewerUUID;
 
     // ── Constructor (server-side) ─────────────────────────────────────────────
 
     public NpcShopMenu(int containerId, Inventory playerInventory, ShopEntityData shopData) {
         super(MenuType.GENERIC_9x6, containerId);
-        this.shopData      = shopData;
-        this.viewerUUID    = playerInventory.player.getUUID();
+        this.shopData = shopData;
 
         // Build a read-only virtual container populated with listing items
-        this.shopContainer = buildShopContainer(shopData.listings);
+        Container shopContainer = buildShopContainer(shopData.listings);
 
         // Add shop display slots (locked — see overrideSlot)
         for (int row = 0; row < SHOP_ROWS; row++) {
@@ -83,12 +78,11 @@ public class NpcShopMenu extends AbstractContainerMenu {
     // ── Click handling ────────────────────────────────────────────────────────
 
     @Override
-    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+    public void clicked(int slotId, int button, @Nonnull ClickType clickType, @Nonnull Player player) {
         if (slotId >= 0 && slotId < SHOP_SLOTS) {
             // Shop slot clicked — execute a BUY transaction for this listing
-            int listingIndex = slotId;
-            if (listingIndex < shopData.listings.size()) {
-                ShopListing listing = shopData.listings.get(listingIndex);
+            if (slotId < shopData.listings.size()) {
+                ShopListing listing = shopData.listings.get(slotId);
                 if (listing.canBuy() && player instanceof ServerPlayer sp) {
                     executeListing(sp, listing);
                 }
@@ -104,7 +98,8 @@ public class NpcShopMenu extends AbstractContainerMenu {
      * Shift-click — disabled for the shop display area; normal for the player inventory.
      */
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
+    @Nonnull
+    public ItemStack quickMoveStack(@Nonnull Player player, int index) {
         if (index < SHOP_SLOTS) return ItemStack.EMPTY; // lock shop display slots
         Slot slot = this.slots.get(index);
         if (slot.hasItem()) {
@@ -115,7 +110,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public boolean stillValid(Player player) { return true; }
+    public boolean stillValid(@Nonnull Player player) { return true; }
 
     // ── Transaction logic ─────────────────────────────────────────────────────
 
@@ -196,8 +191,8 @@ public class NpcShopMenu extends AbstractContainerMenu {
             super(container, index, x, y);
         }
 
-        @Override public boolean mayPickup(Player player) { return false; }
-        @Override public boolean mayPlace(ItemStack stack) { return false; }
+        @Override public boolean mayPickup(@Nonnull Player player) { return false; }
+        @Override public boolean mayPlace(@Nonnull ItemStack stack) { return false; }
     }
 
     // ── MenuProvider ──────────────────────────────────────────────────────────
@@ -207,21 +202,20 @@ public class NpcShopMenu extends AbstractContainerMenu {
      */
     public static class NpcShopMenuProvider implements MenuProvider {
         private final ShopEntityData shopData;
-        private final ServerPlayer   viewer;
 
-        public NpcShopMenuProvider(ShopEntityData shopData, ServerPlayer viewer) {
+        public NpcShopMenuProvider(ShopEntityData shopData) {
             this.shopData = shopData;
-            this.viewer   = viewer;
         }
 
         @Override
+        @Nonnull
         public Component getDisplayName() {
             return Component.literal("§6" + shopData.shopName);
         }
 
         @Nullable
         @Override
-        public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        public AbstractContainerMenu createMenu(int containerId, @Nonnull Inventory playerInventory, @Nonnull Player player) {
             return new NpcShopMenu(containerId, playerInventory, shopData);
         }
     }
