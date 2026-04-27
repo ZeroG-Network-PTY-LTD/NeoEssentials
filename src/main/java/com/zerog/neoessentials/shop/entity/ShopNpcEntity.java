@@ -76,10 +76,6 @@ public class ShopNpcEntity extends PathfinderMob {
     @Override
     public boolean isAggressive() { return false; }
 
-    @Override
-    public net.minecraft.world.damagesource.DamageSource damageSources() {
-        return super.damageSources();
-    }
 
     // ── NBT ───────────────────────────────────────────────────────────────────
 

@@ -210,7 +210,7 @@ public final class ShopTransaction {
 
     // ── Inventory helpers ──────────────────────────────────────────────────────
 
-    static ItemStack resolveItem(String itemId) {
+    public static ItemStack resolveItem(String itemId) {
         try {
             ItemStack result = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(itemId);
             if (result != null && !result.isEmpty()) return result;
@@ -253,7 +253,7 @@ public final class ShopTransaction {
         return removeItems(player.getInventory(), target, amount);
     }
 
-    static void giveItems(ServerPlayer player, ItemStack item) {
+    public static void giveItems(ServerPlayer player, ItemStack item) {
         ItemStack copy = item.copy();
         if (!player.getInventory().add(copy)) player.drop(copy, false);
     }
@@ -279,7 +279,7 @@ public final class ShopTransaction {
         if (container instanceof BlockEntity be) be.setChanged();
     }
 
-    static boolean hasSpaceInContainer(Container container, ItemStack target, int amount) {
+    public static boolean hasSpaceInContainer(Container container, ItemStack target, int amount) {
         int canFit = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
