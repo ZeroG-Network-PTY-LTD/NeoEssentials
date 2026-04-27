@@ -979,9 +979,9 @@ public class NeoEssentials {
         registry.registerCommand("firework", "Edit or fire held firework rockets");
         registry.registerCommand("fw", "Edit or fire held firework rockets (alias)");
         registry.registerCommand("nuke", "Rain TNT on a player");
-        registry.registerCommand("antioch", "Spawn lit TNT at your look target (🐇 easter egg)");
-        registry.registerCommand("kittycannon", "Launch an exploding baby cat 🐱");
-        registry.registerCommand("beezooka", "Launch angry bees 🐝");
+        registry.registerCommand("antioch", "Spawn lit TNT at your look target ( easter egg)");
+        registry.registerCommand("kittycannon", "Launch an exploding baby cat ");
+        registry.registerCommand("beezooka", "Launch angry bees ");
         registry.registerCommand("itemdb", "Look up item registry info");
         registry.registerCommand("potion", "Edit potion effects on held potion item");
         registry.registerCommand("info", "Show server info/MOTD");
