@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * Represents one ChestShop sign entry.
+ * Represents one ChestShop sign entry or the data anchor for an NPC shop.
  * <p>
  * Sign layout:
  * <pre>
@@ -64,14 +64,43 @@ public class ShopData {
      */
     public boolean itemPending = false;
 
+    // ── New fields (Economy Integration v1) ───────────────────────────────────
+
+    /** Shop type — defaults to legacy SIGN_PLAYER/SIGN_ADMIN via {@link #isAdminShop()}. */
+    public ShopType shopType = null; // null = derived from ownerUUID for backward compat
+
+    /** Unique shop identifier (used by NPC shops; optional for sign shops). */
+    public UUID shopId = null;
+
+    /** Total number of successful transactions on this shop. */
+    public long totalSalesCount = 0L;
+
+    /** Epoch-millis of the last sale, or 0 if never sold. */
+    public long lastSaleTimestamp = 0L;
+
+    /**
+     * If stock drops to or below this threshold after a buy transaction, the owner
+     * receives a notification. 0 = use server default from config.
+     */
+    public int stockLowThreshold = 0;
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public BlockPos getSignPos()  { return new BlockPos(signX, signY, signZ); }
     public BlockPos getChestPos() { return hasChest ? new BlockPos(chestX, chestY, chestZ) : null; }
 
     public boolean isAdminShop() {
+        if (shopType == ShopType.SIGN_ADMIN) return true;
+        if (shopType == ShopType.SIGN_PLAYER || shopType == ShopType.NPC) return false;
+        // Legacy: derive from ownerUUID / ownerName
         return ownerUUID == null ||
                ADMIN_SHOP_NAME.equalsIgnoreCase(ownerName != null ? ownerName.trim() : "");
+    }
+
+    /** Resolved shop type, never null. */
+    public ShopType resolvedShopType() {
+        if (shopType != null) return shopType;
+        return isAdminShop() ? ShopType.SIGN_ADMIN : ShopType.SIGN_PLAYER;
     }
 
     public boolean canBuy()  { return buyPrice  != null; }
@@ -84,11 +113,11 @@ public class ShopData {
 
     @Override
     public String toString() {
-        return String.format("ShopData{owner=%s, qty=%d, buy=%s, sell=%s, item=%s, pos=%s}",
+        return String.format("ShopData{owner=%s, qty=%d, buy=%s, sell=%s, item=%s, pos=%s, sales=%d}",
             ownerName, quantity,
             buyPrice  != null ? buyPrice.toPlainString()  : "—",
             sellPrice != null ? sellPrice.toPlainString() : "—",
-            itemId, toKey());
+            itemId, toKey(), totalSalesCount);
     }
 }
 
