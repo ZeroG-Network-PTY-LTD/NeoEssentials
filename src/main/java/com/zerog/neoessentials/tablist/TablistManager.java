@@ -490,6 +490,11 @@ public class TablistManager {
     }
 
     private String getDisplayName(ServerPlayer player) {
+        // Priority: NickCommand nickname → internal customNames override → real name
+        try {
+            String nick = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
+            if (nick != null && !nick.isEmpty()) return nick.replace("&", "§");
+        } catch (Exception ignored) {}
         String custom = customNames.get(player.getUUID());
         if (custom != null && !custom.isEmpty()) return custom;
         return player.getName().getString();

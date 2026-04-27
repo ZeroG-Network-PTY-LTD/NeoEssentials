@@ -2,6 +2,7 @@ package com.zerog.neoessentials.api;
 
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.util.commands.NickCommand;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
@@ -110,11 +111,13 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return switch (identifier.toLowerCase()) {
                 // Player identity
-                case "displayname" -> player != null ? player.getDisplayName().getString() : null;
+                // displayname → nickname if set, otherwise the scoreboard-based display name
+                case "displayname" -> player != null ? getNickOrDisplayName(player) : null;
+                // username → always the real game-profile name (for admin use / realname lookup)
                 case "username", "name" -> player != null ? player.getName().getString() : null;
-                // Hover variants — plain text fallback (ChatFormatter handles the Component side)
-                case "username_hover" -> player != null ? player.getName().getString() : null;
-                case "displayname_hover" -> player != null ? player.getDisplayName().getString() : null;
+                // Hover variants — plain text; ChatFormatter renders the Component side
+                case "username_hover"   -> player != null ? player.getName().getString() : null;
+                case "displayname_hover" -> player != null ? getNickOrDisplayName(player) : null;
                 
                 // Permission system
                 case "prefix" -> getPlayerPrefix(player);
@@ -164,6 +167,23 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         }
     }
     
+    /**
+     * Returns the player's nickname (color-formatted) if one is set via {@code /nick},
+     * otherwise falls back to the scoreboard display name (team prefix/suffix + real name).
+     */
+    private String getNickOrDisplayName(ServerPlayer player) {
+        try {
+            String nick = NickCommand.getNickname(player.getUUID());
+            if (nick != null && !nick.isEmpty()) {
+                return nick.replace("&", "§");
+            }
+        } catch (Exception e) {
+            LOGGER.debug("getNickOrDisplayName: error reading nickname for {}: {}",
+                player.getName().getString(), e.getMessage());
+        }
+        return player.getDisplayName().getString();
+    }
+
     /**
      * Check if a placeholder requires a player context.
      */
