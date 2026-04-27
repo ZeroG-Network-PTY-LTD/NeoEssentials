@@ -1,6 +1,8 @@
 # NeoEssentials
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-blue.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-orange.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/mrwhiteflamesyt)
+
 > NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 1.21.1 - 1.21.11 servers. It provides 50+ commands, GUI tools, advanced administration, and a real-time web dashboard—all managed by modular JSON config files and standardized documentation.
 
 ## 🌟 Overview
@@ -26,20 +28,20 @@ NeoEssentials brings essential server management, player utilities, and advanced
 
 ## 📖 Documentation
 
-Start at [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
-  - [EconomySystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/EconomySystem.md)
-  - [ChatSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ChatSystem.md)
-  - [ModerationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ModerationSystem.md)
-  - [TeleportationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/TeleportationSystem.md)
-  - [KitManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/KitManagement.md)
-  - [WebDashboard](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/WebDashboard.md)
-  - [PermissionSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/PermissionSystem.md)
-  - [ItemManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/ItemManagement.md)
-  - [UtilitySystems](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/UtilitySystems.md)
-  - [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md)
-  - [AFKSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/AFKSystem.md)
+Start at [Home](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/Home) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
+  - [EconomySystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/EconomySystem)
+  - [ChatSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/ChatSystem)
+  - [ModerationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/ModerationSystem)
+  - [TeleportationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/TeleportationSystem)
+  - [KitManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/KitManagement)
+  - [WebDashboard](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/WebDashboard)
+  - [PermissionSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/PermissionSystem)
+  - [ItemManagement](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/ItemManagement)
+  - [UtilitySystems](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/UtilitySystems)
+  - [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APISystem)
+  - [AFKSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/AFKSystem)
 
-See [APISystem.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md) for API & Placeholder System details, including:
+See [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APISystem) for API & Placeholder System details, including:
   - PlaceholderAPI integration for dynamic text
   - Custom and expansion placeholders
   - Web Dashboard REST API endpoints for server status, player info, logs, config, events, and statistics
@@ -48,7 +50,7 @@ See [APISystem.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/R
 ## 🚀 Quick Start
 
 ### Installation
-1. Download the latest release (neoessentials-1.0.2.3.jar)
+1. Download the latest release [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases)
 2. Place the JAR file in your server's `mods` folder
 3. Start your server to generate configuration files in `config/neoessentials/`
 4. Configure permissions and features as needed
@@ -74,15 +76,15 @@ For LuckPerms users:
 
 ## 🎮 Command Reference
 
-See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and individual system docs above for full command lists and config options.
+See [Home](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/Home) and individual system docs above for full command lists and config options.
 
 ## 🔧 Configuration Examples
 
-All features are managed by modular JSON config files. See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and system docs above for details.
+All features are managed by modular JSON config files. See [Home](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/Home) and system docs above for details.
 
 ## 🔗 API Integration for Modders
 
-See [APISystem.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
+See [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APISystem) for full API and PlaceholderAPI documentation, including:
 - Registering custom placeholders
 - Using REST API endpoints for server data
 - Economy API for mod integration
@@ -129,7 +131,7 @@ Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
 - **Bug Reports**: Report issues and bugs through GitHub or Discord
 - **Feature Requests**: Suggest new features and improvements
-- **Documentation**: See [Home.md](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/blob/Released/docs/Wiki/Home.md) and system docs above
+- **Documentation**: See [Home](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/Home) and system docs above
 
 ## 📄 License
 
