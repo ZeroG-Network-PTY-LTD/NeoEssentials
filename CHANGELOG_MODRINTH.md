@@ -4,6 +4,32 @@
 
 ---
 
+## 1.0.2.6+build.72 — 2026-04-27
+
+### 🐛 Bug Fix — FTB Ranks Adapter: Permission Checks Failing
+
+FTB Ranks permissions were silently returning `false` for every check because the adapter was calling methods that do not exist in `ftb-ranks-neoforge-2101.1.3`, resulting in `NoSuchMethodException` at runtime.
+
+**What's fixed:**
+
+- **Correct API method now used** — `FTBRanksAPI.getPermissionValue(ServerPlayer, String)` is the actual static method exposed by FTB Ranks 2101.1.x. The adapter now resolves this as Strategy 1 and interprets the returned `PermissionValue` with `asBooleanOrFalse()`.
+- **Improved fallback chain** — five strategies now cover 2101.1.x (confirmed), RankManager path, two legacy naming variants, and the oldest UUID-based builds.
+- `"MISSING"` added to the boolean deny-list for `PermissionValue.MISSING` edge case.
+
+---
+
+## 1.0.2.6+build.70 — 2026-04-27
+
+### 🐛 Bug Fix — `/msg` & `/reply` Formatting + Missing SocialSpy Key
+
+**What's fixed:**
+
+- **`/msg` and `/reply` showed raw template text** — `java.text.MessageFormat` was applied to templates containing `{placeholder}` tokens, throwing `IllegalArgumentException` on every message send. Non-numeric placeholders are now escaped before format processing.
+- **`neoessentials.socialspy.format` key missing** — SocialSpy intercept threw a missing-key error; key added to `en_us.json`.
+- `_langVersion` → 14.
+
+---
+
 ## 1.0.2.6+build.69 — 2026-04-24
 
 ### ✨ Feature — Custom Player Tablist: Refinements

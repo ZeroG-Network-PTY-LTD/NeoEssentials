@@ -4,6 +4,25 @@
 
 ---
 
+## 1.0.2.6+build.72 — 2026-04-27
+
+### 🐛 Bug Fix — FTB Ranks Permission Check (`NoSuchMethodException`)
+
+- **FTB Ranks permissions now work correctly with `ftb-ranks-neoforge-2101.1.3`** — The adapter was probing non-existent API methods, causing all FTB Ranks permission checks to quietly return `false`. The adapter now correctly calls `FTBRanksAPI.getPermissionValue(ServerPlayer, String)` (the actual static method in 2101.1.x) and interprets the returned `PermissionValue` via `asBooleanOrFalse()`.
+- Additional fallback strategies kept for older FTB Ranks versions.
+
+---
+
+## 1.0.2.6+build.70 — 2026-04-27
+
+### 🐛 Bug Fix — `/msg` & `/reply` SocialSpy Formatting
+
+- **Private messages no longer show raw template text** — `MessageUtil.localize()` was passing message templates containing `{placeholder}` tokens directly to `java.text.MessageFormat`, which threw `IllegalArgumentException` on non-numeric tokens. Non-numeric placeholders are now escaped before `MessageFormat.format()` runs.
+- **`neoessentials.socialspy.format` translation key added** — fixes a missing-key crash in the SocialSpy listener.
+- `_langVersion` bumped `13 → 14` — new key auto-merges on next startup.
+
+---
+
 ## 1.0.2.6+build.69 — 2026-04-24
 
 ### ✨ Feature — Custom Player Tablist: Polish Pass
