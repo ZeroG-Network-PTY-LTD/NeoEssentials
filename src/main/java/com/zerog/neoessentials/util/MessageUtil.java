@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 14;
+    private static final int CURRENT_LANG_VERSION = 15;
 
     /**
      * Load translations from server directory, updating from JAR if needed.
@@ -234,6 +234,68 @@ public class MessageUtil {
         // Examples matched: {neoessentials_displayname}, {MESSAGE}, {PLAYER}
         // Examples NOT matched: {0}, {1,number}, {2,date} — starts with digit
         return s.replaceAll("\\{([^0-9'{}][^}]*)}", "'{'$1'}'");
+    }
+
+    /**
+     * Pattern matching named (non-positional) {@code {TOKEN}} placeholders — used to detect
+     * unresolved tokens after {@link #resolveTemplate} runs in debug mode.
+     */
+    private static final java.util.regex.Pattern NAMED_PLACEHOLDER_PATTERN =
+            java.util.regex.Pattern.compile("\\{([^0-9'{}\\s][^}]*)}");
+
+    /**
+     * Resolve a message template with extra named variables and PlaceholderAPI.
+     *
+     * <p>Resolution order:
+     * <ol>
+     *   <li>Apply {@code extraVars} via case-insensitive token replacement so both
+     *       {@code {MESSAGE}} and {@code {message}} work.</li>
+     *   <li>Run {@link com.zerog.neoessentials.api.PlaceholderAPI#setPlaceholders} for any
+     *       remaining {@code {neoessentials_*}} and external tokens.</li>
+     *   <li>In debug mode, log any {@code {TOKEN}} tokens that are still present after
+     *       resolution to help diagnose template misconfigurations.</li>
+     * </ol>
+     *
+     * @param player    Player context for PlaceholderAPI; may be {@code null} for server-level messages
+     * @param template  Raw template string (may contain {@code &} color codes)
+     * @param extraVars Named variable overrides (key without braces → value); may be {@code null}
+     * @return Resolved string — color codes still use {@code &} prefix for subsequent
+     *         processing by {@link #coloredText(String)}
+     */
+    public static String resolveTemplate(
+            @javax.annotation.Nullable net.minecraft.server.level.ServerPlayer player,
+            String template,
+            @javax.annotation.Nullable java.util.Map<String, String> extraVars) {
+        if (template == null || template.isEmpty()) return template == null ? "" : template;
+
+        String result = template;
+
+        // ── Step 1: apply extra named vars (case-insensitive) ───────────────────
+        if (extraVars != null && !extraVars.isEmpty()) {
+            for (java.util.Map.Entry<String, String> entry : extraVars.entrySet()) {
+                String val = entry.getValue() != null ? entry.getValue() : "";
+                result = result.replaceAll(
+                    "(?i)\\{" + java.util.regex.Pattern.quote(entry.getKey()) + "}",
+                    java.util.regex.Matcher.quoteReplacement(val));
+            }
+        }
+
+        // ── Step 2: PlaceholderAPI for remaining {neoessentials_*} etc. ─────────
+        result = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(player, result);
+
+        // ── Step 3: debug — log any {TOKEN} tokens still unresolved ─────────────
+        if (debugMode) {
+            java.util.regex.Matcher m = NAMED_PLACEHOLDER_PATTERN.matcher(result);
+            java.util.List<String> unresolved = new java.util.ArrayList<>();
+            while (m.find()) unresolved.add(m.group(0));
+            if (!unresolved.isEmpty()) {
+                LOGGER.warn("[NeoEssentials] Unresolved placeholders in template '{}': {}",
+                    template.length() > 80 ? template.substring(0, 77) + "..." : template,
+                    unresolved);
+            }
+        }
+
+        return result;
     }
 
     /**
