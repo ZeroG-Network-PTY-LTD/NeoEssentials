@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -203,8 +204,9 @@ public class MiscTeleportManager {
         deathLocationTimestamps.put(playerId, System.currentTimeMillis());
         persistLocations(playerId);
 
-        player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved"));
-        
+        // Do NOT send a chat message here — LivingDeathEvent fires while the player is
+        // transitioning to the death screen, so they cannot read it.  The "use /back to
+        // return to death location" hint is sent on respawn instead (see onPlayerRespawn).
         LOGGER.info("Saved death location for {}: {}", 
                    player.getName().getString(), deathLocation);
     }
@@ -267,6 +269,14 @@ public class MiscTeleportManager {
         TeleportLocation currentLocation = new TeleportLocation(player);
         final TeleportLocation finalTargetLocation = targetLocation;
 
+        // Snapshot timestamp of the back location we consumed — used later to detect
+        // whether another teleport overwrote the back slot while we were warming up.
+        // If another teleport DID save a newer location during warmup, we still store
+        // the /back-undo position but we do NOT discard the newer back entry that was
+        // saved by the intervening teleport (both are important for the chain).
+        final long backTsAtDispatch = backLocationTimestamps.getOrDefault(playerId, 0L);
+        final long deathTsAtDispatch = deathLocationTimestamps.getOrDefault(playerId, 0L);
+
         // Bypass warmup for players with the permission
         boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.warmup")
             || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.back.bypass.warmup");
@@ -276,9 +286,30 @@ public class MiscTeleportManager {
         }
         TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
-                // Store where the player was — lets them /back again to undo
-                backLocations.put(playerId, currentLocation);
-                backLocationTimestamps.put(playerId, System.currentTimeMillis());
+                // Check if another teleport updated the back slot during our warmup.
+                boolean interveningTeleport =
+                    backLocationTimestamps.getOrDefault(playerId, 0L) != backTsAtDispatch
+                    || deathLocationTimestamps.getOrDefault(playerId, 0L) != deathTsAtDispatch;
+
+                if (!interveningTeleport) {
+                    // Normal case: store where player was (undo-/back position)
+                    backLocations.put(playerId, currentLocation);
+                    backLocationTimestamps.put(playerId, System.currentTimeMillis());
+                } else {
+                    // Another teleport ran during warmup (e.g. player accepted a TPA
+                    // from someone else).  That teleport already saved the correct back
+                    // location.  We still want the player to be able to undo THIS /back,
+                    // so we save currentLocation at a timestamp just ONE millisecond
+                    // older than the intervening save so it won't overshadow it.
+                    long interveningTs = Math.max(
+                        backLocationTimestamps.getOrDefault(playerId, 0L),
+                        deathLocationTimestamps.getOrDefault(playerId, 0L));
+                    backLocations.put(playerId, currentLocation);
+                    backLocationTimestamps.put(playerId, interveningTs - 1);
+                    LOGGER.debug("Player {} had an intervening teleport during /back warmup; undo-back stored with prior-timestamp.",
+                        player.getName().getString());
+                }
+
                 if (usedDeath) {
                     // Clear the death location after a successful /back to it
                     deathLocations.remove(playerId);
@@ -407,12 +438,37 @@ public class MiscTeleportManager {
     }
     
     /**
-     * Event handler: Save death location when player dies
+     * Event handler: Save death location when player dies.
+     * The hint message is NOT sent here (player is in-death-screen); it is sent
+     * on respawn via {@link #onPlayerRespawn} instead.
      */
     @SubscribeEvent
     public static void onPlayerDeathEvent(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         MiscTeleportManager.getInstance().saveDeathLocation(player);
+    }
+
+    /**
+     * Event handler: Send the "death location saved – use /back" hint after
+     * the player has respawned and can actually read the message.
+     */
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        MiscTeleportManager mgr = MiscTeleportManager.getInstance();
+        if (!mgr.enableDeathBack) return;
+        // Only show the hint if this respawn was due to death (not /kill or end-portal return)
+        UUID playerId = player.getUUID();
+        if (mgr.deathLocations.containsKey(playerId) || mgr.deathLocationTimestamps.containsKey(playerId)) {
+            net.minecraft.server.MinecraftServer server = player.getServer();
+            if (server == null) return;
+            // Delay one tick so the hint arrives after vanilla respawn messages
+            server.tell(new net.minecraft.server.TickTask(
+                server.getTickCount() + 1,
+                () -> player.sendSystemMessage(
+                    MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved"))
+            ));
+        }
     }
     
     /**

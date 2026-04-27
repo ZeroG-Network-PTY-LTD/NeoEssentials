@@ -6,7 +6,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -200,8 +199,13 @@ public class TeleportRequestCommands {
             ServerPlayer teleportedPlayer = context.getSource().getPlayerOrException();
             TeleportRequestManager manager = TeleportRequestManager.getInstance();
 
-            // Save the player's current location for /back
-            MiscTeleportManager.getInstance().saveBackLocation(teleportedPlayer);
+            // NOTE: Do NOT save back location here.
+            // TeleportRequestManager.executeTeleportRequest() saves the back location
+            // for the correct player (the one actually being teleported).
+            // For /tpa: the requester is teleported, NOT the acceptor.
+            // For /tpahere: the acceptor is teleported — handled by the Manager.
+            // Saving back for the acceptor here would overwrite their back location
+            // with their current (unchanged) position, breaking /back for them.
 
             boolean success = manager.acceptTeleportRequest(teleportedPlayer);
 
