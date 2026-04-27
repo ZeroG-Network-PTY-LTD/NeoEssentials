@@ -48,6 +48,30 @@
 
 # ✅ Improvements Done
 
+- **Web Dashboard — Backup & Restore** *(build #91)*
+
+  First piece of the Web-Dashboard Improvements track: full snapshot backup/restore system.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | Create named ZIP snapshots of configs, mod data, player data | #91 | ✅ |
+  | List snapshots table (name, date, size, targets, file count) | #91 | ✅ |
+  | Restore snapshot — auto pre-restore backup created first | #91 | ✅ |
+  | Download snapshot as ZIP from the dashboard | #91 | ✅ |
+  | Delete snapshots with confirmation dialog | #91 | ✅ |
+  | Storage stat cards (count, total size, last backup, dir) | #91 | ✅ |
+  | Auto-prune oldest snapshots when limit reached (max 20) | #91 | ✅ |
+  | New `💾 Backup & Restore` nav link on all dashboard pages | #91 | ✅ |
+
+  - `BackupManager.java` — singleton utility for ZIP snapshot create/restore/list/delete; respects target paths (`configs`, `neodata`, `playerdata`); writes `backup-manifest.json` inside each ZIP; auto-prunes when count exceeds 20
+  - `BackupEndpoint.java` — REST handler at `/api/backup/*` (status, list, create, restore, download, delete); all write operations admin-only
+  - `backup.html` + `backup.js` — responsive dashboard page with stat cards, create panel, snapshot table, and confirmation modals
+  - `DashboardAPI.java` — registered `/api/backup` endpoint with auth middleware
+  - `DashboardFileManager.java` — added `backup.html` and `backup.js` to managed file list
+  - All existing sidebar navs updated with `💾 Backup & Restore` link
+
+---
+
 - **`/nick` Nickname System — Full Visibility Fix** *(build #86)*
 
   Complete overhaul of the nickname display pipeline — all five failure points fixed.

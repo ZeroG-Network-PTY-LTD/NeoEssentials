@@ -8,9 +8,11 @@ import com.zerog.neoessentials.webdashboard.api.endpoints.GameEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.LoggingEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.PlayerEndpoint;
 import com.zerog.neoessentials.webdashboard.api.endpoints.ServerEndpoint;
+import com.zerog.neoessentials.webdashboard.endpoints.BackupEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.MotdEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PermissionEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PlaceholderEndpoint;
+import com.zerog.neoessentials.webdashboard.endpoints.StatsEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.TeleportEndpoint;
 import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
@@ -48,6 +50,8 @@ public class DashboardAPI {
     private java.util.concurrent.ExecutorService executor;
     private boolean running = false;
     private MinecraftServer server;
+    /** Held so the TPS-sampler thread can be shut down cleanly. */
+    private StatsEndpoint statsEndpoint;
 
     // Per-IP rate limiter: maps IP → deque of request timestamps
     private final java.util.Map<String, java.util.ArrayDeque<Long>> rateLimitMap =
@@ -186,6 +190,12 @@ public class DashboardAPI {
         
         try {
             LOGGER.info("Stopping Dashboard API server...");
+
+            // Shutdown stats sampler thread
+            if (statsEndpoint != null) {
+                statsEndpoint.shutdown();
+                statsEndpoint = null;
+            }
 
             // Stop accepting new requests and wait up to 2 seconds for existing requests to complete
             apiServer.stop(2);
@@ -359,6 +369,9 @@ public class DashboardAPI {
         apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
         apiServer.createContext("/api/placeholders", withAuth(new PlaceholderEndpoint(server)));
         apiServer.createContext("/api/shops", withAuth(new com.zerog.neoessentials.shop.dashboard.ShopEndpoint()));
+        apiServer.createContext("/api/backup", withAuth(new BackupEndpoint()));
+        statsEndpoint = new StatsEndpoint(server);
+        apiServer.createContext("/api/stats", withAuth(statsEndpoint));
         apiServer.createContext("/api/docs", new DocumentationHandler());
 
         LOGGER.info("API endpoints registered:");
@@ -376,6 +389,8 @@ public class DashboardAPI {
         LOGGER.info("  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/placeholders/* (list, resolve, stats) [AUTH REQUIRED]");
         LOGGER.info("  - /api/shops/* (list, stats, npc, csv/export, csv/import, price) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/backup/* (status, list, create, restore, download, delete) [AUTH REQUIRED - ADMIN ONLY]");
+        LOGGER.info("  - /api/stats/* (overview, economy, activity, performance) [AUTH REQUIRED]");
         LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
         // Check if dashboard resources are available

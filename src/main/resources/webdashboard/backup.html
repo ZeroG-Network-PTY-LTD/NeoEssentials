@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup &amp; Restore - NeoEssentials Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--card-bg, #1e1e2e);
+            border: 1px solid var(--border, #313244);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .stat-card .label { font-size: 0.78rem; color: var(--text-secondary, #a6adc8); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-card .value { font-size: 1.7rem; font-weight: 700; color: var(--text-primary, #cdd6f4); }
+        .stat-card .sub   { font-size: 0.78rem; color: var(--text-secondary, #a6adc8); }
+
+        .create-panel {
+            background: var(--card-bg, #1e1e2e);
+            border: 1px solid var(--border, #313244);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .create-panel h3 { margin: 0 0 1.25rem; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .create-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+        .create-row .field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 180px; }
+        .create-row .field label { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary, #a6adc8); }
+        .create-row input[type="text"] {
+            background: var(--input-bg, #313244);
+            border: 1px solid var(--border, #45475a);
+            border-radius: 6px;
+            color: var(--text-primary, #cdd6f4);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .create-row input[type="text"]:focus { outline: none; border-color: var(--accent, #89b4fa); }
+        .target-checks { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+        .target-checks label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: var(--text-primary, #cdd6f4); cursor: pointer; }
+        .target-checks input[type="checkbox"] { accent-color: #89b4fa; width: 16px; height: 16px; }
+
+        .snapshot-table-wrap {
+            background: var(--card-bg, #1e1e2e);
+            border: 1px solid var(--border, #313244);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .snapshot-table-wrap h3 { margin: 0; padding: 1.25rem 1.5rem; font-size: 1rem; font-weight: 600; border-bottom: 1px solid var(--border, #313244); display: flex; align-items: center; gap: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary, #a6adc8); background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border, #313244); }
+        td { padding: 0.85rem 1rem; font-size: 0.88rem; color: var(--text-primary, #cdd6f4); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+
+        .tag { display: inline-block; background: rgba(137,180,250,0.15); color: #89b4fa; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; margin: 0.1rem; }
+        .tag.green { background: rgba(166,227,161,0.15); color: #a6e3a1; }
+        .tag.yellow{ background: rgba(249,226,175,0.15); color: #f9e2af; }
+
+        .action-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-sm { padding: 0.35rem 0.75rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: opacity 0.15s; }
+        .btn-sm:hover { opacity: 0.8; }
+        .btn-restore  { background: #89b4fa; color: #1e1e2e; }
+        .btn-download { background: #a6e3a1; color: #1e1e2e; }
+        .btn-delete   { background: rgba(243,139,168,0.2); color: #f38ba8; border: 1px solid rgba(243,139,168,0.4); }
+
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary, #a6adc8); }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+        .status-banner {
+            display: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .status-banner.success { background: rgba(166,227,161,0.15); color: #a6e3a1; border: 1px solid #a6e3a1; }
+        .status-banner.error   { background: rgba(243,139,168,0.15); color: #f38ba8; border: 1px solid #f38ba8; }
+        .status-banner.loading { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid #89b4fa; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 420px; width: 90%; }
+        .modal h3 { margin: 0 0 1rem; font-size: 1.1rem; }
+        .modal p  { margin: 0 0 1.5rem; color: #a6adc8; font-size: 0.9rem; line-height: 1.5; }
+        .modal-btns { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .btn-cancel { background: #313244; color: #cdd6f4; padding: 0.5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper" id="dashboardWrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">NeoEssentials</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Overview</span>
+                </a>
+                <a href="index.html#players" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Players</span>
+                </a>
+                <a href="index.html#performance" class="nav-item">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-text">Performance</span>
+                </a>
+                <a href="index.html#worlds" class="nav-item">
+                    <span class="nav-icon">🌍</span>
+                    <span class="nav-text">Worlds</span>
+                </a>
+                <a href="index.html#events" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-text">Events</span>
+                </a>
+                <a href="permissions.html" class="nav-item admin-only">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Permissions</span>
+                </a>
+                <a href="admin.html" class="nav-item admin-only">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Admin Controls</span>
+                </a>
+                <a href="teleport.html" class="nav-item admin-only">
+                    <span class="nav-icon">🌀</span>
+                    <span class="nav-text">Teleport Settings</span>
+                </a>
+                <a href="backup.html" class="nav-item admin-only active">
+                    <span class="nav-icon">💾</span>
+                    <span class="nav-text">Backup &amp; Restore</span>
+                </a>
+                <a href="stats.html" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Statistics</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="server-status-mini">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Server Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
+                    <h2 class="page-title">💾 Backup &amp; Restore</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="status-badge" id="serverStatusBadge">
+                        <span class="dot"></span>
+                        <span id="serverStatusText">Online</span>
+                    </div>
+                    <div class="user-info" id="userInfo">
+                        <div class="user-avatar">?</div>
+                        <span class="user-name" id="userName">Guest</span>
+                    </div>
+                    <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
+                </div>
+            </header>
+
+            <main class="content-area">
+                <!-- Status Banner -->
+                <div class="status-banner" id="statusBanner"></div>
+
+                <!-- Stat Cards -->
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="label">Snapshots</div>
+                        <div class="value" id="statCount">—</div>
+                        <div class="sub" id="statMax">max 20</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Total Size</div>
+                        <div class="value" id="statSize">—</div>
+                        <div class="sub">MB on disk</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Last Backup</div>
+                        <div class="value" style="font-size:1rem;" id="statLast">—</div>
+                        <div class="sub">UTC</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Backup Dir</div>
+                        <div class="value" style="font-size:0.85rem; word-break:break-all;" id="statDir">—</div>
+                        <div class="sub">&nbsp;</div>
+                    </div>
+                </div>
+
+                <!-- Create Backup -->
+                <div class="create-panel">
+                    <h3>📦 Create Snapshot</h3>
+                    <div class="create-row">
+                        <div class="field">
+                            <label for="snapName">Snapshot Name</label>
+                            <input type="text" id="snapName" placeholder="e.g. before-update" maxlength="64">
+                        </div>
+                        <div class="field">
+                            <label>Targets</label>
+                            <div class="target-checks">
+                                <label><input type="checkbox" value="configs"    checked> Configs</label>
+                                <label><input type="checkbox" value="neodata"    checked> Mod Data</label>
+                                <label><input type="checkbox" value="playerdata" checked> Player Data</label>
+                            </div>
+                        </div>
+                        <div class="field" style="flex:0;">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" id="createBtn">
+                                <span id="createBtnLabel">📦 Create Backup</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Snapshots Table -->
+                <div class="snapshot-table-wrap">
+                    <h3>📋 Snapshots
+                        <button class="btn-sm btn-restore" style="margin-left:auto;font-size:0.78rem;padding:0.3rem 0.75rem;" id="refreshBtn">🔄 Refresh</button>
+                    </h3>
+                    <div id="tableContainer">
+                        <div class="empty-state">
+                            <div class="icon">💾</div>
+                            <div>Loading snapshots…</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <h3 id="modalTitle">Confirm</h3>
+            <p id="modalMessage">Are you sure?</p>
+            <div class="modal-btns">
+                <button class="btn-cancel" id="modalCancel">Cancel</button>
+                <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="backup.js?v=1"></script>
+    <script>
+        // Auth check — redirect to index if not logged in
+        const token = localStorage.getItem('authToken');
+        if (!token) { window.location.href = 'index.html'; }
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('authUser');
+            window.location.href = 'index.html';
+        });
+        const storedUser = localStorage.getItem('authUser');
+        if (storedUser) {
+            try {
+                const u = JSON.parse(storedUser);
+                document.getElementById('userName').textContent = u.username || 'User';
+                const av = document.getElementById('userInfo').querySelector('.user-avatar');
+                if (av && u.username) av.textContent = u.username[0].toUpperCase();
+            } catch(e) {}
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>
+
+

@@ -4,6 +4,24 @@
 
 ---
 
+## 1.0.2.6+build.91 — 2026-04-27
+
+### ✨ Web Dashboard — Backup & Restore
+
+Create, browse, restore, and download named server snapshots directly from the dashboard:
+
+- **Create Snapshot** — select targets (Configs, Mod Data, Player Data) and a name; ZIP is stored in `neoessentials/backups/`
+- **Restore** — automatically creates a pre-restore safety backup before overwriting live files
+- **Download** — download the ZIP archive directly from the browser
+- **Delete** — remove snapshots with a confirmation dialog
+- **Auto-prune** — oldest snapshots removed when count exceeds 20
+- New `💾 Backup & Restore` page added to the dashboard sidebar
+
+### 🔧 Code Quality (build #90)
+- Added missing `@Nonnull` annotations and `@SuppressWarnings("resource")` for IntelliJ false-positive `Level`/`ServerLevel` warnings
+
+---
+
 ## 1.0.2.6+build.86 — 2026-04-27
 
 ### 🐛 Bug Fix — `/nick` Nickname Not Showing in Tab List or Chat

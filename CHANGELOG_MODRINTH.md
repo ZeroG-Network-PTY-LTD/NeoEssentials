@@ -4,6 +4,22 @@
 
 ---
 
+## 1.0.2.6+build.91 — 2026-04-27
+
+### ✨ Web Dashboard — Backup & Restore
+
+First piece of the Web-Dashboard improvements track:
+
+- Create named ZIP snapshots of configs, mod data, and player data
+- Browse all snapshots with size, date, and target info
+- One-click restore with automatic pre-restore safety backup
+- Download ZIP archives from the browser
+- Delete snapshots with confirmation
+- Auto-prune when limit exceeded (max 20)
+- New `💾 Backup & Restore` dashboard page with stat cards and confirm modals
+
+---
+
 ## 1.0.2.6+build.86 — 2026-04-27
 
 ### 🐛 Bug Fix — `/nick` Nickname Not Working (Tab List, Chat, Placeholders)
