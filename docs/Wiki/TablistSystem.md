@@ -2,119 +2,142 @@
 
 > **Config file:** `config/neoessentials/tablist.json`  
 > **Reload in-game:** `/tablist reload`  
-> **Admin permission:** `neoessentials.tablist.admin`
+> **Admin permission:** `neoessentials.tablist.admin`  
+> **Introduced:** build.74 — BungeeTabListPlus-inspired rewrite
 
 ---
 
 ## Overview
 
 The NeoEssentials tablist system replaces the vanilla player list header and footer with a fully
-customizable, animated display. It supports:
+customizable, animated display inspired by **BungeeTabListPlus** (BTLP). It operates in
+**independent mode** by default — NeoEssentials owns the tablist entirely, no proxy plugin needed —
+while optionally integrating with a BungeeCord/Velocity proxy for cross-server data.
 
 | Feature | Details |
 |---------|---------|
+| **Independent mode** | NeoEssentials owns header/footer/player-rows — no proxy plugin required |
 | **Animated frames** | Header and footer cycle through an array of strings at a configurable tick rate |
-| **Hex colors** | `&#RRGGBB` inline hex color codes |
-| **Gradients** | `<gradient:RRGGBB-RRGGBB>text</gradient>` — 2-stop or multi-stop |
-| **Rainbow** | `<rainbow>text</rainbow>` — automatic ROYGBIV cycling |
-| **Named colors** | `<red>`, `<gold>`, `<green>`, `<aqua>`, `<blue>`, … |
-| **Format tags** | `<bold>`, `<italic>`, `<underline>`, `<strikethrough>` |
-| **Per-group** | Different header/footer for each permission group |
-| **Per-player** | Individual header/footer overrides per player UUID |
-| **Placeholders** | Player info, server stats, economy balance, permission group |
+| **20+ placeholders** | Standard, proxy-aware, economy, session, stats, and AFK tokens |
+| **Per-group / per-player** | Different header/footer per permission group or per player UUID |
+| **Group-weight sorting** | Players sorted by rank weight (admins first) then alphabetically — BTLP `ContextAwareOrdering` |
+| **Fake player entries** | Decorative separator rows, section labels, and padding — BTLP `fakePlayers` concept |
+| **Layout configuration** | 1–4 columns, playersByServer grouping, excludeServers/hiddenServers |
+| **Proxy integration** | Optional BungeeCord bridge for `{network_online}` / `{server_online:X}` data |
+| **Hex / gradients / rainbow** | Full `RichTextFormatter` syntax support — `&#RRGGBB`, `<gradient:…>`, `<rainbow>` |
 
-References: [TAB](https://github.com/NEZNAMY/TAB), [BungeeTabListPlus](https://github.com/CodeCrafter47/BungeeTabListPlus), [Simple TabList](https://modrinth.com/plugin/simple-tablist)
+References: [BungeeTabListPlus](https://github.com/CodeCrafter47/BungeeTabListPlus), [TAB](https://github.com/NEZNAMY/TAB), [Simple TabList](https://modrinth.com/plugin/simple-tablist)
 
 ---
 
 ## Color & Formatting Syntax
 
 All color and formatting tags are supported in `header`, `footer`, `playerFormat`, `afkSuffix`,
-`groupColors`, and every per-group / per-player override field.
+`groupColors`, `fakePlayers[].name`, and every per-group / per-player override field.
 
 ### Legacy Codes (`&`)
 ```
-&0 &1 &2 &3 &4 &5 &6 &7 &8 &9  — color codes (black → dark grey)
-&a &b &c &d &e &f              — color codes (green → white)
+&0–&9 &a–&f    — color codes
 &k  obfuscated   &l  bold   &m  strikethrough
 &n  underline    &o  italic  &r  reset
 ```
 
 ### Hex Colors
 ```
-&#RRGGBB           — inline  e.g.  &#FF5500  &#00AAFF
-<color:#RRGGBB>text</color>   — span with explicit close
+&#RRGGBB                       — inline  e.g.  &#FF5500
+<color:#RRGGBB>text</color>    — span with explicit close
 ```
 
 ### Gradients
 ```
-<gradient:FF0000-0000FF>text</gradient>          — 2-stop (red → blue)
-<gradient:FF0000-FFFF00-00FF00>text</gradient>   — multi-stop (red → yellow → green)
+<gradient:FF0000-0000FF>text</gradient>            — 2-stop
+<gradient:FF0000-FFFF00-00FF00>text</gradient>     — multi-stop
 ```
-> **Tip:** Keep plain text inside gradient tags.  Avoid mixing `&` format codes inside the
-> gradient span — place them before/after the tag instead.
 
 ### Rainbow
 ```
 <rainbow>text</rainbow>
 ```
 
-### Named Colors
+### Named Colors & Format Tags
 ```
-<red>  <dark_red>  <gold>  <yellow>  <green>  <dark_green>
-<aqua> <dark_aqua> <blue>  <dark_blue> <light_purple> <dark_purple>
-<white>  <gray>  <dark_gray>  <black>
-```
-
-### Format Tags
-```
-<bold>text</bold>   <italic>text</italic>   <underline>text</underline>
-<strikethrough>text</strikethrough>   <obfuscated>text</obfuscated>   <reset>
+<red>  <gold>  <green>  <aqua>  <blue>  <white>  <gray>  …
+<bold>  <italic>  <underline>  <strikethrough>  <reset>
 ```
 
 ---
 
 ## Placeholders
 
+### Standard
+
 | Placeholder | Description |
 |-------------|-------------|
 | `{player}` | Viewing player's username |
-| `{displayname}` | Display name (respects nick override + group colour) |
+| `{displayname}` | Display name (group colour applied) |
 | `{online}` | Online player count (respects `hideVanished`) |
 | `{max}` | Server max slots |
 | `{ping}` | Viewing player's ping (ms) |
 | `{world}` | Current dimension path (`overworld`, `the_nether`, `the_end`) |
-| `{tps}` | Server TPS — auto-colored green/yellow/red |
+| `{tps}` | Server TPS — auto-coloured green/yellow/red |
 | `{time}` | Server real-world time (`HH:mm`) |
-| `{server_name}` | Server name from `server.properties` MOTD |
+| `{server_name}` | Server MOTD from `server.properties` |
 | `{x}` `{y}` `{z}` | Viewing player's block coordinates |
 | `{balance}` | Economy balance (requires EconomyManager) |
 | `{prefix}` | Permission group prefix |
 | `{suffix}` | Permission group suffix |
 | `{group}` | Permission group name |
 | `{newline}` | Line break `\n` |
-| `{bar}` | Decorative strikethrough separator line |
+| `{bar}` | Decorative strikethrough separator |
+
+### BTLP-Style (Proxy & Network)
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{network_online}` | Total players on proxy network (requires `proxy.enabled=true`) |
+| `{server_online:NAME}` | Players on a specific proxy server by name |
+| `{current_server}` | Proxy server name the viewing player is on |
+| `{server_label}` | This server's configured display label (`proxy.serverLabel`) |
+
+### BTLP-Style (Player Stats & Session)
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{rank_weight}` | Numeric permission group weight |
+| `{session_minutes}` | Minutes elapsed in current session (0–59) |
+| `{session_hours}` | Full hours elapsed in current session |
+| `{level}` | Player XP level |
+| `{health}` | Current HP (integer) |
+| `{max_health}` | Maximum HP (integer) |
+| `{afk}` | Blank when active; shows `afkSuffix` text when AFK |
+
+> **TPS colouring:** `{tps}` is automatically formatted — `&a` (≥19), `&e` (≥15), `&c` (<15). Use `{tps}` directly; no manual colour needed.
 
 ---
 
 ## Configuration
 
-### `tablist.json` structure
+### Full `tablist.json` structure (v3)
 
 ```json
 {
-  "_configVersion": 2,
+  "_configVersion": 3,
   "tablist": {
+
     "enabled": true,
     "refreshInterval": 20,
 
+    "independentMode": true,
+
     "header": [
       "<gradient:FFD700-FF8C00>&l✦ {server_name} ✦&r &8| &e{online}&8/&e{max} &7players",
-      "<gradient:FF8C00-FFD700>&l✦ {server_name} ✦&r &8| &eTPS: {tps}"
+      "<gradient:FF8C00-FFD700>&l✦ {server_name} ✦&r &8| &eTPS: {tps}",
+      "<gradient:FFD700-FF8C00>&l✦ {server_name} ✦&r &8| &e{time}"
     ],
 
     "footer": [
       "&7TPS: {tps} &8| &7Ping: &a{ping}&7ms &8| <green>{world}",
+      "&7Coords: &e{x}&7, &e{y}&7, &e{z} &8| &7World: &e{world}",
       "&7Balance: &a{balance} &8| &7Group: &#FFD700{group}"
     ],
 
@@ -125,7 +148,9 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
     "afkSuffix": " &7[AFK]",
 
     "groupColors": {
+      "owner":   "&#FF4444",
       "admin":   "&c",
+      "mod":     "&6",
       "vip":     "&#00CFFF",
       "default": "&f"
     },
@@ -150,73 +175,242 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
     "players": {
       "00000000-0000-0000-0000-000000000000": {
         "header": "<rainbow>Hello, {player}!</rainbow>",
-        "footer": "&#FF5500Special player footer"
+        "footer": "&#FF5500Your special footer"
       }
+    },
+
+    "proxy": {
+      "enabled": false,
+      "serverLabel": "Main",
+      "pollIntervalTicks": 100,
+      "showNetworkPlayers": false,
+      "knownServers": ["Lobby", "Survival", "Creative"]
+    },
+
+    "fakePlayers": [
+      { "id": "sep1",    "name": "&8&m──────────────────────", "latency": -1 },
+      { "id": "header1", "name": "&e&lOur Network",            "latency": 0  },
+      { "id": "sep2",    "name": "&8&m──────────────────────", "latency": -1 }
+    ],
+
+    "layout": {
+      "columns": 1,
+      "sortByGroupWeight": true,
+      "groupSections": false,
+      "playersByServer": false,
+      "excludeServers": [],
+      "hiddenServers": [],
+      "maxSlotsPerColumn": 20
     }
   }
 }
 ```
 
-### Key fields
+### Core Fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Enables/disables the whole system |
+| `enabled` | boolean | `true` | Enable/disable the whole system |
 | `refreshInterval` | int | `20` | Update interval in ticks (20 = 1 s) |
+| `independentMode` | boolean | `true` | NeoEssentials owns the tablist entirely |
 | `header` | string or array | — | Header frame(s) |
 | `footer` | string or array | — | Footer frame(s) |
-| `playerFormat` | string | `"&f{prefix}&r{player}{suffix}"` | Player row format |
-| `hideVanished` | boolean | `true` | Hide vanished players from `{online}` |
-| `showAfkIndicator` | boolean | `true` | Show AFK suffix on player rows |
+| `playerFormat` | string | `"&f{prefix}&r{player}{suffix}"` | Player row display format |
+| `hideVanished` | boolean | `true` | Exclude vanished players from `{online}` |
+| `showAfkIndicator` | boolean | `true` | Append `afkSuffix` to AFK players |
 | `afkSuffix` | string | `" &7[AFK]"` | AFK display suffix |
-| `groupColors` | object | — | Quick `{displayname}` colour per group |
-| `groups` | object | — | Per-group `header`/`footer` overrides |
-| `players` | object | — | Per-player UUID `header`/`footer` overrides |
+| `groupColors` | object | — | Quick `{displayname}` colour prefix per group |
+| `groups` | object | — | Per-group `header`/`footer` frame overrides |
+| `players` | object | — | Per-player UUID `header`/`footer` frame overrides |
 
 ---
 
 ## Priority
 
-The system uses the following priority chain for choosing which header/footer to display:
+When selecting which header/footer to show, the system uses:
 
 ```
 per-player override  >  per-group override  >  global default
 ```
 
-A player in the `vip` group with a per-player override will always see their own custom
-header, not the VIP group one.
+A player in the `vip` group with a per-player override will always see their personal
+header, not the VIP group header.
+
+---
+
+## Independent Mode
+
+`independentMode: true` (default) means NeoEssentials is the **sole owner** of the tablist.
+No proxy plugin should attempt to manage this server's tab simultaneously.
+
+With independent mode on, proxy integration (`proxy`) is used **for data only** — it can
+supply `{network_online}` and `{server_online:X}` counts without taking over header/footer
+rendering. The actual display is always controlled by NeoEssentials.
+
+Toggle in-game:
+```
+/tablist independent on
+/tablist independent off
+```
+
+---
+
+## Proxy Integration
+
+When running behind a BungeeCord proxy, enable the `proxy` section to surface cross-server
+player counts in your header/footer.
+
+```json
+"proxy": {
+  "enabled": true,
+  "serverLabel": "Survival",
+  "pollIntervalTicks": 100,
+  "knownServers": ["Lobby", "Survival", "Creative"]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `enabled` | Activates BungeeCord plugin-messaging queries |
+| `serverLabel` | Display name for this server (used by `{server_label}`) |
+| `pollIntervalTicks` | How often to query the proxy (100 ticks = 5 s) |
+| `showNetworkPlayers` | Include network players in the tab row list |
+| `knownServers` | Servers to poll for player counts; auto-populated from `GetServers` reply |
+
+Once enabled, `{network_online}`, `{current_server}`, and `{server_online:NAME}` will
+be populated. If the proxy hasn't replied yet or proxy is unreachable, `{network_online}`
+falls back to the local player count.
+
+> **Note (NeoForge 1.21.1):** Outbound BungeeCord plugin-messaging (needed to *query* the proxy)
+> requires NeoForge `StreamCodec` registration which is pending a future build. The proxy
+> integration currently receives data sent by the proxy but cannot actively poll.
+> Check `/tablist proxy status` to see detected state.
+
+---
+
+## Fake Players (BTLP `fakePlayers`)
+
+Fake players are decorative tab-list entries that don't correspond to real players. Use them
+for separator lines, section headers, or grid padding.
+
+```json
+"fakePlayers": [
+  { "id": "sep_top",    "name": "&8&m──────────────────────", "latency": -1 },
+  { "id": "net_label",  "name": "&e&lNetwork Players",        "latency": 0  },
+  { "id": "sep_bottom", "name": "&8&m──────────────────────", "latency": -1 }
+]
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `id` | string | `slot_N` | Unique slot identifier (used to derive stable UUID) |
+| `name` | string | `""` | Display text — supports all color/format syntax |
+| `latency` | int | `0` | Displayed ping bar ms. `-1` = disconnected icon, `0` = green |
+| `listed` | boolean | `true` | Whether the entry appears in the visible tab list |
+
+Each fake entry uses a **stable UUID** derived from its `id` via `UUID.nameUUIDFromBytes()",
+so the same entry is always represented by the same UUID across server restarts and reloads.
+
+Manage at runtime with `/tablist fakeplayer`:
+```
+/tablist fakeplayer list
+/tablist fakeplayer add <id> <display text>
+/tablist fakeplayer remove <id>
+/tablist fakeplayer refresh
+```
+
+---
+
+## Layout & Sorting (BTLP `layout`)
+
+```json
+"layout": {
+  "columns": 1,
+  "sortByGroupWeight": true,
+  "groupSections": false,
+  "playersByServer": false,
+  "excludeServers": [],
+  "hiddenServers": [],
+  "maxSlotsPerColumn": 20
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `columns` | int (1–4) | `1` | Visual columns (BTLP supports up to 4×20 = 80 slots) |
+| `sortByGroupWeight` | boolean | `true` | Sort players by descending group weight then alphabetically |
+| `groupSections` | boolean | `false` | Insert separator rows between permission-group buckets |
+| `playersByServer` | boolean | `false` | Bucket players by proxy server name (requires `proxy.enabled`) |
+| `excludeServers` | array | `[]` | Server names fully excluded from this tab (BTLP `excludeServers`) |
+| `hiddenServers` | array | `[]` | Server names whose players are hidden (BTLP `hiddenServers`) |
+| `maxSlotsPerColumn` | int | `20` | Slots per column; total = `columns × maxSlotsPerColumn` |
+
+**Sorting** encodes group weight into scoreboard team names (`neL_<sortKey>_<group>`) so the
+Minecraft client renders players in the correct order without packet interception — the same
+approach BungeeTabListPlus uses via `ContextAwareOrdering`.
 
 ---
 
 ## Commands
 
-All sub-commands require the `neoessentials.tablist.admin` permission (or operator level 4).
+All sub-commands require `neoessentials.tablist.admin` (or operator level 4).
 
+### Core
 | Command | Description |
 |---------|-------------|
 | `/tablist` | Show help |
-| `/tablist reload` | Reload `tablist.json` and push changes immediately |
+| `/tablist reload` | Reload `tablist.json` and push changes to all players |
 | `/tablist enable` | Enable the tablist system |
 | `/tablist disable` | Disable; restores vanilla appearance |
 | `/tablist preview` | Force-send your own current header/footer |
-| `/tablist info` | Show status, frame counts, active group overrides |
-| `/tablist set header <text>` | Set global header at runtime (reset on reload) |
-| `/tablist set footer <text>` | Set global footer at runtime (reset on reload) |
-| `/tablist player <name> header <text>` | Set per-player header override |
-| `/tablist player <name> footer <text>` | Set per-player footer override |
-| `/tablist player <name> reset` | Clear all per-player overrides |
-| `/tablist group <group> header <text>` | Set per-group header override |
-| `/tablist group <group> footer <text>` | Set per-group footer override |
-| `/tablist group <group> reset` | Clear per-group overrides |
+| `/tablist info` | Full status — mode, proxy, layout, fake players, group overrides |
+| `/tablist set header <text>` | Set global header at runtime (lost on reload) |
+| `/tablist set footer <text>` | Set global footer at runtime (lost on reload) |
 
-Runtime overrides set via `/tablist player` or `/tablist group` are **not persisted** to disk.
-Add them to `tablist.json → players` / `tablist.json → groups` to survive reloads.
+### Per-Player Overrides
+| Command | Description |
+|---------|-------------|
+| `/tablist player <name> header <text>` | Set custom header for a player |
+| `/tablist player <name> footer <text>` | Set custom footer for a player |
+| `/tablist player <name> reset` | Clear all per-player overrides |
+
+### Per-Group Overrides
+| Command | Description |
+|---------|-------------|
+| `/tablist group <group> header <text>` | Set header for all players in a group |
+| `/tablist group <group> footer <text>` | Set footer for all players in a group |
+| `/tablist group <group> reset` | Clear group overrides |
+
+### Proxy (BTLP-style)
+| Command | Description |
+|---------|-------------|
+| `/tablist proxy status` | Show proxy state, server list, and per-server counts |
+| `/tablist proxy setserver <name> <count>` | Manually override a server's player count |
+
+### Fake Players (BTLP-style)
+| Command | Description |
+|---------|-------------|
+| `/tablist fakeplayer list` | List all configured fake entries |
+| `/tablist fakeplayer add <id> <display>` | Add a runtime fake entry |
+| `/tablist fakeplayer remove <id>` | Remove a fake entry by id |
+| `/tablist fakeplayer refresh` | Remove and re-inject all fake entries for all players |
+
+### Layout & Independent Mode
+| Command | Description |
+|---------|-------------|
+| `/tablist layout info` | Show columns, sort, server config |
+| `/tablist independent` | Show current independent mode state |
+| `/tablist independent on` | NeoEssentials owns the tablist |
+| `/tablist independent off` | Hand tablist control to proxy plugin |
+
+> Runtime overrides via `/tablist player` and `/tablist group` are **not persisted** to disk.
+> Add them to `tablist.json → players` / `tablist.json → groups` to survive reloads.
 
 ---
 
 ## Animation
 
-Set `header` (or `footer`) to a JSON **array** to enable frame cycling:
+Set `header` or `footer` to a JSON **array** to enable frame cycling:
 
 ```json
 "header": [
@@ -226,39 +420,69 @@ Set `header` (or `footer`) to a JSON **array** to enable frame cycling:
 ]
 ```
 
-Each frame is displayed for `refreshInterval` ticks before advancing.  
-Frames for per-group and per-player overrides use the same global counter (synchronized).
+Each frame is displayed for `refreshInterval` ticks before advancing.
+`{session_minutes}` and other stat tokens update each frame.
 
-**Lower `refreshInterval` → smoother animations but more network packets.**  
-Recommended: `10` for smooth (½ s per frame), `20` for light (1 s per frame).
+**Lower `refreshInterval` → smoother animation, more network packets.**  
+Recommended: `10` (½ s per frame), `20` (1 s, default), `40` (2 s, very light).
 
 ---
 
 ## Integration with Other Systems
 
 ### Nick System
-When a player is nicknamed via `/nick`, their display name in the tablist row automatically
-updates via `TablistManager.setCustomName(uuid, nick)`.
+When a player is nicknamed via `/nick`, `TablistManager.setCustomName(uuid, nick)` is called
+and the tablist row updates automatically on the next tick.
 
 ### AFK System
-The AFK system calls `TablistManager.getAfkSuffix()` and appends it to the player's team
-suffix when they go AFK, and removes it when they return.
+The AFK system calls `TablistManager.getAfkSuffix()` and appends it to the player's scoreboard
+team suffix when they go AFK, removing it when they return. The `{afk}` placeholder also
+becomes non-empty when a player is AFK.
 
 ### Vanish System
-Vanished players are excluded from `{online}` counts and scoreboard teams when
-`hideVanished: true`.  Staff with `neoessentials.vanish.see` still see them.
+Vanished players are excluded from `{online}` counts when `hideVanished: true`.
+Staff with `neoessentials.vanish.see` always see all players.
 
 ### Permission System
-- `{prefix}`, `{suffix}`, `{group}` placeholders pull from the permission group system.
-- Group prefix/suffix values support all color syntax (hex, gradients, etc.).
+- `{prefix}`, `{suffix}`, `{group}` pull from the permission group system.
+- `{rank_weight}` and sorting use `PermissionGroup.getPriority()`.
+- Group prefix/suffix support full color syntax.
+
+### Economy System
+`{balance}` pulls from `EconomyManager.getBalance(uuid)` and is formatted to two decimal places.
 
 ---
 
 ## Examples
 
-### Gradient server name
+### Proxy-aware header showing network players
 ```json
-"header": "<gradient:FF0000-FFFF00-00FF00>&l{server_name}</gradient>"
+"header": [
+  "<gradient:FFD700-FF8C00>&l✦ {server_name} ✦&r &8| &eNetwork: {network_online} players",
+  "<gradient:FF8C00-FFD700>&l✦ {server_name} ✦&r &8| &eLobby: {server_online:Lobby} online"
+]
+```
+
+### Session stats in footer
+```json
+"footer": "&7Session: &e{session_hours}h {session_minutes}m &8| &7HP: &c{health}&8/&c{max_health} &8| &a{ping}ms"
+```
+
+### Fake player separators with section label
+```json
+"fakePlayers": [
+  { "id": "sep1",   "name": "&8&m──────────────────────────", "latency": -1 },
+  { "id": "title1", "name": "&6&l   ★  Online Players  ★",   "latency": 0  },
+  { "id": "sep2",   "name": "&8&m──────────────────────────", "latency": -1 }
+]
+```
+
+### Gradient server name + rainbow
+```json
+"header": [
+  "<gradient:FF0000-FFFF00-00FF00>&l{server_name}</gradient>",
+  "<rainbow>&l{server_name}"
+]
 ```
 
 ### Per-player VIP badge
@@ -266,23 +490,13 @@ Vanished players are excluded from `{online}` counts and scoreboard teams when
 "players": {
   "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx": {
     "header": "<gradient:FFD700-FF8C00>&l✦ Super VIP ✦&r{newline}&7Welcome, &6{player}!",
-    "footer": "&#FFD700★ §rBeta Tester &8| &7{ping}ms"
+    "footer": "&#FFD700★ Beta Tester &8| &7{ping}ms &8| &aHP: {health}/{max_health}"
   }
 }
 ```
 
-### Static hex header
+### Minimal static setup
 ```json
-"header": "&#FF5500My &lServer &#00AAFF— {online}/{max} online"
+"header": "&6&l{server_name} &8| &e{online}&8/&e{max}",
+"footer": "&7{tps} TPS &8| &7{ping}ms &8| &7{world}"
 ```
-
-### Minimal animated frames
-```json
-"header": [
-  "&6&l★ My Server ★",
-  "&e&l★ My Server ★",
-  "&a&l★ My Server ★"
-],
-"footer": "&7{online}/{max} online — {tps} TPS"
-```
-

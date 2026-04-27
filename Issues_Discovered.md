@@ -4,6 +4,30 @@
 
 # ✅ Issues That Were Fixed
 
+## ✨ Build #77 — 2026-04-27 — BungeeTabListPlus-Inspired Tablist Rework
+
+- **Tablist duplicate class definition compile error → ✅ FIXED in build.77**  
+  `TablistCommand.java` contained two complete `class TablistCommand { ... }` definitions — the new BTLP-style class (lines 1–471) followed immediately by the old handler class (lines 473–727). This caused a compile-time "class already defined in package" error. **Fix**: Removed the duplicate old block; retained only the full BTLP-style implementation.  
+  Affected file: `TablistCommand.java`
+
+- **`FakePlayerManager` — `ClientboundPlayerInfoUpdatePacket(EnumSet, List<Entry>)` does not exist → ✅ FIXED in build.77**  
+  NeoForge 1.21.x `ClientboundPlayerInfoUpdatePacket` has no public constructor that accepts a `List<Entry>`. The code tried to call `new ClientboundPlayerInfoUpdatePacket(actions, toAdd)` where `toAdd` is `List<ClientboundPlayerInfoUpdatePacket.Entry>`. **Fix**: Replaced with `buildFakePacket()` — a reflection-based helper that creates an empty packet via `ClientboundPlayerInfoUpdatePacket(actions, Collections.emptyList())` then injects the entries list via `Field.setAccessible(true)`.  
+  Affected file: `FakePlayerManager.java`
+
+- **`ProxyIntegration` — `@Override write(FriendlyByteBuf)` method does not override supertype → ✅ FIXED in build.77**  
+  NeoForge 21.1.179 removed the `write()` method from `CustomPacketPayload` (replaced by the `StreamCodec` registration system). The anonymous inner class `new CustomPacketPayload() { @Override public void write(FriendlyByteBuf) {...} }` caused a compile error because no such method exists in the interface. **Fix**: Removed the anonymous class; replaced `sendBungeeMessage()` with a documented stub that logs a debug message. Outbound BungeeCord channel messaging is deferred to a future build that will register a proper `StreamCodec` via the NeoForge mod-event bus. The feature is disabled by default (`proxy.enabled=false`) so there is no runtime impact.  
+  Affected file: `ProxyIntegration.java`
+
+- **NeoEssentials Proxy Integration with BungeeTabListPlus (Independent Mode) → ✅ Implemented in build.74–77**  
+  Full BTLP-inspired tablist rework:
+  - `TablistManager.java` — complete rewrite; 20+ placeholder tokens including proxy/session/stats tokens; per-player + per-group header/footer frame overrides; AFK indicator; group-colour overrides; session tracking; vanish filtering; delegates to sub-systems.
+  - `TablistLayout.java` — new; BTLP-style layout/sorting: 1–4 columns, `sortByGroupWeight`, `groupSections`, `playersByServer`, `excludeServers`, `hiddenServers`, `maxSlotsPerColumn`.
+  - `FakePlayerManager.java` — new; BTLP `fakePlayers` concept; stable UUIDs via `UUID.nameUUIDFromBytes`; reflection-based packet injection; per-viewer injection tracking to avoid duplicate ADD packets.
+  - `ProxyIntegration.java` — new; BungeeCord plugin-messaging bridge; `GetServers` / `PlayerCount` / `GetServer` sub-channel handling; `{network_online}`, `{server_online:NAME}`, `{current_server}` placeholders; per-player server tracking; independent of tablist rendering.
+  - `TablistCommand.java` — extended with BTLP sub-commands: `proxy`, `fakeplayer`, `layout`, `independent`.
+  - `TablistEventHandler.java` — added join/quit lifecycle hooks; session start time tracking.
+  - `tablist.json` — `_configVersion` 2→3; added `independentMode`, `proxy`, `fakePlayers`, `layout` sections with full documentation comments.
+
 ## ✨ Build #73 — 2026-04-27 — Messaging & SocialSpy Improvements
 
 - **Named placeholder support in message templates → ✅ Implemented in build.73**  

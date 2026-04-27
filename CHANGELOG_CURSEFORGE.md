@@ -4,6 +4,29 @@
 
 ---
 
+## 1.0.2.6+build.77 — 2026-04-27
+
+### ✨ Feature — BungeeTabListPlus-Inspired Tablist (Independent Mode + Proxy Integration)
+
+Complete overhaul of the tablist system inspired by **BungeeTabListPlus** — the industry-standard proxy tablist plugin.
+
+**What's new:**
+- **Independent mode** (default) — NeoEssentials owns the entire tablist without any proxy plugin. Works on any NeoForge server.
+- **20+ BTLP-style placeholders** — `{network_online}`, `{server_online:NAME}`, `{current_server}`, `{server_label}`, `{rank_weight}`, `{session_minutes}`, `{session_hours}`, `{level}`, `{health}`, `{max_health}`, `{afk}`, `{displayname}`, and all existing standard tokens.
+- **Fake player entries** — decorative tab-list rows (separators, section labels, padding). BTLP's `fakePlayers` concept. Config: `tablist.fakePlayers`.
+- **Group-weight sorting** — players sorted by permission group weight (admins first), then alphabetically. Uses scoreboard teams as sort keys (BTLP `ContextAwareOrdering`).  
+- **Layout configuration** — 1–4 columns, `groupSections`, `playersByServer`, `excludeServers`, `hiddenServers` (all BTLP config parity).
+- **Proxy integration** — optional BungeeCord bridge for cross-server player counts. Disabled by default (`proxy.enabled=false`). Enable when behind a proxy; polls `GetServers`/`PlayerCount` to populate `{network_online}` and `{server_online:X}`.
+- **New `/tablist` sub-commands**: `proxy status`, `proxy setserver`, `fakeplayer list/add/remove/refresh`, `layout info`, `independent on/off`, and improved `info` view.
+- `tablist.json` `_configVersion` **2→3** — added `independentMode`, `proxy`, `fakePlayers`, `layout` sections.
+
+**Bug fixes:**
+- Fixed duplicate class definition in `TablistCommand.java` (compile error).
+- Fixed `ClientboundPlayerInfoUpdatePacket` construction error in `FakePlayerManager` (NeoForge 1.21.x API).
+- Fixed `CustomPacketPayload#write()` override error in `ProxyIntegration` (method removed in NeoForge 1.21.1).
+
+---
+
 ## 1.0.2.6+build.73 — 2026-04-27
 
 ### ✨ Feature — Messaging & SocialSpy Improvements

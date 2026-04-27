@@ -164,27 +164,23 @@ public class FakePlayerManager {
 
         try {
             if (!toAdd.isEmpty()) {
-                var addPacket = new ClientboundPlayerInfoUpdatePacket(
-                    EnumSet.of(
-                        ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME
-                    ),
-                    toAdd
+                var addActions = EnumSet.of(
+                    ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME
                 );
-                viewer.connection.send(addPacket);
+                var addPacket = buildFakePacket(addActions, toAdd);
+                if (addPacket != null) viewer.connection.send(addPacket);
             }
             if (!toUpdate.isEmpty()) {
-                var updatePacket = new ClientboundPlayerInfoUpdatePacket(
-                    EnumSet.of(
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
-                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED
-                    ),
-                    toUpdate
+                var updateActions = EnumSet.of(
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED
                 );
-                viewer.connection.send(updatePacket);
+                var updatePacket = buildFakePacket(updateActions, toUpdate);
+                if (updatePacket != null) viewer.connection.send(updatePacket);
             }
         } catch (Exception e) {
             LOGGER.debug("FakePlayerManager: inject error for {}: {}", viewer.getName().getString(), e.getMessage());
@@ -261,6 +257,32 @@ public class FakePlayerManager {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+    /**
+     * Builds a {@link ClientboundPlayerInfoUpdatePacket} with custom fake {@link ClientboundPlayerInfoUpdatePacket.Entry}
+     * objects via reflection, since there is no public constructor for arbitrary entry lists.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static ClientboundPlayerInfoUpdatePacket buildFakePacket(
+            EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions,
+            List<ClientboundPlayerInfoUpdatePacket.Entry> customEntries) {
+        try {
+            // Create an empty packet (valid constructor exists for empty collection)
+            ClientboundPlayerInfoUpdatePacket packet =
+                new ClientboundPlayerInfoUpdatePacket(actions, Collections.emptyList());
+            // Reflectively replace the internal entries list field
+            for (java.lang.reflect.Field f : ClientboundPlayerInfoUpdatePacket.class.getDeclaredFields()) {
+                if (List.class.isAssignableFrom(f.getType())) {
+                    f.setAccessible(true);
+                    f.set(packet, List.copyOf(customEntries));
+                    return packet;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("FakePlayerManager: buildFakePacket reflection error: {}", e.getMessage());
+        }
+        return null;
+    }
+
     private static int clampLatency(int latency) {
         if (latency < 0)   return -1; // shown as disconnected icon
         return Math.min(latency, 9999);

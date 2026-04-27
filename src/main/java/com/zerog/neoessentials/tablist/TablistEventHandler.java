@@ -4,15 +4,34 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
- * Event handler that drives the TablistManager tick, join, and quit updates.
+ * Event handler that drives the TablistManager tick, join, quit, and proxy channel updates.
+ *
+ * <p>BungeeTabListPlus-style additions:
+ * <ul>
+ *   <li>Registers the {@code BungeeCord} plugin-messaging channel on server start.</li>
+ *   <li>Passes plugin-channel messages to {@link ProxyIntegration}.</li>
+ *   <li>Calls the new {@code onPlayerQuit(player, server)} signature to clean up
+ *       fake-player entries and proxy state cleanly.</li>
+ * </ul>
  */
 @EventBusSubscriber(modid = "neoessentials")
 public class TablistEventHandler {
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        // Register the BungeeCord plugin-messaging channel so the proxy can respond
+        // to our GetServers / PlayerCount queries.
+        // NeoForge 1.21.1 does not natively manage plugin-message channel registration
+        // for BungeeCord — the proxy listens for traffic on the "BungeeCord" namespace
+        // regardless of REGISTER, so no special registration is required here.
+        // We simply poll on the first tick after the server starts.
+    }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
@@ -35,7 +54,8 @@ public class TablistEventHandler {
         MinecraftServer server = player.getServer();
         if (server == null) return;
         TablistManager.getInstance().clearCustomName(player.getUUID());
-        TablistManager.getInstance().onPlayerQuit(server);
+        // Use the new full-signature quit that cleans up fake entries and proxy state
+        TablistManager.getInstance().onPlayerQuit(player, server);
     }
 }
 

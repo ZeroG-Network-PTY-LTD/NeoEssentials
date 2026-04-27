@@ -6,6 +6,123 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.77] — 2026-04-27
+
+### Feature — BungeeTabListPlus-Inspired Tablist Rework (Independent Mode + Proxy Integration)
+
+Complete overhaul of the NeoEssentials tablist system, inspired by BungeeTabListPlus (BTLP),
+the industry-standard proxy tablist plugin. NeoEssentials now manages its own tablist logic
+independently (no proxy plugin required) while optionally integrating with BungeeCord/Velocity
+proxies for cross-server player-count data.
+
+#### New Files
+
+| File | Purpose |
+|---|---|
+| `TablistLayout.java` | BTLP-style columns, group-weight sorting, playersByServer grouping, excludeServers/hiddenServers |
+| `FakePlayerManager.java` | BTLP `fakePlayers` — decorative/separator tab entries with stable UUIDs |
+| `ProxyIntegration.java` | BungeeCord plugin-messaging bridge; polls network player counts; `{network_online}`, `{server_online:X}` |
+
+#### Updated Files
+
+| File | Change |
+|---|---|
+| `TablistManager.java` | Full rewrite with BTLP-inspired architecture; per-player/group overrides; 20+ placeholder tokens; per-player session tracking |
+| `TablistCommand.java` | Fixed duplicate class definition; added BTLP-style sub-commands (`/tablist proxy`, `fakeplayer`, `layout`, `independent`) |
+| `TablistEventHandler.java` | Added `onPlayerJoin`/`onPlayerQuit` with session tracking and proxy state cleanup |
+| `tablist.json` | `_configVersion` 2→3; added `independentMode`, `proxy`, `fakePlayers`, `layout` sections |
+
+#### BTLP-Inspired Features Added
+
+**1. Extended Placeholder Set (BTLP parity)**
+
+| Placeholder | Description |
+|---|---|
+| `{network_online}` | Total players on proxy network (via BungeeCord) |
+| `{server_online:NAME}` | Players on a specific proxy server |
+| `{current_server}` | Proxy server name the viewing player is on |
+| `{server_label}` | This server's configured display label |
+| `{rank_weight}` | Numeric permission group weight |
+| `{session_minutes}` | Minutes in current session |
+| `{session_hours}` | Hours in current session |
+| `{level}` | Player XP level |
+| `{health}` | Current HP |
+| `{max_health}` | Maximum HP |
+| `{afk}` | Blank or AFK suffix when idle |
+| `{displayname}` | Display name (coloured by group) |
+
+**2. Independent Mode (default: on)**  
+NeoEssentials owns the tablist rendering end-to-end. No proxy plugin needed.
+Proxy integration (`proxy.enabled=false` by default) adds optional data (network counts)
+without taking over the header/footer/player-row formatting.
+
+**3. BTLP-style Fake Players (`fakePlayers`)**  
+Decorative entries in the player list — separator rows, section labels, padding slots.
+Each entry uses a stable deterministic UUID (survives reloads). Injected via
+`ClientboundPlayerInfoUpdatePacket` using reflection-based entry injection (NeoForge limitation).
+
+**4. Layout & Sorting (`TablistLayout`)**  
+- 1–4 visual columns (BTLP's 4×20 = 80-slot grid equivalent)  
+- Sort players by descending group weight then alphabetically (BTLP `ContextAwareOrdering`)  
+- `groupSections` — bucket players with separator rows between group tiers  
+- `playersByServer` — bucket players by proxy server name  
+- `excludeServers` / `hiddenServers` — BTLP parity for multi-server visibility control  
+
+**5. Proxy Integration (`ProxyIntegration`)**  
+- BungeeCord plugin-messaging channel listener for `GetServers`, `PlayerCount`, `GetServer`
+- Polls proxy every `pollIntervalTicks` (default 100 = 5s) for network counts  
+- Per-player server tracking (`playerServerMap`)  
+- `{network_online}` / `{server_online:X}` placeholders feed from proxy data  
+- Outbound messaging stub — full BungeeCord outbound support deferred pending NeoForge
+  `StreamCodec` registration (proxy is disabled by default so no runtime impact)
+
+**6. `/tablist` Command Extensions**  
+New sub-commands following BTLP patterns:
+```
+/tablist proxy status              — proxy integration status & per-server counts
+/tablist proxy setserver NAME N    — manual server count override
+/tablist fakeplayer list           — show fake entries
+/tablist fakeplayer add ID DISPLAY — add runtime fake entry
+/tablist fakeplayer remove ID      — remove fake entry
+/tablist fakeplayer refresh        — re-inject all fake entries for all players
+/tablist layout info               — show column/sort/server config
+/tablist independent [on|off]      — toggle independent mode
+/tablist info                      — full status (all sub-systems in one view)
+```
+
+**7. `tablist.json` Config Additions** (`_configVersion` 2→3)
+
+```json
+"independentMode": true,
+"proxy": {
+  "enabled": false,
+  "serverLabel": "Main",
+  "pollIntervalTicks": 100,
+  "showNetworkPlayers": false,
+  "knownServers": []
+},
+"fakePlayers": [],
+"layout": {
+  "columns": 1,
+  "sortByGroupWeight": true,
+  "groupSections": false,
+  "playersByServer": false,
+  "excludeServers": [],
+  "hiddenServers": [],
+  "maxSlotsPerColumn": 20
+}
+```
+
+#### Bug Fixes
+- **`TablistCommand.java`** — Fixed duplicate class definition that caused a compile error
+  (the old non-BTLP handler block was left appended after the new class).
+- **`FakePlayerManager.java`** — Fixed `ClientboundPlayerInfoUpdatePacket` constructor call;
+  NeoForge 1.21.x has no constructor accepting `List<Entry>` — fixed using reflection.
+- **`ProxyIntegration.java`** — Removed broken `CustomPacketPayload#write(FriendlyByteBuf)`
+  override; NeoForge 1.21.1 removed `write()` from the interface in favour of `StreamCodec`.
+
+---
+
 ## [1.0.2.6+build.73] — 2026-04-27
 
 ### Feature — Messaging & SocialSpy Improvements

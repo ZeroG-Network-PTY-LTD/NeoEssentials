@@ -336,36 +336,27 @@ public class TablistManager {
      * Resolves all {placeholder} tokens in the frame text.
      *
      * <p><strong>Note:</strong> This method intentionally does NOT convert {@code &} to
-     * {@code §}.  Color processing (legacy {@code &X} codes, {@code &#RRGGBB} hex, gradient
-     * tags, etc.) is deferred to {@link RichTextFormatter#processTablistText(String)} which is
-     * called on the result in {@link #updatePlayer}.  This ensures that {@code &#RRGGBB} hex
-     * codes survive intact and that {@code <gradient:…>} tags inside frame strings are processed
-     * correctly.
+     * {@code §}.  Color processing is deferred to {@link RichTextFormatter#processTablistText(String)}.
      *
-     * Supported placeholders:
-     * {player}        — player's name
-     * {displayname}   — player's display name (with nick/prefix)
-     * {online}        — current online player count (excluding vanished for non-staff)
-     * {max}           — max player slots
-     * {ping}          — player's ping in ms
-     * {world}         — current dimension path (e.g. overworld)
-     * {tps}           — server TPS (formatted to 1 dp, pre-coloured with &a/&e/&c)
-     * {time}          — server real-world time (HH:mm)
-     * {server_name}   — server motd / name
-     * {x}, {y}, {z}  — player coordinates
-     * {balance}       — player balance (from EconomyManager)
-     * {prefix}        — permission group prefix
-     * {suffix}        — permission group suffix
-     * {group}         — permission group name
-     * {newline}       — line break
-     * {bar}           — decorative separator (uses &8 codes left intact for processTablistText)
+     * <p><strong>BTLP-equivalent placeholders:</strong>
+     * <ul>
+     *   <li>{@code {network_online}}   — total players on the proxy network</li>
+     *   <li>{@code {server_online:X}}  — players on proxy server X</li>
+     *   <li>{@code {current_server}}   — proxy server name this player is on</li>
+     *   <li>{@code {server_label}}     — this server's configured display label</li>
+     *   <li>{@code {rank_weight}}      — numeric group weight</li>
+     *   <li>{@code {session_minutes}}  — minutes in current session</li>
+     *   <li>{@code {session_hours}}    — hours in current session</li>
+     *   <li>{@code {level}}            — XP level</li>
+     *   <li>{@code {health}}           — current HP</li>
+     *   <li>{@code {max_health}}       — max HP</li>
+     *   <li>{@code {afk}}              — AFK label (blank when not AFK)</li>
+     * </ul>
      */
     private String applyPlaceholders(String text, ServerPlayer player, MinecraftServer server) {
         if (text == null) return "";
 
-        // NOTE: Do NOT do text.replace("&","§") here — color processing is deferred to
-        // RichTextFormatter.processTablistText() so that &#RRGGBB and gradient tags work.
-
+        // ── Basic counts ──────────────────────────────────────────────────────
         int online = (int) server.getPlayerList().getPlayers().stream()
             .filter(p -> !isVanishedFromPlayer(p, player))
             .count();
@@ -386,21 +377,46 @@ public class TablistManager {
 
         int x = player.getBlockX(), y = player.getBlockY(), z = player.getBlockZ();
 
+        // ── Economy ───────────────────────────────────────────────────────────
         String balance = "0";
         try {
             java.math.BigDecimal bd = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().getBalance(player.getUUID());
             balance = String.format("%.2f", bd.doubleValue());
         } catch (Exception ignored) {}
 
+        // ── Permission / group ────────────────────────────────────────────────
         String prefix = getPermissionPrefix(player);
         String suffix = getPermissionSuffix(player);
-        String group = getPermissionGroup(player);
+        String group  = getPermissionGroup(player);
+        int rankWeight = getGroupWeight(player);
 
         // Apply per-group colour override to displayname if configured
         String groupColor = groupColors.getOrDefault(group, groupColors.getOrDefault("default", ""));
         String coloredDisplayName = groupColor.isEmpty() ? displayName : groupColor + displayName;
 
-        return text
+        // ── Proxy / network data (BTLP-style) ─────────────────────────────────
+        ProxyIntegration proxy = ProxyIntegration.getInstance();
+        int networkOnline = proxy.isProxyEnabled() ? proxy.getNetworkOnline() : online;
+        String currentServer = proxy.isProxyEnabled()
+            ? proxy.getPlayerServer(player.getUUID()) : proxy.getServerLabel();
+        String serverLabel = proxy.getServerLabel();
+
+        // ── Session duration ──────────────────────────────────────────────────
+        long sessionMs = System.currentTimeMillis()
+            - sessionStartTimes.getOrDefault(player.getUUID(), System.currentTimeMillis());
+        long sessionMinutes = sessionMs / 60_000;
+        long sessionHours   = sessionMinutes / 60;
+
+        // ── Health / XP ───────────────────────────────────────────────────────
+        int level     = player.experienceLevel;
+        int health    = (int) player.getHealth();
+        int maxHealth = (int) player.getMaxHealth();
+
+        // ── AFK indicator ─────────────────────────────────────────────────────
+        String afkStr = (showAfkIndicator && isAfk(player)) ? afkSuffix : "";
+
+        String result = text
+            // Standard
             .replace("{player}", playerName)
             .replace("{displayname}", coloredDisplayName)
             .replace("{online}", String.valueOf(online))
@@ -417,8 +433,45 @@ public class TablistManager {
             .replace("{prefix}", prefix)
             .replace("{suffix}", suffix)
             .replace("{group}", group)
+            .replace("{rank_weight}", String.valueOf(rankWeight))
+            // BTLP-style proxy / network
+            .replace("{network_online}", String.valueOf(networkOnline))
+            .replace("{current_server}", currentServer)
+            .replace("{server_label}", serverLabel)
+            // Session
+            .replace("{session_minutes}", String.valueOf(sessionMinutes % 60))
+            .replace("{session_hours}", String.valueOf(sessionHours))
+            // Player stats
+            .replace("{level}", String.valueOf(level))
+            .replace("{health}", String.valueOf(health))
+            .replace("{max_health}", String.valueOf(maxHealth))
+            // AFK
+            .replace("{afk}", afkStr)
+            // Decoration
             .replace("{newline}", "\n")
             .replace("{bar}", "&8&m                              &r");
+
+        // Resolve dynamic {server_online:ServerName} tokens
+        result = resolveServerOnlinePlaceholders(result, proxy);
+
+        return result;
+    }
+
+    /**
+     * Resolves {@code {server_online:ServerName}} tokens.
+     * Example: {@code "Lobby: {server_online:Lobby}"} → {@code "Lobby: 5"}.
+     */
+    private static String resolveServerOnlinePlaceholders(String text, ProxyIntegration proxy) {
+        if (!text.contains("{server_online:")) return text;
+        StringBuilder sb = new StringBuilder(text);
+        int start;
+        while ((start = sb.indexOf("{server_online:")) >= 0) {
+            int end = sb.indexOf("}", start);
+            if (end < 0) break;
+            String srvName = sb.substring(start + "{server_online:".length(), end);
+            sb.replace(start, end + 1, String.valueOf(proxy.getServerOnline(srvName)));
+        }
+        return sb.toString();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -427,6 +480,13 @@ public class TablistManager {
         boolean targetVanished = com.zerog.neoessentials.moderation.VanishManager.getInstance().isPlayerVanished(target.getUUID());
         if (!targetVanished) return false;
         return !PermissionAPI.hasPermission(viewer.getUUID(), "neoessentials.vanish.see");
+    }
+
+    private boolean isAfk(ServerPlayer player) {
+        try {
+            return com.zerog.neoessentials.chat.AfkManager.getInstance().isAfk(player.getUUID());
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private String getDisplayName(ServerPlayer player) {
@@ -488,6 +548,22 @@ public class TablistManager {
         return "default";
     }
 
+    private int getGroupWeight(ServerPlayer player) {
+        try {
+            com.zerog.neoessentials.permissions.PermissionManager mgr =
+                com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
+            if (mgr == null) return 0;
+            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
+            String groupName = (user != null && user.getGroup() != null)
+                ? user.getGroup() : mgr.getDefaultGroup();
+            com.zerog.neoessentials.permissions.PermissionGroup grp = mgr.getGroup(groupName);
+            if (grp != null) {
+                try { return grp.getPriority(); } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
     /** Load a header/footer frame list from a JsonElement (array or single string). */
     private static List<String> loadFrames(JsonElement el) {
         List<String> frames = new ArrayList<>();
@@ -506,6 +582,8 @@ public class TablistManager {
     public int getRefreshIntervalTicks() { return refreshIntervalTicks; }
     public int getHeaderFrameCount() { return headerFrames.size(); }
     public int getFooterFrameCount() { return footerFrames.size(); }
+    public boolean isIndependentMode() { return independentMode; }
+    public void setIndependentMode(boolean independentMode) { this.independentMode = independentMode; }
 
     /** Runtime global header override (first frame replaced). Cleared on reload. */
     public void setHeaderOverride(String text) {
@@ -593,15 +671,27 @@ public class TablistManager {
     public String getAfkSuffix() { return afkSuffix; }
     public boolean isShowAfkIndicator() { return showAfkIndicator; }
 
-    /** Called when a player joins — send initial tablist update. */
+    /** Called when a player joins — record session start and send initial tablist update. */
     public void onPlayerJoin(ServerPlayer player, MinecraftServer server) {
+        sessionStartTimes.put(player.getUUID(), System.currentTimeMillis());
+        ProxyIntegration.getInstance().onPlayerJoin(player, server);
         server.execute(() -> {
             updatePlayer(player, server);
             updatePlayerTeam(player, server);
         });
     }
 
-    /** Called when a player leaves — update all remaining players' online count. */
+    /** Called when a player leaves — clean up and update all remaining players. */
+    public void onPlayerQuit(ServerPlayer player, MinecraftServer server) {
+        UUID uuid = player.getUUID();
+        sessionStartTimes.remove(uuid);
+        ProxyIntegration.getInstance().onPlayerQuit(uuid);
+        FakePlayerManager.getInstance().removeForPlayer(player);
+        server.execute(() -> updateAll(server));
+    }
+
+    /** @deprecated Use {@link #onPlayerQuit(ServerPlayer, MinecraftServer)} */
+    @Deprecated
     public void onPlayerQuit(MinecraftServer server) {
         server.execute(() -> updateAll(server));
     }

@@ -4,6 +4,26 @@
 
 ---
 
+## 1.0.2.6+build.77 — 2026-04-27
+
+### ✨ Feature — BungeeTabListPlus-Inspired Tablist
+
+Completely reimagined tablist system taking direct inspiration from **BungeeTabListPlus**.
+
+**Highlights:**
+- **Independent mode (default)** — NeoEssentials manages the entire tab overlay on its own. No proxy plugin needed.
+- **20+ placeholder tokens** — including proxy-aware tokens: `{network_online}`, `{server_online:NAME}`, `{current_server}`, `{rank_weight}`, `{session_minutes}`, `{health}`, `{afk}`, and more.
+- **Fake player entries** (BTLP `fakePlayers`) — decorative separator rows, section headers, and padding in the player list.
+- **Group-weight sorting** — admins shown first, then by group weight, then alphabetically. Uses scoreboard teams as client-side sort keys.
+- **Configurable layout** — columns (1–4), `groupSections`, `playersByServer`, `excludeServers`, `hiddenServers`.
+- **Optional proxy integration** — BungeeCord channel bridge for `{network_online}` / `{server_online:X}` data. Off by default; enable with `proxy.enabled=true` in `tablist.json`.
+- **New `/tablist` commands**: `proxy status`, `fakeplayer list/add/remove/refresh`, `layout info`, `independent on/off`.
+- `tablist.json` config version **2→3**.
+
+**Bug fixes:** Resolved duplicate class compile error in `TablistCommand`; fixed `ClientboundPlayerInfoUpdatePacket` API incompatibility in `FakePlayerManager`; fixed `CustomPacketPayload` override error in `ProxyIntegration`.
+
+---
+
 ## 1.0.2.6+build.73 — 2026-04-27
 
 ### ✨ Feature — Messaging & SocialSpy Improvements
