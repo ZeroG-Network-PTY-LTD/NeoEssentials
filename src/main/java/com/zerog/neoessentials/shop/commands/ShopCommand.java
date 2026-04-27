@@ -1,12 +1,16 @@
 package com.zerog.neoessentials.shop.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.shop.ShopManager;
+import com.zerog.neoessentials.shop.csv.ShopCsvImporter;
+import com.zerog.neoessentials.shop.csv.ShopCsvSerializer;
 import com.zerog.neoessentials.shop.handlers.ShopSignHandler;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.util.ResourceUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -18,6 +22,9 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +52,22 @@ public class ShopCommand {
                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "x"),
                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "y"),
                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "z")))))))
+            .then(Commands.literal("setprice")
+                .then(Commands.argument("type", StringArgumentType.word())   // buy|sell|both
+                    .then(Commands.argument("price", DoubleArgumentType.doubleArg(0))
+                        .executes(ctx -> executeSetPrice(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "type"),
+                            DoubleArgumentType.getDouble(ctx, "price"))))))
+            .then(Commands.literal("stats")
+                .executes(ctx -> executeStats(ctx.getSource())))
+            .then(Commands.literal("limit")
+                .executes(ctx -> executeLimit(ctx.getSource())))
+            .then(Commands.literal("export")
+                .executes(ctx -> executeExport(ctx.getSource())))
+            .then(Commands.literal("import")
+                .executes(ctx -> executeImport(ctx.getSource(), false))
+                .then(Commands.literal("create")
+                    .executes(ctx -> executeImport(ctx.getSource(), true))))
             .then(Commands.literal("reload")
                 .requires(src -> src.hasPermission(3) ||
                     (src.getEntity() != null &&
@@ -219,6 +242,175 @@ public class ShopCommand {
         src.sendSuccess(() -> Component.literal("§aChestShop data reloaded. §f" +
             ShopManager.getInstance().getShopCount() + " §ashop(s) loaded."), true);
         return 1;
+    }
+
+    // ── /chestshop setprice <buy|sell|both> <price> ──────────────────────────
+
+    private static int executeSetPrice(CommandSourceStack src, String type, double price) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            boolean canSetPrice = src.hasPermission(3) ||
+                    PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.setprice") ||
+                    PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
+            if (!canSetPrice) {
+                src.sendFailure(Component.literal("§cNo permission."));
+                return 0;
+            }
+            HitResult hit = player.pick(5.0, 0.0f, false);
+            if (hit.getType() != HitResult.Type.BLOCK) {
+                src.sendFailure(Component.literal("§cLook at a shop sign."));
+                return 0;
+            }
+            BlockPos pos = ((BlockHitResult) hit).getBlockPos();
+            ServerLevel level = player.serverLevel();
+            String dimension = level.dimension().location().toString();
+            ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
+            if (shop == null) {
+                src.sendFailure(Component.literal("§cNo shop at that sign."));
+                return 0;
+            }
+            // Owner or admin can set price
+            boolean isAdmin = src.hasPermission(3) ||
+                    PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
+            if (!isAdmin && (shop.ownerUUID == null || !shop.ownerUUID.equals(player.getUUID()))) {
+                src.sendFailure(Component.literal("§cYou can only set prices on your own shops."));
+                return 0;
+            }
+            BigDecimal bd = BigDecimal.valueOf(price);
+            switch (type.toLowerCase()) {
+                case "buy"  -> shop.buyPrice  = bd;
+                case "sell" -> shop.sellPrice = bd;
+                case "both" -> { shop.buyPrice = bd; shop.sellPrice = bd; }
+                default -> {
+                    src.sendFailure(Component.literal("§cType must be: buy | sell | both"));
+                    return 0;
+                }
+            }
+            ShopManager.getInstance().registerShop(shop);
+            com.zerog.neoessentials.shop.handlers.ShopSignHandler.writeSignLines(level, pos,
+                    com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
+            src.sendSuccess(() -> Component.literal("§aPrice updated — " + type + ": " +
+                    EconomyManager.getInstance().getCurrencySymbol() + bd.toPlainString()), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop stats ──────────────────────────────────────────────────────
+
+    private static int executeStats(CommandSourceStack src) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            List<ShopData> myShops = ShopManager.getInstance().getShopsByOwner(player.getUUID());
+            long totalSales = myShops.stream().mapToLong(s -> s.totalSalesCount).sum();
+            int adminCount  = (int) myShops.stream().filter(ShopData::isAdminShop).count();
+            int playerCount = myShops.size() - adminCount;
+            src.sendSuccess(() -> Component.literal("§6§l--- Shop Stats ---"), false);
+            src.sendSuccess(() -> Component.literal("§eTotal shops:  §f" + myShops.size() + " §7(player: " + playerCount + ", admin: " + adminCount + ")"), false);
+            src.sendSuccess(() -> Component.literal("§eTotal sales:  §f" + totalSales), false);
+            if (!myShops.isEmpty()) {
+                ShopData top = myShops.stream().max((a, b) -> Long.compare(a.totalSalesCount, b.totalSalesCount)).orElse(null);
+                if (top != null) {
+                    src.sendSuccess(() -> Component.literal("§eTop seller:   §f" + top.itemId.replace("minecraft:", "") +
+                            " §7(" + top.totalSalesCount + " sales)"), false);
+                }
+            }
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop limit ──────────────────────────────────────────────────────
+
+    private static int executeLimit(CommandSourceStack src) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            int used  = ShopManager.getInstance().getShopsByOwner(player.getUUID()).size();
+            int max   = getMaxShopsPerPlayer();
+            src.sendSuccess(() -> Component.literal("§eShops used: §f" + used + " §7/ §f" +
+                    (max < 0 ? "unlimited" : String.valueOf(max))), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop export ─────────────────────────────────────────────────────
+
+    private static int executeExport(CommandSourceStack src) {
+        boolean isAdmin = src.hasPermission(3) ||
+                (src.getEntity() != null &&
+                 PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.export"));
+        if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
+        try {
+            String csv = ShopCsvSerializer.export(ShopManager.getInstance().getAllShops());
+            Path file  = getCsvPath();
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, csv);
+            src.sendSuccess(() -> Component.literal("§aExported §f" +
+                    ShopManager.getInstance().getShopCount() + " §ashop(s) to §7" + file.getFileName()), true);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cExport failed: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop import [create] ────────────────────────────────────────────
+
+    private static int executeImport(CommandSourceStack src, boolean createNew) {
+        boolean isAdmin = src.hasPermission(3) ||
+                (src.getEntity() != null &&
+                 PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.import"));
+        if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
+        try {
+            Path file = getCsvPath();
+            if (!Files.exists(file)) {
+                src.sendFailure(Component.literal("§cCSV file not found: " + file + ". Run /chestshop export first."));
+                return 0;
+            }
+            String csv = Files.readString(file);
+            var rows   = ShopCsvSerializer.importRows(csv);
+            var result = ShopCsvImporter.apply(rows, createNew);
+            src.sendSuccess(() -> Component.literal("§aCSV import complete: §f" + result.details()), true);
+            return result.updated() + result.created();
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cImport failed: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static Path getCsvPath() {
+        try {
+            var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            if (cfg != null && cfg.has("shop")) {
+                var shopCfg = cfg.getAsJsonObject("shop");
+                if (shopCfg.has("csvImportPath")) {
+                    return java.nio.file.Paths.get(shopCfg.get("csvImportPath").getAsString());
+                }
+            }
+        } catch (Exception ignored) {}
+        return ResourceUtil.getConfigPath("shop_prices.csv");
+    }
+
+    private static int getMaxShopsPerPlayer() {
+        try {
+            var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                    .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            if (cfg != null && cfg.has("shop")) {
+                var shopCfg = cfg.getAsJsonObject("shop");
+                if (shopCfg.has("maxShopsPerPlayer")) return shopCfg.get("maxShopsPerPlayer").getAsInt();
+            }
+        } catch (Exception ignored) {}
+        return 10;
     }
 
     // ── /chestshop (help) ─────────────────────────────────────────────────────
