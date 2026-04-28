@@ -73,6 +73,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Authentication check
 async function checkAuthentication() {
+    // ── Discord OAuth2 callback: sessionId passed as URL param ──────────────
+    // After a successful /api/auth/discord/callback the server redirects here
+    // with ?sessionId=XXX&auth=discord in the URL.  Store it, clean the URL,
+    // then proceed to token validation below.
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSessionId = urlParams.get('sessionId');
+    const authError = urlParams.get('error') || urlParams.get('auth_error');
+
+    if (urlSessionId) {
+        localStorage.setItem('authToken', urlSessionId);
+        localStorage.setItem('sessionId', urlSessionId);
+        if (urlParams.get('auth') === 'discord') {
+            localStorage.setItem('authType', 'discord');
+        }
+        // Clean the URL to avoid re-processing on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (authError) {
+        const loginError = document.getElementById('loginError');
+        if (loginError) {
+            const readable = {
+                discord_auth_failed : 'Discord login failed. Please try again.',
+                access_denied       : 'You denied the Discord authorisation.',
+                missing_code        : 'Discord authorisation code missing. Please try again.',
+            };
+            loginError.textContent = readable[authError] || ('Discord error: ' + authError);
+            loginError.style.display = 'block';
+        }
+        showLoginScreen();
+        return;
+    }
+
     const token = localStorage.getItem('authToken');
     
     if (!token) {
@@ -174,6 +207,46 @@ function showDashboard() {
     
     // Load initial data
     refreshData();
+}
+
+// Handle Discord OAuth2 login
+async function handleDiscordLogin() {
+    const discordBtn = document.getElementById('discordLoginBtn');
+    if (discordBtn) {
+        discordBtn.disabled = true;
+        discordBtn.innerHTML = '<span>⏳ Connecting to Discord…</span>';
+    }
+    const loginError = document.getElementById('loginError');
+    if (loginError) loginError.style.display = 'none';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/discord/authorize`);
+        const data = await response.json();
+
+        if (response.ok && data.success && data.authorizeUrl) {
+            // Redirect the browser to Discord's OAuth2 authorization page
+            window.location.href = data.authorizeUrl;
+        } else {
+            if (loginError) {
+                loginError.textContent = data.error || 'Discord login is not configured on this server.';
+                loginError.style.display = 'block';
+            }
+            if (discordBtn) {
+                discordBtn.disabled = false;
+                discordBtn.innerHTML = '<span>Discord Login</span>';
+            }
+        }
+    } catch (error) {
+        console.error('Discord login error:', error);
+        if (loginError) {
+            loginError.textContent = 'Could not reach server. Is the dashboard running?';
+            loginError.style.display = 'block';
+        }
+        if (discordBtn) {
+            discordBtn.disabled = false;
+            discordBtn.innerHTML = '<span>Discord Login</span>';
+        }
+    }
 }
 
 // Handle logout

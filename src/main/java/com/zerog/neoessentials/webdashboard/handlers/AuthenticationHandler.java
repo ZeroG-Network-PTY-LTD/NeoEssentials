@@ -697,7 +697,7 @@ public class AuthenticationHandler implements HttpHandler {
     private void handleDiscordOAuthCallback(HttpExchange exchange) throws IOException {
         String query = exchange.getRequestURI().getQuery();
         if (query == null) {
-            sendHtmlRedirect(exchange, "/dashboard/login.html?error=missing_code");
+            sendHtmlRedirect(exchange, "/login.html?error=missing_code");
             return;
         }
 
@@ -712,12 +712,12 @@ public class AuthenticationHandler implements HttpHandler {
 
         if (error != null) {
             LOGGER.warn("Discord OAuth2 callback received error: {}", error);
-            sendHtmlRedirect(exchange, "/dashboard/login.html?error=" + encode(error));
+            sendHtmlRedirect(exchange, "/login.html?error=" + encode(error));
             return;
         }
 
         if (code == null || code.isEmpty()) {
-            sendHtmlRedirect(exchange, "/dashboard/login.html?error=missing_code");
+            sendHtmlRedirect(exchange, "/login.html?error=missing_code");
             return;
         }
 
@@ -727,14 +727,13 @@ public class AuthenticationHandler implements HttpHandler {
         Session session = handleDiscordOAuth(code, ipAddress, userAgent);
 
         if (session == null) {
-            sendHtmlRedirect(exchange, "/dashboard/login.html?error=discord_auth_failed");
+            sendHtmlRedirect(exchange, "/login.html?error=discord_auth_failed");
             return;
         }
 
-        // Set session cookie and redirect to dashboard
-        exchange.getResponseHeaders().add("Set-Cookie",
-            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
-        sendHtmlRedirect(exchange, "/dashboard/index.html");
+        // Pass sessionId as URL parameter so dashboard.js can store it in localStorage.
+        // HttpOnly cookies are invisible to JS, so we use a redirect URL param instead.
+        sendHtmlRedirect(exchange, "/index.html?sessionId=" + session.getSessionId() + "&auth=discord");
     }
 
     /** Send a 302 redirect response with HTML body fallback. */

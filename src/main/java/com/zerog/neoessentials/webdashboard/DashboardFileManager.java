@@ -26,12 +26,27 @@ public class DashboardFileManager {
     // Updated to include new multi-page structure and new authentication system
     private static final List<String> DASHBOARD_FILES = Arrays.asList(
         "index.html",
+        "login.html",
         "permissions.html",
         "admin.html",
         "teleport.html",
+        "backup.html",
+        "stats.html",
+        "discord.html",
+        "cloud.html",
+        "users.html",
+        "moderation.html",
+        "kits.html",
         "dashboard.js",
         "permissions.js",
         "teleport.js",
+        "backup.js",
+        "stats.js",
+        "discord.js",
+        "cloud.js",
+        "users.js",
+        "moderation.js",
+        "kits.js",
         "styles.css"
     );
 

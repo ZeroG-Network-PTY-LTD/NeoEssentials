@@ -6,6 +6,122 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.98] — 2026-04-27
+
+### Feature — Web Dashboard: Discord Integration Page
+
+The dashboard now shows live Discord bot integration status and a rolling relay-event log,
+hooking directly into the three supported Discord bridge mods
+(Simple Discord Link, DCIntegration, DiscordSRV).
+
+#### New Files
+
+| File | Purpose |
+|---|---|
+| `DiscordEndpoint.java` | REST handler at `/api/discord/*` — status, events, test-message, clear-log |
+| `discord.html` | Dashboard page: adapter cards, supported-mods info, test-message panel, event log |
+| `discord.js` | Calls all `/api/discord/*` endpoints, renders adapter cards & event table, auto-refreshes every 30 s |
+
+#### Modified Files
+
+| File | Change |
+|---|---|
+| `ChatIntegrationManager.java` | Added rolling event log (max 200 entries) recording every Discord relay event (chat, join, quit, mute, AFK, private message); `getRecentEvents()`, `getAdapterStatus()`, `clearEventLog()` public methods; log is cleared on server shutdown |
+| `DashboardAPI.java` | Registered `/api/discord` context with auth middleware; updated endpoint log line |
+| `DashboardFileManager.java` | Added `discord.html` and `discord.js` to managed file list |
+| All existing HTML pages | Added 🤖 **Discord Integration** nav link to sidebar after Statistics entry |
+
+#### API Endpoints
+
+| Method | Path | Role | Description |
+|---|---|---|---|
+| `GET` | `/api/discord/status` | Any | Loaded adapter list, `anyActive` flag, event count |
+| `GET` | `/api/discord/events?limit=N` | Any | Recent relay events, most-recent first |
+| `POST` | `/api/discord/test` | Admin | Send a test message (logs to server; relayed if adapters active) |
+| `DELETE` | `/api/discord/events` | Admin | Clear the rolling event log |
+
+#### Dashboard Features
+
+- **Adapter cards** — each loaded Discord mod shown with name, description, and Active/Inactive badge
+- **No-adapter state** — friendly message listing supported mods and their mod IDs when none are installed
+- **Supported-mods info grid** — always-visible cards for SDLink, DCIntegration, DiscordSRV
+- **Test-message panel** (admin only) — specify channel name/ID and message, fire a test relay
+- **Event log table** — type badge (chat/join/quit/mute/afk/pm), player, target, channel, message preview, timestamp
+- **Auto-refresh** every 30 seconds; manual Refresh and Clear Log (admin) buttons
+
+---
+
+## [1.0.2.6+build.97] — 2026-04-27
+
+### Feature — Web Dashboard: Dedicated Login Page + Discord OAuth Frontend Integration
+
+Completes the Discord OAuth2 authentication system (backend delivered in builds 92–96) by wiring
+the frontend UI, creating a dedicated login page, and fixing the OAuth callback redirect paths.
+
+#### Bug Fixes
+
+| File | Bug | Fix |
+|---|---|---|
+| `AuthenticationHandler.java` | `handleDiscordOAuthCallback()` redirected to `/dashboard/login.html` (404) on error and `/dashboard/index.html` (404) on success — the `/dashboard/` prefix is not part of the URL structure | Error → `/login.html?error={code}`, Success → `/index.html?sessionId={id}&auth=discord` |
+| `AuthenticationHandler.java` | Session was set as an `HttpOnly` cookie after OAuth success, which JS cannot read — the Bearer-token auth system then had no credentials and fell back to the login screen immediately | Replaced cookie with `sessionId` URL param so `dashboard.js` can store it in `localStorage` |
+| `DashboardFileManager.java` | `DASHBOARD_FILES` list was missing `backup.html`, `backup.js`, `stats.html`, `stats.js` — those files were never auto-extracted from the JAR | Added all five new files (`backup.html`, `backup.js`, `stats.html`, `stats.js`, `login.html`) |
+
+#### New Features
+
+| Item | Detail |
+|---|---|
+| Standalone `login.html` | Dedicated `/login.html` page: password form + Discord login button; handles `?error=` param from OAuth callback; validates existing session and redirects to `index.html` if already logged in |
+| Discord login button on `index.html` | "or / Discord Login" divider + button added to the embedded login form on the main dashboard page |
+| `handleDiscordLogin()` in `dashboard.js` | Calls `GET /api/auth/discord/authorize`, receives the Discord authorization URL, and redirects the browser; shows inline error if Discord OAuth2 is not configured |
+| OAuth `?sessionId=` param handler in `dashboard.js` | `checkAuthentication()` now reads `?sessionId=` and `?auth=discord` URL params at page load; stores token in `localStorage`, cleans the URL via `history.replaceState`, then validates normally |
+| OAuth `?error=` param handler in `dashboard.js` | Readable error messages shown for `discord_auth_failed`, `access_denied`, and `missing_code` error codes returned from the callback |
+| Discord login button styles | `.btn-discord`, `.login-divider` added to `styles.css`; Discord brand-purple, SVG icon, hover/disabled states |
+
+---
+
+## [1.0.2.6+build.96] — 2026-04-27
+
+### Feature — Web Dashboard: Discord OAuth2 Auth Backend + Change-Password Flow
+
+Completed the backend for the full Discord OAuth2 authentication system introduced in the
+Dashboard Improvements roadmap.  No server-side code changes are required by administrators —
+the system auto-generates `discord_auth.json` on first start.
+
+#### New Files
+
+| File | Purpose |
+|---|---|
+| `DiscordAuthConfig.java` | Typed wrapper around `discord_auth.json`; handles role mapping (Discord role ID → Dashboard role), whitelist/blacklist, permission-sync settings, and OAuth2 client credentials |
+| `DiscordAuthProvider.java` | SDLink bridge — looks up linked Minecraft accounts and Discord role IDs from the Simple Discord Link mod; gracefully degrades when SDLink is not installed |
+| `DiscordPermissionSync.java` | Syncs Discord role IDs → NeoEssentials permission nodes on player join (when `permissionSync.syncOnJoin = true`) |
+| `DiscordSyncEventHandler.java` | NeoForge event handler that triggers `DiscordPermissionSync` on `PlayerLoggedInEvent` |
+| `DiscordUser.java` | Value object: Discord ID, username, guild roles, linked Minecraft username |
+| `SDLinkDataReader.java` | Reads SDLink's internal account-link data file as a fallback when the mod's API is unavailable |
+| `SDLinkEventListener.java` | Listens for SDLink link/unlink events to keep account data in sync |
+
+#### Updated Files
+
+| File | Change |
+|---|---|
+| `AuthenticationHandler.java` | Added `handleDiscordOAuth()` full flow (code exchange → user info → guild roles → whitelist check → role mapping → user create/update → session); `handleDiscordAuthorizeRedirect()` returns authorization URL; `handleDiscordOAuthCallback()` browser redirect handler; `handleChangePassword()` validates old password, updates hash, clears `requiresPasswordChange` / `isTempPassword` flags, invalidates session |
+| `ConfigManager.java` | Added `DISCORD_AUTH_CONFIG = "discord_auth.json"` constant; wired into `ensureDefaultConfigs()` with version 6; `EXPECTED_CONFIG_VERSIONS` updated |
+| `discord_auth.json` (resource) | Default template with `enabled`, OAuth2 `clientId`/`clientSecret`/`redirectUri`, `roleMapping`, `whitelistedRoles`, `permissionSync.permissionMappings` sections; `_configVersion: 6` |
+
+#### Auth Flow Summary
+
+```
+Browser → GET /api/auth/discord/authorize
+       ← {"authorizeUrl": "https://discord.com/api/oauth2/authorize?..."}
+Browser → Discord OAuth2 page (user approves)
+Discord → GET /api/auth/discord/callback?code=XXX
+Server  → exchange code → fetch /users/@me → fetch guild roles
+       → whitelist/blacklist check → map Discord roles → create/update user → create session
+       → 302 /index.html?sessionId=XXX&auth=discord
+Browser → stores sessionId → calls /api/auth/validate → dashboard
+```
+
+---
+
 ## [1.0.2.6+build.91] — 2026-04-27
 
 ### Added

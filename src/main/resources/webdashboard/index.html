@@ -31,6 +31,10 @@
                 <button type="submit" class="btn btn-login">
                     <span>🔐 Login</span>
                 </button>
+                <div class="login-divider"><span>or</span></div>
+                <button type="button" class="btn btn-discord" id="discordLoginBtn" onclick="handleDiscordLogin()">
+                    <span>Discord Login</span>
+                </button>
                 <div class="login-info">
                     <small>💡 Register in-game: /dashboardregister start</small>
                     <small>📝 No longer requires being online to log in!</small>
@@ -87,9 +91,29 @@
                     <span class="nav-icon">💾</span>
                     <span class="nav-text">Backup &amp; Restore</span>
                 </a>
-                <a href="stats.html" class="nav-item" style="display: none;">
+                <a href="cloud.html" class="nav-item admin-only" style="display: none;">
+                    <span class="nav-icon">☁️</span>
+                    <span class="nav-text">Cloud Storage</span>
+                </a>
+                <a href="users.html" class="nav-item admin-only" style="display: none;">
+                    <span class="nav-icon">👤</span>
+                    <span class="nav-text">User Management</span>
+                </a>
+                <a href="moderation.html" class="nav-item">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-text">Moderation</span>
+                </a>
+                <a href="kits.html" class="nav-item">
+                    <span class="nav-icon">🎒</span>
+                    <span class="nav-text">Kits</span>
+                </a>
+                <a href="stats.html" class="nav-item">
                     <span class="nav-icon">📈</span>
                     <span class="nav-text">Statistics</span>
+                </a>
+                <a href="discord.html" class="nav-item">
+                    <span class="nav-icon">🤖</span>
+                    <span class="nav-text">Discord Integration</span>
                 </a>
             </nav>
             

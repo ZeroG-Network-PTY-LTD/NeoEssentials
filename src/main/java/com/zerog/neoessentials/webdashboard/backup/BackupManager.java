@@ -35,7 +35,7 @@ public class BackupManager {
     private static BackupManager INSTANCE;
 
     /** Where snapshots are stored on disk. */
-    static final Path BACKUP_DIR = Path.of("neoessentials", "backups");
+    public static final Path BACKUP_DIR = Path.of("neoessentials", "backups");
 
     /** Available backup targets → relative source path. */
     public static final Map<String, String> TARGET_PATHS;
