@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -97,6 +98,13 @@ public class WarnManager {
         if (removed == null || removed.isEmpty()) return 0;
         save();
         return removed.size();
+    }
+
+    /**
+     * Get all warn lists (all players), for dashboard use.
+     */
+    public Collection<List<WarnEntry>> getAllWarnings() {
+        return warnMap.values();
     }
 
     /**

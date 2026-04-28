@@ -11,26 +11,21 @@
     - CSV import/export for bulk pricing adjustments. {Other Modded Support}
     - Future-proofing for more advanced economy plugins and integrations.
 
+- **Web-Dashboard Improvements**  
+  Enhance the NeoEssentials web dashboard with:
+    - Backup/restore functionality for configs and player data. *(done — build #91)*
+    - Integration with cloud storage (Google Drive, Dropbox, etc.).
+    - More detailed statistics (economy, player activity, performance).
+    - Improved user management with role-based access control.
+    - Proper Login & Authentication system for secure access, discord auth using discord bot, and session management, other oauths. *(done — builds #92–97)*
+    - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
+
 - **Holographic Displays**  
   Add support for holographic displays to show:
     - Shop information, player stats, server announcements.
     - Customizable text, icons, and animations.
     - Integration with permissions and PlaceholderAPI for dynamic content.
-
-- **Minecraft Assets API Support**  
-  Integrate with the Minecraft Assets API to:
-    - Display item/block textures in the web dashboard.
-    - Provide accurate previews for shops, kits, and inventories.
-    - Enable resource syncing for external tools.
-
-- **Web-Dashboard Improvements**  
-  Enhance the NeoEssentials web dashboard with:
-    - Backup/restore functionality for configs and player data.
-    - Integration with cloud storage (Google Drive, Dropbox, etc.).
-    - More detailed statistics (economy, player activity, performance).
-    - Improved user management with role-based access control.
-    - Proper Login & Authentication system for secure access, discord auth using discord bot, and session management, other oauths .
-    - More intuitive UI/UX design and mobile responsiveness, more pages for different modules (teleportation, moderation, kits, etc.).
+    - Shops can have holographic displays showing prices, stock, and owner info, and players can interact with them to buy/sell items.
 
 - **Port NeoEssentials to Newer Minecraft + NeoForge Versions**  
   Request to update NeoEssentials for compatibility with the latest Minecraft and NeoForge releases.
@@ -47,6 +42,36 @@
 ---
 
 # ✅ Improvements Done
+
+- **Web Dashboard — Discord OAuth2 Login + Dedicated Login Page** *(builds #92–97)*
+
+  Complete Discord OAuth2 authentication system — backend and frontend.
+
+  | Item | Build | Status |
+  |---|---|---|
+  | `DiscordAuthConfig` — OAuth2 client config, role mapping, whitelist, permission-sync | #96 | ✅ |
+  | `DiscordAuthProvider` — SDLink bridge (linked accounts + Discord role IDs) | #96 | ✅ |
+  | `DiscordPermissionSync` — Discord role → NeoEssentials permission-node sync on join | #96 | ✅ |
+  | `AuthenticationHandler` Discord OAuth2 full flow (authorize → callback → session) | #96 | ✅ |
+  | `AuthenticationHandler.handleChangePassword()` — validates old password, clears temp flags, invalidates session | #96 | ✅ |
+  | `discord_auth.json` config template auto-deployed by `ConfigManager` | #96 | ✅ |
+  | Fix OAuth callback redirect paths (`/dashboard/…` → correct root paths) | #97 | ✅ |
+  | Fix OAuth session passing (HttpOnly cookie → `?sessionId=` URL param readable by JS) | #97 | ✅ |
+  | Standalone `login.html` — password form + Discord button + `?error=` display | #97 | ✅ |
+  | Discord login button on `index.html` main dashboard page | #97 | ✅ |
+  | `handleDiscordLogin()` in `dashboard.js` | #97 | ✅ |
+  | `?sessionId=` / `?error=` URL param handlers in `dashboard.js` | #97 | ✅ |
+  | Discord button styles (`btn-discord`, `login-divider`) in `styles.css` | #97 | ✅ |
+  | `DashboardFileManager` — added `login.html`, `backup.html`, `backup.js`, `stats.html`, `stats.js` | #97 | ✅ |
+
+  - `DiscordAuthConfig.java` — typed config wrapper; `load()` reads via `ConfigManager`; `mapDiscordRole()`, `getHighestRole()`, `passesWhitelist()`, `isBlacklisted()` helpers
+  - `DiscordAuthProvider.java` — SDLink integration; `isAvailable()`, `getLinkedAccount()`, `getLinkedAccountByDiscordId()`, `getDiscordRoles()`
+  - `DiscordPermissionSync.java` — `syncRoles(ServerPlayer)` maps Discord role IDs → permission nodes via `permissionMappings` in config; called on join when `syncOnJoin = true`
+  - `AuthenticationHandler.java` — `handleDiscordOAuth()` 9-step flow; `exchangeDiscordCode()`, `fetchDiscordApi()` HTTP helpers; `handleDiscordAuthorizeRedirect()` returns auth URL; `handleDiscordOAuthCallback()` browser redirect handler; `handleChangePassword()` secure password update
+  - `login.html` — standalone login page; self-contained JS; handles `?error=` from Discord callback; existing-session redirect to `index.html`
+  - `dashboard.js` — `checkAuthentication()` extended with URL-param sessionId storage and auth-error display; `handleDiscordLogin()` added
+
+---
 
 - **Web Dashboard — Backup & Restore** *(build #91)*
 

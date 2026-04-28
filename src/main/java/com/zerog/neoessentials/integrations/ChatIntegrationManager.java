@@ -7,8 +7,13 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Central integration manager for external chat mods.
@@ -18,6 +23,46 @@ import java.util.List;
 public class ChatIntegrationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatIntegrationManager.class);
     private static final List<ChatIntegrationAdapter> adapters = new ArrayList<>();
+
+    // ── Discord event log (rolling buffer, max 200 entries) ───────────────────
+    private static final int MAX_EVENTS = 200;
+    private static final LinkedList<Map<String, Object>> eventLog = new LinkedList<>();
+
+    /**
+     * Record a Discord relay event into the rolling log.
+     * @param type     Event type (e.g. "chat", "join", "quit", "mute", "afk", "pm")
+     * @param actor    Primary player name
+     * @param target   Secondary player name, or null
+     * @param channel  Destination Discord channel name / id
+     * @param message  The raw message that was relayed
+     */
+    private static synchronized void recordEvent(String type, String actor, String target, String channel, String message) {
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("type",      type);
+        entry.put("actor",     actor);
+        entry.put("target",    target);
+        entry.put("channel",   channel);
+        entry.put("message",   message);
+        entry.put("timestamp", Instant.now().toString());
+        eventLog.addLast(entry);
+        if (eventLog.size() > MAX_EVENTS) {
+            eventLog.removeFirst();
+        }
+    }
+
+    /**
+     * Return an immutable snapshot of the recent Discord relay event log.
+     */
+    public static synchronized List<Map<String, Object>> getRecentEvents() {
+        return Collections.unmodifiableList(new ArrayList<>(eventLog));
+    }
+
+    /**
+     * Clear the event log (e.g. on server restart).
+     */
+    public static synchronized void clearEventLog() {
+        eventLog.clear();
+    }
 
     /**
      * Initialize all built-in chat integration adapters.
@@ -68,6 +113,7 @@ public class ChatIntegrationManager {
             }
         }
         clearAdapters();
+        clearEventLog();
         LOGGER.info("Chat integration adapters shut down.");
     }
     /**
@@ -100,6 +146,8 @@ public class ChatIntegrationManager {
      * @param discordChannelId Optional Discord channel ID (null = use default)
      */
     public static void broadcastPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
+        String targetCh = (discordChannelId != null && !discordChannelId.isEmpty()) ? discordChannelId : channel;
+        recordEvent("chat", player.getName().getString(), null, targetCh, message);
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPlayerChat(player, channel, message, formattedMessage, discordChannelId);
@@ -116,6 +164,7 @@ public class ChatIntegrationManager {
      * @param message The message content
      */
     public static void broadcastPrivateMessage(ServerPlayer sender, ServerPlayer recipient, String message) {
+        recordEvent("pm", sender.getName().getString(), recipient.getName().getString(), "private-messages", message);
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPrivateMessage(sender, recipient, message);
@@ -132,6 +181,8 @@ public class ChatIntegrationManager {
      * @param isMuted Whether the player is being muted or unmuted
      */
     public static void broadcastMuteEvent(ServerPlayer player, String reason, boolean isMuted) {
+        recordEvent("mute", player.getName().getString(), null, "moderation",
+                    (isMuted ? "muted" : "unmuted") + (reason != null && !reason.isEmpty() ? ": " + reason : ""));
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPlayerMute(player, reason, isMuted);
@@ -148,6 +199,8 @@ public class ChatIntegrationManager {
      * @param reason The AFK reason (if any)
      */
     public static void broadcastAfkEvent(ServerPlayer player, boolean isAfk, String reason) {
+        recordEvent("afk", player.getName().getString(), null, "chat",
+                    (isAfk ? "went AFK" : "returned") + (isAfk && reason != null && !reason.isEmpty() ? ": " + reason : ""));
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onAfkStatusChange(player, isAfk, reason);
@@ -162,6 +215,7 @@ public class ChatIntegrationManager {
      * @param player The joining player
      */
     public static void broadcastPlayerJoin(ServerPlayer player) {
+        recordEvent("join", player.getName().getString(), null, "chat", "joined the server");
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPlayerJoin(player);
@@ -176,6 +230,7 @@ public class ChatIntegrationManager {
      * @param player The quitting player
      */
     public static void broadcastPlayerQuit(ServerPlayer player) {
+        recordEvent("quit", player.getName().getString(), null, "chat", "left the server");
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPlayerQuit(player);
@@ -185,6 +240,21 @@ public class ChatIntegrationManager {
         }
     }
     
+    /**
+     * Get adapter status list for the dashboard.
+     * @return List of maps, each with "name" and "enabled".
+     */
+    public static List<Map<String, Object>> getAdapterStatus() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (ChatIntegrationAdapter adapter : adapters) {
+            Map<String, Object> info = new LinkedHashMap<>();
+            info.put("name",    adapter.getName());
+            info.put("enabled", adapter.isEnabled());
+            result.add(info);
+        }
+        return result;
+    }
+
     /**
      * Get all registered adapters
      * @return List of registered adapters
