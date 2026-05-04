@@ -12,6 +12,7 @@ import com.zerog.neoessentials.webdashboard.endpoints.BackupEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.CloudStorageEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.DiscordEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.KitsEndpoint;
+import com.zerog.neoessentials.webdashboard.endpoints.HologramEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.ModerationEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.MotdEndpoint;
 import com.zerog.neoessentials.webdashboard.endpoints.PermissionEndpoint;
@@ -380,6 +381,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/users",       withAuth(new UserManagementEndpoint()));
         apiServer.createContext("/api/moderation",  withAuth(new ModerationEndpoint(server)));
         apiServer.createContext("/api/kits",        withAuth(new KitsEndpoint()));
+        apiServer.createContext("/api/holograms",   withAuth(new HologramEndpoint()));
         statsEndpoint = new StatsEndpoint(server);
         apiServer.createContext("/api/stats", withAuth(statsEndpoint));
         apiServer.createContext("/api/docs", new DocumentationHandler());
@@ -405,6 +407,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/users/*        (list, sessions, create, role, password, enable, disable, delete) [ADMIN]");
         LOGGER.info("  - /api/moderation/*   (overview, bans, warns, ban, unban) [AUTH/ADMIN]");
         LOGGER.info("  - /api/kits/*         (list, stats, {name}) [AUTH]");
+        LOGGER.info("  - /api/holograms/*    (list, stats, create, get, update, delete, spawn, despawn, visible) [ADMIN]");
         LOGGER.info("  - /api/stats/* (overview, economy, activity, performance) [AUTH REQUIRED]");
         LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
