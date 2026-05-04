@@ -2,6 +2,111 @@
 ---
 #  Issues That Were Discovered
 
+- **NeoEssentials Registry Key Error for Shop NPC (NeoForge 1.21.1, build.1.0.2.6+21)**  
+  Client disconnects when server sends registries containing unknown keys related to NeoEssentials shop NPCs.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 21`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.222`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Client disconnects with warning:
+          ```
+          Client disconnected with reason: The server send registries with unknown keys: ResourceKey[minecraft:entity_type / neoessentials:shop_npc]
+          ```  
+        - Occurs when server attempts to sync registry data for NeoEssentials custom entity type `shop_npc`.
+        - Client does not recognize the registry key, leading to forced disconnect.
+    - Expected Behavior:
+        - Client should recognize and handle NeoEssentials custom entity types without disconnecting.
+    - Need to investigate:
+        - Whether `shop_npc` entity type is properly registered on both client and server.
+        - If registry sync is missing client-side definitions.
+        - Possible fix: ensure NeoEssentials registers `shop_npc` entity type in client initialization, or mark it as server-only to avoid sync errors.
+
+---
+
+- **NeoEssentials Permission Validation Ignores External Mod Permissions (NeoForge 1.21.1, builds 81–97)**  
+  Permission validation fails to recognize permission nodes from other mods (e.g., WorldEdit), and some NeoEssentials nodes are flagged as unknown.
+    - Environment:
+        - NeoEssentials Versions: `1.0.2.6 build 81` (last working), `1.0.2.6 build 87`, `1.0.2.6 build 97` (errors observed)
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Permission validator logs warnings such as:
+          ```
+          ✗ Group 'moderateur': Unknown permission 'worldedit.selection.pos'
+          ✗ Group 'moderateur': Unknown permission 'neoessentials.chat.msgtoggle.bypass'
+          ✗ Group 'architecte': Unknown permission 'worldedit.selection.pos'
+          ⚠ PERMISSION VALIDATION FOUND 3 ISSUES!
+          ⚠ Some permissions may not work correctly!
+          ```  
+        - Other mods’ permissions (e.g., WorldEdit) are not recognized.
+        - NeoEssentials-specific nodes (`neoessentials.chat.msgtoggle.bypass`) also flagged as unknown.
+        - Builds 87 and 97 show errors, while build 81 still works correctly.
+    - Expected Behavior:
+        - NeoEssentials should respect and validate external mod permissions (WorldEdit, LuckPerms, etc.).
+        - NeoEssentials permission nodes should be properly registered and recognized.
+    - Need to investigate:
+        - Whether permission registry initialization changed between builds 81 → 87 → 97.
+        - If NeoEssentials validator only checks its own nodes and ignores external ones.
+        - Possible fix: extend validator to include external mod permission namespaces, and ensure NeoEssentials nodes are registered before validation runs.
+
+---
+
+- **NeoEssentials Default Permissions Not Applied with LuckPerms (NeoForge 1.21.1, build.1.0.2.6+69)**  
+  Default permissions documented for NeoEssentials are not being granted to users in the LuckPerms default group.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 69`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Users in the LuckPerms default group do not receive the ✅ default permissions listed in NeoEssentials documentation.
+        - Removing **FTB Essentials** restored MiniMOTD functionality, but highlighted that NeoEssentials and FTB Essentials were both trying to register home aliases, resulting in neither working.
+        - Conflicts between NeoEssentials and FTB Essentials cause overlapping command registration and permission handling.
+    - Expected Behavior:
+        - NeoEssentials should correctly apply its documented default permissions to the LuckPerms default group.
+        - Home aliases should not conflict when multiple mods are present.
+    - Need to investigate:
+        - Whether NeoEssentials default permissions are not injected into LuckPerms properly.
+        - If FTB Essentials overrides or blocks NeoEssentials permission defaults.
+        - Possible fix: ensure NeoEssentials default permissions are registered independently of other mods, and resolve alias conflicts with FTB Essentials.
+
+---
+
+- **NeoEssentials Chat Config File Misread (NeoForge 1.21.1, build.1.0.2.6+69)**  
+  Chat configuration fails to load unless the file is symlinked or renamed, suggesting a `.json` extension handling bug.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 69`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Error:
+          ```
+          Failed to read config file chat: config/neoessentials/chat (No such file or directory)
+          ```  
+        - Renaming `chat.json` → `chat` makes the error disappear, but chat formatting still defaults to:
+          ```
+          No chat-format in config, using default: [{neoessentials_displayname}: {MESSAGE}]
+          ```  
+        - Creating a symlink (`ln -s chat.json chat`) allows proper loading:
+          ```
+          Loaded chat-format (string): [<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}]
+          ```  
+        - Indicates the code may be missing `.json` in its file lookup logic.
+    - Expected Behavior:
+        - Chat config should load directly from `chat.json` without requiring renaming or symlinks.
+    - Need to investigate:
+        - Whether `ConfigManager` incorrectly strips `.json` when resolving file paths.
+        - If chat manager defaults are overriding loaded config values.
+        - Possible fix: ensure `chat.json` is explicitly referenced in code and parsed correctly.
+
 ---
 
 # ✅ Issues That Were Fixed

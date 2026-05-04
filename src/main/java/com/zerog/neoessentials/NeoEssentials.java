@@ -303,6 +303,18 @@ public class NeoEssentials {
                 LOGGER.error("✗ Shop PricingEngine failed to initialize: {}", e.getMessage(), e);
             }
 
+            // Initialize Hologram system
+            try {
+                LOGGER.info("⚙ Initializing Hologram system...");
+                com.zerog.neoessentials.hologram.HologramManager.getInstance().initialize();
+                ManagerRegistry.getInstance().markInitialized("HologramManager");
+                LOGGER.info("✓ Hologram system initialized ({} hologram(s) loaded)",
+                    com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
+            } catch (Exception e) {
+                LOGGER.error("✗ Hologram system failed to initialize: {}", e.getMessage(), e);
+                ManagerRegistry.getInstance().markFailed("HologramManager", e.getMessage());
+            }
+
             // Initialize custom language system
             try {
                 LOGGER.info("⚙ Initializing custom language system...");
@@ -403,6 +415,20 @@ public class NeoEssentials {
                 LOGGER.info("TablistManager initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize TablistManager: {}", e.getMessage());
+            }
+
+            // Spawn holograms in their respective levels and start the scheduler
+            try {
+                net.minecraft.server.MinecraftServer mcServer = event.getServer();
+                for (net.minecraft.server.level.ServerLevel level : mcServer.getAllLevels()) {
+                    String dimKey = com.zerog.neoessentials.hologram.HologramRenderer.dimensionKey(level);
+                    com.zerog.neoessentials.hologram.HologramRenderer.spawnAllForWorld(level, dimKey);
+                }
+                com.zerog.neoessentials.hologram.HologramScheduler.start();
+                LOGGER.info("✓ Holograms spawned and scheduler started ({} hologram(s)).",
+                    com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
+            } catch (Exception e) {
+                LOGGER.error("Failed to spawn holograms / start scheduler: {}", e.getMessage(), e);
             }
         }
         
@@ -508,6 +534,15 @@ public class NeoEssentials {
                 LOGGER.info("✓ NPC Shop system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown NPC Shop system", e);
+            }
+
+            // Shutdown Hologram system
+            try {
+                com.zerog.neoessentials.hologram.HologramScheduler.stop();
+                com.zerog.neoessentials.hologram.HologramManager.getInstance().shutdown();
+                LOGGER.info("✓ Hologram system shutdown.");
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Hologram system", e);
             }
 
             // Shutdown Chat/AFK Managers
@@ -1005,6 +1040,10 @@ public class NeoEssentials {
         // ========== NPC SHOP COMMANDS ==========
         registry.registerCommand("npcshop", "NPC entity shop management");
         com.zerog.neoessentials.shop.commands.NpcShopCommand.register(dispatcher);
+
+        // ========== HOLOGRAM COMMANDS ==========
+        registry.registerCommand("hologram", "Manage holographic displays", "holo");
+        com.zerog.neoessentials.hologram.command.HologramCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.hologram;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -7,6 +9,10 @@ import java.util.UUID;
  *
  * <p>The {@link #text} field may contain colour codes {@code &x} / {@code &#RRGGBB}
  * as well as placeholder tokens like {@code {neoessentials_server_online}}.
+ *
+ * <p>If {@link #frames} is non-empty the line cycles through those strings
+ * instead of using {@link #text}. The animation advances every
+ * {@link #animFrameIntervalTicks} server ticks.
  */
 public class HologramLine {
 
@@ -19,10 +25,53 @@ public class HologramLine {
      */
     public String text = "";
 
+    /**
+     * Optional animation frames. When non-empty the line cycles through
+     * these strings (instead of {@link #text}) at {@link #animFrameIntervalTicks}.
+     */
+    public List<String> frames = new ArrayList<>();
+
+    /**
+     * How many ticks between animation frame advances.
+     * 0 = no animation (use {@link #text} / first frame only).
+     */
+    public int animFrameIntervalTicks = 0;
+
+    // ── Transient / runtime state ────────────────────────────────────────────
+
+    /** Current frame index; not persisted. */
+    public transient int currentFrame = 0;
+    /** Tick counter for animation; not persisted. */
+    public transient int animTickCount = 0;
+
+    // ── Constructors ─────────────────────────────────────────────────────────
+
     public HologramLine() {}
 
     public HologramLine(String text) {
         this.text = text != null ? text : "";
     }
-}
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Returns the currently-active raw template text (frame or static). */
+    public String currentText() {
+        if (!frames.isEmpty()) {
+            int idx = Math.max(0, Math.min(currentFrame, frames.size() - 1));
+            return frames.get(idx);
+        }
+        return text;
+    }
+
+    /** Advance animation by one tick. Returns {@code true} if the frame changed. */
+    public boolean tickAnimation() {
+        if (frames.isEmpty() || animFrameIntervalTicks <= 0) return false;
+        animTickCount++;
+        if (animTickCount >= animFrameIntervalTicks) {
+            animTickCount = 0;
+            currentFrame = (currentFrame + 1) % frames.size();
+            return true;
+        }
+        return false;
+    }
+}

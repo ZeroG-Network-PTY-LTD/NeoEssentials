@@ -37,6 +37,7 @@ public class DashboardFileManager {
         "users.html",
         "moderation.html",
         "kits.html",
+        "holograms.html",
         "dashboard.js",
         "permissions.js",
         "teleport.js",
@@ -47,6 +48,7 @@ public class DashboardFileManager {
         "users.js",
         "moderation.js",
         "kits.js",
+        "holograms.js",
         "styles.css"
     );
 

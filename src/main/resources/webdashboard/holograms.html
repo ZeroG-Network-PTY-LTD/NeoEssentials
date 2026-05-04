@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kits - NeoEssentials Dashboard</title>
+    <title>Holograms - NeoEssentials Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,16 +32,16 @@
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: rgba(255,255,255,.02); }
 
-        .enabled-badge  { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; background: rgba(166,227,161,0.15); color: #a6e3a1; }
-        .disabled-badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; background: rgba(88,91,112,0.25); color: #6c7086; }
-        .perm-chip { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; background: rgba(137,180,250,0.12); color: #89b4fa; font-family: monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
-        .no-perm { color: #6c7086; font-size: 0.8rem; }
-        .cooldown-val { color: #f9e2af; font-size: 0.82rem; }
-        .no-cooldown  { color: #6c7086; font-size: 0.8rem; }
+        .visible-badge  { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; background: rgba(166,227,161,0.15); color: #a6e3a1; }
+        .hidden-badge   { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; background: rgba(88,91,112,0.25); color: #6c7086; }
+        .anim-chip      { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; background: rgba(249,226,175,0.12); color: #f9e2af; }
+        .shop-chip      { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; background: rgba(137,180,250,0.12); color: #89b4fa; }
 
-        .btn-sm { padding: 0.3rem 0.65rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: opacity 0.15s; }
+        .btn-sm { padding: 0.3rem 0.65rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: opacity 0.15s; margin-right: 2px; }
         .btn-sm:hover { opacity: 0.8; }
-        .btn-view { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid rgba(137,180,250,0.3); }
+        .btn-view   { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid rgba(137,180,250,0.3); }
+        .btn-toggle { background: rgba(166,227,161,0.12); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.3); }
+        .btn-delete { background: rgba(243,139,168,0.12); color: #f38ba8; border: 1px solid rgba(243,139,168,0.3); }
 
         .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary,#a6adc8); }
         .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
@@ -54,18 +54,29 @@
         /* modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 520px; width: 95%; max-height: 90vh; overflow-y: auto; }
+        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 580px; width: 95%; max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
         .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
         .modal-close { background: none; border: none; color: #6c7086; font-size: 1.25rem; cursor: pointer; padding: 0; line-height: 1; }
         .modal-close:hover { color: #cdd6f4; }
-        .kit-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem; }
-        .kit-detail-field { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 0.75rem 1rem; }
-        .kit-detail-field .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); font-weight: 600; margin-bottom: 0.25rem; }
-        .kit-detail-field .field-val   { font-size: 0.9rem; color: var(--text-primary,#cdd6f4); font-weight: 500; word-break: break-all; }
-        .kit-desc { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; color: #a6adc8; font-size: 0.88rem; line-height: 1.5; }
-        .modal-footer { display: flex; justify-content: flex-end; }
-        .btn-cancel { background: #313244; color: #cdd6f4; padding: 0.5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem; }
+        .detail-field { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 0.75rem 1rem; }
+        .detail-field .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); font-weight: 600; margin-bottom: 0.25rem; }
+        .detail-field .field-val   { font-size: 0.9rem; color: var(--text-primary,#cdd6f4); font-weight: 500; word-break: break-all; }
+        .detail-lines { margin-bottom: 1.25rem; }
+        .detail-lines h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); margin: 0 0 0.6rem; }
+        .line-item { background: rgba(255,255,255,0.04); border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem; font-size: 0.88rem; font-family: monospace; display: flex; gap: 0.75rem; align-items: flex-start; }
+        .line-idx { color: #6c7086; min-width: 1.5rem; }
+        .line-text { color: #cdd6f4; word-break: break-all; }
+        .line-anim { font-size: 0.72rem; color: #f9e2af; margin-left: auto; white-space: nowrap; }
+        .modal-footer { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+        .btn-modal { padding: 0.5rem 1.1rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
+        .btn-cancel { background: #313244; color: #cdd6f4; }
+        .btn-spawn  { background: rgba(166,227,161,0.2); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.4); }
+        .btn-despawn{ background: rgba(88,91,112,0.3);   color: #a6adc8; border: 1px solid #45475a; }
+        .btn-vis    { background: rgba(137,180,250,0.2); color: #89b4fa; border: 1px solid rgba(137,180,250,0.4); }
+        .btn-del    { background: rgba(243,139,168,0.2); color: #f38ba8; border: 1px solid rgba(243,139,168,0.4); }
     </style>
 </head>
 <body>
@@ -87,9 +98,8 @@
             <a href="cloud.html"          class="nav-item admin-only"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
             <a href="users.html"          class="nav-item admin-only"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
             <a href="moderation.html"     class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
-            <a href="kits.html"           class="nav-item active"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
-
+            <a href="kits.html"           class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+            <a href="holograms.html"      class="nav-item active admin-only"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
             <a href="stats.html"          class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
             <a href="discord.html"        class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
         </nav>
@@ -102,7 +112,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
-                <h2 class="page-title">🎒 Kits</h2>
+                <h2 class="page-title">✨ Holograms</h2>
             </div>
             <div class="topbar-right">
                 <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
@@ -123,66 +133,70 @@
             <!-- Stats -->
             <div class="stat-cards">
                 <div class="stat-card blue">
-                    <div class="label">Total Kits</div>
+                    <div class="label">Total</div>
                     <div class="value" id="statTotal">—</div>
-                    <div class="sub">defined</div>
+                    <div class="sub">holograms</div>
                 </div>
                 <div class="stat-card green">
-                    <div class="label">Enabled</div>
-                    <div class="value" id="statEnabled">—</div>
-                    <div class="sub">available to players</div>
+                    <div class="label">Visible</div>
+                    <div class="value" id="statVisible">—</div>
+                    <div class="sub">currently shown</div>
                 </div>
                 <div class="stat-card yellow">
-                    <div class="label">With Cooldown</div>
-                    <div class="value" id="statCooldown">—</div>
-                    <div class="sub">time-gated</div>
+                    <div class="label">Animated</div>
+                    <div class="value" id="statAnimated">—</div>
+                    <div class="sub">with frame animation</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">Permission-Locked</div>
-                    <div class="value" id="statPermed">—</div>
-                    <div class="sub">require a node</div>
-                </div>
-                <div class="stat-card red">
-                    <div class="label">Usage-Limited</div>
-                    <div class="value" id="statLimited">—</div>
-                    <div class="sub">one-time / limited uses</div>
+                    <div class="label">Shop Holos</div>
+                    <div class="value" id="statShop">—</div>
+                    <div class="sub">auto-generated</div>
                 </div>
             </div>
 
-            <!-- Kits table -->
+            <!-- Holograms table -->
             <div class="card">
                 <div class="card-header">
-                    <h3>🎒 Kit List</h3>
-                    <button class="btn-secondary btn-sm" id="refreshKitsBtn">🔄 Refresh</button>
+                    <h3>✨ Hologram List</h3>
+                    <button class="btn-secondary btn-sm" id="refreshHologramsBtn">🔄 Refresh</button>
                 </div>
                 <div class="search-row">
-                    <input type="text" id="kitSearch" placeholder="Search kits by name or description…">
+                    <input type="text" id="holoSearch" placeholder="Search by ID or world…">
                 </div>
-                <div id="kitsTableWrap">
-                    <div class="empty-state"><div class="icon"><span class="spinner"></span></div><div>Loading kits…</div></div>
+                <div id="hologramsTableWrap">
+                    <div class="empty-state"><div class="icon"><span class="spinner"></span></div><div>Loading holograms…</div></div>
                 </div>
             </div>
         </main>
     </div>
 </div>
 
-<!-- Kit Detail Modal -->
-<div class="modal-overlay" id="kitModal">
+<!-- Hologram Detail Modal -->
+<div class="modal-overlay" id="holoModal">
     <div class="modal">
         <div class="modal-header">
-            <h3 id="kitModalTitle">🎒 Kit Details</h3>
-            <button class="modal-close" onclick="closeKitModal()">✕</button>
+            <h3 id="holoModalTitle">✨ Hologram Details</h3>
+            <button class="modal-close" onclick="closeHoloModal()">✕</button>
         </div>
-        <div class="kit-desc" id="kitModalDesc" style="display:none;"></div>
-        <div class="kit-detail-grid" id="kitModalGrid"></div>
+        <div class="detail-grid" id="holoModalGrid"></div>
+        <div class="detail-lines" id="holoModalLines" style="display:none;">
+            <h4>Lines</h4>
+            <div id="holoModalLinesList"></div>
+        </div>
         <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeKitModal()">Close</button>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button class="btn-modal btn-spawn"   id="btnSpawn"   onclick="holoAction('spawn')">▶ Spawn</button>
+                <button class="btn-modal btn-despawn" id="btnDespawn" onclick="holoAction('despawn')">⏹ Despawn</button>
+                <button class="btn-modal btn-vis"     id="btnVisible" onclick="holoAction('visible')">👁 Toggle Visible</button>
+                <button class="btn-modal btn-del"     id="btnDelete"  onclick="holoAction('delete')">🗑 Delete</button>
+            </div>
+            <button class="btn-modal btn-cancel" onclick="closeHoloModal()">Close</button>
         </div>
     </div>
 </div>
 
 <script src="dashboard.js"></script>
-<script src="kits.js"></script>
+<script src="holograms.js"></script>
 <script>
     const token = localStorage.getItem('authToken');
     if (!token) window.location.href = 'index.html';
@@ -207,11 +221,11 @@
     document.getElementById('sidebarToggle').addEventListener('click', () =>
         document.querySelector('.sidebar').classList.toggle('collapsed'));
 
-    function closeKitModal() {
-        document.getElementById('kitModal').classList.remove('open');
+    function closeHoloModal() {
+        document.getElementById('holoModal').classList.remove('open');
     }
-    document.getElementById('kitModal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeKitModal();
+    document.getElementById('holoModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeHoloModal();
     });
 </script>
 </body>
