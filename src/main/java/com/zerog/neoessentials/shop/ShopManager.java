@@ -78,6 +78,11 @@ public class ShopManager {
             shopsByChest.put(chestKey, shop);
         }
         trySave();
+        // Auto-create / update hologram above this shop sign
+        try {
+            com.zerog.neoessentials.hologram.integration.ShopHologramManager
+                .createShopHologram(shop, shop.signDimension);
+        } catch (Exception ignored) {}
     }
 
     /** Remove by sign position. Returns the removed shop or null. */
@@ -89,7 +94,14 @@ public class ShopManager {
                 + removed.chestX + "," + removed.chestY + "," + removed.chestZ;
             shopsByChest.remove(ck);
         }
-        if (removed != null) trySave();
+        if (removed != null) {
+            trySave();
+            // Remove associated hologram
+            try {
+                com.zerog.neoessentials.hologram.integration.ShopHologramManager
+                    .deleteShopHologram(removed);
+            } catch (Exception ignored) {}
+        }
         return removed;
     }
 
