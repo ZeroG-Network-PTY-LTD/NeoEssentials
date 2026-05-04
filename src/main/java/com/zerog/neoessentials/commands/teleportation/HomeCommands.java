@@ -13,6 +13,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 
+import net.neoforged.fml.ModList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +30,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class HomeCommands {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HomeCommands.class);
+
+    /**
+     * Known mod IDs that register conflicting home-related commands.
+     * If any of these are loaded, short aliases are skipped to avoid
+     * Brigadier node-merge conflicts.
+     */
+    private static final String[] CONFLICTING_HOME_MODS = {
+        "ftbessentials", "ftb_essentials", "essentials"
+    };
+
     // Track pending delete confirmations: player UUID -> home name
     private static final Map<UUID, String> pendingDeleteConfirmations = new ConcurrentHashMap<>();
     
@@ -55,7 +70,10 @@ public class HomeCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
-        
+
+        // Detect conflicting mods and warn the operator once at startup
+        detectHomeCommandConflicts();
+
         // Only register if teleportation module is enabled
         if (config.isTeleportationEnabled()) {
             // Register individual commands based on their command settings
@@ -78,13 +96,62 @@ public class HomeCommands {
     }
     
     /**
+     * Checks whether any known conflicting mod is present and logs a clear
+     * startup warning so operators know why some home aliases are skipped.
+     */
+    private static void detectHomeCommandConflicts() {
+        for (String modId : CONFLICTING_HOME_MODS) {
+            if (ModList.get().isLoaded(modId)) {
+                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
+                LOGGER.warn("║  HOME COMMAND CONFLICT DETECTED                              ║");
+                LOGGER.warn("║  Mod '{}' also registers /home, /sethome and              ║", padRight(modId, 18));
+                LOGGER.warn("║  related commands. NeoEssentials will register its own       ║");
+                LOGGER.warn("║  home commands; short aliases (/h) will be skipped to        ║");
+                LOGGER.warn("║  avoid Brigadier node-merge issues.                          ║");
+                LOGGER.warn("║  To avoid conflicts, disable that mod's home commands or     ║");
+                LOGGER.warn("║  disable NeoEssentials teleportation in its config.          ║");
+                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            }
+        }
+    }
+
+    /**
+     * Returns {@code true} when at least one known conflicting home-command
+     * mod is present, so that optional short aliases can be suppressed.
+     */
+    private static boolean hasConflictingHomeMod() {
+        for (String modId : CONFLICTING_HOME_MODS) {
+            if (ModList.get().isLoaded(modId)) return true;
+        }
+        return false;
+    }
+
+    /** Right-pad a string to exactly {@code width} characters for log alignment. */
+    private static String padRight(String s, int width) {
+        if (s == null) s = "";
+        return s.length() >= width ? s.substring(0, width) : s + " ".repeat(width - s.length());
+    }
+
+    /**
+     * Checks if a top-level command is already registered in the dispatcher by any mod.
+     * Used to avoid registering optional aliases that would create Brigadier merge issues.
+     */
+    private static boolean isCommandRegistered(CommandDispatcher<CommandSourceStack> dispatcher, String name) {
+        return dispatcher.getRoot().getChild(name) != null;
+    }
+
+    /**
      * Register /home [name] command
      */
     private static void registerHomeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Register main command
+        // Register main command — NeoEssentials always owns /home regardless of other mods
         registerHomeCommandWithName(dispatcher, "home");
-        // Register alias
-        registerHomeCommandWithName(dispatcher, "h");
+        // Register /h alias only when no conflicting mod is active AND the alias is free
+        if (!hasConflictingHomeMod() && !isCommandRegistered(dispatcher, "h")) {
+            registerHomeCommandWithName(dispatcher, "h");
+        } else if (hasConflictingHomeMod()) {
+            LOGGER.info("Skipping /h alias for /home — conflicting mod detected");
+        }
     }
     
     private static void registerHomeCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
@@ -112,7 +179,10 @@ public class HomeCommands {
      */
     private static void registerSetHomeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerSetHomeCommandWithName(dispatcher, "sethome");
-        registerSetHomeCommandWithName(dispatcher, "createhome");
+        // Skip /createhome alias when conflicting mod is active or alias already taken
+        if (!hasConflictingHomeMod() && !isCommandRegistered(dispatcher, "createhome")) {
+            registerSetHomeCommandWithName(dispatcher, "createhome");
+        }
     }
     
     private static void registerSetHomeCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
@@ -147,9 +217,17 @@ public class HomeCommands {
      */
     private static void registerDelHomeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerDelHomeCommandWithName(dispatcher, "delhome");
-        registerDelHomeCommandWithName(dispatcher, "deletehome");
-        registerDelHomeCommandWithName(dispatcher, "removehome");
-        registerDelHomeCommandWithName(dispatcher, "rhome");
+        // Skip optional aliases when a conflicting mod is active or the alias is already claimed
+        // /deletehome is common in other mods; check before registering
+        if (!isCommandRegistered(dispatcher, "deletehome")) {
+            registerDelHomeCommandWithName(dispatcher, "deletehome");
+        }
+        if (!hasConflictingHomeMod() && !isCommandRegistered(dispatcher, "removehome")) {
+            registerDelHomeCommandWithName(dispatcher, "removehome");
+        }
+        if (!hasConflictingHomeMod() && !isCommandRegistered(dispatcher, "rhome")) {
+            registerDelHomeCommandWithName(dispatcher, "rhome");
+        }
     }
     
     private static void registerDelHomeCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
