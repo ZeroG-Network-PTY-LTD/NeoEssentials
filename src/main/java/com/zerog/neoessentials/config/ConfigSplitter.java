@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class ConfigSplitter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigSplitter.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     // ── Section → File mapping (kept for backwards-compat / external callers) ──
     @SuppressWarnings("unused")
@@ -214,6 +214,10 @@ public class ConfigSplitter {
 
             // Replace config.json with stub
             replaceWithStubFile(configFile);
+
+            // Clear the ConfigManager cache so the newly created split files are picked
+            // up on next access instead of the now-stale monolithic config.json entry.
+            ConfigManager.getInstance().clearCache();
 
             LOGGER.info("════════════════════════════════════════");
             LOGGER.info("Migration complete! {} file(s) created.", created);

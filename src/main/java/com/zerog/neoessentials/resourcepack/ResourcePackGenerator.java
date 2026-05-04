@@ -21,7 +21,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class ResourcePackGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourcePackGenerator.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private static final int PACK_FORMAT = 34; // MC 1.21.1-1.21.11
     private static final String PACK_NAME = "NeoEssentials-Badges";

@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class TaskHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskHandler.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {

@@ -67,7 +67,7 @@ public class MailCommand {
     private static final Map<UUID, List<MailMessage>> MAIL_BOX = new ConcurrentHashMap<>();
     private static final Path MAIL_DATA_FILE =
         Paths.get("config", "neoessentials", "mail_data.json");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final DateTimeFormatter TIME_FORMAT =
         DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 

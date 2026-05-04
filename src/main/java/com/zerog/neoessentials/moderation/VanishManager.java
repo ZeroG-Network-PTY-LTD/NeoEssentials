@@ -77,7 +77,7 @@ public class VanishManager {
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(VanishManager.class);
     private static VanishManager instance;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final File vanishFile;
     
     // In-memory cache for quick lookups

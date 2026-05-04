@@ -407,7 +407,7 @@ public class SpawnManager {
             ResourceUtil.ensureDataDirectory();
             File file = ResourceUtil.getDataFile(SPAWN_FILE);
             java.nio.file.Files.writeString(file.toPath(),
-                new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root));
+                new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(root));
             
         } catch (Exception e) {
             LOGGER.error("Failed to save spawn to file", e);

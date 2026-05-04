@@ -46,7 +46,7 @@ public class BanManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BanManager.class);
     private static BanManager instance;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final File banFile;
     private final File ipBanFile;
     

@@ -42,7 +42,7 @@ public class NeoEssentialsManager {
     private EconomyService economyService;
 
     private static final String PLAYERDATA_DIR = com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "playerdata/";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     /**
      * Private constructor for singleton pattern.

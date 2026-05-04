@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class CloudProviderManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CloudProviderManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final File TOKENS_FILE = new File("config/neoessentials/cloud_tokens.json");
 
     private static CloudProviderManager INSTANCE;

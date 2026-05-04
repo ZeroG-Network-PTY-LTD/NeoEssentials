@@ -38,7 +38,7 @@ public class JailManager {
     private static boolean jailSystemEnabledCache = true;
     private static final Logger LOGGER = LoggerFactory.getLogger(JailManager.class);
     private static JailManager instance;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final File jailFile;
     private final File jailLocationFile;
     // Track number of times each player has been jailed

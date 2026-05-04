@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  */
 public class CommandExecutionHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandExecutionHandler.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     // Command history storage
     private static final List<CommandHistoryEntry> commandHistory = Collections.synchronizedList(new ArrayList<>());

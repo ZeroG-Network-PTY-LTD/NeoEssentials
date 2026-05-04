@@ -26,7 +26,7 @@ import java.util.stream.Stream;
  */
 public class FileManagementHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileManagementHandler.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     // Allowed directories for file operations (security)
     private static final List<Path> ALLOWED_PATHS = Arrays.asList(

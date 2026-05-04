@@ -1203,8 +1203,30 @@ public class ConfigManager {
                     configCache.put(configName, section);
                     return section;
                 }
+                // Fallback: attempt to read configName.json directly (handles split-config files
+                // whose section was not present in the cached MAIN_CONFIG, e.g. chat.json when
+                // the merged config cache is stale or split configs were recently enabled).
+                File splitFile = ResourceUtil.getConfigFile(configName + ".json");
+                if (splitFile.exists()) {
+                    try (FileReader splitReader = new FileReader(splitFile, StandardCharsets.UTF_8)) {
+                        JsonObject fileObj = JsonParser.parseReader(splitReader).getAsJsonObject();
+                        // Split files wrap their content under the section key: {"chat": {...}}
+                        if (fileObj.has(configName) && fileObj.get(configName).isJsonObject()) {
+                            JsonObject section = fileObj.getAsJsonObject(configName);
+                            configCache.put(configName, section);
+                            LOGGER.debug("Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
+                            return section;
+                        }
+                        // File exists but uses a flat layout – return the whole object
+                        configCache.put(configName, fileObj);
+                        LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
+                        return fileObj;
+                    } catch (IOException fallbackEx) {
+                        LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
+                    }
+                }
                 // Section missing – return empty (do not cache so it retries after reload)
-                LOGGER.debug("Config section '{}' not found in main config, returning empty object", configName);
+                LOGGER.debug("Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
                 return new JsonObject();
             }
 
@@ -1383,7 +1405,7 @@ public class ConfigManager {
 
                 // Write merged result back
                 try (java.io.FileWriter writer = new java.io.FileWriter(configFile, StandardCharsets.UTF_8)) {
-                    new GsonBuilder().setPrettyPrinting().create().toJson(onDisk, writer);
+                    new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(onDisk, writer);
                 }
 
                 configCache.remove(configName);
@@ -2640,7 +2662,7 @@ public class ConfigManager {
             }
             File file = ResourceUtil.getConfigFile(configName);
             try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
-                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
                 gson.toJson(config, writer);
             }
             configCache.put(configName, config);

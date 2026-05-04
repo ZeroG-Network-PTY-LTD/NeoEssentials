@@ -341,7 +341,7 @@ public class WarpManager {
             for (Map.Entry<UUID, Map<String, TeleportLocation>> entry : playerWarps.entrySet()) {
                 serializable.put(entry.getKey().toString(), entry.getValue());
             }
-            String json = new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(serializable);
+            String json = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(serializable);
             java.nio.file.Files.writeString(java.nio.file.Path.of(PLAYER_WARPS_FILE), json);
         } catch (Exception e) {
             System.err.println("[WarpManager] Failed to save player warps: " + e);

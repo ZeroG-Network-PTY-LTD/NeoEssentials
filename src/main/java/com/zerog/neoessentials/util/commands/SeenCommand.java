@@ -30,7 +30,7 @@ public class SeenCommand {
     
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Map<UUID, PlayerActivity> PLAYER_ACTIVITY = new ConcurrentHashMap<>();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Path SEEN_DATA_FILE = ResourceUtil.getConfigPath("seen_data.json");
     
     /**

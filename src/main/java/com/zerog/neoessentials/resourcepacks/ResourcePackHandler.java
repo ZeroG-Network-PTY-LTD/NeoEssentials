@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class ResourcePackHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourcePackHandler.class);
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {

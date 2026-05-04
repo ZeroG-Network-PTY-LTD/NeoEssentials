@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PlayerChatFormatManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerChatFormatManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static volatile PlayerChatFormatManager instance;
 
     /** UUID → format string */

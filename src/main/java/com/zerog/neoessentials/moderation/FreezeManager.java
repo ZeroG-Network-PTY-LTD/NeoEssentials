@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FreezeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(FreezeManager.class);
     private static FreezeManager instance;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final File freezeFile;
     
     // In-memory cache for quick lookups

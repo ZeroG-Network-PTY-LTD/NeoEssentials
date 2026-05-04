@@ -4,6 +4,55 @@
 
 ---
 
+## 1.0.2.6+build.109 — 2026-05-04
+
+### 🐛 Bug Fix — Chat Format Strings Saved with Garbled Characters
+
+Gson's default HTML-escaping was silently converting `<`, `>`, and `&` to `\u003c`, `\u003e`, `\u0026` whenever config or data files were written. This corrupted chat format strings like `<{prefix} {name}> {MESSAGE}` the moment they were saved.
+
+Added `.disableHtmlEscaping()` to every `GsonBuilder` instance in the mod (30+ files), including `ConfigSplitter`, `ConfigManager`, `PlayerChatFormatManager`, `AfkManager`, all moderation managers, scheduler, web-dashboard classes, mail/nick/rules commands, language files, and more.
+
+---
+
+## 1.0.2.6+build.107 — 2026-05-04
+
+### 🐛 Bug Fix — Chat Configuration Not Loading (`chat.json`)
+
+**Error seen:** `Failed to read config file chat: config/neoessentials/chat (No such file or directory)`
+
+Even with `chat.json` present and split configs enabled, the chat format would fall back to the built-in default (`[{neoessentials_displayname}: {MESSAGE}]`) if the config cache was stale — for example immediately after running `/neoe config split` before a reload.
+
+**What's fixed:**
+
+- `ConfigManager.getConfig("chat")` now falls back to reading `chat.json` directly from disk and correctly unwraps the nested `"chat"` section when the merged MAIN_CONFIG cache doesn't contain it.
+- `ConfigSplitter` now clears the config cache immediately after migration to split files, so the stale monolithic view is evicted right away without requiring a manual `/neoe reload`.
+
+---
+
+## 1.0.2.6+build.102 — 2026-05-04
+
+### 🐛 Bug Fix — Shop NPC Disconnects All Clients on Join
+
+**Error:** `The server sent registries with unknown keys: ResourceKey[minecraft:entity_type / neoessentials:shop_npc]`
+
+Every player was kicked during login because NeoForge syncs custom entity-type registries to clients and the `shop_npc` type was not present on the client side.
+
+**Fix:** Shop NPCs are now vanilla `ArmorStand` entities tagged with an NBT UUID key (`NeoEssentials_ShopId`). Interaction is captured via `PlayerInteractEvent.EntityInteract` — no client-side changes required, no custom entity type registered.
+
+### 🐛 Bug Fix — Hologram Files Failing to Compile (UTF-8 BOM)
+
+Six hologram-related source files contained a UTF-8 BOM character causing `error: illegal character: '\ufeff'` at compile time. BOM stripped from all six files.
+
+### 🐛 Bug Fix — Permission Validator Incorrectly Flagging External Mod Permissions
+
+Permissions from other mods (WorldEdit, FTB Ranks, etc.) were being logged as "unknown" NeoEssentials nodes. The validator now silently skips any node not prefixed with `neoessentials.` and reports a separate external-skip count instead.
+
+### 🐛 Bug Fix — Missing Permission Nodes (`compass`, `msgtoggle.bypass`)
+
+Three permission nodes (`neoessentials.compass`, `neoessentials.compass.others`, `neoessentials.chat.msgtoggle.bypass`) were in use but unregistered, generating spurious validator warnings. All three are now registered with correct default values.
+
+---
+
 ## 1.0.2.6+build.91 — 2026-04-27
 
 ### ✨ Web Dashboard — Backup & Restore

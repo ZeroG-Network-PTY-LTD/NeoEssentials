@@ -28,7 +28,7 @@ public class WarnManager {
     private static final WarnManager INSTANCE = new WarnManager();
     public static WarnManager getInstance() { return INSTANCE; }
 
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     /** targetId → list of warns */
     private final Map<UUID, List<WarnEntry>> warnMap = new ConcurrentHashMap<>();

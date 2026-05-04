@@ -21,7 +21,7 @@ import java.util.*;
 public class DiscordAuthConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordAuthConfig.class);
     @SuppressWarnings("unused") // Reserved for future JSON serialization features
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     @SuppressWarnings("unused") // Reserved for future file-based config loading
     private static final Path CONFIG_FILE = Paths.get("config", "neoessentials", "discord_auth.json");
     public static final String CONFIG_NAME = "discord_auth.json";

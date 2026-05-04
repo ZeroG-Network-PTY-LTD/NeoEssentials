@@ -42,7 +42,7 @@ public class ModerationManager {
         this.storageDirectory = Paths.get(MODERATION_DIR);
         this.bansFile = storageDirectory.resolve(BANS_FILE);
         this.whitelistFile = storageDirectory.resolve(WHITELIST_FILE);
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         this.whitelistEnabled = false;
         
         try {
