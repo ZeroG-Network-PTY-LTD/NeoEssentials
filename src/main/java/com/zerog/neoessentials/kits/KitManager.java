@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class KitManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(KitManager.class);
     private static final KitManager INSTANCE = new KitManager();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     private final Map<String, Kit> kits = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, Long>> playerCooldowns = new ConcurrentHashMap<>();

@@ -39,7 +39,7 @@ public class ResourcePackManager {
         this.resourcePacks = new ConcurrentHashMap<>();
         this.storageDirectory = Paths.get(PACKS_DIR);
         this.packsFile = storageDirectory.resolve(PACKS_FILE);
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         
         try {
             Files.createDirectories(storageDirectory);

@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class PermissionEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionEndpoint.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final MinecraftServer server;
 
     public PermissionEndpoint(MinecraftServer server) {

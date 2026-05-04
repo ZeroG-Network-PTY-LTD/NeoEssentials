@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class MotdEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(MotdEndpoint.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private final MinecraftServer server;
 

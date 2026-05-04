@@ -31,7 +31,7 @@ public class AfkManager {
     private boolean autoSave = true;
     private int saveIntervalSeconds = 60;
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     // Thread-safe singleton using Bill Pugh pattern
     private static class SingletonHelper {

@@ -1,6 +1,28 @@
 ---
 ---
 #  Issues That Were Discovered
+- **NeoEssentials /help Pagination Broken (NeoForge 1.21.1, build.1.0.2.6+69)**  
+  The `/help` command works for the first page, but `/help 2` (and subsequent pages) does not function at all.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 69`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - `/help` displays the first page of commands correctly.
+        - `/help 2` produces no output or fails to display the second page.
+        - Pagination appears to be ignored or broken in command registration.
+        - Console reports error of "Unknown command or insufficient permissions".
+    - Expected Behavior:
+        - `/help <page>` should display the corresponding page of available commands.
+        -  Should work in console and for players, with correct page counts and navigation.
+    - Need to investigate:
+        - Whether NeoEssentials overrides vanilla `/help` pagination incorrectly.
+        - If Brigadier command registration fails to handle integer arguments for page numbers.
+        - Possible fix: ensure `/help` subcommand properly parses page arguments and retrieves paginated command lists.
+
+---
 
 - **NeoEssentials Registry Key Error for Shop NPC (NeoForge 1.21.1, build.1.0.2.6+21)**  
   Client disconnects when server sends registries containing unknown keys related to NeoEssentials shop NPCs.
@@ -78,38 +100,17 @@
 
 ---
 
-- **NeoEssentials Chat Config File Misread (NeoForge 1.21.1, build.1.0.2.6+69)**  
-  Chat configuration fails to load unless the file is symlinked or renamed, suggesting a `.json` extension handling bug.
-    - Environment:
-        - NeoEssentials Version: `1.0.2.6 build 69`
-        - Minecraft Version: `1.21.1`
-        - NeoForge Version: `21.1.227`
-        - Java Version: `openjdk 21.0.10`
-        - Dedicated Server
-    - Observed Behavior:
-        - Error:
-          ```
-          Failed to read config file chat: config/neoessentials/chat (No such file or directory)
-          ```  
-        - Renaming `chat.json` → `chat` makes the error disappear, but chat formatting still defaults to:
-          ```
-          No chat-format in config, using default: [{neoessentials_displayname}: {MESSAGE}]
-          ```  
-        - Creating a symlink (`ln -s chat.json chat`) allows proper loading:
-          ```
-          Loaded chat-format (string): [<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}]
-          ```  
-        - Indicates the code may be missing `.json` in its file lookup logic.
-    - Expected Behavior:
-        - Chat config should load directly from `chat.json` without requiring renaming or symlinks.
-    - Need to investigate:
-        - Whether `ConfigManager` incorrectly strips `.json` when resolving file paths.
-        - If chat manager defaults are overriding loaded config values.
-        - Possible fix: ensure `chat.json` is explicitly referenced in code and parsed correctly.
-
----
-
 # ✅ Issues That Were Fixed
+
+- **NeoEssentials Chat Config File Misread (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED in build.107**
+  Chat configuration failed to load unless the file was symlinked or renamed.
+  - **Root cause:** `getConfig("chat")` tried to open a file literally named `chat` (no `.json`) in old code. After the section-extraction guard was added, a stale MAIN_CONFIG cache (populated before split configs were activated) could still leave the `"chat"` section missing, returning an empty object.
+  - **Fix 1 (`ConfigManager.java`):** `getConfig(sectionName)` now falls back to reading `sectionName.json` directly from disk and unwrapping the nested section if the merged MAIN_CONFIG doesn't contain the key.
+  - **Fix 2 (`ConfigSplitter.java`):** `migrateToSplitConfigs()` now calls `ConfigManager.getInstance().clearCache()` immediately after creating split files — the stale entry is evicted without requiring a manual `/neoe reload`.
+
+- **Gson HTML Escaping Corrupts Chat Format Strings → ✅ FIXED in build.109**
+  Gson's default HTML-escaping converted `<`, `>`, `&` in saved JSON to `\u003c`, `\u003e`, `\u0026`, corrupting chat format strings like `<{prefix} {name}> {MESSAGE}`.
+  - **Fix:** `.disableHtmlEscaping()` added to every `GsonBuilder` instance that writes JSON files (30+ files across config, chat, moderation, scheduler, web-dashboard, i18n, and more).
 
 ## ✨ Build #86 — 2026-04-27 — `/nick` System Non-Functional + Shop Entity Compile Errors
 

@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class CloudStorageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CloudStorageManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private static final Path CONFIG_FILE = Path.of("config", "neoessentials", "cloud_storage.json");
     private static CloudStorageManager INSTANCE;

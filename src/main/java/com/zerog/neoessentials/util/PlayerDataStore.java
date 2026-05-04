@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PlayerDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerDataStore.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private final String dataType; // e.g., "homes", "warps", "economy"
     private final File dataDirectory;

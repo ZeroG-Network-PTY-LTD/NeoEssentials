@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
  * Returns all player .dat NBT data as JSON keyed by UUID
  */
 public class PlayerDataHandler implements HttpHandler {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {

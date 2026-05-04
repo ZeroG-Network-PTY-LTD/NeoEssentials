@@ -6,6 +6,115 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.109] — 2026-05-04
+
+### Bug Fix — Gson HTML Character Escaping in Config and Data Files
+
+All `GsonBuilder` instances that write JSON files to disk now use `.disableHtmlEscaping()`.
+Previously, Gson's default behaviour silently converted `<`, `>`, and `&` to Unicode escapes
+(`\u003c`, `\u003e`, `\u0026`), corrupting any saved value that contained those characters —
+most notably chat format strings such as `<{prefix} {name}> {MESSAGE}`.
+
+#### Affected Files (30+)
+
+| Category | Files |
+|---|---|
+| Config | `ConfigSplitter.java`, `ConfigManager.java` |
+| Chat | `PlayerChatFormatManager.java`, `AfkManager.java` |
+| Player data | `PlayerDataStore.java`, `NickCommand.java`, `MailCommand.java`, `SeenCommand.java` |
+| Moderation | `BanManager.java`, `JailManager.java`, `FreezeManager.java`, `WarnManager.java`, `VanishManager.java`, `ModerationManager.java`, `ModerationHandler.java` |
+| Teleportation | `WarpManager.java`, `SpawnManager.java` |
+| Economy | `WorthManager.java` |
+| Kits | `KitManager.java` |
+| Language / i18n | `MessageUtil.java`, `CustomLanguageManager.java` |
+| MOTD / Rules | `MotdManager.java`, `RulesCommand.java` |
+| Scheduler | `TaskManager.java`, `TaskHandler.java` |
+| Resource packs | `ResourcePackGenerator.java`, `ResourcePackHandler.java`, `ResourcePackManager.java` |
+| Web dashboard | `DiscordAuthConfig.java`, `DashboardRegistrationManager.java`, `AuthenticationManager.java`, `AuthenticationHandler.java`, `PlayerDataHandler.java`, `FileManagementHandler.java`, `CommandExecutionHandler.java`, `MotdEndpoint.java`, `PermissionEndpoint.java`, `RulesEndpoint.java`, `StatsEndpoint.java`, `CloudStorageManager.java`, `CloudProviderManager.java`, `BackupManager.java` |
+| Core | `NeoEssentialsManager.java`, `DocumentationManager.java`, `DocumentationHandler.java` |
+
+---
+
+## [1.0.2.6+build.107] — 2026-05-04
+
+### Bug Fix — Chat Config File Misread (`chat.json` not loading)
+
+**Reported error:**
+```
+Failed to read config file chat: config/neoessentials/chat (No such file or directory)
+```
+
+**Root cause (build.69):** `getConfig("chat")` tried to open a file literally named `chat`
+(no `.json` extension) because the section-extraction guard `!configName.endsWith(".json")`
+didn't exist yet. After that guard was added, a secondary scenario remained: if the MAIN_CONFIG
+cache was populated before split configs were activated (e.g. after running `/neoe config split`
+without a subsequent `/neoe reload`), the merged view lacked the `"chat"` section, causing
+the fallthrough to return an empty `JsonObject` and ChatManager to log
+`No chat-format in config, using default`.
+
+#### Fixes
+
+| File | Change |
+|---|---|
+| `ConfigManager.java` | `getConfig(sectionName)` now has a **direct-file fallback**: if the section is not found in the merged MAIN_CONFIG, the code attempts to read `sectionName.json` from disk and unwrap the nested section (e.g. `chat.json` → `{"chat": {...}}` → returns the inner object). This handles stale-cache and mid-migration scenarios without requiring a manual reload. |
+| `ConfigSplitter.java` | `migrateToSplitConfigs()` now calls `ConfigManager.getInstance().clearCache()` immediately after creating split files and the `.split_configs` marker. Previously the monolithic `config.json` content remained cached in memory until an explicit `/neoe reload`, causing all section lookups (including `"chat"`) to return empty. |
+
+---
+
+## [1.0.2.6+build.102] — 2026-05-04
+
+### Bug Fix — Shop NPC Entity Registry Key Causes Client Disconnect
+
+**Error:** `The server sent registries with unknown keys: ResourceKey[minecraft:entity_type / neoessentials:shop_npc]`
+
+NeoForge 21.1.x mandatorily synchronises all `DeferredRegister<EntityType<?>>` entries to clients
+during login handshake. The custom `ShopNpcEntity` type was registered server-side only, so every
+client disconnected immediately on join.
+
+**Solution:** Replaced the custom entity with vanilla `ArmorStand` entities tagged with the NBT
+key `NeoEssentials_ShopId` (UUID value). Shop NPC interaction is intercepted via
+`PlayerInteractEvent.EntityInteract` on the GAME event bus — no custom entity type required.
+
+| File | Change |
+|---|---|
+| `ShopEntityRegistry.java` | Replaced `DeferredRegister<EntityType<?>>` with `@EventBusSubscriber(GAME bus)` + `onEntityInteract` handler that detects tagged armor stands and opens the shop menu |
+| `ShopNpcEntity.java` | Converted from `PathfinderMob` subclass to a `final` static-utility class; exposes `create(Level, UUID, String)`, `getShopId(ArmorStand)`, `isShopNpc(ArmorStand)` |
+| `NpcShopCommand.java` | `executeCreate` uses `ShopNpcEntity.create()` (returns `ArmorStand`); `executeRemove` uses `getEntitiesOfClass(ArmorStand.class, aabb, ShopNpcEntity::isShopNpc)` |
+| `NeoEssentials.java` | Removed `ShopEntityRegistry.register(modEventBus)` call (no longer needed) |
+
+### Bug Fix — UTF-8 BOM in Hologram Source Files (`illegal character: '\ufeff'`)
+
+Six hologram-related Java files were saved with a UTF-8 BOM, producing javac errors
+`error: illegal character: '\ufeff'` on the first line of each file.
+
+BOM stripped from: `HologramEventHandler.java`, `HologramScheduler.java`,
+`HologramTextProcessor.java`, `HologramCommand.java`, `ShopHologramManager.java`,
+`HologramEndpoint.java`.
+
+### Bug Fix — Permission Validator Incorrectly Flags External Mod Permissions
+
+`PermissionValidator` was emitting "unknown permission" warnings for nodes belonging to other
+mods (e.g. `worldedit.selection.pos`, FTB Ranks entries) because it only checked against the
+NeoEssentials internal permission registry.
+
+**Fix:** Added an external-mod gate in `PermissionValidator.java` — any node not prefixed with
+`neoessentials.` is silently counted as `externalSkipped` and never flagged as an issue.
+`ValidationResult` gained an `externalSkipped` field; the post-validation log line now reports
+the skip count separately for clarity.
+
+### Bug Fix — Missing Permission Nodes in PermissionRegistry
+
+Three nodes used in command handlers were not registered in `PermissionRegistry`, producing
+spurious "unknown permission" warnings in the validator output:
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.chat.msgtoggle.bypass` | `false` | Message players who have toggled off DMs |
+| `neoessentials.compass` | `true` | Use `/compass` |
+| `neoessentials.compass.others` | `false` | View compass info for another player |
+
+---
+
 ## [1.0.2.6+build.98] — 2026-04-27
 
 ### Feature — Web Dashboard: Discord Integration Page

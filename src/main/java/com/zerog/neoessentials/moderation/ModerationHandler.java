@@ -21,7 +21,7 @@ import com.zerog.neoessentials.util.InputValidator;
  */
 public class ModerationHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModerationHandler.class);
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {

@@ -37,7 +37,7 @@ public class RulesCommand {
     private static final Path RULES_DATA_FILE = ResourceUtil.getConfigPath("rules_data.json");
     // Legacy file name used in older NeoEssentials builds
     private static final Path RULES_LEGACY_FILE = ResourceUtil.getConfigPath("rules.json");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final int RULES_PER_PAGE = 10;
     
     /**

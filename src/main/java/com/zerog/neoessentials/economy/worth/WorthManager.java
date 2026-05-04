@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WorthManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(WorthManager.class);
     private static final WorthManager INSTANCE = new WorthManager();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final String WORTH_FILE = "worth.json";
 
     // itemId (minecraft:diamond) → price

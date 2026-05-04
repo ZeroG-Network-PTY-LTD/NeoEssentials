@@ -20,7 +20,7 @@ public class DocumentationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentationManager.class);
     private static DocumentationManager instance;
     @SuppressWarnings("unused") // Reserved for future JSON serialization features
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     // Documentation storage
     private final Map<String, DocumentationSection> sections = new LinkedHashMap<>();

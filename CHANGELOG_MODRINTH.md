@@ -4,6 +4,63 @@
 
 ---
 
+## 1.0.2.6+build.109 — 2026-05-04
+
+### 🐛 Bug Fix — Chat Format Strings Corrupted on Save (HTML Escaping)
+
+Gson was converting `<`, `>`, and `&` to Unicode escapes (`\u003c` etc.) every time a JSON file was written to disk. This silently corrupted chat format strings — e.g. `<{prefix} {name}> {MESSAGE}` would become `\u003c{prefix} {name}\u003e {MESSAGE}` and display as literal escape codes in chat.
+
+**Fix:** `.disableHtmlEscaping()` added to every `GsonBuilder` instance across the mod (30+ files) — config files, player data, moderation records, language files, web-dashboard writers, and more.
+
+---
+
+## 1.0.2.6+build.107 — 2026-05-04
+
+### 🐛 Bug Fix — `chat.json` Not Being Loaded (Chat Format Reverts to Default)
+
+**Reported error:** `Failed to read config file chat: config/neoessentials/chat (No such file or directory)`
+
+Even with `chat.json` present in `config/neoessentials/`, the chat format would fall back to `{neoessentials_displayname}: {MESSAGE}` instead of the configured value.
+
+**Root cause:** The config cache could hold a stale merged view of the main config that was built before `chat.json` existed (e.g. right after running `/neoe config split` without reloading). The section-extraction path returned an empty object without ever trying the file directly.
+
+**What's fixed:**
+
+- `ConfigManager.getConfig("chat")` now falls back to reading `chat.json` directly and correctly unwraps the `"chat"` sub-object before returning it to callers.
+- `ConfigSplitter.migrateToSplitConfigs()` now clears the config cache immediately after migration — no manual `/neoe reload` needed for the new split files to take effect.
+
+**Files changed:** `ConfigManager.java`, `ConfigSplitter.java`
+
+---
+
+## 1.0.2.6+build.102 — 2026-05-04
+
+### 🐛 Bug Fix — Shop NPC Kicks All Players on Join
+
+**Error:** `The server sent registries with unknown keys: ResourceKey[minecraft:entity_type / neoessentials:shop_npc]`
+
+NeoForge syncs entity-type registries to clients at login. Because the `shop_npc` type only existed server-side, every player was disconnected the moment they tried to join.
+
+**Fix:** Shop NPCs now use vanilla `ArmorStand` entities with a hidden NBT tag (`NeoEssentials_ShopId`). The interaction is caught by `PlayerInteractEvent.EntityInteract` on the server — zero changes on the client, no custom entity registration.
+
+**Files changed:** `ShopEntityRegistry.java`, `ShopNpcEntity.java`, `NpcShopCommand.java`, `NeoEssentials.java`
+
+### 🐛 Bug Fix — Hologram Source Files Failing to Compile (BOM Characters)
+
+Six hologram files were saved with a UTF-8 BOM, causing `error: illegal character: '\ufeff'` on the very first character of each file. BOM removed from all six files.
+
+**Files:** `HologramEventHandler.java`, `HologramScheduler.java`, `HologramTextProcessor.java`, `HologramCommand.java`, `ShopHologramManager.java`, `HologramEndpoint.java`
+
+### 🐛 Bug Fix — Permission Validator Warns About Other Mods' Permissions
+
+Any permission node not starting with `neoessentials.` (WorldEdit, FTB Ranks, LuckPerms groups, etc.) was incorrectly logged as an "unknown NeoEssentials permission". The validator now silently skips external nodes and counts them separately.
+
+### 🐛 Bug Fix — Missing Permission Nodes Causing Validator Warnings
+
+`neoessentials.compass`, `neoessentials.compass.others`, and `neoessentials.chat.msgtoggle.bypass` were used in command checks but absent from `PermissionRegistry`. All three are now registered with the correct default values.
+
+---
+
 ## 1.0.2.6+build.91 — 2026-04-27
 
 ### ✨ Web Dashboard — Backup & Restore

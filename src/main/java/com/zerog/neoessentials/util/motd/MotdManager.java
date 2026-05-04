@@ -31,7 +31,7 @@ import java.util.concurrent.*;
 public class MotdManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MotdManager.class);
     private static final File DATA_FILE = ResourceUtil.getConfigFile("motd_data.json");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     // ── Singleton ──────────────────────────────────────────────────────────────

@@ -96,7 +96,7 @@ public class BackupManager {
             zos.setLevel(Deflater.DEFAULT_COMPRESSION);
 
             // Write manifest entry first
-            String manifestJson = new GsonBuilder().setPrettyPrinting().create().toJson(manifest);
+            String manifestJson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(manifest);
             zos.putNextEntry(new ZipEntry("backup-manifest.json"));
             zos.write(manifestJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             zos.closeEntry();

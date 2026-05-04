@@ -30,7 +30,7 @@ public class CustomLanguageManager {
     private final Path customLangDir;
     private final Path templatesDir;
     private final Path overridesFile;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     // Track missing translation keys for template generation
     private final Set<String> missingKeys = ConcurrentHashMap.newKeySet();

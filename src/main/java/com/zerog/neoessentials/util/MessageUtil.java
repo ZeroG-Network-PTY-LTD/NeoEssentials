@@ -97,7 +97,7 @@ public class MessageUtil {
                         finalTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
                         try (java.io.FileWriter fw = new java.io.FileWriter(serverLangFile)) {
                             new com.google.gson.GsonBuilder().setPrettyPrinting()
-                                .create().toJson(finalTranslations, fw);
+                                .disableHtmlEscaping().create().toJson(finalTranslations, fw);
                         } catch (Exception ex) {
                             LOGGER.warn("NeoEssentials: could not save merged lang file: {}", ex.getMessage());
                         }
@@ -209,7 +209,7 @@ public class MessageUtil {
             Map<String, String> translationsWithVersion = new HashMap<>(jarTranslations);
             translationsWithVersion.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
             try (java.io.FileWriter writer = new java.io.FileWriter(serverFile)) {
-                Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
                 gson.toJson(translationsWithVersion, writer);
                 LOGGER.debug("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
             }
