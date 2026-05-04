@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manager for miscellaneous teleportation utilities (/back, death locations, etc.)
  */
-@EventBusSubscriber(modid = "neoessentials")
+@EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
 public class MiscTeleportManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MiscTeleportManager.class);
     
@@ -68,12 +68,19 @@ public class MiscTeleportManager {
             teleportDelay = cfg.getBackTeleportDelay();
             enableDeathBack = cfg.isDeathBackEnabled();
             enableTeleportBack = cfg.isTeleportBackEnabled();
-            // Read back cooldown from config (optional field)
+            // Read back cooldown from config (check backSettings first, then legacy miscSettings)
             try {
                 com.google.gson.JsonObject config = cfg.getConfig(ConfigManager.MAIN_CONFIG);
                 if (config.has("teleportation")) {
                     com.google.gson.JsonObject tp = config.getAsJsonObject("teleportation");
-                    if (tp.has("miscSettings")) {
+                    // Prefer backSettings (new canonical location)
+                    if (tp.has("backSettings")) {
+                        com.google.gson.JsonObject bs = tp.getAsJsonObject("backSettings");
+                        if (bs.has("backCooldown")) {
+                            backCooldownSeconds = bs.get("backCooldown").getAsInt();
+                        }
+                    } else if (tp.has("miscSettings")) {
+                        // Legacy fallback
                         com.google.gson.JsonObject misc = tp.getAsJsonObject("miscSettings");
                         if (misc.has("backCooldown")) {
                             backCooldownSeconds = misc.get("backCooldown").getAsInt();
@@ -441,10 +448,23 @@ public class MiscTeleportManager {
      * Event handler: Save death location when player dies.
      * The hint message is NOT sent here (player is in-death-screen); it is sent
      * on respawn via {@link #onPlayerRespawn} instead.
+     *
+     * <p>Uses {@code receiveCanceled = true} so the death position is captured even
+     * when another mod cancels the event (keep-inventory, god-mode plugins, etc.).
+     * We still save only when the entity is an actual {@link ServerPlayer}.</p>
      */
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     public static void onPlayerDeathEvent(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        LOGGER.info("[MiscTeleportManager] Death event fired for {} at ({}, {}, {}) in {} — cancelled={}",
+            player.getName().getString(),
+            String.format("%.2f", player.getX()),
+            String.format("%.2f", player.getY()),
+            String.format("%.2f", player.getZ()),
+            player.level().dimension().location(),
+            event.isCanceled());
+        // Always save the death location, regardless of event cancellation status.
+        // This ensures /back works even with keep-inventory or protection plugins.
         MiscTeleportManager.getInstance().saveDeathLocation(player);
     }
 

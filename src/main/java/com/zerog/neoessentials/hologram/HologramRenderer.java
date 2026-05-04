@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
+import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +35,15 @@ public final class HologramRenderer {
     // ── Reflected accessors for Display.TextDisplay private fields ─────────────
     // NeoForge 1.21.1 runs with Mojang official names at runtime → field names are stable.
 
-    private static EntityDataAccessor<Component> DATA_TEXT;
-    private static EntityDataAccessor<Integer>   DATA_BG;
-    private static EntityDataAccessor<Byte>      DATA_STYLE;
+    private static EntityDataAccessor<Component>   DATA_TEXT;
+    private static EntityDataAccessor<Integer>     DATA_BG;
+    private static EntityDataAccessor<Byte>        DATA_STYLE;
+
+    // ── Reflected accessors for Display (base class) ───────────────────────────
+    private static EntityDataAccessor<Byte>        DATA_BILLBOARD;
+    private static EntityDataAccessor<Quaternionf> DATA_LEFT_ROTATION;
+    private static EntityDataAccessor<Integer>     DATA_INTERP_DURATION;
+    private static EntityDataAccessor<Integer>     DATA_INTERP_START_DELTA;
 
     static {
         try {
@@ -46,6 +53,15 @@ public final class HologramRenderer {
             LOGGER.debug("[Hologram] Display.TextDisplay data accessors resolved.");
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to resolve Display.TextDisplay data accessors — holograms may not render text.", e);
+        }
+        try {
+            DATA_BILLBOARD       = reflectAccessor(Display.class, "DATA_BILLBOARD_CONSTRAINTS_ID");
+            DATA_LEFT_ROTATION   = reflectAccessor(Display.class, "DATA_LEFT_ROTATION_ID");
+            DATA_INTERP_DURATION = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID");
+            DATA_INTERP_START_DELTA = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID");
+            LOGGER.debug("[Hologram] Display base-class data accessors resolved (billboard, rotation, interpolation).");
+        } catch (Exception e) {
+            LOGGER.warn("[Hologram] Failed to resolve Display base-class accessors — billboard/spin/hover disabled: {}", e.getMessage());
         }
     }
 
@@ -70,7 +86,7 @@ public final class HologramRenderer {
 
         for (int i = 0; i < data.lines.size(); i++) {
             HologramLine line = data.lines.get(i);
-            double lineY = data.lineY(i);
+            double lineY = data.lineYWithHover(i);
             Component text = HologramTextProcessor.processStatic(line.currentText());
 
             try {
@@ -87,6 +103,7 @@ public final class HologramRenderer {
                 entity.getPersistentData().putString(TAG_ID, data.id);
 
                 applyText(entity, text);
+                applyBillboardAndRotation(entity, data);
 
                 level.addFreshEntity(entity);
                 data.entityUUIDs.add(entity.getUUID());
@@ -97,6 +114,39 @@ public final class HologramRenderer {
 
         data.lastRefreshMs = System.currentTimeMillis();
         LOGGER.debug("[Hologram] Spawned {} line entity(ies) for '{}'.", data.entityUUIDs.size(), data.id);
+    }
+
+    /**
+     * Update the rotation (spin) and Y position (hover) for all live entities
+     * of the given hologram.  Called every animation tick by {@link HologramScheduler}.
+     */
+    public static void updateRotationsAndPositions(HologramData data, ServerLevel level) {
+        if (data.entityUUIDs == null || data.entityUUIDs.isEmpty()) return;
+        if (data.entityUUIDs.size() != data.lines.size()) {
+            // Entity count mismatch — respawn cleanly
+            spawn(data, level);
+            return;
+        }
+        for (int i = 0; i < data.lines.size(); i++) {
+            try {
+                UUID uuid = data.entityUUIDs.get(i);
+                net.minecraft.world.entity.Entity raw = level.getEntity(uuid);
+                if (!(raw instanceof Display.TextDisplay entity)) {
+                    spawn(data, level);
+                    return;
+                }
+                // Hover: update entity Y position
+                if (data.hoverEnabled) {
+                    entity.setPos(data.x, data.lineYWithHover(i), data.z);
+                }
+                // Spin: update rotation
+                if (data.spinEnabled && DATA_LEFT_ROTATION != null) {
+                    applySpinRotation(entity, data);
+                }
+            } catch (Exception e) {
+                LOGGER.debug("[Hologram] updateRotationsAndPositions error for '{}' line {}: {}", data.id, i, e.getMessage());
+            }
+        }
     }
 
     /**
@@ -184,6 +234,52 @@ public final class HologramRenderer {
         } catch (Exception e) {
             LOGGER.debug("[Hologram] applyText error: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Apply billboard constraint and initial spin rotation to an entity.
+     * Called once on every (re)spawn.
+     */
+    private static void applyBillboardAndRotation(Display.TextDisplay entity, HologramData data) {
+        try {
+            if (DATA_BILLBOARD != null) {
+                byte mode = (byte) Math.max(0, Math.min(3, data.billboardMode));
+                entity.getEntityData().set(DATA_BILLBOARD, mode);
+            }
+            if (data.spinEnabled && DATA_LEFT_ROTATION != null) {
+                // Set interpolation to 1 tick so spin looks smooth
+                if (DATA_INTERP_DURATION    != null) entity.getEntityData().set(DATA_INTERP_DURATION, 1);
+                if (DATA_INTERP_START_DELTA != null) entity.getEntityData().set(DATA_INTERP_START_DELTA, 0);
+                entity.getEntityData().set(DATA_LEFT_ROTATION, buildRotationQuat(data));
+            }
+        } catch (Exception e) {
+            LOGGER.debug("[Hologram] applyBillboardAndRotation error for '{}': {}", data.id, e.getMessage());
+        }
+    }
+
+    /**
+     * Update LEFT_ROTATION for a live entity based on the hologram's current spin angle.
+     */
+    private static void applySpinRotation(Display.TextDisplay entity, HologramData data) {
+        try {
+            if (DATA_LEFT_ROTATION != null) {
+                if (DATA_INTERP_START_DELTA != null) entity.getEntityData().set(DATA_INTERP_START_DELTA, 0);
+                entity.getEntityData().set(DATA_LEFT_ROTATION, buildRotationQuat(data));
+            }
+        } catch (Exception e) {
+            LOGGER.debug("[Hologram] applySpinRotation error: {}", e.getMessage());
+        }
+    }
+
+    /** Build a Quaternionf from the hologram's current spin angle and axis. */
+    private static Quaternionf buildRotationQuat(HologramData data) {
+        float radians = (float) Math.toRadians(data.currentSpinAngle);
+        String axis = data.spinAxis != null ? data.spinAxis.toUpperCase() : "Y";
+        return switch (axis) {
+            case "X" -> new Quaternionf().rotationX(radians);
+            case "Z" -> new Quaternionf().rotationZ(radians);
+            default  -> new Quaternionf().rotationY(radians); // "Y"
+        };
     }
 
     /**

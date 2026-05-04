@@ -1,10 +1,24 @@
 package com.zerog.neoessentials.hologram.integration;
+import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.hologram.*;
+import com.zerog.neoessentials.shop.ShopManager;
+import com.zerog.neoessentials.shop.ShopTransaction;
+import com.zerog.neoessentials.shop.ShopTransaction.TransactionResult;
+import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.events.ShopTransactionEvent;
 import com.zerog.neoessentials.shop.model.ShopData;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Display;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,14 +118,169 @@ public class ShopHologramManager {
             LOGGER.debug("[ShopHologram] Error refreshing shop hologram: {}", e.getMessage());
         }
     }
-    // ── Event listener ────────────────────────────────────────────────────────
+    // ── Event listeners ───────────────────────────────────────────────────────
+
     @SubscribeEvent
     public static void onShopTransaction(ShopTransactionEvent event) {
         try {
             refreshShopHologram(event.getShop());
         } catch (Exception ignored) {}
     }
+
+    /**
+     * Right-clicking a shop hologram entity is identical to right-clicking the sign → BUY.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
+        if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
+
+        ShopData shop = shopFromHologramEntity(display, player.serverLevel());
+        if (shop == null) return;
+
+        event.setCanceled(true);
+
+        // Owner right-clicks → show info (same behaviour as sign)
+        if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+            sendShopInfo(player, shop);
+            return;
+        }
+
+        // Item autofill: owner of a pending "?" shop right-clicks with item in hand
+        if (shop.itemPending) {
+            net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
+            boolean canAssign = shop.isAdminShop()
+                    ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
+                    : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
+            if (canAssign && !held.isEmpty()) {
+                shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                shop.itemPending = false;
+                ShopManager.getInstance().registerShop(shop);
+                player.sendSystemMessage(Component.literal(
+                    "§aItem set to §f" + ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
+            } else {
+                player.sendSystemMessage(Component.literal("§eHold the item you want to trade, then right-click the hologram."));
+            }
+            return;
+        }
+
+        if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+            return;
+        }
+        if (!shop.canBuy()) {
+            player.sendSystemMessage(Component.literal("§cThis shop does not sell items."));
+            return;
+        }
+        TransactionResult result = ShopTransaction.executeBuy(player, shop, player.serverLevel());
+        sendTransactionResult(player, result, shop, true);
+    }
+
+    /**
+     * Left-clicking (attacking) a shop hologram entity → SELL.
+     * Display entities are invulnerable so no damage is dealt.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onEntityAttack(AttackEntityEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
+
+        ShopData shop = shopFromHologramEntity(display, player.serverLevel());
+        if (shop == null) return;
+
+        event.setCanceled(true);
+
+        // Owner left-clicks → show info
+        if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+            sendShopInfo(player, shop);
+            return;
+        }
+
+        if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+            return;
+        }
+        if (!shop.canSell()) {
+            player.sendSystemMessage(Component.literal("§cThis shop does not buy items."));
+            return;
+        }
+        TransactionResult result = ShopTransaction.executeSell(player, shop, player.serverLevel());
+        sendTransactionResult(player, result, shop, false);
+    }
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Given a TextDisplay entity, return the ShopData it belongs to, or {@code null}
+     * if this entity is not a shop hologram.
+     *
+     * <p>Shop holograms are always positioned at signX+0.5, signY+1.8, signZ+0.5
+     * (see {@link #createShopHologram}), so we reverse-compute the sign block pos.
+     */
+    private static ShopData shopFromHologramEntity(Display.TextDisplay entity, ServerLevel level) {
+        try {
+            net.minecraft.nbt.CompoundTag data = entity.getPersistentData();
+            if (!data.contains("neoessentials_hologram")) return null;
+            String holoId = data.getString("neoessentials_hologram_id");
+            if (!holoId.startsWith(SHOP_HOLOGRAM_PREFIX)) return null;
+
+            HologramData holo = HologramManager.getInstance().getHologram(holoId);
+            if (holo == null) return null;
+
+            int signX = (int) Math.floor(holo.x - 0.5);
+            int signY = (int) Math.floor(holo.y - 1.8);
+            int signZ = (int) Math.floor(holo.z - 0.5);
+            String dimension = HologramRenderer.dimensionKey(level);
+            return ShopManager.getInstance().getShopBySign(dimension, new BlockPos(signX, signY, signZ));
+        } catch (Exception e) {
+            LOGGER.debug("[ShopHologram] shopFromHologramEntity error: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static void sendShopInfo(ServerPlayer player, ShopData shop) {
+        String currency = EconomyManager.getInstance().getCurrencySymbol();
+        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        player.sendSystemMessage(Component.literal("§6§l--- Shop Info ---"));
+        player.sendSystemMessage(Component.literal("§eOwner: §f" + shop.ownerName));
+        player.sendSystemMessage(Component.literal("§eItem:  §f" + shop.quantity + "x " + itemDisplay));
+        if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal("§eBuy:   §f" + currency + shop.buyPrice.toPlainString()));
+        if (shop.sellPrice != null) player.sendSystemMessage(Component.literal("§eSell:  §f" + currency + shop.sellPrice.toPlainString()));
+    }
+
+    private static void sendTransactionResult(ServerPlayer player, TransactionResult result,
+                                              ShopData shop, boolean buying) {
+        String currency = EconomyManager.getInstance().getCurrencySymbol();
+        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        switch (result.type) {
+            case SUCCESS -> {
+                if (buying) {
+                    player.sendSystemMessage(Component.literal(String.format(
+                        "§aYou bought §f%dx %s §afor §f%s%s§a from §f%s§a.",
+                        result.quantity, itemDisplay, currency, result.price.toPlainString(), shop.ownerName)));
+                } else {
+                    player.sendSystemMessage(Component.literal(String.format(
+                        "§aYou sold §f%dx %s §afor §f%s%s§a.",
+                        result.quantity, itemDisplay, currency, result.price.toPlainString())));
+                }
+            }
+            case NOT_ENOUGH_MONEY -> player.sendSystemMessage(Component.literal(buying
+                ? "§cYou don't have enough money to buy that."
+                : "§cThe shop owner can't afford to buy that."));
+            case NOT_ENOUGH_STOCK -> player.sendSystemMessage(Component.literal(buying
+                ? "§cThis shop is out of stock."
+                : "§cYou don't have enough of that item."));
+            case NO_SPACE -> player.sendSystemMessage(Component.literal(buying
+                ? "§cYour inventory is full."
+                : "§cThe shop's chest is full."));
+            case NO_CHEST -> player.sendSystemMessage(Component.literal("§cShop has no linked chest."));
+            case SHOP_DISABLED -> player.sendSystemMessage(Component.literal(buying
+                ? "§cThis shop doesn't sell items."
+                : "§cThis shop doesn't buy items."));
+            default -> player.sendSystemMessage(Component.literal("§cTransaction failed (internal error)."));
+        }
+    }
+
     private static String shopHologramId(ShopData shop) {
         return (SHOP_HOLOGRAM_PREFIX + shop.signDimension + "_" + shop.signX + "_" + shop.signY + "_" + shop.signZ)
             .toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
