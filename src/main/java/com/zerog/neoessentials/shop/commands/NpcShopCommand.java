@@ -10,7 +10,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.AABB;
 
 import java.math.BigDecimal;
@@ -82,35 +82,27 @@ public class NpcShopCommand {
     private static int executeCreate(CommandSourceStack src, String name) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            if (ShopNpcEntity.TYPE == null) {
-                src.sendFailure(Component.literal("§cNPC entity type not registered yet."));
-                return 0;
-            }
 
             ShopEntityData shopData = new ShopEntityData();
-            shopData.shopId     = UUID.randomUUID();
-            shopData.ownerUUID  = player.getUUID();
-            shopData.shopName   = name;
-            shopData.dimension  = player.level().dimension().location().toString();
-            shopData.spawnX     = player.getX();
-            shopData.spawnY     = player.getY();
-            shopData.spawnZ     = player.getZ();
+            shopData.shopId    = UUID.randomUUID();
+            shopData.ownerUUID = player.getUUID();
+            shopData.shopName  = name;
+            shopData.dimension = player.level().dimension().location().toString();
+            shopData.spawnX    = player.getX();
+            shopData.spawnY    = player.getY();
+            shopData.spawnZ    = player.getZ();
 
-            // Spawn the entity
-            ShopNpcEntity npc = ShopNpcEntity.TYPE.create(player.serverLevel());
-            if (npc == null) {
-                src.sendFailure(Component.literal("§cFailed to create entity."));
-                return 0;
-            }
+            // Spawn a vanilla ArmorStand — no custom EntityType needed client-side
+            ArmorStand npc = ShopNpcEntity.create(player.serverLevel(), shopData.shopId, name);
             npc.setPos(player.getX(), player.getY(), player.getZ());
-            npc.setShopId(shopData.shopId);
             shopData.entityUUID = npc.getUUID();
 
             player.serverLevel().addFreshEntity(npc);
             ShopEntityManager.getInstance().register(shopData);
 
             src.sendSuccess(() -> Component.literal("§aNPC shop §f\"" + name + "\"§a created. " +
-                    "§7ID: " + shopData.shopId + "\n§eUse /npcshop additem " + shopData.shopId.toString().substring(0, 8) + "... to add items."), true);
+                    "§7ID: " + shopData.shopId + "\n§eUse /npcshop additem " +
+                    shopData.shopId.toString().substring(0, 8) + "... to add items."), true);
             return 1;
         } catch (Exception e) {
             src.sendFailure(Component.literal("§cError: " + e.getMessage()));
@@ -123,19 +115,21 @@ public class NpcShopCommand {
     private static int executeRemove(CommandSourceStack src) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            // Find nearest ShopNpcEntity within 5 blocks
-            List<ShopNpcEntity> nearby = player.serverLevel().getEntitiesOfClass(
-                    ShopNpcEntity.class,
+
+            // Find nearest NeoEssentials shop ArmorStand within 5 blocks
+            List<ArmorStand> nearby = player.serverLevel().getEntitiesOfClass(
+                    ArmorStand.class,
                     new AABB(player.getX() - 5, player.getY() - 5, player.getZ() - 5,
-                             player.getX() + 5, player.getY() + 5, player.getZ() + 5));
+                             player.getX() + 5, player.getY() + 5, player.getZ() + 5),
+                    ShopNpcEntity::isShopNpc);
 
             if (nearby.isEmpty()) {
                 src.sendFailure(Component.literal("§cNo NPC shop within 5 blocks."));
                 return 0;
             }
 
-            ShopNpcEntity target = nearby.get(0);
-            UUID shopId = target.getShopId();
+            ArmorStand target = nearby.get(0);
+            UUID shopId = ShopNpcEntity.getShopId(target);
             target.discard();
 
             if (shopId != null) {

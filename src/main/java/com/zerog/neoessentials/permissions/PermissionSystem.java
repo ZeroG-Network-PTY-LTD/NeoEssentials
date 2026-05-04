@@ -119,8 +119,10 @@ public class PermissionSystem {
                 com.zerog.neoessentials.api.permissions.PermissionValidator.validate(manager);
             if (validation.hasIssues()) {
                 LOGGER.warn("⚠ PERMISSION VALIDATION FOUND {} ISSUES!", validation.getIssuesFound());
-                LOGGER.warn("⚠ Some permissions may not work correctly!");
+                LOGGER.warn("⚠ Some NeoEssentials permissions may not work correctly!");
                 LOGGER.warn("⚠ Check the validation output above for details.");
+                LOGGER.warn("⚠ Note: {} external mod permission(s) were skipped (they are valid).",
+                        validation.getExternalSkipped());
                 for (String warning : validation.getWarnings()) {
                     LOGGER.warn(warning);
                 }
@@ -128,7 +130,11 @@ public class PermissionSystem {
                     LOGGER.warn(suggestion);
                 }
             } else {
-                LOGGER.info("✓ Permission validation passed - all permissions are properly configured");
+                LOGGER.info("✓ Permission validation passed - all NeoEssentials permissions are properly configured");
+                if (validation.getExternalSkipped() > 0) {
+                    LOGGER.info("  └─ {} external mod permission(s) accepted without validation (e.g. worldedit.*, ftbranks.*, etc.)",
+                            validation.getExternalSkipped());
+                }
             }
             LOGGER.info("═══════════════════════════════════════════════════════════");
         } catch (Exception e) {

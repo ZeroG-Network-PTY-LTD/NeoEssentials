@@ -70,4 +70,33 @@ public interface ExternalPermissionAdapter {
     default int getConsecutiveFailures() {
         return 0;
     }
+
+    /**
+     * Returns {@code true} when the external permission system has an <em>explicit</em>
+     * deny (negative) entry for the given permission node for the given player.
+     *
+     * <p>This is distinct from {@link #hasPermission} returning {@code false}:
+     * <ul>
+     *   <li>{@code false} from {@code hasPermission} could mean the permission is
+     *       simply not set (undefined / inherited) in the external system.</li>
+     *   <li>{@code true} from {@code isExplicitlyDenied} means an admin has
+     *       intentionally negated the node.</li>
+     * </ul>
+     *
+     * <p>NeoEssentials uses this to decide whether registry-level default
+     * permissions (those registered with {@code defaultValue=true}) should still
+     * be honoured: they are granted when the external system merely has no opinion
+     * ({@code UNDEFINED}), but suppressed when the external system has explicitly
+     * revoked the permission ({@code FALSE}).
+     *
+     * <p>The default implementation returns {@code false} so that adapters that
+     * cannot distinguish UNDEFINED from FALSE remain source-compatible.
+     *
+     * @param uuid       the player's UUID
+     * @param permission the permission node to query
+     * @return {@code true} only if an explicit deny is present in the external system
+     */
+    default boolean isExplicitlyDenied(UUID uuid, String permission) {
+        return false;
+    }
 }
