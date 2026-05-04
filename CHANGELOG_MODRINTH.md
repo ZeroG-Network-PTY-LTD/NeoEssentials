@@ -4,7 +4,23 @@
 
 ---
 
-## 1.0.2.6+build.109 — 2026-05-04
+## 1.0.2.6+build.112 — 2026-05-04
+
+### 🐛 Bug Fix — `/back` Returns "No Previous Location" After Death
+
+After dying, `/back` consistently reported *"No previous location to return to"* even though the player's death location should have been captured.
+
+**Root causes fixed:**
+- `MiscTeleportManager`'s `@EventBusSubscriber` now explicitly declares `bus = Bus.GAME`, matching the project-wide pattern and eliminating any bus-selection ambiguity.
+- The death handler is now `@SubscribeEvent(receiveCanceled = true)`. Previously, if any mod cancelled `LivingDeathEvent` at a higher priority (keep-inventory plugins, god-mode, etc.), our handler was never called and the death position was silently dropped. Now the location is always captured when a `ServerPlayer` is the dying entity.
+- `PlayerDataStore.flush()` now creates the data directory if it doesn't exist before writing, preventing silent I/O failures that would leave death positions un-persisted across server restarts.
+- Added `teleportation.backSettings` to `config.json` with explicit `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, `backCooldown` keys.
+
+**Diagnostic:** The server log now shows an INFO line every time a player death is captured (coordinates + cancellation flag), so you can confirm the event is being received.
+
+---
+
+
 
 ### 🐛 Bug Fix — Chat Format Strings Corrupted on Save (HTML Escaping)
 

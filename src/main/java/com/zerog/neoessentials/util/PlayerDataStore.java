@@ -142,6 +142,12 @@ public class PlayerDataStore {
         File tempFile = new File(playerFile.getAbsolutePath() + ".tmp");
 
         try {
+            // Ensure parent directory exists (may not exist on first write)
+            if (!dataDirectory.exists() && !dataDirectory.mkdirs()) {
+                LOGGER.error("Failed to create {} data directory: {}", dataType, dataDirectory.getAbsolutePath());
+                return;
+            }
+
             // Write to temp file
             try (FileWriter writer = new FileWriter(tempFile)) {
                 GSON.toJson(data, writer);

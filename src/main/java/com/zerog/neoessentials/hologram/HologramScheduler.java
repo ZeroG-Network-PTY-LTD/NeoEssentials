@@ -59,18 +59,47 @@ public class HologramScheduler {
         if (server == null) return;
         for (HologramData data : HologramManager.getInstance().getAllHolograms()) {
             if (!data.visible) continue;
-            boolean changed = false;
+
+            boolean textChanged = false;
+            // Frame animation
             for (int i = 0; i < data.lines.size(); i++) {
                 if (data.lines.get(i).tickAnimation()) {
-                    changed = true;
+                    textChanged = true;
                 }
             }
-            if (!changed) continue;
-            final HologramData fd = data;
+
+            // Advance spin angle
+            boolean spinChanged = false;
+            if (data.spinEnabled) {
+                data.currentSpinAngle = (data.currentSpinAngle + data.spinSpeedDegrees) % 360f;
+                spinChanged = true;
+            }
+
+            // Advance hover phase
+            boolean hoverChanged = false;
+            if (data.hoverEnabled) {
+                data.hoverPhase = (data.hoverPhase + data.hoverSpeedDegrees) % 360f;
+                hoverChanged = true;
+            }
+
+            if (!textChanged && !spinChanged && !hoverChanged) continue;
+
+            final HologramData fd       = data;
+            final boolean       fText   = textChanged;
+            final boolean       fMotion = spinChanged || hoverChanged;
+
             server.execute(() -> {
                 try {
                     ServerLevel level = getLevelForDimension(server, fd.world);
-                    if (level != null) {
+                    if (level == null) return;
+
+                    // Update rotation / position (spin + hover)
+                    if (fMotion) {
+                        HologramRenderer.updateRotationsAndPositions(fd, level);
+                    }
+
+                    // Update animated text frames
+                    if (fText) {
                         for (int i = 0; i < fd.lines.size(); i++) {
                             if (!fd.lines.get(i).frames.isEmpty()) {
                                 HologramRenderer.updateLineText(fd, i,

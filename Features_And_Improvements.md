@@ -360,3 +360,16 @@
 
 ---
 
+- **`/back` Command — Death Location Not Saved** *(build #112)*
+    - ✅ **Root cause 1 fixed** — `MiscTeleportManager`'s `@EventBusSubscriber` was missing `bus = EventBusSubscriber.Bus.GAME`. Added explicit bus declaration matching every other event class in the project; eliminates any edge-case silent registration failure.
+    - ✅ **Root cause 2 fixed** — `onPlayerDeathEvent` used `@SubscribeEvent` default (`receiveCanceled = false`). If another mod cancelled `LivingDeathEvent` at a higher priority (keep-inventory mechanics, protection plugins, god-mode), our handler was silently skipped and the death position was never saved. Changed to `@SubscribeEvent(receiveCanceled = true)`.
+    - ✅ **Root cause 3 fixed** — `PlayerDataStore.flush()` silently failed when the data directory didn't exist yet, leaving death locations un-persisted across server restarts. Added `dataDirectory.mkdirs()` guard; failure logged at ERROR level.
+    - ✅ **Root cause 4 fixed** — Added `teleportation.backSettings` section to bundled `config.json` with explicit `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, `backCooldown` defaults.
+    - ✅ **Diagnostic logging** — `onPlayerDeathEvent` now emits INFO with coordinates every time a death is received, confirming the event chain works and showing exactly where the chain may break if an external mod interferes.
+    - **Affected files:** `MiscTeleportManager.java`, `SpawnOnDeathHandler.java`, `PlayerDataStore.java`, `config.json`
+
+---
+
+
+---
+

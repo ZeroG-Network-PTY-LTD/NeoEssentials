@@ -490,6 +490,17 @@
         }
       }
     },
+    "backSettings": {
+      "backSettings_comment": "Settings for the /back command — return to death location or previous teleport origin",
+      "enableDeathBack": true,
+      "enableDeathBack_comment": "When true, player death location is saved so /back teleports them back to where they died.",
+      "enableTeleportBack": true,
+      "enableTeleportBack_comment": "When true, the location before every teleport (home/warp/spawn/tpa) is saved for /back.",
+      "teleportDelay": 3,
+      "teleportDelay_comment": "Warm-up delay in seconds for /back. 0 for instant. Overrides generalSettings.teleportDelay for /back only.",
+      "backCooldown": 0,
+      "backCooldown_comment": "Cooldown in seconds between /back uses. 0 to disable."
+    },
     "commandCosts": {
       "commandCosts_comment": "Defines the cost to use teleportation commands PER USE. Some commands have sub-costs.",
       "home": 0,

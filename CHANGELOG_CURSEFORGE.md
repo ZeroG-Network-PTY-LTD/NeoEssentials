@@ -4,7 +4,24 @@
 
 ---
 
-## 1.0.2.6+build.109 — 2026-05-04
+## 1.0.2.6+build.112 — 2026-05-04
+
+### 🐛 Bug Fix — `/back` Returns "No Previous Location" After Death
+
+After dying, `/back` always returned *"No previous location to return to"* even though the death location should have been saved.
+
+**What was wrong (multiple issues fixed together):**
+
+- `MiscTeleportManager`'s `@EventBusSubscriber` was missing `bus = Bus.GAME`. While NeoForge defaults to the game bus, not being explicit could cause registration to silently fail in edge cases — matching the explicit pattern used by all other event classes in the mod.
+- The death event handler used the default `receiveCanceled = false`. If another mod cancelled `LivingDeathEvent` *before* our NORMAL-priority handler ran (e.g. keep-inventory mods), the handler was skipped and the death position was never saved. Changed to `receiveCanceled = true` so we always capture the position when a `ServerPlayer` dies.
+- `PlayerDataStore.flush()` could silently fail when the `back_locations/` directory didn't exist yet, leaving death positions un-persisted across server restarts. Now logs an ERROR and creates the directory if missing.
+- Added an explicit `teleportation.backSettings` section to `config.json` so `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, and `backCooldown` have clear defaults that admins can easily adjust.
+
+**Diagnostic logging:** `onPlayerDeathEvent` now logs an INFO message with coordinates every time a player dies, making it easy to confirm NeoEssentials is receiving the event.
+
+---
+
+
 
 ### 🐛 Bug Fix — Chat Format Strings Saved with Garbled Characters
 

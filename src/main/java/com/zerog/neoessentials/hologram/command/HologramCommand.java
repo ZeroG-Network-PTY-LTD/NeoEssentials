@@ -24,6 +24,9 @@ import java.util.UUID;
  *   moveto <id> <x> <y> <z>
  *   setrefresh <id> <seconds>
  *   toggle <id>
+ *   billboard <id> <fixed|vertical|horizontal|center>
+ *   spin <id> <on|off> [speed] [axis]
+ *   hover <id> <on|off> [amplitude] [speed]
  *   list
  *   info <id>
  *   reload
@@ -99,7 +102,48 @@ public class HologramCommand {
                 .then(Commands.argument("id", StringArgumentType.word())
                     .executes(ctx -> cmdInfo(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("reload")
-                .executes(ctx -> cmdReload(ctx.getSource())));
+                .executes(ctx -> cmdReload(ctx.getSource())))
+            // ── Billboard / rotation sub-commands ─────────────────────────────
+            .then(Commands.literal("billboard")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("mode", StringArgumentType.word())
+                        .executes(ctx -> cmdBillboard(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"),
+                            StringArgumentType.getString(ctx, "mode"))))))
+            .then(Commands.literal("spin")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    // /hologram spin <id> off
+                    .then(Commands.literal("off")
+                        .executes(ctx -> cmdSpinOff(ctx.getSource(), StringArgumentType.getString(ctx, "id"))))
+                    // /hologram spin <id> on [speed] [axis]
+                    .then(Commands.literal("on")
+                        .executes(ctx -> cmdSpinOn(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"), 3.0f, "Y"))
+                        .then(Commands.argument("speed", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(0.1f, 30f))
+                            .executes(ctx -> cmdSpinOn(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "id"),
+                                com.mojang.brigadier.arguments.FloatArgumentType.getFloat(ctx, "speed"), "Y"))
+                            .then(Commands.argument("axis", StringArgumentType.word())
+                                .executes(ctx -> cmdSpinOn(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "id"),
+                                    com.mojang.brigadier.arguments.FloatArgumentType.getFloat(ctx, "speed"),
+                                    StringArgumentType.getString(ctx, "axis"))))))))
+            .then(Commands.literal("hover")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.literal("off")
+                        .executes(ctx -> cmdHoverOff(ctx.getSource(), StringArgumentType.getString(ctx, "id"))))
+                    .then(Commands.literal("on")
+                        .executes(ctx -> cmdHoverOn(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"), 0.08f, 1.5f))
+                        .then(Commands.argument("amplitude", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(0.01f, 2.0f))
+                            .executes(ctx -> cmdHoverOn(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "id"),
+                                com.mojang.brigadier.arguments.FloatArgumentType.getFloat(ctx, "amplitude"), 1.5f))
+                            .then(Commands.argument("speed", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(0.1f, 10f))
+                                .executes(ctx -> cmdHoverOn(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "id"),
+                                    com.mojang.brigadier.arguments.FloatArgumentType.getFloat(ctx, "amplitude"),
+                                    com.mojang.brigadier.arguments.FloatArgumentType.getFloat(ctx, "speed"))))))));
         dispatcher.register(root);
         // Alias /holo
         dispatcher.register(Commands.literal("holo")
@@ -216,12 +260,26 @@ public class HologramCommand {
     private static int cmdInfo(CommandSourceStack src, String id) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        String[] bbNames = {"FIXED", "VERTICAL", "HORIZONTAL", "CENTER"};
+        String bbName = (data.billboardMode >= 0 && data.billboardMode < bbNames.length)
+            ? bbNames[data.billboardMode] : "UNKNOWN";
         StringBuilder sb = new StringBuilder();
         sb.append("§6=== Hologram: §e").append(data.id).append(" §6===\n");
         sb.append("§7World: §f").append(data.world).append("\n");
         sb.append("§7Position: §f(").append(fmt(data.x)).append(", ").append(fmt(data.y)).append(", ").append(fmt(data.z)).append(")\n");
         sb.append("§7Visible: ").append(data.visible ? "§ayes" : "§cno").append("\n");
         sb.append("§7Refresh: §f").append(data.refreshInterval == 0 ? "disabled" : data.refreshInterval + "s").append("\n");
+        sb.append("§7Billboard: §e").append(bbName).append("\n");
+        if (data.spinEnabled) {
+            sb.append("§7Spin: §eon §7(§f").append(data.spinSpeedDegrees).append("°/tick§7, axis=§f").append(data.spinAxis).append("§7)\n");
+        } else {
+            sb.append("§7Spin: §8off\n");
+        }
+        if (data.hoverEnabled) {
+            sb.append("§7Hover: §eon §7(amplitude=§f").append(data.hoverAmplitude).append("§7 blocks, speed=§f").append(data.hoverSpeedDegrees).append("§7°/tick)\n");
+        } else {
+            sb.append("§7Hover: §8off\n");
+        }
         sb.append("§7Lines (").append(data.lines.size()).append("):\n");
         for (int i = 0; i < data.lines.size(); i++) {
             HologramLine line = data.lines.get(i);
@@ -232,8 +290,76 @@ public class HologramCommand {
         src.sendSuccess(() -> Component.literal(sb.toString().trim()), false);
         return 1;
     }
-    private static int cmdReload(CommandSourceStack src) {
-        try {
+    // ── Billboard / spin / hover ───────────────────────────────────────────────
+    private static int cmdBillboard(CommandSourceStack src, String id, String mode) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        int modeVal = switch (mode.toLowerCase()) {
+            case "fixed"      -> 0;
+            case "vertical"   -> 1;
+            case "horizontal" -> 2;
+            case "center"     -> 3;
+            default -> -1;
+        };
+        if (modeVal < 0) {
+            src.sendFailure(Component.literal("§cInvalid billboard mode. Use: §ffixed§c, §fvertical§c, §fhorizontal§c, §fcenter§c."));
+            return 0;
+        }
+        data.billboardMode = modeVal;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        String modeName = new String[]{"FIXED", "VERTICAL", "HORIZONTAL", "CENTER"}[modeVal];
+        src.sendSuccess(() -> Component.literal("§a✓ Hologram '§e" + id + "§a' billboard set to §e" + modeName + "§a."), true);
+        return 1;
+    }
+    private static int cmdSpinOn(CommandSourceStack src, String id, float speed, String axis) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        String axisUpper = axis.toUpperCase();
+        if (!axisUpper.equals("X") && !axisUpper.equals("Y") && !axisUpper.equals("Z")) {
+            src.sendFailure(Component.literal("§cInvalid axis '§e" + axis + "§c'. Use X, Y, or Z."));
+            return 0;
+        }
+        data.spinEnabled      = true;
+        data.spinSpeedDegrees = speed;
+        data.spinAxis         = axisUpper;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("§a✓ Spin enabled for '§e" + id + "§a': §e" + speed + "°/tick§a on §e" + axisUpper + "§a axis."), true);
+        return 1;
+    }
+    private static int cmdSpinOff(CommandSourceStack src, String id) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        data.spinEnabled = false;
+        data.currentSpinAngle = 0f;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("§a✓ Spin disabled for '§e" + id + "§a'."), true);
+        return 1;
+    }
+    private static int cmdHoverOn(CommandSourceStack src, String id, float amplitude, float speed) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        data.hoverEnabled       = true;
+        data.hoverAmplitude     = amplitude;
+        data.hoverSpeedDegrees  = speed;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("§a✓ Hover enabled for '§e" + id + "§a': §eamplitude=§f" + amplitude + "§a blocks, §espeed=§f" + speed + "§a°/tick."), true);
+        return 1;
+    }
+    private static int cmdHoverOff(CommandSourceStack src, String id) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        data.hoverEnabled = false;
+        data.hoverPhase   = 0f;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("§a✓ Hover disabled for '§e" + id + "§a'."), true);
+        return 1;
+    }
+    private static int cmdReload(CommandSourceStack src) {        try {
             // Despawn all
             net.minecraft.server.MinecraftServer server = src.getServer();
             for (ServerLevel level : server.getAllLevels()) {

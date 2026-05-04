@@ -707,6 +707,34 @@
 
 >  **Features & Improvements** have been moved to [`Features_And_Improvements.md`](./Features_And_Improvements.md)
 
+---
+
+- **NeoEssentials `/back` Returns "No Previous Location" After Death**
+  *(Status: Fixed → v1.0.2.6+build.112)*
+
+  **Reported behavior:** After dying, `/back` always returned "§cNo previous location to return to." even though the player had just died at a known location.
+
+  **Root causes found:**
+
+  1. **Missing explicit `bus = Bus.GAME` on `@EventBusSubscriber`** — `MiscTeleportManager` used `@EventBusSubscriber(modid = "neoessentials")` without specifying the bus. Other classes in the mod explicitly use `bus = Bus.GAME`. While NeoForge defaults to `Bus.GAME`, the lack of an explicit declaration could cause silent registration failures in edge cases.
+
+  2. **`receiveCanceled = false` (default) on death event handler** — If another mod or mechanic cancelled `LivingDeathEvent` at a higher priority (e.g. keep-inventory mods, protection plugins, god-mode handlers), our NORMAL-priority handler was silently skipped and `saveDeathLocation` was never called. The player DID die (death screen shown, respawn triggered), but NeoEssentials never recorded the death position. Changed to `@SubscribeEvent(receiveCanceled = true)` to always capture the position when a `ServerPlayer` dies regardless of event cancellation.
+
+  3. **`PlayerDataStore.flush()` silently failed when directory missing** — `flush()` wrote to `neoessentials/playerdata/back_locations/<UUID>.json`. If the directory didn't exist (fresh install, first ever death), `FileWriter` threw and the exception was caught/logged but the death location was not persisted. After a server restart, `/back` would return "no history". Added an explicit `dataDirectory.mkdirs()` guard inside `flush()`.
+
+  4. **Missing `backSettings` section in default `config.json`** — `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, and `backCooldown` had no explicit entries in the bundled config. Added `teleportation.backSettings` with all four keys.
+
+  **Fixes applied:**
+
+  | File | Change |
+  |---|---|
+  | `MiscTeleportManager.java` | Added `bus = Bus.GAME`; `@SubscribeEvent(receiveCanceled = true)`; INFO-level log in `onPlayerDeathEvent`; `loadConfig` checks `backSettings` then `miscSettings` for `backCooldown`. |
+  | `SpawnOnDeathHandler.java` | Added `bus = Bus.GAME` (consistency). |
+  | `PlayerDataStore.java` | `flush()` now calls `dataDirectory.mkdirs()` before writing; logs ERROR if creation fails. |
+  | `config.json` (bundled) | Added `teleportation.backSettings` section. |
+
+
+
 
 
 

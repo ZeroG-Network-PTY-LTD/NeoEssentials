@@ -6,7 +6,48 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.109] — 2026-05-04
+## [1.0.2.6+build.112] — 2026-05-04
+
+### Bug Fix — `/back` Returns "No Previous Location" After Death
+
+**Reported behaviour:** After dying, `/back` always showed *"No previous location to return to"*,
+even though the player had just died in a known location.
+
+#### Root Causes
+
+| # | Root cause | Fix |
+|---|---|---|
+| 1 | **Missing explicit `bus` on `@EventBusSubscriber`** — `MiscTeleportManager` used `@EventBusSubscriber(modid = "neoessentials")` without specifying `bus = Bus.GAME`. Other classes in the project (including the inner `GameEvents` class in `NeoEssentials.java`) always pass the bus explicitly. NeoForge defaults to `Bus.GAME`, but being explicit avoids any future ambiguity and matches the project-wide pattern. | Added `bus = EventBusSubscriber.Bus.GAME` to the annotation. |
+| 2 | **`receiveCanceled = false` (default) on the death handler** — If another mod or mechanic (e.g. keep-inventory, protection plugins) cancelled `LivingDeathEvent` before our NORMAL-priority handler ran, the handler was silently skipped. The player DID die (the event being cancelled merely prevents loot-drop / spawnpoint reset in some mods), but `saveDeathLocation` was never called. | Changed `@SubscribeEvent` to `@SubscribeEvent(receiveCanceled = true)` so the handler always fires when the dying entity is a `ServerPlayer`, regardless of cancellation. |
+| 3 | **`PlayerDataStore.flush` silently fails when directory doesn't exist** — On a fresh install the `neoessentials/playerdata/back_locations/` directory is created in the `PlayerDataStore` constructor, but only when `getInstance()` is first called. If a race condition or unexpected class-load order caused the constructor to run before the data directory was available, `FileWriter` would throw and leave in-memory data un-persisted. After a server restart `/back` would return "no history". | Added an explicit `dataDirectory.mkdirs()` guard inside `flush()` before writing the temp file; failure is now logged at ERROR level. |
+| 4 | **Missing `backSettings` section in default `config.json`** — Values like `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, and `backCooldown` had no explicit defaults in the bundled config. They relied on Java field defaults and ConfigManager fallbacks, making it impossible for server admins to knowingly adjust them. | Added `teleportation.backSettings` section to the bundled `config.json` with all four keys explicitly documented. |
+
+#### Diagnostic Logging Added
+
+`onPlayerDeathEvent` now logs an **INFO** message every time a player dies, including coordinates
+and whether the event was cancelled. Check your server log for lines like:
+
+```
+[MiscTeleportManager] Death event fired for Steve at (128.50, 64.00, -256.30) in minecraft:overworld — cancelled=false
+[MiscTeleportManager] Saved death location for Steve at (128.50, 64.00, -256.30)
+```
+
+If these lines are absent after a player death, an external mod is preventing `LivingDeathEvent`
+from reaching NeoEssentials. If the first line appears but not the second, check the
+`enableDeathBack` flag in `config.json → teleportation.backSettings`.
+
+#### Files Changed
+
+| File | Change |
+|---|---|
+| `MiscTeleportManager.java` | Added `bus = Bus.GAME` to annotation; `@SubscribeEvent(receiveCanceled = true)`; INFO log in `onPlayerDeathEvent`; `loadConfig` reads `backCooldown` from `backSettings` (falls back to legacy `miscSettings`). |
+| `SpawnOnDeathHandler.java` | Added `bus = Bus.GAME` to annotation (consistency fix). |
+| `PlayerDataStore.java` | `flush()` now calls `dataDirectory.mkdirs()` before writing and logs ERROR if it fails. |
+| `config.json` (bundled) | Added `teleportation.backSettings` with `enableDeathBack`, `enableTeleportBack`, `teleportDelay`, `backCooldown`. |
+
+---
+
+
 
 ### Bug Fix — Gson HTML Character Escaping in Config and Data Files
 
