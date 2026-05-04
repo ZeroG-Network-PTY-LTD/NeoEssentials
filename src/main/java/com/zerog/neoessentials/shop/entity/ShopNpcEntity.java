@@ -1,114 +1,68 @@
 package com.zerog.neoessentials.shop.entity;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerPlayer;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
- * Shop NPC entity.
+ * Utility helpers for NeoEssentials NPC shop entities.
  *
- * <p>A peaceful, stationary mob that opens a virtual shop GUI when right-clicked.
- * The {@code shopId} NBT tag links this entity to its {@link ShopEntityData}.
+ * <p>Shop NPCs are plain vanilla {@link ArmorStand} entities — no custom
+ * EntityType is registered. This avoids the registry-sync disconnect that
+ * clients without NeoEssentials installed would otherwise receive:
+ * <em>"The server sent registries with unknown keys:
+ * ResourceKey[minecraft:entity_type / neoessentials:shop_npc]"</em>.
  *
- * <p>Rendered as a default entity (invisible white box on clients that have no
- * client-side renderer for {@code neoessentials:shop_npc}).  Admins manage these
- * entities through the {@code /npcshop} command.
+ * <p>The shop identity is stored in {@link net.minecraft.nbt.CompoundTag
+ * persistent data} under {@link #NBT_SHOP_ID}. Interactions are intercepted
+ * by {@link ShopEntityRegistry}.
  */
-public class ShopNpcEntity extends PathfinderMob {
+public final class ShopNpcEntity {
 
-    private static final String NBT_SHOP_ID = "NeoEssentials_ShopId";
+    /** Persistent-data key used to tag a shop ArmorStand (UUID stored as two longs). */
+    public static final String NBT_SHOP_ID = "NeoEssentials_ShopId";
 
-    @Nullable
-    private UUID shopId;
+    private ShopNpcEntity() {}
 
-    public ShopNpcEntity(EntityType<? extends ShopNpcEntity> type, Level level) {
-        super(type, level);
-        this.setInvulnerable(true);
-        this.setSilent(true);
-        this.setNoAi(true);
-    }
+    // ── Factory ───────────────────────────────────────────────────────────────
 
-    public static AttributeSupplier.Builder createAttributes() {
-        return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.0);
-    }
-
-    // ── Interaction ───────────────────────────────────────────────────────────
-
-    @Override
-    @Nonnull
-    @SuppressWarnings("resource") // Level is not AutoCloseable; IntelliJ false positive
-    protected InteractionResult mobInteract(@Nonnull Player player, @Nonnull InteractionHand hand) {
-        if (!level().isClientSide() && player instanceof ServerPlayer sp && hand == InteractionHand.MAIN_HAND) {
-            if (shopId != null) {
-                ShopEntityData shopData = ShopEntityManager.getInstance().getByShopId(shopId);
-                if (shopData != null && !shopData.listings.isEmpty()) {
-                    sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData), buf -> buf.writeUtf(shopId.toString()));
-                } else {
-                    sp.sendSystemMessage(Component.literal("§cThis NPC shop has no items configured yet."));
-                }
-            } else {
-                sp.sendSystemMessage(Component.literal("§cThis NPC is not linked to a shop. Ask an admin."));
-            }
-        }
-        return InteractionResult.sidedSuccess(level().isClientSide());
-    }
-
-    // ── No combat ─────────────────────────────────────────────────────────────
-
-    @Override
-    public boolean canBeLeashed() { return false; }
-
-    @Override
-    public boolean isAggressive() { return false; }
-
-
-    // ── NBT ───────────────────────────────────────────────────────────────────
-
-    @Override
-    public void addAdditionalSaveData(@Nonnull CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
-        if (shopId != null) nbt.putUUID(NBT_SHOP_ID, shopId);
-    }
-
-    @Override
-    public void readAdditionalSaveData(@Nonnull CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        if (nbt.hasUUID(NBT_SHOP_ID)) {
-            this.shopId = nbt.getUUID(NBT_SHOP_ID);
-            // Sync entity UUID back to ShopEntityManager
-            ShopEntityManager.getInstance().updateEntityUUID(shopId, this.getUUID());
-        }
+    /**
+     * Create and configure a new ArmorStand as a shop NPC.
+     *
+     * <p>The returned entity has NOT been added to the level yet — call
+     * {@code level.addFreshEntity(stand)} after setting its position.
+     *
+     * @param level    the server level
+     * @param shopId   the shopId to embed in persistent data
+     * @param shopName display name shown above the NPC head
+     * @return configured ArmorStand, ready to spawn
+     */
+    public static ArmorStand create(Level level, UUID shopId, String shopName) {
+        ArmorStand stand = new ArmorStand(EntityType.ARMOR_STAND, level);
+        stand.setInvulnerable(true);
+        stand.setSilent(true);
+        stand.setNoGravity(true);
+        // ArmorStand extends LivingEntity (not Mob) — no setNoAi(); stands are stationary by default
+        stand.setCustomName(Component.literal("§6[Shop] §f" + shopName));
+        stand.setCustomNameVisible(true);
+        stand.getPersistentData().putUUID(NBT_SHOP_ID, shopId);
+        return stand;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    @Nullable
-    public UUID getShopId() { return shopId; }
-
-    public void setShopId(UUID shopId) {
-        this.shopId = shopId;
-        if (shopId != null) {
-            ShopEntityManager.getInstance().updateEntityUUID(shopId, this.getUUID());
-        }
+    /** Returns the shopId embedded in the ArmorStand's persistent data, or {@code null}. */
+    public static UUID getShopId(ArmorStand stand) {
+        var data = stand.getPersistentData();
+        return data.hasUUID(NBT_SHOP_ID) ? data.getUUID(NBT_SHOP_ID) : null;
     }
 
-    /** Entity type constant — set by {@link ShopEntityRegistry} before use. */
-    public static EntityType<ShopNpcEntity> TYPE;
+    /** Returns {@code true} if this ArmorStand is a NeoEssentials shop NPC. */
+    public static boolean isShopNpc(ArmorStand stand) {
+        return stand.getPersistentData().hasUUID(NBT_SHOP_ID);
+    }
 }
-
 

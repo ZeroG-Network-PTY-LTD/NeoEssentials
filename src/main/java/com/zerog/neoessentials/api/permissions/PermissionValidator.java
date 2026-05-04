@@ -17,7 +17,14 @@ public class PermissionValidator {
 
     /**
      * Validate all permissions in groups against registered permissions.
-     * Logs warnings for any mismatches found.
+     *
+     * <p>Only {@code neoessentials.*} permission nodes are checked against the
+     * internal registry. Permissions belonging to other mods (e.g. {@code worldedit.*},
+     * {@code ftbchunks.*}, {@code luckperms.*}) are accepted unconditionally — NeoEssentials
+     * has no knowledge of what nodes external mods expose, and flagging them as unknown
+     * would produce misleading warnings for any server that mixes mods.
+     *
+     * <p>Logs warnings for any NeoEssentials nodes that are not found in the registry.
      */
     public static ValidationResult validate(PermissionManager manager) {
         LOGGER.info("═══════════════════════════════════════════════════════════");
@@ -31,6 +38,7 @@ public class PermissionValidator {
         List<String> suggestions = new ArrayList<>();
         int totalChecked = 0;
         int issuesFound = 0;
+        int externalSkipped = 0;
 
         // Check each group's permissions
         for (PermissionGroup group : manager.getGroups()) {
@@ -44,18 +52,31 @@ public class PermissionValidator {
                     continue;
                 }
 
-                // Skip negative permissions
+                // Determine the effective node (strip leading '-' for negated permissions)
+                String effectiveNode = permission.startsWith("-") ? permission.substring(1) : permission;
+
+                // ── External mod permissions ───────────────────────────────────
+                // Any node that does NOT start with "neoessentials." belongs to
+                // another mod. We cannot know its permission tree, so we accept it
+                // silently instead of flagging it as unknown.
+                if (!effectiveNode.startsWith("neoessentials.")) {
+                    LOGGER.debug("  ✓ Group '{}': External permission '{}' — accepted (not NeoEssentials)",
+                            group.getName(), permission);
+                    externalSkipped++;
+                    continue;
+                }
+
+                // Skip negative permissions after the external-mod gate above
                 if (permission.startsWith("-")) {
-                    String actualPerm = permission.substring(1);
-                    if (!registeredPermissions.contains(actualPerm) && !actualPerm.endsWith(".*")) {
-                        warnings.add(String.format("  ⚠ Group '%s': Negative permission '%s' not registered",
+                    if (!registeredPermissions.contains(effectiveNode) && !effectiveNode.endsWith(".*")) {
+                        warnings.add(String.format("  ⚠ Group '%s': Negative NeoEssentials permission '%s' not registered",
                             group.getName(), permission));
                         issuesFound++;
                     }
                     continue;
                 }
 
-                // Check if permission is registered
+                // Check if NeoEssentials permission is registered
                 if (!registeredPermissions.contains(permission)) {
                     // Check if there's a similar registered permission
                     String suggestion = findSimilarPermission(permission, registeredPermissions);
@@ -66,7 +87,7 @@ public class PermissionValidator {
                         suggestions.add(String.format("    → Did you mean '%s'?", suggestion));
                         issuesFound++;
                     } else {
-                        warnings.add(String.format("  ✗ Group '%s': Unknown permission '%s'",
+                        warnings.add(String.format("  ✗ Group '%s': Unknown NeoEssentials permission '%s'",
                             group.getName(), permission));
                         issuesFound++;
                     }
@@ -77,9 +98,10 @@ public class PermissionValidator {
         // Log results
         LOGGER.info("─────────────────────────────────────────────────────────────");
         LOGGER.info("Validation Results:");
-        LOGGER.info("  Total permissions checked: {}", totalChecked);
-        LOGGER.info("  Registered permissions: {}", registeredPermissions.size());
-        LOGGER.info("  Issues found: {}", issuesFound);
+        LOGGER.info("  Total permissions checked:           {}", totalChecked);
+        LOGGER.info("  Registered NeoEssentials permissions: {}", registeredPermissions.size());
+        LOGGER.info("  External mod permissions (skipped):  {}", externalSkipped);
+        LOGGER.info("  NeoEssentials issues found:          {}", issuesFound);
 
         if (!warnings.isEmpty()) {
             LOGGER.warn("─────────────────────────────────────────────────────────────");
@@ -97,7 +119,7 @@ public class PermissionValidator {
 
         LOGGER.info("═══════════════════════════════════════════════════════════");
 
-        return new ValidationResult(totalChecked, issuesFound, warnings, suggestions);
+        return new ValidationResult(totalChecked, issuesFound, externalSkipped, warnings, suggestions);
     }
 
     /**
@@ -173,18 +195,22 @@ public class PermissionValidator {
     public static class ValidationResult {
         private final int totalChecked;
         private final int issuesFound;
+        private final int externalSkipped;
         private final List<String> warnings;
         private final List<String> suggestions;
 
-        public ValidationResult(int totalChecked, int issuesFound, List<String> warnings, List<String> suggestions) {
+        public ValidationResult(int totalChecked, int issuesFound, int externalSkipped,
+                                List<String> warnings, List<String> suggestions) {
             this.totalChecked = totalChecked;
             this.issuesFound = issuesFound;
+            this.externalSkipped = externalSkipped;
             this.warnings = new ArrayList<>(warnings);
             this.suggestions = new ArrayList<>(suggestions);
         }
 
         public int getTotalChecked() { return totalChecked; }
         public int getIssuesFound() { return issuesFound; }
+        public int getExternalSkipped() { return externalSkipped; }
         public List<String> getWarnings() { return Collections.unmodifiableList(warnings); }
         public List<String> getSuggestions() { return Collections.unmodifiableList(suggestions); }
         public boolean hasIssues() { return issuesFound > 0; }

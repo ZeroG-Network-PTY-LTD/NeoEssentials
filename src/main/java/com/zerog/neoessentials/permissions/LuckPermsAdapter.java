@@ -129,39 +129,40 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         });
     }
 
-    @Override
-    public boolean hasPermission(UUID uuid, String permission) {
-        if (!luckPermsLoaded || luckPermsApi == null) {
-            return false;
-        }
+    /**
+     * Resolve the raw LuckPerms {@link Tristate} for the given player + permission.
+     * Returns {@code null} when LuckPerms is not available or an error occurs.
+     * <ul>
+     *   <li>{@link Tristate#TRUE}      — explicitly granted</li>
+     *   <li>{@link Tristate#FALSE}     — explicitly denied</li>
+     *   <li>{@link Tristate#UNDEFINED} — not set (no opinion)</li>
+     * </ul>
+     */
+    private Tristate queryTristate(UUID uuid, String permission) {
+        if (!luckPermsLoaded || luckPermsApi == null) return null;
 
         try {
-            // For online players prefer their live, context-aware cached data
             var server = ServerLifecycleHooks.getCurrentServer();
             ServerPlayer onlinePlayer = server != null ? server.getPlayerList().getPlayer(uuid) : null;
 
-            // Try to get cached user first (fast path)
             User user = luckPermsApi.getUserManager().getUser(uuid);
-
-            // If user not cached, try to load them (for offline permission checks)
             if (user == null) {
                 try {
-                    java.util.concurrent.CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
+                    java.util.concurrent.CompletableFuture<User> userFuture =
+                            luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, java.util.concurrent.TimeUnit.SECONDS);
                 } catch (Exception e) {
                     LOGGER.debug("Could not load user {} from LuckPerms: {}", uuid, e.getMessage());
                     consecutiveFailures.incrementAndGet();
-                    return false;
+                    return null;
                 }
             }
 
             if (user == null) {
                 LOGGER.debug("User {} not found in LuckPerms", uuid);
-                return false;
+                return null;
             }
 
-            // Use the player's live query options when online (picks up world/server contexts)
-            // Fall back to default contextual options for offline checks
             QueryOptions queryOptions;
             if (onlinePlayer != null) {
                 queryOptions = luckPermsApi.getContextManager()
@@ -172,19 +173,12 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
 
             Tristate result = user.getCachedData().getPermissionData(queryOptions).checkPermission(permission);
-
-            // Tristate: TRUE = has permission, FALSE = explicitly denied, UNDEFINED = not set
-            boolean hasPermission = result.asBoolean();
-
-            LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={} ({})",
-                uuid, permission, hasPermission, result);
-
-            consecutiveFailures.set(0); // reset on success
-            return hasPermission;
+            consecutiveFailures.set(0);
+            return result;
 
         } catch (Exception e) {
             int failures = consecutiveFailures.incrementAndGet();
-            LOGGER.error("Error checking permission '{}' for user {}: {}", permission, uuid, e.getMessage(), e);
+            LOGGER.error("Error querying LuckPerms tristate for '{}' / {}: {}", permission, uuid, e.getMessage(), e);
             if (failures == MAX_FAILURES) {
                 LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
                 LOGGER.warn("║  LUCKPERMS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
@@ -193,8 +187,41 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 LOGGER.warn("║  Resolve the LuckPerms API issue and run /neoe reload.       ║");
                 LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
             }
+            return null;
+        }
+    }
+
+    @Override
+    public boolean hasPermission(UUID uuid, String permission) {
+        if (!luckPermsLoaded || luckPermsApi == null) {
             return false;
         }
+
+        Tristate result = queryTristate(uuid, permission);
+        if (result == null) return false;
+
+        // TRUE = explicitly granted; FALSE = explicitly denied; UNDEFINED = not set
+        // We return true only for TRUE so that UNDEFINED can fall through to
+        // NeoEssentials' own default-value logic in PermissionAPI.
+        boolean hasPermission = result == Tristate.TRUE;
+
+        LOGGER.debug("LuckPerms permission check: user={}, permission={}, tristate={}, result={}",
+                uuid, permission, result, hasPermission);
+
+        return hasPermission;
+    }
+
+    /**
+     * Returns {@code true} when LuckPerms has an <em>explicit</em> deny
+     * ({@link Tristate#FALSE}) for this player + permission — meaning an
+     * admin intentionally revoked it.  {@link Tristate#UNDEFINED} ("not set")
+     * returns {@code false} so that NeoEssentials registry defaults can still apply.
+     */
+    @Override
+    public boolean isExplicitlyDenied(UUID uuid, String permission) {
+        if (!luckPermsLoaded || luckPermsApi == null) return false;
+        Tristate result = queryTristate(uuid, permission);
+        return result == Tristate.FALSE;
     }
 
     @Override

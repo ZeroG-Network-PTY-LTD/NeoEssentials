@@ -42,13 +42,11 @@ public class NeoEssentials {
     public NeoEssentials(IEventBus modEventBus) {
         long startTime = System.currentTimeMillis();
 
-        // Register NPC shop entity type on the MOD event bus (must happen in constructor)
-        try {
-            com.zerog.neoessentials.shop.entity.ShopEntityRegistry.register(modEventBus);
-        } catch (Exception e) {
-            LOGGER.error("✗ Failed to register ShopNpcEntity: {}", e.getMessage(), e);
-        }
-        
+        // ShopEntityRegistry uses @EventBusSubscriber — no manual registration needed.
+        // (Previously registered a custom EntityType here, which caused client disconnects
+        //  with "unknown registry key: neoessentials:shop_npc". Shop NPCs now use vanilla
+        //  ArmorStand entities; interaction is handled via PlayerInteractEvent.EntityInteract.)
+
         // Enhanced initialization logging with version and build info
         LOGGER.info("╔════════════════════════════════════════════════════════════════╗");
         LOGGER.info("║         {} v{} (Build #{})         ║", MOD_NAME, MOD_VERSION, BUILD_NUMBER);

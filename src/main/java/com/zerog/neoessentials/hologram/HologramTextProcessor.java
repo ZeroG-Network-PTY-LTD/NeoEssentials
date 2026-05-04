@@ -1,4 +1,4 @@
-﻿package com.zerog.neoessentials.hologram;
+package com.zerog.neoessentials.hologram;
 import com.zerog.neoessentials.api.PlaceholderManager;
 import com.zerog.neoessentials.chat.RichTextFormatter;
 import net.minecraft.network.chat.Component;

@@ -505,6 +505,7 @@ public class PermissionRegistry {
         register("neoessentials.chat.ignore", "Ignore players", PermissionCategory.CHAT, true);
         register("neoessentials.chat.unignore", "Unignore players", PermissionCategory.CHAT, true);
         register("neoessentials.chat.msgtoggle", "Toggle message acceptance", PermissionCategory.CHAT, true);
+        register("neoessentials.chat.msgtoggle.bypass", "Message players who have toggled off message receipt", PermissionCategory.CHAT, false);
         register("neoessentials.chat.socialspy", "Use social spy", PermissionCategory.CHAT, false);
         register("neoessentials.chat.mute", "Mute players", PermissionCategory.CHAT, false);
         register("neoessentials.chat.unmute", "Unmute players", PermissionCategory.CHAT, false);
@@ -558,6 +559,8 @@ public class PermissionRegistry {
         register("neoessentials.book.author", "Set the author of a written book", PermissionCategory.MISC, false);
         register("neoessentials.depth", "View depth/Y-level information", PermissionCategory.MISC, true);
         register("neoessentials.depth.others", "View others' depth information", PermissionCategory.MISC, false);
+        register("neoessentials.compass", "View compass / bearing / coordinates info (/compass)", PermissionCategory.MISC, true);
+        register("neoessentials.compass.others", "View compass info for another player", PermissionCategory.MISC, false);
         register("neoessentials.gamemode", "Change own gamemode", PermissionCategory.MISC, false);
         register("neoessentials.gamemode.others", "Change others' gamemode", PermissionCategory.ADMIN, false);
         register("neoessentials.helpop", "Send a help request to staff", PermissionCategory.MISC, true);

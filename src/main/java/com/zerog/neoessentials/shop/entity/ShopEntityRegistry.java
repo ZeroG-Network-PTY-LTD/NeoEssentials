@@ -1,49 +1,68 @@
 package com.zerog.neoessentials.shop.entity;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
-import net.neoforged.bus.api.IEventBus;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import java.util.UUID;
 
 /**
- * Registers the {@link ShopNpcEntity} entity type on the NeoForge mod event bus.
+ * Intercepts player interactions with ArmorStand-based NPC shops.
  *
- * <p>Call {@link #register(IEventBus)} from the {@code NeoEssentials} mod constructor
- * to wire up the deferred registrations.
+ * <p>NeoEssentials avoids registering a custom EntityType so that vanilla clients
+ * (and clients without NeoEssentials installed) are never disconnected by an
+ * unknown registry key. Instead, shop NPCs are ordinary {@link ArmorStand}
+ * entities whose persistent data carries a {@code NeoEssentials_ShopId} UUID tag
+ * that the server reads on interact.
+ *
+ * <p>Previously this class registered a {@code DeferredRegister<EntityType<?>>}
+ * which caused: <em>"The server sent registries with unknown keys:
+ * ResourceKey[minecraft:entity_type / neoessentials:shop_npc]"</em>.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class ShopEntityRegistry {
 
-    /** Deferred register — must be driven on the MOD event bus. */
-    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(Registries.ENTITY_TYPE, "neoessentials");
-
-    /** The NPC shop entity type holder. */
-    public static final DeferredHolder<EntityType<?>, EntityType<ShopNpcEntity>> SHOP_NPC =
-            ENTITY_TYPES.register("shop_npc", () -> EntityType.Builder
-                    .of(ShopNpcEntity::new, MobCategory.MISC)
-                    .sized(0.6f, 1.95f)
-                    .noSummon()
-                    .build("neoessentials:shop_npc"));
+    private ShopEntityRegistry() {}
 
     /**
-     * Wire up the deferred registers on the mod event bus.
-     * Call this from the {@code NeoEssentials} constructor.
+     * Intercept right-click on any ArmorStand that carries our shop NBT tag.
+     * Cancel the event to suppress the vanilla equip GUI and open the shop instead.
      */
-    public static void register(IEventBus modEventBus) {
-        ENTITY_TYPES.register(modEventBus);
-        // Set static reference on the entity class for easy access elsewhere
-        modEventBus.addListener(ShopEntityRegistry::onAttributeCreation);
-    }
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        // Only handle main-hand interact and server-side
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
+        Player player = event.getEntity();
+        if (player.level().isClientSide()) return;
+        if (!(player instanceof ServerPlayer sp)) return;
+        if (!(event.getTarget() instanceof ArmorStand stand)) return;
 
-    /** Provide attributes for the ShopNpcEntity. */
-    private static void onAttributeCreation(EntityAttributeCreationEvent event) {
-        event.put(SHOP_NPC.get(), ShopNpcEntity.createAttributes().build());
-        // Set the static TYPE reference so ShopNpcEntity.TYPE is usable without DeferredHolder
-        ShopNpcEntity.TYPE = SHOP_NPC.get();
+        CompoundTag persistentData = stand.getPersistentData();
+        if (!persistentData.hasUUID(ShopNpcEntity.NBT_SHOP_ID)) return;
+
+        // It's a NeoEssentials NPC shop — cancel vanilla interaction
+        event.setCanceled(true);
+
+        UUID shopId = persistentData.getUUID(ShopNpcEntity.NBT_SHOP_ID);
+        ShopEntityData shopData = ShopEntityManager.getInstance().getByShopId(shopId);
+
+        if (shopData == null) {
+            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§cThis NPC is not linked to a shop. Ask an admin."));
+            return;
+        }
+        if (shopData.listings.isEmpty()) {
+            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§cThis NPC shop has no items configured yet."));
+            return;
+        }
+
+        sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData),
+                buf -> buf.writeUtf(shopId.toString()));
     }
 }
 

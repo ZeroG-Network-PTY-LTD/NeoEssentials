@@ -187,7 +187,22 @@ public class PermissionAPI {
                     LOGGER.debug("═══════════════════════");
                     return true;
                 }
-                // Internal also said "no" — fall through to vanilla-OP fallback.
+                // Internal also said "no" — try registry defaults before vanilla-OP fallback.
+            }
+
+            // ── Registry-default fallback ─────────────────────────────────────
+            // If the permission has defaultValue=true in PermissionRegistry AND the
+            // external system did NOT explicitly deny it (Tristate.FALSE), grant it.
+            // This covers the common case where LuckPerms simply has no entry for a
+            // permission node (Tristate.UNDEFINED) — users should still get NeoEssentials
+            // defaults without needing to manually add every node to LuckPerms.
+            if (externalAvailable) {
+                boolean registryDefault = checkRegistryDefault(uuid, permission, externalAdapter);
+                if (registryDefault) {
+                    LOGGER.debug("Result: TRUE (registry default — external had no opinion)");
+                    LOGGER.debug("═══════════════════════");
+                    return true;
+                }
             }
 
             // ── Vanilla OP fallback (last resort after external+internal both failed/denied) ──
@@ -210,8 +225,60 @@ public class PermissionAPI {
             return true;
         }
 
+        // ── Registry-default fallback (internal-only path) ────────────────────
+        // No external adapter is active; check whether the permission has
+        // defaultValue=true in the registry and grant it if so.
+        boolean registryDefault = checkRegistryDefault(uuid, permission, null);
+        if (registryDefault) {
+            LOGGER.debug("Result: TRUE (registry default — internal had no entry)");
+            LOGGER.debug("═══════════════════════");
+            return true;
+        }
+
         // Internal said "no" — vanilla-OP fallback is the last resort.
         return checkVanillaOpFallback(uuid, permission, "internal");
+    }
+
+    /**
+     * Registry-default fallback.
+     *
+     * <p>Grants the permission if:
+     * <ol>
+     *   <li>It is registered in {@link PermissionRegistry} with {@code defaultValue=true},
+     *   AND</li>
+     *   <li>The external adapter (if any) did NOT explicitly deny it — i.e. the external
+     *       system's answer was "undefined / no opinion", not an intentional revocation.</li>
+     * </ol>
+     *
+     * <p>Pass {@code null} for {@code adapter} when running the internal-only path.
+     *
+     * @param adapter the active external adapter, or {@code null} if none
+     * @return {@code true} if the registry default should grant the permission
+     */
+    private static boolean checkRegistryDefault(UUID uuid, String permission,
+                                                ExternalPermissionAdapter adapter) {
+        try {
+            PermissionRegistry registry = PermissionRegistry.getInstance();
+            PermissionRegistry.PermissionInfo info = registry.getPermissionInfo(permission);
+            if (info == null || !info.getDefaultValue()) {
+                return false; // not a default-true permission
+            }
+
+            // If the external adapter is available and it has an *explicit* deny,
+            // respect that — the admin intentionally revoked the permission.
+            if (adapter != null && adapter.isAvailable()) {
+                if (adapter.isExplicitlyDenied(uuid, permission)) {
+                    LOGGER.debug("Registry default suppressed: external adapter explicitly denied '{}'", permission);
+                    return false;
+                }
+            }
+
+            LOGGER.debug("Registry default applies for '{}' (defaultValue=true, not explicitly denied)", permission);
+            return true;
+        } catch (Exception e) {
+            LOGGER.debug("Error checking registry default for '{}': {}", permission, e.getMessage());
+            return false;
+        }
     }
 
     /**
