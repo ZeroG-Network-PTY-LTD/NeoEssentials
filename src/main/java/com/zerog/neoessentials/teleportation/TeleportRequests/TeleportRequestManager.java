@@ -403,7 +403,12 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
             targetLocation = safeLocation;
         }
         int delayTicks = teleportDelay * 20;
-        TeleportUtil.teleportPlayer(teleporter, targetLocation, delayTicks, true).thenAccept(result -> {
+        // findSafe=false: teleport to the destination player's exact position.
+        // Using findSafe=true caused /tpa to nether-lava players to land on the nether roof
+        // (scanColumnTopDown found Y=128 above bedrock), and /tpa to ocean-boat players to
+        // land in underwater caves (top-down scan skipped all water and found a dry cave below).
+        // The destination player is alive there → it is an acceptable landing spot.
+        TeleportUtil.teleportPlayer(teleporter, targetLocation, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 teleporter.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.teleported_to", destination.getName().getString()));
                 destination.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.player_teleported_to_you", teleporter.getName().getString()));

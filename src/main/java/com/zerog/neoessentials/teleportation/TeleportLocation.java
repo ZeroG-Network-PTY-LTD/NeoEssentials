@@ -151,10 +151,15 @@ public class TeleportLocation {
 
     /**
      * Find a safe location near this position.
-     * Strategy (mirrors EssentialsX behaviour):
+     * Strategy:
      *  1. Try the original location first.
-     *  2. Scan downward from build-height at the same X,Z (surface landing).
-     *  3. Expand in XZ radius up to 16, scanning a ±8 Y window at each column.
+     *  2. Scan a ±16 Y window centered on the destination Y at the same X,Z column.
+     *     This finds a spot close to the actual destination (e.g. nether interior) and
+     *     prevents the top-down scan from skipping past it to the nether roof or an
+     *     underground cave below the ocean.
+     *  3. Top-down scan at the same X,Z — capped to logical height so it never reaches
+     *     above the nether ceiling (Y>127) or equivalent dimension caps.
+     *  4. Expand in XZ radius up to 16, scanning a ±8 Y window at each column.
      */
     public TeleportLocation findSafeLocation() {
         ServerLevel level = getLevel();
@@ -163,13 +168,30 @@ public class TeleportLocation {
         if (isSafe()) return this;
 
         int ix = (int) Math.floor(x);
+        int iy = (int) Math.floor(y);
         int iz = (int) Math.floor(z);
 
-        // Step 1: top-down scan at same X,Z column
+        // Step 2: Y-neighbourhood scan at same X,Z — prefer landing close to destination Y
+        // Scan alternating: 0, +1, -1, +2, -2, … up to ±16 Y offset.
+        for (int dy = 0; dy <= 16; dy++) {
+            if (dy == 0) {
+                // Already tried by isSafe() above; skip to avoid duplicate check
+                continue;
+            }
+            for (int sign : new int[]{1, -1}) {
+                BlockPos candidate = new BlockPos(ix, iy + sign * dy, iz);
+                if (candidate.getY() < level.getMinBuildHeight() + 1 ||
+                    candidate.getY() > level.getMaxBuildHeight() - 2) continue;
+                TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);
+                if (loc.isSafe()) return loc;
+            }
+        }
+
+        // Step 3: top-down column scan, capped to logical height to avoid nether roof
         TeleportLocation col = scanColumnTopDown(level, ix, iz);
         if (col != null) return col;
 
-        // Step 2: expanding XZ radius
+        // Step 4: expanding XZ radius
         for (int radius = 1; radius <= 16; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
@@ -189,9 +211,21 @@ public class TeleportLocation {
         return null;
     }
 
-    /** Scan from just below build height downward at the given X,Z to find a safe surface spot. */
+    /**
+     * Scan from just below the dimension's logical ceiling downward at the given X,Z to
+     * find a safe surface spot.
+     *
+     * <p>Uses {@code level.dimensionType().logicalHeight()} rather than
+     * {@code level.getMaxBuildHeight()} so that in the Nether
+     * (logicalHeight=128, maxBuildHeight=256) the scan never starts above the bedrock
+     * ceiling and therefore never finds Y=128 (directly above the bedrock roof) as a
+     * valid landing spot.</p>
+     */
     private TeleportLocation scanColumnTopDown(ServerLevel level, int bx, int bz) {
-        int maxY = level.getMaxBuildHeight() - 2;
+        // Cap to logical height — prevents landing above the nether ceiling (Y≥128)
+        // or above any other dimension's intended play space.
+        int logicalHeight = level.dimensionType().logicalHeight();
+        int maxY = Math.min(level.getMaxBuildHeight() - 2, logicalHeight - 1);
         int minY = level.getMinBuildHeight() + 1;
         for (int by = maxY; by >= minY; by--) {
             BlockPos candidate = new BlockPos(bx, by, bz);
