@@ -4,6 +4,76 @@
 
 ---
 
+## 1.0.2.6+build.120 — 2026-05-11
+
+### 🐛 Bug Fix — `/help` Pagination (and Higher Pages) Now Works
+
+**What was wrong:**
+- `/help 2` (and higher page numbers) showed *"No command found"* due to a conflict with vanilla's `/help` command registration.
+- Vanilla's `/help <command>` would consume numeric input before NeoEssentials' pagination logic could process it.
+
+**What's fixed:**
+- NeoEssentials now owns `/help` and `/?` registration during command setup, so page arguments route correctly.
+- Resolved Brigadier shadowing that caused the numeric input issue.
+
+**File:** `HelpCommand.java`
+
+---
+
+## 1.0.2.6+build.119 — 2026-05-08
+
+### 🐛 Bug Fix — `/tpa` Landing on Nether Roof / Underwater Caves
+
+Players reported two teleport issues:
+- Teleporting to players in the Nether could land on top of the bedrock roof.
+- Teleporting to players in oceans/boats could land in caves below the seafloor.
+
+**Fixes applied:**
+- `TeleportLocation.scanColumnTopDown()` now caps scan start Y to `dimensionType().logicalHeight() - 1`, preventing Nether-roof selections.
+- `/tpa` now teleports to the target player's actual live position (`findSafe=false`) instead of remapping to distant "safe" spots.
+- `findSafeLocation()` now first checks a ±16 Y neighborhood around the destination before doing full top-down fallback, improving nearby safety resolution for other teleport systems.
+
+**Files:** `TeleportLocation.java`, `TeleportRequestManager.java`
+
+---
+
+## 1.0.2.6+build.115 — 2026-05-08
+
+### ✨ Feature — Interactive Shop Holograms
+
+The hologram above sign shops is now interactive:
+- **Right-click hologram** = buy (same as right-clicking the sign)
+- **Left-click hologram** = sell (same as left-clicking the sign)
+- **Owner click** = show shop info panel
+
+Interaction reuses the same permission checks and transaction pipeline as sign interaction.
+
+**Files:** `ShopHologramManager.java`
+
+---
+
+## 1.0.2.6+build.113 — 2026-05-08
+
+### ✨ Feature — Hologram Billboard + Spin + Hover
+
+Holograms now support per-hologram display orientation and animation:
+- Billboard modes: `fixed`, `vertical`, `horizontal`, `center` (player-facing)
+- Optional spin animation with configurable speed and axis (`X|Y|Z`)
+- Optional hover/bob animation with configurable amplitude and speed
+
+**New commands:**
+- `/hologram billboard <id> <fixed|vertical|horizontal|center>`
+- `/hologram spin <id> on [speed] [axis]`
+- `/hologram spin <id> off`
+- `/hologram hover <id> on [amplitude] [speed]`
+- `/hologram hover <id> off`
+
+`/hologram info <id>` now includes billboard/spin/hover state.
+
+**Files:** `HologramData.java`, `HologramRenderer.java`, `HologramScheduler.java`, `HologramCommand.java`
+
+---
+
 ## 1.0.2.6+build.112 — 2026-05-04
 
 ### 🐛 Bug Fix — `/back` Returns "No Previous Location" After Death

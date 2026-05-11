@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.CommandNode;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,11 @@ public class HelpCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("help")) return;
+
+        // Vanilla's /help node shadows pagination (/help 2) in this Brigadier build.
+        // We remove the existing root nodes via reflection before registering ours.
+        removeRootLiteral(dispatcher, "help");
+        removeRootLiteral(dispatcher, "?");
 
         // NOTE: Vanilla Minecraft registers /help <command:string> before any mod.
         // Brigadier matches children in insertion order, so a separate int-argument branch
@@ -164,7 +171,25 @@ public class HelpCommand {
             src.sendSuccess(() -> Component.literal("§7Aliases: §e" + String.join("§7, §e", aliases)), false);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private static void removeRootLiteral(CommandDispatcher<CommandSourceStack> dispatcher, String literal) {
+        try {
+            CommandNode<CommandSourceStack> root = dispatcher.getRoot();
+            Field childrenField = CommandNode.class.getDeclaredField("children");
+            Field literalsField = CommandNode.class.getDeclaredField("literals");
+            childrenField.setAccessible(true);
+            literalsField.setAccessible(true);
+
+            Map<String, CommandNode<CommandSourceStack>> children =
+                (Map<String, CommandNode<CommandSourceStack>>) childrenField.get(root);
+            Map<String, CommandNode<CommandSourceStack>> literals =
+                (Map<String, CommandNode<CommandSourceStack>>) literalsField.get(root);
+
+            children.remove(literal);
+            literals.remove(literal);
+        } catch (Exception e) {
+            LOGGER.debug("Could not remove existing '{}' command node before registering NeoEssentials help", literal, e);
+        }
+    }
 }
-
-
-

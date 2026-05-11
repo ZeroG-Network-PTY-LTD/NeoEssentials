@@ -6,6 +6,136 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.120] — 2026-05-11
+
+### Bug Fix — `/help 2` Pagination Broken by Vanilla Brigadier Node Shadowing
+
+**Reported behaviour:**
+- `/help` showed page 1 correctly.
+- `/help 2` was parsed by vanilla help's command-lookup argument and returned unknown/no-permission style output instead of page 2.
+
+#### Root Cause
+
+NeoEssentials and vanilla both register `/help` as Brigadier root literals. In this runtime, vanilla's `/help <command:string>` child shadowed NeoEssentials' pagination argument path, so numeric input (`2`) was consumed by vanilla before NeoEssentials logic executed.
+
+#### Fix
+
+`HelpCommand.register()` now removes existing root literals for `help` and `?` from the dispatcher tree before registering NeoEssentials help nodes. This guarantees `/help [page|command]` and `/? [page|command]` are resolved by NeoEssentials and pagination works as intended.
+
+#### Files Changed
+
+| File | Change |
+|---|---|
+| `HelpCommand.java` | Added dispatcher root-node replacement for `help` and `?` (reflection-based map removal in Brigadier `CommandNode`) before command registration. |
+
+---
+
+## [1.0.2.6+build.119] — 2026-05-08
+
+### Bug Fix — `/tpa` Lands on Nether Roof or Inside Underwater Caves
+
+**Reported behaviour:**
+- Teleporting to a player in the **Nether** sometimes placed the arriving player on top of the bedrock roof (Y≥128).
+- Teleporting to a player who was in an **ocean or on a boat** sometimes placed the arriving player inside a submerged cave beneath the seafloor.
+
+#### Root Causes
+
+| # | Root cause | Fix |
+|---|---|---|
+| 1 | **Nether roof landing** — `TeleportLocation.scanColumnTopDown()` started its scan from `level.getMaxBuildHeight() - 2` (Y=254 in the Nether). Because Y=128–254 is the empty void above the bedrock ceiling, the very first air block found was Y=128 — one block above solid bedrock. The scan happily returned that as "safe". | Cap the starting Y to `level.dimensionType().logicalHeight() - 1` (Y=127 in the Nether). The scan now stays inside the cave space and never touches the roof. |
+| 2 | **Underwater cave landing** — When a destination player stood in water (or on a boat), `isSafe()` returned `false` (water has an empty collision shape). This triggered `findSafeLocation()`. The top-down scan skipped all ocean water columns (no solid dry ground) and found the first dry cave *below* the ocean floor as the "safe" spot. | For `/tpa` specifically, pass `findSafe=false`. Teleporting to a live player's exact position is EssentialsX-standard behaviour — if they are alive there, the spot is acceptable. Additionally, `findSafeLocation()` now first tries a ±16 Y neighbourhood around the destination before triggering the full top-down scan, so home/spawn/warp teleports also prefer nearby spots over distant ceilings or caves. |
+
+#### Files Changed
+
+| File | Change |
+|---|---|
+| `TeleportLocation.java` | `scanColumnTopDown()` caps start Y to `dimensionType().logicalHeight() - 1`; `findSafeLocation()` tries ±16 Y neighbourhood before falling back to top-down scan. |
+| `TeleportRequestManager.java` | `executeTeleportRequest()` passes `findSafe=false` when teleporting to a player's live position. |
+
+---
+
+## [1.0.2.6+build.115] — 2026-05-08
+
+### Feature — Interactive Shop Holograms (Click to Buy / Sell)
+
+Players can now interact directly with the hologram floating above a sign-shop, without needing to click the sign itself.
+
+| Action | Result |
+|---|---|
+| **Right-click** the shop hologram | Buy items (identical to right-clicking the sign) |
+| **Left-click** the shop hologram | Sell items (identical to left-clicking the sign) |
+| **Owner** right- or left-clicks their own shop hologram | Shows shop info panel |
+
+`Display.TextDisplay` entities are invulnerable, so left-clicking produces no swing animation or damage — it acts purely as a click trigger. All existing permission checks, transaction logic, stock limits, and error messages are reused from the sign handler.
+
+#### Files Changed
+
+| File | Change |
+|---|---|
+| `ShopHologramManager.java` | Added `onEntityInteract` (`PlayerInteractEvent.EntityInteract`) for right-click buy; added `onEntityAttack` (`AttackEntityEvent`) for left-click sell; added `shopFromHologramEntity()` helper that resolves sign block from hologram NBT tag; added `sendShopInfo()` and `sendTransactionResult()` helpers. |
+
+---
+
+## [1.0.2.6+build.113] — 2026-05-08
+
+### Feature — Hologram Billboard, Spin & Hover Animations
+
+Holograms now support player-facing billboard rotation and smooth animation effects, configurable per-hologram via commands.
+
+#### Billboard Mode (Player-Facing Rotation)
+
+`Display.TextDisplay` entities support a built-in `BillboardConstraints` flag that the game client resolves per-viewer. Setting `CENTER` makes the hologram always face each player's camera client-side with zero server overhead. This replaces the previous `FIXED` (non-rotating) default.
+
+| Mode | Behaviour |
+|---|---|
+| `CENTER` *(new default)* | Always faces the viewing player's camera |
+| `VERTICAL` | Rotates only on the Y axis to face the player |
+| `HORIZONTAL` | Rotates only on the horizontal plane |
+| `FIXED` | No rotation (original behaviour) |
+
+#### Spin Animation
+
+Applies a quaternion rotation to the `DATA_LEFT_ROTATION` slot of each `Display` entity every tick. Uses 1-tick transformation interpolation for smooth motion. Configurable speed (`°/tick`) and axis (X / Y / Z).
+
+#### Hover Animation
+
+Applies a sine-wave vertical offset to each entity's Y position every tick, producing a smooth floating bob effect. Configurable amplitude (blocks) and speed (`°/tick`).
+
+#### New Fields Added to `HologramData`
+
+| Field | Default | Description |
+|---|---|---|
+| `billboardMode` | `3` (CENTER) | 0=FIXED, 1=VERTICAL, 2=HORIZONTAL, 3=CENTER |
+| `spinEnabled` | `false` | Enable Y/Z/X axis spin |
+| `spinSpeedDegrees` | `3.0` | Degrees advanced per animation tick |
+| `spinAxis` | `"Y"` | Axis to rotate around |
+| `hoverEnabled` | `false` | Enable up/down bob effect |
+| `hoverAmplitude` | `0.08` | Peak displacement in blocks |
+| `hoverSpeedDegrees` | `1.5` | Speed of sine-wave bob |
+
+#### New Commands
+
+```
+/hologram billboard <id> <fixed|vertical|horizontal|center>
+/hologram spin <id> on [speed] [axis]
+/hologram spin <id> off
+/hologram hover <id> on [amplitude] [speed]
+/hologram hover <id> off
+```
+
+`/hologram info <id>` now displays all billboard, spin, and hover settings.
+
+#### Files Changed
+
+| File | Change |
+|---|---|
+| `HologramData.java` | Added `billboardMode`, `spinEnabled`, `spinSpeedDegrees`, `spinAxis`, `hoverEnabled`, `hoverAmplitude`, `hoverSpeedDegrees`, transient `currentSpinAngle`, transient `hoverPhase`. |
+| `HologramRenderer.java` | Added `DATA_BILLBOARD_CONSTRAINTS_ID`, `DATA_LEFT_ROTATION_ID`, `DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID` via reflection; `spawn()` now applies billboard mode; added `updateRotationsAndPositions()` called by scheduler. |
+| `HologramScheduler.java` | Animation tick (every 50 ms) advances spin angle and hover phase, then calls `updateRotationsAndPositions()`. |
+| `HologramCommand.java` | Added `billboard`, `spin`, `hover` subcommands; `info` shows all new fields. |
+
+---
+
 ## [1.0.2.6+build.112] — 2026-05-04
 
 ### Bug Fix — `/back` Returns "No Previous Location" After Death
@@ -914,7 +1044,7 @@ thread-safe Java API for external mods; adds `/placeholder` in-game admin comman
 | `PlaceholderProvider.java` | Extracted to a `public` top-level `@FunctionalInterface` so external mods can implement it. Previously the type was embedded as a package-private inner type in `PlaceholderAPI.java`. |
 | `PlaceholderExpansion.java` | Extracted to a `public` top-level abstract class. Same fix — was package-private, preventing any external mod from extending it. |
 | `NeoEssentialsAPI.java` | Added `getPlaceholderManager()` returning `PlaceholderManager.getInstance()`. Bumped `API_VERSION` to `"1.2.0"`. Added Javadoc changelog block. |
-| `PlaceholderEndpoint.java` | New REST handler: `GET /api/placeholders/list`, `GET /api/placeholders/resolve?player=&text=`, `GET /api/placeholders/stats`. All routes authenticated by `DashboardAPI.withAuth()`. |
+| `PlaceholderEndpoint.java` | New REST handler `/api/placeholders` with `GET` list, `POST` resolve, and `DELETE` stats routes, all authenticated by `DashboardAPI.withAuth()`. |
 | `DashboardAPI.java` | Registered `/api/placeholders` → `PlaceholderEndpoint` and `/api/docs` → `DocumentationHandler` (was never wired). Added both to startup log. |
 | `PlaceholderCommand.java` | New in-game command `/placeholder` with sub-commands: `list`, `info <id>` (tab-completes), `test <text>`, `stats`. Permission: `neoessentials.admin.placeholders`. |
 | `NeoEssentials.java` | Registered `PlaceholderCommand` in `registerAllCommands()`. |
@@ -1149,7 +1279,7 @@ Clicking the `[Confirm]` button on a `/sethome <name>` overwrite prompt or a `/d
 prompt failed with *"Invalid home name: Colony confirm"*. Each subsequent click appended another
 `" confirm"`, producing names like *"Colony confirm confirm confirm"*. The action never completed.
 
-**Root cause:**
+#### Root cause
 
 The `confirm` and `deny` literals were registered as Brigadier **child nodes of the `<name>`
 word-argument** (`/sethome <name> confirm`). The confirmation button's `RUN_COMMAND` click event
@@ -1181,7 +1311,7 @@ Using `/back` (to return to a death point or previous location) failed whenever 
 was in an unloaded chunk, producing the error *"No safe teleport location found"* even when
 the destination was perfectly valid.
 
-**Root causes:**
+#### Root causes:
 
 1. **`TeleportUtil` only force-loaded the single target chunk.** `findSafeLocation()` scans
    up to ±16 blocks in X/Z from the target, which can cross into neighbouring chunks.
@@ -1212,7 +1342,7 @@ Disabling the vanish module via `moderation.vanishSettings.enableVanishSystem: f
 Commands remained registered and interaction prevention kept blocking previously-vanished players even
 after the flag was set.
 
-**Root causes:**
+#### Root causes:
 
 1. **Wrong config path in `ConfigManager.isVanishSystemEnabled()`** — the method checked for
    `enableVanishSystem` at the root of `config.json`, but the key lives at
@@ -1372,7 +1502,7 @@ Full tables in [PermissionSystem.md — Fine-Grained Command Control](docs/Wiki/
 
 ---
 
-## [1.0.2.6+build.28] — 2026-04-01
+## [1.0.2.6+build.26] — 2026-04-01
 
 ### Feature — Permissions System Improvements
 
@@ -1475,95 +1605,6 @@ New action constants written to `permissions_audit.log`:
 - `PermissionAPI.hasPermission(UUID, String, PermissionContext)` — context threaded through the full 5-step resolution chain; alias resolution runs before every check
 - `PermissionStorage` — groups and users now save/load `contextualPermissions` and `conditions`
 - `NeoEssentialsAPI.API_VERSION` bumped to `1.1.0`
-
----
-
-## [1.0.2.6+build.26] — 2026-04-01
-
-### Improvement — Utility Systems Audit & Polish
-
-Audited all core utility commands for correctness, consistency, and clean registration.
-
-#### Fixes & changes
-
-| Area | Change |
-|---|---|
-| `NickCommand` | Storage path now uses `ResourceUtil.getConfigPath()` (was raw `Paths.get()`); registered `/nickname` alias via Brigadier redirect so `/nickname` works identically to `/nick` |
-| `SeenCommand` | Storage path now uses `ResourceUtil.getConfigPath()` for `seen_data.json` |
-| `NeoEssentials.java` | Removed duplicate `registry.registerCommand()` entries from the old "PLAYER INFO" metadata block; all player-info commands (`near`, `ping`, `seen`, `whois`, etc.) are now registered exactly once by their dedicated command classes |
-| `PermissionRegistry` | Removed stale duplicate `register()` calls for `neoessentials.whois`, `neoessentials.seen`, `neoessentials.realname`, `neoessentials.near`, `neoessentials.ping`, `neoessentials.ping.others`, `neoessentials.motd`, `neoessentials.rules`, `neoessentials.suicide` — earlier duplicates incorrectly overrode canonical values (e.g. `whois` was silently changed from `ADMIN/false` to `MISC/true`); correct values are now authoritative |
-| `PermissionRegistry` | `neoessentials.whois.detailed`, `neoessentials.rules.admin`, and all `neoessentials.motd.*` sub-nodes moved to their canonical positions and kept unique |
-
-#### Commands verified as present and fully functional
-
-`/nick` · `/nickname` · `/setnick` · `/near` · `/nearby` · `/ping` · `/depth` · `/helpop` (`/ac` `/amsg`) · `/motd` · `/rules` · `/suicide` · `/killme` · `/seen` · `/whois` · `/realname` · `/msgtoggle`
-
----
-
-
-
-### New Feature — Temporary Permissions
-
-Time-limited permission grants for both users and groups. A permission granted with a duration automatically expires and is revoked — no manual cleanup required.
-
-#### Duration format
-Combinations of `d` (days), `h` (hours), `m` (minutes), `s` (seconds):
-
-| Example | Meaning |
-|---|---|
-| `30m` | 30 minutes |
-| `12h` | 12 hours |
-| `1d` | 1 day |
-| `7d` | 7 days |
-| `1d12h30m` | 1 day, 12 hours, 30 minutes |
-
-#### New commands — users
-
-| Command | Permission | Description |
-|---|---|---|
-| `/permissions user <p> addtemp <node> <duration>` | `neoessentials.permissions.user.temp` | Grant a time-limited permission to a player |
-| `/permissions user <p> removetemp <node>` | `neoessentials.permissions.user.temp` | Revoke a temporary permission before it expires |
-| `/permissions user <p> listtemp` | `neoessentials.permissions.info.user` | List all active temp permissions with time remaining |
-
-#### New commands — groups
-
-| Command | Permission | Description |
-|---|---|---|
-| `/permissions group <g> addtemp <node> <duration>` | `neoessentials.permissions.group.temp` | Grant a time-limited permission to a group |
-| `/permissions group <g> removetemp <node>` | `neoessentials.permissions.group.temp` | Revoke a temporary group permission early |
-| `/permissions group <g> listtemp` | `neoessentials.permissions.info.group` | List all active group temp permissions with time remaining |
-
-#### Auto-expiry engine
-- **Added** `PermissionExpiryHandler` — `@EventBusSubscriber` class that hooks `ServerTickEvent.Post` and calls `PermissionManager.purgeExpiredTempPermissions()` every **30 seconds** (600 ticks).
-- When a temp permission expires the affected **online player** is notified with a chat message: `§eYour temporary permission §f<node>§e has expired.`
-- Every expiry is written to the **audit log** as `USER_TEMP_PERM_EXPIRED` / `GROUP_TEMP_PERM_EXPIRED` with executor `SYSTEM`.
-- Expired entries are **never loaded from disk** — `PermissionStorage` skips entries whose expiry timestamp has already passed on load.
-
-#### Persistence
-- **`playerdata.json`** — users gain an optional `"tempPermissions": {"<node>": <expiryMs>}` key.
-- **`permissions.json`** — groups gain an optional `"tempPermissions"` key with the same format.
-- Only unexpired entries are written on save; expired entries are stripped automatically.
-
-#### Resolution order
-Temp permissions are evaluated **after** negative-permission denial and **before** regular user/group permissions in the full resolution chain, so they cannot override explicit `-node` denials.
-
-#### New permission nodes
-
-| Node | Description |
-|---|---|
-| `neoessentials.permissions.user.temp` | Grant/revoke time-limited permissions for a user |
-| `neoessentials.permissions.group.temp` | Grant/revoke time-limited permissions for a group |
-
-#### New audit log events
-
-| Action constant | Trigger |
-|---|---|
-| `USER_TEMP_PERM_ADDED` | `/permissions user <p> addtemp` |
-| `USER_TEMP_PERM_REMOVED` | `/permissions user <p> removetemp` |
-| `USER_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
-| `GROUP_TEMP_PERM_ADDED` | `/permissions group <g> addtemp` |
-| `GROUP_TEMP_PERM_REMOVED` | `/permissions group <g> removetemp` |
-| `GROUP_TEMP_PERM_EXPIRED` | Auto-expiry engine (executor = `SYSTEM`) |
 
 ---
 
@@ -1848,84 +1889,3 @@ Temp permissions are evaluated **after** negative-permission denial and **before
 - `UtilitySystems.md` and `CommandsReference.md` wikis updated with full MOTD command/API reference.
 
 ---
-
-## [1.0.2.6+build.8] — 2026-04-01
-
-
-### Bug Fixes
-
-#### Chat System
-- **Fixed** `&` color codes in `chat.json` format values being silently discarded, causing all chat output to appear plain white regardless of configuration.  
-  Root cause: `ChatFormatter.formatMessage()` called `componentToFormattedString(RichTextFormatter.processRichText(…))` which internally called `Component.getString()` — stripping every formatting code before the enhancement phase saw the text.  
-  Fix: a new `RichTextFormatter.preprocessTags()` method converts `<gradient:…>` / `<rainbow>` tags to `&#RRGGBB` hex codes as a plain `String` and returns without touching any `&` codes; `ChatFormatter` now calls `preprocessTags()` so that all `&` codes survive into `buildComponentFromMarkup()` / `parseColorCodes()` where they are rendered correctly. The no-enhancements path (`processRichText()` → `Component`) is unchanged.  
-  Example format (now works correctly):
-  ```json
-  "group:fondateur": "&f[&4Fondateur&f] &f{neoessentials_username}&7: &f{MESSAGE}"
-  ```
-
-#### Permissions
-- **Fixed** Three wildcard permission nodes (`neoessentials.spawner.*`, `neoessentials.fireball.*`, `neoessentials.warps.*`) logging `WARN: Invalid permission format` at every startup.  
-  Root cause: `PermissionRegistry.isValidPermission()` and `PermissionScanner.isValidPermission()` used the regex `^[a-z0-9._-]+$` which does not include `*`, so every `.*`-suffixed node failed validation and was silently dropped from the registry.  
-  Note: the permissions **worked at runtime** in all affected versions because `PermissionManager.hasPermissionWithWildcards()` evaluates group permissions directly without consulting the registry. Only the startup log was wrong.  
-  Fix: both validators now recognise the `.*` wildcard suffix explicitly — the prefix (everything before `.*`) is validated separately with the existing character rules; `neoessentials.*`, `neoessentials.spawner.*`, etc. now register cleanly with no warnings.
-
----
-
-## [1.0.2.6+build.5] — 2026-04-01
-
-### Bug Fixes
-
-#### Config System
-- **Fixed** `ClassCastException: JsonArray cannot be cast to JsonObject` crash in all kit commands (`/kit`, `/kits`, `/listkits`, etc.) when split configs are enabled. Kit settings now live in `main.json`; `kits.json` is reserved for kit definitions only. All `ConfigManager` kit-settings helpers now carry an explicit `isJsonObject()` guard.
-- **Fixed** `getConfig("chat")` (and all other section-name lookups) throwing `FileNotFoundException`. `ConfigManager.getConfig()` now handles bare section names (no `.json` extension) by extracting the section from the main config, fixing errors in `ChatFormatter`, `BadgeManager`, `ConditionalFormatter`, `ResourcePackManager`, `PlayerTagManager`, and more.
-- **Fixed** `ConfigSplitter.mergeSplitConfigs()` now skips `"kits"` unless the value `isJsonObject()`, preventing leftover `kits.json` from poisoning the merged config view.
-
-#### Permissions
-- **Fixed** Server operators (`OP`) being denied commands when an external permission adapter (FTB Ranks, LuckPerms) was configured. OP bypass is now checked *before* delegating to any external system, acting as a universal safety fallback.
-- **Fixed** `FtbRanksAdapter` crashing with `NoSuchMethodException: hasPermission(UUID, String)` on FTB Ranks 2101.1.x. The adapter now probes `getPermission(ServerPlayer, String, boolean)` (new API) and falls back to the old instance method, handling multiple return types (Boolean, Optional<Boolean>, TriState).
-
-#### ChestShop
-- **Fixed** Admin shops created with `?` on line 4 showing "This shop is not yet ready" when the creating admin right-clicked to assign the item. Admin shops have `ownerUUID = null`; the interact handler now grants assignment rights to any player with `neoessentials.shop.create.admin` instead of checking UUID equality.
-
-#### Commands
-- **Fixed** `/help 2` (and any `/help <page>`) showing "No command found" instead of the requested page. Vanilla's `<command:string>` argument was matching the page number first. Replaced the separate integer branch with a combined `<page_or_command>` argument that parses integers first.
-- **Fixed** `/unban <player>` reporting "Player is not currently banned" for vanilla-issued bans (`/ban` or operator action). `BanManager` now checks and imports from the vanilla `UserBanList` as a fallback, and syncs all NeoEssentials bans to the vanilla list so both stay consistent.
-- **Fixed** `/rules` showing "Rules are not set" on servers migrating from older builds that stored rules in `rules.json`. `loadRulesData()` now detects the legacy file and migrates its contents to `rules_data.json` automatically.
-- **Fixed** `/motd set <msg>` appearing to succeed but the MOTD resetting on restart. `MotdCommand` now uses `ResourceUtil.getConfigFile("motd_data.json")` (consistent with every other data file in the mod) instead of a raw relative `Paths.get()` path. Save errors now log the absolute path for easier diagnosis.
-
----
-
-## [1.0.2.6+build.1] — 2026-03-06
-
-### Starting fresh from 1.0.2.6
-
-This is the first build of the `1.0.2.6` release series. Build number reset to 1.
-
-**Carried forward from 1.0.2.5 series:**
-
-#### Added
-- Sign-based ChestShop system — admin shops, auto-fill (`?`), buy/sell via right/left-click
-- Vault API — Economy, Chat, and Permission providers backed by NeoEssentials systems
-- Dedicated `tablist.json` config — group colours, 18 placeholders, animation, `&` colour codes
-- 50+ new commands across Player Info, World/Fun, Teleport, Item/Misc, Utility, Admin, Player State
-- `/tpr` / `/rtp` Random Teleport — even distribution, nether-aware, async pre-computation cache, named zones, biome exclusions, `/settpr`
-- Timed jails (`/jailfor`) with auto-release, full event enforcement (respawn, teleport, interact, attack)
-- `/kit <name> <player>` give-to-others, `/kitreset`, clean kit list with cooldown status
-- `/mail sendtemp`, `sendall`, `sendtempall`, `clearall` — mute/ignore/rate-limit checks
-- `/warp <name> <player>`, `/warp` (no args) paginated list, per-warp permission support
-- `/eco reset`, async `/baltop` with pagination and total wealth, percent amounts in eco commands
-- 8 new bundled languages: FR, DE, ES, PT-BR, ZH-CN, NL, PL, RU — auto-deployed and merged on start
-- 50+ permission nodes registered; new `MODERATION` category; denial messages show required node
-- `tablist.json` dedicated config; `/tablist config` live settings summary
-
-#### Fixed
-- Teleportation safe-location detection rewritten — slabs, stairs, glass, trapdoors now correctly safe; dangerous blocks (lava, fire, magma, cactus) now correctly blocked
-- AFK system — config loading, activity score thresholds, broadcast formatting, personal feedback all fixed
-- Chat messages now appear in server console
-- PowerTool — fires on block right-clicks and empty right-clicks, not just air; `/powertooltoggle` now correctly enables/disables powertools
-- Rich text (gradients/rainbow) rendering pipeline fixed
-- Dashboard — offline login, register command, file auto-update, admin/permissions split into own pages
-- ~120 missing translation keys added to `en_us.json`; auto-merge on load without overwriting edits
-- Vault economy `format()` now reads live currency symbol from config
-- Vault chat prefix/suffix correctly routes through LuckPerms/FTBRanks when installed
-- NeoForge 1.21.1 API compatibility: event classes, `ItemStack` methods, stats API all corrected
