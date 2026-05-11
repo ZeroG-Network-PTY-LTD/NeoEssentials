@@ -4,6 +4,71 @@
 
 ---
 
+## 1.0.2.6+build.120 — 2026-05-11
+
+### Fixed
+- `/help 2` and higher pages now resolve correctly.
+- Fixed Brigadier command shadowing where vanilla `/help <command>` intercepted numeric input before NeoEssentials pagination.
+- NeoEssentials now takes ownership of `/help` and `/?` command registration so page parsing is reliable for players and console.
+
+**Touched file:** `HelpCommand.java`
+
+---
+
+## 1.0.2.6+build.119 — 2026-05-08
+
+### 🐛 Bug Fix — `/tpa` Nether Roof / Underwater Cave Landings
+
+Fixed two player-reported `/tpa` landing regressions:
+- Nether teleports could resolve to the bedrock roof.
+- Ocean/boat teleports could resolve to caves under the seafloor.
+
+**Fixes:**
+- `TeleportLocation.scanColumnTopDown()` now starts at `min(maxBuildHeight-2, logicalHeight-1)` to avoid scanning above logical dimension space (notably Nether roof space).
+- `/tpa` now teleports to the target player's live location (`findSafe=false`) instead of remapping to distant "safe" spots.
+- `findSafeLocation()` now prefers a ±16 Y local search around the destination before full column fallback.
+
+**Files changed:** `TeleportLocation.java`, `TeleportRequestManager.java`
+
+---
+
+## 1.0.2.6+build.115 — 2026-05-08
+
+### ✨ Feature — Interactive Shop Holograms
+
+Players can now click the hologram above a sign shop directly:
+- **Right-click hologram** → buy
+- **Left-click hologram** → sell
+- **Owner click** → show shop info
+
+This uses the same permission and transaction pipeline as sign interaction for consistent behavior.
+
+**Files changed:** `ShopHologramManager.java`
+
+---
+
+## 1.0.2.6+build.113 — 2026-05-08
+
+### ✨ Feature — Hologram Billboard, Spin & Hover
+
+Added per-hologram orientation and animation controls:
+- Billboard modes: `fixed`, `vertical`, `horizontal`, `center`
+- Optional spin animation (speed + axis)
+- Optional hover/bob animation (amplitude + speed)
+
+**New commands:**
+- `/hologram billboard <id> <fixed|vertical|horizontal|center>`
+- `/hologram spin <id> on [speed] [axis]`
+- `/hologram spin <id> off`
+- `/hologram hover <id> on [amplitude] [speed]`
+- `/hologram hover <id> off`
+
+`/hologram info <id>` now includes billboard/spin/hover settings.
+
+**Files changed:** `HologramData.java`, `HologramRenderer.java`, `HologramScheduler.java`, `HologramCommand.java`
+
+---
+
 ## 1.0.2.6+build.112 — 2026-05-04
 
 ### 🐛 Bug Fix — `/back` Returns "No Previous Location" After Death
