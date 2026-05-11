@@ -42,19 +42,26 @@ public class EconomyManager {
         return SingletonHolder.INSTANCE;
     }
 
-    // Use ConcurrentHashMap for balances
-    private ConcurrentHashMap<UUID, BigDecimal> balancesCache;
+    // Use ConcurrentHashMap for balances — initialized at declaration so it is NEVER null,
+    // even when the economy module is disabled and the constructor returns early.
+    private ConcurrentHashMap<UUID, BigDecimal> balancesCache = new ConcurrentHashMap<>();
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
     // Use daemon thread to prevent blocking JVM shutdown
-private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-    Thread t = new Thread(r, "EconomyManager-Save");
-    t.setDaemon(true);
-    return t;
-});
+    private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "EconomyManager-Save");
+        t.setDaemon(true);
+        return t;
+    });
     private final AtomicBoolean saveQueued = new AtomicBoolean(false);
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
+    /**
+     * True only after the constructor has completed a full initialization
+     * (i.e. the economy module is enabled and balances have been loaded).
+     * Guards save/metrics methods so they are no-ops when the economy is disabled.
+     */
+    private volatile boolean initialized = false;
 
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
@@ -96,6 +103,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     private void saveBalancesAtomic() {
+        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
         if (!balancesFile.getParentFile().exists()) {
             //noinspection ResultOfMethodCallIgnored
             balancesFile.getParentFile().mkdirs();
@@ -192,6 +200,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     private void saveLastActivityAtomic() {
+        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
         if (!lastActivityFile.getParentFile().exists()) {
             //noinspection ResultOfMethodCallIgnored
             lastActivityFile.getParentFile().mkdirs();
@@ -233,7 +242,9 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     private EconomyManager() {
         // Check global config for module enable
         if (!ConfigManager.isEconomyEnabled()) {
-            // Economy is globally disabled, do not load balances or settings
+            // Economy is globally disabled, do not load balances or settings.
+            // balancesCache is still a valid (empty) map thanks to the field initializer —
+            // no NPE will occur if shutdown() is called before initialization.
             return;
         }
         // Configuration is loaded automatically by ConfigManager
@@ -249,6 +260,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
         saveExecutor.scheduleAtFixedRate(this::logCacheMetrics, 30, 30, TimeUnit.MINUTES);
         // Schedule inactive account cleanup every hour (no time window)
         saveExecutor.scheduleAtFixedRate(this::cleanupInactiveAccounts, 1, 1, TimeUnit.HOURS);
+        initialized = true;
     }
 
     public BigDecimal getBalance(UUID player) {
@@ -405,6 +417,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
      * Logs cache metrics for monitoring and debugging.
      */
     private void logCacheMetrics() {
+        if (!initialized) return;
         LOGGER.info("EconomyManager Cache Metrics - Size: {}", balancesCache.size());
     }
     
@@ -413,21 +426,28 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
      */
     public void shutdown() {
         LOGGER.info("Shutting down EconomyManager...");
-        
+
         // Set shutdown flag to prevent new operations
         shuttingDown.set(true);
-        
+
+        if (!initialized) {
+            // Economy was never enabled/initialized — nothing to save; just stop the executor.
+            LOGGER.info("EconomyManager was not initialized (economy disabled) — skipping save.");
+            saveExecutor.shutdownNow();
+            return;
+        }
+
         // Wait a moment for any in-flight operations to complete
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
+
         // Save any pending data (this will block)
         saveBalancesAtomic();
         saveLastActivityAtomic();
-        
+
         // Shutdown executor service
         saveExecutor.shutdown();
         try {
@@ -440,7 +460,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
             saveExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        
+
         LOGGER.info("EconomyManager shutdown complete.");
     }
     
