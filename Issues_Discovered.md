@@ -1,7 +1,14 @@
 ---
 ---
 #  Issues That Were Discovered
-- **NeoEssentials /help Pagination Broken (NeoForge 1.21.1, build.1.0.2.6+69)**  
+
+*(No open issues at this time — all discovered issues have been resolved.)*
+
+---
+
+# ✅ Issues That Were Fixed
+
+- **NeoEssentials /help Pagination Broken (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED**
   The `/help` command works for the first page, but `/help 2` (and subsequent pages) does not function at all.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 69`
@@ -16,15 +23,14 @@
         - Console reports error of "Unknown command or insufficient permissions".
     - Expected Behavior:
         - `/help <page>` should display the corresponding page of available commands.
-        -  Should work in console and for players, with correct page counts and navigation.
-    - Need to investigate:
-        - Whether NeoEssentials overrides vanilla `/help` pagination incorrectly.
-        - If Brigadier command registration fails to handle integer arguments for page numbers.
-        - Possible fix: ensure `/help` subcommand properly parses page arguments and retrieves paginated command lists.
+        - Should work in console and for players, with correct page counts and navigation.
+    - **Root Cause**: Vanilla `/help <command:string>` claimed `"2"` before NeoEssentials' integer `<page>` argument could fire. Additionally, `neoessentials.help` was missing from the `default` group so non-OP players were blocked entirely.
+    - **Fix**: Replaced integer `<page>` branch with a single `<page_or_command>` string argument that checks `Integer.parseInt()` first. Added `neoessentials.help` to the `default` group in `permissions.json`.
+    - Affected files: `HelpCommand.java`, `permissions.json`
 
 ---
 
-- **NeoEssentials Registry Key Error for Shop NPC (NeoForge 1.21.1, build.1.0.2.6+21)**  
+- **NeoEssentials Registry Key Error for Shop NPC (NeoForge 1.21.1, build.1.0.2.6+21) → ✅ FIXED**
   Client disconnects when server sends registries containing unknown keys related to NeoEssentials shop NPCs.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 21`
@@ -36,19 +42,18 @@
         - Client disconnects with warning:
           ```
           Client disconnected with reason: The server send registries with unknown keys: ResourceKey[minecraft:entity_type / neoessentials:shop_npc]
-          ```  
+          ```
         - Occurs when server attempts to sync registry data for NeoEssentials custom entity type `shop_npc`.
         - Client does not recognize the registry key, leading to forced disconnect.
     - Expected Behavior:
         - Client should recognize and handle NeoEssentials custom entity types without disconnecting.
-    - Need to investigate:
-        - Whether `shop_npc` entity type is properly registered on both client and server.
-        - If registry sync is missing client-side definitions.
-        - Possible fix: ensure NeoEssentials registers `shop_npc` entity type in client initialization, or mark it as server-only to avoid sync errors.
+    - **Root Cause**: NeoForge 21.1.x mandatorily synchronises every `DeferredRegister<EntityType<?>>` entry to clients during the login handshake. The custom `neoessentials:shop_npc` type was registered server-side only, so every vanilla client disconnected on join with the unknown-key error.
+    - **Fix**: Removed the custom `EntityType` entirely. Shop NPCs are now plain vanilla `ArmorStand` entities tagged with the NBT key `NeoEssentials_ShopId` (UUID value stored as two longs). Right-click interaction is intercepted by `ShopEntityRegistry` via `PlayerInteractEvent.EntityInteract` on the GAME event bus — no custom entity type registration required, no registry sync issue possible.
+    - Affected files: `ShopEntityRegistry.java`, `ShopNpcEntity.java`, `ShopEntityManager.java`
 
 ---
 
-- **NeoEssentials Permission Validation Ignores External Mod Permissions (NeoForge 1.21.1, builds 81–97)**  
+- **NeoEssentials Permission Validation Ignores External Mod Permissions (NeoForge 1.21.1, builds 81–97) → ✅ FIXED**
   Permission validation fails to recognize permission nodes from other mods (e.g., WorldEdit), and some NeoEssentials nodes are flagged as unknown.
     - Environment:
         - NeoEssentials Versions: `1.0.2.6 build 81` (last working), `1.0.2.6 build 87`, `1.0.2.6 build 97` (errors observed)
@@ -64,21 +69,22 @@
           ✗ Group 'architecte': Unknown permission 'worldedit.selection.pos'
           ⚠ PERMISSION VALIDATION FOUND 3 ISSUES!
           ⚠ Some permissions may not work correctly!
-          ```  
-        - Other mods’ permissions (e.g., WorldEdit) are not recognized.
+          ```
+        - Other mods' permissions (e.g., WorldEdit) are not recognized.
         - NeoEssentials-specific nodes (`neoessentials.chat.msgtoggle.bypass`) also flagged as unknown.
         - Builds 87 and 97 show errors, while build 81 still works correctly.
     - Expected Behavior:
         - NeoEssentials should respect and validate external mod permissions (WorldEdit, LuckPerms, etc.).
         - NeoEssentials permission nodes should be properly registered and recognized.
-    - Need to investigate:
-        - Whether permission registry initialization changed between builds 81 → 87 → 97.
-        - If NeoEssentials validator only checks its own nodes and ignores external ones.
-        - Possible fix: extend validator to include external mod permission namespaces, and ensure NeoEssentials nodes are registered before validation runs.
+    - **Root Cause 1**: `PermissionValidator` only checked nodes against the internal NeoEssentials registry. Any permission node whose namespace did not begin with `neoessentials.` was treated as unknown, generating spurious warnings for WorldEdit, LuckPerms, etc.
+    - **Root Cause 2**: `neoessentials.chat.msgtoggle.bypass` was not registered in `PermissionRegistry.registerAllPermissions()`.
+    - **Fix 1 (`PermissionValidator.java`)**: Validator now skips the "unknown" warning for any node whose namespace does not match `neoessentials` — external-mod nodes are silently accepted as valid. Warnings are only emitted for `neoessentials.*` nodes genuinely absent from the registry.
+    - **Fix 2 (`PermissionRegistry.java`)**: Registered `neoessentials.chat.msgtoggle.bypass` and all other missing nodes surfaced during audit in `registerAllPermissions()`.
+    - Affected files: `PermissionValidator.java`, `PermissionRegistry.java`
 
 ---
 
-- **NeoEssentials Default Permissions Not Applied with LuckPerms (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED**  
+- **NeoEssentials Default Permissions Not Applied with LuckPerms (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED**
   Default permissions documented for NeoEssentials are not being granted to users in the LuckPerms default group.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 69`
@@ -96,16 +102,14 @@
     - **Root Cause 1 — `externalAvailable` guard blocked registry defaults when LuckPerms was unhealthy**:
       `PermissionAPI.hasPermission()` guarded the registry-default fallback with `if (externalAvailable)`. When `LuckPermsAdapter` accumulated ≥ 5 consecutive failures (e.g. during startup before user data was cached), `isHealthy()` returned `false`, `externalAvailable = false`, and the registry-default block was never reached. Non-OP players lost all NeoEssentials default permissions without any visible error.
     - **Root Cause 2 — `queryTristate` called twice per check, doubling failure count**:
-      `hasPermission()` called `queryTristate` once, and if it returned anything other than `TRUE`, `checkRegistryDefault()` called `isExplicitlyDenied()` which called `queryTristate` a **second time** for the same node. Every failed load (user not in LuckPerms cache yet) incremented `consecutiveFailures` **twice**, causing the adapter to flip to "unhealthy" in half as many checks — directly triggering Root Cause 1.
+      `hasPermission()` called `queryTristate` once, and if it returned anything other than `TRUE`, `checkRegistryDefault()` called `isExplicitlyDenied()` which called `queryTristate` a **second time** for the same node. Every failed load incremented `consecutiveFailures` **twice**, causing the adapter to flip to "unhealthy" in half as many checks — directly triggering Root Cause 1.
     - **Root Cause 3 — Home command aliases conflicted with FTB Essentials**:
       Both NeoEssentials and FTB Essentials registered `/home`, `/sethome`, `/delhome`, and `/homes`, causing Brigadier node-merge conflicts. Neither mod's `requires()` predicate applied cleanly, so `/home` tab-completed but failed silently for players who lacked the conflicting mod's permission node.
-    - **Fix 1 (`PermissionAPI.java`)**: Removed the `if (externalAvailable)` guard from the registry-default block. Registry defaults are now always evaluated as a last resort before vanilla-OP fallback. When the adapter is healthy the cached `explicitDeny` flag is used (no extra API call). When the adapter is unhealthy `explicitDeny == null`, which is treated conservatively as "not denied" — NeoEssentials defaults still apply even when LuckPerms is temporarily unreachable.
-    - **Fix 2 (`PermissionAPI.java`)**: Eliminated the double `queryTristate` call. After `hasPermission()` returns `false`, the code immediately calls `isExplicitlyDenied()` once and caches the result in `Boolean explicitDeny`. `checkRegistryDefaultNoAdapterCall()` (new helper) then reads that cached value instead of calling back into the adapter, halving LuckPerms API calls per check and preventing premature failure-counter growth.
-    - **Fix 3 (`HomeCommands.java`)**: Added `CONFLICTING_HOME_MODS` detection (`ftbessentials`, `ftb_essentials`, `essentials`). Short aliases (`/h`, `/createhome`) are suppressed when a conflicting mod is present. A clear startup warning is logged. The `isCommandRegistered()` guard prevents duplicate registration even when the mod list is incomplete.
+    - **Fix 1 (`PermissionAPI.java`)**: Removed the `if (externalAvailable)` guard from the registry-default block. Registry defaults are now always evaluated as a last resort before vanilla-OP fallback. When the adapter is healthy the cached `explicitDeny` flag is used (no extra API call). When the adapter is unhealthy `explicitDeny == null`, treated conservatively as "not denied" — NeoEssentials defaults still apply even when LuckPerms is temporarily unreachable.
+    - **Fix 2 (`PermissionAPI.java`)**: Eliminated the double `queryTristate` call. After `hasPermission()` returns `false`, the code calls `isExplicitlyDenied()` once and caches the result in `Boolean explicitDeny`. New helper `checkRegistryDefaultNoAdapterCall()` reads that cached value instead of calling back into the adapter, halving LuckPerms API calls per check and preventing premature failure-counter growth.
+    - **Fix 3 (`HomeCommands.java`)**: Added `CONFLICTING_HOME_MODS` detection (`ftbessentials`, `ftb_essentials`, `essentials`). Short aliases (`/h`, `/createhome`) are suppressed when a conflicting mod is present. A clear startup warning is logged. The `isCommandRegistered()` guard prevents duplicate registration.
 
 ---
-
-# ✅ Issues That Were Fixed
 
 - **NeoEssentials Chat Config File Misread (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED in build.107**
   Chat configuration failed to load unless the file was symlinked or renamed.
@@ -738,33 +742,3 @@
   | `PlayerDataStore.java` | `flush()` now calls `dataDirectory.mkdirs()` before writing; logs ERROR if creation fails. |
   | `config.json` (bundled) | Added `teleportation.backSettings` section. |
 
-
-
-
-
-
-
-
-
-
-
-
-- **Economy integration**: Chest sign shops, Player Chest shops, Entity shops, dynamic pricing, CSV Dynamic pricing list import/export, and ect. more.
-- **Holographic displays**: Support for holographic displays to show any information.
-  5. **Per-group runtime commands**
-     `/tablist group <group> header|footer|reset` — adjust groups live without reloading config.
-  - Wildcard & Hierarchical Permissions: Support for wildcards (e.g., neoessentials.*) and hierarchical permission inheritance, so granting a parent node gives access to all child nodes.
-    Contextual Permissions: Allow permissions to be context-sensitive (e.g., per-world, per-channel, per-region, or time-based).
-    Dynamic Permission Reloading: Add a command or event to reload permissions without restarting the server.
-    Permission Checks in All Features: Ensure every command, event, and feature checks permissions strictly, including edge cases and new features.
-    Permission Debugging Tools: Add commands to debug/check a user's effective permissions, showing where a permission is granted or denied.
-    Permission Groups & Priorities: Allow group priorities, so if a user is in multiple groups, the highest priority group's permissions/prefixes/suffixes are used.
-    Permission Expiry: Support temporary permissions that expire after a set time or event.
-    API for Other Mods: Expose a clean API for other mods/plugins to check and register permissions.
-    Permission Aliases: Allow aliases for permission nodes for easier migration or compatibility.
-    Audit Logging: Log permission changes, grants, and denials for security and debugging.
-    GUI Management: Provide a web or in-game GUI for managing permissions, groups, and users.
-    Integration with External Systems: Improve and document integration with LuckPerms, FTB Ranks, and other permission mods, including fallback logic.
-    Permission Suggestions: When a command is denied, suggest the required permission node in the error message.
-    Fine-Grained Command Control: Allow per-argument or per-subcommand permissions (e.g., /home set vs /home delete).
-    Custom Permission Conditions: Allow custom logic for permission checks (e.g., based on player stats, inventory, or server state).
