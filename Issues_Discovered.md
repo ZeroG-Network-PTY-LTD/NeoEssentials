@@ -78,7 +78,7 @@
 
 ---
 
-- **NeoEssentials Default Permissions Not Applied with LuckPerms (NeoForge 1.21.1, build.1.0.2.6+69)**  
+- **NeoEssentials Default Permissions Not Applied with LuckPerms (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED**  
   Default permissions documented for NeoEssentials are not being granted to users in the LuckPerms default group.
     - Environment:
         - NeoEssentials Version: `1.0.2.6 build 69`
@@ -93,10 +93,15 @@
     - Expected Behavior:
         - NeoEssentials should correctly apply its documented default permissions to the LuckPerms default group.
         - Home aliases should not conflict when multiple mods are present.
-    - Need to investigate:
-        - Whether NeoEssentials default permissions are not injected into LuckPerms properly.
-        - If FTB Essentials overrides or blocks NeoEssentials permission defaults.
-        - Possible fix: ensure NeoEssentials default permissions are registered independently of other mods, and resolve alias conflicts with FTB Essentials.
+    - **Root Cause 1 — `externalAvailable` guard blocked registry defaults when LuckPerms was unhealthy**:
+      `PermissionAPI.hasPermission()` guarded the registry-default fallback with `if (externalAvailable)`. When `LuckPermsAdapter` accumulated ≥ 5 consecutive failures (e.g. during startup before user data was cached), `isHealthy()` returned `false`, `externalAvailable = false`, and the registry-default block was never reached. Non-OP players lost all NeoEssentials default permissions without any visible error.
+    - **Root Cause 2 — `queryTristate` called twice per check, doubling failure count**:
+      `hasPermission()` called `queryTristate` once, and if it returned anything other than `TRUE`, `checkRegistryDefault()` called `isExplicitlyDenied()` which called `queryTristate` a **second time** for the same node. Every failed load (user not in LuckPerms cache yet) incremented `consecutiveFailures` **twice**, causing the adapter to flip to "unhealthy" in half as many checks — directly triggering Root Cause 1.
+    - **Root Cause 3 — Home command aliases conflicted with FTB Essentials**:
+      Both NeoEssentials and FTB Essentials registered `/home`, `/sethome`, `/delhome`, and `/homes`, causing Brigadier node-merge conflicts. Neither mod's `requires()` predicate applied cleanly, so `/home` tab-completed but failed silently for players who lacked the conflicting mod's permission node.
+    - **Fix 1 (`PermissionAPI.java`)**: Removed the `if (externalAvailable)` guard from the registry-default block. Registry defaults are now always evaluated as a last resort before vanilla-OP fallback. When the adapter is healthy the cached `explicitDeny` flag is used (no extra API call). When the adapter is unhealthy `explicitDeny == null`, which is treated conservatively as "not denied" — NeoEssentials defaults still apply even when LuckPerms is temporarily unreachable.
+    - **Fix 2 (`PermissionAPI.java`)**: Eliminated the double `queryTristate` call. After `hasPermission()` returns `false`, the code immediately calls `isExplicitlyDenied()` once and caches the result in `Boolean explicitDeny`. `checkRegistryDefaultNoAdapterCall()` (new helper) then reads that cached value instead of calling back into the adapter, halving LuckPerms API calls per check and preventing premature failure-counter growth.
+    - **Fix 3 (`HomeCommands.java`)**: Added `CONFLICTING_HOME_MODS` detection (`ftbessentials`, `ftb_essentials`, `essentials`). Short aliases (`/h`, `/createhome`) are suppressed when a conflicting mod is present. A clear startup warning is logged. The `isCommandRegistered()` guard prevents duplicate registration even when the mod list is incomplete.
 
 ---
 
