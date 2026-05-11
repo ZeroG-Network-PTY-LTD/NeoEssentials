@@ -151,10 +151,17 @@ public class PermissionAPI {
 
         // ── External permission adapter path ──────────────────────────────────
         // Try external first. If unhealthy or throwing, fall through to internal
-        // and then to the vanilla-OP fallback.
+        // and then to the registry-default / vanilla-OP fallbacks.
         if (externalAdapter != null) {
             LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
             boolean externalAvailable = externalAdapter.isAvailable() && externalAdapter.isHealthy();
+
+            // explicitDeny caches the result of isExplicitlyDenied() so that we avoid
+            // calling queryTristate a second time inside checkRegistryDefault.
+            // null  = not yet determined (adapter unavailable or threw)
+            // true  = adapter confirmed an intentional revocation (Tristate.FALSE)
+            // false = adapter said UNDEFINED (no opinion) or TRUE
+            Boolean explicitDeny = null;
 
             if (externalAvailable) {
                 try {
@@ -165,15 +172,24 @@ public class PermissionAPI {
                         LOGGER.debug("═══════════════════════");
                         return true;
                     }
-                    // External said "no" — fall through to vanilla-OP fallback below.
-                    LOGGER.debug("External denied '{}', checking vanilla OP fallback", permission);
+                    // Not explicitly granted — check once whether it is explicitly denied.
+                    // Caching the result here avoids a second queryTristate call inside
+                    // checkRegistryDefault, which would double-count consecutive failures.
+                    try {
+                        explicitDeny = externalAdapter.isExplicitlyDenied(uuid, permission);
+                    } catch (Exception ex2) {
+                        LOGGER.debug("isExplicitlyDenied threw for '{}' — treating as not denied: {}",
+                                permission, ex2.getMessage());
+                        explicitDeny = false;
+                    }
+                    LOGGER.debug("External '{}': no explicit grant; explicitDeny={}", permission, explicitDeny);
                 } catch (Exception ex) {
                     LOGGER.warn("External permission adapter '{}' threw during hasPermission('{}') — falling back: {}",
                             externalAdapter.getName(), permission, ex.getMessage());
-                    // fall through to internal then vanilla-OP fallback
+                    // fall through to internal then registry-default / vanilla-OP fallback
                 }
             } else {
-                LOGGER.warn("External permission adapter '{}' is UNHEALTHY (failures: {}) — using internal fallback",
+                LOGGER.warn("External permission adapter '{}' is UNHEALTHY (failures: {}) — using internal/registry fallback",
                         externalAdapter.getName(), externalAdapter.getConsecutiveFailures());
             }
 
@@ -191,18 +207,29 @@ public class PermissionAPI {
             }
 
             // ── Registry-default fallback ─────────────────────────────────────
-            // If the permission has defaultValue=true in PermissionRegistry AND the
-            // external system did NOT explicitly deny it (Tristate.FALSE), grant it.
-            // This covers the common case where LuckPerms simply has no entry for a
-            // permission node (Tristate.UNDEFINED) — users should still get NeoEssentials
-            // defaults without needing to manually add every node to LuckPerms.
-            if (externalAvailable) {
-                boolean registryDefault = checkRegistryDefault(uuid, permission, externalAdapter);
+            // Apply NeoEssentials documented defaults unconditionally so that users
+            // are never locked out simply because LuckPerms became temporarily
+            // unhealthy or has no explicit node for a permission.
+            //
+            // • When the adapter is healthy we already know whether it explicitly denied
+            //   the node (cached in explicitDeny above) — pass that result directly to
+            //   avoid a second LuckPerms queryTristate call and the double-failure-count
+            //   bug that went with it.
+            //
+            // • When the adapter is unhealthy / unavailable (explicitDeny == null) we
+            //   cannot distinguish "denied" from "unknown", so we conservatively treat
+            //   the node as not explicitly denied and still honour the registry default.
+            //   This is the safer choice: grant defaults rather than lock everyone out.
+            boolean explicitlyDenied = Boolean.TRUE.equals(explicitDeny); // false when null (unknown) or false
+            if (!explicitlyDenied) {
+                boolean registryDefault = checkRegistryDefaultNoAdapterCall(permission);
                 if (registryDefault) {
-                    LOGGER.debug("Result: TRUE (registry default — external had no opinion)");
+                    LOGGER.debug("Result: TRUE (registry default — external had no opinion or was unavailable)");
                     LOGGER.debug("═══════════════════════");
                     return true;
                 }
+            } else {
+                LOGGER.debug("Registry default suppressed: external adapter explicitly denied '{}'", permission);
             }
 
             // ── Vanilla OP fallback (last resort after external+internal both failed/denied) ──
@@ -228,7 +255,7 @@ public class PermissionAPI {
         // ── Registry-default fallback (internal-only path) ────────────────────
         // No external adapter is active; check whether the permission has
         // defaultValue=true in the registry and grant it if so.
-        boolean registryDefault = checkRegistryDefault(uuid, permission, null);
+        boolean registryDefault = checkRegistryDefaultNoAdapterCall(permission);
         if (registryDefault) {
             LOGGER.debug("Result: TRUE (registry default — internal had no entry)");
             LOGGER.debug("═══════════════════════");
@@ -240,43 +267,34 @@ public class PermissionAPI {
     }
 
     /**
-     * Registry-default fallback.
+     * Registry-default fallback — <em>without</em> calling back into the external adapter.
      *
-     * <p>Grants the permission if:
-     * <ol>
-     *   <li>It is registered in {@link PermissionRegistry} with {@code defaultValue=true},
-     *   AND</li>
-     *   <li>The external adapter (if any) did NOT explicitly deny it — i.e. the external
-     *       system's answer was "undefined / no opinion", not an intentional revocation.</li>
-     * </ol>
+     * <p>Used by both:
+     * <ul>
+     *   <li>The external-adapter path in {@link #hasPermission} where the
+     *       explicit-deny status is already known (cached as {@code explicitDeny}) so
+     *       a second {@code queryTristate} call is unnecessary and would double-count
+     *       consecutive failures, potentially flipping the adapter to "unhealthy" faster.</li>
+     *   <li>The pure-internal path where no external adapter is configured at all.</li>
+     * </ul>
      *
-     * <p>Pass {@code null} for {@code adapter} when running the internal-only path.
+     * <p>The caller is responsible for checking explicit-deny <em>before</em>
+     * calling this method and skipping it when an explicit deny is confirmed.
      *
-     * @param adapter the active external adapter, or {@code null} if none
-     * @return {@code true} if the registry default should grant the permission
+     * @param permission the permission node to check
+     * @return {@code true} when the permission is registered with {@code defaultValue=true}
      */
-    private static boolean checkRegistryDefault(UUID uuid, String permission,
-                                                ExternalPermissionAdapter adapter) {
+    private static boolean checkRegistryDefaultNoAdapterCall(String permission) {
         try {
             PermissionRegistry registry = PermissionRegistry.getInstance();
             PermissionRegistry.PermissionInfo info = registry.getPermissionInfo(permission);
             if (info == null || !info.getDefaultValue()) {
-                return false; // not a default-true permission
+                return false;
             }
-
-            // If the external adapter is available and it has an *explicit* deny,
-            // respect that — the admin intentionally revoked the permission.
-            if (adapter != null && adapter.isAvailable()) {
-                if (adapter.isExplicitlyDenied(uuid, permission)) {
-                    LOGGER.debug("Registry default suppressed: external adapter explicitly denied '{}'", permission);
-                    return false;
-                }
-            }
-
-            LOGGER.debug("Registry default applies for '{}' (defaultValue=true, not explicitly denied)", permission);
+            LOGGER.debug("Registry default applies for '{}' (defaultValue=true, explicit-deny already confirmed as false)", permission);
             return true;
         } catch (Exception e) {
-            LOGGER.debug("Error checking registry default for '{}': {}", permission, e.getMessage());
+            LOGGER.debug("Error checking registry default (no-adapter path) for '{}': {}", permission, e.getMessage());
             return false;
         }
     }
