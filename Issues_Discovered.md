@@ -2,11 +2,117 @@
 ---
 #  Issues That Were Discovered
 
-*(No open issues at this time — all discovered issues have been resolved.)*
-
 ---
 
 # ✅ Issues That Were Fixed
+
+- **NeoEssentials AFK Kick Timeout Not Working (NeoForge 1.21.1, build.1.0.2.6+119)**
+  Players were never kicked for being AFK even when `kickTimeout` was set to a value greater than 0 in config.
+    - Root Causes:
+        1. **Hidden `kickAfkPlayers` gate**: `loadConfiguration()` only set `kickAfkPlayers = true` when the JSON key `"kickAfkPlayers": true` was explicitly present in config. The bundled `config.json` never included this key, so `kickAfkPlayers` stayed `false` — silently suppressing all AFK kicks regardless of `kickTimeout`.
+        2. **`neoessentials.afk.exempt` permission not enforced**: `checkForAfkPlayers()` never checked the kick-exempt permission before disconnecting a player, making the permission node effectively non-functional.
+        3. **Wiki listed wrong permission name**: Wiki said `neoessentials.afk.kickexempt`; the actual registered node is `neoessentials.afk.exempt`.
+    - Fix Applied:
+        - **`AfkManager.loadConfiguration()`**: Timeout keys (`kickTimeout` / `kickTimeoutMinutes`) are now parsed **before** `kickAfkPlayers` is evaluated. When `"kickAfkPlayers"` is absent from config, it is auto-derived as `true` whenever `kickTimeout > 0`. Setting `"kickAfkPlayers": false` explicitly still force-disables kicking.
+        - **`AfkManager.checkForAfkPlayers()`**: Added `PermissionAPI.hasPermission(uuid, "neoessentials.afk.exempt")` check before the kick block — players with this permission are skipped.
+        - **`config.json`** (`afk` section): Added `timeout_comment`, `kickTimeout_comment`, and `kickAfkPlayers_comment` inline documentation so server admins know that only `kickTimeout > 0` is needed to activate AFK kicking.
+        - **`AFKSystem.md` wiki**: Fixed permission name from `neoessentials.afk.kickexempt` → `neoessentials.afk.exempt` to match `PermissionRegistry`.
+
+- **NeoEssentials Teleportation Safety Checks Ignored Config (NeoForge 1.21.1, build.1.0.2.6+119)**
+  Safety checks ran unconditionally even when all safety flags were disabled in config, causing `/back` to fail with *"No safe landing spot found"* for destinations in caves, underground bases, or any location that didn't pass the `isSafe()` check.
+    - Root Causes:
+        1. **Missing `enableBackSafety` key in bundled `config.json`**: The `backSettings` section had no `enableBackSafety` key, so `ConfigManager.isBackTeleportSafetyEnabled()` always returned the hardcoded default `true`. Server admins had no way to disable back-teleport safety even if they wanted to, because the key wasn't present to configure.
+        2. **Hardcoded `findSafe=true` in `/top`, `/jump`, `/jumpto`**: `MiscTeleportManager.teleportToTop()`, `teleportJump()`, and `teleportToLookingAt()` all called `TeleportUtil.teleportPlayer(..., true)` unconditionally. These commands already compute a valid destination themselves (top block scan, open-air scan, player look-at), so re-running `findSafeLocation()` was redundant and could fail on valid spots.
+    - Fix Applied:
+        - **`config.json`** (`teleportation.backSettings`): Added `"enableBackSafety": true` with descriptive comment so admins can set it to `false` to skip safety enforcement on `/back`.
+        - **`MiscTeleportManager.java`**: Changed `teleportToTop()`, `teleportJump()`, and `teleportToLookingAt()` to pass `findSafe=false` to `TeleportUtil.teleportPlayer()`. These methods already guarantee a valid open-air destination, making the redundant safety scan both unnecessary and harmful.
+        - `/tpr` (random teleport) intentionally retains `findSafe=true` since random coordinates are not pre-validated.
+
+- **NeoEssentials Economy Manager NullPointerException on Shutdown (NeoForge 1.21.1, build.1.0.2.6+119) → ✅ FIXED**
+  Server shutdown threw an NPE deep inside `EconomyManager`, crashing the shutdown sequence with a stack trace.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 119`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Server log on stop:
+          ```
+          Failed to shutdown Economy Manager
+          java.lang.NullPointerException: Cannot invoke "ConcurrentHashMap.entrySet()" because "this.balancesCache" is null
+          ```
+        - Only occurred when the economy module was **disabled** in config.
+    - **Root Cause**: `balancesCache` was declared as a bare field (`private ConcurrentHashMap<UUID, BigDecimal> balancesCache;`) with no initializer. The `EconomyManager` constructor exits early when `ConfigManager.isEconomyEnabled()` returns `false` — before the line `balancesCache = new ConcurrentHashMap<>()` was ever reached. When `shutdown()` called `saveBalancesAtomic()`, the method immediately dereferenced the null field via `balancesCache.entrySet()`. The same null field would have caused NPEs in `logCacheMetrics()`, `getAllBalances()`, and `getCacheStats()` for the same reason.
+    - **Fix**:
+        1. **Initialized `balancesCache` at the field declaration** (`= new ConcurrentHashMap<>()`) so it is never `null` regardless of whether the constructor completes fully.
+        2. Added an `initialized` boolean flag set to `true` only once the constructor finishes a full initialization (economy enabled, balances loaded, tasks scheduled).
+        3. Added `if (!initialized) return;` guards at the top of `saveBalancesAtomic()`, `saveLastActivityAtomic()`, and `logCacheMetrics()` — so when the economy is disabled, these no-ops emit nothing and write no files.
+        4. In `shutdown()`, added the same `initialized` check: if the economy was never initialized, the executor is stopped immediately with `shutdownNow()` and a clear log message is emitted instead of proceeding to the (now-redundant) save calls.
+    - Affected files: `EconomyManager.java`
+
+---
+
+- **NeoEssentials Duplicate Translation Keys (NeoForge 1.21.1, build.1.0.2.6+119) → ✅ FIXED**
+  JAR translations failed to load due to duplicate keys in `en_us.json`, causing `JsonSyntaxException` at startup and leaving all translation keys null.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 119`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Server log at startup:
+          ```
+          Failed to load JAR translations: duplicate key: commands.neoessentials.teleport.home.delete_no_pending
+          com.google.gson.JsonSyntaxException: duplicate key: commands.neoessentials.teleport.home.delete_no_pending
+          ```
+        - All translation keys returned `null`; players saw raw key names or garbled text.
+        - Version-merge logic never ran, so deployed server lang files were never updated.
+    - **Root Cause**: `en_us.json` contained 13 duplicate keys across several sections:
+        - `commands.neoessentials.teleport.home.delete_no_pending` (×2)
+        - Five `commands.neoessentials.kits.admin.*` keys each defined twice
+        - `commands.neoessentials.seen.online` and `seen.offline` (×2 each)
+        - `commands.neoessentials.realname.not_found` (×2)
+        - `commands.neoessentials.teleport.admin.tpall.no_players` (×2)
+        - `commands.neoessentials.general.player_not_found` (×2 — identical)
+        - A missing comma between `mutelist.list` and `gamemode.spectator` caused an additional JSON syntax error.
+        Gson (used by the mod on NeoForge 21.1.x) throws `JsonSyntaxException` on duplicate keys.
+    - **Fix**: Removed all duplicate entries from `en_us.json`, keeping the best version of each; fixed the missing comma. Bumped `_langVersion` from `15` → `16` in `MessageUtil.java` so all deployed server-side lang files are automatically re-merged on next server start.
+    - Affected files: `src/main/resources/data/lang/en_us.json`, `MessageUtil.java`
+
+---
+
+- **NeoEssentials Home Delete Message Formatting Failure (NeoForge 1.21.1, build.1.0.2.6+119) → ✅ FIXED**
+  Deleting a home triggered a `MessageFormat` exception, displaying a raw error in the log and falling back to the unformatted template string.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 119`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Log error on `/delhome`:
+          ```
+          Failed to format message - Key: commands.neoessentials.teleport.home.delete_success,
+          Template: 'Home '{HOME}' has been deleted successfully.', Args: [base],
+          Error: can't parse argument number: 'HOME'
+          ```
+        - Player saw unformatted template text; home name was never interpolated.
+    - **Root Cause**: Two separate problems interacted:
+        1. Some deployed server-side lang files contained legacy `{HOME}`-style named placeholders (e.g. `Home '{HOME}' has been deleted successfully.`) from an older version of the mod before positional `{0}` args were adopted.
+        2. The `escapeNamedPlaceholders()` method in `MessageUtil` tried to wrap named tokens in MessageFormat quote spans (`'{'NAME'}'`), but when a token was already surrounded by single-quotes in the template (e.g. `'{HOME}'`), the resulting string `''{'HOME'}''` was mis-parsed by `MessageFormat`, causing `can't parse argument number: 'HOME'`.
+        Because the JAR translations **failed to load** (due to the duplicate-key bug above), the version-merge never triggered, so old server files remained in use indefinitely.
+    - **Fix**:
+        - **Removed `MessageFormat` from the localization pipeline entirely.** `MessageUtil.localize()` now uses a simple custom `applyArgs()` method that:
+          - Converts `''` → `'` (backward-compat with existing templates that use MessageFormat-style single-quote escaping),
+          - Replaces `{0}`, `{1}`, … with the corresponding positional args via `String.replace()`,
+          - Leaves all named tokens (`{HOME}`, `{MESSAGE}`, `{neoessentials_*}`) untouched for later resolution by `PlaceholderAPI`.
+        - Added **automatic migration** of legacy `{HOME}`-style keys during the version-bump merge: if a key in the deployed server file still contains an uppercase named placeholder (`{[A-Z][A-Z0-9_]+}`) but the JAR version has a positional `{0}`, the server file value is overwritten with the JAR value.
+        - Bumped `CURRENT_LANG_VERSION` to `16` to trigger the merge on all existing deployments.
+    - Affected files: `MessageUtil.java`
+
+---
 
 - **NeoEssentials /help Pagination Broken (NeoForge 1.21.1, build.1.0.2.6+69) → ✅ FIXED**
   The `/help` command works for the first page, but `/help 2` (and subsequent pages) does not function at all.

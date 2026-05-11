@@ -317,6 +317,11 @@ public class AfkManager {
 
             // Check if AFK player should be kicked (only if kick timeout is > 0 and feature is enabled)
             if (kickAfkPlayers && afkKickTimeoutMs > 0 && data.isAfk()) {
+                // Skip players with the kick-exempt permission
+                if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(uuid, "neoessentials.afk.exempt")) {
+                    continue;
+                }
+
                 long afkDuration = currentTime - data.getAfkStartTime();
 
                 // Warn player 60 seconds before kick
@@ -398,32 +403,39 @@ public class AfkManager {
             this.broadcastReturnMessages = this.broadcastAfkMessages;
         }
 
-        // AFK kick settings - DISABLED by default to prevent unexpected kicks
-        // Only enable if explicitly set to true in config
-        this.kickAfkPlayers = afkConfig.has("kickAfkPlayers") &&
-            afkConfig.get("kickAfkPlayers").getAsBoolean();
-
-        LOGGER.info("AFK kick feature: {}", this.kickAfkPlayers ? "ENABLED" : "DISABLED");
-
+        // AFK kick settings: parse timeout FIRST, then derive kickAfkPlayers from it.
+        // This ensures that users only need to set kickTimeout > 0 to enable AFK kicks,
+        // matching the documented behaviour: kickTimeout = 0 means disabled.
         // Support both 'kickTimeout' (seconds) and 'kickTimeoutMinutes' (minutes) for compatibility
         if (afkConfig.has("kickTimeout")) {
             long kickTimeoutSeconds = afkConfig.get("kickTimeout").getAsLong();
-            this.afkKickTimeoutMs = kickTimeoutSeconds > 0 ? kickTimeoutSeconds * 1000 : 0;
-            if (this.kickAfkPlayers && kickTimeoutSeconds > 0) {
+            this.afkKickTimeoutMs = kickTimeoutSeconds > 0 ? kickTimeoutSeconds * 1000L : 0;
+            if (kickTimeoutSeconds > 0) {
                 LOGGER.info("AFK kick timeout: {} seconds ({} minutes)", kickTimeoutSeconds, kickTimeoutSeconds / 60);
             }
         } else if (afkConfig.has("kickTimeoutMinutes")) {
             long kickTimeoutMinutes = afkConfig.get("kickTimeoutMinutes").getAsLong();
-            this.afkKickTimeoutMs = kickTimeoutMinutes > 0 ? kickTimeoutMinutes * 60000 : 0;
-            if (this.kickAfkPlayers && kickTimeoutMinutes > 0) {
+            this.afkKickTimeoutMs = kickTimeoutMinutes > 0 ? kickTimeoutMinutes * 60000L : 0;
+            if (kickTimeoutMinutes > 0) {
                 LOGGER.info("AFK kick timeout: {} minutes", kickTimeoutMinutes);
             }
         } else {
-            // Default 30 minutes, but only matters if kickAfkPlayers is enabled
-            this.afkKickTimeoutMs = 1800000;
+            // No timeout key present; default to 0 (disabled)
+            this.afkKickTimeoutMs = 0;
         }
 
-        // Warn if kick is enabled with 0 timeout (would kick immediately!)
+        // Determine kickAfkPlayers:
+        // - If explicitly set in config, honour that value (allows force-disabling even with timeout > 0)
+        // - Otherwise auto-derive: kick is enabled whenever kickTimeout > 0
+        if (afkConfig.has("kickAfkPlayers")) {
+            this.kickAfkPlayers = afkConfig.get("kickAfkPlayers").getAsBoolean();
+        } else {
+            this.kickAfkPlayers = this.afkKickTimeoutMs > 0;
+        }
+
+        LOGGER.info("AFK kick feature: {}", this.kickAfkPlayers ? "ENABLED" : "DISABLED");
+
+        // Warn if kick is enabled with 0 timeout (would kick immediately!) – guard against explicit misconfiguration
         if (this.kickAfkPlayers && this.afkKickTimeoutMs == 0) {
             LOGGER.error("AFK kick is ENABLED but timeout is 0! This would kick players immediately. Setting to 30 minutes default.");
             this.afkKickTimeoutMs = 1800000; // Force 30 minutes minimum

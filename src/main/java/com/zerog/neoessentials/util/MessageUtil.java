@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 15;
+    private static final int CURRENT_LANG_VERSION = 16;
 
     /**
      * Load translations from server directory, updating from JAR if needed.
@@ -88,10 +88,23 @@ public class MessageUtil {
                     Map<String, String> jarTranslations = loadJarTranslations();
                     if (jarTranslations != null) {
                         int added = 0;
+                        int updated = 0;
+                        java.util.regex.Pattern legacyNamedPattern =
+                            java.util.regex.Pattern.compile("\\{[A-Z][A-Z0-9_]+}");
                         for (Map.Entry<String, String> e : jarTranslations.entrySet()) {
                             if (!finalTranslations.containsKey(e.getKey())) {
                                 finalTranslations.put(e.getKey(), e.getValue());
                                 added++;
+                            } else {
+                                // Update keys where server still has legacy {HOME}/{NAME} style
+                                // but the JAR now uses positional {0}/{1} style
+                                String serverVal = finalTranslations.get(e.getKey());
+                                if (serverVal != null
+                                        && legacyNamedPattern.matcher(serverVal).find()
+                                        && e.getValue().contains("{0}")) {
+                                    finalTranslations.put(e.getKey(), e.getValue());
+                                    updated++;
+                                }
                             }
                         }
                         finalTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
@@ -101,8 +114,8 @@ public class MessageUtil {
                         } catch (Exception ex) {
                             LOGGER.warn("NeoEssentials: could not save merged lang file: {}", ex.getMessage());
                         }
-                        LOGGER.info("NeoEssentials: merged {} new translation keys (total: {})",
-                            added, finalTranslations.size());
+                        LOGGER.info("NeoEssentials: merged {} new + {} updated translation keys (total: {})",
+                            added, updated, finalTranslations.size());
                     }
                 }
                 translations.putAll(finalTranslations);
@@ -221,18 +234,14 @@ public class MessageUtil {
     /**
      * Escape non-numeric {@code {NAME}} placeholders so {@link MessageFormat} leaves them untouched.
      *
-     * <p>MessageFormat uses single-quote pair escaping: {@code '{'NAME'}'} is rendered as the
-     * literal string {@code {NAME}}.  This lets NeoEssentials placeholders such as
-     * {@code {neoessentials_displayname}} and {@code {MESSAGE}} survive the localization call
-     * intact and be resolved later by {@link com.zerog.neoessentials.api.PlaceholderAPI}.</p>
-     *
-     * <p>Tokens that begin with a digit — e.g. {@code {0}}, {@code {1}} — are left unchanged
-     * so that positional {@code MessageFormat} substitution still works normally.</p>
+     * @deprecated No longer used — {@link #localize} now uses simple positional substitution
+     *             instead of {@link java.text.MessageFormat}, so named placeholders are naturally
+     *             left intact for later resolution by
+     *             {@link com.zerog.neoessentials.api.PlaceholderAPI}.
      */
+    @Deprecated
     private static String escapeNamedPlaceholders(String s) {
-        // Regex: match { followed by a non-digit non-special char, then any non-} chars, then }
-        // Examples matched: {neoessentials_displayname}, {MESSAGE}, {PLAYER}
-        // Examples NOT matched: {0}, {1,number}, {2,date} — starts with digit
+        // Kept for API compatibility only — no longer called in core localize path.
         return s.replaceAll("\\{([^0-9'{}][^}]*)}", "'{'$1'}'");
     }
 
@@ -299,6 +308,39 @@ public class MessageUtil {
     }
 
     /**
+     * Apply positional arguments to a template string.
+     *
+     * <p>Substitution rules (in order):
+     * <ol>
+     *   <li>{@code ''} → literal {@code '} (MessageFormat-style escaped single-quote, kept for
+     *       backward-compat with existing translation files).</li>
+     *   <li>{@code %s} → first argument (legacy shorthand).</li>
+     *   <li>{@code {0}}, {@code {1}}, … → corresponding element of {@code args}.</li>
+     * </ol>
+     * Named tokens such as {@code {HOME}}, {@code {MESSAGE}}, or
+     * {@code {neoessentials_displayname}} are left untouched for later resolution by
+     * {@link com.zerog.neoessentials.api.PlaceholderAPI} or
+     * {@link #resolveTemplate}.
+     * </p>
+     */
+    private static String applyArgs(String template, Object... args) {
+        if (template == null) return "";
+        // MessageFormat-style double-single-quote escape: '' → '
+        String result = template.replace("''", "'");
+        // Legacy %s → first arg
+        if (args != null && args.length > 0) {
+            result = result.replace("%s", args[0] != null ? args[0].toString() : "");
+        }
+        // Positional {0}, {1}, {2}, … substitution
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                result = result.replace("{" + i + "}", args[i] != null ? args[i].toString() : "");
+            }
+        }
+        return result;
+    }
+
+    /**
      * Get a localized string with optional arguments.
      * Falls back to a human-readable form of the key if the key is not found.
      *
@@ -321,12 +363,9 @@ public class MessageUtil {
         }
 
         try {
-            // Escape named {TOKEN} placeholders so MessageFormat does not try to parse them
-            // as argument indices — they will be resolved later by PlaceholderAPI.
-            String escaped = escapeNamedPlaceholders(template.replace("%s", "{0}"));
-            String result = MessageFormat.format(escaped, args);
+            String result = applyArgs(template, args);
             if (debugMode) {
-                LOGGER.info("MessageFormat success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
+                LOGGER.info("localize success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
                     key, template, java.util.Arrays.toString(args), result);
             }
             return result;
@@ -352,8 +391,7 @@ public class MessageUtil {
         }
 
         try {
-            String escaped = escapeNamedPlaceholders(template.replace("%s", "{0}"));
-            return MessageFormat.format(escaped, args);
+            return applyArgs(template, args);
         } catch (Exception e) {
             LOGGER.error("Failed to format message with fallback - Key: {}, Template: '{}', Error: {}",
                 key, template, e.getMessage(), e);

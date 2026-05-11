@@ -51,6 +51,7 @@ public class MiscTeleportManager {
     private boolean enableDeathBack = true;
     private boolean enableTeleportBack = true;
     private int backCooldownSeconds = 0; // 0 = no cooldown
+    private boolean enableBackSafety = true; // teleportation.backSettings.enableBackSafety
 
     // Cooldown tracking for /back
     private final Map<UUID, Long> lastBackTimestamps = new ConcurrentHashMap<>();
@@ -68,6 +69,7 @@ public class MiscTeleportManager {
             teleportDelay = cfg.getBackTeleportDelay();
             enableDeathBack = cfg.isDeathBackEnabled();
             enableTeleportBack = cfg.isTeleportBackEnabled();
+            enableBackSafety = cfg.isBackTeleportSafetyEnabled();
             // Read back cooldown from config (check backSettings first, then legacy miscSettings)
             try {
                 com.google.gson.JsonObject config = cfg.getConfig(ConfigManager.MAIN_CONFIG);
@@ -88,8 +90,8 @@ public class MiscTeleportManager {
                     }
                 }
             } catch (Exception ignored) {}
-            LOGGER.info("[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}",
-                teleportDelay, backCooldownSeconds, enableDeathBack, enableTeleportBack);
+        LOGGER.info("[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}, backSafety={}",
+            teleportDelay, backCooldownSeconds, enableDeathBack, enableTeleportBack, enableBackSafety);
         } catch (Exception e) {
             LOGGER.warn("Failed to load MiscTeleportManager config, using defaults: {}", e.getMessage());
         }
@@ -291,7 +293,7 @@ public class MiscTeleportManager {
         if (delayTicks > 0) {
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.back_warmup", teleportDelay));
         }
-        TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, true).thenAccept(result -> {
+        TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, enableBackSafety).thenAccept(result -> {
             if (result.isSuccess()) {
                 // Check if another teleport updated the back slot during our warmup.
                 boolean interveningTeleport =
@@ -365,7 +367,7 @@ public class MiscTeleportManager {
         
         // Perform the teleport
         int delayTicks = teleportDelay * 20;
-        TeleportUtil.teleportPlayer(player, deathLocation, delayTicks, true).thenAccept(result -> {
+        TeleportUtil.teleportPlayer(player, deathLocation, delayTicks, enableBackSafety).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
                 
@@ -556,7 +558,9 @@ public class MiscTeleportManager {
                 );
                 
                 int delayTicks = teleportDelay * 20;
-                TeleportUtil.teleportPlayer(player, topLocation, delayTicks, true).thenAccept(result -> {
+                // /top already found a solid block — safety check is redundant and would
+                // re-run findSafeLocation on an already-safe spot; skip it.
+                TeleportUtil.teleportPlayer(player, topLocation, delayTicks, false).thenAccept(result -> {
                     if (result.isSuccess()) {
                         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.top_success"));
                         LOGGER.info("Player {} teleported to top at Y={}", player.getName().getString(), targetY);
@@ -603,7 +607,8 @@ public class MiscTeleportManager {
                 );
                 
                 int delayTicks = teleportDelay * 20;
-                TeleportUtil.teleportPlayer(player, jumpLocation, delayTicks, true).thenAccept(result -> {
+                // /jump scanned for open air space — safety check not needed.
+                TeleportUtil.teleportPlayer(player, jumpLocation, delayTicks, false).thenAccept(result -> {
                     if (result.isSuccess()) {
                         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.jump_success"));
                         LOGGER.info("Player {} jumped through walls to distance {}", player.getName().getString(), finalDistance);
@@ -641,7 +646,9 @@ public class MiscTeleportManager {
             );
             
             int delayTicks = teleportDelay * 20;
-            TeleportUtil.teleportPlayer(player, jumpToLocation, delayTicks, true).thenAccept(result -> {
+            // /jumpto targets a block the player explicitly looked at — skip safety
+            // re-scan so players can intentionally teleport to wall-adjacent spots.
+            TeleportUtil.teleportPlayer(player, jumpToLocation, delayTicks, false).thenAccept(result -> {
                 if (result.isSuccess()) {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.jumpto_success"));
                     LOGGER.info("Player {} teleported to looking at: {}", player.getName().getString(), targetPos);

@@ -2674,6 +2674,24 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if back/death teleport safety is enabled in teleportation.backSettings config section.
+     * Key: teleportation.backSettings.enableBackSafety (defaults to true when absent).
+     */
+    public boolean isBackTeleportSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("backSettings")) {
+                JsonObject backSettings = tp.getAsJsonObject("backSettings");
+                if (backSettings.has("enableBackSafety")) {
+                    return backSettings.get("enableBackSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true for safety
+    }
+
+    /**
      * Returns true if home teleport safety is enabled in teleportation.homeSettings config section.
      * Accepts both "enableHomeTeleportSafety" (canonical) and "enableHomeSafety" (alias, consistent with enableWarpSafety).
      * (teleportation.homeSettings.enableHomeTeleportSafety or teleportation.homeSettings.enableHomeSafety)

@@ -16,7 +16,8 @@ The AFK system automatically marks players as AFK after a configurable period of
 |---|---|---|
 | `enabled` | `true` | Enable/disable the AFK system |
 | `timeout` | `300` | Seconds of inactivity before a player is marked AFK |
-| `kickTimeout` | `0` | Seconds after going AFK before being kicked (0 = disabled) |
+| `kickTimeout` | `0` | Seconds after going AFK before being kicked (0 = disabled). Setting this to any value `> 0` automatically enables AFK kicking. |
+| `kickAfkPlayers` | *(auto)* | Optional explicit override. Omit this key (recommended) and let `kickTimeout > 0` enable kicking. Set to `false` to force-disable kicking even if `kickTimeout > 0`. |
 | `afkkickMessage` | `"Kicked for being AFK too long"` | Message shown on AFK kick |
 | `enableafkBroadcasts` | `true` | Broadcast AFK status changes to all players |
 | `broadcastOnAfk` | `true` | Broadcast when a player goes AFK |
@@ -55,7 +56,7 @@ The AFK system automatically marks players as AFK after a configurable period of
 |---|---|---|
 | `neoessentials.afk` | ✅ | Use `/afk` to manually toggle AFK |
 | `neoessentials.afk.others` | 🔒 | Force another player in/out of AFK |
-| `neoessentials.afk.kickexempt` | 🔒 | Exempt from AFK kick timer |
+| `neoessentials.afk.exempt` | 🔒 | Exempt from AFK kick timer |
 
 ---
 
