@@ -266,6 +266,82 @@
                 <!-- Status Banner -->
                 <div class="status-banner" id="statusBanner"></div>
 
+                <!-- ── OAuth2 / Login Config Panel (admin-only) ───────────────── -->
+                <div class="panel admin-only" id="oauthConfigPanel" style="margin-bottom:2rem;">
+                    <h3>🔐 Discord OAuth2 Login Configuration</h3>
+                    <div id="oauthStatusBanner" style="display:none;padding:0.65rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.85rem;font-weight:500;"></div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+
+                        <!-- Left column: toggles -->
+                        <div style="display:flex;flex-direction:column;gap:0.9rem;">
+                            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;">
+                                <input type="checkbox" id="cfgEnabled" style="width:16px;height:16px;accent-color:#89b4fa;">
+                                <span><strong>Enable Discord Authentication</strong></span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;">
+                                <input type="checkbox" id="cfgRequireLinked" style="width:16px;height:16px;accent-color:#89b4fa;">
+                                <span>Require linked Minecraft account <small style="color:#6c7086;">(SDLink only)</small></span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;">
+                                <input type="checkbox" id="cfgAutoReg" style="width:16px;height:16px;accent-color:#89b4fa;">
+                                <span>Allow auto-registration on first Discord login</span>
+                            </label>
+                            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Default Dashboard Role</label>
+                                <select id="cfgDefaultRole" style="background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
+                                    <option value="VIEWER">VIEWER</option>
+                                    <option value="MODERATOR">MODERATOR</option>
+                                    <option value="ADMIN">ADMIN</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Right column: OAuth2 fields -->
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <p style="margin:0 0 0.4rem;font-size:0.8rem;color:#a6adc8;">
+                                Create / open your app at
+                                <a href="https://discord.com/developers/applications" target="_blank" style="color:#89b4fa;">discord.com/developers/applications</a>.
+                                Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> from <em>OAuth2 → General</em>.
+                            </p>
+                            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Client ID</label>
+                                <input type="text" id="cfgClientId" placeholder="1234567890123456789"
+                                    style="background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
+                                    Client Secret
+                                    <span id="cfgSecretSetLabel" style="display:none;color:#a6e3a1;font-size:0.75rem;margin-left:0.4rem;">✓ already set — leave blank to keep</span>
+                                </label>
+                                <div style="display:flex;gap:0.5rem;">
+                                    <input type="password" id="cfgClientSecret" placeholder="Leave blank to keep current secret"
+                                        style="flex:1;background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
+                                    <button type="button" onclick="toggleSecretVisibility()" style="background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:#a6adc8;padding:0.5rem 0.6rem;font-size:0.9rem;cursor:pointer;" title="Show/hide">👁</button>
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:0.3rem;">
+                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
+                                    Redirect URI
+                                    <span style="color:#6c7086;font-size:0.74rem;margin-left:0.3rem;">(must match Discord app settings)</span>
+                                </label>
+                                <div style="display:flex;gap:0.5rem;">
+                                    <input type="text" id="cfgRedirectUri" placeholder="http://YOUR_IP:8080/api/auth/discord/callback"
+                                        style="flex:1;background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
+                                    <button type="button" onclick="autoFillRedirectUri()" style="background:rgba(137,180,250,0.1);border:1px solid rgba(137,180,250,0.3);border-radius:6px;color:#89b4fa;padding:0.5rem 0.75rem;font-size:0.8rem;cursor:pointer;white-space:nowrap;">Auto-fill</button>
+                                </div>
+                                <small style="color:#6c7086;font-size:0.75rem;">Also add this exact URI to <em>OAuth2 → Redirects</em> in your Discord app.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:0.75rem;align-items:center;">
+                        <button class="btn-primary" id="saveOauthBtn" onclick="saveOauthConfig()">💾 Save Config</button>
+                        <button class="btn-secondary" onclick="loadOauthConfig()">🔄 Reload</button>
+                        <span id="cfgOauthStatus" style="font-size:0.82rem;color:#a6adc8;margin-left:0.5rem;"></span>
+                    </div>
+                </div>
+
                 <!-- Stat Cards -->
                 <div class="stat-cards">
                     <div class="stat-card">
@@ -374,6 +450,99 @@
     <!-- Scripts -->
     <script src="dashboard.js"></script>
     <script src="discord.js"></script>
+    <script>
+        // ── Discord OAuth2 Config panel ────────────────────────────────────────
+
+        async function loadOauthConfig() {
+            const statusEl = document.getElementById('cfgOauthStatus');
+            statusEl.textContent = 'Loading…';
+            try {
+                const data = await apiFetch('/discord/auth-config');
+                if (!data || !data.success) { statusEl.textContent = '✗ Failed to load'; return; }
+
+                document.getElementById('cfgEnabled').checked       = !!data.enabled;
+                document.getElementById('cfgRequireLinked').checked  = !!data.requireLinkedAccount;
+                document.getElementById('cfgAutoReg').checked        = !!data.allowAutoRegistration;
+                document.getElementById('cfgDefaultRole').value      = data.defaultRole || 'VIEWER';
+                document.getElementById('cfgClientId').value         = (data.oauth2 || {}).clientId || '';
+                document.getElementById('cfgRedirectUri').value      = (data.oauth2 || {}).redirectUri || '';
+                document.getElementById('cfgClientSecret').value     = '';  // never pre-filled
+
+                const secretSet = !!(data.oauth2 || {}).clientSecretSet;
+                document.getElementById('cfgSecretSetLabel').style.display = secretSet ? 'inline' : 'none';
+
+                const configured = !!(data.oauth2 || {}).configured;
+                statusEl.textContent = configured ? '✓ OAuth2 configured' : '⚠ OAuth2 not yet configured';
+                statusEl.style.color = configured ? '#a6e3a1' : '#f9e2af';
+            } catch (e) {
+                statusEl.textContent = '✗ Error: ' + e.message;
+                statusEl.style.color = '#f38ba8';
+            }
+        }
+
+        async function saveOauthConfig() {
+            const btn      = document.getElementById('saveOauthBtn');
+            const statusEl = document.getElementById('cfgOauthStatus');
+            btn.disabled   = true;
+            btn.textContent = '⏳ Saving…';
+            statusEl.textContent = '';
+
+            const payload = {
+                enabled:              document.getElementById('cfgEnabled').checked,
+                requireLinkedAccount: document.getElementById('cfgRequireLinked').checked,
+                allowAutoRegistration:document.getElementById('cfgAutoReg').checked,
+                defaultRole:          document.getElementById('cfgDefaultRole').value,
+                oauth2: {
+                    clientId:     document.getElementById('cfgClientId').value.trim(),
+                    clientSecret: document.getElementById('cfgClientSecret').value.trim(),
+                    redirectUri:  document.getElementById('cfgRedirectUri').value.trim(),
+                }
+            };
+
+            try {
+                const data = await apiFetch('/discord/auth-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (data && data.success) {
+                    statusEl.textContent = '✓ Saved!';
+                    statusEl.style.color  = '#a6e3a1';
+                    // Reload to show updated state
+                    setTimeout(() => loadOauthConfig(), 800);
+                } else {
+                    statusEl.textContent = '✗ ' + (data?.error || 'Save failed');
+                    statusEl.style.color  = '#f38ba8';
+                }
+            } catch (e) {
+                statusEl.textContent = '✗ Error: ' + e.message;
+                statusEl.style.color  = '#f38ba8';
+            } finally {
+                btn.disabled   = false;
+                btn.textContent = '💾 Save Config';
+            }
+        }
+
+        function toggleSecretVisibility() {
+            const input = document.getElementById('cfgClientSecret');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function autoFillRedirectUri() {
+            const base = window.location.origin;
+            document.getElementById('cfgRedirectUri').value = base + '/api/auth/discord/callback';
+        }
+
+        // Load config once the auth check in dashboard.js confirms we're an admin
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait a tick so dashboard.js authCheck finishes and admin-only elements are shown
+            setTimeout(() => {
+                const isAdmin = localStorage.getItem('isAdmin') === 'true';
+                if (isAdmin) loadOauthConfig();
+            }, 600);
+        });
+    </script>
 </body>
 </html>
 
