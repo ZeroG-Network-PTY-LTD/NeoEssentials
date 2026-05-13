@@ -6,6 +6,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.security.DashboardRegistrationManager;
 import com.zerog.neoessentials.webdashboard.security.DashboardAccountRegistration;
+import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
+import com.zerog.neoessentials.webdashboard.security.DiscordUser;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -16,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
  * Usage:
  * - /dashboardregister start - Start registration process
  * - /dashboardregister complete <username> <password> - Complete registration
+ * - /dashboardregister discord - Register using linked Discord account (no password needed)
  * - /dashboardregister status - Check registration status
  */
 public class DashboardRegisterCommand {
@@ -39,13 +42,17 @@ public class DashboardRegisterCommand {
                 source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
                 source.sendSuccess(() -> Component.literal(""), false);
                 source.sendSuccess(() -> Component.literal("§7Available commands:"), false);
-                source.sendSuccess(() -> Component.literal("  §e/dashboardregister start §7- Begin registration"), false);
-                source.sendSuccess(() -> Component.literal("  §e/dashboardregister complete <user> <pass> §7- Finish registration"), false);
+                source.sendSuccess(() -> Component.literal("  §b/dashboardregister discord §7- Register using your linked Discord account §a(recommended)"), false);
+                source.sendSuccess(() -> Component.literal("  §e/dashboardregister start §7- Begin manual registration"), false);
+                source.sendSuccess(() -> Component.literal("  §e/dashboardregister complete <user> <pass> §7- Finish manual registration"), false);
                 source.sendSuccess(() -> Component.literal("  §e/dashboardregister status §7- Check your status"), false);
                 source.sendSuccess(() -> Component.literal(""), false);
+                source.sendSuccess(() -> Component.literal("§7§oDiscord registration requires Simple Discord Link mod"), false);
                 source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
                 return 1;
             })
+            .then(Commands.literal("discord")
+                .executes(DashboardRegisterCommand::registerWithDiscord))
             .then(Commands.literal("start")
                 .executes(DashboardRegisterCommand::startRegistration))
             .then(Commands.literal("complete")
@@ -55,6 +62,78 @@ public class DashboardRegisterCommand {
             .then(Commands.literal("status")
                 .executes(DashboardRegisterCommand::checkStatus))
         );
+    }
+
+    /**
+     * Register using linked Discord account via Simple Discord Link (SDLink).
+     * No username/password needed — the player logs in via the Discord OAuth2 button.
+     */
+    private static int registerWithDiscord(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+
+        if (!source.isPlayer()) {
+            source.sendSuccess(() -> Component.literal("§cThis command can only be used by players"), false);
+            return 0;
+        }
+
+        ServerPlayer player = (ServerPlayer) source.getEntity();
+        DashboardRegistrationManager manager = DashboardRegistrationManager.getInstance();
+
+        // Check if already registered
+        if (manager.isRegistered(player.getUUID())) {
+            source.sendSuccess(() -> Component.literal("§e§lINFO: §eYou already have a registered dashboard account!"), false);
+            source.sendSuccess(() -> Component.literal("§7Use the §bLogin with Discord §7button on the dashboard to sign in"), false);
+            return 0;
+        }
+
+        // Require SDLink
+        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+        if (!discordProvider.isAvailable()) {
+            source.sendSuccess(() -> Component.literal("§c§lERROR: §cDiscord registration is not available"), false);
+            source.sendSuccess(() -> Component.literal("§7The Simple Discord Link mod is not installed on this server"), false);
+            source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register manually instead"), false);
+            return 0;
+        }
+
+        // Look up linked Discord account
+        DiscordUser discordUser = discordProvider.getLinkedAccountByUuid(player.getUUID());
+        if (discordUser == null || !discordUser.isLinked()) {
+            source.sendSuccess(() -> Component.literal("§c§lERROR: §cNo Discord account linked to your Minecraft account"), false);
+            source.sendSuccess(() -> Component.literal("§7Link your Discord first using the §e/link §7command in the Discord server"), false);
+            source.sendSuccess(() -> Component.literal("§7Or use §e/dashboardregister start §7to register manually"), false);
+            return 0;
+        }
+
+        String discordId = discordUser.getDiscordId();
+        String discordUsername = discordUser.getDiscordUsername();
+
+        // Attempt registration
+        DashboardAccountRegistration registration = manager.registerWithDiscord(
+            player.getUUID(), player.getName().getString(), discordId, discordUsername);
+
+        if (registration == null) {
+            source.sendSuccess(() -> Component.literal("§c§lERROR: §cDiscord registration failed!"), false);
+            source.sendSuccess(() -> Component.literal("§7Possible reasons:"), false);
+            source.sendSuccess(() -> Component.literal("§7- Dashboard username §e" + player.getName().getString() + " §7is already taken"), false);
+            source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register with a custom username"), false);
+            return 0;
+        }
+
+        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
+        source.sendSuccess(() -> Component.literal("§a§l✓ Discord Registration Successful!"), false);
+        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
+        source.sendSuccess(() -> Component.literal(""), false);
+        source.sendSuccess(() -> Component.literal("§7Dashboard Username: §a" + registration.getDashboardUsername()), false);
+        source.sendSuccess(() -> Component.literal("§7Linked Minecraft: §e" + player.getName().getString()), false);
+        source.sendSuccess(() -> Component.literal("§7Linked Discord: §b" + discordUsername), false);
+        source.sendSuccess(() -> Component.literal(""), false);
+        source.sendSuccess(() -> Component.literal("§7To log in, use the §b§lLogin with Discord §r§7button on the dashboard"), false);
+        source.sendSuccess(() -> Component.literal("§7No password needed — Discord is your login!"), false);
+        source.sendSuccess(() -> Component.literal(""), false);
+        source.sendSuccess(() -> Component.literal("§7View the dashboard URL with: §e/dashboard url"), false);
+        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
+
+        return 1;
     }
 
     private static int startRegistration(CommandContext<CommandSourceStack> context) {
@@ -168,6 +247,22 @@ public class DashboardRegisterCommand {
         source.sendSuccess(() -> Component.literal("§7Dashboard Username: §a" + registration.getDashboardUsername()), false);
         source.sendSuccess(() -> Component.literal("§7Linked to: §e" + player.getName().getString()), false);
         source.sendSuccess(() -> Component.literal(""), false);
+
+        // Auto-link Discord if SDLink is available and the player has a linked account
+        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+        if (discordProvider.isAvailable()) {
+            DiscordUser discordUser = discordProvider.getLinkedAccountByUuid(player.getUUID());
+            if (discordUser != null && discordUser.isLinked()) {
+                boolean linked = DashboardRegistrationManager.getInstance().linkDiscordAccount(
+                    player.getUUID(), discordUser.getDiscordId(), discordUser.getDiscordUsername());
+                if (linked) {
+                    source.sendSuccess(() -> Component.literal("§b§l🔗 Discord Auto-Linked: §b" + discordUser.getDiscordUsername()), false);
+                    source.sendSuccess(() -> Component.literal("§7You can also log in using the §b§lLogin with Discord §r§7button!"), false);
+                    source.sendSuccess(() -> Component.literal(""), false);
+                }
+            }
+        }
+
         source.sendSuccess(() -> Component.literal("§7You can now log in to the dashboard at:"), false);
         source.sendSuccess(() -> Component.literal("§b§n/dashboard url"), false);
         source.sendSuccess(() -> Component.literal(""), false);
@@ -209,7 +304,14 @@ public class DashboardRegisterCommand {
         } else {
             source.sendSuccess(() -> Component.literal("§c§l✗ §cNot Registered"), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register"), false);
+            // Show Discord tip if SDLink is available and they're linked
+            DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+            if (discordProvider.isAvailable() && discordProvider.isAccountLinkedByUuid(player.getUUID())) {
+                source.sendSuccess(() -> Component.literal("§b§l💡 TIP: §bYou have Discord linked! Run §e/dashboardregister discord §bto register instantly"), false);
+            } else {
+                source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register"), false);
+                source.sendSuccess(() -> Component.literal("§7Or §b/dashboardregister discord §7if you have Discord linked via SDLink"), false);
+            }
         }
 
         source.sendSuccess(() -> Component.literal(""), false);
