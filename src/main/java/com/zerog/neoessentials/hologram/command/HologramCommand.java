@@ -1,4 +1,4 @@
-﻿package com.zerog.neoessentials.hologram.command;
+package com.zerog.neoessentials.hologram.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;

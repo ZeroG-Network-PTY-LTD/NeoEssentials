@@ -4,7 +4,24 @@
 
 ---
 
-## 1.0.2.6+build.123 — 2026-05-13
+## 1.0.2.6+build.124 — 2026-05-13
+
+### ✨ Feature — `/dashboard update` Smart File Comparison
+
+The `/dashboard update` command now performs **per-file MD5 checksum comparison** instead of unconditionally overwriting all dashboard files.
+
+**New subcommands:**
+- `/dashboard update` — Smart update: only overwrites files whose content differs from the bundled JAR version. Reports which files were added, updated, or already up-to-date.
+- `/dashboard update check` — **Dry-run preview**: shows exactly which files would change without writing anything.
+- `/dashboard update force` — Bypass checksums and replace every file unconditionally (old behavior).
+
+**`/dashboard status`** now shows the installed dashboard file version vs. the current build, with a hint when an update is available.
+
+**Files changed:** `DashboardFileManager.java`, `DashboardCommand.java`
+
+---
+
+
 
 ### ✨ Feature — Hologram System Improvements
 
