@@ -191,6 +191,67 @@ public class DashboardRegistrationManager {
     }
 
     /**
+     * Register a dashboard account directly via Discord (SDLink-linked account).
+     * Uses the player's Minecraft username as the dashboard username.
+     * A random unusable password is set — the player must log in via Discord OAuth2.
+     *
+     * @return the new registration, or null on failure
+     */
+    public DashboardAccountRegistration registerWithDiscord(UUID minecraftUuid, String minecraftUsername,
+                                                            String discordId, String discordUsername) {
+        if (isRegistered(minecraftUuid)) {
+            LOGGER.warn("Player {} already has a registered dashboard account", minecraftUsername);
+            return null;
+        }
+
+        // Use Minecraft username as the dashboard username (matches OAuth2 flow)
+        String dashboardUsername = minecraftUsername;
+
+        // If the Minecraft username is already taken as a dashboard username by a different MC account, append _mc
+        if (getRegistrationByUsername(dashboardUsername) != null) {
+            LOGGER.warn("Dashboard username '{}' already taken during Discord registration for {}", dashboardUsername, minecraftUsername);
+            return null;
+        }
+
+        // Random unusable password — login is exclusively via Discord OAuth2
+        String unusablePassword = UUID.randomUUID().toString() + UUID.randomUUID();
+
+        DashboardAccountRegistration registration = new DashboardAccountRegistration(
+            minecraftUuid,
+            minecraftUsername,
+            dashboardUsername,
+            hashPassword(unusablePassword),
+            System.currentTimeMillis()
+        );
+
+        // Attach Discord link immediately
+        registration.setDiscordId(discordId);
+        registration.setDiscordUsername(discordUsername);
+        registration.setDiscordLinkedAt(System.currentTimeMillis());
+
+        registrations.put(minecraftUuid, registration);
+        saveRegistrations();
+
+        // Create the user account in AuthenticationManager (with the random unusable password)
+        try {
+            AuthenticationManager authManager = AuthenticationManager.getInstance();
+            User.Role role = determineRole(minecraftUuid);
+            authManager.createUser(dashboardUsername, unusablePassword, discordId + "@discord.oauth", role);
+
+            LOGGER.info("Discord-registered dashboard account for {} (MC: {}, Discord: {})",
+                dashboardUsername, minecraftUsername, discordUsername);
+
+            return registration;
+        } catch (Exception e) {
+            LOGGER.error("Failed to create user account for Discord registration: {}", e.getMessage(), e);
+            // Rollback
+            registrations.remove(minecraftUuid);
+            saveRegistrations();
+            return null;
+        }
+    }
+
+    /**
      * Link a Discord account to an existing registration
      */
     public boolean linkDiscordAccount(UUID minecraftUuid, String discordId, String discordUsername) {
