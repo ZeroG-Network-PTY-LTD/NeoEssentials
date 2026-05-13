@@ -31,6 +31,38 @@ import java.util.stream.Collectors;
 public class AuthenticationHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationHandler.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+
+    // ── In-game Discord registration state tracking ───────────────────────────
+    // Maps OAuth2 state token → pending registration (minecraft username + expiry)
+    private static final java.util.concurrent.ConcurrentHashMap<String, PendingDiscordReg>
+        PENDING_DISCORD_REGS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Represents a pending in-game-initiated Discord OAuth2 registration. */
+    private static class PendingDiscordReg {
+        final String  minecraftUsername;
+        final UUID    playerUuid;
+        final long    expiresAt;
+
+        PendingDiscordReg(UUID playerUuid, String minecraftUsername) {
+            this.playerUuid        = playerUuid;
+            this.minecraftUsername = minecraftUsername;
+            this.expiresAt         = System.currentTimeMillis() + 5 * 60_000L; // 5 min
+        }
+
+        boolean isExpired() { return System.currentTimeMillis() > expiresAt; }
+    }
+
+    /**
+     * Called by {@code /dashboardregister discord} to create a one-time OAuth2 state
+     * that is bound to a specific Minecraft player. Returns the state token string.
+     */
+    public static String createPendingDiscordRegistration(UUID playerUuid, String minecraftUsername) {
+        // Evict stale entries first
+        PENDING_DISCORD_REGS.entrySet().removeIf(e -> e.getValue().isExpired());
+        String state = UUID.randomUUID().toString().replace("-", "");
+        PENDING_DISCORD_REGS.put(state, new PendingDiscordReg(playerUuid, minecraftUsername));
+        return state;
+    }
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -415,6 +447,18 @@ public class AuthenticationHandler implements HttpHandler {
      *   5. Apply role mapping, get/create dashboard user, create session
      */
     private Session handleDiscordOAuth(String oauthCode, String ipAddress, String userAgent) {
+        return handleDiscordOAuth(oauthCode, ipAddress, userAgent, null);
+    }
+
+    /**
+     * Core Discord OAuth2 flow.
+     *
+     * @param forcedMinecraftUsername When non-null (set by in-game {@code /dashboardregister discord}),
+     *                                the account will be linked to this Minecraft username regardless
+     *                                of whether SDLink is installed.
+     */
+    private Session handleDiscordOAuth(String oauthCode, String ipAddress, String userAgent,
+                                       String forcedMinecraftUsername) {
         DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
 
         if (!discordConfig.isEnabled()) {
@@ -505,7 +549,12 @@ public class AuthenticationHandler implements HttpHandler {
             // ── Step 7: Find linked Minecraft account ─────────────────────────
             String minecraftUsername = null;
 
-            if (discordProvider.isAvailable()) {
+            if (forcedMinecraftUsername != null) {
+                // In-game registration: we already know the Minecraft player
+                minecraftUsername = forcedMinecraftUsername;
+                LOGGER.info("Discord OAuth2: using in-game player '{}' as Minecraft account (state-bound registration)",
+                    minecraftUsername);
+            } else if (discordProvider.isAvailable()) {
                 DiscordUser linkedAccount = discordProvider.getLinkedAccountByDiscordId(discordId);
                 if (linkedAccount != null && linkedAccount.isLinked()) {
                     minecraftUsername = linkedAccount.getMinecraftUsername();
@@ -529,7 +578,9 @@ public class AuthenticationHandler implements HttpHandler {
             User user = authManager.getUserByUsername(accountUsername);
 
             if (user == null) {
-                if (!discordConfig.allowsAutoRegistration()) {
+                // Allow creation if: auto-registration is on, OR this is an explicit in-game registration
+                boolean allowCreate = discordConfig.allowsAutoRegistration() || forcedMinecraftUsername != null;
+                if (!allowCreate) {
                     LOGGER.warn("Discord OAuth2: account not found and auto-registration is disabled for {}",
                         accountUsername);
                     return null;
@@ -753,7 +804,18 @@ public class AuthenticationHandler implements HttpHandler {
         String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
         String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
 
-        Session session = handleDiscordOAuth(code, ipAddress, userAgent);
+        // Check whether this callback was initiated by an in-game /dashboardregister discord command
+        String forcedMinecraftUsername = null;
+        if (state != null && !state.isEmpty()) {
+            PendingDiscordReg pending = PENDING_DISCORD_REGS.remove(state);
+            if (pending != null && !pending.isExpired()) {
+                forcedMinecraftUsername = pending.minecraftUsername;
+                LOGGER.info("Discord OAuth2 callback matches in-game registration for Minecraft player '{}'",
+                    forcedMinecraftUsername);
+            }
+        }
+
+        Session session = handleDiscordOAuth(code, ipAddress, userAgent, forcedMinecraftUsername);
 
         if (session == null) {
             sendHtmlRedirect(exchange, "/login.html?error=discord_auth_failed");
