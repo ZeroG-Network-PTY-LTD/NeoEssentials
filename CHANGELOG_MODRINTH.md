@@ -4,6 +4,26 @@
 
 ---
 
+## 1.0.2.6+build.123 — 2026-05-13
+
+### ✨ Added — Hologram System Improvements
+
+New visual properties: `scale`, `lineSpacing`, `textShadow`, `textOpacity`, `backgroundColorArgb`
+
+New commands:
+- `/hologram copy <id> <newid>` — clone a hologram
+- `/hologram movehere <id>` — move hologram to your position
+- `/hologram near [radius]` — list nearby holograms
+- `/hologram insertline <id> <index> <text>` — insert a line at any position
+- `/hologram addframes <id> <lineIndex> <intervalTicks> <frame1|frame2|...>` — frame animation
+- `/hologram removeframes <id> <lineIndex>` — clear frame animation
+- `/hologram scale <id> <scale>` | `linespacing` | `shadow` | `opacity` | `background` — visual tweaks
+
+Dashboard REST API now returns all billboard/animation/visual fields for holograms.
+New wiki page: `HologramSystem.md`
+
+---
+
 ## 1.0.2.6+build.120 — 2026-05-11
 
 ### Fixed

@@ -4,6 +4,41 @@
 
 ---
 
+## 1.0.2.6+build.123 — 2026-05-13
+
+### ✨ Feature — Hologram System Improvements
+
+Significant quality-of-life and visual enhancements to the hologram system.
+
+**New visual properties (persisted in `holograms.json`):**
+- `scale` — uniform text scale from 0.1× to 10× (default 1.0×)
+- `lineSpacing` — configurable gap between lines in blocks (default 0.3, was hardcoded)
+- `textShadow` — toggle the Minecraft text drop-shadow (default off)
+- `textOpacity` — text opacity 0–255 (default 255 = fully opaque)
+- `backgroundColorArgb` — background panel colour as ARGB integer (default `0x00000000` transparent)
+
+**New commands:**
+- `/hologram copy <id> <newid>` — clone a hologram with all settings and lines
+- `/hologram movehere <id>` — snap hologram to the caller's position (no coordinate typing)
+- `/hologram near [radius]` — list holograms within `radius` blocks (default 20), sorted by distance
+- `/hologram insertline <id> <index> <text>` — insert a line at any position (not just the end)
+- `/hologram addframes <id> <lineIndex> <intervalTicks> <frame1|frame2|...>` — set frame animation on any line
+- `/hologram removeframes <id> <lineIndex>` — clear frame animation from a line
+- `/hologram scale <id> <scale>` — set text scale
+- `/hologram linespacing <id> <spacing>` — set line spacing
+- `/hologram shadow <id> on|off` — toggle text shadow
+- `/hologram opacity <id> <0-255>` — set text opacity
+- `/hologram background <id> <transparent|#RRGGBB|#AARRGGBB>` — set background panel colour
+
+**Dashboard API update:**
+- All hologram JSON responses now include `billboard`, `spin`, `hover`, `scale`, `lineSpacing`, `textShadow`, `textOpacity`, and `backgroundColorArgb` fields (previously missing).
+
+**Wiki:** New `docs/Wiki/HologramSystem.md` with full command reference, examples, and JSON schema documentation.
+
+**Files changed:** `HologramData.java`, `HologramRenderer.java`, `HologramCommand.java`, `HologramEndpoint.java`, `docs/Wiki/HologramSystem.md`
+
+---
+
 ## 1.0.2.6+build.120 — 2026-05-11
 
 ### 🐛 Bug Fix — `/help` Pagination (and Higher Pages) Now Works

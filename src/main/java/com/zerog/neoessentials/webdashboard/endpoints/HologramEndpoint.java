@@ -162,6 +162,20 @@ public class HologramEndpoint implements HttpHandler {
         o.addProperty("visible", d.visible);
         o.addProperty("refreshInterval", d.refreshInterval);
         o.addProperty("lineCount", d.lines.size());
+        // Visual appearance
+        o.addProperty("scale", d.scale);
+        o.addProperty("lineSpacing", d.lineSpacing);
+        o.addProperty("textShadow", d.textShadow);
+        o.addProperty("textOpacity", d.textOpacity);
+        o.addProperty("backgroundColorArgb", d.backgroundColorArgb);
+        // Billboard & animations
+        o.addProperty("billboardMode", d.billboardMode);
+        o.addProperty("spinEnabled", d.spinEnabled);
+        o.addProperty("spinSpeedDegrees", d.spinSpeedDegrees);
+        o.addProperty("spinAxis", d.spinAxis);
+        o.addProperty("hoverEnabled", d.hoverEnabled);
+        o.addProperty("hoverAmplitude", d.hoverAmplitude);
+        o.addProperty("hoverSpeedDegrees", d.hoverSpeedDegrees);
         JsonArray lines = new JsonArray();
         for (HologramLine ln : d.lines) {
             JsonObject l = new JsonObject();

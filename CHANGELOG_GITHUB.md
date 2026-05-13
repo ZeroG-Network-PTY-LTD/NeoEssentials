@@ -6,6 +6,42 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.123] — 2026-05-13
+
+### ✨ Feature — Hologram System Improvements
+
+#### New visual properties (persisted, applied on spawn)
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `scale` | float | `1.0` | Uniform text scale (0.1–10.0) |
+| `lineSpacing` | float | `0.3` | Vertical gap between lines in blocks |
+| `textShadow` | bool | `false` | Minecraft text drop-shadow |
+| `textOpacity` | int | `255` | Text opacity (0–255) |
+| `backgroundColorArgb` | int | `0x00000000` | Background panel colour (ARGB) |
+
+#### New commands
+- `/hologram copy <id> <newid>` — deep-clone a hologram (all lines, animations, visual settings)
+- `/hologram movehere <id>` — teleport hologram to caller's current standing position
+- `/hologram near [radius]` — list all holograms within `radius` blocks (default 20), sorted by distance
+- `/hologram insertline <id> <index> <text>` — insert a line at any position (0 = top)
+- `/hologram addframes <id> <lineIndex> <intervalTicks> <frame1|frame2|...>` — configure frame animation on any line
+- `/hologram removeframes <id> <lineIndex>` — revert a line to static text
+- `/hologram scale <id> <scale>` — set scale
+- `/hologram linespacing <id> <spacing>` — set line spacing
+- `/hologram shadow <id> on|off` — toggle text shadow
+- `/hologram opacity <id> <0-255>` — set text opacity 
+- `/hologram background <id> <transparent|#RRGGBB|#AARRGGBB>` — set panel background
+
+#### Dashboard API
+All hologram JSON responses now include the full set of visual and animation fields: `billboardMode`, `spinEnabled`, `spinSpeedDegrees`, `spinAxis`, `hoverEnabled`, `hoverAmplitude`, `hoverSpeedDegrees`, `scale`, `lineSpacing`, `textShadow`, `textOpacity`, `backgroundColorArgb` — previously these were missing.
+
+#### Documentation
+New `docs/Wiki/HologramSystem.md` covering all commands, placeholder support, colour codes, JSON schema, and web dashboard API.
+
+**Files changed:** `HologramData.java`, `HologramRenderer.java`, `HologramCommand.java`, `HologramEndpoint.java`, `docs/Wiki/HologramSystem.md`
+
+---
+
 ## [1.0.2.6+build.120] — 2026-05-11
 
 ### Bug Fix — `/help 2` Pagination Broken by Vanilla Brigadier Node Shadowing

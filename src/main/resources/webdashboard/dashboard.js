@@ -82,6 +82,27 @@ async function checkAuthentication() {
     const authError = urlParams.get('error') || urlParams.get('auth_error');
 
     if (urlSessionId) {
+        // ── CSRF state verification ───────────────────────────────────────────
+        // Before the Discord redirect we stored the generated state in sessionStorage.
+        // Discord echoes it back → server passes it through → we verify it here.
+        const urlState    = urlParams.get('state');
+        const storedState = sessionStorage.getItem('discordOAuthState');
+        if (urlState && storedState) {
+            if (urlState !== storedState) {
+                console.error('Discord OAuth2 state mismatch — possible CSRF/replay attack, rejecting session');
+                sessionStorage.removeItem('discordOAuthState');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                showLoginScreen();
+                const loginError = document.getElementById('loginError');
+                if (loginError) {
+                    loginError.textContent = 'Discord login failed: security check failed. Please try again.';
+                    loginError.style.display = 'block';
+                }
+                return;
+            }
+        }
+        if (urlState) sessionStorage.removeItem('discordOAuthState');
+
         localStorage.setItem('authToken', urlSessionId);
         localStorage.setItem('sessionId', urlSessionId);
         if (urlParams.get('auth') === 'discord') {
@@ -95,10 +116,11 @@ async function checkAuthentication() {
         const loginError = document.getElementById('loginError');
         if (loginError) {
             const readable = {
-                discord_auth_failed : 'Discord login failed. Please try again.',
-                access_denied       : 'You denied the Discord authorisation.',
-                missing_code        : 'Discord authorisation code missing. Please try again.',
-            };
+                    discord_auth_failed : 'Discord login failed. Please try again.',
+                    access_denied       : 'You denied the Discord authorisation.',
+                    missing_code        : 'Discord authorisation code missing. Please try again.',
+                    state_mismatch      : 'Discord login failed: security check failed. Please try again.',
+                };
             loginError.textContent = readable[authError] || ('Discord error: ' + authError);
             loginError.style.display = 'block';
         }
@@ -170,6 +192,45 @@ function showLoginScreen() {
 
     if (loginContainer) loginContainer.style.display = 'flex';
     if (dashboardWrapper) dashboardWrapper.style.display = 'none';
+
+    // Check Discord auth status and update button visibility accordingly
+    checkDiscordAuthStatus();
+}
+
+/**
+ * Check whether Discord OAuth2 is enabled and configured on the server.
+ * Shows or hides the Discord login button and divider accordingly.
+ */
+async function checkDiscordAuthStatus() {
+    const discordBtn     = document.getElementById('discordLoginBtn');
+    const discordDivider = document.querySelector('.login-divider');
+    if (!discordBtn) return; // Not on a page with a login form
+
+    try {
+        const res  = await fetch(`${API_BASE_URL}/auth/discord/status`);
+        const data = await res.json();
+
+        if (res.ok && data.enabled && data.configured) {
+            // Discord OAuth2 is ready — show the button
+            discordBtn.style.display = '';
+            if (discordDivider) discordDivider.style.display = '';
+
+            // Annotate button with SDLink availability info (tooltip)
+            if (!data.sdlinkAvailable && data.requiresLinkedAccount) {
+                discordBtn.title = 'Warning: Simple Discord Link mod not detected. Login will fail if requireLinkedAccount=true.';
+            } else {
+                discordBtn.title = '';
+            }
+        } else {
+            // Discord auth disabled or not yet configured — hide button and divider
+            discordBtn.style.display = 'none';
+            if (discordDivider) discordDivider.style.display = 'none';
+        }
+    } catch (_err) {
+        // Cannot reach server — hide Discord button to avoid dead UI
+        discordBtn.style.display = 'none';
+        if (discordDivider) discordDivider.style.display = 'none';
+    }
 }
 
 function showDashboard() {
@@ -224,6 +285,10 @@ async function handleDiscordLogin() {
         const data = await response.json();
 
         if (response.ok && data.success && data.authorizeUrl) {
+            // Store state in sessionStorage for CSRF verification when Discord redirects back
+            if (data.state) {
+                sessionStorage.setItem('discordOAuthState', data.state);
+            }
             // Redirect the browser to Discord's OAuth2 authorization page
             window.location.href = data.authorizeUrl;
         } else {

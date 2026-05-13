@@ -22,6 +22,38 @@ public class HologramData {
     /** Whether this hologram is currently visible. */
     public boolean visible = true;
 
+    // ── Visual appearance ─────────────────────────────────────────────────────
+    /**
+     * Uniform scale applied to every text entity in this hologram.
+     * 1.0 = normal size; 0.5 = half-size; 2.0 = double-size.
+     * Clamped to [0.1, 10.0] on spawn.
+     */
+    public float scale = 1.0f;
+
+    /**
+     * Vertical gap between lines, in blocks.
+     * Default is 0.3 (≈ one text-line height).
+     */
+    public float lineSpacing = 0.3f;
+
+    /**
+     * Text shadow rendered behind each character (like vanilla chat).
+     * Default is false for clean floating text.
+     */
+    public boolean textShadow = false;
+
+    /**
+     * Text opacity: 0 = fully transparent, 255 = fully opaque.
+     * Default 255.
+     */
+    public int textOpacity = 255;
+
+    /**
+     * Background colour of the text panel (ARGB integer, e.g. 0x40000000 = 25% black).
+     * 0x00000000 = fully transparent (default).
+     */
+    public int backgroundColorArgb = 0x00000000;
+
     // ── Billboard & rotation ──────────────────────────────────────────────────
     /**
      * Billboard constraint applied to every Display.TextDisplay entity for this hologram.
@@ -66,7 +98,7 @@ public class HologramData {
     }
     /** Base Y position for line at given index (0 = topmost, before hover offset). */
     public double lineY(int index) {
-        return y + (lines.size() - 1 - index) * 0.3;
+        return y + (lines.size() - 1 - index) * lineSpacing;
     }
     /** Y position for line at given index accounting for current hover offset. */
     public double lineYWithHover(int index) {
@@ -87,5 +119,10 @@ public class HologramData {
             if (!l.frames.isEmpty() && l.animFrameIntervalTicks > 0) return true;
         }
         return false;
+    }
+    /** Distance (2-D, XZ) from this hologram to the given world coordinates. */
+    public double distanceXZ(double px, double pz) {
+        double dx = x - px, dz = z - pz;
+        return Math.sqrt(dx * dx + dz * dz);
     }
 }
