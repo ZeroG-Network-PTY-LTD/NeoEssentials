@@ -51,6 +51,8 @@ public class AuthenticationHandler implements HttpHandler {
         try {
             if ("POST".equals(method) && path.endsWith("/login")) {
                 handleLogin(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/discord/status")) {
+                handleDiscordStatus(exchange);
             } else if ("GET".equals(method) && path.endsWith("/discord")) {
                 handleDiscordAuth(exchange);
             } else if ("GET".equals(method) && path.contains("/discord/callback")) {
@@ -656,6 +658,32 @@ public class AuthenticationHandler implements HttpHandler {
     }
 
     /**
+     * GET /api/auth/discord/status
+     * Lightweight, no-auth endpoint. Returns whether Discord OAuth2 is enabled and configured.
+     * Used by the login page to decide whether to show / enable the Discord login button.
+     * Response: {
+     *   "enabled": true,           // discord_auth.json "enabled" flag
+     *   "configured": true,        // clientId + clientSecret are set
+     *   "sdlinkAvailable": false,  // Simple Discord Link mod is loaded
+     *   "requiresLinkedAccount": true,
+     *   "allowAutoRegistration": true
+     * }
+     */
+    private void handleDiscordStatus(HttpExchange exchange) throws IOException {
+        DiscordAuthConfig config = DiscordAuthConfig.load();
+        DiscordAuthProvider provider = DiscordAuthProvider.getInstance();
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("enabled", config.isEnabled());
+        response.addProperty("configured", config.isOauth2Configured());
+        response.addProperty("sdlinkAvailable", provider.isAvailable());
+        response.addProperty("requiresLinkedAccount", config.requiresLinkedAccount());
+        response.addProperty("allowAutoRegistration", config.allowsAutoRegistration());
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
      * GET /api/auth/discord/authorize
      * Returns the Discord OAuth2 authorization URL so the frontend can redirect the browser.
      * Response: {"authorizeUrl": "https://discord.com/api/oauth2/authorize?..."}
@@ -709,6 +737,7 @@ public class AuthenticationHandler implements HttpHandler {
 
         String code = params.get("code");
         String error = params.get("error");
+        String state = params.get("state");
 
         if (error != null) {
             LOGGER.warn("Discord OAuth2 callback received error: {}", error);
@@ -732,8 +761,13 @@ public class AuthenticationHandler implements HttpHandler {
         }
 
         // Pass sessionId as URL parameter so dashboard.js can store it in localStorage.
+        // Also pass the state back so the client can verify CSRF protection.
         // HttpOnly cookies are invisible to JS, so we use a redirect URL param instead.
-        sendHtmlRedirect(exchange, "/index.html?sessionId=" + session.getSessionId() + "&auth=discord");
+        String redirectUrl = "/index.html?sessionId=" + session.getSessionId() + "&auth=discord";
+        if (state != null && !state.isEmpty()) {
+            redirectUrl += "&state=" + encode(state);
+        }
+        sendHtmlRedirect(exchange, redirectUrl);
     }
 
     /** Send a 302 redirect response with HTML body fallback. */

@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,30 +39,34 @@ public final class HologramRenderer {
     private static EntityDataAccessor<Component>   DATA_TEXT;
     private static EntityDataAccessor<Integer>     DATA_BG;
     private static EntityDataAccessor<Byte>        DATA_STYLE;
+    private static EntityDataAccessor<Byte>        DATA_TEXT_OPACITY;
 
     // ── Reflected accessors for Display (base class) ───────────────────────────
     private static EntityDataAccessor<Byte>        DATA_BILLBOARD;
     private static EntityDataAccessor<Quaternionf> DATA_LEFT_ROTATION;
     private static EntityDataAccessor<Integer>     DATA_INTERP_DURATION;
     private static EntityDataAccessor<Integer>     DATA_INTERP_START_DELTA;
+    private static EntityDataAccessor<Vector3f>    DATA_SCALE;
 
     static {
         try {
-            DATA_TEXT  = reflectAccessor(Display.TextDisplay.class, "DATA_TEXT_ID");
-            DATA_BG    = reflectAccessor(Display.TextDisplay.class, "DATA_BACKGROUND_COLOR_ID");
-            DATA_STYLE = reflectAccessor(Display.TextDisplay.class, "DATA_STYLE_FLAGS_ID");
+            DATA_TEXT         = reflectAccessor(Display.TextDisplay.class, "DATA_TEXT_ID");
+            DATA_BG           = reflectAccessor(Display.TextDisplay.class, "DATA_BACKGROUND_COLOR_ID");
+            DATA_STYLE        = reflectAccessor(Display.TextDisplay.class, "DATA_STYLE_FLAGS_ID");
+            DATA_TEXT_OPACITY = reflectAccessor(Display.TextDisplay.class, "DATA_TEXT_OPACITY_ID");
             LOGGER.debug("[Hologram] Display.TextDisplay data accessors resolved.");
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to resolve Display.TextDisplay data accessors — holograms may not render text.", e);
         }
         try {
-            DATA_BILLBOARD       = reflectAccessor(Display.class, "DATA_BILLBOARD_CONSTRAINTS_ID");
-            DATA_LEFT_ROTATION   = reflectAccessor(Display.class, "DATA_LEFT_ROTATION_ID");
-            DATA_INTERP_DURATION = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID");
+            DATA_BILLBOARD          = reflectAccessor(Display.class, "DATA_BILLBOARD_CONSTRAINTS_ID");
+            DATA_LEFT_ROTATION      = reflectAccessor(Display.class, "DATA_LEFT_ROTATION_ID");
+            DATA_INTERP_DURATION    = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID");
             DATA_INTERP_START_DELTA = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID");
-            LOGGER.debug("[Hologram] Display base-class data accessors resolved (billboard, rotation, interpolation).");
+            DATA_SCALE              = reflectAccessor(Display.class, "DATA_SCALE_ID");
+            LOGGER.debug("[Hologram] Display base-class data accessors resolved (billboard, rotation, scale, interpolation).");
         } catch (Exception e) {
-            LOGGER.warn("[Hologram] Failed to resolve Display base-class accessors — billboard/spin/hover disabled: {}", e.getMessage());
+            LOGGER.warn("[Hologram] Failed to resolve Display base-class accessors — billboard/spin/hover/scale disabled: {}", e.getMessage());
         }
     }
 
@@ -102,7 +107,7 @@ public final class HologramRenderer {
                 entity.getPersistentData().putBoolean(TAG_MARKER, true);
                 entity.getPersistentData().putString(TAG_ID, data.id);
 
-                applyText(entity, text);
+                applyText(entity, text, data);
                 applyBillboardAndRotation(entity, data);
 
                 level.addFreshEntity(entity);
@@ -212,7 +217,7 @@ public final class HologramRenderer {
             UUID uuid = data.entityUUIDs.get(lineIndex);
             net.minecraft.world.entity.Entity entity = level.getEntity(uuid);
             if (entity instanceof Display.TextDisplay td) {
-                applyText(td, text);
+                applyText(td, text, data);
             } else {
                 spawn(data, level); // entity gone — full respawn
             }
@@ -225,19 +230,28 @@ public final class HologramRenderer {
 
     /**
      * Apply text and visual settings to a TextDisplay via entity data (reflection-backed).
+     * Visual properties (shadow, opacity, background) are taken from {@code data}.
      */
-    private static void applyText(Display.TextDisplay entity, Component text) {
+    private static void applyText(Display.TextDisplay entity, Component text, HologramData data) {
         try {
-            if (DATA_TEXT  != null) entity.getEntityData().set(DATA_TEXT,  text);
-            if (DATA_BG    != null) entity.getEntityData().set(DATA_BG,    0x00000000); // fully transparent
-            if (DATA_STYLE != null) entity.getEntityData().set(DATA_STYLE, (byte) 0x08); // centre-aligned
+            if (DATA_TEXT  != null) entity.getEntityData().set(DATA_TEXT, text);
+            if (DATA_BG    != null) entity.getEntityData().set(DATA_BG,   data.backgroundColorArgb);
+            if (DATA_STYLE != null) {
+                byte flags = 0x08; // bit3 = centre-aligned
+                if (data.textShadow) flags |= 0x01; // bit0 = shadow
+                entity.getEntityData().set(DATA_STYLE, flags);
+            }
+            if (DATA_TEXT_OPACITY != null) {
+                int clamped = Math.max(0, Math.min(255, data.textOpacity));
+                entity.getEntityData().set(DATA_TEXT_OPACITY, (byte) clamped);
+            }
         } catch (Exception e) {
             LOGGER.debug("[Hologram] applyText error: {}", e.getMessage());
         }
     }
 
     /**
-     * Apply billboard constraint and initial spin rotation to an entity.
+     * Apply billboard constraint, scale, and initial spin rotation to an entity.
      * Called once on every (re)spawn.
      */
     private static void applyBillboardAndRotation(Display.TextDisplay entity, HologramData data) {
@@ -245,6 +259,10 @@ public final class HologramRenderer {
             if (DATA_BILLBOARD != null) {
                 byte mode = (byte) Math.max(0, Math.min(3, data.billboardMode));
                 entity.getEntityData().set(DATA_BILLBOARD, mode);
+            }
+            if (DATA_SCALE != null) {
+                float s = Math.max(0.1f, Math.min(10.0f, data.scale));
+                entity.getEntityData().set(DATA_SCALE, new Vector3f(s, s, s));
             }
             if (data.spinEnabled && DATA_LEFT_ROTATION != null) {
                 // Set interpolation to 1 tick so spin looks smooth

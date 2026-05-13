@@ -70,9 +70,13 @@
                     discord_auth_failed : 'Discord login failed. Check your server\'s discord_auth.json config.',
                     access_denied       : 'You denied the Discord authorisation.',
                     missing_code        : 'Discord authorisation code missing. Please try again.',
+                    state_mismatch      : 'Discord login failed: security check failed. Please try again.',
                 };
                 showError(readable[authError] || ('Discord error: ' + authError));
             }
+
+            // Clear any stale OAuth state if we're back on the login page with an error
+            if (authError) sessionStorage.removeItem('discordOAuthState');
 
             // If already logged in, skip to dashboard
             const token = localStorage.getItem('authToken');
@@ -85,6 +89,9 @@
                 e.preventDefault();
                 handleLogin();
             });
+
+            // Check if Discord auth is configured and update button visibility
+            checkDiscordAuthStatus();
         });
 
         function showError(message) {
@@ -157,6 +164,32 @@
             }
         }
 
+        async function checkDiscordAuthStatus() {
+            const discordBtn     = document.getElementById('discordLoginBtn');
+            const discordDivider = document.querySelector('.login-divider');
+            if (!discordBtn) return;
+
+            try {
+                const res  = await fetch(`${API_BASE_URL}/auth/discord/status`);
+                const data = await res.json();
+
+                if (res.ok && data.enabled && data.configured) {
+                    discordBtn.style.display = '';
+                    if (discordDivider) discordDivider.style.display = '';
+
+                    if (!data.sdlinkAvailable && data.requiresLinkedAccount) {
+                        discordBtn.title = 'Warning: Simple Discord Link mod not detected. Login will fail if requireLinkedAccount=true.';
+                    }
+                } else {
+                    discordBtn.style.display = 'none';
+                    if (discordDivider) discordDivider.style.display = 'none';
+                }
+            } catch (_err) {
+                discordBtn.style.display = 'none';
+                if (discordDivider) discordDivider.style.display = 'none';
+            }
+        }
+
         async function handleDiscordLogin() {
             const discordBtn = document.getElementById('discordLoginBtn');
             const loginError = document.getElementById('loginError');
@@ -168,6 +201,10 @@
                 const data = await res.json();
 
                 if (res.ok && data.success && data.authorizeUrl) {
+                    // Store state in sessionStorage for CSRF verification on callback return
+                    if (data.state) {
+                        sessionStorage.setItem('discordOAuthState', data.state);
+                    }
                     window.location.href = data.authorizeUrl;
                 } else {
                     showError(data.error || 'Discord login is not configured on this server.');

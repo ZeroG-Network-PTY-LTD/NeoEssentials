@@ -36,6 +36,102 @@ If **Simple Discord Link** is installed and configured, players can also authent
 
 ---
 
+## Discord OAuth2 Login
+
+NeoEssentials supports logging into the dashboard directly with a Discord account via OAuth2 ("Login with Discord" button). This is separate from — and works alongside — the standard username/password login.
+
+### How It Works
+
+```
+Browser                Dashboard Server              Discord
+  |                          |                           |
+  |-- click Discord Login --> |                           |
+  |<-- authorizeUrl ----------|                           |
+  |-- redirect ---------------------------------------------> Discord consent screen
+  |<----------------------------------------------------- redirect back with ?code=
+  |                  /api/auth/discord/callback           |
+  |              1. Exchange code → access token          |
+  |              2. Fetch Discord user (/users/@me)       |
+  |              3. Check blacklist / whitelist roles     |
+  |              4. Map Discord roles → dashboard role    |
+  |              5. Lookup linked MC account (SDLink)     |
+  |              6. Get-or-create dashboard user          |
+  |              7. Create session, redirect to dashboard |
+  |<-- redirect to /index.html?sessionId=...&auth=discord |
+```
+
+### Discord Application Setup
+
+1. Go to **https://discord.com/developers/applications** and create a new application (or open your bot's existing one)
+2. Under **OAuth2 → General**, copy the **Client ID** and **Client Secret**
+3. Under **OAuth2 → Redirects**, add the exact callback URL:
+   ```
+   http://YOUR_SERVER_IP:8080/api/auth/discord/callback
+   ```
+   Replace `YOUR_SERVER_IP` with your server's public IP or domain and `8080` with your dashboard port.
+4. Save your changes in the Discord Developer Portal
+
+### Config (`discord_auth.json`)
+
+Located at `config/neoessentials/discord_auth.json`. Auto-generated on first start.
+
+#### OAuth2 section
+
+| Key | Description |
+|---|---|
+| `oauth2.clientId` | Discord Application Client ID |
+| `oauth2.clientSecret` | Discord Application Client Secret (**keep private**) |
+| `oauth2.redirectUri` | Must exactly match the redirect URI registered in your Discord app |
+| `oauth2.scopes` | OAuth2 scopes — default: `identify guilds.members.read` (do not change) |
+
+#### Auth behavior
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `true` | Enable Discord auth (requires `clientId` + `clientSecret` to actually work) |
+| `requireLinkedAccount` | `true` | Require the Discord user to have a linked Minecraft account via SDLink |
+| `allowAutoRegistration` | `true` | Auto-create a dashboard account on first Discord login |
+| `defaultRole` | `VIEWER` | Dashboard role given when no Discord role is mapped |
+
+#### Role mapping
+
+Discord role IDs (not names) are mapped to dashboard roles. Enable **Developer Mode** in Discord Settings → Advanced, then right-click a role → **Copy ID**.
+
+```json
+"roleMapping": {
+  "123456789012345678": "ADMIN",
+  "234567890123456789": "MODERATOR",
+  "345678901234567890": "VIEWER"
+}
+```
+
+#### Whitelist / Blacklist
+
+```json
+"whitelistedRoles":  ["123456789012345678"],   // only these role IDs can log in (empty = everyone)
+"blacklistedUsers":  ["987654321098765432"]    // these Discord user IDs are always denied
+```
+
+### Without Simple Discord Link
+
+If SDLink is **not** installed, the OAuth2 flow still works for identification, but:
+- `requireLinkedAccount: true` → login will be denied (no Minecraft account can be looked up)
+- `requireLinkedAccount: false` → login succeeds; dashboard username = Discord display name
+
+Set `requireLinkedAccount: false` in `discord_auth.json` to allow Discord-only accounts.
+
+### Troubleshooting
+
+| Symptom | Likely Cause |
+|---|---|
+| Discord button missing on login page | `clientId` / `clientSecret` not set in `discord_auth.json` |
+| `discord_auth_failed` error after redirect | Wrong `redirectUri` in config or Discord app |
+| "no linked account" error | SDLink not installed or player hasn't used `/link` in Discord |
+| "does not have a whitelisted role" | User doesn't hold one of the `whitelistedRoles` IDs |
+| Button shows warning tooltip | SDLink absent but `requireLinkedAccount: true` |
+
+---
+
 ## Config (`config.json` → `webDashboard`)
 
 | Key | Default | Description |
