@@ -2,6 +2,7 @@ package com.zerog.neoessentials.webdashboard.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -242,6 +243,13 @@ public class ServerDataCollector {
             if (tps < 10) health = "critical";
             status.addProperty("health", health);
             LOGGER.debug("Health: {}", health);
+
+            // Expose WebSocket port so the frontend knows where to connect
+            try {
+                status.addProperty("wsPort", ConfigManager.getInstance().getWebDashboardWebSocketPort());
+            } catch (Exception e2) {
+                status.addProperty("wsPort", 8081);
+            }
 
             LOGGER.info("=== Server Status Collection Complete ===");
             return status;

@@ -1,11 +1,14 @@
 package com.zerog.neoessentials.webdashboard.api.endpoints;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.webdashboard.data.PlayerDataCollector;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +49,21 @@ public class PlayerEndpoint implements HttpHandler {
         LOGGER.debug("PlayerEndpoint handling request: {} {}", method, path);
 
         try {
-            // Only allow GET requests
+            // Route POST requests
+            if ("POST".equals(method)) {
+                if (path.matches("/api/player/kick/.*")) {
+                    String username = path.substring("/api/player/kick/".length());
+                    handleKick(exchange, username);
+                } else if (path.matches("/api/player/gamemode/.*")) {
+                    String username = path.substring("/api/player/gamemode/".length());
+                    handleGamemode(exchange, username);
+                } else {
+                    sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
+                }
+                return;
+            }
+
+            // Only allow GET requests beyond this point
             if (!"GET".equals(method)) {
                 sendResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
                 return;
@@ -124,6 +141,116 @@ public class PlayerEndpoint implements HttpHandler {
         }
     }
     
+    // ── POST /api/player/kick/{username} ────────────────────────────────────
+
+    private void handleKick(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String reason;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            reason = body.has("reason") ? body.get("reason").getAsString() : "Kicked by dashboard admin";
+        } catch (Exception e) {
+            reason = "Kicked by dashboard admin";
+        }
+        final String finalReason = reason;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                player.connection.disconnect(Component.literal(finalReason));
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " was kicked: " + finalReason);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        JsonObject result;
+        try {
+            result = future.get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            result = new JsonObject();
+            result.addProperty("success", false);
+            result.addProperty("error", "Timeout or server error: " + e.getMessage());
+        }
+        int status = result.has("success") && result.get("success").getAsBoolean() ? 200 : 400;
+        sendResponse(exchange, status, result.toString());
+    }
+
+    // ── POST /api/player/gamemode/{username} ─────────────────────────────────
+    // Body: {"gamemode": "creative"}  (survival / creative / adventure / spectator)
+
+    private void handleGamemode(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        GameType targetMode;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            String gm = body.has("gamemode") ? body.get("gamemode").getAsString().toLowerCase() : "survival";
+            targetMode = switch (gm) {
+                case "creative"   -> GameType.CREATIVE;
+                case "adventure"  -> GameType.ADVENTURE;
+                case "spectator"  -> GameType.SPECTATOR;
+                default           -> GameType.SURVIVAL;
+            };
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body or gamemode\"}");
+            return;
+        }
+        final GameType finalMode = targetMode;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                player.setGameMode(finalMode);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + "'s game mode is now " + finalMode.getName());
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        JsonObject result;
+        try {
+            result = future.get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            result = new JsonObject();
+            result.addProperty("success", false);
+            result.addProperty("error", "Timeout or server error: " + e.getMessage());
+        }
+        int status = result.has("success") && result.get("success").getAsBoolean() ? 200 : 400;
+        sendResponse(exchange, status, result.toString());
+    }
+
+    /** Returns true if the exchange was authenticated as an admin. */
+    private boolean isAdmin(HttpExchange exchange) {
+        Object adminAttr = exchange.getAttribute("auth-admin");
+        return Boolean.TRUE.equals(adminAttr);
+    }
+
     private JsonObject getResponse(String path) {
         JsonObject response;
             

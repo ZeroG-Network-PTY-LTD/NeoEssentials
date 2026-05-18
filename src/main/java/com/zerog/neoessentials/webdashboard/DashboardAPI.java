@@ -393,7 +393,7 @@ public class DashboardAPI {
         LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history, assets) [AUTH REQUIRED]");
         LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
         LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/admin/* (restart, stop, reload, save) [AUTH REQUIRED - ADMIN ONLY]");
+        LOGGER.info("  - /api/admin/* (restart, stop, reload, save, broadcast) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/files/* (browse, read, write, create, upload, delete, backup, restore, cloud) [AUTH REQUIRED]");
         LOGGER.info("  - /api/permissions/* (overview, groups, users, manage) [AUTH REQUIRED - ADMIN ONLY]");
         LOGGER.info("  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
