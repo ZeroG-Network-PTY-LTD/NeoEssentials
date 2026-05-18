@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.webdashboard.analytics.PlayerSessionTracker;
+import com.zerog.neoessentials.webdashboard.analytics.WebSocketEventBroadcaster;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.players.GameProfileCache;
 import org.slf4j.Logger;
@@ -103,6 +104,9 @@ public class StatsEndpoint implements HttpHandler {
             timeLabels[historyHead]  = ISO.format(Instant.now());
             historyHead = (historyHead + 1) % HISTORY_POINTS;
             if (historySamples < HISTORY_POINTS) historySamples++;
+
+            // Push live stats pulse to WebSocket clients
+            WebSocketEventBroadcaster.broadcastStatsPulse(server);
         } catch (Exception e) {
             LOGGER.debug("[Stats] Sample error: {}", e.getMessage());
         }

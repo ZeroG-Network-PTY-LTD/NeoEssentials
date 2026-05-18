@@ -52,6 +52,8 @@ public class AdminEndpoint implements HttpHandler {
                 handleReload(exchange);
             } else if (path.equals("/api/admin/save") && "POST".equals(method)) {
                 handleSaveAll(exchange);
+            } else if (path.equals("/api/admin/broadcast") && "POST".equals(method)) {
+                handleBroadcast(exchange);
             } else {
                 sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
             }
@@ -279,6 +281,65 @@ public class AdminEndpoint implements HttpHandler {
         } catch (Exception e) {
             LOGGER.error("Timeout or error getting reload response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Reload request timeout\"}");
+        }
+    }
+
+    /**
+     * POST /api/admin/broadcast - Send a message to all online players from the dashboard
+     * Body: {"message": "Server maintenance in 10 minutes!"}
+     */
+    private void handleBroadcast(HttpExchange exchange) throws IOException {
+        String bodyJson;
+        try {
+            bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Could not read request body\"}");
+            return;
+        }
+
+        String message;
+        try {
+            com.google.gson.JsonObject body = com.google.gson.JsonParser.parseString(bodyJson).getAsJsonObject();
+            if (!body.has("message") || body.get("message").getAsString().isBlank()) {
+                sendResponse(exchange, 400, "{\"success\":false,\"error\":\"'message' field is required\"}");
+                return;
+            }
+            message = body.get("message").getAsString();
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid JSON body\"}");
+            return;
+        }
+
+        String senderName = "Dashboard";
+        Object attr = exchange.getAttribute("auth-username");
+        if (attr instanceof String s && !s.isBlank()) senderName = s;
+
+        final String finalSender  = senderName;
+        final String finalMessage = "§6[Dashboard §e" + senderName + "§6]§f " + message;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                int count = server.getPlayerList().getPlayers().size();
+                server.getPlayerList().getPlayers().forEach(p ->
+                    p.sendSystemMessage(net.minecraft.network.chat.Component.literal(finalMessage)));
+                LOGGER.info("[Dashboard Broadcast] {}: {}", finalSender, finalMessage);
+                resp.addProperty("success", true);
+                resp.addProperty("recipients", count);
+                resp.addProperty("message", "Message sent to " + count + " player(s)");
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        try {
+            JsonObject result = future.get(8, TimeUnit.SECONDS);
+            int code = result.has("success") && result.get("success").getAsBoolean() ? 200 : 500;
+            sendResponse(exchange, code, result.toString());
+        } catch (Exception e) {
+            sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Timeout\"}");
         }
     }
 

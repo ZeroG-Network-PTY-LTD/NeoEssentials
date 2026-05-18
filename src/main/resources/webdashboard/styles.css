@@ -1,4 +1,4 @@
-/* NeoEssentials Dashboard Styles v2.0 - Modern Design */
+e /* NeoEssentials Dashboard Styles v2.0 - Modern Design */
 
 :root {
     /* Color Palette */
@@ -2046,9 +2046,78 @@ select.form-input {
     max-width: 600px;
 }
 
-#groupPermModal .perm-list,
-#userPermModal .perm-list {
-    max-height: 400px;
-    overflow-y: auto;
+/* ── Live badge ─────────────────────────────────────────────────────────── */
+.live-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--danger);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 0.5rem;
+    animation: livePulse 1.5s ease-in-out infinite;
+    vertical-align: middle;
 }
+@keyframes livePulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+/* ── Live chat feed ──────────────────────────────────────────────────────── */
+.live-chat-feed {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+}
+.chat-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.2rem 0.25rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+.chat-entry:hover { background: rgba(255,255,255,0.04); }
+.chat-time  { color: var(--text-tertiary); font-size: 0.72rem; white-space: nowrap; }
+.chat-player { font-weight: 600; color: var(--primary-light); white-space: nowrap; }
+.chat-sep   { color: var(--text-tertiary); }
+.chat-text  { color: var(--text-primary); word-break: break-word; }
+
+/* ── Player quick-action button (xs) ────────────────────────────────────── */
+.btn-xs {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    border-radius: var(--border-radius-sm);
+}
+.player-actions { margin-left: auto; display: flex; gap: 0.35rem; align-items: center; }
+
+/* ── WS live event flash ─────────────────────────────────────────────────── */
+.event-item.ws-live {
+    animation: eventFlash 1.2s ease;
+}
+@keyframes eventFlash {
+    0%   { background: rgba(99, 102, 241, 0.18); }
+    100% { background: transparent; }
+}
+
+/* ── Broadcast widget form ───────────────────────────────────────────────── */
+.card-footer { background: var(--bg-tertiary); }
+.form-input, .form-select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 0.4rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--primary); }
+.form-select { cursor: pointer; }
+
 

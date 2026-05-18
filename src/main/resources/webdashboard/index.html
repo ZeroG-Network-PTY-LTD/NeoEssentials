@@ -107,7 +107,14 @@
                     <span class="nav-icon"></span>
                     <span class="nav-text">Kits</span>
                 </a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
+            <a href="holograms.html" class="nav-item admin-only" style="display: none;">
+                <span class="nav-icon">🔮</span>
+                <span class="nav-text">Holograms</span>
+            </a>
+            <a href="shop.html" class="nav-item admin-only" style="display: none;">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-text">Shops</span>
+            </a>
 
                 <a href="stats.html" class="nav-item">
                     <span class="nav-icon"></span>
@@ -293,17 +300,46 @@
                         <div class="card card-full" data-page="overview events">
                             <div class="card-header">
                                 <h3 class="card-title">
-                                    <span class="title-icon"></span>
+                                    <span class="title-icon">📋</span>
                                     Recent Events
+                                    <span class="live-badge" id="wsLiveBadge" style="display:none;">● LIVE</span>
                                 </h3>
                                 <button class="btn btn-sm" id="clearEventsBtn">Clear</button>
                             </div>
                             <div class="card-body">
                                 <div class="events-timeline" id="eventsList">
                                     <div class="empty-state">
-                                        <span class="empty-icon"></span>
+                                        <span class="empty-icon">📜</span>
                                         <p>No recent events</p>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Chat Feed (visible to admins) -->
+                        <div class="card card-full admin-only" data-page="overview events" style="display:none;">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <span class="title-icon">💬</span>
+                                    Live Chat
+                                    <span class="live-badge">● LIVE</span>
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="live-chat-feed" id="liveChatFeed">
+                                    <div class="chat-placeholder" style="color:var(--text-tertiary);font-size:0.85rem;padding:0.5rem;">
+                                        Chat messages will appear here in real-time once WebSocket connects…
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer" style="padding:0.75rem 1rem;border-top:1px solid var(--border-color);">
+                                <div style="display:flex;gap:0.5rem;align-items:center;">
+                                    <input type="text" id="broadcastInput" class="form-input"
+                                        placeholder="Broadcast message to all players…"
+                                        style="flex:1;"
+                                        onkeydown="if(event.key==='Enter')handleBroadcastToPlayers()">
+                                    <button id="broadcastBtn" class="btn btn-sm btn-primary"
+                                        onclick="handleBroadcastToPlayers()">📢 Broadcast</button>
                                 </div>
                             </div>
                         </div>
@@ -431,11 +467,27 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closePlayerModal()">Close</button>
+                <!-- Admin-only player actions -->
+                <div id="modalAdminActions" class="admin-only" style="display:none;gap:0.5rem;display:flex;">
+                    <select id="modalGamemodeSelect" class="form-select"
+                        title="Change game mode"
+                        onchange="setPlayerGamemode(document.getElementById('modalPlayerName').textContent, this.value)">
+                        <option value="">— Set Gamemode —</option>
+                        <option value="survival">Survival</option>
+                        <option value="creative">Creative</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="spectator">Spectator</option>
+                    </select>
+                    <button class="btn btn-sm btn-danger"
+                        onclick="kickPlayer(document.getElementById('modalPlayerName').textContent)">
+                        ⚡ Kick
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="dashboard.js?v=419"></script>
+    <script src="dashboard.js?v=142"></script>
     <script src="permissions.js"></script>
 </body>
 </html>

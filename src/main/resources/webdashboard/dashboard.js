@@ -8,6 +8,13 @@ const REFRESH_INTERVAL = 5000; // 5 seconds
 let refreshTimer = null;
 let lastUpdateTime = 0;
 
+// ── WebSocket real-time state ────────────────────────────────────────────────
+let dashboardWS       = null;
+let wsReconnectTimer  = null;
+let wsReconnectDelay  = 3000;   // ms — doubles on each failed attempt (max 30 s)
+let wsConnected       = false;
+let wsPort            = 8081;   // updated from /api/server/status at runtime
+
 // Helper function to make authenticated API calls
 async function fetchWithAuth(url, options = {}) {
     const token = localStorage.getItem('authToken');
@@ -268,6 +275,9 @@ function showDashboard() {
     
     // Load initial data
     refreshData();
+
+    // Connect WebSocket for real-time updates
+    initWebSocket();
 }
 
 // Handle Discord OAuth2 login
@@ -314,6 +324,187 @@ async function handleDiscordLogin() {
     }
 }
 
+// ── WebSocket real-time connection ────────────────────────────────────────────
+
+function initWebSocket() {
+    if (dashboardWS) { try { dashboardWS.close(); } catch (_) {} dashboardWS = null; }
+    if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+
+    const wsHost = window.location.hostname || 'localhost';
+    const wsUrl  = `ws://${wsHost}:${wsPort}`;
+
+    try {
+        dashboardWS = new WebSocket(wsUrl);
+    } catch (e) {
+        console.warn('[WS] Could not create WebSocket:', e.message);
+        scheduleWsReconnect();
+        return;
+    }
+
+    dashboardWS.onopen = () => {
+        console.log('[WS] Connected to', wsUrl);
+        wsConnected = true;
+        wsReconnectDelay = 3000;
+        dashboardWS.send(JSON.stringify({ type: 'authenticate', sessionId: token }));
+    };
+
+    dashboardWS.onmessage = (event) => {
+        try { handleWsMessage(JSON.parse(event.data)); } catch (_) {}
+    };
+
+    dashboardWS.onerror = () => {
+        wsConnected = false;
+    };
+
+    dashboardWS.onclose = (ev) => {
+        wsConnected = false;
+        dashboardWS = null;
+        const badge = document.getElementById('wsLiveBadge');
+        if (badge) badge.style.display = 'none';
+        if (ev.code !== 1008 && localStorage.getItem('authToken')) scheduleWsReconnect();
+    };
+}
+
+function scheduleWsReconnect() {
+    if (wsReconnectTimer) return;
+    wsReconnectTimer = setTimeout(() => {
+        wsReconnectTimer = null;
+        if (localStorage.getItem('authToken') && !wsConnected) initWebSocket();
+    }, wsReconnectDelay);
+    wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30_000);
+}
+
+function handleWsMessage(msg) {
+    switch (msg.type) {
+        case 'welcome': break;
+        case 'authenticated':
+            console.log('[WS] Authenticated as', msg.username);
+            dashboardWS.send(JSON.stringify({ type: 'subscribe', channels: ['events', 'chat', 'stats'] }));
+            break;
+        case 'subscribed': {
+            console.log('[WS] Subscribed to', msg.channels);
+            const badge = document.getElementById('wsLiveBadge');
+            if (badge) badge.style.display = '';
+            updateApiStatus('Connected (Live)', true);
+            break;
+        }
+        case 'stats':   handleWsStatsPulse(msg); break;
+        case 'event':   handleWsGameEvent(msg);  break;
+        case 'chat':    handleWsChatMsg(msg);     break;
+        case 'pong':    break;
+        case 'error':
+        case 'auth_error':
+            console.warn('[WS] Server error:', msg.message); break;
+        default:
+            console.debug('[WS] Unknown message type:', msg.type);
+    }
+}
+
+function handleWsStatsPulse(msg) {
+    if (msg.tps !== undefined) {
+        const tps = Number(msg.tps);
+        const tpsNumEl = document.querySelector('#tpsValue .number');
+        if (tpsNumEl) tpsNumEl.textContent = tps.toFixed(1);
+        updateProgressBar('tpsProgress', (tps / 20) * 100, tps);
+    }
+    if (msg.memUsedMb !== undefined) {
+        const usedMB = Number(msg.memUsedMb), maxMB = Number(msg.memMaxMb || 0);
+        const pct    = Number(msg.memPercent || 0);
+        const numEl  = document.querySelector('#memoryValue .number');
+        const unitEl = document.querySelector('#memoryValue .unit');
+        if (numEl)  numEl.textContent  = usedMB.toFixed(0);
+        if (unitEl) unitEl.textContent = `MB / ${maxMB.toFixed(0)} MB`;
+        const bar = document.getElementById('memoryProgress');
+        if (bar) {
+            bar.style.width = `${Math.min(pct, 100)}%`;
+            bar.style.background = pct >= 85
+                ? 'linear-gradient(90deg, var(--danger), var(--danger-light))'
+                : pct >= 70
+                    ? 'linear-gradient(90deg, var(--warning), var(--warning-light))'
+                    : 'linear-gradient(90deg, var(--success), var(--success-light))';
+        }
+    }
+    if (msg.players !== undefined) {
+        const pn = document.querySelector('#playerCount .number');
+        const pm = document.querySelector('#playerCount .max');
+        if (pn) pn.textContent = msg.players;
+        if (pm) pm.textContent = `/ ${msg.playersMax || 20}`;
+    }
+}
+
+function handleWsGameEvent(msg) {
+    const listEl = document.getElementById('eventsList');
+    if (!listEl) return;
+    const empty = listEl.querySelector('.empty-state');
+    if (empty) empty.remove();
+
+    const item = document.createElement('div');
+    item.className = `event-item ${getEventClass(msg.event || '')} ws-live`;
+    item.innerHTML = `
+        <span class="event-icon">${getEventIcon(msg.event || '')}</span>
+        <span class="event-message">${escapeHtml(msg.message || '')}</span>
+        <span class="event-time">just now</span>
+    `;
+    listEl.insertBefore(item, listEl.firstChild);
+    while (listEl.children.length > 50) listEl.removeChild(listEl.lastChild);
+
+    if (msg.event === 'player_join' || msg.event === 'player_leave') {
+        setTimeout(() => loadAllPlayers(), 600);
+    }
+}
+
+function handleWsChatMsg(msg) {
+    const feedEl = document.getElementById('liveChatFeed');
+    if (!feedEl) return;
+    const ph = feedEl.querySelector('.chat-placeholder');
+    if (ph) ph.remove();
+
+    const time  = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entry = document.createElement('div');
+    entry.className = 'chat-entry';
+    entry.innerHTML = `
+        <span class="chat-time">${time}</span>
+        <span class="chat-player">${escapeHtml(msg.player || 'Unknown')}</span>
+        <span class="chat-sep">›</span>
+        <span class="chat-text">${escapeHtml(msg.message || '')}</span>
+    `;
+    feedEl.insertBefore(entry, feedEl.firstChild);
+    while (feedEl.children.length > 40) feedEl.removeChild(feedEl.lastChild);
+}
+
+// ── Broadcast to all players ──────────────────────────────────────────────────
+
+async function handleBroadcastToPlayers() {
+    const input = document.getElementById('broadcastInput');
+    const msg   = input ? input.value.trim() : '';
+    if (!msg) { alert('Please enter a message to broadcast.'); return; }
+
+    const btn = document.getElementById('broadcastBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+    try {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/admin/broadcast`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            if (input) input.value = '';
+            addAdminLog(`Broadcast: ${msg} (${data.recipients || 0} players)`, 'success');
+        } else {
+            alert('Broadcast failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Error sending broadcast: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '📢 Broadcast'; }
+    }
+}
+
 // Handle logout
 async function handleLogout() {
     const token = localStorage.getItem('authToken');
@@ -337,6 +528,10 @@ async function handleLogout() {
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('authType');
     
+    // Close WebSocket
+    if (dashboardWS) { try { dashboardWS.close(1000, 'logout'); } catch (_) {} dashboardWS = null; }
+    wsConnected = false;
+
     // Show login screen
     showLoginScreen();
     
@@ -882,6 +1077,11 @@ async function loadAllPlayers() {
                         <div class="player-ping ${getPingClass(player.ping)}">
                             ${player.ping !== undefined ? player.ping : 0}ms
                         </div>
+                        ${localStorage.getItem('isAdmin') === 'true' ? `
+                        <div class="player-actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-xs btn-danger" title="Kick player"
+                                onclick="kickPlayer('${escapeHtml(player.username || '')}')">Kick</button>
+                        </div>` : ''}
                     </div>
                 `).join('');
                 }
@@ -1742,3 +1942,59 @@ console.log('Auto-refresh interval: ' + (REFRESH_INTERVAL / 1000) + ' seconds');
 console.log('Press Ctrl+R or F5 to manually refresh data');
 console.log('Player modal functions loaded:', typeof window.openPlayerModal === 'function', typeof window.closePlayerModal === 'function');
 console.log('Admin control functions loaded:', typeof handleRestartServer === 'function');
+
+// ── Player admin action helpers ──────────────────────────────────────────────
+
+/**
+ * Kick an online player (admin only).
+ * @param {string} username
+ */
+window.kickPlayer = async function(username) {
+    if (!username) return;
+    const reason = prompt(`Kick reason for ${username}:`, 'Kicked by dashboard admin');
+    if (reason === null) return; // cancelled
+
+    try {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/player/kick/${encodeURIComponent(username)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            alert(`✅ ${data.message}`);
+            setTimeout(() => loadAllPlayers(), 500);
+        } else {
+            alert(`❌ Kick failed: ${data.error || 'Unknown error'}`);
+        }
+    } catch (e) {
+        alert(`❌ Error: ${e.message}`);
+    }
+};
+
+/**
+ * Change a player's game mode (admin only).
+ * @param {string} username
+ * @param {string} gamemode  survival | creative | adventure | spectator
+ */
+window.setPlayerGamemode = async function(username, gamemode) {
+    if (!username || !gamemode) return;
+    try {
+        const resp = await fetchWithAuth(`${API_BASE_URL}/player/gamemode/${encodeURIComponent(username)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gamemode })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            const gmEl = document.getElementById('modalGamemodeSelect');
+            if (gmEl) gmEl.style.boxShadow = '0 0 0 2px var(--success)';
+            setTimeout(() => loadAllPlayers(), 300);
+        } else {
+            alert(`❌ Gamemode change failed: ${data.error || 'Unknown error'}`);
+        }
+    } catch (e) {
+        alert(`❌ Error: ${e.message}`);
+    }
+};
+
