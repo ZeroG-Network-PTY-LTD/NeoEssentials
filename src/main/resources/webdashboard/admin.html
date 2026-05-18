@@ -19,19 +19,19 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
-                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+                <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
                 <a href="admin.html" class="nav-item admin-only active"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
-                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
-                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
                 <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
-                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
-                <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
-                <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
-                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
-                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
-                <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
-                <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
+                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+                <a href="moderation.html" class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+                <a href="kits.html" class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+                <a href="stats.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+                <a href="discord.html" class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <div class="server-status-mini">
@@ -55,7 +55,7 @@
                         <div class="user-avatar">A</div>
                         <span class="user-name" id="userName">Guest</span>
                     </div>
-                    <button class="btn-icon" id="logoutBtn" title="Logout"><span></span></button>
+                    <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
                 </div>
             </header>
             <main class="content">
@@ -71,49 +71,49 @@
                         <div class="card-body">
                             <div class="admin-controls-grid">
                                 <div class="admin-control-card danger">
-                                    <div class="admin-control-icon"></div>
+                                    <div class="admin-control-icon">🔄</div>
                                     <div class="admin-control-content">
                                         <h4>Restart Server</h4>
                                         <p>Gracefully restart the Minecraft server with 5-second countdown</p>
                                         <button class="btn btn-danger" id="restartServerBtn">
-                                            <span></span> Restart Server
+                                            <span>🔄</span> Restart Server
                                         </button>
                                     </div>
                                 </div>
                                 <div class="admin-control-card danger">
-                                    <div class="admin-control-icon"></div>
+                                    <div class="admin-control-icon">🛑</div>
                                     <div class="admin-control-content">
                                         <h4>Stop Server</h4>
                                         <p>Gracefully shutdown the server with 5-second countdown</p>
                                         <button class="btn btn-danger" id="stopServerBtn">
-                                            <span></span> Stop Server
+                                            <span>🛑</span> Stop Server
                                         </button>
                                     </div>
                                 </div>
                                 <div class="admin-control-card warning">
-                                    <div class="admin-control-icon"></div>
+                                    <div class="admin-control-icon">🔧</div>
                                     <div class="admin-control-content">
                                         <h4>Reload Configurations</h4>
                                         <p>Reload all mod configurations without restarting</p>
                                         <button class="btn btn-warning" id="reloadConfigsBtn">
-                                            <span></span> Reload Configs
+                                            <span>🔧</span> Reload Configs
                                         </button>
                                     </div>
                                 </div>
                                 <div class="admin-control-card success">
-                                    <div class="admin-control-icon"></div>
+                                    <div class="admin-control-icon">💾</div>
                                     <div class="admin-control-content">
                                         <h4>Save All Worlds</h4>
                                         <p>Force save all loaded world chunks</p>
                                         <button class="btn btn-success" id="saveWorldsBtn">
-                                            <span></span> Save Worlds
+                                            <span>💾</span> Save Worlds
                                         </button>
                                     </div>
                                 </div>
                             </div>
                             <div class="admin-log-section">
                                 <h4 class="admin-log-title">
-                                    <span></span> Action Log
+                                    <span>📋</span> Action Log
                                 </h4>
                                 <div class="admin-log-messages" id="adminLogMessages">
                                     <div class="admin-log-empty">No recent actions</div>

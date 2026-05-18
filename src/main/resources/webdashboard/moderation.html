@@ -70,19 +70,19 @@
     <aside class="sidebar">
         <div class="sidebar-header"><div class="sidebar-logo"><span class="logo-icon">⚡</span><span class="logo-text">NeoEssentials</span></div></div>
         <nav class="sidebar-nav">
-            <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
-            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
             <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
-            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
-            <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+            <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
             <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
-            <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
-            <a href="moderation.html" class="nav-item active"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
-            <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
-            <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
-            <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
-            <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
-            <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
+            <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+            <a href="moderation.html" class="nav-item active"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+            <a href="kits.html" class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+            <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+            <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+            <a href="stats.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+            <a href="discord.html" class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
         </nav>
         <div class="sidebar-footer"><div class="server-status-mini"><span class="status-dot"></span><span class="status-text">Server Online</span></div></div>
     </aside>
@@ -91,16 +91,16 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
-                <h2 class="page-title">️ Moderation</h2>
+                <h2 class="page-title">🛡️ Moderation</h2>
             </div>
             <div class="topbar-right">
                 <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
                 <div class="user-info" id="userInfo"><div class="user-avatar">?</div><span class="user-name" id="userName">Guest</span></div>
-                <button class="btn-icon" id="logoutBtn" title="Logout"><span></span></button>
+                <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
             </div>
         </header>
 
-        <main class="content-area">
+        <main class="content">
             <div class="status-banner" id="statusBanner"></div>
 
             <div class="stat-cards">
@@ -111,7 +111,7 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('bans',this)"> Bans</button>
+                <button class="tab-btn active" onclick="switchTab('bans',this)">🚫 Bans</button>
                 <button class="tab-btn" onclick="switchTab('warns',this)">⚠️ Warnings</button>
                 <button class="tab-btn admin-only" onclick="switchTab('newban',this)">➕ Issue Ban</button>
             </div>
@@ -120,10 +120,10 @@
             <div class="tab-panel active" id="bansPanel">
                 <div class="card">
                     <div class="card-header">
-                        <h3> Ban List</h3>
+                        <h3>🚫 Ban List</h3>
                         <div style="display:flex;gap:0.5rem;">
                             <button class="btn-secondary btn-sm" id="toggleActiveBtn" onclick="toggleBansView(this)">Show All</button>
-                            <button class="btn-secondary btn-sm" id="refreshBansBtn"> Refresh</button>
+                            <button class="btn-secondary btn-sm" id="refreshBansBtn">🔄 Refresh</button>
                         </div>
                     </div>
                     <div id="bansTableWrap"><div class="empty-state"><div class="icon"><span class="spinner"></span></div></div></div>
@@ -133,7 +133,7 @@
             <!-- Warnings tab -->
             <div class="tab-panel" id="warnsPanel">
                 <div class="card">
-                    <div class="card-header"><h3>⚠️ Warnings</h3><button class="btn-secondary btn-sm" id="refreshWarnsBtn"> Refresh</button></div>
+                    <div class="card-header"><h3>⚠️ Warnings</h3><button class="btn-secondary btn-sm" id="refreshWarnsBtn">🔄 Refresh</button></div>
                     <div class="search-row">
                         <input type="text" id="warnSearch" placeholder="Search by player name…">
                         <button class="btn-primary btn-sm" id="searchWarnBtn">Search</button>
@@ -145,7 +145,7 @@
             <!-- Issue ban tab -->
             <div class="tab-panel admin-only" id="newbanPanel">
                 <div class="create-panel">
-                    <h3> Issue New Ban</h3>
+                    <h3>⛔ Issue New Ban</h3>
                     <div class="form-row">
                         <div class="form-field"><label>Target (UUID or IP)</label><input type="text" id="banTarget" placeholder="UUID or IP address"></div>
                         <div class="form-field"><label>Player Name</label><input type="text" id="banName" placeholder="Display name"></div>
@@ -165,8 +165,8 @@
         </main>
     </div>
 </div>
-<script src="dashboard.js"></script>
-<script src="moderation.js"></script>
+<script src="dashboard.js?v=144"></script>
+<script src="moderation.js?v=144"></script>
 <script>
 function switchTab(name, btn) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

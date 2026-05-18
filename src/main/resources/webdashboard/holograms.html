@@ -126,7 +126,7 @@
             <a href="users.html"          class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
             <a href="moderation.html"     class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
             <a href="kits.html"           class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
-            <a href="holograms.html"      class="nav-item active admin-only"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
+            <a href="holograms.html"      class="nav-item active admin-only"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
             <a href="shop.html"           class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
             <a href="stats.html"          class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
             <a href="discord.html"        class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
@@ -140,7 +140,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
-                <h2 class="page-title">✨ Holograms</h2>
+                <h2 class="page-title">🔮 Holograms</h2>
             </div>
             <div class="topbar-right">
                 <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
@@ -186,7 +186,7 @@
             <!-- Holograms table -->
             <div class="card">
                 <div class="card-header">
-                    <h3>✨ Hologram List</h3>
+                    <h3>🔮 Hologram List</h3>
                     <button class="btn-secondary btn-sm" id="refreshHologramsBtn">🔄 Refresh</button>
                 </div>
                 <div class="search-row">
@@ -206,7 +206,7 @@
 <div class="modal-overlay" id="holoModal">
     <div class="modal">
         <div class="modal-header">
-            <h3 id="holoModalTitle">✨ Hologram Details</h3>
+            <h3 id="holoModalTitle">🔮 Hologram Details</h3>
             <button class="modal-close" onclick="closeHoloModal()">✕</button>
         </div>
         <div class="detail-grid" id="holoModalGrid"></div>
@@ -415,32 +415,9 @@
     </div>
 </div>
 
-<script src="dashboard.js"></script>
-<script src="holograms.js"></script>
+<script src="dashboard.js?v=144"></script>
+<script src="holograms.js?v=144"></script>
 <script>
-    const token = localStorage.getItem('authToken');
-    if (!token) window.location.href = 'index.html';
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUser');
-        window.location.href = 'index.html';
-    });
-
-    try {
-        const u = JSON.parse(localStorage.getItem('authUser') || '{}');
-        if (u.username) {
-            document.getElementById('userName').textContent = u.username;
-            document.querySelector('.user-avatar').textContent = u.username[0].toUpperCase();
-        }
-        if (u.role === 'ADMIN' || u.admin) {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-        }
-    } catch(e) {}
-
-    document.getElementById('sidebarToggle').addEventListener('click', () =>
-        document.querySelector('.sidebar').classList.toggle('collapsed'));
-
     function closeHoloModal() {
         document.getElementById('holoModal').classList.remove('open');
     }
