@@ -54,6 +54,33 @@ public class HologramData {
      */
     public int backgroundColorArgb = 0x00000000;
 
+    /**
+     * Text alignment applied to every line in this hologram.
+     * 0 = CENTER (default), 1 = LEFT, 2 = RIGHT.
+     */
+    public int textAlign = 0;
+
+    /**
+     * Whether text renders through solid blocks (like a beacon beam effect).
+     * Default is false.
+     */
+    public boolean seeThrough = false;
+
+    /**
+     * Maximum text width in pixels before the text wraps to the next line.
+     * Default is 200 (vanilla TextDisplay default).
+     * Set higher (e.g. 1000) to prevent wrapping for long lines.
+     */
+    public int lineWidth = 200;
+
+    /**
+     * How far away (in blocks) players can see this hologram.
+     * Corresponds to the Display entity's view range multiplier.
+     * Default is 1.0 (vanilla default ≈ 64 blocks).
+     * Higher = visible further, lower = closer range only.
+     */
+    public float viewRange = 1.0f;
+
     // ── Billboard & rotation ──────────────────────────────────────────────────
     /**
      * Billboard constraint applied to every Display.TextDisplay entity for this hologram.
@@ -70,10 +97,24 @@ public class HologramData {
     public boolean spinEnabled = false;
     public float spinSpeedDegrees = 3.0f;
     /**
-     * Spin axis: "Y" (world-space vertical spin — useful with FIXED billboard),
+     * Spin axis: "Y" (world-space vertical spin — automatically uses player-tracking mode),
+     *            "X" (pitch spin, visible with CENTER billboard),
      *            "Z" (roll spin visible to player — recommended with CENTER billboard).
      */
     public String spinAxis = "Y";
+
+    /**
+     * When {@code true} (the default) and {@code spinAxis} is {@code "Y"}, the renderer
+     * switches the billboard to <b>FIXED</b> and computes the effective Y rotation as
+     * {@code yaw_to_nearest_player + currentSpinAngle}.  This makes the hologram rotate
+     * a full 360 degrees around its vertical axis while the "front face" always follows
+     * the nearest player — so the text is readable once per revolution no matter where
+     * the player stands.
+     *
+     * <p>Set to {@code false} to fall back to the raw LEFT_ROTATION Y spin (only useful
+     * with a FIXED billboard set manually; CENTER/VERTICAL will cancel it out).
+     */
+    public boolean spinTrackPlayer = true;
 
     /**
      * Hover / subtle bob animation. Moves the hologram smoothly up and down.
@@ -89,6 +130,12 @@ public class HologramData {
     public transient List<UUID> entityUUIDs = new ArrayList<>();
     /** Current spin angle in degrees (runtime only, not persisted). */
     public transient float  currentSpinAngle = 0f;
+    /**
+     * Yaw angle (degrees) from the hologram centre to the nearest tracked player
+     * (runtime only, not persisted).  Refreshed each animation tick by
+     * {@link HologramRenderer} when Y-axis tracking spin is active.
+     */
+    public transient float  spinPlayerYaw    = 0f;
     /** Current hover sine-wave phase in degrees (runtime only). */
     public transient float  hoverPhase       = 0f;
 

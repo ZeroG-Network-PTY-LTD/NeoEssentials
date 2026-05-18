@@ -313,7 +313,7 @@ public class DashboardRegisterCommand {
                 boolean linked = DashboardRegistrationManager.getInstance().linkDiscordAccount(
                     player.getUUID(), discordUser.getDiscordId(), discordUser.getDiscordUsername());
                 if (linked) {
-                    source.sendSuccess(() -> Component.literal("§b§l🔗 Discord Auto-Linked: §b" + discordUser.getDiscordUsername()), false);
+                    source.sendSuccess(() -> Component.literal("§b§l Discord Auto-Linked: §b" + discordUser.getDiscordUsername()), false);
                     source.sendSuccess(() -> Component.literal("§7You can also log in using the §b§lLogin with Discord §r§7button!"), false);
                     source.sendSuccess(() -> Component.literal(""), false);
                 }
@@ -364,7 +364,7 @@ public class DashboardRegisterCommand {
             // Show Discord tip if SDLink is available and they're linked
             DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
             if (discordProvider.isAvailable() && discordProvider.isAccountLinkedByUuid(player.getUUID())) {
-                source.sendSuccess(() -> Component.literal("§b§l💡 TIP: §bYou have Discord linked! Run §e/dashboardregister discord §bto register instantly"), false);
+                source.sendSuccess(() -> Component.literal("§b§l TIP: §bYou have Discord linked! Run §e/dashboardregister discord §bto register instantly"), false);
             } else {
                 source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register"), false);
                 source.sendSuccess(() -> Component.literal("§7Or §b/dashboardregister discord §7if you have Discord linked via SDLink"), false);

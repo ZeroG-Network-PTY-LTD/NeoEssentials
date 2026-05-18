@@ -106,8 +106,12 @@ public class HologramManager {
             List<HologramData> list = GSON.fromJson(r, listType);
             if (list != null) {
                 for (HologramData d : list) {
-                    // Init transient fields
+                    // Init transient / collection fields that Gson leaves null when absent from JSON
                     if (d.entityUUIDs == null) d.entityUUIDs = new ArrayList<>();
+                    if (d.lines == null)       d.lines       = new ArrayList<>();
+                    for (HologramLine line : d.lines) {
+                        if (line.frames == null) line.frames = new ArrayList<>();
+                    }
                     holograms.put(d.id.toLowerCase(Locale.ROOT), d);
                 }
             }

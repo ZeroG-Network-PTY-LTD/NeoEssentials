@@ -42,15 +42,15 @@
                 </div>
                 <div id="loginError" class="login-error" style="display: none;"></div>
                 <button type="submit" class="btn btn-login">
-                    <span>🔐 Login</span>
+                    <span> Login</span>
                 </button>
                 <div class="login-divider"><span>or</span></div>
                 <button type="button" class="btn btn-discord" id="discordLoginBtn" onclick="handleDiscordLogin()">
                     <span>Discord Login</span>
                 </button>
                 <div class="login-info">
-                    <small>💡 Register in-game: <strong>/dashboardregister discord</strong> or /dashboardregister start</small>
-                    <small>📝 No longer requires being online to log in!</small>
+                    <small> Register in-game: <strong>/dashboardregister discord</strong> or /dashboardregister start</small>
+                    <small> No longer requires being online to log in!</small>
                 </div>
             </form>
         </div>
@@ -156,11 +156,11 @@
                     window.location.href = 'index.html';
                 } else {
                     showError(data.error || 'Invalid credentials. Try registering in-game: /dashboardregister start');
-                    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '🔐 Login'; }
+                    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = ' Login'; }
                 }
             } catch (err) {
                 showError('Connection error. Is the server running?');
-                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '🔐 Login'; }
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = ' Login'; }
             }
         }
 

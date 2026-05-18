@@ -42,6 +42,7 @@
         .btn-view   { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid rgba(137,180,250,0.3); }
         .btn-toggle { background: rgba(166,227,161,0.12); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.3); }
         .btn-delete { background: rgba(243,139,168,0.12); color: #f38ba8; border: 1px solid rgba(243,139,168,0.3); }
+        .btn-edit   { background: rgba(249,226,175,0.12); color: #f9e2af; border: 1px solid rgba(249,226,175,0.3); }
 
         .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary,#a6adc8); }
         .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
@@ -51,10 +52,10 @@
         .refresh-bar { display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: .5rem; align-items: center; }
         .auto-badge  { font-size: .72rem; color: var(--text-secondary,#a6adc8); }
 
-        /* modal */
+        /* modals */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 580px; width: 95%; max-height: 90vh; overflow-y: auto; }
+        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 640px; width: 95%; max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
         .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
         .modal-close { background: none; border: none; color: #6c7086; font-size: 1.25rem; cursor: pointer; padding: 0; line-height: 1; }
@@ -64,19 +65,49 @@
         .detail-field { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 0.75rem 1rem; }
         .detail-field .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); font-weight: 600; margin-bottom: 0.25rem; }
         .detail-field .field-val   { font-size: 0.9rem; color: var(--text-primary,#cdd6f4); font-weight: 500; word-break: break-all; }
-        .detail-lines { margin-bottom: 1.25rem; }
-        .detail-lines h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); margin: 0 0 0.6rem; }
-        .line-item { background: rgba(255,255,255,0.04); border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem; font-size: 0.88rem; font-family: monospace; display: flex; gap: 0.75rem; align-items: flex-start; }
+        .detail-section { margin-bottom: 1.25rem; }
+        .detail-section h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing:.05em; color: var(--text-secondary,#a6adc8); margin: 0 0 0.6rem; }
+        .line-item { background: rgba(255,255,255,0.04); border-radius: 6px; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem; font-size: 0.88rem; font-family: monospace; display: flex; gap: 0.75rem; align-items: center; }
         .line-idx { color: #6c7086; min-width: 1.5rem; }
-        .line-text { color: #cdd6f4; word-break: break-all; }
-        .line-anim { font-size: 0.72rem; color: #f9e2af; margin-left: auto; white-space: nowrap; }
-        .modal-footer { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+        .line-text { color: #cdd6f4; word-break: break-all; flex: 1; }
+        .line-anim { font-size: 0.72rem; color: #f9e2af; white-space: nowrap; }
+        .modal-footer { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
         .btn-modal { padding: 0.5rem 1.1rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
         .btn-cancel { background: #313244; color: #cdd6f4; }
         .btn-spawn  { background: rgba(166,227,161,0.2); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.4); }
         .btn-despawn{ background: rgba(88,91,112,0.3);   color: #a6adc8; border: 1px solid #45475a; }
         .btn-vis    { background: rgba(137,180,250,0.2); color: #89b4fa; border: 1px solid rgba(137,180,250,0.4); }
         .btn-del    { background: rgba(243,139,168,0.2); color: #f38ba8; border: 1px solid rgba(243,139,168,0.4); }
+        .btn-primary-modal { background: #89b4fa; color: #1e1e2e; }
+        .btn-primary-modal:hover { background: #74c7ec; }
+        .btn-warn   { background: rgba(249,226,175,0.2); color: #f9e2af; border: 1px solid rgba(249,226,175,0.4); }
+
+        /* form fields in modals */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary,#a6adc8); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: .04em; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; background: rgba(255,255,255,0.06); border: 1px solid #45475a;
+            border-radius: 8px; color: #cdd6f4; padding: 0.55rem 0.8rem; font-size: 0.9rem;
+            font-family: inherit; box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #89b4fa; }
+        .form-group select option { background: #1e1e2e; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .form-check { display: flex; align-items: center; gap: 0.5rem; }
+        .form-check input[type=checkbox] { width: auto; cursor: pointer; accent-color: #89b4fa; }
+        .form-section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .05em; color: #89b4fa; font-weight: 700; margin: 1.25rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(137,180,250,0.2); }
+        .error-msg { color: #f38ba8; font-size: 0.83rem; margin-top: 0.5rem; }
+        .success-msg { color: #a6e3a1; font-size: 0.83rem; margin-top: 0.5rem; }
+
+        /* line editor */
+        .line-editor-item { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+        .line-editor-item input { flex: 1; }
+        .btn-icon-sm { background: none; border: 1px solid #45475a; border-radius: 6px; color: #a6adc8; cursor: pointer; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        .btn-icon-sm:hover { border-color: #89b4fa; color: #89b4fa; }
+        .btn-icon-sm.danger:hover { border-color: #f38ba8; color: #f38ba8; }
+        .btn-add-line { background: rgba(166,227,161,0.1); color: #a6e3a1; border: 1px dashed rgba(166,227,161,0.4); border-radius: 8px; width: 100%; padding: 0.5rem; cursor: pointer; font-size: 0.85rem; margin-top: 0.25rem; }
+        .btn-add-line:hover { background: rgba(166,227,161,0.18); }
     </style>
 </head>
 <body>
@@ -127,6 +158,7 @@
         <main class="content-area">
             <div class="refresh-bar">
                 <span class="auto-badge" id="autoRefreshBadge">Auto-refresh: 60s</span>
+                <button class="btn btn-primary" id="createHoloBtn" style="padding:.4rem 1rem;font-size:.82rem;margin-right:.5rem;">➕ Create Hologram</button>
                 <button class="btn btn-primary" id="refreshBtn" style="padding:.4rem 1rem;font-size:.82rem;">🔄 Refresh</button>
             </div>
 
@@ -171,7 +203,9 @@
     </div>
 </div>
 
-<!-- Hologram Detail Modal -->
+<!-- ══════════════════════════════════════════
+     HOLOGRAM DETAIL MODAL
+══════════════════════════════════════════ -->
 <div class="modal-overlay" id="holoModal">
     <div class="modal">
         <div class="modal-header">
@@ -179,18 +213,207 @@
             <button class="modal-close" onclick="closeHoloModal()">✕</button>
         </div>
         <div class="detail-grid" id="holoModalGrid"></div>
-        <div class="detail-lines" id="holoModalLines" style="display:none;">
+
+        <!-- visual / animation chips -->
+        <div class="detail-section" id="holoModalAnimSection" style="display:none;">
+            <h4>Animations &amp; Appearance</h4>
+            <div class="detail-grid" id="holoModalAnimGrid"></div>
+        </div>
+
+        <!-- lines list -->
+        <div class="detail-section" id="holoModalLines" style="display:none;">
             <h4>Lines</h4>
             <div id="holoModalLinesList"></div>
         </div>
+
         <div class="modal-footer">
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button class="btn-modal btn-warn"    id="btnEdit"    onclick="openEditModal()">✏️ Edit</button>
                 <button class="btn-modal btn-spawn"   id="btnSpawn"   onclick="holoAction('spawn')">▶ Spawn</button>
                 <button class="btn-modal btn-despawn" id="btnDespawn" onclick="holoAction('despawn')">⏹ Despawn</button>
                 <button class="btn-modal btn-vis"     id="btnVisible" onclick="holoAction('visible')">👁 Toggle Visible</button>
                 <button class="btn-modal btn-del"     id="btnDelete"  onclick="holoAction('delete')">🗑 Delete</button>
             </div>
             <button class="btn-modal btn-cancel" onclick="closeHoloModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     CREATE HOLOGRAM MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="createHoloModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>➕ Create Hologram</h3>
+            <button class="modal-close" onclick="closeCreateModal()">✕</button>
+        </div>
+
+        <div class="form-group">
+            <label>Hologram ID *</label>
+            <input type="text" id="createId" placeholder="e.g. spawn-welcome" autocomplete="off">
+        </div>
+        <div class="form-section-title">Position</div>
+        <div class="form-row-3">
+            <div class="form-group"><label>X</label><input type="number" id="createX" value="0" step="0.1"></div>
+            <div class="form-group"><label>Y</label><input type="number" id="createY" value="64" step="0.1"></div>
+            <div class="form-group"><label>Z</label><input type="number" id="createZ" value="0" step="0.1"></div>
+        </div>
+        <div class="form-group">
+            <label>World / Dimension</label>
+            <input type="text" id="createWorld" value="minecraft:overworld" placeholder="minecraft:overworld">
+        </div>
+
+        <div class="form-section-title">Initial Lines</div>
+        <div id="createLinesList"></div>
+        <button class="btn-add-line" onclick="addCreateLine()">+ Add Line</button>
+
+        <div class="form-section-title">Settings</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Refresh Interval (s)</label>
+                <input type="number" id="createRefresh" value="5" min="0" max="3600">
+            </div>
+            <div class="form-group">
+                <label>Scale</label>
+                <input type="number" id="createScale" value="1.0" min="0.1" max="10" step="0.1">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Billboard Mode</label>
+                <select id="createBillboard">
+                    <option value="3">Center (always face player)</option>
+                    <option value="1">Vertical</option>
+                    <option value="2">Horizontal</option>
+                    <option value="0">Fixed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Line Spacing</label>
+                <input type="number" id="createLineSpacing" value="0.3" min="0.05" max="3" step="0.05">
+            </div>
+        </div>
+
+        <div id="createError" class="error-msg" style="display:none;"></div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-primary-modal" onclick="submitCreate()">✨ Create</button>
+            <button class="btn-modal btn-cancel" onclick="closeCreateModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     EDIT HOLOGRAM MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="editHoloModal">
+    <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+            <h3 id="editModalTitle">✏️ Edit Hologram</h3>
+            <button class="modal-close" onclick="closeEditModal()">✕</button>
+        </div>
+
+        <div class="form-section-title">Lines</div>
+        <div id="editLinesList"></div>
+        <button class="btn-add-line" onclick="addEditLine()">+ Add Line</button>
+
+        <div class="form-section-title">Position</div>
+        <div class="form-row-3">
+            <div class="form-group"><label>X</label><input type="number" id="editX" step="0.1"></div>
+            <div class="form-group"><label>Y</label><input type="number" id="editY" step="0.1"></div>
+            <div class="form-group"><label>Z</label><input type="number" id="editZ" step="0.1"></div>
+        </div>
+
+        <div class="form-section-title">General Settings</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Refresh Interval (s, 0=off)</label>
+                <input type="number" id="editRefresh" min="0" max="3600">
+            </div>
+            <div class="form-group">
+                <label>Scale (0.1–10.0)</label>
+                <input type="number" id="editScale" min="0.1" max="10" step="0.1">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Line Spacing (blocks)</label>
+                <input type="number" id="editLineSpacing" min="0.05" max="3" step="0.05">
+            </div>
+            <div class="form-group">
+                <label>Billboard Mode</label>
+                <select id="editBillboard">
+                    <option value="3">Center (always face player)</option>
+                    <option value="1">Vertical</option>
+                    <option value="2">Horizontal</option>
+                    <option value="0">Fixed</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section-title">Text Appearance</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Opacity (0–255)</label>
+                <input type="number" id="editOpacity" min="0" max="255">
+            </div>
+            <div class="form-group">
+                <label>Background Color</label>
+                <input type="text" id="editBackground" placeholder="transparent or #AARRGGBB">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="editShadow">
+                <label for="editShadow" style="text-transform:none;font-size:.9rem;">Text shadow</label>
+            </div>
+        </div>
+
+        <div class="form-section-title">Spin Animation</div>
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="editSpinEnabled">
+                <label for="editSpinEnabled" style="text-transform:none;font-size:.9rem;">Enable spin</label>
+            </div>
+        </div>
+        <div class="form-row-3" id="editSpinOptions">
+            <div class="form-group">
+                <label>Speed (°/tick)</label>
+                <input type="number" id="editSpinSpeed" min="0.1" max="30" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Axis</label>
+                <select id="editSpinAxis">
+                    <option value="Y">Y (vertical)</option>
+                    <option value="X">X</option>
+                    <option value="Z">Z (roll)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section-title">Hover / Bob Animation</div>
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="editHoverEnabled">
+                <label for="editHoverEnabled" style="text-transform:none;font-size:.9rem;">Enable hover</label>
+            </div>
+        </div>
+        <div class="form-row" id="editHoverOptions">
+            <div class="form-group">
+                <label>Amplitude (blocks)</label>
+                <input type="number" id="editHoverAmplitude" min="0.01" max="2" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Speed (°/tick)</label>
+                <input type="number" id="editHoverSpeed" min="0.1" max="10" step="0.1">
+            </div>
+        </div>
+
+        <div id="editError" class="error-msg" style="display:none;"></div>
+        <div id="editSuccess" class="success-msg" style="display:none;"></div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-primary-modal" onclick="submitEdit()">💾 Save Changes</button>
+            <button class="btn-modal btn-cancel" onclick="closeEditModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -227,6 +450,14 @@
     document.getElementById('holoModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeHoloModal();
     });
+    document.getElementById('createHoloModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeCreateModal();
+    });
+    document.getElementById('editHoloModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeEditModal();
+    });
+
+    document.getElementById('createHoloBtn').addEventListener('click', () => window.openCreateModal());
 </script>
 </body>
 </html>
