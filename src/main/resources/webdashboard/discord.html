@@ -186,19 +186,19 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
-                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+                <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
                 <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
-                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
-                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
                 <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
-                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
-                <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
-                <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
-                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
-                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
-                <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
-                <a href="discord.html" class="nav-item active"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
+                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+                <a href="moderation.html" class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+                <a href="kits.html" class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+                <a href="stats.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+                <a href="discord.html" class="nav-item active"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <div class="server-status-mini">
@@ -213,7 +213,7 @@
             <header class="topbar">
                 <div class="topbar-left">
                     <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
-                    <h2 class="page-title"> Discord Integration</h2>
+                    <h2 class="page-title">🤖 Discord Integration</h2>
                 </div>
                 <div class="topbar-right">
                     <div class="status-badge" id="serverStatusBadge">
@@ -224,18 +224,18 @@
                         <div class="user-avatar">?</div>
                         <span class="user-name" id="userName">Guest</span>
                     </div>
-                    <button class="btn-icon" id="logoutBtn" title="Logout"><span></span></button>
+                    <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
                 </div>
             </header>
 
-            <main class="content-area">
+            <main class="content">
 
                 <!-- Status Banner -->
                 <div class="status-banner" id="statusBanner"></div>
 
                 <!-- ── OAuth2 / Login Config Panel (admin-only) ───────────────── -->
                 <div class="panel admin-only" id="oauthConfigPanel" style="margin-bottom:2rem;">
-                    <h3> Discord OAuth2 Login Configuration</h3>
+                    <h3>🔑 Discord OAuth2 Login Configuration</h3>
                     <div id="oauthStatusBanner" style="display:none;padding:0.65rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.85rem;font-weight:500;"></div>
 
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
@@ -304,7 +304,7 @@
 
                     <div style="display:flex;gap:0.75rem;align-items:center;">
                         <button class="btn-primary" id="saveOauthBtn" onclick="saveOauthConfig()"> Save Config</button>
-                        <button class="btn-secondary" onclick="loadOauthConfig()"> Reload</button>
+                        <button class="btn-secondary" onclick="loadOauthConfig()">🔄 Reload</button>
                         <span id="cfgOauthStatus" style="font-size:0.82rem;color:#a6adc8;margin-left:0.5rem;"></span>
                     </div>
                 </div>
@@ -330,13 +330,13 @@
 
                 <!-- Active Adapters Section -->
                 <div class="panel" style="padding-bottom:0.25rem;">
-                    <h3> Loaded Adapters</h3>
+                    <h3>🔌 Loaded Adapters</h3>
                     <div id="adapterSection">
                         <div class="adapter-grid" id="adapterGrid">
                             <!-- populated by JS -->
                         </div>
                         <div class="no-adapters" id="noAdapters" style="display:none;">
-                            <div class="icon"></div>
+                            <div class="icon">🤖</div>
                             <h3>No Discord Adapter Loaded</h3>
                             <p>Install one of the supported Discord bridge mods and restart the server.
                                NeoEssentials will automatically detect and hook into it.
@@ -350,7 +350,7 @@
                 <!-- Supported Mods Info -->
                 <div class="info-grid">
                     <div class="info-card">
-                        <div class="ic-header"><span class="ic-icon"></span><span class="ic-name">Simple Discord Link</span></div>
+                        <div class="ic-header"><span class="ic-icon">🔗</span><span class="ic-name">Simple Discord Link</span></div>
                         <div class="ic-body">
                             Mod ID: <code>sdlink</code><br>
                             By <em>hypherionsa</em>. A lightweight Discord↔Minecraft bridge for NeoForge.
@@ -358,7 +358,7 @@
                         </div>
                     </div>
                     <div class="info-card">
-                        <div class="ic-header"><span class="ic-icon"></span><span class="ic-name">DCIntegration</span></div>
+                        <div class="ic-header"><span class="ic-icon">⚙️</span><span class="ic-name">DCIntegration</span></div>
                         <div class="ic-body">
                             Mod ID: <code>dcintegration</code><br>
                             By <em>ErdbeerbaerLP</em>. Full Discord integration with channel routing
@@ -366,7 +366,7 @@
                         </div>
                     </div>
                     <div class="info-card">
-                        <div class="ic-header"><span class="ic-icon"></span><span class="ic-name">DiscordSRV</span></div>
+                        <div class="ic-header"><span class="ic-icon">🤝</span><span class="ic-name">DiscordSRV</span></div>
                         <div class="ic-body">
                             Mod ID: <code>discordsrv</code><br>
                             Industry-standard Discord bridge. Supports both v1 (classic) and v2 (Adventure API).
@@ -376,7 +376,7 @@
 
                 <!-- Test Message Panel (admin only) -->
                 <div class="panel admin-only" id="testPanel">
-                    <h3> Send Test Message</h3>
+                    <h3>📨 Send Test Message</h3>
                     <div class="form-row">
                         <div class="form-field">
                             <label for="testChannel">Discord Channel Name / ID</label>
@@ -398,13 +398,13 @@
                     <div class="table-header">
                         <h3> Recent Relay Events <span style="font-size:0.75rem;font-weight:400;color:#6c7086;" id="eventCountLabel"></span></h3>
                         <div style="display:flex;gap:0.75rem;align-items:center;">
-                            <button class="btn-secondary btn-sm" id="refreshEventsBtn"> Refresh</button>
-                            <button class="btn-secondary btn-sm admin-only" id="clearEventsBtn" style="color:#f38ba8;"> Clear Log</button>
+                        <button class="btn-secondary btn-sm" id="refreshEventsBtn">🔄 Refresh</button>
+                        <button class="btn-secondary btn-sm admin-only" id="clearEventsBtn" style="color:#f38ba8;">🗑 Clear Log</button>
                         </div>
                     </div>
                     <div id="eventTableContainer">
                         <div class="empty-state">
-                            <div class="icon"></div>
+                            <div class="icon">📋</div>
                             <div>Loading events…</div>
                         </div>
                     </div>
@@ -415,8 +415,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="dashboard.js"></script>
-    <script src="discord.js"></script>
+    <script src="dashboard.js?v=144"></script>
+    <script src="discord.js?v=144"></script>
     <script>
         // ── Discord OAuth2 Config panel ────────────────────────────────────────
 

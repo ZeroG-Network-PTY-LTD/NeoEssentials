@@ -80,19 +80,19 @@
             <div class="sidebar-logo"><span class="logo-icon">⚡</span><span class="logo-text">NeoEssentials</span></div>
         </div>
         <nav class="sidebar-nav">
-            <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
-            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
             <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
-            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
-            <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+            <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
             <a href="cloud.html" class="nav-item admin-only active"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
-            <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
-            <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
-            <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
-            <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
-            <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
-            <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
-            <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
+            <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+            <a href="moderation.html" class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+            <a href="kits.html" class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+            <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+            <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+            <a href="stats.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+            <a href="discord.html" class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
         </nav>
         <div class="sidebar-footer"><div class="server-status-mini"><span class="status-dot"></span><span class="status-text">Server Online</span></div></div>
     </aside>
@@ -106,11 +106,11 @@
             <div class="topbar-right">
                 <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
                 <div class="user-info" id="userInfo"><div class="user-avatar">?</div><span class="user-name" id="userName">Guest</span></div>
-                <button class="btn-icon" id="logoutBtn" title="Logout"><span></span></button>
+                <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
             </div>
         </header>
 
-        <main class="content-area">
+        <main class="content">
             <div class="status-banner" id="statusBanner"></div>
 
             <!-- Provider cards -->
@@ -118,7 +118,7 @@
                 <!-- Dropbox Card -->
                 <div class="provider-card">
                     <div class="provider-header">
-                        <div class="provider-icon"></div>
+                        <div class="provider-icon">📦</div>
                         <div><div class="provider-name">Dropbox</div></div>
                         <span class="provider-status unconfigured" id="dbxStatus">Not Configured</span>
                     </div>
@@ -129,7 +129,7 @@
                             <div class="quota-bar"><div class="quota-bar-fill" id="dbxQuotaFill" style="width:0%"></div></div>
                         </div>
                         <div class="btn-row">
-                            <button class="btn-sm btn-test admin-only" id="dbxTestBtn"> Test Connection</button>
+                            <button class="btn-sm btn-test admin-only" id="dbxTestBtn">🔌 Test Connection</button>
                             <button class="btn-sm btn-upload admin-only" onclick="document.getElementById('configTabBtn').click();document.getElementById('dbxConfigTab').click()">⚙️ Configure</button>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
                 <!-- Google Drive Card -->
                 <div class="provider-card">
                     <div class="provider-header">
-                        <div class="provider-icon">️</div>
+                        <div class="provider-icon">🗂️</div>
                         <div><div class="provider-name">Google Drive</div></div>
                         <span class="provider-status unconfigured" id="gdStatus">Not Configured</span>
                     </div>
@@ -149,7 +149,7 @@
                             <div class="quota-bar"><div class="quota-bar-fill" id="gdQuotaFill" style="width:0%"></div></div>
                         </div>
                         <div class="btn-row">
-                            <button class="btn-sm btn-test admin-only" id="gdTestBtn"> Test Connection</button>
+                            <button class="btn-sm btn-test admin-only" id="gdTestBtn">🔌 Test Connection</button>
                             <button class="btn-sm btn-upload admin-only" onclick="document.getElementById('configTabBtn').click();document.getElementById('gdConfigTab').click()">⚙️ Configure</button>
                         </div>
                     </div>
@@ -160,8 +160,8 @@
             <div class="config-section admin-only">
                 <h3 id="configTabBtn">⚙️ Provider Configuration</h3>
                 <div class="config-tabs">
-                    <button class="config-tab active" id="dbxConfigTab" onclick="switchConfigTab('dropbox',this)"> Dropbox</button>
-                    <button class="config-tab" id="gdConfigTab" onclick="switchConfigTab('google',this)">️ Google Drive</button>
+                    <button class="config-tab active" id="dbxConfigTab" onclick="switchConfigTab('dropbox',this)">📦 Dropbox</button>
+                    <button class="config-tab" id="gdConfigTab" onclick="switchConfigTab('google',this)">🗂️ Google Drive</button>
                 </div>
 
                 <!-- Dropbox config panel -->
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
-                        <button class="btn-primary btn-save" id="saveDropboxBtn"> Save Dropbox Config</button>
+                        <button class="btn-primary btn-save" id="saveDropboxBtn">💾 Save Dropbox Config</button>
                     </div>
                     <div style="margin-top:1.5rem;padding:1rem;background:rgba(137,180,250,0.07);border-radius:8px;border:1px solid rgba(137,180,250,0.2);font-size:0.82rem;color:#a6adc8;line-height:1.6;">
                         <strong style="color:#89b4fa;">How to set up Dropbox:</strong><br>
@@ -213,7 +213,7 @@
                         </div>
                     </div>
                     <div style="margin-top:1.25rem;display:flex;gap:0.75rem;">
-                        <button class="btn-primary btn-save" id="saveGoogleBtn"> Save Google Drive Config</button>
+                        <button class="btn-primary btn-save" id="saveGoogleBtn">💾 Save Google Drive Config</button>
                     </div>
                     <div style="margin-top:1.5rem;padding:1rem;background:rgba(137,180,250,0.07);border-radius:8px;border:1px solid rgba(137,180,250,0.2);font-size:0.82rem;color:#a6adc8;line-height:1.6;">
                         <strong style="color:#89b4fa;">How to set up Google Drive OAuth2:</strong><br>
@@ -228,12 +228,12 @@
             <!-- Cloud Files Section -->
             <div class="files-section">
                 <div class="section-header">
-                    <h3> Cloud Files</h3>
-                    <button class="btn-secondary btn-sm" id="refreshFilesBtn"> Refresh</button>
+                    <h3>☁️ Cloud Files</h3>
+                    <button class="btn-secondary btn-sm" id="refreshFilesBtn">🔄 Refresh</button>
                 </div>
                 <div class="files-tabs">
-                    <button class="files-tab active" id="showDropboxBtn" onclick="switchFilesTab('dropbox',this)"> Dropbox</button>
-                    <button class="files-tab" id="showGoogleBtn" onclick="switchFilesTab('google',this)">️ Google Drive</button>
+                    <button class="files-tab active" id="showDropboxBtn" onclick="switchFilesTab('dropbox',this)">📦 Dropbox</button>
+                    <button class="files-tab" id="showGoogleBtn" onclick="switchFilesTab('google',this)">🗂️ Google Drive</button>
                 </div>
                 <div id="filesContainer">
                     <div class="empty-state"><div class="icon">☁️</div><div>Select a provider and configure it to see cloud files.</div></div>
@@ -243,8 +243,8 @@
         </main>
     </div>
 </div>
-<script src="dashboard.js"></script>
-<script src="cloud.js"></script>
+<script src="dashboard.js?v=144"></script>
+<script src="cloud.js?v=144"></script>
 <script>
 function switchConfigTab(name, btn) {
     document.querySelectorAll('.config-tab').forEach(b => b.classList.remove('active'));

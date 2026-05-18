@@ -76,20 +76,16 @@
         </div>
         <nav class="sidebar-nav">
             <a href="index.html"          class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
-            <a href="index.html#players"  class="nav-item"><span class="nav-icon">👥</span><span class="nav-text">Players</span></a>
-            <a href="index.html#performance" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-text">Performance</span></a>
-            <a href="index.html#worlds"   class="nav-item"><span class="nav-icon">🌍</span><span class="nav-text">Worlds</span></a>
-            <a href="index.html#events"   class="nav-item"><span class="nav-icon">📜</span><span class="nav-text">Events</span></a>
-            <a href="permissions.html"    class="nav-item admin-only"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
-            <a href="admin.html"          class="nav-item admin-only"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
-            <a href="teleport.html"       class="nav-item admin-only"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
-            <a href="backup.html"         class="nav-item admin-only"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
-            <a href="cloud.html"          class="nav-item admin-only"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
-            <a href="users.html"          class="nav-item admin-only"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+            <a href="permissions.html"    class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
+            <a href="admin.html"          class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+            <a href="teleport.html"       class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+            <a href="backup.html"         class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
+            <a href="cloud.html"          class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+            <a href="users.html"          class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
             <a href="moderation.html"     class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
             <a href="kits.html"           class="nav-item active"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
-
+            <a href="holograms.html"      class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+            <a href="shop.html"           class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
             <a href="stats.html"          class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
             <a href="discord.html"        class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
         </nav>
@@ -114,7 +110,7 @@
             </div>
         </header>
 
-        <main class="content-area">
+        <main class="content">
             <div class="refresh-bar">
                 <span class="auto-badge" id="autoRefreshBadge">Auto-refresh: 60s</span>
                 <button class="btn btn-primary" id="refreshBtn" style="padding:.4rem 1rem;font-size:.82rem;">🔄 Refresh</button>
@@ -181,31 +177,9 @@
     </div>
 </div>
 
-<script src="dashboard.js"></script>
-<script src="kits.js"></script>
+<script src="dashboard.js?v=144"></script>
+<script src="kits.js?v=144"></script>
 <script>
-    const token = localStorage.getItem('authToken');
-    if (!token) window.location.href = 'index.html';
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUser');
-        window.location.href = 'index.html';
-    });
-
-    try {
-        const u = JSON.parse(localStorage.getItem('authUser') || '{}');
-        if (u.username) {
-            document.getElementById('userName').textContent = u.username;
-            document.querySelector('.user-avatar').textContent = u.username[0].toUpperCase();
-        }
-        if (u.role === 'ADMIN' || u.admin) {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-        }
-    } catch(e) {}
-
-    document.getElementById('sidebarToggle').addEventListener('click', () =>
-        document.querySelector('.sidebar').classList.toggle('collapsed'));
 
     function closeKitModal() {
         document.getElementById('kitModal').classList.remove('open');
