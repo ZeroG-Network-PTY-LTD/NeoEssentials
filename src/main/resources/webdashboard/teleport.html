@@ -128,52 +128,19 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Overview</span>
-                </a>
-                <a href="index.html#players" class="nav-item">
-                    <span class="nav-icon">👥</span>
-                    <span class="nav-text">Players</span>
-                </a>
-                <a href="index.html#performance" class="nav-item">
-                    <span class="nav-icon">⚡</span>
-                    <span class="nav-text">Performance</span>
-                </a>
-                <a href="index.html#worlds" class="nav-item">
-                    <span class="nav-icon">🌍</span>
-                    <span class="nav-text">Worlds</span>
-                </a>
-                <a href="index.html#events" class="nav-item">
-                    <span class="nav-icon">📜</span>
-                    <span class="nav-text">Events</span>
-                </a>
-                <a href="permissions.html" class="nav-item admin-only">
-                    <span class="nav-icon">🔐</span>
-                    <span class="nav-text">Permissions</span>
-                </a>
-                <a href="admin.html" class="nav-item admin-only">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">Admin Controls</span>
-                </a>
-                <a href="teleport.html" class="nav-item admin-only active">
-                    <span class="nav-icon">🌀</span>
-                    <span class="nav-text">Teleport Settings</span>
-                </a>
-                <a href="backup.html" class="nav-item admin-only">
-                    <span class="nav-icon">💾</span>
-                    <span class="nav-text">Backup &amp; Restore</span>
-                </a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
-
-                <a href="stats.html" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Statistics</span>
-                </a>
-                <a href="discord.html" class="nav-item">
-                    <span class="nav-icon">🤖</span>
-                    <span class="nav-text">Discord Integration</span>
-                </a>
+                <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
+                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+                <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+                <a href="teleport.html" class="nav-item admin-only active"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
+                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+                <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
+                <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
+                <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
+                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
+                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
+                <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
+                <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <div class="server-status-mini">
@@ -200,7 +167,7 @@
                         <span class="user-name" id="userName">Guest</span>
                     </div>
                     <button class="btn-icon" id="logoutBtn" title="Logout">
-                        <span>🚪</span>
+                        <span></span>
                     </button>
                 </div>
             </header>
@@ -209,7 +176,7 @@
                     <div class="card card-full">
                         <div class="card-header">
                             <h3 class="card-title">
-                                <span class="title-icon">🌀</span>
+                                <span class="title-icon"></span>
                                 Teleportation Configuration
                             </h3>
                             <span class="card-badge">Admin Only</span>
@@ -257,7 +224,7 @@
 
                                 <!-- ── Home Settings ────────────────────────── -->
                                 <div class="settings-section">
-                                    <h4>🏠 Home Settings</h4>
+                                    <h4> Home Settings</h4>
                                     <div class="form-row">
                                         <label for="maxHomes">Max Homes per Player</label>
                                         <input type="number" id="maxHomes" min="1" max="1000" value="5">
@@ -293,7 +260,7 @@
 
                                 <!-- ── Warp Settings ────────────────────────── -->
                                 <div class="settings-section">
-                                    <h4>🌐 Warp Settings</h4>
+                                    <h4> Warp Settings</h4>
                                     <div class="form-row">
                                         <label for="maxWarps">Max Server Warps</label>
                                         <input type="number" id="maxWarps" min="1" max="10000" value="50">
@@ -317,7 +284,7 @@
 
                                 <!-- ── Spawn Settings ───────────────────────── -->
                                 <div class="settings-section">
-                                    <h4>🌟 Spawn Settings</h4>
+                                    <h4> Spawn Settings</h4>
                                     <div class="form-row">
                                         <label for="spawnCooldown">Spawn Cooldown (seconds)</label>
                                         <input type="number" id="spawnCooldown" min="0" max="86400" value="0">
@@ -362,8 +329,8 @@
                             </div> <!-- .settings-grid -->
 
                             <div class="actions-row">
-                                <button class="btn btn-secondary" id="reloadSettingsBtn">🔃 Reload from Server</button>
-                                <button class="btn btn-success" id="saveSettingsBtn">💾 Save &amp; Apply</button>
+                                <button class="btn btn-secondary" id="reloadSettingsBtn"> Reload from Server</button>
+                                <button class="btn btn-success" id="saveSettingsBtn"> Save &amp; Apply</button>
                             </div>
 
                         </div>
@@ -388,8 +355,8 @@
             </footer>
         </div>
     </div>
-    <script src="dashboard.js?v=419"></script>
-    <script src="teleport.js?v=419"></script>
+    <script src="dashboard.js?v=144"></script>
+    <script src="teleport.js?v=144"></script>
 </body>
 </html>
 

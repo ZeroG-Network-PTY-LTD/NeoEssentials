@@ -116,48 +116,19 @@
                 </div>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Overview</span>
-                </a>
-                <a href="index.html#players" class="nav-item">
-                    <span class="nav-icon">👥</span>
-                    <span class="nav-text">Players</span>
-                </a>
-                <a href="index.html#performance" class="nav-item">
-                    <span class="nav-icon">⚡</span>
-                    <span class="nav-text">Performance</span>
-                </a>
-                <a href="index.html#worlds" class="nav-item">
-                    <span class="nav-icon">🌍</span>
-                    <span class="nav-text">Worlds</span>
-                </a>
-                <a href="index.html#events" class="nav-item">
-                    <span class="nav-icon">📜</span>
-                    <span class="nav-text">Events</span>
-                </a>
-                <a href="permissions.html" class="nav-item admin-only">
-                    <span class="nav-icon">🔐</span>
-                    <span class="nav-text">Permissions</span>
-                </a>
-                <a href="admin.html" class="nav-item admin-only">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">Admin Controls</span>
-                </a>
-                <a href="teleport.html" class="nav-item admin-only">
-                    <span class="nav-icon">🌀</span>
-                    <span class="nav-text">Teleport Settings</span>
-                </a>
-                <a href="backup.html" class="nav-item admin-only active">
-                    <span class="nav-icon">💾</span>
-                    <span class="nav-text">Backup &amp; Restore</span>
-                </a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
-
-                <a href="stats.html" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Statistics</span>
-                </a>
+                <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
+                <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+                <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
+                <a href="backup.html" class="nav-item admin-only active"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+                <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
+                <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
+                <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
+                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
+                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
+                <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
+                <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <div class="server-status-mini">
@@ -172,7 +143,7 @@
             <header class="topbar">
                 <div class="topbar-left">
                     <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
-                    <h2 class="page-title">💾 Backup &amp; Restore</h2>
+                    <h2 class="page-title"> Backup &amp; Restore</h2>
                 </div>
                 <div class="topbar-right">
                     <div class="status-badge" id="serverStatusBadge">
@@ -183,7 +154,7 @@
                         <div class="user-avatar">?</div>
                         <span class="user-name" id="userName">Guest</span>
                     </div>
-                    <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
+                    <button class="btn-icon" id="logoutBtn" title="Logout"><span></span></button>
                 </div>
             </header>
 
@@ -217,7 +188,7 @@
 
                 <!-- Create Backup -->
                 <div class="create-panel">
-                    <h3>📦 Create Snapshot</h3>
+                    <h3> Create Snapshot</h3>
                     <div class="create-row">
                         <div class="field">
                             <label for="snapName">Snapshot Name</label>
@@ -234,7 +205,7 @@
                         <div class="field" style="flex:0;">
                             <label>&nbsp;</label>
                             <button class="btn btn-primary" id="createBtn">
-                                <span id="createBtnLabel">📦 Create Backup</span>
+                                <span id="createBtnLabel"> Create Backup</span>
                             </button>
                         </div>
                     </div>
@@ -242,12 +213,12 @@
 
                 <!-- Snapshots Table -->
                 <div class="snapshot-table-wrap">
-                    <h3>📋 Snapshots
-                        <button class="btn-sm btn-restore" style="margin-left:auto;font-size:0.78rem;padding:0.3rem 0.75rem;" id="refreshBtn">🔄 Refresh</button>
+                    <h3> Snapshots
+                        <button class="btn-sm btn-restore" style="margin-left:auto;font-size:0.78rem;padding:0.3rem 0.75rem;" id="refreshBtn"> Refresh</button>
                     </h3>
                     <div id="tableContainer">
                         <div class="empty-state">
-                            <div class="icon">💾</div>
+                            <div class="icon"></div>
                             <div>Loading snapshots…</div>
                         </div>
                     </div>
@@ -268,29 +239,8 @@
         </div>
     </div>
 
-    <script src="backup.js?v=1"></script>
-    <script>
-        // Auth check — redirect to index if not logged in
-        const token = localStorage.getItem('authToken');
-        if (!token) { window.location.href = 'index.html'; }
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authUser');
-            window.location.href = 'index.html';
-        });
-        const storedUser = localStorage.getItem('authUser');
-        if (storedUser) {
-            try {
-                const u = JSON.parse(storedUser);
-                document.getElementById('userName').textContent = u.username || 'User';
-                const av = document.getElementById('userInfo').querySelector('.user-avatar');
-                if (av && u.username) av.textContent = u.username[0].toUpperCase();
-            } catch(e) {}
-        }
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('collapsed');
-        });
-    </script>
+    <script src="dashboard.js?v=144"></script>
+    <script src="backup.js?v=144"></script>
 </body>
 </html>
 
