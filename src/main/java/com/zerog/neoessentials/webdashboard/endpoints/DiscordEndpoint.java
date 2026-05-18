@@ -158,7 +158,7 @@ public class DiscordEndpoint implements HttpHandler {
         }
 
         String channel = "chat";
-        String message = "🔔 Test message from NeoEssentials Dashboard";
+        String message = " Test message from NeoEssentials Dashboard";
 
         if (!body.isEmpty()) {
             channel = extractJsonString(body, "channel", channel);

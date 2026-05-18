@@ -17,15 +17,15 @@ public class HologramEventHandler {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         try {
-            // Spawn all holograms for all loaded levels
-            for (ServerLevel level : event.getServer().getAllLevels()) {
-                String dimKey = HologramRenderer.dimensionKey(level);
-                HologramRenderer.spawnAllForWorld(level, dimKey);
-            }
+            // Start the animation / placeholder-refresh scheduler.
+            // NOTE: hologram entities are spawned in onLevelLoad (which fires before this event
+            // for all initial dimensions), so we must NOT spawn again here – that would cause a
+            // brief flicker as entities are despawned and immediately re-spawned.
             HologramScheduler.start();
-            LOGGER.info("[Hologram] Entities spawned on server start.");
+            LOGGER.info("[Hologram] Scheduler started on server start ({} hologram(s) active).",
+                com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
         } catch (Exception e) {
-            LOGGER.error("[Hologram] Failed to spawn holograms on server start.", e);
+            LOGGER.error("[Hologram] Failed to start hologram scheduler.", e);
         }
     }
     @SubscribeEvent

@@ -50,7 +50,10 @@ public class HologramCommand {
         var root = Commands.literal("hologram")
             .requires(src -> hasPermission(src))
             .then(Commands.literal("create")
+                // /hologram create <id>  — creates at player's current position
                 .then(Commands.argument("id", StringArgumentType.word())
+                    .executes(ctx -> cmdCreateHere(ctx.getSource(),
+                        StringArgumentType.getString(ctx, "id")))
                     .then(Commands.argument("x", DoubleArgumentType.doubleArg())
                         .then(Commands.argument("y", DoubleArgumentType.doubleArg())
                             .then(Commands.argument("z", DoubleArgumentType.doubleArg())
@@ -70,6 +73,12 @@ public class HologramCommand {
             .then(Commands.literal("delete")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .executes(ctx -> cmdDelete(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
+            .then(Commands.literal("rename")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("newid", StringArgumentType.word())
+                        .executes(ctx -> cmdRename(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"),
+                            StringArgumentType.getString(ctx, "newid"))))))
             .then(Commands.literal("copy")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .then(Commands.argument("newid", StringArgumentType.word())
@@ -135,6 +144,12 @@ public class HologramCommand {
             .then(Commands.literal("movehere")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .executes(ctx -> cmdMoveHere(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
+            .then(Commands.literal("align")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .executes(ctx -> cmdAlign(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
+            .then(Commands.literal("tp")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .executes(ctx -> cmdTp(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("near")
                 .executes(ctx -> cmdNear(ctx.getSource(), 20.0))
                 .then(Commands.argument("radius", DoubleArgumentType.doubleArg(1, 1000))
@@ -162,6 +177,12 @@ public class HologramCommand {
                         .executes(ctx -> cmdBillboard(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "mode"))))))
+            .then(Commands.literal("textalign")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("align", StringArgumentType.word())
+                        .executes(ctx -> cmdTextAlign(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"),
+                            StringArgumentType.getString(ctx, "align"))))))
             .then(Commands.literal("spin")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .then(Commands.literal("off")
@@ -178,6 +199,15 @@ public class HologramCommand {
                                     StringArgumentType.getString(ctx, "id"),
                                     FloatArgumentType.getFloat(ctx, "speed"),
                                     StringArgumentType.getString(ctx, "axis"))))))))
+            // /hologram spintrack <id> <on|off>  — toggle player-tracking for Y-axis spin
+            .then(Commands.literal("spintrack")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.literal("on")
+                        .executes(ctx -> cmdSpinTrack(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"), true)))
+                    .then(Commands.literal("off")
+                        .executes(ctx -> cmdSpinTrack(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"), false)))))
             .then(Commands.literal("hover")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .then(Commands.literal("off")
@@ -213,12 +243,41 @@ public class HologramCommand {
                         .executes(ctx -> cmdShadow(ctx.getSource(), StringArgumentType.getString(ctx, "id"), true)))
                     .then(Commands.literal("off")
                         .executes(ctx -> cmdShadow(ctx.getSource(), StringArgumentType.getString(ctx, "id"), false)))))
+            .then(Commands.literal("seethrough")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.literal("on")
+                        .executes(ctx -> cmdSeeThrough(ctx.getSource(), StringArgumentType.getString(ctx, "id"), true)))
+                    .then(Commands.literal("off")
+                        .executes(ctx -> cmdSeeThrough(ctx.getSource(), StringArgumentType.getString(ctx, "id"), false)))))
             .then(Commands.literal("opacity")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .then(Commands.argument("opacity", IntegerArgumentType.integer(0, 255))
                         .executes(ctx -> cmdOpacity(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "opacity"))))))
+            .then(Commands.literal("viewrange")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("range", FloatArgumentType.floatArg(0.1f, 8.0f))
+                        .executes(ctx -> cmdViewRange(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"),
+                            FloatArgumentType.getFloat(ctx, "range"))))))
+            .then(Commands.literal("linewidth")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("pixels", IntegerArgumentType.integer(1, 4096))
+                        .executes(ctx -> cmdLineWidth(ctx.getSource(),
+                            StringArgumentType.getString(ctx, "id"),
+                            IntegerArgumentType.getInteger(ctx, "pixels"))))))
+            .then(Commands.literal("clearlines")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .executes(ctx -> cmdClearLines(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
+            .then(Commands.literal("moveline")
+                .then(Commands.argument("id", StringArgumentType.word())
+                    .then(Commands.argument("from", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("to", IntegerArgumentType.integer(0))
+                            .executes(ctx -> cmdMoveLine(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "id"),
+                                IntegerArgumentType.getInteger(ctx, "from"),
+                                IntegerArgumentType.getInteger(ctx, "to")))))))
             .then(Commands.literal("background")
                 .then(Commands.argument("id", StringArgumentType.word())
                     .then(Commands.argument("color", StringArgumentType.word())
@@ -306,11 +365,17 @@ public class HologramCommand {
     private static int cmdSetLine(CommandSourceStack src, String id, int index, String text) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("Â§cHologram 'Â§e" + id + "Â§c' not found.")); return 0; }
-        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("Â§cLine index out of range (0â€“" + (data.lines.size()-1) + ").")); return 0; }
-        data.lines.get(index).text = text;
+        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("\u00a7cLine index out of range (0\u2013" + (data.lines.size()-1) + ").")); return 0; }
+        HologramLine line = data.lines.get(index);
+        line.text = text;
+        // Clear any frame animation so the new static text is shown immediately
+        line.frames.clear();
+        line.animFrameIntervalTicks = 0;
+        line.currentFrame = 0;
+        line.animTickCount = 0;
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("Â§aâœ“ Line Â§e" + index + "Â§a updated."), true);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line \u00a7e" + index + "\u00a7a updated."), true);
         return 1;
     }
     private static int cmdRemoveLine(CommandSourceStack src, String id, int index) {
@@ -477,10 +542,18 @@ public class HologramCommand {
         sb.append("Â§7Shadow: ").append(data.textShadow ? "Â§aon" : "Â§8off").append("\n");
         sb.append("Â§7Opacity: Â§f").append(data.textOpacity).append("/255\n");
         sb.append("Â§7Background: Â§f").append(String.format("0x%08X", data.backgroundColorArgb)).append("\n");
+        String[] alignNames = {"CENTER", "LEFT", "RIGHT"};
+        String alignName = (data.textAlign >= 0 && data.textAlign < alignNames.length) ? alignNames[data.textAlign] : "UNKNOWN";
+        sb.append("Â§7Text align: Â§e").append(alignName).append("\n");
+        sb.append("Â§7See-through: ").append(data.seeThrough ? "Â§aon" : "Â§8off").append("\n");
+        sb.append("Â§7Line width: Â§f").append(data.lineWidth).append("px\n");
+        sb.append("Â§7View range: Â§f").append(data.viewRange).append("x (Â§f~").append(Math.round(data.viewRange * 64)).append(" blocksÂ§7)\n");
         if (data.spinEnabled) {
-            sb.append("Â§7Spin: Â§eon Â§7(Â§f").append(data.spinSpeedDegrees).append("Â°/tickÂ§7, axis=Â§f").append(data.spinAxis).append("Â§7)\n");
+            String trackNote = (data.spinAxis != null && data.spinAxis.equalsIgnoreCase("Y") && data.spinTrackPlayer)
+                ? " \u00a78[player-tracking, billboard=FIXED]" : "";
+            sb.append("\u00a77Spin: \u00a7eon \u00a77(\u00a7f").append(data.spinSpeedDegrees).append("\u00a7a\u00b0/tick\u00a77, axis=\u00a7f").append(data.spinAxis).append("\u00a77)").append(trackNote).append("\n");
         } else {
-            sb.append("Â§7Spin: Â§8off\n");
+            sb.append("\u00a77Spin: \u00a78off\n");
         }
         if (data.hoverEnabled) {
             sb.append("Â§7Hover: Â§eon Â§7(amplitude=Â§f").append(data.hoverAmplitude).append("Â§7 blocks, speed=Â§f").append(data.hoverSpeedDegrees).append("Â§7Â°/tick)\n");
@@ -521,18 +594,34 @@ public class HologramCommand {
     }
     private static int cmdSpinOn(CommandSourceStack src, String id, float speed, String axis) {
         HologramData data = HologramManager.getInstance().getHologram(id);
-        if (data == null) { src.sendFailure(Component.literal("Â§cHologram 'Â§e" + id + "Â§c' not found.")); return 0; }
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
         String axisUpper = axis.toUpperCase();
         if (!axisUpper.equals("X") && !axisUpper.equals("Y") && !axisUpper.equals("Z")) {
-            src.sendFailure(Component.literal("Â§cInvalid axis 'Â§e" + axis + "Â§c'. Use X, Y, or Z."));
+            src.sendFailure(Component.literal("\u00a7cInvalid axis '\u00a7e" + axis + "\u00a7c'. Use X, Y, or Z."));
             return 0;
         }
         data.spinEnabled      = true;
         data.spinSpeedDegrees = speed;
         data.spinAxis         = axisUpper;
+        // Y-axis spin enables player-tracking by default so the text follows the viewer.
+        // X / Z axis spins use the billboard setting directly (usually CENTER).
+        if (axisUpper.equals("Y")) data.spinTrackPlayer = true;
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("Â§aâœ“ Spin enabled for 'Â§e" + id + "Â§a': Â§e" + speed + "Â°/tickÂ§a on Â§e" + axisUpper + "Â§a axis."), true);
+        String trackNote = axisUpper.equals("Y") ? " \u00a78[player-tracking ON]" : "";
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Spin enabled for '\u00a7e" + id + "\u00a7a': \u00a7e" + speed
+            + "\u00a7a\u00b0/tick on \u00a7e" + axisUpper + "\u00a7a axis." + trackNote), true);
+        return 1;
+    }
+    /** /hologram spintrack <id> <on|off> — toggle player-tracking for Y-axis spin. */
+    private static int cmdSpinTrack(CommandSourceStack src, String id, boolean on) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        data.spinTrackPlayer = on;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Spin player-tracking " + (on ? "\u00a7aenabled" : "\u00a77disabled")
+            + "\u00a7a for '\u00a7e" + id + "\u00a7a'." + (on ? " \u00a78(billboard auto-set to FIXED for Y axis)" : "")), true);
         return 1;
     }
     private static int cmdSpinOff(CommandSourceStack src, String id) {
@@ -591,7 +680,68 @@ public class HologramCommand {
         data.textShadow = on;
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("Â§aâœ“ Text shadow " + (on ? "Â§aenabled" : "Â§7disabled") + "Â§a for 'Â§e" + id + "Â§a'."), true);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Text shadow " + (on ? "\u00a7aenabled" : "\u00a77disabled") + "\u00a7a for '\u00a7e" + id + "\u00a7a'."), true);
+        return 1;
+    }
+    private static int cmdSeeThrough(CommandSourceStack src, String id, boolean on) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        data.seeThrough = on;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 See-through " + (on ? "\u00a7aenabled" : "\u00a77disabled") + "\u00a7a for '\u00a7e" + id + "\u00a7a'."), true);
+        return 1;
+    }
+    private static int cmdViewRange(CommandSourceStack src, String id, float range) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        data.viewRange = range;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        // Approximate display distance: vanilla base is ~64 blocks, multiplied by viewRange
+        int approxBlocks = Math.round(range * 64);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 View range for '\u00a7e" + id + "\u00a7a' set to \u00a7e" + range + "\u00a7a (approx \u00a7e" + approxBlocks + "\u00a7a blocks)."), true);
+        return 1;
+    }
+    private static int cmdLineWidth(CommandSourceStack src, String id, int pixels) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        data.lineWidth = pixels;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line width for '\u00a7e" + id + "\u00a7a' set to \u00a7e" + pixels + "\u00a7a pixels."), true);
+        return 1;
+    }
+    /** /hologram clearlines <id> – remove all lines from a hologram. */
+    private static int cmdClearLines(CommandSourceStack src, String id) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        int count = data.lines.size();
+        data.lines.clear();
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Cleared \u00a7e" + count + "\u00a7a line(s) from '\u00a7e" + id + "\u00a7a'."), true);
+        return 1;
+    }
+    /** /hologram moveline <id> <from> <to> – reorder a line within the hologram. */
+    private static int cmdMoveLine(CommandSourceStack src, String id, int from, int to) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        int size = data.lines.size();
+        if (from < 0 || from >= size) {
+            src.sendFailure(Component.literal("\u00a7c'from' index \u00a7e" + from + "\u00a7c out of range (0\u2013" + (size - 1) + ")."));
+            return 0;
+        }
+        int clampedTo = Math.max(0, Math.min(size - 1, to));
+        if (from == clampedTo) {
+            src.sendSuccess(() -> Component.literal("\u00a77Line is already at index \u00a7e" + from + "\u00a77."), false);
+            return 1;
+        }
+        HologramLine line = data.lines.remove(from);
+        data.lines.add(clampedTo, line);
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line moved from \u00a7e" + from + "\u00a7a to \u00a7e" + clampedTo + "\u00a7a in '\u00a7e" + id + "\u00a7a'."), true);
         return 1;
     }
     private static int cmdOpacity(CommandSourceStack src, String id, int opacity) {
@@ -616,8 +766,8 @@ public class HologramCommand {
                 argb = 0x00000000;
             } else {
                 String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
-                if (hex.length() == 6) hex = "00" + hex;   // opaque (alpha=0 means transparent â€” default MC bg)
-                else if (hex.length() == 8) { /* use full ARGB */ }
+                if (hex.length() == 6) hex = "FF" + hex;   // default to fully opaque when no alpha given
+                else if (hex.length() == 8) { /* full AARRGGBB as-is */ }
                 else { src.sendFailure(Component.literal("Â§cInvalid colour. Use Â§ftransparentÂ§c, Â§f#RRGGBBÂ§c, or Â§f#AARRGGBBÂ§c.")); return 0; }
                 argb = (int) Long.parseLong(hex, 16);
             }
@@ -684,5 +834,98 @@ public class HologramCommand {
     }
     private static String fmt(double v) {
         return String.format("%.1f", v);
+    }
+    /** /hologram create <id>  – create at the executing player's position (eye-level). */
+    private static int cmdCreateHere(CommandSourceStack src, String id) {
+        if (!(src.getEntity() instanceof ServerPlayer player)) {
+            src.sendFailure(Component.literal("\u00a7cThis command can only be run by a player."));
+            return 0;
+        }
+        if (HologramManager.getInstance().exists(id)) {
+            src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' already exists."));
+            return 0;
+        }
+        HologramData data = new HologramData();
+        data.id = id.toLowerCase();
+        data.x = player.getX();
+        data.y = player.getY() + 1.5;
+        data.z = player.getZ();
+        data.world = HologramRenderer.dimensionKey(player.serverLevel());
+        data.refreshInterval = 5;
+        HologramManager.getInstance().registerHologram(data);
+        HologramRenderer.spawn(data, player.serverLevel());
+        double nx = data.x, ny = data.y, nz = data.z;
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Hologram '\u00a7e" + id + "\u00a7a' created at your position \u00a77(" + fmt(nx) + ", " + fmt(ny) + ", " + fmt(nz) + ")\u00a7a.\n\u00a77Use \u00a7f/hologram addline " + id + " <text> \u00a77to add lines."), true);
+        return 1;
+    }
+    /** /hologram rename <id> <newid> – rename a hologram in-place. */
+    private static int cmdRename(CommandSourceStack src, String id, String newId) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        String newIdLower = newId.toLowerCase();
+        if (HologramManager.getInstance().exists(newIdLower)) {
+            src.sendFailure(Component.literal("\u00a7cA hologram named '\u00a7e" + newIdLower + "\u00a7c' already exists."));
+            return 0;
+        }
+        ServerLevel level = getLevel(src, data.world);
+        if (level != null) HologramRenderer.despawn(data, level);
+        HologramManager.getInstance().removeHologram(id);
+        data.id = newIdLower;
+        HologramManager.getInstance().registerHologram(data);
+        if (level != null) HologramRenderer.spawn(data, level);
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Hologram '\u00a7e" + id + "\u00a7a' renamed to '\u00a7e" + newIdLower + "\u00a7a'."), true);
+        return 1;
+    }
+    /** /hologram align <id> – snap X/Z to the nearest block centre (+0.5). */
+    private static int cmdAlign(CommandSourceStack src, String id) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        ServerLevel level = getLevel(src, data.world);
+        if (level != null) HologramRenderer.despawn(data, level);
+        data.x = Math.floor(data.x) + 0.5;
+        data.z = Math.floor(data.z) + 0.5;
+        HologramManager.getInstance().registerHologram(data);
+        if (level != null) HologramRenderer.spawn(data, level);
+        double nx = data.x, ny = data.y, nz = data.z;
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Hologram '\u00a7e" + id + "\u00a7a' aligned to block centre \u00a77(" + fmt(nx) + ", " + fmt(ny) + ", " + fmt(nz) + ")\u00a7a."), true);
+        return 1;
+    }
+    /** /hologram tp <id> – teleport the executing player to the hologram. */
+    private static int cmdTp(CommandSourceStack src, String id) {
+        if (!(src.getEntity() instanceof ServerPlayer player)) {
+            src.sendFailure(Component.literal("\u00a7cThis command can only be run by a player."));
+            return 0;
+        }
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        ServerLevel targetLevel = getLevel(src, data.world);
+        if (targetLevel == null) {
+            src.sendFailure(Component.literal("\u00a7cCould not find world '\u00a7e" + data.world + "\u00a7c'."));
+            return 0;
+        }
+        player.teleportTo(targetLevel, data.x, data.y, data.z, player.getYRot(), player.getXRot());
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Teleported to hologram '\u00a7e" + id + "\u00a7a' at \u00a77(" + fmt(data.x) + ", " + fmt(data.y) + ", " + fmt(data.z) + ")\u00a7a."), true);
+        return 1;
+    }
+    /** /hologram textalign <id> <center|left|right> */
+    private static int cmdTextAlign(CommandSourceStack src, String id, String align) {
+        HologramData data = HologramManager.getInstance().getHologram(id);
+        if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
+        int alignVal = switch (align.toLowerCase()) {
+            case "center", "centre" -> 0;
+            case "left"             -> 1;
+            case "right"            -> 2;
+            default -> -1;
+        };
+        if (alignVal < 0) {
+            src.sendFailure(Component.literal("\u00a7cInvalid alignment. Use: \u00a7fcenter\u00a7c, \u00a7fleft\u00a7c, or \u00a7fright\u00a7c."));
+            return 0;
+        }
+        data.textAlign = alignVal;
+        HologramManager.getInstance().registerHologram(data);
+        respawn(src, data);
+        String alignName = new String[]{"CENTER", "LEFT", "RIGHT"}[alignVal];
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Hologram '\u00a7e" + id + "\u00a7a' text alignment set to \u00a7e" + alignName + "\u00a7a."), true);
+        return 1;
     }
 }
