@@ -50,59 +50,67 @@ public class ShopInteractHandler {
 
         event.setCanceled(true);
 
-        // ── Item autofill: owner right-clicks a pending "?" shop with item in hand ──
-        if (shop.itemPending) {
-            // Admin shops have ownerUUID == null; any player with the admin-shop create
-            // permission can assign the item.  Player shops require UUID ownership.
-            boolean canAssign = shop.isAdminShop()
-                    ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
-                    : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
+        try {
+            // ── Item autofill: owner right-clicks a pending "?" shop with item in hand ──
+            if (shop.itemPending) {
+                // Admin shops have ownerUUID == null; any player with the admin-shop create
+                // permission can assign the item.  Player shops require UUID ownership.
+                boolean canAssign = shop.isAdminShop()
+                        ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
+                        : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
 
-            if (canAssign) {
-                net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
-                if (held.isEmpty()) {
-                    player.sendSystemMessage(Component.literal(
-                        "§eHold the item you want this shop to trade, then right-click the sign."));
+                if (canAssign) {
+                    net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
+                    if (held.isEmpty()) {
+                        player.sendSystemMessage(Component.literal(
+                            "§eHold the item you want this shop to trade, then right-click the sign."));
+                    } else {
+                        // Assign the held item
+                        shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                        shop.itemPending = false;
+                        ShopManager.getInstance().registerShop(shop); // re-save with updated data
+                        ShopSignHandler.writeSignLines(level, pos, com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
+                        String currency = EconomyManager.getInstance().getCurrencySymbol();
+                        player.sendSystemMessage(Component.literal(
+                            "§aItem set to §f" + com.zerog.neoessentials.shop.ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
+                        if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
+                            "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
+                        if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
+                            "§eSell price: §f" + currency + shop.sellPrice.toPlainString()));
+                        player.sendSystemMessage(Component.literal("§aShop is now active."));
+                    }
                 } else {
-                    // Assign the held item
-                    shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
-                    shop.itemPending = false;
-                    ShopManager.getInstance().registerShop(shop); // re-save with updated data
-                    ShopSignHandler.writeSignLines(level, pos, ShopParser.formatSignLines(shop));
-                    String currency = EconomyManager.getInstance().getCurrencySymbol();
-                    player.sendSystemMessage(Component.literal(
-                        "§aItem set to §f" + ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
-                    if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
-                        "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
-                    if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
-                        "§eSell price: §f" + currency + shop.sellPrice.toPlainString()));
-                    player.sendSystemMessage(Component.literal("§aShop is now active."));
+                    player.sendSystemMessage(Component.literal("§cThis shop is not yet ready."));
                 }
-            } else {
-                player.sendSystemMessage(Component.literal("§cThis shop is not yet ready."));
+                return;
             }
-            return;
-        }
 
-        // ── Normal right-click = BUY ──────────────────────────────────────────
-        // Owner right-clicks their own active sign → show info instead of buying
-        if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
-            sendShopInfo(player, shop);
-            return;
-        }
+            // ── Normal right-click = BUY ──────────────────────────────────────────
+            // Owner right-clicks their own active sign → show info instead of buying
+            if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+                sendShopInfo(player, shop);
+                return;
+            }
 
-        if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
-            return;
-        }
+            if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
+                player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+                return;
+            }
 
-        if (!shop.canBuy()) {
-            player.sendSystemMessage(Component.literal("§cThis shop does not sell items."));
-            return;
-        }
+            if (!shop.canBuy()) {
+                player.sendSystemMessage(Component.literal("§cThis shop does not sell items."));
+                return;
+            }
 
-        TransactionResult result = ShopTransaction.executeBuy(player, shop, level);
-        sendTransactionResult(player, result, shop, true);
+            TransactionResult result = ShopTransaction.executeBuy(player, shop, level);
+            sendTransactionResult(player, result, shop, true);
+
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§cShop error: " + e.getMessage()));
+            org.slf4j.LoggerFactory.getLogger(ShopInteractHandler.class)
+                    .error("[ChestShop] Unhandled exception in onRightClick for shop {}: {}",
+                            shop.toKey(), e.getMessage(), e);
+        }
     }
 
     // ── Left-click = SELL ─────────────────────────────────────────────────────
@@ -120,28 +128,34 @@ public class ShopInteractHandler {
         ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
         if (shop == null) return;
 
-        // Owner left-clicks → show info only
-        if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
-            event.setCanceled(true);
-            sendShopInfo(player, shop);
-            return;
-        }
-
-        if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
-            event.setCanceled(true);
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
-            return;
-        }
-
-        if (!shop.canSell()) {
-            event.setCanceled(true);
-            player.sendSystemMessage(Component.literal("§cThis shop does not buy items."));
-            return;
-        }
-
         event.setCanceled(true);
-        TransactionResult result = ShopTransaction.executeSell(player, shop, level);
-        sendTransactionResult(player, result, shop, false);
+
+        try {
+            // Owner left-clicks → show info only
+            if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+                sendShopInfo(player, shop);
+                return;
+            }
+
+            if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
+                player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+                return;
+            }
+
+            if (!shop.canSell()) {
+                player.sendSystemMessage(Component.literal("§cThis shop does not buy items."));
+                return;
+            }
+
+            TransactionResult result = ShopTransaction.executeSell(player, shop, level);
+            sendTransactionResult(player, result, shop, false);
+
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§cShop error: " + e.getMessage()));
+            org.slf4j.LoggerFactory.getLogger(ShopInteractHandler.class)
+                    .error("[ChestShop] Unhandled exception in onLeftClick for shop {}: {}",
+                            shop.toKey(), e.getMessage(), e);
+        }
     }
 
     // ── Block break → remove shop ─────────────────────────────────────────────

@@ -124,6 +124,14 @@ public class ShopManager {
         return shopsByChest.get(dimension + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ());
     }
 
+    /**
+     * Look up a shop directly by its sign-position key (format: {@code "dim@x,y,z"}).
+     * Useful when the key has been stored in NBT and needs to be resolved back to a shop.
+     */
+    public ShopData getShopByKey(String key) {
+        return shopsBySign.get(key);
+    }
+
     /** All shops owned by a given UUID. */
     public List<ShopData> getShopsByOwner(UUID ownerUUID) {
         return shopsBySign.values().stream()

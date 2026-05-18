@@ -22,6 +22,14 @@ public class HologramData {
     /** Whether this hologram is currently visible. */
     public boolean visible = true;
 
+    /**
+     * When {@code true} this hologram responds to player interactions (right-click / left-click).
+     * Used by {@link com.zerog.neoessentials.hologram.integration.ShopHologramManager} to gate
+     * click-through shop transactions on the hologram.  Non-shop holograms leave this {@code false}
+     * so accidental clicks pass through harmlessly.
+     */
+    public boolean interactive = false;
+
     // ── Visual appearance ─────────────────────────────────────────────────────
     /**
      * Uniform scale applied to every text entity in this hologram.

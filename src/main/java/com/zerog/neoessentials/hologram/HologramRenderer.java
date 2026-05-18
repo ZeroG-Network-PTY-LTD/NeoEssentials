@@ -1,4 +1,4 @@
-﻿package com.zerog.neoessentials.hologram;
+package com.zerog.neoessentials.hologram;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;

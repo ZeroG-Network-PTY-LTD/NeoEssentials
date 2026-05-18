@@ -2,9 +2,11 @@ package com.zerog.neoessentials.shop.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.hologram.integration.ShopHologramManager;
 import com.zerog.neoessentials.shop.ShopManager;
 import com.zerog.neoessentials.shop.csv.ShopCsvImporter;
 import com.zerog.neoessentials.shop.csv.ShopCsvSerializer;
@@ -76,6 +78,29 @@ public class ShopCommand {
                 .executes(ctx -> executeReload(ctx.getSource())))
             .then(Commands.literal("pricing")
                 .executes(ctx -> executePricingStatus(ctx.getSource())))
+            .then(Commands.literal("hologram")
+                .then(Commands.literal("enable")
+                    .executes(ctx -> executeHologramEnable(ctx.getSource())))
+                .then(Commands.literal("disable")
+                    .executes(ctx -> executeHologramDisable(ctx.getSource())))
+                // Internal: called by the clickable chat message with exact sign coordinates
+                .then(Commands.literal("enablepos")
+                    .then(Commands.argument("x", IntegerArgumentType.integer())
+                        .then(Commands.argument("y", IntegerArgumentType.integer())
+                            .then(Commands.argument("z", IntegerArgumentType.integer())
+                                .executes(ctx -> executeHologramEnablePos(ctx.getSource(),
+                                    IntegerArgumentType.getInteger(ctx, "x"),
+                                    IntegerArgumentType.getInteger(ctx, "y"),
+                                    IntegerArgumentType.getInteger(ctx, "z")))))))
+                // Move hologram: offsets relative to sign block, clamped to 9×9×9 (±4.5)
+                .then(Commands.literal("move")
+                    .then(Commands.argument("x", DoubleArgumentType.doubleArg(-4.5, 4.5))
+                        .then(Commands.argument("y", DoubleArgumentType.doubleArg(-4.5, 4.5))
+                            .then(Commands.argument("z", DoubleArgumentType.doubleArg(-4.5, 4.5))
+                                .executes(ctx -> executeHologramMove(ctx.getSource(),
+                                    DoubleArgumentType.getDouble(ctx, "x"),
+                                    DoubleArgumentType.getDouble(ctx, "y"),
+                                    DoubleArgumentType.getDouble(ctx, "z"))))))))
             .executes(ctx -> executeHelp(ctx.getSource()));
 
         dispatcher.register(node);
@@ -390,6 +415,145 @@ public class ShopCommand {
         }
     }
 
+    // ── /chestshop hologram enable ────────────────────────────────────────────
+
+    /** Enable hologram on the shop sign the player is currently looking at. */
+    private static int executeHologramEnable(CommandSourceStack src) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            ShopData shop = getShopFromLookAt(player);
+            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(Component.literal("§cOnly the shop owner can enable its hologram."));
+                return 0;
+            }
+            if (shop.hologramEnabled) {
+                src.sendSuccess(() -> Component.literal("§eHologram is already enabled for this shop."), false);
+                return 1;
+            }
+            ShopHologramManager.enableShopHologram(shop);
+            src.sendSuccess(() -> Component.literal(
+                "§aHologram enabled! Right/left-click it to buy/sell. Move it with §e/chestshop hologram move <x> <y> <z>§a."), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    /** Enable hologram for the shop at the given sign coordinates (used by clickable chat message). */
+    private static int executeHologramEnablePos(CommandSourceStack src, int x, int y, int z) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            String dimension = player.serverLevel().dimension().location().toString();
+            ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
+            if (shop == null) { src.sendFailure(Component.literal("§cNo shop found at that position.")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(Component.literal("§cOnly the shop owner can enable its hologram."));
+                return 0;
+            }
+            if (shop.hologramEnabled) {
+                src.sendSuccess(() -> Component.literal("§eHologram is already enabled for this shop."), false);
+                return 1;
+            }
+            ShopHologramManager.enableShopHologram(shop);
+            src.sendSuccess(() -> Component.literal(
+                "§aHologram enabled! Right/left-click it to buy/sell. Move it with §e/chestshop hologram move <x> <y> <z>§a."), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop hologram disable ───────────────────────────────────────────
+
+    private static int executeHologramDisable(CommandSourceStack src) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            ShopData shop = getShopFromLookAt(player);
+            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(Component.literal("§cOnly the shop owner can disable its hologram."));
+                return 0;
+            }
+            if (!shop.hologramEnabled) {
+                src.sendSuccess(() -> Component.literal("§eHologram is already disabled for this shop."), false);
+                return 1;
+            }
+            ShopHologramManager.disableShopHologram(shop);
+            src.sendSuccess(() -> Component.literal("§aHologram removed."), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop hologram move <x> <y> <z> ─────────────────────────────────
+
+    /**
+     * Move the hologram to a new position offset (in blocks) relative to the sign block.
+     * Clamped to ±4.5 blocks per axis (9×9×9 cube around the sign).
+     * Player must be looking at their shop sign.
+     */
+    private static int executeHologramMove(CommandSourceStack src, double ox, double oy, double oz) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            ShopData shop = getShopFromLookAt(player);
+            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(Component.literal("§cOnly the shop owner can move the hologram."));
+                return 0;
+            }
+            if (!shop.hologramEnabled) {
+                src.sendFailure(Component.literal(
+                    "§cHologram is not enabled. Enable it first with §e/chestshop hologram enable§c."));
+                return 0;
+            }
+            boolean moved = ShopHologramManager.moveShopHologram(shop, ox, oy, oz);
+            if (!moved) {
+                src.sendFailure(Component.literal("§cCould not move hologram."));
+                return 0;
+            }
+            double cx = shop.hologramOffsetX, cy = shop.hologramOffsetY, cz = shop.hologramOffsetZ;
+            src.sendSuccess(() -> Component.literal(String.format(
+                "§aHologram moved to offset §f%.2f, %.2f, %.2f §a(relative to sign).", cx, cy, cz)), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    @SuppressWarnings("resource")
+    private static ShopData getShopFromLookAt(ServerPlayer player) {
+        HitResult hit = player.pick(5.0, 0.0f, false);
+        if (hit.getType() != HitResult.Type.BLOCK) return null;
+        BlockPos pos = ((BlockHitResult) hit).getBlockPos();
+        ServerLevel level = player.serverLevel();
+        String dimension = level.dimension().location().toString();
+        return ShopManager.getInstance().getShopBySign(dimension, pos);
+    }
+
+    private static boolean isShopOwnerOrAdmin(ServerPlayer player, ShopData shop) {
+        if (player.hasPermissions(3)) return true;
+        if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.remove")) return true;
+        return shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
+    }
+
+    /**
+     * Returns {@code true} only if {@code player} is the recorded owner of {@code shop}.
+     * Admin flags are intentionally NOT checked — hologram management is owner-exclusive
+     * so that server staff cannot enable or reposition holograms on behalf of players.
+     * (Admins can still use {@code /hologram remove <id>} for moderation if needed.)
+     */
+    private static boolean isShopOwner(ServerPlayer player, ShopData shop) {
+        return shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static Path getCsvPath() {
@@ -443,6 +607,9 @@ public class ShopCommand {
         src.sendSuccess(() -> Component.literal("§e/chestshop stats §7- Your shop statistics"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop limit §7- Show your shop limit"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop pricing §7- Show dynamic pricing engine status"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop hologram enable §7- Enable hologram on looked-at shop"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop hologram disable §7- Remove hologram from looked-at shop"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop hologram move <x> <y> <z> §7- Move hologram (offset from sign, max ±4.5 blocks)"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop export §7- Admin: export shops to CSV"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop import [create] §7- Admin: import from CSV"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop convert §7- Register looked-at sign as shop"), false);
