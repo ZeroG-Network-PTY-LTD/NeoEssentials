@@ -84,6 +84,25 @@ public class ShopData {
      */
     public int stockLowThreshold = 0;
 
+    // ── Hologram integration ──────────────────────────────────────────────────
+
+    /**
+     * Whether the shop owner has opted-in to showing a hologram above this sign shop.
+     * Defaults to {@code false} — the owner must explicitly enable it via command or
+     * the clickable chat prompt shown on shop creation.
+     */
+    public boolean hologramEnabled = false;
+
+    /**
+     * Hologram position offset relative to the sign block, in blocks.
+     * Defaults to (0.5, 1.8, 0.5) — centred above the sign.
+     * Limited to ±4.5 in X/Z and ±4.5 in Y from the sign position so the hologram
+     * stays within a 9×9×9 cube around the sign/chest.
+     */
+    public double hologramOffsetX = 0.5;
+    public double hologramOffsetY = 1.8;
+    public double hologramOffsetZ = 0.5;
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public BlockPos getSignPos()  { return new BlockPos(signX, signY, signZ); }

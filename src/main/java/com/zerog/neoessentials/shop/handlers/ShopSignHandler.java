@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.SignBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.network.chat.ClickEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -229,6 +230,22 @@ public class ShopSignHandler {
             } else {
                 player.sendSystemMessage(Component.literal("§2[Admin Shop] Unlimited stock."));
             }
+        }
+
+        // ── Hologram opt-in prompt ────────────────────────────────────────────
+        // Only offer a hologram if there isn't one already (e.g. re-conversion).
+        if (!shop.hologramEnabled) {
+            String enableCmd = "/chestshop hologram enablepos "
+                + shop.signX + " " + shop.signY + " " + shop.signZ;
+            Component holoPrompt = Component.literal("§eWant a hologram above your shop? ")
+                .append(Component.literal("§a§l[Click to Enable]")
+                    .withStyle(s -> s.withClickEvent(new ClickEvent(
+                        ClickEvent.Action.RUN_COMMAND, enableCmd)))
+                    .withStyle(s -> s.withHoverEvent(
+                        new net.minecraft.network.chat.HoverEvent(
+                            net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                            Component.literal("§7Enables a floating text display above\nyour sign shop. You can move it later with\n§e/chestshop hologram move <x> <y> <z>")))));
+            player.sendSystemMessage(holoPrompt);
         }
     }
 
