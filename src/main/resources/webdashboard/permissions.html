@@ -22,52 +22,19 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Overview</span>
-                </a>
-                <a href="index.html#players" class="nav-item">
-                    <span class="nav-icon">👥</span>
-                    <span class="nav-text">Players</span>
-                </a>
-                <a href="index.html#performance" class="nav-item">
-                    <span class="nav-icon">⚡</span>
-                    <span class="nav-text">Performance</span>
-                </a>
-                <a href="index.html#worlds" class="nav-item">
-                    <span class="nav-icon">🌍</span>
-                    <span class="nav-text">Worlds</span>
-                </a>
-                <a href="index.html#events" class="nav-item">
-                    <span class="nav-icon">📜</span>
-                    <span class="nav-text">Events</span>
-                </a>
-                <a href="permissions.html" class="nav-item admin-only active">
-                    <span class="nav-icon">🔐</span>
-                    <span class="nav-text">Permissions</span>
-                </a>
-                <a href="admin.html" class="nav-item admin-only">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">Admin Controls</span>
-                </a>
-                <a href="teleport.html" class="nav-item admin-only">
-                    <span class="nav-icon">🌀</span>
-                    <span class="nav-text">Teleport Settings</span>
-                </a>
-                <a href="backup.html" class="nav-item admin-only">
-                    <span class="nav-icon">💾</span>
-                    <span class="nav-text">Backup &amp; Restore</span>
-                </a>
-            <a href="holograms.html"      class="nav-item admin-only"><span class="nav-icon">?</span><span class="nav-text">Holograms</span></a>
-
-                <a href="stats.html" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Statistics</span>
-                </a>
-                <a href="discord.html" class="nav-item">
-                    <span class="nav-icon">🤖</span>
-                    <span class="nav-text">Discord Integration</span>
-                </a>
+                <a href="index.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Overview</span></a>
+                <a href="permissions.html" class="nav-item admin-only active"><span class="nav-icon"></span><span class="nav-text">Permissions</span></a>
+                <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+                <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Teleport Settings</span></a>
+                <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Backup &amp; Restore</span></a>
+                <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+                <a href="users.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">User Management</span></a>
+                <a href="moderation.html" class="nav-item"><span class="nav-icon">️</span><span class="nav-text">Moderation</span></a>
+                <a href="kits.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Kits</span></a>
+                <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">✨</span><span class="nav-text">Holograms</span></a>
+                <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon"></span><span class="nav-text">Shops</span></a>
+                <a href="stats.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Statistics</span></a>
+                <a href="discord.html" class="nav-item"><span class="nav-icon"></span><span class="nav-text">Discord Integration</span></a>
             </nav>
 
             <div class="sidebar-footer">
@@ -98,7 +65,7 @@
                         <span class="user-name" id="userName">Guest</span>
                     </div>
                     <button class="btn-icon" id="logoutBtn" title="Logout">
-                        <span>🚪</span>
+                        <span></span>
                     </button>
                 </div>
             </header>
@@ -110,7 +77,7 @@
                     <div class="card card-full">
                         <div class="card-header">
                             <h3 class="card-title">
-                                <span class="title-icon">🔐</span>
+                                <span class="title-icon"></span>
                                 Permission System Management
                             </h3>
                             <span class="card-badge" id="permSystemBadge">Internal</span>
@@ -127,16 +94,16 @@
                             <!-- Permission Tabs -->
                             <div class="perm-tabs">
                                 <button class="perm-tab active" data-tab="overview">
-                                    <span>📊</span> Overview
+                                    <span></span> Overview
                                 </button>
                                 <button class="perm-tab" data-tab="groups">
-                                    <span>👥</span> Groups
+                                    <span></span> Groups
                                 </button>
                                 <button class="perm-tab" data-tab="users">
-                                    <span>🎮</span> Users
+                                    <span></span> Users
                                 </button>
                                 <button class="perm-tab" data-tab="permissions">
-                                    <span>🔑</span> Permissions
+                                    <span></span> Permissions
                                 </button>
                             </div>
 
@@ -144,21 +111,21 @@
                             <div class="perm-tab-content active" id="permOverviewTab">
                                 <div class="perm-stats-grid">
                                     <div class="perm-stat-card">
-                                        <div class="perm-stat-icon">👥</div>
+                                        <div class="perm-stat-icon"></div>
                                         <div class="perm-stat-content">
                                             <div class="perm-stat-label">Total Groups</div>
                                             <div class="perm-stat-value" id="totalGroupsStat">0</div>
                                         </div>
                                     </div>
                                     <div class="perm-stat-card">
-                                        <div class="perm-stat-icon">🎮</div>
+                                        <div class="perm-stat-icon"></div>
                                         <div class="perm-stat-content">
                                             <div class="perm-stat-label">Online Users</div>
                                             <div class="perm-stat-value" id="totalUsersStat">0</div>
                                         </div>
                                     </div>
                                     <div class="perm-stat-card">
-                                        <div class="perm-stat-icon">🔐</div>
+                                        <div class="perm-stat-icon"></div>
                                         <div class="perm-stat-content">
                                             <div class="perm-stat-label">System Type</div>
                                             <div class="perm-stat-value" id="systemTypeStat">Internal</div>
@@ -180,7 +147,7 @@
                                         <span>➕</span> Create Group
                                     </button>
                                     <button class="btn btn-secondary" id="refreshGroupsBtn">
-                                        <span>🔄</span> Refresh
+                                        <span></span> Refresh
                                     </button>
                                 </div>
                                 <div class="perm-groups-table" id="permGroupsTable">
@@ -191,9 +158,9 @@
                             <!-- Users Tab Content -->
                             <div class="perm-tab-content" id="permUsersTab">
                                 <div class="perm-actions-bar">
-                                    <input type="text" class="search-input" id="userSearchInput" placeholder="🔍 Search users...">
+                                    <input type="text" class="search-input" id="userSearchInput" placeholder=" Search users...">
                                     <button class="btn btn-secondary" id="refreshUsersBtn">
-                                        <span>🔄</span> Refresh
+                                        <span></span> Refresh
                                     </button>
                                 </div>
                                 <div class="perm-users-table" id="permUsersTable">
@@ -232,7 +199,7 @@
         </div>
     </div>
 
-    <script src="dashboard.js?v=419"></script>
+    <script src="dashboard.js?v=144"></script>
     <script src="permissions.js"></script>
 </body>
 </html>

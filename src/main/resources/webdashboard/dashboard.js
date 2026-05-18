@@ -60,9 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set up event listeners first
     setupEventListeners();
     
-    // Setup navigation
-    setupNavigation();
-    
     console.log('Available API endpoints:');
     console.log('  - /api/auth/* - Authentication endpoints');
     console.log('  - /api/player/online - Get online players');
@@ -270,11 +267,19 @@ function showDashboard() {
     console.log('Dashboard authenticated, starting data refresh...');
     console.log('Admin mode:', isAdmin);
 
-    // Start auto-refresh timer
-    startAutoRefresh();
-    
-    // Load initial data
-    refreshData();
+    // Only run main-page polling & navigation on index.html.
+    // Sub-pages are identified by the absence of data-page nav items.
+    const isMainPage = document.querySelector('.nav-item[data-page]') !== null;
+    if (isMainPage) {
+        // Start auto-refresh timer
+        startAutoRefresh();
+
+        // Initialize the overview page layout
+        switchPage('overview');
+
+        // Load initial data
+        refreshData();
+    }
 
     // Connect WebSocket for real-time updates
     initWebSocket();
@@ -501,7 +506,7 @@ async function handleBroadcastToPlayers() {
     } catch (e) {
         alert('Error sending broadcast: ' + e.message);
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '📢 Broadcast'; }
+        if (btn) { btn.disabled = false; btn.textContent = ' Broadcast'; }
     }
 }
 
@@ -588,7 +593,7 @@ function setupEventListeners() {
         clearEventsBtn.addEventListener('click', () => {
             document.getElementById('eventsList').innerHTML = `
                 <div class="empty-state">
-                    <span class="empty-icon">📜</span>
+                    <span class="empty-icon"></span>
                     <p>No recent events</p>
                 </div>
             `;
@@ -624,42 +629,30 @@ function setupEventListeners() {
         saveWorldsBtn.addEventListener('click', () => handleSaveWorlds());
     }
 
-    // Navigation items - Page switching
+    // Navigation items - Page switching (only handle in-page sections; let href links navigate normally)
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const page = item.getAttribute('data-page');
-            if (page) {
-                switchPage(page);
-            }
+            if (!page) return; // No data-page → let the browser follow the href
+            e.preventDefault();
+            switchPage(page);
         });
     });
 }
 
 // Switch between dashboard pages
 function switchPage(pageName) {
-    // Update active nav item
+    // Update active nav item — only touch items that participate in in-page navigation
+    // (those with a data-page attribute). Items without data-page are cross-page links
+    // and should keep whatever active state they were given in the HTML.
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
+        if (!item.hasAttribute('data-page')) return; // cross-page link — leave alone
         if (item.getAttribute('data-page') === pageName) {
             item.classList.add('active');
         } else {
             item.classList.remove('active');
-        }
-    });
-
-    // Hide all page sections
-    const pageCards = document.querySelectorAll('[data-page]');
-    pageCards.forEach(card => {
-        if (card.classList.contains('nav-item')) {
-            // Skip nav items
-            return;
-        }
-        if (card.getAttribute('data-page') === pageName) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
         }
     });
 
@@ -677,11 +670,29 @@ function switchPage(pageName) {
         pageTitle.textContent = pageTitles[pageName] || 'Dashboard';
     }
 
-    // If switching to overview, show stats cards
+    // Show/hide stats row
     const statsRow = document.querySelector('.stats-row');
     if (statsRow) {
-        statsRow.style.display = pageName === 'overview' ? '' : 'none';
+        statsRow.style.display = (pageName === 'overview' || pageName === 'players' || pageName === 'performance') ? 'grid' : 'none';
     }
+
+    // Show/hide cards based on data-page attribute (respect admin-only)
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    document.querySelectorAll('.card, .card-large').forEach(card => {
+        const cardPages = card.getAttribute('data-page');
+        if (!cardPages) return;
+        const pages = cardPages.split(' ');
+        if (pages.includes(pageName)) {
+            // Respect admin-only visibility
+            if (card.classList.contains('admin-only') && !isAdmin) {
+                card.style.display = 'none';
+            } else {
+                card.style.display = '';
+            }
+        } else {
+            card.style.display = 'none';
+        }
+    });
 
     console.log('Switched to page:', pageName);
 }
@@ -798,66 +809,6 @@ async function handleLogin() {
     }
 }
 
-// Setup navigation
-function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Remove active class from all items
-            navItems.forEach(nav => nav.classList.remove('active'));
-            
-            // Add active class to clicked item
-            item.classList.add('active');
-            
-            // Get page name
-            const pageName = item.getAttribute('data-page');
-            const pageTitle = item.querySelector('.nav-text').textContent;
-            
-            // Update page title
-            const pageTitleElement = document.getElementById('pageTitle');
-            if (pageTitleElement) {
-                pageTitleElement.textContent = pageTitle;
-            }
-            
-            // Switch to the selected page
-            switchPage(pageName);
-            
-            console.log('Navigated to:', pageTitle);
-        });
-    });
-}
-
-// Switch between different dashboard pages
-function switchPage(pageName) {
-    const statsRow = document.querySelector('.stats-row');
-    const allCards = document.querySelectorAll('.card, .card-large');
-    
-    // Show/hide stats row based on page
-    if (statsRow) {
-        if (pageName === 'overview' || pageName === 'players' || pageName === 'performance') {
-            statsRow.style.display = 'grid';
-        } else {
-            statsRow.style.display = 'none';
-        }
-    }
-    
-    // Show/hide cards based on data-page attribute
-    allCards.forEach(card => {
-        const cardPages = card.getAttribute('data-page');
-        if (cardPages) {
-            // Check if current page is in the card's data-page list
-            const pages = cardPages.split(' ');
-            if (pages.includes(pageName)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        }
-    });
-}
 
 // Auto-refresh functionality
 function startAutoRefresh() {
@@ -924,6 +875,9 @@ async function loadServerStatus() {
         console.log('Server status response:', data);
         
         if (data && data.online !== undefined) {
+            // Capture WebSocket port for live updates
+            if (data.wsPort) wsPort = data.wsPort;
+
             // Update server status badge
             const statusBadge = document.getElementById('serverStatusBadge');
             if (statusBadge) {
@@ -1057,7 +1011,7 @@ async function loadAllPlayers() {
                 if (onlinePlayers.length === 0) {
                     onlineListElement.innerHTML = `
                         <div class="empty-state">
-                            <span class="empty-icon">👥</span>
+                            <span class="empty-icon"></span>
                             <p>No players online</p>
                         </div>
                     `;
@@ -1099,7 +1053,7 @@ async function loadAllPlayers() {
                 if (offlinePlayers.length === 0) {
                     offlineListElement.innerHTML = `
                         <div class="empty-state">
-                            <span class="empty-icon">💤</span>
+                            <span class="empty-icon"></span>
                             <p>No offline players</p>
                         </div>
                     `;
@@ -1152,7 +1106,7 @@ async function loadGameEvents() {
                 if (events.length === 0) {
                     listElement.innerHTML = `
                         <div class="empty-state">
-                            <span class="empty-icon">📜</span>
+                            <span class="empty-icon"></span>
                             <p>No recent events</p>
                         </div>
                     `;
@@ -1257,14 +1211,14 @@ async function loadWorlds() {
                 if (worlds.length === 0) {
                     listElement.innerHTML = `
                         <div class="empty-state">
-                            <span class="empty-icon">🌍</span>
+                            <span class="empty-icon"></span>
                             <p>No worlds loaded</p>
                         </div>
                     `;
                 } else {
                     listElement.innerHTML = worlds.map(world => `
                     <div class="world-item">
-                        <div class="world-name">🌍 ${escapeHtml(world.name || 'Unknown')}</div>
+                        <div class="world-name"> ${escapeHtml(world.name || 'Unknown')}</div>
                         <div class="world-info">
                             ${world.playersInWorld || 0} players • 
                             ${world.loadedChunks || 0} chunks • 
@@ -1352,11 +1306,11 @@ function getEventIcon(type) {
     const t = type ? type.toLowerCase() : '';
     if (t.includes('join') || t.includes('login')) return '➕';
     if (t.includes('leave') || t.includes('quit') || t.includes('disconnect')) return '➖';
-    if (t.includes('death') || t.includes('died') || t.includes('killed')) return '💀';
-    if (t.includes('chat') || t.includes('message')) return '💬';
-    if (t.includes('achievement')) return '🏆';
+    if (t.includes('death') || t.includes('died') || t.includes('killed')) return '';
+    if (t.includes('chat') || t.includes('message')) return '';
+    if (t.includes('achievement')) return '';
     if (t.includes('advancement')) return '⭐';
-    return '📝';
+    return '';
 }
 
 function formatTimeAgo(timestamp) {
@@ -1535,11 +1489,11 @@ async function loadPlayerDetails(username, isOnline) {
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Food Level</span>
-                        <span class="detail-value">${status.foodLevel !== undefined ? status.foodLevel : 'N/A'} 🍖</span>
+                        <span class="detail-value">${status.foodLevel !== undefined ? status.foodLevel : 'N/A'} </span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Armor</span>
-                        <span class="detail-value">${status.armorValue !== undefined ? status.armorValue : 'N/A'} 🛡️</span>
+                        <span class="detail-value">${status.armorValue !== undefined ? status.armorValue : 'N/A'} ️</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Experience</span>
@@ -1588,7 +1542,7 @@ async function loadPlayerDetails(username, isOnline) {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Completed</span>
-                    <span class="detail-value">${completed} 🏆 (${percentComplete}%)</span>
+                    <span class="detail-value">${completed}  (${percentComplete}%)</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">In Progress</span>
@@ -1607,7 +1561,7 @@ async function loadPlayerDetails(username, isOnline) {
             if (homes.homes && homes.homes.length > 0) {
                 homesInfo.innerHTML = homes.homes.map(home => `
                     <div class="home-item">
-                        <div class="home-name">🏠 ${escapeHtml(home.name)}</div>
+                        <div class="home-name"> ${escapeHtml(home.name)}</div>
                         <div class="home-location">${home.world || 'Unknown'}</div>
                         <div class="home-location">${home.x !== undefined ? `${home.x.toFixed(0)}, ${home.y.toFixed(0)}, ${home.z.toFixed(0)}` : 'Unknown'}</div>
                     </div>
@@ -1802,12 +1756,12 @@ async function handleRestartServer() {
 }
 
 async function handleStopServer() {
-    if (!confirm('🛑 CRITICAL WARNING: This will STOP the Minecraft server!\n\nThe server will shutdown completely.\nPlayers will be disconnected in 5 seconds.\n\nYou will need server console access to restart it.\n\nAre you absolutely sure?')) {
+    if (!confirm(' CRITICAL WARNING: This will STOP the Minecraft server!\n\nThe server will shutdown completely.\nPlayers will be disconnected in 5 seconds.\n\nYou will need server console access to restart it.\n\nAre you absolutely sure?')) {
         return;
     }
 
     // Double confirmation for stop
-    if (!confirm('🛑 FINAL CONFIRMATION:\n\nStopping the server will require manual restart from server console or control panel.\n\nProceed with shutdown?')) {
+    if (!confirm(' FINAL CONFIRMATION:\n\nStopping the server will require manual restart from server console or control panel.\n\nProceed with shutdown?')) {
         return;
     }
 
@@ -1837,7 +1791,7 @@ async function handleStopServer() {
 }
 
 async function handleReloadConfigs() {
-    if (!confirm('🔃 Reload all configurations?\n\nThis will reload:\n- Config files\n- Translations\n- Permissions\n\nServer will NOT restart.\n\nContinue?')) {
+    if (!confirm(' Reload all configurations?\n\nThis will reload:\n- Config files\n- Translations\n- Permissions\n\nServer will NOT restart.\n\nContinue?')) {
         return;
     }
 
@@ -1860,7 +1814,7 @@ async function handleReloadConfigs() {
 
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span>🔃</span> Reload Configs';
+            btn.innerHTML = '<span></span> Reload Configs';
         }
 
         if (data.success) {
@@ -1886,7 +1840,7 @@ async function handleReloadConfigs() {
         const btn = document.getElementById('reloadConfigsBtn');
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span>🔃</span> Reload Configs';
+            btn.innerHTML = '<span></span> Reload Configs';
         }
 
         alert('❌ Error: ' + error.message);
@@ -1913,7 +1867,7 @@ async function handleSaveWorlds() {
 
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span>💾</span> Save Worlds';
+            btn.innerHTML = '<span></span> Save Worlds';
         }
 
         if (data.success) {
@@ -1930,7 +1884,7 @@ async function handleSaveWorlds() {
         const btn = document.getElementById('saveWorldsBtn');
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<span>💾</span> Save Worlds';
+            btn.innerHTML = '<span></span> Save Worlds';
         }
 
         alert('❌ Error: ' + error.message);

@@ -1,4 +1,4 @@
-e /* NeoEssentials Dashboard Styles v2.0 - Modern Design */
+/* NeoEssentials Dashboard Styles v2.0 - Modern Design */
 
 :root {
     /* Color Palette */
@@ -2119,5 +2119,8 @@ select.form-input {
 }
 .form-input:focus, .form-select:focus { border-color: var(--primary); }
 .form-select { cursor: pointer; }
+
+/* ── Modal admin actions row ─────────────────────────────────────────────── */
+#modalAdminActions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
 
