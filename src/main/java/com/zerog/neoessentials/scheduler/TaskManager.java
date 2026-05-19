@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import com.zerog.neoessentials.util.ResourceUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -25,9 +25,9 @@ public class TaskManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static TaskManager INSTANCE;
     
-    private static final Path TASKS_DIR = Paths.get("neoessentials", "scheduler");
-    private static final Path TASKS_FILE = TASKS_DIR.resolve("tasks.json");
-    private static final Path HISTORY_FILE = TASKS_DIR.resolve("execution_history.json");
+    private static final Path TASKS_DIR = ResourceUtil.getDataPath("scheduler");
+    private static final Path TASKS_FILE = ResourceUtil.getDataPath("scheduler/tasks.json");
+    private static final Path HISTORY_FILE = ResourceUtil.getDataPath("scheduler/execution_history.json");
     
     // Tasks storage: ID -> ScheduledTask
     private final Map<String, ScheduledTask> tasks = new ConcurrentHashMap<>();

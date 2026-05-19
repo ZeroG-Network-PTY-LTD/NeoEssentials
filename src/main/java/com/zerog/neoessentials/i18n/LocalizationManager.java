@@ -3,6 +3,7 @@ package com.zerog.neoessentials.i18n;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +12,6 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -41,7 +41,7 @@ public class LocalizationManager {
     );
     
     private LocalizationManager() {
-        this.langDirectory = Paths.get("neoessentials", "webdashboard", "lang");
+        this.langDirectory = ResourceUtil.getDataPath("webdashboard/lang");
         initialize();
     }
     

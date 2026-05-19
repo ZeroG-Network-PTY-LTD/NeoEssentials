@@ -443,12 +443,20 @@ public class NeoEssentials {
                     // Mark that we've notified admins (only show once per server start)
                     ConfigSplitter.markAdminsNotified();
 
-                    // Send notification after a short delay to ensure player is fully connected
+                    // Send notification after a short delay to ensure player is fully connected.
+                    // The sleep MUST happen on a background thread — sleeping inside server.execute()
+                    // would block the Minecraft main tick thread for 2 seconds, causing a server freeze.
                     net.minecraft.server.MinecraftServer server = player.getServer();
                     if (server != null) {
-                        server.execute(() -> {
+                        Thread notifyThread = new Thread(() -> {
                             try {
-                                Thread.sleep(2000); // 2 second delay
+                                Thread.sleep(2000); // 2 second delay (off the server thread)
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                return;
+                            }
+                            // Marshal message sending back onto the server thread
+                            server.execute(() -> {
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§l                    CONFIG SPLITTING AVAILABLE"));
@@ -466,10 +474,10 @@ public class NeoEssentials {
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                            } catch (InterruptedException e) {
-                                // Ignore
-                            }
-                        });
+                            });
+                        }, "NeoEssentials-AdminNotify");
+                        notifyThread.setDaemon(true);
+                        notifyThread.start();
                     }
                 }
             }

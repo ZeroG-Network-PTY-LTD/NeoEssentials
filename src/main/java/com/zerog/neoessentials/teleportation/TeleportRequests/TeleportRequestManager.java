@@ -4,11 +4,6 @@ import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.HoverEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -571,103 +566,5 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         return String.format("TeleportRequest Statistics: %d pending, %d sent, timeout: %ds", 
                            pendingRequests.size(), sentRequests.size(), requestTimeoutSeconds);
     }
-
-    /**
-     * Send a TPA request (teleport to player)
-     */
-    public void sendTpaRequest(ServerPlayer sender, ServerPlayer target, boolean here) {
-        UUID senderId = sender.getUUID();
-        UUID targetId = target.getUUID();
-
-        // Check if sender is already pending or has sent a request
-        if (pendingRequests.containsKey(senderId) || sentRequests.containsKey(senderId)) {
-            sender.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent"));
-            return;
-        }
-
-        // Check if target has too many pending requests
-        long targetPendingCount = pendingRequests.values().stream()
-            .filter(req -> req != null && req.getTargetId().equals(targetId))
-            .count();
-
-        if (targetPendingCount >= maxPendingRequests) {
-            sender.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
-            return;
-        }
-
-        // Create the request
-        TeleportRequest request = new TeleportRequest(
-            senderId,
-            sender.getName().getString(),
-            targetId,
-            target.getName().getString(),
-            TeleportRequestType.TPA,
-            System.currentTimeMillis() + (requestTimeoutSeconds * 1000L)
-        );
-
-        // Store the request atomically - replace the null with actual request
-        sentRequests.put(senderId, request);
-
-        // Use putIfAbsent for pending requests to prevent race
-        TeleportRequest existingPending = pendingRequests.putIfAbsent(targetId, request);
-        if (existingPending != null) {
-            // Another request beat us, clean up
-            sentRequests.remove(senderId);
-            sender.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
-            return;
-        }
-
-        // Auto-accept if enabled and requester is a friend (stub)
-        if (autoAcceptFromFriends && isFriend(target, sender)) {
-            cleanupRequest(request);
-            executeTeleportRequest(sender, target, TeleportRequestType.TPA);
-            sender.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.auto_accepted", target.getName().getString()));
-            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.auto_accepted_target", sender.getName().getString()));
-            if (logTeleportRequests) {
-                LOGGER.info("Teleport request from {} to {} auto-accepted (friends)", sender.getName().getString(), target.getName().getString());
-            }
-            return;
-        }
-
-        // Schedule timeout
-        scheduler.schedule(() -> {
-            TeleportRequest currentRequest = pendingRequests.get(targetId);
-            if (currentRequest != null && currentRequest.equals(request)) {
-                timeoutRequest(request);
-            }
-        }, requestTimeoutSeconds, TimeUnit.SECONDS);
-
-        // Send messages
-        String typeText = "to you";
-        sender.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.sent",
-                                                        target.getName().getString(), typeText));
-
-        if (enableRequestNotifications) {
-            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.received",
-                                                    sender.getName().getString(), typeText));
-            target.sendSystemMessage(MessageUtil.component("commands.neoessentials.teleport.request.instructions"));
-            // Send clickable accept/deny buttons to the target
-            MutableComponent accept = Component.literal("[Accept]")
-                .withStyle(style -> style.withColor(ChatFormatting.GREEN).withBold(true))
-                .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tpaaccept " + sender.getName().getString())))
-                .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Accept teleport request"))));
-            MutableComponent deny = Component.literal("[Deny]")
-                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(true))
-                .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tpadeny " + sender.getName().getString())))
-                .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Deny teleport request"))));
-            MutableComponent message = Component.literal("")
-                .append(accept)
-                .append(Component.literal(" "))
-                .append(deny);
-            target.sendSystemMessage(message);
-        }
-
-        if (logTeleportRequests) {
-            LOGGER.info("Player {} sent TPA request to {}",
-                   sender.getName().getString(), target.getName().getString());
-        }
-    }
 }
-
-
 

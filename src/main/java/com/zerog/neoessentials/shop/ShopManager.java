@@ -149,7 +149,7 @@ public class ShopManager {
     // ── Persistence ───────────────────────────────────────────────────────────
 
     private Path getDataFile() {
-        return ResourceUtil.getConfigPath("shops.json");
+        return ResourceUtil.getDataPath("shops.json");
     }
 
     private void load() throws IOException {

@@ -65,7 +65,7 @@ public class EconomyManager {
 
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
-    private final File lastActivityFile = new File("neoessentials/balances_activity.json");
+    private final File lastActivityFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances_activity.json");
     
     // Track current file versions to avoid unnecessary backups
     private volatile int currentBalancesVersion = CURRENT_DATA_VERSION;

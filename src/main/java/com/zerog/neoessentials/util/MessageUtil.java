@@ -738,7 +738,7 @@ public class MessageUtil {
      */
     public static Map<String, String> loadCustomLanguageFile(String languageCode) {
         // Always use the NeoEssentials data directory for custom languages
-        File customLangFile = new File("neoessentials/languages/custom/" + languageCode + ".json");
+        File customLangFile = ResourceUtil.getDataFile("languages/custom/" + languageCode + ".json");
         if (!customLangFile.exists()) {
             return null;
         }
@@ -760,7 +760,7 @@ public class MessageUtil {
      */
     public static Map<String, Map<String, String>> loadAllCustomLanguages() {
         Map<String, Map<String, String>> languages = new HashMap<>();
-        File langDir = new File("neoessentials/languages/custom");
+        File langDir = ResourceUtil.getDataFile("languages/custom");
         if (langDir.exists() && langDir.isDirectory()) {
             File[] files = langDir.listFiles((dir, name) -> name.endsWith(".json"));
             if (files != null) {

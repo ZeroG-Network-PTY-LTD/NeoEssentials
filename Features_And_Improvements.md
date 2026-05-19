@@ -39,6 +39,14 @@
         - Ensures server admins can upgrade without losing essential functionality.
         - Provides a stable foundation for fixing existing bugs (permissions, configs, teleportation) in the new environment.
 
+- **Database Support**  
+  Add optional database support for:
+    - Player data, permissions, economy storage, and other persistent data.
+    - MySQL, Mongodb, or other popular databases.
+    - SQLite, PostgreSQL, or other embedded options for smaller servers using mod https://modrinth.com/plugin/minecraft-sqlite-jdbc.
+    - Migration tools for existing JSON data to the database.
+    - Improved performance and scalability for larger servers.
+  Configuration options to enable/disable database support and choose between different database types.
 ---
 
 # ✅ Improvements Done

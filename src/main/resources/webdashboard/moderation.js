@@ -72,8 +72,7 @@
     }
 
     function isAdmin() {
-        try { const p = JSON.parse(atob(token().split('.')[1])); return p.role==='admin'||p.admin===true; }
-        catch(_) { return false; }
+        return localStorage.getItem('isAdmin') === 'true';
     }
 
     window.toggleBansView = function(btn) {

@@ -4,6 +4,149 @@
 
 ---
 
+## 1.0.2.6+build.152 — 2026-05-19
+
+### 🐛 Bug Fix — Runtime Data in Wrong Directory
+
+- **ShopManager / PlayerChatFormatManager wrong storage dir** — Player-created shops (`shops.json`) and per-player chat format overrides (`player_chat_formats.json`) were stored in `config/neoessentials/` instead of `neoessentials/`. A config reset would silently wipe all shops and chat format assignments. Fixed to use `ResourceUtil.getDataPath()`.
+
+**Files changed:** `ShopManager.java`, `PlayerChatFormatManager.java`
+
+---
+
+## 1.0.2.6+build.151 — 2026-05-19
+
+### 🐛 Bug Fix — i18n/Language System Raw Paths
+
+- **LocalizationManager / LanguageCommand / MessageUtil raw paths** — Three i18n/language files used hardcoded `Paths.get("neoessentials", ...)` / `new File("neoessentials/...")` instead of `ResourceUtil`, causing all language/translation files to be mislocated on some hosting environments. Fixed to use `ResourceUtil.getDataPath()` / `ResourceUtil.getDataFile()`.
+
+**Files changed:** `LocalizationManager.java`, `LanguageCommand.java`, `MessageUtil.java`
+
+---
+
+## 1.0.2.6+build.150 — 2026-05-19
+
+### 🐛 Bug Fix — Scheduler Path Consistency
+
+- **TaskManager raw paths** — Scheduler data files (`tasks.json`, `execution_history.json`) were resolved via raw `Paths.get("neoessentials", "scheduler")` instead of `ResourceUtil.getDataPath()`. Fixed.
+
+**Files changed:** `TaskManager.java`
+
+---
+
+## 1.0.2.6+build.149 — 2026-05-19
+
+### 🐛 Bug Fix — Economy & Teleport System
+
+- **EconomyManager `lastActivityFile` raw path** — `balances_activity.json` was resolved from the JVM working directory instead of the server root, causing the inactive-account cleanup scheduler to misread activity data and potentially purge live balances on some hosts. Fixed to use `ResourceUtil.getDataFile()`.
+- **TeleportRequestManager dead code removed** — `sendTpaRequest()` was an unreachable duplicate of `sendTeleportRequest()` that silently omitted the request cooldown, `allowMultipleRequests`, and tptoggle checks. Removed.
+
+**Files changed:** `EconomyManager.java`, `TeleportRequestManager.java`
+
+---
+
+## 1.0.2.6+build.148 — 2026-05-19
+
+### 🐛 Bug Fix — BanManager: Temp IP Ban Cleanup & Expiry Checks
+
+- **Scheduler never swept IP bans** — `cleanupExpiredTempBans()` only cleaned player bans. Expired temp IP bans accumulated in memory and on disk, remaining visible in `/ipbanlist` until a manual unban. Fixed by adding an `ipBans` sweep that mirrors the existing player-ban loop.
+- **`isIPBanned()` ignored expiry** — returned `true` for any stored IP ban entry, including expired ones. Expired temp IP bans acted as permanent until the next server restart. Fixed to call `IPBanEntry.isExpired()` and auto-remove on lookup.
+
+**Files changed:** `BanManager.java`
+
+---
+
+## 1.0.2.6+build.147 — 2026-05-18
+
+### 🎨 Dashboard — Hologram Icon Visual Consistency
+
+Updated hologram-related navigation icons across all admin dashboard pages for visual consistency. No behaviour changes.
+
+---
+
+## 1.0.2.6+build.135 — 2026-05-18
+
+### 🔧 Dashboard — Navigation & UI Cleanup
+
+- Navigation sidebar links are now hidden for non-operator sessions
+- Active-link highlighting fixed on all sub-pages
+- `dashboard.js` authentication guard simplified; dead-code paths removed
+- Responsive layout tweaks in `styles.css`
+
+---
+
+## 1.0.2.6+build.133 — 2026-05-18
+
+### ✨ Feature — WebSocket Real-Time Dashboard Updates
+
+- `WebSocketEventBroadcaster` pushes live events to all connected dashboard sessions (`player_join/leave`, `server_stats`, `chat_message`, `shop_transaction`, `hologram_update`)
+- `POST /api/admin/broadcast` — send server announcements directly from the dashboard
+- Dashboard stat cards and player list update live without page refresh
+- New **Shop Management** dashboard page (`shop.html` / `shop.js`) — view shops, edit prices, view transactions, manage holograms
+
+**Files changed:** `WebSocketEventBroadcaster.java`, `AdminEndpoint.java`, `PlayerEndpoint.java`, `DashboardAPI.java`, `dashboard.js`, `index.html`, `shop.html`, `shop.js`
+
+---
+
+## 1.0.2.6+build.131 — 2026-05-18
+
+### ✨ Feature — Shop Hologram Management Commands
+
+New `/shop hologram` subcommands:
+- `/shop hologram enable <shopId>` — spawn/re-enable the shop hologram
+- `/shop hologram disable <shopId>` — hide the hologram without deleting the shop
+- `/shop hologram move <shopId>` — snap the hologram to the sign's current position
+
+Hologram is automatically created/destroyed with the shop. Fixed right-click-hologram purchase detection.
+
+**Files changed:** `ShopHologramManager.java`, `ShopManager.java`, `ShopCommand.java`, `ShopInteractHandler.java`, `ShopSignHandler.java`, `ShopData.java`
+
+---
+
+## 1.0.2.6+build.129 — 2026-05-18
+
+### 🎨 Improvement — Hologram & Discord Dashboard UI Rework
+
+**Hologram dashboard:**
+- Responsive card-based redesign with live preview panel
+- Inline editors for `scale`, `lineSpacing`, `textShadow`, `textOpacity`, `backgroundColorArgb`
+- Frame animation editor per line; billboard/spin/hover controls exposed
+
+**Hologram renderer fixes:**
+- Background panel colour applied correctly; scale/spacing applied at spawn; reduced animation flicker
+
+**Discord dashboard:**
+- Redesigned account-link table with live status badges and one-click unlink
+
+**Files changed:** `HologramRenderer.java`, `HologramCommand.java`, `holograms.html`, `holograms.js`, `discord.html`
+
+---
+
+## 1.0.2.6+build.127 — 2026-05-13
+
+### ✨ Feature — In-Game Discord OAuth2 Registration
+
+Complete in-game Discord OAuth2 integration:
+- `/dashboard register discord` opens an OAuth2 authorization flow — no manual token copy-paste
+- New `DiscordEndpoint` routes: `auth/start`, `auth/callback`, `link`, `unlink`, `linked`
+- New **Discord dashboard page** (`discord.html`) for managing linked accounts
+- `discord_auth.json` config format updated
+
+**Files changed:** `DashboardRegisterCommand.java`, `AuthenticationHandler.java`, `DiscordEndpoint.java`, `discord.html`, `discord_auth.json`
+
+---
+
+## 1.0.2.6+build.125 — 2026-05-13
+
+### ✨ Feature — Discord-Linked Dashboard Registration
+
+- `/dashboard register discord` — starts a Discord OAuth2 link flow
+- `DashboardRegistrationManager` — manages one-time Discord registration tokens and associates Discord user IDs with Minecraft UUIDs
+
+**Files changed:** `DashboardRegisterCommand.java`, `DashboardRegistrationManager.java`
+
+---
+
 ## 1.0.2.6+build.124 — 2026-05-13
 
 ### ✨ Feature — `/dashboard update` Smart File Comparison
@@ -53,6 +196,27 @@ Significant quality-of-life and visual enhancements to the hologram system.
 **Wiki:** New `docs/Wiki/HologramSystem.md` with full command reference, examples, and JSON schema documentation.
 
 **Files changed:** `HologramData.java`, `HologramRenderer.java`, `HologramCommand.java`, `HologramEndpoint.java`, `docs/Wiki/HologramSystem.md`
+
+---
+
+## 1.0.2.6+build.122 — 2026-05-11
+
+### 🐛 Bug Fix — LuckPerms Default Permissions Not Applied When Adapter Is Unhealthy
+
+Two root causes fixed in `PermissionAPI.hasPermission()`:
+
+1. **Registry-default block was skipped when adapter unhealthy** — the registry-default fallback was inside `if (externalAvailable)`. When LuckPerms reached ≥ 5 consecutive failures, non-OP players in the default group lost all NeoEssentials registered default permissions. Fixed by removing the guard — registry defaults now always apply.
+2. **`queryTristate` called twice per check, doubling failure count** — doubled `consecutiveFailures` on every cache-miss, flipping to unhealthy at half the intended threshold. Fixed by caching `isExplicitlyDenied()` after the first call.
+
+**Files changed:** `PermissionAPI.java`
+
+---
+
+### 🐛 Bug Fix — AFK Kick Not Respecting Exempt Permission
+
+Players holding `neoessentials.afk.kickexempt` were being kicked. Fixed by adding a permission check before kick execution. Also improved `AfkManager` config reading and `MessageUtil` placeholder resolution.
+
+**Files changed:** `AfkManager.java`, `MiscTeleportManager.java`, `MessageUtil.java`, `ConfigManager.java`
 
 ---
 

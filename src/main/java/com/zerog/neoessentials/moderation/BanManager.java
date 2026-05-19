@@ -150,19 +150,36 @@ public class BanManager {
      * This uses the same logic as getAllPlayerBans() but is safe for background use.
      */
     private void cleanupExpiredTempBans() {
-        boolean removedAny = false;
-        Iterator<Map.Entry<UUID, BanEntry>> iterator = playerBans.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<UUID, BanEntry> entry = iterator.next();
-            BanEntry ban = entry.getValue();
-            if (ban.isExpired() && com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
-                iterator.remove();
-                removedAny = true;
+        boolean autoExpire = com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled();
+
+        // Clean up expired player bans
+        boolean removedPlayerBans = false;
+        Iterator<Map.Entry<UUID, BanEntry>> playerIterator = playerBans.entrySet().iterator();
+        while (playerIterator.hasNext()) {
+            Map.Entry<UUID, BanEntry> entry = playerIterator.next();
+            if (entry.getValue().isExpired() && autoExpire) {
+                playerIterator.remove();
+                removedPlayerBans = true;
             }
         }
-        if (removedAny) {
+        if (removedPlayerBans) {
             saveBans();
-            LOGGER.info("Expired temp bans cleaned up by scheduler.");
+            LOGGER.info("Expired temp player bans cleaned up by scheduler.");
+        }
+
+        // Clean up expired IP bans
+        boolean removedIPBans = false;
+        Iterator<Map.Entry<String, IPBanEntry>> ipIterator = ipBans.entrySet().iterator();
+        while (ipIterator.hasNext()) {
+            Map.Entry<String, IPBanEntry> entry = ipIterator.next();
+            if (entry.getValue().isExpired() && autoExpire) {
+                ipIterator.remove();
+                removedIPBans = true;
+            }
+        }
+        if (removedIPBans) {
+            saveIPBans();
+            LOGGER.info("Expired temp IP bans cleaned up by scheduler.");
         }
     }
 
@@ -518,10 +535,19 @@ public class BanManager {
     }
     
     /**
-     * Check if an IP is banned
+     * Check if an IP is banned (also handles expiry of temp IP bans)
      */
     public boolean isIPBanned(String ipAddress) {
-        return ipBans.containsKey(ipAddress);
+        IPBanEntry ban = ipBans.get(ipAddress);
+        if (ban == null) return false;
+        if (ban.isExpired()) {
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                ipBans.remove(ipAddress);
+                saveIPBans();
+            }
+            return false;
+        }
+        return true;
     }
     
     /**
@@ -774,7 +800,11 @@ public class BanManager {
                         banObj.get("bannedBy").getAsString()
                     );
                     ban.banTime = banObj.get("banTime").getAsLong();
-                    ipBans.put(ban.ipAddress, ban);
+                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
+                    // Only load non-expired bans
+                    if (!ban.isExpired()) {
+                        ipBans.put(ban.ipAddress, ban);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -823,6 +853,7 @@ public class BanManager {
                 banObj.addProperty("reason", ban.reason);
                 banObj.addProperty("bannedBy", ban.bannedBy);
                 banObj.addProperty("banTime", ban.banTime);
+                banObj.addProperty("expireTime", ban.expireTime);
                 bansArray.add(banObj);
             }
             

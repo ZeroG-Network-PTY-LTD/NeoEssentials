@@ -1891,7 +1891,7 @@ async function handleSaveWorlds() {
     }
 }
 
-console.log('NeoEssentials Dashboard v2.1 loaded successfully - Build 418');
+console.log('NeoEssentials Dashboard v2.1 loaded successfully - Build 147');
 console.log('Auto-refresh interval: ' + (REFRESH_INTERVAL / 1000) + ' seconds');
 console.log('Press Ctrl+R or F5 to manually refresh data');
 console.log('Player modal functions loaded:', typeof window.openPlayerModal === 'function', typeof window.closePlayerModal === 'function');

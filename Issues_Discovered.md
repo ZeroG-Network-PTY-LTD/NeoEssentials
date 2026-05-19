@@ -6,8 +6,57 @@
 
 # ✅ Issues That Were Fixed
 
+## ✨ Bug Hunt — Build #147 — 2026-05-19
+
+- **`MuteManager` — Mutes Not Persisted Across Server Restarts → ✅ FIXED**
+  All player mutes were stored in an in-memory `ConcurrentHashMap.newKeySet()` with no backing file. Every server restart silently cleared all mutes. Players who had been muted would be able to chat again after any restart.
+  - **Root cause**: `MuteManager` had no `load()` / `save()` methods and no data file. The static `mutedPlayers` set existed only in JVM memory.
+  - **Additionally**: Timed (`/tempmute`) mutes had no expiry tracking — the set stored only player names, not when the mute should expire. Even while the server was running, there was no way for a timed mute to auto-expire.
+  - **Fix**:
+    - Rewrote `MuteManager` to store `Map<String, Long>` (lowercase name → expiry timestamp; `0` = permanent).
+    - Added `load()` called from a `static {}` block on class init; loads `data/moderation/mutes.json`.
+    - Added `save()` called on every `mute()` / `unmute()`.
+    - `isMuted()` now checks expiry — auto-removes expired timed mutes and calls `save()`.
+    - Added `mute(String targetName, long durationMillis)` overload for timed mutes.
+    - Added `getMuteExpiry(String playerName)` helper for UI/command display.
+  - Affected files: `MuteManager.java`
+
+- **`IgnoreManager` — Ignore Lists Not Persisted Across Server Restarts → ✅ FIXED**
+  Player ignore lists were stored only in memory (`Map<String, Set<String>>`). Every server restart wiped all ignore lists. Players would have to re-run `/ignore` for every person they had previously ignored.
+  - **Root Cause 1 — No persistence**: No `load()` / `save()` methods, no backing file. Data lived only in JVM heap.
+  - **Root Cause 2 — `cleanupPlayer()` destroyed data on disconnect**: The method removed the disconnecting player's own ignore list (`ignoreMap.remove(playerName)`) AND removed them from all _other_ players' lists (`ignoreMap.values().forEach(... .remove(playerName))`). Even within a single server session, a player's ignore list would be deleted the moment they logged out, meaning it would not apply when they logged back in during the same uptime.
+  - **Fix**:
+    - Rewrote `IgnoreManager` to back the map with `data/chat/ignore_lists.json`.
+    - Added `load()` + `save()` — `save()` called on every `ignore()` / `unignore()`.
+    - `cleanupPlayer()` is now a deliberate no-op (ignore lists are permanent preferences, not session state).
+  - Affected files: `IgnoreManager.java`
+
+- **`BanManager` — Temporary IP Bans Never Expire + Expiry Not Saved/Loaded → ✅ FIXED**
+  Three interlocking bugs caused temporary IP bans (`/banip <ip> <duration>`) to be effectively permanent:
+  1. **`isIPBanned()` never checked expiry**: The method called `ipBans.containsKey(ipAddress)` — a pure key existence check with no expiry logic, unlike `isPlayerBanned()` which correctly calls `ban.isExpired()`.
+  2. **`saveIPBans()` never wrote `expireTime`**: The `JsonObject` built during save omitted the `expireTime` field entirely. Even if loading had checked it, the value would have been missing from the file.
+  3. **`loadIPBans()` never read `expireTime`**: The deserialization loop never read the `expireTime` field, so `ban.expireTime` was always left at the constructor default of `0` (permanent) after a restart.
+  - **Fix**:
+    - `isIPBanned()` now looks up the `IPBanEntry`, calls `ban.isExpired()`, auto-removes via `ipBans.remove()` + `saveIPBans()` when `autoExpireTempBans` is enabled, and returns `false` for expired bans.
+    - `saveIPBans()` now includes `banObj.addProperty("expireTime", ban.expireTime)`.
+    - `loadIPBans()` now reads the `expireTime` field (`banObj.has("expireTime") ? ... : 0`) and skips entries that are already expired at load time.
+  - Affected files: `BanManager.java`
+
+- **`PlayerJoinQuitHandler` — `newPlayerKit` Blocked by Kit Permissions → ✅ FIXED**
+  The "starter kit on first join" feature called `kitManager.giveKit(player, kitName)`, which internally calls `canUseKit()` — a full permission/cooldown/max-uses check. New players who weren't yet in any permission group with the kit node would receive the error `"You don't have permission to use this kit"` instead of their starter items. The config comment said permissions were bypassed, but the code did not bypass them.
+  - **Fix**: On first join, the kit items are now given directly by iterating `starterKit.getItems()` and calling `inventory.add()` / `player.drop()`, completely bypassing `canUseKit()`. Logging, cooldown tracking, and usage limits are intentionally skipped for the first-join gift.
+  - Affected files: `PlayerJoinQuitHandler.java`
+
+- **`PlayerJoinQuitHandler` — `first_joined.json` Written to Wrong Directory → ✅ FIXED**
+  The file tracking which players have already received their starter kit used a raw relative path: `new java.io.File("neoessentials/first_joined.json")`. On dedicated servers where the working directory is not the server root (or differs from the NeoEssentials data directory), this file would be created in the wrong location — causing every join to be treated as a first join and re-giving the starter kit on each login.
+  - **Fix**: Changed to `ResourceUtil.getDataFile("first_joined.json")` for a consistent absolute path. Also added a `parent.mkdirs()` guard before the write so the directory is created if it doesn't exist.
+  - Affected files: `PlayerJoinQuitHandler.java`
+
+---
+
 - **NeoEssentials AFK Kick Timeout Not Working (NeoForge 1.21.1, build.1.0.2.6+119)**
   Players were never kicked for being AFK even when `kickTimeout` was set to a value greater than 0 in config.
+
     - Root Causes:
         1. **Hidden `kickAfkPlayers` gate**: `loadConfiguration()` only set `kickAfkPlayers = true` when the JSON key `"kickAfkPlayers": true` was explicitly present in config. The bundled `config.json` never included this key, so `kickAfkPlayers` stayed `false` — silently suppressing all AFK kicks regardless of `kickTimeout`.
         2. **`neoessentials.afk.exempt` permission not enforced**: `checkForAfkPlayers()` never checked the kick-exempt permission before disconnecting a player, making the permission node effectively non-functional.
@@ -848,3 +897,189 @@
   | `PlayerDataStore.java` | `flush()` now calls `dataDirectory.mkdirs()` before writing; logs ERROR if creation fails. |
   | `config.json` (bundled) | Added `teleportation.backSettings` section. |
 
+---
+
+## Bugs Discovered — build.150 audit
+
+---
+
+- **`NeoEssentials.java` — `Thread.sleep(2000)` Called on Minecraft Server Main Thread**
+  *(Status: Fixed → v1.0.2.6+build.150)*
+
+  **Root cause**: Inside `GameEvents.onPlayerLoggedIn()`, when an admin first joins after server start and the config-split notification needs to be shown, the code called:
+  ```java
+  server.execute(() -> {
+      Thread.sleep(2000); // ← BLOCKS THE SERVER MAIN THREAD
+      player.sendSystemMessage(...);
+  });
+  ```
+  `server.execute()` submits work to the **Minecraft server tick thread** — the single thread that drives all game logic. Calling `Thread.sleep(2000)` inside that runnable pauses the tick thread for 2 full seconds, causing:
+  - A 2-second complete server freeze visible to all online players (rubber-banding, no block updates, etc.)
+  - `Can't keep up! Did the system time change, or is the server overloaded?` log warnings
+  - In worst case: watchdog timeout and crash if another thread monitors tick time
+
+  **Fix**: Moved the 2-second sleep to a dedicated daemon background thread (`NeoEssentials-AdminNotify`). Once the sleep completes, the message sending is marshalled back to the server thread via `server.execute()` — the same pattern used by `HologramScheduler` and `TablistManager` for safe server-thread callbacks.
+
+  | File | Change |
+  |---|---|
+  | `NeoEssentials.java` | Replaced `server.execute(() -> { Thread.sleep(2000); ... })` with a daemon thread that sleeps off-thread, then calls `server.execute()` only for the message sends. `InterruptedException` now correctly re-interrupts the thread instead of being silently swallowed. |
+
+---
+
+## Bugs Discovered — build.149 audit
+
+---
+
+- **EconomyManager — `lastActivityFile` Uses Raw Relative Path**
+  *(Status: Fixed → v1.0.2.6+build.149)*
+
+  **Root cause**: `lastActivityFile` was declared as `new File("neoessentials/balances_activity.json")` — a raw relative path resolved from the JVM working directory. The companion `balancesFile` on the very next line correctly used `ResourceUtil.getDataFile("balances.json")`.
+
+  **Effect**: On server hosts where the JVM working directory differs from the server root (Pterodactyl, AMP, etc.), `balances_activity.json` was created in or read from a different location than `balances.json`. This caused the inactive-account cleanup scheduler to never find any activity data and silently wipe all economy account balances it classified as "inactive".
+
+  **Fix**: Changed to `ResourceUtil.getDataFile("balances_activity.json")` to match `balancesFile`.
+
+  | File | Change |
+  |---|---|
+  | `EconomyManager.java` | `lastActivityFile` now uses `ResourceUtil.getDataFile("balances_activity.json")`. |
+
+---
+
+- **TeleportRequestManager — `sendTpaRequest()` Dead Code with Missing Safety Checks**
+  *(Status: Fixed → v1.0.2.6+build.149)*
+
+  **Root cause**: A second method `sendTpaRequest(ServerPlayer, ServerPlayer, boolean)` existed alongside `sendTeleportRequest()`. It was never called from anywhere in the codebase — all commands routed through `sendTeleportRequest()`.
+
+  **Effect**: The dead method duplicated the request logic but was missing three critical checks present in `sendTeleportRequest()`:
+  1. **Cooldown** — no `lastRequestTimestamps` check; a player could spam requests if `sendTpaRequest` were ever invoked.
+  2. **`allowMultipleRequests`** — no duplicate-request guard.
+  3. **tptoggle** — no check for whether the target had disabled incoming teleport requests.
+
+  If the method was ever called externally (e.g., by another mod or a future feature), all three protections would have been silently bypassed.
+
+  **Fix**: Removed `sendTpaRequest()` entirely. Also removed the five now-unused imports (`Component`, `MutableComponent`, `ChatFormatting`, `ClickEvent`, `HoverEvent`) that were only used by that method.
+
+  | File | Change |
+  |---|---|
+  | `TeleportRequestManager.java` | Removed dead `sendTpaRequest()` method and its unused imports. |
+
+---
+
+## Bugs Discovered — build.148 audit (historical)
+
+---
+
+- **BanManager — `isIPBanned()` Never Checked Expiry of Temp IP Bans**
+  *(Status: Fixed → v1.0.2.6+build.148)*
+
+  **Root cause**: `isIPBanned()` returned `ipBans.containsKey(ipAddress)`, which is `true` for any stored entry — including expired temporary IP bans. `IPBanEntry.isExpired()` existed but was never called during the lookup.
+
+  **Effect**: A player whose temporary IP ban had already passed could not join the server until the next time `cleanupExpiredTempBans()` ran (which itself only cleaned *player* bans — see below), or until the server restarted. Effectively, temp IP bans behaved as permanent bans.
+
+  **Fix**: Replaced `containsKey` check with a full `isExpired()` check. If the ban is expired and auto-expire is enabled, the entry is removed from `ipBans` and `saveIPBans()` is called immediately.
+
+  | File | Change |
+  |---|---|
+  | `BanManager.java` | `isIPBanned()` now calls `ban.isExpired()`, removes stale entry, and `saveIPBans()` on auto-remove. |
+
+---
+
+- **BanManager — `saveIPBans()` / `loadIPBans()` Drop `expireTime` (Temp IP Bans Become Permanent After Restart)**
+  *(Status: N/A — already handled in current code)*
+
+  **Note**: On re-inspection of the live source, `saveIPBans()` already writes `expireTime` and `loadIPBans()` already reads it back with a null-safe fallback. No change required.
+
+---
+
+- **BanManager — `cleanupExpiredTempBans()` Never Cleans Expired IP Bans**
+  *(Status: Fixed → v1.0.2.6+build.148)*
+
+  **Root cause**: `cleanupExpiredTempBans()` iterated only `playerBans` and never touched `ipBans`. Expired temporary IP bans accumulated in memory and on disk until a manual unban was issued.
+
+  **Effect**: Memory leak over time; expired IP bans remained visible in `/ipbanlist`; `saveIPBans()` wrote expired entries back on unrelated save calls.
+
+  **Fix**: Added a second iterator loop over `ipBans` in `cleanupExpiredTempBans()`, mirroring the player-ban sweep. Calls `saveIPBans()` if any expired IP bans were removed.
+
+  | File | Change |
+  |---|---|
+  | `BanManager.java` | `cleanupExpiredTempBans()` now sweeps both `playerBans` and `ipBans`; logs separately for each type removed. |
+
+---
+
+- **MuteManager — No Persistence (All Mutes Lost on Server Restart)**
+  *(Status: N/A — already handled in current code)*
+
+  **Note**: On re-inspection of the live source, `MuteManager` already has a `load()`/`save()` pair backed by `ResourceUtil.getDataFile("moderation/mutes.json")`, with timed-mute expiry support and auto-remove on lookup. No change required.
+
+---
+
+- **IgnoreManager — No Persistence (All Ignores Lost on Server Restart)**
+  *(Status: N/A — already handled in current code)*
+
+  **Note**: On re-inspection, `IgnoreManager` already has `load()`/`save()` backed by `ResourceUtil.getDataFile("chat/ignore_lists.json")`. `cleanupPlayer()` is intentionally a no-op with an explanatory comment — ignore lists are designed to survive sessions. No change required.
+
+---
+
+- **PlayerJoinQuitHandler — New-Player Welcome Kit Blocked by Permission Check**
+  *(Status: N/A — already handled in current code)*
+
+  **Note**: The first-join kit path already bypasses `KitManager.giveKit()` entirely. It calls `kitManager.getKit(kitName)` to fetch the kit data, then iterates `starterKit.getItems()` and adds them directly to the player's inventory — no `canUseKit()` call, no permission check. No change required.
+
+---
+
+- **PlayerJoinQuitHandler — `first_joined.json` Uses Raw Relative Path**
+  *(Status: N/A — already handled in current code)*
+
+  **Note**: Line 61 already reads `com.zerog.neoessentials.util.ResourceUtil.getDataFile("first_joined.json")`. No change required.
+
+---
+
+- **LocalizationManager / LanguageCommand / MessageUtil — i18n Paths Use Raw `Paths.get()` / `new File()` Instead of `ResourceUtil`**
+  *(Status: Fixed → v1.0.2.6+build.151)* Three files in the i18n/commands/util layer hardcoded raw paths to `neoessentials/...` directories instead of routing through `ResourceUtil`:
+  - `LocalizationManager.java` — `langDirectory = Paths.get("neoessentials", "webdashboard", "lang")`
+  - `LanguageCommand.java` — two calls to `Paths.get("neoessentials", "languages", "templates", fileName)`
+  - `MessageUtil.java` — `new File("neoessentials/languages/custom/...")` in `loadCustomLanguageFile()` and `loadAllCustomLanguages()`
+
+  **Effect**: Same as other raw-path bugs — mismatched paths on hosts where the JVM working directory differs, plus `ResourceUtil.DATA_DIR` changes would be silently bypassed for the entire language/i18n subsystem.
+
+  **Fix**: Replaced all raw paths with `ResourceUtil.getDataPath()` / `ResourceUtil.getDataFile()`. Removed now-unused `Paths` imports from `LocalizationManager` and `LanguageCommand`. Added `ResourceUtil` import to `LocalizationManager` (same package in `MessageUtil`, no import needed).
+
+  | File | Change |
+  |---|---|
+  | `LocalizationManager.java` | `langDirectory` now uses `ResourceUtil.getDataPath("webdashboard/lang")` |
+  | `LanguageCommand.java` | `generateTemplate()` and `exportMissingKeys()` now use `ResourceUtil.getDataPath("languages/templates/...")` |
+  | `MessageUtil.java` | `loadCustomLanguageFile()` and `loadAllCustomLanguages()` now use `ResourceUtil.getDataFile("languages/custom/...")` |
+
+---
+
+- **TaskManager — Scheduler Paths Use Raw `Paths.get()` Instead of `ResourceUtil`**
+  *(Status: Fixed → v1.0.2.6+build.150)*
+
+  **Root cause**: `TASKS_DIR`, `TASKS_FILE`, and `HISTORY_FILE` were all initialised with hardcoded `Paths.get("neoessentials", "scheduler")` / `.resolve(...)` instead of the project-standard `ResourceUtil.getDataPath()`. Every other data-file path in the mod uses `ResourceUtil`; the scheduler was the sole outlier.
+
+  **Effect**: Path inconsistency — if `ResourceUtil.DATA_DIR` were ever changed, scheduler files would silently continue writing to the old location. Also defeats any future path-override mechanism built on top of `ResourceUtil`.
+
+  **Fix**: Replaced all three constants with `ResourceUtil.getDataPath("scheduler")`, `ResourceUtil.getDataPath("scheduler/tasks.json")`, and `ResourceUtil.getDataPath("scheduler/execution_history.json")`. Added `ResourceUtil` import; removed now-unused `Paths` import.
+
+  | File | Change |
+  |---|---|
+  | `TaskManager.java` | `TASKS_DIR`, `TASKS_FILE`, `HISTORY_FILE` now use `ResourceUtil.getDataPath()`. |
+
+---
+
+- **ShopManager / PlayerChatFormatManager — Runtime Data Stored in Config Directory**
+  *(Status: Fixed → v1.0.2.6+build.152)*
+
+  **Root cause**: Two managers stored player-generated runtime data using `ResourceUtil.getConfigPath()` / `getConfigFile()`, which resolves to `config/neoessentials/`. The `CONFIG_DIR` is explicitly intended for server configuration files (read-only after initial setup). Runtime data generated by player actions belongs in `DATA_DIR` (`neoessentials/`).
+
+  - `ShopManager.java` — `getDataFile()` returned `ResourceUtil.getConfigPath("shops.json")`. Shops are player-created at runtime with owner UUIDs, block positions, and chest links.
+  - `PlayerChatFormatManager.java` — Per-player chat format overrides (assigned via admin commands, keyed by UUID) were stored as `config/neoessentials/player_chat_formats.json`.
+
+  **Effect**: Player-created shops and custom chat formats would accumulate in `config/neoessentials/` rather than `neoessentials/`. On typical Minecraft hosting setups the `config/` directory is often excluded from world backups but not from mod config resets, meaning a config wipe could silently delete all player shops and chat format assignments.
+
+  **Fix**: Changed both to use `getDataPath()` / `getDataFile()` with appropriate subdirectories.
+
+  | File | Change |
+  |---|---|
+  | `ShopManager.java` | `getDataFile()` returns `ResourceUtil.getDataPath("shops.json")` |
+  | `PlayerChatFormatManager.java` | `getDataFile()` returns `ResourceUtil.getDataFile("chat/player_chat_formats.json")` |

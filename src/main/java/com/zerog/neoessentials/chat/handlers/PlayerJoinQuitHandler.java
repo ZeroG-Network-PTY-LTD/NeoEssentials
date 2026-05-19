@@ -57,10 +57,8 @@ public class PlayerJoinQuitHandler {
             if (config.isNewPlayerKitEnabled()) {
                 String kitName = config.getNewPlayerKitName();
                 if (kitName != null && !kitName.trim().isEmpty()) {
-                    // Check if this is the player's first join (no advancements, no homes, or use a persistent flag)
-                    // We'll use the Minecraft built-in first played time if available, or fallback to a persistent file
-                    // For now, use a persistent file in data/neoessentials/first_joined.json
-                    java.io.File firstJoinFile = new java.io.File("neoessentials/first_joined.json");
+                    // Use ResourceUtil for a consistent data path on all server hosts
+                    java.io.File firstJoinFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("first_joined.json");
                     java.util.Set<java.util.UUID> joined = new java.util.HashSet<>();
                     if (firstJoinFile.exists()) {
                         try (java.io.FileReader r = new java.io.FileReader(firstJoinFile)) {
@@ -72,11 +70,24 @@ public class PlayerJoinQuitHandler {
                     }
                     boolean isFirstJoin = !joined.contains(player.getUUID());
                     if (isFirstJoin) {
-                        // Give the kit, bypassing permission/cost/cooldown
+                        // Give kit items directly, bypassing permission/cooldown checks for the starter kit
                         com.zerog.neoessentials.kits.KitManager kitManager = com.zerog.neoessentials.kits.KitManager.getInstance();
-                        kitManager.giveKit(player, kitName);
+                        com.zerog.neoessentials.kits.Kit starterKit = kitManager.getKit(kitName);
+                        if (starterKit != null) {
+                            net.minecraft.world.entity.player.Inventory inv = player.getInventory();
+                            for (net.minecraft.world.item.ItemStack item : starterKit.getItems()) {
+                                if (item.isEmpty()) continue;
+                                if (!inv.add(item.copy())) {
+                                    player.drop(item.copy(), false);
+                                }
+                            }
+                        }
                         // Add to joined set and save
                         joined.add(player.getUUID());
+                        try {
+                            java.io.File parent = firstJoinFile.getParentFile();
+                            if (parent != null && !parent.exists()) parent.mkdirs();
+                        } catch (Exception ignore) {}
                         try (java.io.FileWriter w = new java.io.FileWriter(firstJoinFile, false)) {
                             com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
                             for (java.util.UUID id : joined) arr.add(id.toString());

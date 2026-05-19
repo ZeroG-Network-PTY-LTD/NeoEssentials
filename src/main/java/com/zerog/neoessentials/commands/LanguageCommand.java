@@ -7,12 +7,11 @@ import com.zerog.neoessentials.i18n.CustomLanguageManager;
 import com.zerog.neoessentials.i18n.CustomLanguageManager.LanguageFileInfo;
 import com.zerog.neoessentials.i18n.CustomLanguageManager.ValidationReport;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.ResourceUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -155,7 +154,7 @@ public class LanguageCommand {
             String fileName = languageCode + "_template.json";
             CustomLanguageManager.getInstance().generateTemplate(
                 languageCode,
-                Paths.get("neoessentials", "languages", "templates", fileName)
+                ResourceUtil.getDataPath("languages/templates/" + fileName)
             );
 
             source.sendSuccess(() -> MessageUtil.success("Generated template for language: {0}", languageCode), true);
@@ -191,7 +190,7 @@ public class LanguageCommand {
 
             String fileName = "missing_keys_" + System.currentTimeMillis() + ".json";
             CustomLanguageManager.getInstance().exportMissingKeys(
-                Paths.get("neoessentials", "languages", "templates", fileName)
+                ResourceUtil.getDataPath("languages/templates/" + fileName)
             );
 
             source.sendSuccess(() -> MessageUtil.success("Exported {0} missing keys", count), true);

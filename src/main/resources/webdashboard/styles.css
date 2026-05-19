@@ -432,6 +432,7 @@ body {
 .status-badge.offline .dot {
     background: var(--danger);
     animation: none;
+    opacity: 1;
 }
 
 /* ===== BUTTONS ===== */
@@ -697,11 +698,7 @@ body {
     background: var(--bg-secondary);
     border-radius: var(--border-radius-sm);
     transition: var(--transition);
-}
-
-.player-item:hover {
-    background: var(--bg-tertiary);
-    transform: translateX(4px);
+    cursor: pointer;
 }
 
 .player-avatar {
@@ -933,6 +930,8 @@ body {
 
 .api-status.error .status-dot {
     background: var(--danger);
+    animation: none;
+    opacity: 1;
 }
 
 /* ===== SCROLLBAR ===== */
@@ -1343,12 +1342,8 @@ body {
 }
 
 /* Player Item Clickable */
-.player-item {
-    cursor: pointer;
-    transition: var(--transition);
-}
-
 .player-item:hover {
+    background: var(--bg-tertiary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -1369,11 +1364,19 @@ body {
    ======================================== */
 
 .admin-only {
-    display: none !important;
+    display: none;
 }
 
+/* When admin is authenticated, visible class is added by dashboard.js.
+   'revert' restores each element's native display type (block for divs,
+   table-cell for th/td, inline-block for buttons, etc.) */
 .admin-only.visible {
-    display: block !important;
+    display: revert;
+}
+
+/* Nav items must show as flex (sidebar navigation uses flex layout) */
+.nav-item.admin-only.visible {
+    display: flex;
 }
 
 .admin-controls-grid {

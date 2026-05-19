@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Allows admins to assign a custom chat format to individual players,
  * overriding the group-level and default format for that player only.
  *
- * <p>Persistence: {@code config/neoessentials/player_chat_formats.json}</p>
+ * <p>Persistence: {@code neoessentials/chat/player_chat_formats.json}</p>
  *
  * <p>Format strings support all normal NeoEssentials placeholders, color codes,
  * and rich-text tags (gradient, rainbow, named colors).</p>
@@ -52,7 +52,7 @@ public class PlayerChatFormatManager {
 
     private File getDataFile() {
         if (dataFile == null) {
-            dataFile = ResourceUtil.getConfigFile("player_chat_formats.json");
+            dataFile = ResourceUtil.getDataFile("chat/player_chat_formats.json");
         }
         return dataFile;
     }
