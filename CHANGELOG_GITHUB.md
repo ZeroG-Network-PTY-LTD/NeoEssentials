@@ -6,6 +6,18 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.153] — 2026-05-19
+
+### 🐛 Bug Fix — `ResourcePackManager`: `Thread.sleep(1000)` on Server Main Thread
+
+`onPlayerJoin()` used `server.execute(() -> { Thread.sleep(1000); sendResourcePack(player); })`, which blocks the **Minecraft server tick thread** for 1 second on every player login — causing rubber-banding, no block updates, and `Can't keep up!` warnings. Same root cause as the previously fixed `NeoEssentials.java` admin-notify sleep (build.150).
+
+**Fix:** Sleep moved to a daemon background thread (`NeoEssentials-ResourcePackDelay`). Once the delay completes, the actual packet send is marshalled back to the server tick thread via `server.execute()`.
+
+**Files changed:** `ResourcePackManager.java`
+
+---
+
 ## [1.0.2.6+build.152] — 2026-05-19
 
 ### 🐛 Bug Fix — `ShopManager` & `PlayerChatFormatManager`: Runtime Data Written to Config Directory

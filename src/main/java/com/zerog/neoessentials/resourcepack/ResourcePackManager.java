@@ -144,15 +144,18 @@ public class ResourcePackManager {
         if (event.getEntity() instanceof ServerPlayer player) {
             var server = player.getServer();
             if (server != null) {
-                // Send resource pack after a short delay
-                server.execute(() -> {
+                // Sleep on a background thread, then marshal the send back to the server tick thread.
+                Thread t = new Thread(() -> {
                     try {
-                        Thread.sleep(1000); // 1 second delay
-                        getInstance().sendResourcePack(player);
+                        Thread.sleep(1000); // 1 second delay (off main thread)
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        return;
                     }
-                });
+                    server.execute(() -> getInstance().sendResourcePack(player));
+                }, "NeoEssentials-ResourcePackDelay");
+                t.setDaemon(true);
+                t.start();
             }
         }
     }
@@ -236,4 +239,3 @@ public class ResourcePackManager {
         return "This server uses custom badge images. Please accept the resource pack for the best experience!";
     }
 }
-

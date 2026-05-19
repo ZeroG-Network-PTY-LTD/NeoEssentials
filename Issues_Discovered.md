@@ -972,10 +972,7 @@
 - **BanManager — `isIPBanned()` Never Checked Expiry of Temp IP Bans**
   *(Status: Fixed → v1.0.2.6+build.148)*
 
-  **Root cause**: `isIPBanned()` returned `ipBans.containsKey(ipAddress)`, which is `true` for any stored entry — including expired temporary IP bans. `IPBanEntry.isExpired()` existed but was never called during the lookup.
-
-  **Effect**: A player whose temporary IP ban had already passed could not join the server until the next time `cleanupExpiredTempBans()` ran (which itself only cleaned *player* bans — see below), or until the server restarted. Effectively, temp IP bans behaved as permanent bans.
-
+  **Root cause**: `isIPBanned()` returned `ipBans.containsKey(ipAddress)` — a pure key existence check with no expiry logic, unlike `isPlayerBanned()` which correctly calls `ban.isExpired()`.
   **Fix**: Replaced `containsKey` check with a full `isExpired()` check. If the ban is expired and auto-expire is enabled, the entry is removed from `ipBans` and `saveIPBans()` is called immediately.
 
   | File | Change |
@@ -1083,3 +1080,19 @@
   |---|---|
   | `ShopManager.java` | `getDataFile()` returns `ResourceUtil.getDataPath("shops.json")` |
   | `PlayerChatFormatManager.java` | `getDataFile()` returns `ResourceUtil.getDataFile("chat/player_chat_formats.json")` |
+
+---
+
+- **ResourcePackManager — `Thread.sleep(1000)` Called on Server Main Thread at Player Login**
+  *(Status: Fixed → v1.0.2.6+build.153)*
+
+  **Root cause**: `onPlayerJoin()` submitted `server.execute(() -> { Thread.sleep(1000); sendResourcePack(player); })`. `server.execute()` enqueues work on the **Minecraft server tick thread** — the single thread that drives all game logic. Sleeping it for 1 second causes a complete server freeze for every player on login: rubber-banding, no block updates, `Can't keep up!` warnings, and potential watchdog crashes.
+
+  **Effect**: Every time a player joined the server, the server tick thread was suspended for 1 second. With multiple concurrent logins, pauses stacked. Same root-cause as the previously fixed `NeoEssentials.java` admin-notify sleep.
+
+  **Fix**: Moved the 1-second sleep to a dedicated daemon background thread (`NeoEssentials-ResourcePackDelay`). Once the sleep completes, the `sendResourcePack()` call is marshalled back to the server tick thread via `server.execute()`.
+
+  | File | Change |
+  |---|---|
+  | `ResourcePackManager.java` | `onPlayerJoin()` no longer calls `Thread.sleep` on the server tick thread; sleep moved to a daemon background thread. |
+

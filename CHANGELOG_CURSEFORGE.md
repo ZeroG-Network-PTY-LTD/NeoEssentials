@@ -4,6 +4,16 @@
 
 ---
 
+## 1.0.2.6+build.153 — 2026-05-19
+
+### 🐛 Bug Fix — `ResourcePackManager` main-thread sleep
+
+- **ResourcePackManager `Thread.sleep` on server tick thread** — `server.execute()` + `Thread.sleep(1000)` blocked the server main thread for 1 second on every player login, causing rubber-banding and `Can't keep up!` warnings. Fixed: sleep moved to a background daemon thread.
+
+**Files changed:** `ResourcePackManager.java`
+
+---
+
 ## 1.0.2.6+build.152 — 2026-05-19
 
 ### 🐛 Bug Fix — Runtime Data in Wrong Directory
