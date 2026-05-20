@@ -168,12 +168,12 @@
                 <div class="config-panel active" id="dropboxConfigPanel">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label>Access Token</label>
+                            <label for="dbxToken">Access Token</label>
                             <input type="password" id="dbxToken" placeholder="sl.AAAA…">
                             <span class="hint">Get from <a href="https://www.dropbox.com/developers/apps" target="_blank" style="color:#89b4fa;">Dropbox App Console</a> → Generate access token</span>
                         </div>
                         <div class="form-field">
-                            <label>Upload Path</label>
+                            <label for="dbxPath">Upload Path</label>
                             <input type="text" id="dbxPath" placeholder="/NeoEssentials-Backups" value="/NeoEssentials-Backups">
                             <span class="hint">Folder path inside your Dropbox</span>
                         </div>
@@ -194,20 +194,20 @@
                 <div class="config-panel" id="googleConfigPanel">
                     <div class="form-grid">
                         <div class="form-field">
-                            <label>Client ID</label>
+                            <label for="gdClientId">Client ID</label>
                             <input type="text" id="gdClientId" placeholder="1234567890-abc…apps.googleusercontent.com">
                         </div>
                         <div class="form-field">
-                            <label>Client Secret</label>
+                            <label for="gdClientSecret">Client Secret</label>
                             <input type="password" id="gdClientSecret" placeholder="GOCSPX-…">
                         </div>
                         <div class="form-field">
-                            <label>Refresh Token</label>
+                            <label for="gdRefreshToken">Refresh Token</label>
                             <input type="password" id="gdRefreshToken" placeholder="1//0AAAAAA…">
                             <span class="hint">Obtained after completing OAuth2 consent screen</span>
                         </div>
                         <div class="form-field">
-                            <label>Folder ID <em style="font-weight:400;opacity:0.7;">(optional)</em></label>
+                            <label for="gdFolderId">Folder ID <em style="font-weight:400;opacity:0.7;">(optional)</em></label>
                             <input type="text" id="gdFolderId" placeholder="1BxiMVs0XRA5nFMd…">
                             <span class="hint">Leave blank to upload to My Drive root</span>
                         </div>

@@ -463,8 +463,7 @@ public class BanManager {
         if (online != null) return online.getGameProfile();
         // Try profile cache
         try {
-            var cached = server.getProfileCache().get(uuid);
-            if (cached.isPresent()) return cached.get();
+            return server.getProfileCache().get(uuid).orElse(null);
         } catch (Exception ignored) {}
         // Fallback: construct a minimal profile
         if (name != null && !name.isBlank()) {
@@ -514,8 +513,8 @@ public class BanManager {
                         // Import this vanilla ban into our list so it appears in /banlist
                         net.minecraft.server.players.UserBanListEntry entry = vanillaBans.get(profile);
                         if (entry != null) {
-                            String reason = entry.getReason() != null ? entry.getReason() : "Banned by operator";
-                            String source = entry.getSource() != null ? entry.getSource() : "Console";
+                            String reason = entry.getReason();
+                            String source = entry.getSource();
                             BanEntry imported = new BanEntry(profile.getName(), playerId, reason, source);
                             if (entry.getExpires() != null) {
                                 imported.expireTime = entry.getExpires().getTime();

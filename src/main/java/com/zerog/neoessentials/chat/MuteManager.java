@@ -41,7 +41,7 @@ public class MuteManager {
     // ── Persistence ──────────────────────────────────────────────────────────
 
     private static void load() {
-        if (MUTE_FILE == null || !MUTE_FILE.exists()) return;
+        if (!MUTE_FILE.exists()) return;
         try (FileReader fr = new FileReader(MUTE_FILE)) {
             JsonObject root = GSON.fromJson(fr, JsonObject.class);
             if (root == null) return;
@@ -61,7 +61,9 @@ public class MuteManager {
     private static void save() {
         try {
             File parent = MUTE_FILE.getParentFile();
-            if (parent != null && !parent.exists()) parent.mkdirs();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                LOGGER.warn("MuteManager: failed to create parent directory: {}", parent.getAbsolutePath());
+            }
             try (FileWriter fw = new FileWriter(MUTE_FILE)) {
                 JsonObject root = new JsonObject();
                 for (Map.Entry<String, Long> entry : mutedPlayers.entrySet()) {
@@ -89,8 +91,8 @@ public class MuteManager {
         return active;
     }
 
-    /** Permanently mute a player. */
-    public static void mute(ServerPlayer sender, String targetName) {
+    /** Permanently mute a player by name. */
+    public static void mute(String targetName) {
         mute(targetName, 0L);
     }
 
@@ -107,9 +109,6 @@ public class MuteManager {
         ChatDebugUtil.debug("Muted player %s (expire=%d). Active mutes: %d", targetName, expireTime, mutedPlayers.size());
     }
 
-    public static void unmute(ServerPlayer sender, String targetName) {
-        unmute(targetName);
-    }
 
     public static void unmute(String targetName) {
         mutedPlayers.remove(targetName.toLowerCase());
@@ -138,6 +137,7 @@ public class MuteManager {
      * Returns the expiry timestamp (ms) for a muted player, or -1 if not muted,
      * or 0 if permanently muted.
      */
+    @SuppressWarnings("unused")
     public static long getMuteExpiry(String playerName) {
         Long expireTime = mutedPlayers.get(playerName.toLowerCase());
         if (expireTime == null) return -1L;

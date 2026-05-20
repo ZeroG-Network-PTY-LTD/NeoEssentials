@@ -153,9 +153,11 @@ public class LocalizationManager {
                 return;
             }
             
-            Files.list(langDirectory)
-                .filter(path -> path.toString().endsWith("_dashboard.json"))
-                .forEach(this::loadDashboardTranslationFile);
+            try (var dirStream = Files.list(langDirectory)) {
+                dirStream
+                    .filter(path -> path.toString().endsWith("_dashboard.json"))
+                    .forEach(this::loadDashboardTranslationFile);
+            }
                 
         } catch (IOException e) {
             LOGGER.error("Failed to load dashboard translation files", e);
@@ -339,6 +341,7 @@ public class LocalizationManager {
     /**
      * Get translation with placeholders
      */
+    @SuppressWarnings("unused")
     public String translate(String key, String language, Object... args) {
         String translation = translate(key, language);
         
@@ -367,6 +370,7 @@ public class LocalizationManager {
     /**
      * Get combined translations (dashboard + in-game from MessageUtil)
      */
+    @SuppressWarnings("unused")
     public Map<String, String> getAllTranslations(String language) {
         Map<String, String> combined = new HashMap<>();
         
@@ -394,6 +398,13 @@ public class LocalizationManager {
      */
     public boolean isLanguageSupported(String language) {
         return availableLanguages.containsKey(language);
+    }
+
+    /**
+     * Check if language is NOT supported. Convenience inverse of {@link #isLanguageSupported(String)}.
+     */
+    public boolean isLanguageUnsupported(String language) {
+        return !availableLanguages.containsKey(language);
     }
     
     /**

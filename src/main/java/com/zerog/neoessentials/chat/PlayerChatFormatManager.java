@@ -87,7 +87,9 @@ public class PlayerChatFormatManager {
         try {
             File file = getDataFile();
             File parent = file.getParentFile();
-            if (parent != null && !parent.exists()) parent.mkdirs();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                LOGGER.warn("PlayerChatFormatManager: failed to create parent directory: {}", parent.getAbsolutePath());
+            }
             JsonObject data = new JsonObject();
             playerFormats.forEach((uuid, fmt) -> data.addProperty(uuid.toString(), fmt));
             try (FileWriter writer = new FileWriter(file)) {
@@ -130,6 +132,7 @@ public class PlayerChatFormatManager {
     }
 
     /** @return {@code true} if a per-player format override exists */
+    @SuppressWarnings("unused")
     public boolean hasFormat(UUID playerUUID) {
         return playerFormats.containsKey(playerUUID);
     }

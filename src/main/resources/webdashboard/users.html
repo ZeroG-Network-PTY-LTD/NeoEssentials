@@ -163,10 +163,10 @@
                 <div class="create-panel">
                     <h3>➕ Create Dashboard User</h3>
                     <div class="form-row">
-                        <div class="form-field"><label>Username</label><input type="text" id="newUsername" placeholder="admin2"></div>
-                        <div class="form-field"><label>Password</label><input type="password" id="newPassword" placeholder="Min 8 characters"></div>
-                        <div class="form-field"><label>Email <em style="opacity:0.6;">(optional)</em></label><input type="email" id="newEmail" placeholder="user@example.com"></div>
-                        <div class="form-field"><label>Role</label>
+                        <div class="form-field"><label for="newUsername">Username</label><input type="text" id="newUsername" placeholder="admin2"></div>
+                        <div class="form-field"><label for="newPassword">Password</label><input type="password" id="newPassword" placeholder="Min 8 characters"></div>
+                        <div class="form-field"><label for="newEmail">Email <em style="opacity:0.6;">(optional)</em></label><input type="email" id="newEmail" placeholder="user@example.com"></div>
+                        <div class="form-field"><label for="newRole">Role</label>
                             <select id="newRole">
                                 <option value="VIEWER">Viewer — read-only</option>
                                 <option value="MODERATOR">Moderator — moderation actions</option>
@@ -190,7 +190,7 @@
     <div class="modal">
         <h3> Change Role</h3>
         <p id="roleModalDesc">Change the role for this user.</p>
-        <select class="modal-select" id="roleSelect">
+        <select class="modal-select" id="roleSelect" aria-label="Select new role">
             <option value="VIEWER">Viewer</option>
             <option value="MODERATOR">Moderator</option>
             <option value="OPERATOR">Operator</option>
@@ -208,7 +208,7 @@
     <div class="modal">
         <h3> Reset Password</h3>
         <p>Leave blank to generate a temporary password that requires a change on next login.</p>
-        <input type="password" class="modal-input" id="pwInput" placeholder="New password (min 8 chars)">
+        <input type="password" class="modal-input" id="pwInput" aria-label="New password" placeholder="New password (min 8 chars)">
         <div class="modal-btns">
             <button class="btn-cancel" onclick="closeModal('pwModal')">Cancel</button>
             <button class="btn-primary" id="confirmPwBtn">Reset</button>

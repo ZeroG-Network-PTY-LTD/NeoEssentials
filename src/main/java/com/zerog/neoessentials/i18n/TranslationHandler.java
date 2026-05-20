@@ -144,7 +144,7 @@ public class TranslationHandler implements HttpHandler {
         Map<String, String> params = parseQueryParams(exchange.getRequestURI().getQuery());
         String language = params.getOrDefault("language", "en_us");
         
-        if (!LocalizationManager.getInstance().isLanguageSupported(language)) {
+        if (LocalizationManager.getInstance().isLanguageUnsupported(language)) {
             sendBadRequest(exchange, "Unsupported language: " + language);
             return;
         }
@@ -187,7 +187,7 @@ public class TranslationHandler implements HttpHandler {
                 return;
             }
             
-            if (!LocalizationManager.getInstance().isLanguageSupported(language)) {
+            if (LocalizationManager.getInstance().isLanguageUnsupported(language)) {
                 sendBadRequest(exchange, "Unsupported language: " + language);
                 return;
             }

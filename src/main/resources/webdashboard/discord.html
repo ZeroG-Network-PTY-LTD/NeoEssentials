@@ -255,7 +255,7 @@
                                 <span>Allow auto-registration on first Discord login</span>
                             </label>
                             <div style="display:flex;flex-direction:column;gap:0.3rem;">
-                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Default Dashboard Role</label>
+                                <label for="cfgDefaultRole" style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Default Dashboard Role</label>
                                 <select id="cfgDefaultRole" style="background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
                                     <option value="VIEWER">VIEWER</option>
                                     <option value="MODERATOR">MODERATOR</option>
@@ -272,12 +272,12 @@
                                 Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> from <em>OAuth2 → General</em>.
                             </p>
                             <div style="display:flex;flex-direction:column;gap:0.3rem;">
-                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Client ID</label>
+                                <label for="cfgClientId" style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">Client ID</label>
                                 <input type="text" id="cfgClientId" placeholder="1234567890123456789"
                                     style="background:var(--input-bg,#313244);border:1px solid var(--border,#45475a);border-radius:6px;color:var(--text-primary,#cdd6f4);padding:0.5rem 0.75rem;font-size:0.9rem;">
                             </div>
                             <div style="display:flex;flex-direction:column;gap:0.3rem;">
-                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
+                                <label for="cfgClientSecret" style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
                                     Client Secret
                                     <span id="cfgSecretSetLabel" style="display:none;color:#a6e3a1;font-size:0.75rem;margin-left:0.4rem;">✓ already set — leave blank to keep</span>
                                 </label>
@@ -288,7 +288,7 @@
                                 </div>
                             </div>
                             <div style="display:flex;flex-direction:column;gap:0.3rem;">
-                                <label style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
+                                <label for="cfgRedirectUri" style="font-size:0.8rem;font-weight:500;color:var(--text-secondary,#a6adc8);">
                                     Redirect URI
                                     <span style="color:#6c7086;font-size:0.74rem;margin-left:0.3rem;">(must match Discord app settings)</span>
                                 </label>

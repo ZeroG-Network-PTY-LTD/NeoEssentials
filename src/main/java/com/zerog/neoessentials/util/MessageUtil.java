@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.util;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -232,20 +231,6 @@ public class MessageUtil {
     }
 
     /**
-     * Escape non-numeric {@code {NAME}} placeholders so {@link MessageFormat} leaves them untouched.
-     *
-     * @deprecated No longer used — {@link #localize} now uses simple positional substitution
-     *             instead of {@link java.text.MessageFormat}, so named placeholders are naturally
-     *             left intact for later resolution by
-     *             {@link com.zerog.neoessentials.api.PlaceholderAPI}.
-     */
-    @Deprecated
-    private static String escapeNamedPlaceholders(String s) {
-        // Kept for API compatibility only — no longer called in core localize path.
-        return s.replaceAll("\\{([^0-9'{}][^}]*)}", "'{'$1'}'");
-    }
-
-    /**
      * Pattern matching named (non-positional) {@code {TOKEN}} placeholders — used to detect
      * unresolved tokens after {@link #resolveTemplate} runs in debug mode.
      */
@@ -462,6 +447,7 @@ public class MessageUtil {
     /**
      * Get debug information about loaded translations
      */
+    @SuppressWarnings("unused")
     public static String getDebugInfo() {
     loadTranslations();
     syncDebugModeFromConfig();
@@ -589,6 +575,7 @@ public class MessageUtil {
     /**
      * Create a clickable suggestion component
      */
+    @SuppressWarnings("unused")
     public static Component clickableSuggestion(String text, String command, String hoverText) {
         return ChatComponentUtil.createClickableSuggestion(text, command, hoverText);
     }
@@ -596,6 +583,7 @@ public class MessageUtil {
     /**
      * Create formatted balance display with interaction
      */
+    @SuppressWarnings("unused")
     public static Component balanceComponent(String playerName, double balance, String currency) {
         return ChatComponentUtil.createBalanceComponent(playerName, balance, currency);
     }
@@ -603,6 +591,7 @@ public class MessageUtil {
     /**
      * Create formatted player name with interaction
      */
+    @SuppressWarnings("unused")
     public static Component playerComponent(String playerName) {
         return ChatComponentUtil.createPlayerComponent(playerName);
     }
@@ -610,6 +599,7 @@ public class MessageUtil {
     /**
      * Create formatted permission with copy functionality
      */
+    @SuppressWarnings("unused")
     public static Component permissionComponent(String permission) {
         return ChatComponentUtil.createPermissionComponent(permission);
     }
@@ -640,25 +630,11 @@ public class MessageUtil {
     /**
      * Create a progress bar
      */
+    @SuppressWarnings("unused")
     public static Component progressBar(double current, double max, int width) {
         return ChatComponentUtil.createProgressBar(current, max, width);
     }
     
-    /**
-     * Get the version of a language file from its translations map
-     */
-    private static int getLanguageVersion(Map<String, String> translations) {
-        if (translations == null || !translations.containsKey(LANG_VERSION_KEY)) {
-            return 0; // Default version for files without version key
-        }
-        try {
-            return Integer.parseInt(translations.get(LANG_VERSION_KEY));
-        } catch (NumberFormatException e) {
-            LOGGER.warn("Invalid language version format, defaulting to 0");
-            return 0;
-        }
-    }
-
     /**
      * Create a clickable confirmation message for home actions
      */
@@ -727,7 +703,9 @@ public class MessageUtil {
                 }
             }
         }
-        dir.delete();
+        if (!dir.delete()) {
+            LOGGER.warn("MessageUtil: failed to delete: {}", dir.getAbsolutePath());
+        }
     }
 
     /**
@@ -746,11 +724,8 @@ public class MessageUtil {
             Gson gson = new Gson();
             Type type = new TypeToken<Map<String, String>>() {}.getType();
             return gson.fromJson(reader, type);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load custom language file '{}': {}", languageCode, e.getMessage(), e);
             return null;
         }
     }
@@ -758,6 +733,7 @@ public class MessageUtil {
     /**
      * Loads all available custom language files from the NeoEssentials data directory.
      */
+    @SuppressWarnings("unused")
     public static Map<String, Map<String, String>> loadAllCustomLanguages() {
         Map<String, Map<String, String>> languages = new HashMap<>();
         File langDir = ResourceUtil.getDataFile("languages/custom");

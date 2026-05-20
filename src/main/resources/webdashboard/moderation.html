@@ -135,7 +135,7 @@
                 <div class="card">
                     <div class="card-header"><h3>⚠️ Warnings</h3><button class="btn-secondary btn-sm" id="refreshWarnsBtn">🔄 Refresh</button></div>
                     <div class="search-row">
-                        <input type="text" id="warnSearch" placeholder="Search by player name…">
+                        <input type="text" id="warnSearch" aria-label="Search by player name" placeholder="Search by player name…">
                         <button class="btn-primary btn-sm" id="searchWarnBtn">Search</button>
                     </div>
                     <div id="warnsTableWrap"><div class="empty-state"><div class="icon">⚠️</div><div>Enter a player name to search, or refresh to see all.</div></div></div>
@@ -147,17 +147,17 @@
                 <div class="create-panel">
                     <h3>⛔ Issue New Ban</h3>
                     <div class="form-row">
-                        <div class="form-field"><label>Target (UUID or IP)</label><input type="text" id="banTarget" placeholder="UUID or IP address"></div>
-                        <div class="form-field"><label>Player Name</label><input type="text" id="banName" placeholder="Display name"></div>
-                        <div class="form-field"><label>Reason</label><input type="text" id="banReason" placeholder="Griefing, cheating…"></div>
-                        <div class="form-field"><label>Type</label>
+                        <div class="form-field"><label for="banTarget">Target (UUID or IP)</label><input type="text" id="banTarget" placeholder="UUID or IP address"></div>
+                        <div class="form-field"><label for="banName">Player Name</label><input type="text" id="banName" placeholder="Display name"></div>
+                        <div class="form-field"><label for="banReason">Reason</label><input type="text" id="banReason" placeholder="Griefing, cheating…"></div>
+                        <div class="form-field"><label for="banType">Type</label>
                             <select id="banType">
                                 <option value="UUID">UUID (player)</option>
                                 <option value="IP">IP address</option>
                                 <option value="BOTH">Both UUID + IP</option>
                             </select>
                         </div>
-                        <div class="form-field"><label>Duration (seconds, 0=perm)</label><input type="number" id="banDuration" placeholder="0" min="0" value="0"></div>
+                        <div class="form-field"><label for="banDuration">Duration (seconds, 0=perm)</label><input type="number" id="banDuration" placeholder="0" min="0" value="0"></div>
                         <div class="form-field" style="flex:0;"><label>&nbsp;</label><button class="btn-primary" id="issueBanBtn">Issue Ban</button></div>
                     </div>
                 </div>

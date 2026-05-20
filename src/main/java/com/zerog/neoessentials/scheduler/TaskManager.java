@@ -185,11 +185,11 @@ public class TaskManager {
         execution.executionTime = executionTime;
         
         List<TaskExecution> history = executionHistory.computeIfAbsent(taskId, k -> new ArrayList<>());
-        history.add(0, execution); // Add to beginning
+        history.addFirst(execution);
         
         // Limit history size
         if (history.size() > MAX_HISTORY_PER_TASK) {
-            history.remove(history.size() - 1);
+            history.removeLast();
         }
         
         // Update task statistics
@@ -252,9 +252,7 @@ public class TaskManager {
             ZonedDateTime now = ZonedDateTime.now(tz);
             long currentTime = now.getHour() * 3600000L + now.getMinute() * 60000L + now.getSecond() * 1000L;
             
-            if (currentTime < conditions.getStartTime() || currentTime > conditions.getEndTime()) {
-                return false;
-            }
+            return currentTime >= conditions.getStartTime() && currentTime <= conditions.getEndTime();
         }
         
         return true;

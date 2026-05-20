@@ -59,19 +59,19 @@
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Overview</span>
                 </a>
-                <a href="#players" class="nav-item" data-page="players">
+                <a href="#" class="nav-item" data-page="players">
                     <span class="nav-icon">👥</span>
                     <span class="nav-text">Players</span>
                 </a>
-                <a href="#performance" class="nav-item" data-page="performance">
+                <a href="#" class="nav-item" data-page="performance">
                     <span class="nav-icon">⚡</span>
                     <span class="nav-text">Performance</span>
                 </a>
-                <a href="#worlds" class="nav-item" data-page="worlds">
+                <a href="#" class="nav-item" data-page="worlds">
                     <span class="nav-icon">🌍</span>
                     <span class="nav-text">Worlds</span>
                 </a>
-                <a href="#events" class="nav-item" data-page="events">
+                <a href="#" class="nav-item" data-page="events">
                     <span class="nav-icon">📜</span>
                     <span class="nav-text">Events</span>
                 </a>
@@ -334,6 +334,7 @@
                             <div class="card-footer" style="padding:0.75rem 1rem;border-top:1px solid var(--border-color);">
                                 <div style="display:flex;gap:0.5rem;align-items:center;">
                                     <input type="text" id="broadcastInput" class="form-input"
+                                        aria-label="Broadcast message to all players"
                                         placeholder="Broadcast message to all players…"
                                         style="flex:1;"
                                         onkeydown="if(event.key==='Enter')handleBroadcastToPlayers()">

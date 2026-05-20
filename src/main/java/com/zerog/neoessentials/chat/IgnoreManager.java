@@ -38,7 +38,7 @@ public class IgnoreManager {
     // ── Persistence ──────────────────────────────────────────────────────────
 
     private static void load() {
-        if (IGNORE_FILE == null || !IGNORE_FILE.exists()) return;
+        if (!IGNORE_FILE.exists()) return;
         try (FileReader fr = new FileReader(IGNORE_FILE)) {
             JsonObject root = GSON.fromJson(fr, JsonObject.class);
             if (root == null) return;
@@ -60,7 +60,9 @@ public class IgnoreManager {
     private static void save() {
         try {
             File parent = IGNORE_FILE.getParentFile();
-            if (parent != null && !parent.exists()) parent.mkdirs();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                LOGGER.warn("IgnoreManager: failed to create parent directory: {}", parent.getAbsolutePath());
+            }
             try (FileWriter fw = new FileWriter(IGNORE_FILE)) {
                 JsonObject root = new JsonObject();
                 for (Map.Entry<String, Set<String>> entry : ignoreMap.entrySet()) {
@@ -116,6 +118,7 @@ public class IgnoreManager {
     /**
      * Get the ignore list for a player
      */
+    @SuppressWarnings("unused")
     public static Set<String> getIgnoreList(ServerPlayer player) {
         String playerName = player.getName().getString().toLowerCase();
         Set<String> ignored = ignoreMap.get(playerName);
@@ -127,7 +130,8 @@ public class IgnoreManager {
      * NOTE: Ignore lists are persisted and intentionally NOT removed here —
      * a player should still have their ignore list when they reconnect.
      */
-    public static void cleanupPlayer(ServerPlayer player) {
+    @SuppressWarnings("unused")
+    public static void cleanupPlayer(ServerPlayer ignoredPlayer) {
         // Nothing to clean up — ignore lists survive sessions via persistence.
         // Deliberately left empty to avoid accidentally destroying player data.
     }

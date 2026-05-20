@@ -190,7 +190,7 @@
                     <button class="btn-secondary btn-sm" id="refreshHologramsBtn">🔄 Refresh</button>
                 </div>
                 <div class="search-row">
-                    <input type="text" id="holoSearch" placeholder="Search by ID or world…">
+                    <input type="text" id="holoSearch" aria-label="Search holograms" placeholder="Search by ID or world…">
                 </div>
                 <div id="hologramsTableWrap">
                     <div class="empty-state"><div class="icon"><span class="spinner"></span></div><div>Loading holograms…</div></div>
@@ -247,17 +247,17 @@
         </div>
 
         <div class="form-group">
-            <label>Hologram ID *</label>
+            <label for="createId">Hologram ID *</label>
             <input type="text" id="createId" placeholder="e.g. spawn-welcome" autocomplete="off">
         </div>
         <div class="form-section-title">Position</div>
         <div class="form-row-3">
-            <div class="form-group"><label>X</label><input type="number" id="createX" value="0" step="0.1"></div>
-            <div class="form-group"><label>Y</label><input type="number" id="createY" value="64" step="0.1"></div>
-            <div class="form-group"><label>Z</label><input type="number" id="createZ" value="0" step="0.1"></div>
+            <div class="form-group"><label for="createX">X</label><input type="number" id="createX" value="0" step="0.1"></div>
+            <div class="form-group"><label for="createY">Y</label><input type="number" id="createY" value="64" step="0.1"></div>
+            <div class="form-group"><label for="createZ">Z</label><input type="number" id="createZ" value="0" step="0.1"></div>
         </div>
         <div class="form-group">
-            <label>World / Dimension</label>
+            <label for="createWorld">World / Dimension</label>
             <input type="text" id="createWorld" value="minecraft:overworld" placeholder="minecraft:overworld">
         </div>
 
@@ -268,17 +268,17 @@
         <div class="form-section-title">Settings</div>
         <div class="form-row">
             <div class="form-group">
-                <label>Refresh Interval (s)</label>
+                <label for="createRefresh">Refresh Interval (s)</label>
                 <input type="number" id="createRefresh" value="5" min="0" max="3600">
             </div>
             <div class="form-group">
-                <label>Scale</label>
+                <label for="createScale">Scale</label>
                 <input type="number" id="createScale" value="1.0" min="0.1" max="10" step="0.1">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Billboard Mode</label>
+                <label for="createBillboard">Billboard Mode</label>
                 <select id="createBillboard">
                     <option value="3">Center (always face player)</option>
                     <option value="1">Vertical</option>
@@ -287,7 +287,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Line Spacing</label>
+                <label for="createLineSpacing">Line Spacing</label>
                 <input type="number" id="createLineSpacing" value="0.3" min="0.05" max="3" step="0.05">
             </div>
         </div>
@@ -316,29 +316,29 @@
 
         <div class="form-section-title">Position</div>
         <div class="form-row-3">
-            <div class="form-group"><label>X</label><input type="number" id="editX" step="0.1"></div>
-            <div class="form-group"><label>Y</label><input type="number" id="editY" step="0.1"></div>
-            <div class="form-group"><label>Z</label><input type="number" id="editZ" step="0.1"></div>
+            <div class="form-group"><label for="editX">X</label><input type="number" id="editX" step="0.1"></div>
+            <div class="form-group"><label for="editY">Y</label><input type="number" id="editY" step="0.1"></div>
+            <div class="form-group"><label for="editZ">Z</label><input type="number" id="editZ" step="0.1"></div>
         </div>
 
         <div class="form-section-title">General Settings</div>
         <div class="form-row">
             <div class="form-group">
-                <label>Refresh Interval (s, 0=off)</label>
+                <label for="editRefresh">Refresh Interval (s, 0=off)</label>
                 <input type="number" id="editRefresh" min="0" max="3600">
             </div>
             <div class="form-group">
-                <label>Scale (0.1–10.0)</label>
+                <label for="editScale">Scale (0.1–10.0)</label>
                 <input type="number" id="editScale" min="0.1" max="10" step="0.1">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Line Spacing (blocks)</label>
+                <label for="editLineSpacing">Line Spacing (blocks)</label>
                 <input type="number" id="editLineSpacing" min="0.05" max="3" step="0.05">
             </div>
             <div class="form-group">
-                <label>Billboard Mode</label>
+                <label for="editBillboard">Billboard Mode</label>
                 <select id="editBillboard">
                     <option value="3">Center (always face player)</option>
                     <option value="1">Vertical</option>
@@ -351,11 +351,11 @@
         <div class="form-section-title">Text Appearance</div>
         <div class="form-row">
             <div class="form-group">
-                <label>Opacity (0–255)</label>
+                <label for="editOpacity">Opacity (0–255)</label>
                 <input type="number" id="editOpacity" min="0" max="255">
             </div>
             <div class="form-group">
-                <label>Background Color</label>
+                <label for="editBackground">Background Color</label>
                 <input type="text" id="editBackground" placeholder="transparent or #AARRGGBB">
             </div>
         </div>
@@ -375,11 +375,11 @@
         </div>
         <div class="form-row-3" id="editSpinOptions">
             <div class="form-group">
-                <label>Speed (°/tick)</label>
+                <label for="editSpinSpeed">Speed (°/tick)</label>
                 <input type="number" id="editSpinSpeed" min="0.1" max="30" step="0.1">
             </div>
             <div class="form-group">
-                <label>Axis</label>
+                <label for="editSpinAxis">Axis</label>
                 <select id="editSpinAxis">
                     <option value="Y">Y (vertical)</option>
                     <option value="X">X</option>
@@ -397,11 +397,11 @@
         </div>
         <div class="form-row" id="editHoverOptions">
             <div class="form-group">
-                <label>Amplitude (blocks)</label>
+                <label for="editHoverAmplitude">Amplitude (blocks)</label>
                 <input type="number" id="editHoverAmplitude" min="0.01" max="2" step="0.01">
             </div>
             <div class="form-group">
-                <label>Speed (°/tick)</label>
+                <label for="editHoverSpeed">Speed (°/tick)</label>
                 <input type="number" id="editHoverSpeed" min="0.1" max="10" step="0.1">
             </div>
         </div>

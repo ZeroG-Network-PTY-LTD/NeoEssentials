@@ -86,7 +86,9 @@ public class PlayerJoinQuitHandler {
                         joined.add(player.getUUID());
                         try {
                             java.io.File parent = firstJoinFile.getParentFile();
-                            if (parent != null && !parent.exists()) parent.mkdirs();
+                            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                                LOGGER.warn("PlayerJoinQuitHandler: failed to create parent directory: {}", parent.getAbsolutePath());
+                            }
                         } catch (Exception ignore) {}
                         try (java.io.FileWriter w = new java.io.FileWriter(firstJoinFile, false)) {
                             com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
@@ -100,15 +102,13 @@ public class PlayerJoinQuitHandler {
                     try {
                         // Check spawnOnJoin config (teleportation.spawnSettings.spawnOnJoin)
                         boolean spawnOnJoin = false;
-                        if (config != null) {
-                            com.google.gson.JsonObject mainConfig = config.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
-                            if (mainConfig.has("teleportation")) {
-                                com.google.gson.JsonObject tp = mainConfig.getAsJsonObject("teleportation");
-                                if (tp.has("spawnSettings")) {
-                                    com.google.gson.JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
-                                    if (spawnSettings.has("spawnOnJoin")) {
-                                        spawnOnJoin = spawnSettings.get("spawnOnJoin").getAsBoolean();
-                                    }
+                        com.google.gson.JsonObject mainConfig = config.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                        if (mainConfig.has("teleportation")) {
+                            com.google.gson.JsonObject tp = mainConfig.getAsJsonObject("teleportation");
+                            if (tp.has("spawnSettings")) {
+                                com.google.gson.JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
+                                if (spawnSettings.has("spawnOnJoin")) {
+                                    spawnOnJoin = spawnSettings.get("spawnOnJoin").getAsBoolean();
                                 }
                             }
                         }
@@ -149,7 +149,10 @@ public class PlayerJoinQuitHandler {
                 Component formattedMessage = Component.literal(coloredMessage);
                 
                 // Broadcast the custom join message to all players
-                player.getServer().getPlayerList().broadcastSystemMessage(formattedMessage, false);
+                var server = player.getServer();
+                if (server != null) {
+                    server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
+                }
                 
                 LOGGER.debug("Displayed custom join message for player {}: {}", 
                     player.getName().getString(), formattedMessage.getString());
@@ -207,7 +210,10 @@ public class PlayerJoinQuitHandler {
                 Component formattedMessage = Component.literal(coloredMessage);
                 
                 // Broadcast the custom quit message to all players
-                player.getServer().getPlayerList().broadcastSystemMessage(formattedMessage, false);
+                var server = player.getServer();
+                if (server != null) {
+                    server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
+                }
                 
                 LOGGER.debug("Displayed custom quit message for player {}: {}", 
                     player.getName().getString(), formattedMessage.getString());

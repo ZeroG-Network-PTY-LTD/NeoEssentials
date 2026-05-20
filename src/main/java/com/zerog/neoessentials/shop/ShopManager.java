@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Singleton manager that holds all active {@link ShopData} entries in memory
@@ -106,10 +105,11 @@ public class ShopManager {
     }
 
     /** Remove all shops owned by the given UUID. */
+    @SuppressWarnings("unused")
     public int removeShopsByOwner(UUID ownerUUID) {
         List<ShopData> toRemove = shopsBySign.values().stream()
             .filter(s -> ownerUUID.equals(s.ownerUUID))
-            .collect(Collectors.toList());
+            .toList();
         toRemove.forEach(s -> removeShop(s.signDimension, s.getSignPos()));
         return toRemove.size();
     }
@@ -136,7 +136,7 @@ public class ShopManager {
     public List<ShopData> getShopsByOwner(UUID ownerUUID) {
         return shopsBySign.values().stream()
             .filter(s -> ownerUUID.equals(s.ownerUUID))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     /** Snapshot of all shops (defensive copy). */
