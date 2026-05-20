@@ -4,6 +4,23 @@
 
 ---
 
+## 1.0.2.6+build.154 — 2026-05-20
+
+### 🧹 Code Quality — Warning & Bug Fix Pass
+
+- **IgnoreManager / MuteManager** — Removed always-false IGNORE_FILE/MUTE_FILE null checks; log `mkdirs()` failures; removed unused `sender`-parameter overloads from MuteManager (`mute(ServerPlayer, String)` / `unmute(ServerPlayer, String)`).
+- **MessageUtil** — Replaced `e.printStackTrace()` with `LOGGER.error()`; merged duplicate catch branches; fixed `File.delete()` result ignored; removed dead private methods (`getLanguageVersion`, `escapeNamedPlaceholders`); added `@SuppressWarnings("unused")` to intentional API-surface public methods.
+- **PlayerChatFormatManager / ShopManager** — Log `mkdirs()` failures; modernised `collect(Collectors.toList())` → `.toList()`.
+- **PlayerJoinQuitHandler** — Removed always-true `if (config != null)` guard; guarded `player.getServer().getPlayerList()` with null checks.
+- **LocalizationManager** — Wrapped `Files.list()` in try-with-resources (resource leak fix); added `isLanguageUnsupported()` inverse method; updated `TranslationHandler` callers.
+- **TaskManager** — `addFirst()` / `removeLast()` modernisation; simplified time-range if-block to a single boolean expression.
+- **BanManager** — Used `Optional.orElse(null)` instead of `.get()` (NPE risk); removed always-true null checks on `entry.getReason()` / `entry.getSource()`.
+- **Web dashboard (HTML accessibility)** — Added `for` / `aria-label` to all form inputs missing label associations across `index.html`, `shop.html`, `permissions.html`, `kits.html`, `moderation.html`, `users.html`, `cloud.html`, `discord.html`, `holograms.html`; fixed unresolvable `#players` / `#performance` / `#worlds` / `#events` nav anchors.
+
+**Files changed:** 12 Java files, 9 HTML files
+
+---
+
 ## 1.0.2.6+build.153 — 2026-05-19
 
 ### 🐛 Bug Fix — `ResourcePackManager` main-thread sleep

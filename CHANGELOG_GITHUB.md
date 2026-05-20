@@ -6,6 +6,42 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.154] — 2026-05-20
+
+### 🧹 Code Quality — Comprehensive Warning & Bug Fix Pass
+
+Full IDE-warning audit across Java systems and web dashboard HTML files.
+
+**Java fixes:**
+
+- **`IgnoreManager`** — Removed always-false `IGNORE_FILE == null` null-check (static final field is never null); log `mkdirs()` failures instead of silently ignoring them; added `@SuppressWarnings("unused")` to intentional API method `getIgnoreList()` and renamed unused `player` param in `cleanupPlayer()` to `ignoredPlayer`.
+- **`MuteManager`** — Same null-check removal and mkdirs logging as above; removed the dead `sender`-overload of `mute(ServerPlayer, String)` and `unmute(ServerPlayer, String)` (parameter was accepted but never read); added `@SuppressWarnings("unused")` to `getMuteExpiry()`.
+- **`MuteCommand` / `UnmuteCommand`** — Updated callers to use the clean `mute(targetName)` / `unmute(targetName)` single-arg form.
+- **`MessageUtil`** — Replaced `e.printStackTrace()` with `LOGGER.error(...)` in `loadCustomLanguageFile()`; merged the identical `FileNotFoundException` and `Exception` catch branches into one; fixed `File.delete()` result ignored in `deleteDirectoryRecursively()` (now logs a warning on failure); removed unused `FileNotFoundException` import; removed dead private `getLanguageVersion()` method; removed deprecated dead `escapeNamedPlaceholders()` method; annotated intentional-API public methods (`getDebugInfo`, `clickableSuggestion`, `balanceComponent`, `playerComponent`, `permissionComponent`, `progressBar`, `loadAllCustomLanguages`) with `@SuppressWarnings("unused")`.
+- **`PlayerChatFormatManager`** — Log `mkdirs()` failure in `save()`; annotate `hasFormat()` with `@SuppressWarnings("unused")`.
+- **`ShopManager`** — `collect(Collectors.toList())` → `.toList()` (Java 21); removed now-unused `Collectors` import; annotated `removeShopsByOwner()` with `@SuppressWarnings("unused")`.
+- **`PlayerJoinQuitHandler`** — Log `mkdirs()` failure; removed always-true `if (config != null)` dead-code guard (config already used successfully at line 57); guarded both `player.getServer().getPlayerList()` calls with a null-check to prevent theoretical NPE at join/quit time.
+- **`LocalizationManager`** — Wrapped `Files.list(langDirectory)` in a `try`-with-resources to prevent a stream resource leak in `loadDashboardTranslations()`; added `@SuppressWarnings("unused")` to `translate(key, language, args)` and `getAllTranslations()`; added `isLanguageUnsupported()` convenience inverse so all `!isLanguageSupported()` call sites can use the positive form.
+- **`TranslationHandler`** — Updated two `!isLanguageSupported()` calls to use the new `isLanguageUnsupported()`.
+- **`TaskManager`** — `history.add(0, execution)` → `history.addFirst()`; `history.remove(history.size()-1)` → `history.removeLast()`; simplified `if (currentTime < start || currentTime > end) return false; return true;` block to a single `return currentTime >= start && currentTime <= end`.
+- **`BanManager`** — Replaced `Optional.get()` (flagged as potential NPE) with `Optional.orElse(null)` for the profile-cache lookup; removed always-true defensive null checks on `entry.getReason()` / `entry.getSource()`.
+
+**Web dashboard accessibility fixes (HTML `for`/`aria-label`):**
+
+- **`index.html`** — Changed `href="#players"` / `href="#performance"` / `href="#worlds"` / `href="#events"` to `href="#"` (SPA navigation handled by `data-page`; avoids unresolvable anchor warnings); added `aria-label` to `#broadcastInput`.
+- **`shop.html`** — Added `aria-label` to `#filterInput` and `#typeFilter`.
+- **`permissions.html`** — Added `aria-label` to `#userSearchInput`.
+- **`kits.html`** — Added `aria-label` to `#kitSearch`.
+- **`moderation.html`** — Added `aria-label` to `#warnSearch`; added `for` attributes to all ban-form labels (`banTarget`, `banName`, `banReason`, `banType`, `banDuration`).
+- **`users.html`** — Added `for` to create-user form labels (`newUsername`, `newPassword`, `newEmail`, `newRole`); added `aria-label` to modal `#roleSelect` and `#pwInput`.
+- **`cloud.html`** — Added `for` to all Dropbox and Google Drive config labels (`dbxToken`, `dbxPath`, `gdClientId`, `gdClientSecret`, `gdRefreshToken`, `gdFolderId`).
+- **`discord.html`** — Added `for` to OAuth2 config labels (`cfgDefaultRole`, `cfgClientId`, `cfgClientSecret`, `cfgRedirectUri`).
+- **`holograms.html`** — Added `aria-label` to `#holoSearch`; added `for` to all Create-modal and Edit-modal labels (position X/Y/Z, refresh, scale, billboard, line spacing, opacity, background, spin speed/axis, hover amplitude/speed).
+
+**Files changed:** `IgnoreManager.java`, `MuteManager.java`, `MuteCommand.java`, `UnmuteCommand.java`, `MessageUtil.java`, `PlayerChatFormatManager.java`, `ShopManager.java`, `PlayerJoinQuitHandler.java`, `LocalizationManager.java`, `TranslationHandler.java`, `TaskManager.java`, `BanManager.java`, `index.html`, `shop.html`, `permissions.html`, `kits.html`, `moderation.html`, `users.html`, `cloud.html`, `discord.html`, `holograms.html`
+
+---
+
 ## [1.0.2.6+build.153] — 2026-05-19
 
 ### 🐛 Bug Fix — `ResourcePackManager`: `Thread.sleep(1000)` on Server Main Thread
