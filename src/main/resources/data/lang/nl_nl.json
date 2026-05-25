@@ -8,6 +8,8 @@
   "commands.neoessentials.balance": "Saldo: {0}{1}",
   "commands.neoessentials.balance.player_not_found": "Speler niet gevonden.",
   "commands.neoessentials.eco.disabled": "Het economiesysteem is momenteel uitgeschakeld.",
+  "commands.neoessentials.eco.give_failed": "§cKon §f{0}§c niet geven aan §f{1}§c (maximumsaldo bereikt?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c heeft niet genoeg geld om §f{0}§c in te trekken.",
   "commands.neoessentials.eco.give": "{0} gegeven aan {1}.",
   "commands.neoessentials.eco.set": "Saldo van {0} ingesteld op {1}.",
   "commands.neoessentials.eco.take": "{0} afgetrokken van {1}.",

@@ -1,13 +1,14 @@
 # NeoEssentials — Localization System
 
-> **Added / overhauled in build.62**
+> **Added / overhauled in build.62 · Language config setting added in build.187**
 
 ---
 
 ## Overview
 
-NeoEssentials ships a fully featured, server-side localization system. Every in-game message is driven by translation keys stored in `en_us.json`. Server admins can:
+NeoEssentials ships a fully featured, server-side localization system. Every in-game message is driven by translation keys stored in language JSON files. Server admins can:
 
+- **Set the active language** with one line in `config.json` — no file renaming needed.
 - **Override individual messages** without editing any bundled file.
 - **Add or swap entire languages** by dropping a `.json` file in the custom language directory.
 - **Validate coverage** of any language file against the English base.
@@ -17,12 +18,43 @@ All tooling is exposed through the `/language` in-game command (OP level 4).
 
 ---
 
+## Choosing the Active Language
+
+Set the server language in `config.json` under the `localization` section:
+
+```json
+"localization": {
+  "language": "fr_fr"
+}
+```
+
+Reload in-game: `/neoessentials reload`
+
+**Available built-in language codes:**
+
+| Code | Language |
+|------|----------|
+| `en_us` | English (US) — default |
+| `fr_fr` | French |
+| `de_de` | German |
+| `es_es` | Spanish |
+| `pt_br` | Portuguese (Brazil) |
+| `zh_cn` | Chinese (Simplified) |
+| `nl_nl` | Dutch |
+| `pl_pl` | Polish |
+| `ru_ru` | Russian |
+
+> **Fallback:** Any key not present in the configured language file automatically falls back to `en_us`. You will never see a raw translation key in-game.
+
+---
+
 ## File Locations
 
 | File | Purpose |
 |------|---------|
-| `neoessentials/languages/custom/en_us.json` | Base English translation file — auto-deployed from JAR on first start, auto-merged on updates |
-| `neoessentials/languages/custom/<code>.json` | Custom or community language files (e.g. `fr_fr.json`) |
+| `neoessentials/languages/custom/<language>.json` | Active language file — auto-deployed from JAR when first selected, auto-merged on updates (e.g. `fr_fr.json` when `"language": "fr_fr"`) |
+| `neoessentials/languages/custom/en_us.json` | Fallback English file (always present) |
+| `neoessentials/languages/custom/<code>.json` | Any additional custom / community language files |
 | `neoessentials/languages/overrides.json` | Admin message overrides — take top priority over everything else |
 | `neoessentials/languages/templates/<code>_template.json` | Auto-generated templates for translators |
 
@@ -32,18 +64,20 @@ All tooling is exposed through the `/language` in-game command (OP level 4).
 
 ### Startup / Boot
 
-1. `CustomLanguageManager.initialize()` runs on server start.
-2. `en_us.json` is deployed from the JAR if missing or empty.
-3. If the deployed file's `_langVersion` is **older** than the current JAR version, **new keys are merged in** without overwriting existing values.
-4. All other bundled language files (`fr_fr`, `de_de`, `es_es`, `pt_br`, `zh_cn`, `nl_nl`, `pl_pl`, `ru_ru`) are deployed and merged the same way.
-5. `overrides.json` is loaded. Overrides take top priority over all files.
+1. `ConfigManager.getServerLanguage()` reads `localization.language` from `config.json` (default: `en_us`).
+2. `MessageUtil.loadTranslations()` runs and resolves the configured language code.
+3. The language file is looked for at `neoessentials/languages/custom/<code>.json`.
+4. If not found (first run), it is deployed from the JAR's bundled `<code>.json`.
+5. If the `fr_fr` (or other) JAR file does not cover 100% of keys, missing keys are filled from `en_us` as fallback.
+6. If the deployed file's `_langVersion` is **older** than the current JAR version, **new keys are merged in** without overwriting existing values.
+7. `overrides.json` is loaded. Overrides take top priority over all files.
 
 ### Key Resolution Order (highest → lowest priority)
 
 ```
 1. Admin overrides  (overrides.json)
-2. Custom language file  (e.g. fr_fr.json if the player is using French)
-3. Base en_us.json
+2. Configured language file  (e.g. fr_fr.json when "language": "fr_fr")
+3. en_us fallback  (for keys not covered by the configured language)
 4. Human-readable fallback  (generated from the key name)
 ```
 
@@ -62,18 +96,18 @@ This ensures players always see readable English even if a key is missing.
 
 ## Version Tracking
 
-Each `en_us.json` (and bundled language files) contains a `_langVersion` metadata key:
+Each language file contains a `_langVersion` metadata key:
 
 ```json
 {
-  "_langVersion": "13",
+  "_langVersion": "16",
   ...
 }
 ```
 
 `MessageUtil.java` maintains a constant `CURRENT_LANG_VERSION`. On startup, if the deployed file's version is lower, new keys are merged automatically. The file version is then bumped to the current value and saved.
 
-**Current version: 13** (as of build.62)
+**Current version: 16** (as of build.187)
 
 When you add new translation keys to `en_us.json`, increment `_langVersion` by 1 in both:
 - `src/main/resources/data/lang/en_us.json` (the `_langVersion` value)
@@ -168,15 +202,22 @@ Override any message key permanently. Overrides are saved to `overrides.json` an
 
 4. Save the file as `neoessentials/languages/custom/zh_tw.json`.
 
-5. Run `/language reload`.
+5. Set it active in `config.json`:
+   ```json
+   "localization": {
+     "language": "zh_tw"
+   }
+   ```
 
-6. Verify coverage with `/language validate zh_tw`.
+6. Run `/neoessentials reload`.
+
+7. Verify coverage with `/language validate zh_tw`.
 
 ---
 
 ## Bundled Language Files
 
-The following languages are bundled in the JAR and auto-deployed:
+The following languages are bundled in the JAR and can be activated via `config.json`:
 
 | Code | Language |
 |------|----------|
@@ -239,14 +280,14 @@ Component info    = MessageUtil.info("commands.neoessentials.home.list_header", 
 
 | Problem | Fix |
 |---------|-----|
+| Language not changing after config edit | Run `/neoessentials reload` — language is re-read on every reload. |
 | Message shows raw key (e.g. `commands.neoessentials.xyz`) | The key is missing from `en_us.json`. Add it and bump `_langVersion`. |
 | Message shows human-readable fallback instead of proper text | Same as above — key is missing. The humanizer is a safety net, not the final output. |
 | Bundled language file not updating | Run `/language regenerate <code>`. |
 | Override not showing in-game | Run `/language override reload` or `/language reload` after editing `overrides.json` manually. |
 | Language file corrupted | Delete it and run `/language regenerate <code>` to redeploy from JAR. |
+| Language falls back to English for some messages | That key isn't translated in the language file yet. Run `/language validate <code>` to see missing keys. |
 
 ---
 
-*Last updated: build.64 — 2026-04-24*
-
-
+*Last updated: build.190 — 2026-05-25*

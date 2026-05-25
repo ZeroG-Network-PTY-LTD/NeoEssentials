@@ -68,31 +68,40 @@ public class EconomyAPI {
      * This operation is ATOMIC to prevent double-spending exploits.
      */
     public static boolean payPlayer(UUID sender, UUID receiver, BigDecimal amount) {
+        return payPlayer(sender, receiver, amount, ConfigManager.getTaxPercentage());
+    }
+
+    /**
+     * Pay another player with a custom tax rate (0.0–100.0).
+     * Use this overload to apply per-player tax-exempt/modifier logic before calling.
+     * The fee is removed from the system (burned).
+     * This operation is ATOMIC to prevent double-spending exploits.
+     */
+    public static boolean payPlayer(UUID sender, UUID receiver, BigDecimal amount, double taxRate) {
         if (sender.equals(receiver)) return false; // Prevent self-payment
         if (amount.compareTo(BigDecimal.ZERO) <= 0) return false; // No negative or zero payments
-        
+
         EconomyManager manager = EconomyManager.getInstance();
-        
-        // Calculate tax upfront
-        double taxPercent = ConfigManager.getTaxPercentage();
-        BigDecimal fee = amount.multiply(BigDecimal.valueOf(taxPercent / 100.0));
+
+        // Calculate tax upfront using the provided (per-player) tax rate
+        BigDecimal fee = amount.multiply(BigDecimal.valueOf(taxRate / 100.0));
         BigDecimal netAmount = amount.subtract(fee);
         if (netAmount.compareTo(BigDecimal.ZERO) <= 0) return false; // Fee too high for amount
-        
-        // ATOMIC operation: subtract from sender (will fail if insufficient funds)
+
+        // ATOMIC: subtract from sender (fails if insufficient funds)
         boolean senderSuccess = manager.subtractBalance(sender, amount);
         if (!senderSuccess) {
             return false; // Insufficient funds or negative balance not allowed
         }
-        
-        // Add to receiver (should always succeed after sender succeeds)
+
+        // Add to receiver
         boolean receiverSuccess = manager.addBalance(receiver, netAmount);
         if (!receiverSuccess) {
-            // Extremely unlikely, but if it fails, refund the sender
+            // Extremely unlikely — refund the sender
             manager.addBalance(sender, amount);
             return false;
         }
-        
+
         return true;
     }
 }

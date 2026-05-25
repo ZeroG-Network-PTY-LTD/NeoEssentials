@@ -7,33 +7,33 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         /* ── Shop page extras ─────────────────────────────────────── */
         .shop-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
-        .shop-stat-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1rem 1.25rem; }
-        .shop-stat-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); font-weight: 600; margin-bottom: .35rem; }
+        .shop-stat-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+        .shop-stat-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; margin-bottom: .35rem; }
         .shop-stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 
-        .shop-table-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; }
-        .shop-table-toolbar { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+        .shop-table-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .shop-table-toolbar { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
         .shop-table-toolbar input { flex: 1; min-width: 180px; }
         table  { width: 100%; border-collapse: collapse; }
-        thead  { background: var(--bg-tertiary); }
-        th     { padding: .6rem 1rem; text-align: left; font-size: .72rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap; }
-        td     { padding: .65rem 1rem; font-size: .875rem; border-bottom: 1px solid var(--border-color); }
+        thead  { background: var(--bg-elevated); }
+        th     { padding: .6rem 1rem; text-align: left; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); white-space: nowrap; border-bottom: 1px solid var(--border-bright); }
+        td     { padding: .65rem 1rem; font-size: .875rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background: rgba(99,102,241,.04); }
+        tr:hover td { background: var(--bg-hover); color: var(--text-primary); }
 
-        .badge-admin  { background: rgba(139,92,246,.15); color: #a78bfa; font-size: .7rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 600; }
-        .badge-player { background: rgba(16,185,129,.15); color: #34d399; font-size: .7rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 600; }
+        .badge-admin  { background: rgba(124,58,237,.18); color: var(--accent-light); font-size: .7rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 600; border: 1px solid var(--accent-border); }
+        .badge-player { background: rgba(16,185,129,.15); color: var(--success-light); font-size: .7rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 600; border: 1px solid rgba(16,185,129,.3); }
 
-        .price-input { width: 88px; padding: .25rem .5rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-secondary); color: var(--text-primary); font-size: .8rem; }
-        .price-input:focus { border-color: var(--primary); outline: none; }
+        .price-input { width: 88px; padding: .25rem .5rem; border: 1px solid var(--border-bright); border-radius: var(--radius-xs); background: var(--bg-elevated); color: var(--text-primary); font-size: .8rem; }
+        .price-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
-        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid var(--border-color); font-size: .85rem; }
+        .pagination { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid var(--border); font-size: .85rem; }
         .pagination .btn { min-width: 2.25rem; }
-        .page-info { color: var(--text-secondary); }
+        .page-info { color: var(--text-muted); }
 
         .csv-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
     </style>
@@ -159,7 +159,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="shopTableBody">
-                                    <tr><td colspan="9" style="text-align:center;color:var(--text-tertiary);padding:2rem;">Loading shops…</td></tr>
+                                    <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading shops…</td></tr>
                                 </tbody>
                             </table>
                         </div>

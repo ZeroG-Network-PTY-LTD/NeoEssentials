@@ -18,7 +18,7 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 
 | File | Contains |
 |---|---|
-| `main.json` | `modules`, `logging`, `permissions`, `kits` (settings), `economy` |
+| `main.json` | `modules`, `logging`, `localization`, `permissions`, `kits` (settings), `economy` |
 | `commands.json` | `commands` (enable/disable toggles for every command) |
 | `chat.json` | `chat` (formatting, channels, anti-spam, badges, rich text) |
 | `teleportation.json` | `teleportation` (homes, warps, spawn, TPA, random TP) |
@@ -72,7 +72,7 @@ On a brand-new server where `config.json` has never existed, NeoEssentials autom
 ━━━━━━━━━ Config Status ━━━━━━━━━
 Mode: Split configs (recommended)
 Files:
-  ✔ main.json          — modules, logging, permissions, kits, economy
+  ✔ main.json          — modules, logging, localization, permissions, kits, economy
   ✔ commands.json      — commands
   ✔ chat.json          — chat
   ✔ teleportation.json — teleportation

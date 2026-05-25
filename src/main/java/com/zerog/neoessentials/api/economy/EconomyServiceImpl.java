@@ -10,9 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import net.neoforged.neoforge.common.NeoForge;
-import com.zerog.neoessentials.api.event.EconomyDepositEvent;
-import com.zerog.neoessentials.api.event.EconomyWithdrawEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,27 +60,17 @@ public class EconomyServiceImpl implements EconomyService {
     @Override
     public boolean deposit(UUID playerId, double amount) {
         if (amount <= 0) return false;
-        
-        // Delegate to EconomyManager
-        boolean success = EconomyManager.getInstance().addBalance(playerId, BigDecimal.valueOf(amount));
-        
-        if (success) {
-            NeoForge.EVENT_BUS.post(new EconomyDepositEvent(playerId, amount));
-        }
-        return success;
+        // Delegate to EconomyManager — it fires EconomyDepositEvent internally,
+        // so we must NOT post it again here (BUG FIX: double event was fired before).
+        return EconomyManager.getInstance().addBalance(playerId, BigDecimal.valueOf(amount));
     }
 
     @Override
     public boolean withdraw(UUID playerId, double amount) {
         if (amount <= 0) return false;
-        
-        // Delegate to EconomyManager
-        boolean success = EconomyManager.getInstance().subtractBalance(playerId, BigDecimal.valueOf(amount));
-        
-        if (success) {
-            NeoForge.EVENT_BUS.post(new EconomyWithdrawEvent(playerId, amount));
-        }
-        return success;
+        // Delegate to EconomyManager — it fires EconomyWithdrawEvent internally,
+        // so we must NOT post it again here (BUG FIX: double event was fired before).
+        return EconomyManager.getInstance().subtractBalance(playerId, BigDecimal.valueOf(amount));
     }
 
     @Override
@@ -97,8 +84,9 @@ public class EconomyServiceImpl implements EconomyService {
 
     @Override
     public boolean resetBalance(UUID playerId) {
-        // Delegate to EconomyManager
-        EconomyManager.getInstance().setBalance(playerId, BigDecimal.ZERO);
+        // Reset to the configured starting balance, not zero
+        BigDecimal startingBalance = BigDecimal.valueOf(com.zerog.neoessentials.config.ConfigManager.getEconomyStartingBalance());
+        EconomyManager.getInstance().setBalance(playerId, startingBalance);
         return true;
     }
 
@@ -122,11 +110,8 @@ public class EconomyServiceImpl implements EconomyService {
     @Override
     public boolean deleteAccount(UUID playerId) {
         if (!hasAccount(playerId)) return false;
-        
-        // Delete by setting to zero and removing from cache
-        // Note: EconomyManager doesn't have a delete method, so we set to zero
-        EconomyManager.getInstance().setBalance(playerId, BigDecimal.ZERO);
-        return true;
+        // Properly remove account from EconomyManager cache
+        return EconomyManager.getInstance().removeAccount(playerId);
     }
 
     @Override

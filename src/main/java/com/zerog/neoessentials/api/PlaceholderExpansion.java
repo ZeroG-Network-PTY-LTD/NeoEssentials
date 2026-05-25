@@ -50,9 +50,15 @@ public abstract class PlaceholderExpansion {
     /**
      * Get the unique identifier for this expansion.
      * This is used as the prefix for all placeholders in this expansion.
-     * Must be lowercase, alphanumeric (underscores allowed).
      *
-     * @return The expansion identifier (e.g., "neoessentials", "mymod")
+     * <p><strong>Important:</strong> The identifier must be lowercase and alphanumeric.
+     * <em>Do NOT use underscores in the expansion ID.</em>  The resolution algorithm splits
+     * on the first {@code _} in a placeholder token to extract the expansion prefix:
+     * e.g. {@code {mymod_kills}} → expansion {@code "mymod"}, placeholder {@code "kills"}.
+     * An ID containing an underscore (e.g. {@code "my_mod"}) would never be matched because
+     * {@code {my_mod_kills}} would try to look up expansion {@code "my"}, not {@code "my_mod"}.</p>
+     *
+     * @return The expansion identifier (e.g., "neoessentials", "mymod") — no underscores
      */
     public abstract String getIdentifier();
 

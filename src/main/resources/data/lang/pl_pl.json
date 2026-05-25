@@ -8,6 +8,8 @@
   "commands.neoessentials.balance": "Saldo: {0}{1}",
   "commands.neoessentials.balance.player_not_found": "Gracz nie znaleziony.",
   "commands.neoessentials.eco.disabled": "System ekonomii jest aktualnie wyłączony.",
+  "commands.neoessentials.eco.give_failed": "§cNie można dać §f{0}§c graczowi §f{1}§c (osiągnięto maksymalne saldo?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c nie ma wystarczająco pieniędzy, aby zabrać §f{0}§c.",
   "commands.neoessentials.eco.give": "Dano {0} graczowi {1}.",
   "commands.neoessentials.eco.set": "Ustawiono saldo {0} na {1}.",
   "commands.neoessentials.eco.take": "Pobrano {0} od {1}.",

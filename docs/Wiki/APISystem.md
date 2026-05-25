@@ -47,6 +47,15 @@ Short-form aliases (legacy, no prefix) are also supported in most contexts.
 | `{neoessentials_gamemode}` | — | Gamemode (survival / creative / …) |
 | `{neoessentials_ping}` | `{ping}` | Connection latency (ms) |
 
+### Stat Placeholders
+
+| Placeholder | Description |
+|---|---|
+| `{neoessentials_deaths}` | Total death count |
+| `{neoessentials_player_kills}` | Total player kills |
+| `{neoessentials_mob_kills}` | Total mob kills |
+| `{neoessentials_play_time}` | Total play time (e.g. `3d 2h 15m`, `45m 30s`) |
+
 ### AFK Placeholders
 
 | Placeholder | Description |
@@ -373,45 +382,51 @@ NeoEssentials supports full internationalisation with per-server language overri
 
 `en_us`, `fr_fr`, `de_de`, `es_es`, `pt_br`, `zh_cn`, `nl_nl`, `pl_pl`, `ru_ru`
 
-All files are auto-deployed to `config/neoessentials/languages/custom/` on first start.
+All files are available in the JAR and auto-deployed to `neoessentials/languages/custom/` when first selected.
 
 ### Switching Language
 
-In `config.json`:
+In `config.json` under the `localization` section:
 
 ```json
-"language": "fr_fr"
+"localization": {
+  "language": "fr_fr"
+}
 ```
 
-Or in-game:
+Then reload in-game:
 
 ```
-/language fr_fr
-/language reload
+/neoessentials reload
 ```
+
+> **Fallback:** Any key not translated in the chosen language file falls back to English automatically.
 
 ### Custom / Overriding Translations
 
-Edit any file in `config/neoessentials/languages/custom/<lang>.json`.
+Edit any file in `neoessentials/languages/custom/<lang>.json`.
 Changes are preserved across mod updates — new keys from the JAR are merged in without overwriting your edits.
 
 ### Adding a New Language
 
-1. Create `config/neoessentials/languages/custom/xx_xx.json`
+1. Create `neoessentials/languages/custom/xx_xx.json`
 2. Copy all keys from `en_us.json` and translate values
-3. Run `/language reload` to apply
+3. Set `"language": "xx_xx"` in `config.json → localization`
+4. Run `/neoessentials reload` to apply
 
 ### Lang Key Format
 
 ```json
 {
-  "_langVersion": 10,
+  "_langVersion": 16,
   "commands.neoessentials.home.teleported": "§aTeleported to home §e{0}§a.",
   "commands.neoessentials.home.not_found": "§cHome §e{0}§c not found."
 }
 ```
 
 `{0}`, `{1}`, … are positional `MessageFormat` arguments substituted at runtime.
+
+See [Localization System](LocalizationSystem) for full documentation.
 
 ---
 

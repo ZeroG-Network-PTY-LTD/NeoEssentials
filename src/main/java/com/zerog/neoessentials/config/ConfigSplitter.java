@@ -80,10 +80,16 @@ public class ConfigSplitter {
         put("moderation.json",    1);
         put("webdashboard.json",  1);
         put("items.json",         1);
-        put("afk.json",           1);
+        put("afk.json",           2);  // v2  — invulnerableWhenAfk option
         put("security.json",      1);
         put("tablist.json",       1);
     }};
+
+    /**
+     * Current monolithic config version — must stay in sync with the JAR's config.json
+     * {@code _configVersion} field and {@link ConfigManager#EXPECTED_CONFIG_VERSIONS}.
+     */
+    private static final int CURRENT_MAIN_VERSION = 23;
 
     // ── Marker ────────────────────────────────────────────────────────────────
 
@@ -398,7 +404,7 @@ public class ConfigSplitter {
      */
     public static JsonObject mergeSplitConfigs() {
         JsonObject merged = new JsonObject();
-        merged.addProperty("_configVersion", 20);
+        merged.addProperty("_configVersion", CURRENT_MAIN_VERSION);
         merged.addProperty("_configVersion_comment",
             "NOTE: This is a virtual merged view. Edit individual split config files instead.");
 
@@ -469,8 +475,8 @@ public class ConfigSplitter {
         Integer version = SPLIT_CONFIG_VERSIONS.get(fileName);
         if (version != null) {
             result.addProperty("_configVersion", version);
-            result.addProperty("_configVersion_comment",
-                "DO NOT MODIFY: Used by NeoEssentials for automatic config updates.");
+            // Note: _configVersion_comment is intentionally omitted — it is treated as a
+            // legacy key by the upgrade system and would be stripped on next version bump.
         }
         for (String section : sections) {
             if (source != null && source.has(section)) {
@@ -545,6 +551,7 @@ public class ConfigSplitter {
     /**
      * Check / upgrade a split config file's version.
      * Only adds NEW keys from the JAR template — never overwrites user values.
+     * Also strips leftover legacy {@code _comment} / {@code _doc_*} keys on upgrade.
      */
     private static void checkSplitConfigVersion(String fileName, File configFile,
                                                 int expectedVersion, JsonObject jarConfig) {
@@ -585,6 +592,9 @@ public class ConfigSplitter {
             }
         }
 
+        // Strip legacy _comment / _doc_* / _step* keys left over from older file formats
+        stripLegacyCommentKeys(onDisk);
+
         onDisk.addProperty("_configVersion", expectedVersion);
         try {
             writeJsonFile(configFile, onDisk);
@@ -592,6 +602,37 @@ public class ConfigSplitter {
         } catch (Exception e) {
             LOGGER.error("Failed to write updated '{}': {}", fileName, e.getMessage());
         }
+    }
+
+    /**
+     * Recursively remove legacy "comment" keys from a {@link JsonObject}.
+     * Removes keys that end with {@code _comment}, end with {@code -description},
+     * or start with {@code _} but are NOT {@code _configVersion}.
+     *
+     * @return {@code true} if at least one key was removed
+     */
+    private static boolean stripLegacyCommentKeys(JsonObject obj) {
+        boolean changed = false;
+        List<String> toRemove = new ArrayList<>();
+        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+            String key = entry.getKey();
+            if (isLegacyCommentKey(key)) {
+                toRemove.add(key);
+            } else if (entry.getValue().isJsonObject()) {
+                changed |= stripLegacyCommentKeys(entry.getValue().getAsJsonObject());
+            }
+        }
+        for (String key : toRemove) {
+            obj.remove(key);
+            changed = true;
+            LOGGER.debug("  - Removed legacy comment key '{}' from split config", key);
+        }
+        return changed;
+    }
+
+    private static boolean isLegacyCommentKey(String key) {
+        if ("_configVersion".equals(key)) return false; // always preserve version field
+        return key.endsWith("_comment") || key.endsWith("-description") || key.startsWith("_");
     }
 
     /**
@@ -618,7 +659,7 @@ public class ConfigSplitter {
 
     private static void replaceWithStubFile(File configFile) throws IOException {
         JsonObject stub = new JsonObject();
-        stub.addProperty("_configVersion", 20);
+        stub.addProperty("_configVersion", CURRENT_MAIN_VERSION);
         stub.addProperty("_configVersion_comment",
             "DO NOT MODIFY: Used by NeoEssentials for automatic config updates.");
         stub.addProperty("_notice",
@@ -639,6 +680,16 @@ public class ConfigSplitter {
 
     // ── I/O utilities ─────────────────────────────────────────────────────────
 
+    /**
+     * Parse a JSON reader in lenient mode so that {@code //} and {@code /* *\/} comments
+     * (present in config.json since v22) are accepted without errors.
+     */
+    private static JsonObject parseLenient(java.io.Reader reader) throws IOException {
+        com.google.gson.stream.JsonReader jr = new com.google.gson.stream.JsonReader(reader);
+        jr.setLenient(true);
+        return JsonParser.parseReader(jr).getAsJsonObject();
+    }
+
     /** Load the bundled {@code config.json} from the mod JAR. Returns {@code null} on failure. */
     private static JsonObject loadJarConfig() {
         try (InputStream in = ResourceUtil.getJarConfigResource("config.json")) {
@@ -646,7 +697,8 @@ public class ConfigSplitter {
                 LOGGER.error("config.json not found in JAR at {}", ResourceUtil.JAR_CONFIG_PATH);
                 return null;
             }
-            return JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            // Lenient reader required: config.json uses // comment syntax since v22.
+            return parseLenient(new InputStreamReader(in, StandardCharsets.UTF_8));
         } catch (Exception e) {
             LOGGER.error("Failed to parse JAR config.json: {}", e.getMessage());
             return null;
@@ -669,10 +721,14 @@ public class ConfigSplitter {
         return hasSections ? obj : new JsonObject();
     }
 
-    /** Read a JSON file. Returns {@code null} on parse/IO error. */
+    /**
+     * Read a JSON file in lenient mode.
+     * Lenient mode is used for consistency with the JAR config reader and to handle
+     * any edge-case comments the user may have added. Returns {@code null} on parse/IO error.
+     */
     private static JsonObject readJsonFile(File f) {
         try (FileReader reader = new FileReader(f, StandardCharsets.UTF_8)) {
-            return JsonParser.parseReader(reader).getAsJsonObject();
+            return parseLenient(reader);
         } catch (Exception e) {
             LOGGER.error("Failed to read/parse '{}': {}", f.getName(), e.getMessage());
             return null;

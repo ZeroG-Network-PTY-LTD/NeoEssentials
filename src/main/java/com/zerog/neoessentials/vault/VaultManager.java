@@ -5,6 +5,9 @@ import com.zerog.neoessentials.vault.api.VaultServiceRegistry.ServicePriority;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsChat;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsEconomy;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsPermission;
+import com.zerog.neoessentials.vault.impl.VaultShopEconomyAdapter;
+import com.zerog.neoessentials.shop.api.ShopEconomyRegistry;
+import com.zerog.neoessentials.shop.api.NeoEssentialsShopEconomy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +89,18 @@ public class VaultManager {
         registry.logStatus();
         initialised = true;
         LOGGER.info("[VaultAPI] Vault API ready.");
+
+        // Bridge: replace the shop's economy adapter with a VaultShopEconomyAdapter that
+        // dynamically delegates to whichever VaultEconomy has the highest active priority.
+        // This means third-party mods only need to register a VaultEconomy at HIGH/HIGHEST
+        // priority and the shop system picks it up automatically.
+        try {
+            ShopEconomyRegistry.getInstance().register(
+                new VaultShopEconomyAdapter(new NeoEssentialsShopEconomy()));
+            LOGGER.info("[VaultAPI] VaultShopEconomyAdapter registered — shop now uses VaultServiceRegistry.");
+        } catch (Exception e) {
+            LOGGER.error("[VaultAPI] Failed to register VaultShopEconomyAdapter: {}", e.getMessage(), e);
+        }
     }
 
     /** Called during server shutdown to clear all registrations. */

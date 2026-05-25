@@ -8,6 +8,8 @@
   "commands.neoessentials.balance": "Баланс: {0}{1}",
   "commands.neoessentials.balance.player_not_found": "Игрок не найден.",
   "commands.neoessentials.eco.disabled": "Экономическая система в данный момент отключена.",
+  "commands.neoessentials.eco.give_failed": "§cНе удалось выдать §f{0}§c игроку §f{1}§c (достигнут максимальный баланс?).",
+  "commands.neoessentials.eco.take_failed": "§cУ §f{1}§c недостаточно денег, чтобы снять §f{0}§c.",
   "commands.neoessentials.eco.give": "{0} выдано игроку {1}.",
   "commands.neoessentials.eco.set": "Баланс {0} установлен на {1}.",
   "commands.neoessentials.eco.take": "{0} снято с {1}.",

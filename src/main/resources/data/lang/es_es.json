@@ -11,6 +11,8 @@
   "commands.neoessentials.baltop.header": "Mejores saldos:",
   "commands.neoessentials.baltop.no_permission": "No tienes permiso para usar /baltop.",
   "commands.neoessentials.eco.disabled": "El sistema económico está actualmente desactivado.",
+  "commands.neoessentials.eco.give_failed": "§cError al dar §f{0}§c a §f{1}§c (¿saldo máximo alcanzado?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c no tiene suficiente dinero para quitar §f{0}§c.",
   "commands.neoessentials.eco.give": "Se han dado {0} a {1}.",
   "commands.neoessentials.eco.player_not_found": "Jugador no encontrado.",
   "commands.neoessentials.eco.set": "Saldo de {0} establecido en {1}.",

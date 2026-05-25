@@ -340,6 +340,7 @@ public class ChatFormatter {
             .replace("{USERNAME}", "{neoessentials_username}")
             .replace("{PREFIX}", "{neoessentials_prefix}")
             .replace("{SUFFIX}", "{neoessentials_suffix}")
+            .replace("{GROUP}", "{neoessentials_group}")
             .replace("{WORLD}", "{neoessentials_world}")
             .replace("{X}", "{neoessentials_x}")
             .replace("{Y}", "{neoessentials_y}")
@@ -348,7 +349,12 @@ public class ChatFormatter {
             .replace("{LEVEL}", "{neoessentials_level}")
             .replace("{BALANCE}", "{neoessentials_balance}")
             .replace("{GAMEMODE}", "{neoessentials_gamemode}")
-            .replace("{BIOME}", "{neoessentials_biome}");
+            .replace("{BIOME}", "{neoessentials_biome}")
+            .replace("{AFK}", "{neoessentials_afk}")
+            .replace("{PING}", "{neoessentials_ping}")
+            .replace("{SERVER_NAME}", "{neoessentials_server_name}")
+            .replace("{ONLINE_PLAYERS}", "{neoessentials_online_players}")
+            .replace("{MAX_PLAYERS}", "{neoessentials_max_players}");
     }
     
     /**

@@ -49,6 +49,16 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    // PB4 Maven — sgui (server-side GUI library for AuctionHouse)
+    maven {
+        name = "PB4 Maven"
+        url = "https://maven.pb4.eu/release/"
+    }
+    // Nucleoid Maven — fallback for PB4 artifacts
+    maven {
+        name = "Nucleoid Maven"
+        url = "https://maven.nucleoid.xyz/"
+    }
 }
 
 base {
@@ -157,6 +167,11 @@ dependencies {
     // JarJar will properly isolate this dependency within our mod
     implementation 'org.java-websocket:Java-WebSocket:1.5.7'
     jarJar(group: 'org.java-websocket', name: 'Java-WebSocket', version: '[1.5.7,1.6.0)')
+
+
+    // SQLite JDBC driver — bundled for AuctionHouse persistence
+    implementation 'org.xerial:sqlite-jdbc:3.45.2.0'
+    jarJar(group: 'org.xerial', name: 'sqlite-jdbc', version: '[3.42.0.0,4.0.0)')
 
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'

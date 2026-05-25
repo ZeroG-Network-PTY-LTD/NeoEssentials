@@ -1298,7 +1298,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 22);          // v22 — migrated to // comment style
+        put(MAIN_CONFIG, 24);          // v24 — localization.language setting
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -1306,6 +1306,25 @@ public class ConfigManager {
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
     }};
+
+    /**
+     * Returns the configured server language code (e.g. "fr_fr", "de_de").
+     * Reads from localization.language in config.json.
+     * Defaults to "en_us" if not set.
+     */
+    public static String getServerLanguage() {
+        try {
+            JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+            if (config.has("localization")) {
+                JsonObject loc = config.getAsJsonObject("localization");
+                if (loc.has("language")) {
+                    String val = loc.get("language").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val.trim().toLowerCase();
+                }
+            }
+        } catch (Exception ignored) {}
+        return "en_us";
+    }
 
     private ConfigManager() {
         // On first construction, ensure all required config files exist
@@ -1736,6 +1755,36 @@ public class ConfigManager {
      */
     public static double getEconomyTaxPercentage() {
         return getTaxPercentage();
+    }
+
+    /**
+     * Returns the singular currency name from economy.json (currencyName).
+     * Defaults to the currency symbol if not set.
+     */
+    public static String getCurrencyName() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("currencyName")) {
+            try {
+                String name = config.get("currencyName").getAsString();
+                if (name != null && !name.isBlank()) return name;
+            } catch (Exception ignored) {}
+        }
+        return getCurrencySymbol();
+    }
+
+    /**
+     * Returns the plural currency name from economy.json (currencyNamePlural).
+     * Defaults to the singular currency name if not set.
+     */
+    public static String getCurrencyNamePlural() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("currencyNamePlural")) {
+            try {
+                String name = config.get("currencyNamePlural").getAsString();
+                if (name != null && !name.isBlank()) return name;
+            } catch (Exception ignored) {}
+        }
+        return getCurrencyName();
     }
 
     /**

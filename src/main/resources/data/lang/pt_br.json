@@ -9,6 +9,8 @@
   "commands.neoessentials.balance.player_not_found": "Jogador não encontrado.",
   "commands.neoessentials.baltop.header": "Maiores saldos:",
   "commands.neoessentials.eco.disabled": "O sistema econômico está desativado.",
+  "commands.neoessentials.eco.give_failed": "§cFalha ao dar §f{0}§c a §f{1}§c (saldo máximo atingido?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c não tem dinheiro suficiente para retirar §f{0}§c.",
   "commands.neoessentials.eco.give": "{0} dado a {1}.",
   "commands.neoessentials.eco.set": "Saldo de {0} definido para {1}.",
   "commands.neoessentials.eco.take": "{0} retirado de {1}.",

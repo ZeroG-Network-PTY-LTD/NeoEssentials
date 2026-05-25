@@ -135,15 +135,8 @@ public class EcoCommand {
             return 1;
         }
 
-        // All other actions need an amount — support percent suffix (Essentials: isPercent / scaleByPowerOfTen)
+        // All other actions need an amount
         double amountRaw = DoubleArgumentType.getDouble(ctx, "amount");
-        boolean isPercent = false;
-        // Percent check: if the raw string arg ends with '%'  (Brigadier already parsed the double)
-        // We detect it by checking the raw argument string
-        try {
-            String rawAmountStr = ctx.getArgument("amount", String.class);
-            isPercent = rawAmountStr != null && rawAmountStr.endsWith("%");
-        } catch (Exception ignored) {}
 
         BigDecimal amount;
         if ("set".equals(action)) {
@@ -162,18 +155,17 @@ public class EcoCommand {
             amount = amountValidation.getValue(BigDecimal.class);
         }
 
-        // If percent: multiply current balance × (amount / 100)  (Essentials: scaleByPowerOfTen(-2))
-        if (isPercent) {
-            BigDecimal current = EconomyManager.getInstance().getBalance(uuid);
-            amount = current.multiply(amount).scaleByPowerOfTen(-2);
-        }
 
         EconomyManager manager = EconomyManager.getInstance();
         String adminName = ctx.getSource().getTextName();
         final BigDecimal finalAmount = amount;
         switch (action) {
             case "give" -> {
-                manager.addBalance(uuid, finalAmount);
+                boolean ok = manager.addBalance(uuid, finalAmount);
+                if (!ok) {
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.give_failed", validPlayerName));
+                    return 0;
+                }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
                     "commands.neoessentials.eco.give", finalAmount, validPlayerName), false);
                 EconomyTransactionLogger.log("ADMIN_GIVE", adminName, validPlayerName,
@@ -186,7 +178,11 @@ public class EcoCommand {
                     manager.getCurrencySymbol()));
             }
             case "take" -> {
-                manager.subtractBalance(uuid, finalAmount);
+                boolean ok = manager.subtractBalance(uuid, finalAmount);
+                if (!ok) {
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.take_failed", validPlayerName));
+                    return 0;
+                }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
                     "commands.neoessentials.eco.take", finalAmount, validPlayerName), false);
                 EconomyTransactionLogger.log("ADMIN_TAKE", adminName, validPlayerName,

@@ -290,6 +290,16 @@ public class NeoEssentials {
                 ManagerRegistry.getInstance().markFailed("ShopEntityManager", e.getMessage());
             }
 
+            // Initialize Auction House system
+            try {
+                LOGGER.info("⚙ Initializing Auction House system...");
+                com.zerog.neoessentials.auctionhouse.AuctionHouseManager.getInstance()
+                        .initialize(event.getServer());
+                LOGGER.info("✓ Auction House initialized successfully");
+            } catch (Exception e) {
+                LOGGER.error("✗ Auction House failed to initialize: {}", e.getMessage(), e);
+            }
+
             // Initialize dynamic pricing engine
             try {
                 LOGGER.info("⚙ Initializing Shop PricingEngine...");
@@ -362,6 +372,14 @@ public class NeoEssentials {
         @SubscribeEvent
         public static void onServerStarted(ServerStartedEvent event) {
             LOGGER.info("Server started - initializing chat system...");
+
+            // Set server reference for Auction House component serialiser (registry ops)
+            try {
+                com.zerog.neoessentials.auctionhouse.AuctionHouseManager.getInstance()
+                        .setServer(event.getServer());
+            } catch (Exception e) {
+                LOGGER.error("Failed to set AuctionHouse server reference", e);
+            }
 
             // Initialize chat integration adapters (SDLink, DCIntegration, DiscordSRV, etc.)
             try {
@@ -517,6 +535,15 @@ public class NeoEssentials {
                 com.zerog.neoessentials.economy.managers.PayToggleManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Pay Toggle Manager", e);
+            }
+
+            // Shutdown Auction House system
+            try {
+                LOGGER.info("Shutting down Auction House system...");
+                com.zerog.neoessentials.auctionhouse.AuctionHouseManager.getInstance().shutdown();
+                LOGGER.info("✓ Auction House system shutdown.");
+            } catch (Exception e) {
+                LOGGER.error("Failed to shutdown Auction House system", e);
             }
 
             // Shutdown Vault API
@@ -1050,6 +1077,10 @@ public class NeoEssentials {
         // ========== HOLOGRAM COMMANDS ==========
         registry.registerCommand("hologram", "Manage holographic displays", "holo");
         com.zerog.neoessentials.hologram.command.HologramCommand.register(dispatcher);
+
+        // ========== AUCTION HOUSE COMMANDS ==========
+        registry.registerCommand("ah", "Auction House — buy and sell items", "auctionhouse");
+        com.zerog.neoessentials.auctionhouse.command.AuctionHouseCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

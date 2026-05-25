@@ -11,6 +11,8 @@
   "commands.neoessentials.baltop.header": "Meilleurs soldes :",
   "commands.neoessentials.baltop.no_permission": "Vous n'avez pas la permission d'utiliser /baltop.",
   "commands.neoessentials.eco.disabled": "Le système économique est actuellement désactivé.",
+  "commands.neoessentials.eco.give_failed": "§cImpossible de donner §f{0}§c à §f{1}§c (solde maximal atteint ?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c n'a pas assez d'argent pour retirer §f{0}§c.",
   "commands.neoessentials.eco.give": "{0} donné à {1}.",
   "commands.neoessentials.eco.player_not_found": "Joueur introuvable.",
   "commands.neoessentials.eco.set": "Solde de {0} fixé à {1}.",

@@ -90,6 +90,13 @@ public class TablistManager {
     // Player session start times (for {session_minutes} / {session_hours})
     private final Map<UUID, Long> sessionStartTimes = new ConcurrentHashMap<>();
 
+    // ── Team-update dirty cache ───────────────────────────────────────────────
+    // Avoids sending redundant scoreboard team packets on every tick, which causes
+    // the prefix/suffix to flicker when refreshInterval is very low (e.g. 1 tick).
+    private final Map<UUID, String> lastTeamName   = new ConcurrentHashMap<>();
+    private final Map<UUID, String> lastTeamPrefix = new ConcurrentHashMap<>();
+    private final Map<UUID, String> lastTeamSuffix = new ConcurrentHashMap<>();
+
     private TablistManager() {
         headerFrames.add("<gradient:FFD700-FF8C00>&l{server_name}&r &8| &e{online}&8/&e{max} &7players");
         footerFrames.add("&7TPS: {tps} &8| &7Ping: &a{ping}ms &8| &7{world}");
@@ -187,6 +194,11 @@ public class TablistManager {
             footerFrame = 0;
             tickCounter = 0;
 
+            // Clear dirty cache so all players get a fresh team update after reload
+            lastTeamName.clear();
+            lastTeamPrefix.clear();
+            lastTeamSuffix.clear();
+
             // Delegate to sub-system configs
             ProxyIntegration.getInstance().loadConfig();
             FakePlayerManager.getInstance().loadConfig();
@@ -263,12 +275,12 @@ public class TablistManager {
             String group  = getPermissionGroup(player);
 
             // Append AFK suffix to the team suffix when AFK
+            String effectiveSuffix = suffix;
             if (showAfkIndicator && isAfk(player)) {
-                suffix = suffix + afkSuffix;
+                effectiveSuffix = suffix + afkSuffix;
             }
 
             // BTLP-style: encode group weight into team name for client-side sort order.
-            // Lower sortKey integer → displayed first.  Same pattern as BTLP's ContextAwareOrdering.
             String rawTeamName;
             if (TablistLayout.getInstance().isSortByGroupWeight()) {
                 int weight = getGroupWeight(player);
@@ -279,21 +291,54 @@ public class TablistManager {
             }
             String teamName = rawTeamName.length() > 16 ? rawTeamName.substring(0, 16) : rawTeamName;
 
+            UUID uuid = player.getUUID();
+
+            // ── Dirty check: skip all scoreboard packets if nothing changed ────────
+            // This is the core fix for prefix flickering at low refreshInterval values.
+            // setPlayerPrefix/setPlayerSuffix and addPlayerToTeam all broadcast packets
+            // to every connected client; doing that 20×/sec causes visible flicker.
+            String cachedTeam   = lastTeamName.get(uuid);
+            String cachedPrefix = lastTeamPrefix.get(uuid);
+            String cachedSuffix = lastTeamSuffix.get(uuid);
+
+            boolean teamChanged   = !teamName.equals(cachedTeam);
+            boolean prefixChanged = !prefix.equals(cachedPrefix);
+            boolean suffixChanged = !effectiveSuffix.equals(cachedSuffix);
+
+            if (!teamChanged && !prefixChanged && !suffixChanged) {
+                return; // Nothing to update — no packet needed
+            }
+
+            // Update the cache with new values
+            lastTeamName.put(uuid, teamName);
+            lastTeamPrefix.put(uuid, prefix);
+            lastTeamSuffix.put(uuid, effectiveSuffix);
+
             ServerScoreboard scoreboard = server.getScoreboard();
 
-            PlayerTeam current = scoreboard.getPlayersTeam(player.getName().getString());
-            if (current != null && current.getName().startsWith("ne_") && !current.getName().equals(teamName)) {
-                scoreboard.removePlayerFromTeam(player.getName().getString(), current);
+            // If the player moved to a different team, remove from the old one first
+            if (teamChanged) {
+                PlayerTeam current = scoreboard.getPlayersTeam(player.getName().getString());
+                if (current != null && current.getName().startsWith("ne_") && !current.getName().equals(teamName)) {
+                    scoreboard.removePlayerFromTeam(player.getName().getString(), current);
+                }
             }
 
             PlayerTeam team = scoreboard.getPlayerTeam(teamName);
             if (team == null) team = scoreboard.addPlayerTeam(teamName);
 
-            // Use RichTextFormatter for prefix/suffix so hex/gradients work in team display
-            team.setPlayerPrefix(RichTextFormatter.processTablistText(prefix));
-            team.setPlayerSuffix(RichTextFormatter.processTablistText(suffix));
+            // Only push prefix/suffix packets when they have actually changed
+            if (prefixChanged || teamChanged) {
+                team.setPlayerPrefix(RichTextFormatter.processTablistText(prefix));
+            }
+            if (suffixChanged || teamChanged) {
+                team.setPlayerSuffix(RichTextFormatter.processTablistText(effectiveSuffix));
+            }
 
-            scoreboard.addPlayerToTeam(player.getName().getString(), team);
+            // Only re-add to team when the team itself changed (avoid redundant add packets)
+            if (teamChanged) {
+                scoreboard.addPlayerToTeam(player.getName().getString(), team);
+            }
 
         } catch (Exception e) {
             LOGGER.debug("Failed to update team for {}: {}", player.getName().getString(), e.getMessage());
@@ -464,6 +509,13 @@ public class TablistManager {
 
         // Resolve {animation:NAME} tokens — expands to the current animation frame
         result = AnimationManager.getInstance().resolveAnimations(result);
+
+        // Finally, pass any remaining {placeholder} tokens through the full PlaceholderAPI
+        // so that {neoessentials_*}, {luckperms_*}, {ftbranks_*} and any custom
+        // registered expansions are resolved too.
+        try {
+            result = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(player, result);
+        } catch (Exception ignored) {}
 
         return result;
     }
@@ -706,6 +758,10 @@ public class TablistManager {
     public void onPlayerQuit(ServerPlayer player, MinecraftServer server) {
         UUID uuid = player.getUUID();
         sessionStartTimes.remove(uuid);
+        // Clear dirty-check cache so the next login starts fresh
+        lastTeamName.remove(uuid);
+        lastTeamPrefix.remove(uuid);
+        lastTeamSuffix.remove(uuid);
         ProxyIntegration.getInstance().onPlayerQuit(uuid);
         FakePlayerManager.getInstance().removeForPlayer(player);
         server.execute(() -> updateAll(server));

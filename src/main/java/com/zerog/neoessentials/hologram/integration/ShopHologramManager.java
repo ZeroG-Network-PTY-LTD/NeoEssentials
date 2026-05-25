@@ -6,7 +6,6 @@ import com.zerog.neoessentials.shop.ShopManager;
 import com.zerog.neoessentials.shop.ShopTransaction;
 import com.zerog.neoessentials.shop.ShopTransaction.TransactionResult;
 import com.zerog.neoessentials.shop.ShopParser;
-import com.zerog.neoessentials.shop.events.ShopTransactionEvent;
 import com.zerog.neoessentials.shop.model.ShopData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -31,8 +30,9 @@ import java.util.Locale;
  * <p>Call {@link #createShopHologram(ShopData, String)} when a shop sign is placed,
  * and {@link #deleteShopHologram(String, String)} when the sign is broken.
  *
- * <p>Also listens to {@link ShopTransactionEvent} to refresh the hologram text
- * after each buy/sell.
+ * <p>Hologram text is refreshed via {@link #createShopHologram} which is triggered
+ * automatically by {@link com.zerog.neoessentials.shop.ShopManager#registerShop}
+ * after each buy/sell transaction.
  */
 @EventBusSubscriber(modid = "neoessentials")
 public class ShopHologramManager {
@@ -61,6 +61,30 @@ public class ShopHologramManager {
         if (!shop.hologramEnabled) return;   // opt-in required
         try {
             String id = shopHologramId(shop);
+
+            // ── BUG FIX: reuse existing HologramData so despawn() can locate its entities ──
+            // If we created a brand-new HologramData every time, its entityUUIDs would be empty
+            // and HologramRenderer.spawn() → despawn() would find nothing to remove.  The old
+            // TextDisplay entities would remain in the world as orphans while new ones get
+            // spawned on top — causing entities to accumulate on every registerShop() call
+            // (which happens on every transaction, price-change, etc.).
+            HologramData existing = HologramManager.getInstance().getHologram(id);
+            if (existing != null) {
+                // Update lines so the text reflects the current shop state.
+                existing.lines = buildShopLines(shop);
+                HologramManager.getInstance().registerHologram(existing);
+                ServerLevel level = findLevel(existing.world);
+                if (level != null) {
+                    // spawn() calls despawn() first — uses existing.entityUUIDs, so old
+                    // entities ARE removed before new ones are created.
+                    HologramRenderer.spawn(existing, level);
+                    tagEntitiesWithShopKey(existing, shop);
+                }
+                LOGGER.debug("[ShopHologram] Refreshed hologram '{}' for shop at {}", id, shop.toKey());
+                return;
+            }
+
+            // ── First-time creation ──────────────────────────────────────────────────────
             HologramData data = new HologramData();
             data.id = id;
             data.world = dimensionKey;
@@ -71,7 +95,7 @@ public class ShopHologramManager {
             data.refreshInterval = 10;
             data.visible = true;
             data.interactive = true;   // shop holograms are always interactive
-            if (data.entityUUIDs == null) data.entityUUIDs = new ArrayList<>();
+            data.entityUUIDs = new ArrayList<>();
             data.lines = buildShopLines(shop);
             HologramManager.getInstance().registerHologram(data);
             spawnInLevel(data);
@@ -148,19 +172,19 @@ public class ShopHologramManager {
     /** Remove the hologram that was auto-created for the given shop sign position. */
     public static void deleteShopHologram(String dimensionKey, String shopKey) {
         try {
-            // shopKey is in format "dim@x,y,z" - derive id from it
-            // try to find the hologram by searching shop prefix holograms
-            for (HologramData d : HologramManager.getInstance().getAllHolograms()) {
-                if (d.id.startsWith(SHOP_HOLOGRAM_PREFIX) && d.world.equals(dimensionKey)) {
-                    // Check if position matches
-                    String key = dimensionKey + "@" + (int)Math.floor(d.x - 0.5) + "," + (int)Math.floor(d.y - 1.8) + "," + (int)Math.floor(d.z - 0.5);
-                    if (key.equals(shopKey)) {
-                        ServerLevel level = findLevel(dimensionKey);
-                        if (level != null) HologramRenderer.despawn(d, level);
-                        HologramManager.getInstance().removeHologram(d.id);
-                        return;
-                    }
-                }
+            // shopKey format: "dim@x,y,z"  — the hologram ID is derived from the same components,
+            // so reconstruct it directly instead of reverse-engineering from hologram x/y/z
+            // (which would break for moved holograms since those offsets are no longer 0.5/1.8/0.5).
+            //
+            // Derive an ID that matches shopHologramId(): shop_ + dim_x_y_z (sanitised to a-z0-9_).
+            String rawId = SHOP_HOLOGRAM_PREFIX + shopKey.replace("@", "_").replace(",", "_");
+            String id = rawId.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
+
+            HologramData data = HologramManager.getInstance().getHologram(id);
+            if (data != null) {
+                ServerLevel level = findLevel(dimensionKey);
+                if (level != null) HologramRenderer.despawn(data, level);
+                HologramManager.getInstance().removeHologram(id);
             }
         } catch (Exception e) {
             LOGGER.debug("[ShopHologram] Error deleting shop hologram: {}", e.getMessage());
@@ -202,12 +226,11 @@ public class ShopHologramManager {
     }
     // ── Event listeners ───────────────────────────────────────────────────────
 
-    @SubscribeEvent
-    public static void onShopTransaction(ShopTransactionEvent event) {
-        try {
-            refreshShopHologram(event.getShop());
-        } catch (Exception ignored) {}
-    }
+    // NOTE: ShopTransactionEvent refresh is intentionally NOT handled here.
+    // ShopTransaction always calls ShopManager.registerShop() after a transaction to persist
+    // stats, and registerShop() calls createShopHologram() which already updates the hologram
+    // in-place.  Adding a second refresh here would cause two full despawn+respawn cycles per
+    // transaction, doubling entity churn for no benefit.
 
     /**
      * Right-clicking a shop hologram entity is identical to right-clicking the sign → BUY.

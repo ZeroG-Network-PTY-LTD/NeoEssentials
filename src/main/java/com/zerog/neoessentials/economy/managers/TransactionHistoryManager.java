@@ -101,10 +101,13 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
     }
 
     public void addTransaction(UUID player, String entry) {
-        historyMap.computeIfAbsent(player, k -> new ArrayDeque<>());
-        Deque<String> deque = historyMap.get(player);
-        if (deque.size() >= HISTORY_LIMIT) deque.removeFirst();
-        deque.addLast(entry);
+        // Use compute() for atomic read-modify-write — prevents race conditions
+        historyMap.compute(player, (uuid, deque) -> {
+            if (deque == null) deque = new ArrayDeque<>();
+            if (deque.size() >= HISTORY_LIMIT) deque.removeFirst();
+            deque.addLast(entry);
+            return deque;
+        });
         queueAsyncSave();
     }
 

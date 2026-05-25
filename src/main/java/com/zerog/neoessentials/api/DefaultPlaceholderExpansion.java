@@ -4,6 +4,7 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.util.commands.NickCommand;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,10 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         // Economy placeholders
         placeholders.add("balance");
         placeholders.add("balance_formatted");
+        placeholders.add("balance_raw");       // plain number, no formatting
+        placeholders.add("currency_symbol");   // configured currency symbol
+        placeholders.add("baltop_rank");       // player's rank on the balance leaderboard
+        placeholders.add("pay_toggle");        // "enabled" / "disabled" pay acceptance status
         
         // Server placeholders
         placeholders.add("server_name");
@@ -77,6 +82,12 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("afk");
         placeholders.add("afk_time");
         placeholders.add("afk_reason");
+
+        // Stat placeholders
+        placeholders.add("deaths");
+        placeholders.add("player_kills");
+        placeholders.add("mob_kills");
+        placeholders.add("play_time");
         
         LOGGER.debug("Initialized {} default placeholders", placeholders.size());
     }
@@ -143,6 +154,10 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 // Economy
                 case "balance" -> getBalance(player);
                 case "balance_formatted" -> getFormattedBalance(player);
+                case "balance_raw" -> getBalanceRaw(player);
+                case "currency_symbol" -> getCurrencySymbol();
+                case "baltop_rank" -> getBaltopRank(player);
+                case "pay_toggle" -> getPayToggle(player);
                 
                 // Server
                 case "server_name" -> getServerName(player);
@@ -158,6 +173,12 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 case "afk" -> getAfkStatus(player);
                 case "afk_time" -> getAfkTime(player);
                 case "afk_reason" -> getAfkReason(player);
+
+                // Stats
+                case "deaths" -> player != null ? String.valueOf(player.getStats().getValue(Stats.CUSTOM.get(Stats.DEATHS))) : null;
+                case "player_kills" -> player != null ? String.valueOf(player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAYER_KILLS))) : null;
+                case "mob_kills" -> player != null ? String.valueOf(player.getStats().getValue(Stats.CUSTOM.get(Stats.MOB_KILLS))) : null;
+                case "play_time" -> player != null ? formatPlayTime(player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME))) : null;
                 
                 default -> null;
             };
@@ -313,6 +334,56 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             LOGGER.debug("Error getting balance for player {}: {}", player.getName().getString(), e.getMessage());
         }
         return "0.0";
+    }
+
+    /** Raw plain balance with no trailing zeros. */
+    @Nullable
+    private String getBalanceRaw(@Nullable ServerPlayer player) {
+        if (player == null) return null;
+        try {
+            return EconomyManager.getInstance().getBalance(player.getUUID()).toPlainString();
+        } catch (Exception e) {
+            return "0";
+        }
+    }
+
+    /** Configured currency symbol (e.g. "$"). */
+    private String getCurrencySymbol() {
+        try {
+            return EconomyManager.getInstance().getCurrencySymbol();
+        } catch (Exception e) {
+            return "$";
+        }
+    }
+
+    /** Player's rank on the /baltop leaderboard, or "N/A" if unknown. */
+    @Nullable
+    private String getBaltopRank(@Nullable ServerPlayer player) {
+        if (player == null) return null;
+        try {
+            java.util.Map<java.util.UUID, java.math.BigDecimal> all =
+                EconomyManager.getInstance().getAllBalances();
+            java.math.BigDecimal myBal = EconomyManager.getInstance().getBalance(player.getUUID());
+            long rank = all.values().stream()
+                .filter(b -> b.compareTo(myBal) > 0)
+                .count() + 1;
+            return String.valueOf(rank);
+        } catch (Exception e) {
+            return "N/A";
+        }
+    }
+
+    /** Whether the player currently accepts payments ("enabled" / "disabled"). */
+    @Nullable
+    private String getPayToggle(@Nullable ServerPlayer player) {
+        if (player == null) return null;
+        try {
+            boolean accepts = com.zerog.neoessentials.economy.managers.PayToggleManager
+                .getInstance().getPayToggle(player.getUUID());
+            return accepts ? "enabled" : "disabled";
+        } catch (Exception e) {
+            return "enabled";
+        }
     }
     
     /**
@@ -481,5 +552,22 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             LOGGER.debug("Error getting AFK reason for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
         }
+    }
+
+    /**
+     * Format play time from ticks (20 ticks = 1 second) into a human-readable string.
+     * e.g. "3d 4h 12m" or "45m 30s"
+     */
+    private String formatPlayTime(int ticks) {
+        long totalSeconds = ticks / 20;
+        long seconds = totalSeconds % 60;
+        long minutes = (totalSeconds / 60) % 60;
+        long hours   = (totalSeconds / 3600) % 24;
+        long days    = totalSeconds / 86400;
+
+        if (days > 0)        return String.format("%dd %dh %dm", days, hours, minutes);
+        else if (hours > 0)  return String.format("%dh %dm", hours, minutes);
+        else if (minutes > 0) return String.format("%dm %ds", minutes, seconds);
+        else                 return String.format("%ds", seconds);
     }
 }

@@ -4,6 +4,9 @@ package com.zerog.neoessentials.economy.managers;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
+import com.zerog.neoessentials.api.event.EconomyDepositEvent;
+import com.zerog.neoessentials.api.event.EconomyWithdrawEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
@@ -159,7 +162,10 @@ public class EconomyManager {
         long thresholdMillis = ConfigManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
         for (UUID uuid : balancesCache.keySet()) {
             Long lastActive = lastActivityMap.get(uuid);
-            if (lastActive == null || (now - lastActive) >= thresholdMillis) {
+            // BUG FIX: Only remove if we know when the account was last active AND it exceeds
+            // the inactive threshold. Previously the condition was (null || expired) which
+            // would wipe ALL accounts the first time the activity file is missing/empty.
+            if (lastActive != null && (now - lastActive) >= thresholdMillis) {
                 balancesCache.remove(uuid);
                 lastActivityMap.remove(uuid);
             }
@@ -293,6 +299,14 @@ public class EconomyManager {
             LOGGER.warn("Attempted to modify balance during shutdown for player {}", player);
             return false;
         }
+
+        // Fire cancellable deposit event BEFORE modifying balance
+        EconomyDepositEvent depositEvent = new EconomyDepositEvent(player, amount);
+        NeoForge.EVENT_BUS.post(depositEvent);
+        if (depositEvent.isCanceled()) {
+            LOGGER.debug("EconomyDepositEvent cancelled for player {}", player);
+            return false;
+        }
         
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         boolean allowNegative = ConfigManager.allowNegativeBalances();
@@ -339,6 +353,14 @@ public class EconomyManager {
             return false;
         }
         
+        // Fire cancellable withdraw event BEFORE modifying balance
+        EconomyWithdrawEvent withdrawEvent = new EconomyWithdrawEvent(player, amount);
+        NeoForge.EVENT_BUS.post(withdrawEvent);
+        if (withdrawEvent.isCanceled()) {
+            LOGGER.debug("EconomyWithdrawEvent cancelled for player {}", player);
+            return false;
+        }
+        
         boolean allowNegative = ConfigManager.allowNegativeBalances();
         
         // Atomic read-modify-write using compute()
@@ -375,6 +397,22 @@ public class EconomyManager {
 
     public Map<UUID, BigDecimal> getAllBalances() {
         return new ConcurrentHashMap<>(balancesCache);
+    }
+
+    /**
+     * Remove a player's account completely (deletes their balance entry).
+     * @return true if the account existed and was removed, false if it didn't exist.
+     */
+    public boolean removeAccount(UUID player) {
+        BigDecimal removed = balancesCache.remove(player);
+        lastActivityMap.remove(player);
+        if (removed != null) {
+            queueAsyncSave();
+            queueAsyncSaveActivity();
+            EconomyTransactionLogger.log("DELETE", player.toString(), "SERVER", "0", "Account deleted");
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Login Screen (hidden when authenticated) -->
@@ -55,6 +55,7 @@
             </div>
             
             <nav class="sidebar-nav">
+                <span class="nav-section-label">Server</span>
                 <a href="index.html" class="nav-item active" data-page="overview">
                     <span class="nav-icon">📊</span>
                     <span class="nav-text">Overview</span>
@@ -75,6 +76,26 @@
                     <span class="nav-icon">📜</span>
                     <span class="nav-text">Events</span>
                 </a>
+
+                <span class="nav-section-label">Management</span>
+                <a href="moderation.html" class="nav-item">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-text">Moderation</span>
+                </a>
+                <a href="kits.html" class="nav-item">
+                    <span class="nav-icon">🎒</span>
+                    <span class="nav-text">Kits</span>
+                </a>
+                <a href="stats.html" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Statistics</span>
+                </a>
+                <a href="discord.html" class="nav-item">
+                    <span class="nav-icon">🤖</span>
+                    <span class="nav-text">Discord Integration</span>
+                </a>
+
+                <span class="nav-section-label admin-only">Admin</span>
                 <a href="permissions.html" class="nav-item admin-only" style="display: none;">
                     <span class="nav-icon">🔐</span>
                     <span class="nav-text">Permissions</span>
@@ -99,14 +120,6 @@
                     <span class="nav-icon">👤</span>
                     <span class="nav-text">User Management</span>
                 </a>
-                <a href="moderation.html" class="nav-item">
-                    <span class="nav-icon">🛡️</span>
-                    <span class="nav-text">Moderation</span>
-                </a>
-                <a href="kits.html" class="nav-item">
-                    <span class="nav-icon">🎒</span>
-                    <span class="nav-text">Kits</span>
-                </a>
                 <a href="holograms.html" class="nav-item admin-only" style="display: none;">
                     <span class="nav-icon">🔮</span>
                     <span class="nav-text">Holograms</span>
@@ -114,14 +127,6 @@
                 <a href="shop.html" class="nav-item admin-only" style="display: none;">
                     <span class="nav-icon">🛒</span>
                     <span class="nav-text">Shops</span>
-                </a>
-                <a href="stats.html" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Statistics</span>
-                </a>
-                <a href="discord.html" class="nav-item">
-                    <span class="nav-icon">🤖</span>
-                    <span class="nav-text">Discord Integration</span>
                 </a>
             </nav>
             
@@ -326,12 +331,12 @@
                             </div>
                             <div class="card-body">
                                 <div class="live-chat-feed" id="liveChatFeed">
-                                    <div class="chat-placeholder" style="color:var(--text-tertiary);font-size:0.85rem;padding:0.5rem;">
+                                    <div class="chat-placeholder" style="color:var(--text-muted);font-size:0.85rem;padding:0.5rem;">
                                         Chat messages will appear here in real-time once WebSocket connects…
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-footer" style="padding:0.75rem 1rem;border-top:1px solid var(--border-color);">
+                            <div class="card-footer" style="padding:0.75rem 1rem;border-top:1px solid var(--border);">
                                 <div style="display:flex;gap:0.5rem;align-items:center;">
                                     <input type="text" id="broadcastInput" class="form-input"
                                         aria-label="Broadcast message to all players"

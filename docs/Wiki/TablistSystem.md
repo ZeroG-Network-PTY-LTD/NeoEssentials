@@ -111,13 +111,42 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
 | `{max_health}` | Maximum HP (integer) |
 | `{afk}` | Blank when active; shows `afkSuffix` text when AFK |
 
+### BTLP-Style (Player Stats & Session)
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{rank_weight}` | Numeric permission group weight |
+| `{session_minutes}` | Minutes elapsed in current session (0–59) |
+| `{session_hours}` | Full hours elapsed in current session |
+| `{level}` | Player XP level |
+| `{health}` | Current HP (integer) |
+| `{max_health}` | Maximum HP (integer) |
+| `{afk}` | Blank when active; shows `afkSuffix` text when AFK |
+
+### PlaceholderAPI / NeoEssentials Expansion Tokens
+
+Any `{neoessentials_*}` token registered with the PlaceholderAPI system is also resolved in tablist header, footer, and player row fields. This includes all built-in tokens and any custom expansion tokens registered by other mods.
+
+**Stat examples usable in tablist:**
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{neoessentials_deaths}` | Player's total death count |
+| `{neoessentials_player_kills}` | Player's total player kills |
+| `{neoessentials_mob_kills}` | Player's total mob kills |
+| `{neoessentials_play_time}` | Player's formatted play time (e.g. `3d 2h 15m`) |
+| `{neoessentials_balance}` | Economy balance |
+| `{neoessentials_prefix}` | Permission prefix |
+
+> **Resolution order:** Native tablist tokens (e.g. `{tps}`, `{ping}`) are resolved first, then `PlaceholderManager.setPlaceholders()` handles all remaining `{…}` tokens. Both can be mixed in the same line.
+
 > **TPS colouring:** `{tps}` is automatically formatted — `&a` (≥19), `&e` (≥15), `&c` (<15). Use `{tps}` directly; no manual colour needed.
 
 ---
 
 ## Configuration
 
-### Full `tablist.json` structure (v3)
+### Full `tablist.json` structure (v5)
 
 ```json
 {
@@ -425,6 +454,8 @@ Each frame is displayed for `refreshInterval` ticks before advancing.
 
 **Lower `refreshInterval` → smoother animation, more network packets.**  
 Recommended: `10` (½ s per frame), `20` (1 s, default), `40` (2 s, very light).
+
+> **Flicker-free at low intervals:** As of build.184, the tablist system uses a dirty-check cache for scoreboard team prefix/suffix packets. Team update packets are only sent when the displayed value actually changes, so using `refreshInterval: 1` (20 fps animation) will not cause the player prefix to flicker or disappear.
 
 ---
 

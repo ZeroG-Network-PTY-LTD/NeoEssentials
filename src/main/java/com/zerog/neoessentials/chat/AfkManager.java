@@ -84,6 +84,9 @@ public class AfkManager {
     // Configurable rotation threshold for AFK detection
     private double rotationThreshold = 5.0;
 
+    // Whether AFK players are invulnerable to all damage
+    private boolean invulnerableWhenAfk = false;
+
     // Configurable excluded commands for AFK activity tracking
     private java.util.Set<String> excludedCommands = new java.util.HashSet<>(java.util.List.of(
         "afk", "list", "who", "tps", "ping", "help", "?"
@@ -504,8 +507,15 @@ public class AfkManager {
             }
         }
 
-        LOGGER.info("AFK configuration loaded: timeout={}min, autoAfk={}, broadcast={}, kick={}", 
-            afkTimeoutMs / 60000, autoAfkEnabled, broadcastAfkMessages, kickAfkPlayers);
+        // Support invulnerableWhenAfk from config
+        if (afkConfig.has("invulnerableWhenAfk")) {
+            this.invulnerableWhenAfk = afkConfig.get("invulnerableWhenAfk").getAsBoolean();
+        } else {
+            this.invulnerableWhenAfk = false;
+        }
+
+        LOGGER.info("AFK configuration loaded: timeout={}min, autoAfk={}, broadcast={}, kick={}, invulnerable={}",
+            afkTimeoutMs / 60000, autoAfkEnabled, broadcastAfkMessages, kickAfkPlayers, invulnerableWhenAfk);
     }
     
     /**
@@ -614,6 +624,7 @@ public class AfkManager {
     public boolean isAutoSave() { return autoSave; }
     public int getSaveIntervalSeconds() { return saveIntervalSeconds; }
     public java.util.Set<String> getExcludedCommands() { return excludedCommands; }
+    public boolean isInvulnerableWhenAfk() { return invulnerableWhenAfk; }
     
     /**
      * Shutdown the AFK manager

@@ -9,6 +9,8 @@
   "commands.neoessentials.balance.player_not_found": "未找到玩家。",
   "commands.neoessentials.baltop.header": "最高余额：",
   "commands.neoessentials.eco.disabled": "经济系统当前已禁用。",
+  "commands.neoessentials.eco.give_failed": "§c无法给予 §f{1}§c §f{0}§c（已达到最大余额？）。",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c 没有足够的钱扣除 §f{0}§c。",
   "commands.neoessentials.eco.give": "已给予 {1} {0}。",
   "commands.neoessentials.eco.set": "已将 {0} 的余额设置为 {1}。",
   "commands.neoessentials.eco.take": "已从 {1} 扣除 {0}。",

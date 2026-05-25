@@ -19,10 +19,11 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
 | [Permission System](PermissionSystem) | All permission nodes, groups, wildcards, external mods |
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
-| [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders |
+| [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders, stat tokens |
 | [Chat Channels](ChatChannels) | Channel config, permissions, Discord relay |
 | [**Split Config System**](SplitConfigs) | Split config files, validation, repair, migration guide |
-| [**Tablist System**](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player |
+| [**Tablist System**](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player, PlaceholderAPI support |
+| [**Localization System**](LocalizationSystem) | Server language selection, custom translations, language override commands |
 
 ---
 
@@ -31,7 +32,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 1. Drop `neoessentials-<version>.jar` into your server's `mods/` folder
 2. Start the server — config files are auto-generated in `config/neoessentials/`
 3. Key config files (split config mode — recommended):
-   - `main.json` — modules, logging, permissions, kits settings, economy settings
+   - `main.json` — modules, logging, localization, permissions, kits settings, economy settings
    - `commands.json` — enable/disable individual commands
    - `chat.json` — chat formatting, channels, anti-spam
    - `teleportation.json` — homes, warps, spawn, TPA
@@ -65,4 +66,4 @@ All optional — NeoEssentials runs fully standalone without any of them.
 
 ---
 
-*NeoEssentials v1.0.2.6 · Minecraft 1.21.1 · NeoForge 21.1.179+*
+*NeoEssentials v1.0.2.6 · Minecraft 1.21.1 · NeoForge 21.1.179+ · build.190*

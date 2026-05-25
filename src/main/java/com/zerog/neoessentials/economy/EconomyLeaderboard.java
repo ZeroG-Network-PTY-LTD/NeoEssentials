@@ -2,6 +2,8 @@ package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import net.minecraft.server.MinecraftServer;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,17 +25,44 @@ public class EconomyLeaderboard {
     }
 
     /**
-     * Format the leaderboard for display.
+     * Format the leaderboard for display using raw UUIDs (no server access).
+     * For player-name-resolved display, prefer {@link #formatLeaderboard(int, MinecraftServer)}.
      * @param topN Number of top players to display
-     * @return List of formatted leaderboard strings
+     * @return List of formatted leaderboard strings showing UUID + balance
      */
     public static List<String> formatLeaderboard(int topN) {
         List<Map.Entry<UUID, BigDecimal>> top = getTopPlayers(topN);
         List<String> lines = new ArrayList<>();
         int rank = 1;
         for (Map.Entry<UUID, BigDecimal> entry : top) {
-            lines.add(MessageUtil.localize("commands.neoessentials.economy.leaderboard_entry", 
-                rank++, entry.getKey(), entry.getValue().toPlainString()));
+            lines.add(MessageUtil.localize("commands.neoessentials.economy.leaderboard_entry",
+                rank++, entry.getKey().toString(), entry.getValue().toPlainString()));
+        }
+        return lines;
+    }
+
+    /**
+     * Format the leaderboard for display with player name resolution.
+     * @param topN   Number of top players to display
+     * @param server MinecraftServer used to look up player names from the profile cache
+     * @return List of formatted leaderboard strings showing player name + balance
+     */
+    public static List<String> formatLeaderboard(int topN, MinecraftServer server) {
+        List<Map.Entry<UUID, BigDecimal>> top = getTopPlayers(topN);
+        List<String> lines = new ArrayList<>();
+        int rank = 1;
+        for (Map.Entry<UUID, BigDecimal> entry : top) {
+            String displayName = entry.getKey().toString(); // UUID fallback
+            try {
+                if (server != null) {
+                    var profile = server.getProfileCache().get(entry.getKey());
+                    if (profile.isPresent() && profile.get().getName() != null) {
+                        displayName = profile.get().getName();
+                    }
+                }
+            } catch (Exception ignored) {}
+            lines.add(MessageUtil.localize("commands.neoessentials.economy.leaderboard_entry",
+                rank++, displayName, entry.getValue().toPlainString()));
         }
         return lines;
     }

@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 22,
+  "_configVersion": 23,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -381,7 +381,10 @@
     // Commands that do not reset the AFK timer
     "excludedCommands": ["afk", "list", "who", "tps", "ping", "help", "?"],
     "autoSave": true,
-    "saveInterval": 60
+    "saveInterval": 60,
+    // Make AFK players immune to all damage (mobs, environment, explosions, etc.)
+    // Useful for hardcore-style servers where an AFK death would be permanent
+    "invulnerableWhenAfk": false
   },
 
   /* ----------------------------------------------------------------

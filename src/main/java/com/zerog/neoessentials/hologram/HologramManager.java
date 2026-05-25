@@ -44,6 +44,9 @@ public class HologramManager {
 
     public void initialize() {
         try {
+            // Clear before loading so that holograms deleted from the JSON file
+            // do not survive a /hologram reload (previously the map was only appended to).
+            holograms.clear();
             load();
             LOGGER.info("[Hologram] Loaded {} hologram(s).", holograms.size());
         } catch (Exception e) {

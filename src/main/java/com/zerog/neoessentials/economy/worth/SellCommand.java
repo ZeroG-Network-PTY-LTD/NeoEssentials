@@ -121,10 +121,17 @@ public class SellCommand {
         if (player == null) { source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
         WorthManager wm = WorthManager.getInstance();
+        // Apply per-player sell multiplier from EconomyModifierManager
+        double modMult = com.zerog.neoessentials.economy.compat.EconomyModifierManager
+            .getInstance().getSellMultiplier(player.getUUID());
+        // modMult=0 means no override — use WorthManager global multiplier
+        BigDecimal effectiveMultiplier = wm.getSellMultiplier();
+        if (modMult > 0) effectiveMultiplier = BigDecimal.valueOf(modMult);
+
         BigDecimal total = BigDecimal.ZERO;
         int typesSold = 0;
         List<String> skippedNamed = new ArrayList<>();
-        Inventory inv = player.getInventory();
+        net.minecraft.world.entity.player.Inventory inv = player.getInventory();
 
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
@@ -135,7 +142,7 @@ public class SellCommand {
             }
             BigDecimal price = wm.getPrice(s);
             if (price == null) continue;
-            BigDecimal earned = price.multiply(wm.getSellMultiplier())
+            BigDecimal earned = price.multiply(effectiveMultiplier)
                 .multiply(BigDecimal.valueOf(s.getCount()));
             total = total.add(earned);
             typesSold++;
@@ -194,13 +201,18 @@ public class SellCommand {
             source.sendFailure(MessageUtil.error("commands.neoessentials.sell.not_enough_items"));
             return 0;
         }
+
+        // Apply per-player multiplier from EconomyModifierManager
+        double modMult = com.zerog.neoessentials.economy.compat.EconomyModifierManager
+            .getInstance().getSellMultiplier(player.getUUID());
+        BigDecimal multiplier = (modMult > 0) ? BigDecimal.valueOf(modMult) : wm.getSellMultiplier();
+
         removeFromInventory(player, template, toSell);
-        BigDecimal earned = price.multiply(wm.getSellMultiplier())
-            .multiply(BigDecimal.valueOf(toSell));
+        BigDecimal earned = price.multiply(multiplier).multiply(BigDecimal.valueOf(toSell));
         EconomyManager.getInstance().addBalance(player.getUUID(), earned);
-        LOGGER.info("Player {} sold {}x {} for {}{}", player.getName().getString(),
+        LOGGER.info("Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
             toSell, WorthManager.getItemId(template),
-            WorthCommand.getCurrencySymbol(), WorthCommand.format(earned));
+            WorthCommand.getCurrencySymbol(), WorthCommand.format(earned), multiplier.toPlainString());
         String sym = WorthCommand.getCurrencySymbol();
         final int fs = toSell; final BigDecimal fe = earned; final BigDecimal fp = price;
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.sell.item_sold",

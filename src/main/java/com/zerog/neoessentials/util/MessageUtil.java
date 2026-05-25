@@ -51,11 +51,25 @@ public class MessageUtil {
      * If the deployed file exists but is at an older version, any missing keys
      * are merged in from the JAR without overwriting user edits.
      */
+    /**
+     * Returns the configured server language code, e.g. "fr_fr".
+     * Safe to call before config is fully loaded (falls back to "en_us").
+     */
+    private static String getConfiguredLanguage() {
+        try {
+            return com.zerog.neoessentials.config.ConfigManager.getServerLanguage();
+        } catch (Exception ignored) {}
+        return "en_us";
+    }
+
     private static void loadTranslations() {
         if (loaded) return;
         loaded = true;
 
         LOGGER.debug("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
+
+        String langCode = getConfiguredLanguage();
+        LOGGER.info("NeoEssentials: loading language '{}'", langCode);
 
         File customLangDir = getNeoEssentialsLangCustomDir();
         if (!customLangDir.exists()) {
@@ -66,7 +80,7 @@ public class MessageUtil {
                 LOGGER.debug("Created custom language directory: {}", customLangDir.getAbsolutePath());
             }
         }
-        File serverLangFile = new File(customLangDir, "en_us.json");
+        File serverLangFile = new File(customLangDir, langCode + ".json");
         LOGGER.debug("Server language file path: {}", serverLangFile.getAbsolutePath());
 
         Map<String, String> finalTranslations;
@@ -83,13 +97,14 @@ public class MessageUtil {
                 if (deployedVersion < CURRENT_LANG_VERSION) {
                     LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
                         deployedVersion, CURRENT_LANG_VERSION);
-                    Map<String, String> jarTranslations = loadJarTranslations();
-                    if (jarTranslations != null) {
+                    // Build merge source: configured language + en_us fallback for missing keys
+                    Map<String, String> mergeSource = buildJarTranslationsWithFallback(langCode);
+                    if (mergeSource != null) {
                         int added = 0;
                         int updated = 0;
                         java.util.regex.Pattern legacyNamedPattern =
                             java.util.regex.Pattern.compile("\\{[A-Z][A-Z0-9_]+}");
-                        for (Map.Entry<String, String> e : jarTranslations.entrySet()) {
+                        for (Map.Entry<String, String> e : mergeSource.entrySet()) {
                             if (!finalTranslations.containsKey(e.getKey())) {
                                 finalTranslations.put(e.getKey(), e.getValue());
                                 added++;
@@ -117,14 +132,14 @@ public class MessageUtil {
                     }
                 }
                 translations.putAll(finalTranslations);
-                LOGGER.info("NeoEssentials: loaded {} translations", translations.size());
+                LOGGER.info("NeoEssentials: loaded {} translations (language: {})", translations.size(), langCode);
             } else {
                 LOGGER.error("Failed to load custom language file, will attempt to update from JAR");
             }
         }
         // If file missing or unreadable, deploy from JAR
         if (translations.isEmpty()) {
-            Map<String, String> jarTranslations = loadJarTranslations();
+            Map<String, String> jarTranslations = buildJarTranslationsWithFallback(langCode);
             if (jarTranslations == null || jarTranslations.isEmpty()) {
                 LOGGER.error("Failed to load JAR translations - cannot proceed");
                 try (InputStream testIn = ResourceUtil.getJarLangResource("en_us.json")) {
@@ -138,7 +153,7 @@ public class MessageUtil {
                 }
                 return;
             }
-            LOGGER.debug("JAR contains {} translation keys", jarTranslations.size());
+            LOGGER.debug("JAR contains {} translation keys for '{}'", jarTranslations.size(), langCode);
             try {
                 updateServerLanguageFile(serverLangFile, jarTranslations);
                 if (serverLangFile.exists()) {
@@ -146,7 +161,7 @@ public class MessageUtil {
                     finalTranslations = loadServerTranslations(serverLangFile);
                     if (finalTranslations != null) {
                         translations.putAll(finalTranslations);
-                        LOGGER.info("NeoEssentials: loaded {} translations (updated from JAR)", translations.size());
+                        LOGGER.info("NeoEssentials: loaded {} translations (updated from JAR, language: {})", translations.size(), langCode);
                     } else {
                         LOGGER.error("Failed to load custom language file after update, using JAR translations directly");
                         translations.putAll(jarTranslations);
@@ -167,10 +182,11 @@ public class MessageUtil {
     }
     
     /**
-     * Load translations from JAR resource
+     * Load translations from JAR resource for the given language code.
+     * Returns null if the resource is not found.
      */
-    private static Map<String, String> loadJarTranslations() {
-        try (InputStream in = ResourceUtil.getJarLangResource("en_us.json")) {
+    private static Map<String, String> loadJarTranslations(String langCode) {
+        try (InputStream in = ResourceUtil.getJarLangResource(langCode + ".json")) {
             if (in != null) {
                 try (java.util.Scanner scanner = new java.util.Scanner(in, java.nio.charset.StandardCharsets.UTF_8).useDelimiter("\\A")) {
                     String json = scanner.hasNext() ? scanner.next() : "";
@@ -179,12 +195,47 @@ public class MessageUtil {
                     return gson.fromJson(json, type);
                 }
             } else {
-                LOGGER.error("JAR language resource 'en_us.json' not found.");
+                LOGGER.debug("JAR language resource '{}' not found.", langCode + ".json");
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to load JAR translations: {}", e.getMessage(), e);
+            LOGGER.error("Failed to load JAR translations for '{}': {}", langCode, e.getMessage(), e);
         }
         return null;
+    }
+
+    /**
+     * Load translations from JAR resource (en_us fallback).
+     */
+    private static Map<String, String> loadJarTranslations() {
+        Map<String, String> result = loadJarTranslations("en_us");
+        if (result == null) {
+            LOGGER.error("JAR language resource 'en_us.json' not found.");
+        }
+        return result;
+    }
+
+    /**
+     * Build a merged translation map for the given language code.
+     * Loads the JAR's <langCode>.json and fills any missing keys from en_us.json.
+     * If langCode == "en_us" or the language file is not bundled, returns en_us directly.
+     */
+    private static Map<String, String> buildJarTranslationsWithFallback(String langCode) {
+        if (langCode == null || langCode.equals("en_us")) {
+            return loadJarTranslations("en_us");
+        }
+        Map<String, String> base = loadJarTranslations("en_us");
+        Map<String, String> lang = loadJarTranslations(langCode);
+        if (lang == null || lang.isEmpty()) {
+            LOGGER.warn("NeoEssentials: no bundled JAR file for language '{}', falling back to en_us.", langCode);
+            return base;
+        }
+        // Start from en_us base so every key is covered, then overlay the target language
+        Map<String, String> merged = new HashMap<>();
+        if (base != null) merged.putAll(base);
+        merged.putAll(lang); // target language takes priority
+        LOGGER.info("NeoEssentials: built '{}' translations ({} keys, {} from en_us fallback)",
+            langCode, merged.size(), base != null ? Math.max(0, merged.size() - lang.size()) : 0);
+        return merged;
     }
     
     /**
@@ -487,8 +538,9 @@ public class MessageUtil {
      * Ensures all keys from the JAR are present in the server language file.
      */
     public static void ensureLanguageFileUpToDate() {
-        File serverLangFile = ResourceUtil.getLanguageFile("en_us");
-        Map<String, String> jarTranslations = loadJarTranslations();
+        String langCode = getConfiguredLanguage();
+        File serverLangFile = new File(getNeoEssentialsLangCustomDir(), langCode + ".json");
+        Map<String, String> jarTranslations = buildJarTranslationsWithFallback(langCode);
         Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
         boolean needsUpdate = false;
         if (jarTranslations == null) {
@@ -533,20 +585,27 @@ public class MessageUtil {
      * If missing, generates it from the JAR resource and logs all steps.
      */
     public static void ensureCustomLanguageFile() {
+        String langCode = getConfiguredLanguage();
         File configRoot = getNeoEssentialsConfigRoot();
         File langDir = new File(configRoot, "neoessentials/languages/custom");
-        File langFile = new File(langDir, "en_us.json");
+        File langFile = new File(langDir, langCode + ".json");
         logInfo("[Lang] Working directory: " + System.getProperty("user.dir"));
+        logInfo("[Lang] Active language: " + langCode);
         logInfo("[Lang] Resolved language file path: " + langFile.getAbsolutePath());
         if (!langFile.exists() || langFile.length() == 0) {
             logInfo("Custom language file not found or empty: " + langFile.getAbsolutePath());
-            try (InputStream in = ResourceUtil.getJarLangResource("en_us.json")) {
-                if (in == null) {
+            try (InputStream in = ResourceUtil.getJarLangResource(langCode + ".json")) {
+                InputStream source = in;
+                if (source == null) {
+                    logInfo("Language '" + langCode + "' not bundled, falling back to en_us");
+                    source = ResourceUtil.getJarLangResource("en_us.json");
+                }
+                if (source == null) {
                     logError("Default language resource not found in JAR: data/lang/en_us.json");
                     return;
                 }
                 Files.createDirectories(langFile.getParentFile().toPath());
-                Files.copy(in, langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(source, langFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 logInfo("Generated custom language file from JAR resource: " + langFile.getAbsolutePath());
             } catch (Exception e) {
                 logError("Failed to generate custom language file: " + e.getMessage());

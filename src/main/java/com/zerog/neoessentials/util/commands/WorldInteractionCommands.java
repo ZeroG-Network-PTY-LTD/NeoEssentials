@@ -432,8 +432,10 @@ public class WorldInteractionCommands {
                 .executes(ctx -> {
                     var src = ctx.getSource();
                     String msg = StringArgumentType.getString(ctx, "message");
+                    // Resolve placeholders using sender's player context (may be null for console)
+                    String resolved = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(src.getPlayer(), msg);
                     ServerLevel targetLevel = src.getLevel();
-                    Component broadcast = MessageUtil.coloredText("§6[World] §e" + msg);
+                    Component broadcast = MessageUtil.coloredText("§6[World] §e" + resolved);
                     int count = 0;
                     for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) {
                         @SuppressWarnings("resource") // ServerLevel is not AutoCloseable
@@ -446,7 +448,7 @@ public class WorldInteractionCommands {
                     final int fc = count;
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.broadcastworld.sent",
                         targetLevel.dimension().location().getPath(), fc), false);
-                    LOGGER.info("[BroadcastWorld:{}] {}", targetLevel.dimension().location().getPath(), msg);
+                    LOGGER.info("[BroadcastWorld:{}] {}", targetLevel.dimension().location().getPath(), resolved);
                     return 1;
                 })
             )

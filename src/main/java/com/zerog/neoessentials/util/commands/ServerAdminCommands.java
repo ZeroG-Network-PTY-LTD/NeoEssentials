@@ -68,12 +68,14 @@ public class ServerAdminCommands {
                     String msg = StringArgumentType.getString(ctx, "message");
                     String senderName = ctx.getSource().getPlayer() != null
                         ? ctx.getSource().getPlayer().getName().getString() : "Console";
-                    // Broadcast to all players with color code support
-                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + msg);
+                    // Resolve placeholders using sender's player context (may be null for console)
+                    net.minecraft.server.level.ServerPlayer senderPlayer = ctx.getSource().getPlayer();
+                    String resolved = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(senderPlayer, msg);
+                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + resolved);
                     ctx.getSource().getServer().getPlayerList().getPlayers()
                         .forEach(p -> p.sendSystemMessage(broadcast));
                     ctx.getSource().getServer().sendSystemMessage(broadcast);
-                    LOGGER.info("[Broadcast] {} : {}", senderName, msg);
+                    LOGGER.info("[Broadcast] {} : {}", senderName, resolved);
                     return 1;
                 })
             )
@@ -84,7 +86,9 @@ public class ServerAdminCommands {
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(ctx -> {
                     String msg = StringArgumentType.getString(ctx, "message");
-                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + msg);
+                    net.minecraft.server.level.ServerPlayer senderPlayer = ctx.getSource().getPlayer();
+                    String resolved = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(senderPlayer, msg);
+                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + resolved);
                     ctx.getSource().getServer().getPlayerList().getPlayers().forEach(p -> p.sendSystemMessage(broadcast));
                     ctx.getSource().getServer().sendSystemMessage(broadcast);
                     return 1;
@@ -97,7 +101,9 @@ public class ServerAdminCommands {
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(ctx -> {
                     String msg = StringArgumentType.getString(ctx, "message");
-                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + msg);
+                    net.minecraft.server.level.ServerPlayer senderPlayer = ctx.getSource().getPlayer();
+                    String resolved = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(senderPlayer, msg);
+                    Component broadcast = MessageUtil.coloredText("§6[Broadcast] §f" + resolved);
                     ctx.getSource().getServer().getPlayerList().getPlayers().forEach(p -> p.sendSystemMessage(broadcast));
                     ctx.getSource().getServer().sendSystemMessage(broadcast);
                     return 1;

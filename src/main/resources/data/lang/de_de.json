@@ -11,6 +11,8 @@
   "commands.neoessentials.baltop.header": "Top-Kontostände:",
   "commands.neoessentials.baltop.no_permission": "Du hast keine Berechtigung für /baltop.",
   "commands.neoessentials.eco.disabled": "Das Wirtschaftssystem ist derzeit deaktiviert.",
+  "commands.neoessentials.eco.give_failed": "§cFehler: §f{1}§c konnte §f{0}§c nicht gegeben werden (Max. Guthaben erreicht?).",
+  "commands.neoessentials.eco.take_failed": "§c{1}§c hat nicht genug Geld, um §f{0}§c abzuziehen.",
   "commands.neoessentials.eco.give": "{0} an {1} gegeben.",
   "commands.neoessentials.eco.player_not_found": "Spieler nicht gefunden.",
   "commands.neoessentials.eco.set": "Kontostand von {0} auf {1} gesetzt.",
