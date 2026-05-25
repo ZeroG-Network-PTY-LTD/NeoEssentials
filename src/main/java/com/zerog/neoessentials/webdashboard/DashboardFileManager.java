@@ -22,7 +22,7 @@ public class DashboardFileManager {
 
     // Files to manage (auto-update when mod version changes)
     // Updated to include new multi-page structure and new authentication system
-    private static final List<String> DASHBOARD_FILES = Arrays.asList(
+    private static final List<String> DASHBOARD_FILES = List.of(
         "index.html",
         "login.html",
         "permissions.html",

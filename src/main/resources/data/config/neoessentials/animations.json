@@ -1,0 +1,108 @@
+{
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 2,
+
+  /* ================================================================
+     NeoEssentials — Animation Definitions  (animations.json)
+     Reload in-game: /tablist reload
+  ================================================================ */
+
+  /* Define named text animations here.
+   * Each animation has:
+   *   name          — unique identifier used in {animation:NAME} placeholders (case-insensitive)
+   *   frames        — ordered list of text frames. Supports &-codes, &#RRGGBB hex,
+   *                   <gradient:…>, <rainbow>, named color tags, etc.
+   *   frameDuration — milliseconds each frame is displayed (minimum 50 ms)
+   *
+   * Use {animation:NAME} in tablist header/footer, MOTD, chat formats, etc.
+   *
+   * Examples:
+   *   Header: "<gradient:FFD700-FF8C00>&l{server_name}&r &8| {animation:StatusDot} &e{online}/{max}"
+   *   Static text: "&7Server: {animation:Rainbow}"
+   */
+
+  "animations": [
+    {
+      // Classic rainbow letter-cycling effect
+      "name": "Rainbow",
+      "frames": [
+        "&cR&6a&eo&6b&cn&6w",
+        "&6R&ca&eo&cb&cn&6w",
+        "&eR&6a&co&cb&cn&6w",
+        "&6R&ca&eo&cn&6w",
+        "&cR&eao&cbn&w",
+        "&6Ra&eocn&w",
+        "&eRacn&w",
+        "&6Racn&w"
+      ],
+      "frameDuration": 500
+    },
+
+    {
+      // Pulsing star — good as decorative separator or bullet
+      "name": "PulseStar",
+      "frames": [
+        "&e★",
+        "&6★",
+        "&c★",
+        "&6★"
+      ],
+      "frameDuration": 400
+    },
+
+    {
+      // Blinking dot — good for status indicators
+      "name": "StatusDot",
+      "frames": [
+        "&a●",
+        "&7●"
+      ],
+      "frameDuration": 750
+    },
+
+    {
+      // Animated loading ellipsis
+      "name": "LoadingDots",
+      "frames": [
+        "&7Loading&8.",
+        "&7Loading&8..",
+        "&7Loading&8..."
+      ],
+      "frameDuration": 400
+    },
+
+    {
+      // Scrolling server-name banner using gradient colour shifts
+      "name": "GoldBanner",
+      "frames": [
+        "<gradient:FFD700-FF8C00>&l✦ Welcome ✦",
+        "<gradient:FF8C00-FFD700>&l✦ Welcome ✦",
+        "<gradient:FFD700-FFA500>&l✦ Welcome ✦",
+        "<gradient:FFA500-FFD700>&l✦ Welcome ✦"
+      ],
+      "frameDuration": 600
+    },
+
+    {
+      // Classic BTLP-style spinning pipe
+      "name": "Spinner",
+      "frames": [
+        "&e|",
+        "&e/",
+        "&e—",
+        "&e\\"
+      ],
+      "frameDuration": 200
+    },
+
+    {
+      // Alternating heart colour pattern
+      "name": "HeartBeat",
+      "frames": [
+        "&c❤ &4❤ &c❤",
+        "&4❤ &c❤ &4❤"
+      ],
+      "frameDuration": 600
+    }
+  ]
+}

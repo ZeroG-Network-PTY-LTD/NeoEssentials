@@ -463,7 +463,8 @@ public class BanManager {
         if (online != null) return online.getGameProfile();
         // Try profile cache
         try {
-            return server.getProfileCache().get(uuid).orElse(null);
+            var cache = server.getProfileCache();
+            if (cache != null) return cache.get(uuid).orElse(null);
         } catch (Exception ignored) {}
         // Fallback: construct a minimal profile
         if (name != null && !name.isBlank()) {

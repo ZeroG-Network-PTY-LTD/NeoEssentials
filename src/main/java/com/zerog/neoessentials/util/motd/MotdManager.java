@@ -233,8 +233,8 @@ public class MotdManager {
     public String setProfile(String name, String motd, String author) {
         if (name == null || name.trim().isEmpty())
             return "Profile name cannot be empty";
-        if (motd.length() > 500)
-            return "MOTD message too long (max 500 characters)";
+        if (motd.length() > 2000)
+            return "MOTD message too long (max 2000 characters)";
         name = name.toLowerCase(Locale.ROOT);
         String ts = LocalDateTime.now().format(TIME_FMT);
         profiles.put(name, new MotdProfile(name, motd, author, ts));

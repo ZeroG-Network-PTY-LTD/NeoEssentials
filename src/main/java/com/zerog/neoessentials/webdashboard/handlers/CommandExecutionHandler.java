@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
  * Handler for /api/commands endpoint
  * Executes server commands and returns results
  */
+//noinspection unused
+@SuppressWarnings("unused")
 public class CommandExecutionHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandExecutionHandler.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -36,12 +38,13 @@ public class CommandExecutionHandler implements HttpHandler {
     private static final int MAX_HISTORY_SIZE = 100;
     
     // Command output capture
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private static final Map<String, List<String>> commandOutputs = new ConcurrentHashMap<>();
     
     // Restricted commands (require special permission)
-    private static final Set<String> RESTRICTED_COMMANDS = new HashSet<>(Arrays.asList(
+    private static final Set<String> RESTRICTED_COMMANDS = Set.of(
         "stop", "restart", "reload", "op", "deop", "whitelist", "ban", "ban-ip"
-    ));
+    );
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -275,7 +278,7 @@ public class CommandExecutionHandler implements HttpHandler {
             
             // Trim history if too large
             if (commandHistory.size() > MAX_HISTORY_SIZE) {
-                commandHistory.remove(0);
+                commandHistory.removeFirst();
             }
         }
     }

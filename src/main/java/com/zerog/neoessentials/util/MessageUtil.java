@@ -10,7 +10,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.text.MessageFormat;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -70,7 +69,7 @@ public class MessageUtil {
         File serverLangFile = new File(customLangDir, "en_us.json");
         LOGGER.debug("Server language file path: {}", serverLangFile.getAbsolutePath());
 
-        Map<String, String> finalTranslations = null;
+        Map<String, String> finalTranslations;
         if (serverLangFile.exists() && serverLangFile.length() > 0) {
             finalTranslations = loadServerTranslations(serverLangFile);
             if (finalTranslations != null) {
@@ -447,6 +446,7 @@ public class MessageUtil {
     /**
      * Get debug information about loaded translations
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static String getDebugInfo() {
     loadTranslations();
@@ -575,6 +575,7 @@ public class MessageUtil {
     /**
      * Create a clickable suggestion component
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Component clickableSuggestion(String text, String command, String hoverText) {
         return ChatComponentUtil.createClickableSuggestion(text, command, hoverText);
@@ -583,6 +584,7 @@ public class MessageUtil {
     /**
      * Create formatted balance display with interaction
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Component balanceComponent(String playerName, double balance, String currency) {
         return ChatComponentUtil.createBalanceComponent(playerName, balance, currency);
@@ -591,6 +593,7 @@ public class MessageUtil {
     /**
      * Create formatted player name with interaction
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Component playerComponent(String playerName) {
         return ChatComponentUtil.createPlayerComponent(playerName);
@@ -599,6 +602,7 @@ public class MessageUtil {
     /**
      * Create formatted permission with copy functionality
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Component permissionComponent(String permission) {
         return ChatComponentUtil.createPermissionComponent(permission);
@@ -630,6 +634,7 @@ public class MessageUtil {
     /**
      * Create a progress bar
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Component progressBar(double current, double max, int width) {
         return ChatComponentUtil.createProgressBar(current, max, width);
@@ -657,9 +662,8 @@ public class MessageUtil {
     }
 
     /**
-     * Utility to get the NeoEssentials custom language directory (matches CustomLanguageManager)
-     *
-     * This version also removes the legacy 'lang' directory if it exists in the server root.
+     * Utility to get the NeoEssentials custom language directory (matches CustomLanguageManager).
+     * <p>Also removes the legacy 'lang' directory if it exists in the server root.
      */
     private static File getNeoEssentialsLangCustomDir() {
         // Use FMLPaths.GAMEDIR if available, else fallback to user.dir
@@ -667,6 +671,8 @@ public class MessageUtil {
         try {
             // Try to use FMLPaths if available (Forge/NeoForge)
             Class<?> fmlPathsClass = Class.forName("net.neoforged.fml.loading.FMLPaths");
+            // FMLPaths.GAMEDIR is an enum constant; we access it reflectively as a field
+            //noinspection JavaReflectionMemberAccess
             java.lang.reflect.Method gamedirMethod = fmlPathsClass.getMethod("GAMEDIR");
             Object gamedirPath = gamedirMethod.invoke(null);
             java.nio.file.Path serverRoot = (java.nio.file.Path) gamedirPath.getClass().getMethod("get").invoke(gamedirPath);
@@ -733,6 +739,7 @@ public class MessageUtil {
     /**
      * Loads all available custom language files from the NeoEssentials data directory.
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Map<String, Map<String, String>> loadAllCustomLanguages() {
         Map<String, Map<String, String>> languages = new HashMap<>();

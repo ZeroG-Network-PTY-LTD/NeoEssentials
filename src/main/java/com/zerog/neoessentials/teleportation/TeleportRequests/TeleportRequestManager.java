@@ -194,12 +194,12 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }, requestTimeoutSeconds, TimeUnit.SECONDS);
 
         // Send messages
-        String typeText = type == TeleportRequestType.TPA ? "to you" : "you to them";
-        requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.sent", 
-                                                        target.getName().getString(), typeText));
+        String typeText = type == TeleportRequestType.TPA ? "to teleport to you" : "you to teleport to them";
+        requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.sent",
+                                                        target.getName().getString(), requestTimeoutSeconds));
 
         if (enableRequestNotifications) {
-            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.received", 
+            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.received",
                                                     requester.getName().getString(), typeText));
             target.sendSystemMessage(MessageUtil.component("commands.neoessentials.teleport.request.instructions"));
             // Send clickable [Accept] and [Deny] buttons

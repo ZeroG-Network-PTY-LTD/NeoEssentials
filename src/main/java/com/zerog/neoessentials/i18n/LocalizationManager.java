@@ -341,6 +341,7 @@ public class LocalizationManager {
     /**
      * Get translation with placeholders
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public String translate(String key, String language, Object... args) {
         String translation = translate(key, language);
@@ -370,6 +371,7 @@ public class LocalizationManager {
     /**
      * Get combined translations (dashboard + in-game from MessageUtil)
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public Map<String, String> getAllTranslations(String language) {
         Map<String, String> combined = new HashMap<>();
@@ -396,6 +398,8 @@ public class LocalizationManager {
     /**
      * Check if language is supported
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public boolean isLanguageSupported(String language) {
         return availableLanguages.containsKey(language);
     }

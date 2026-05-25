@@ -3,6 +3,7 @@ package com.zerog.neoessentials.util.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.zerog.neoessentials.api.PlaceholderAPI;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
@@ -12,6 +13,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -176,8 +179,11 @@ public class MotdCommand {
             return 1;
         }
         MotdManager.MotdProfile p = mgr.getActiveProfile();
+        ServerPlayer player = source.getEntity() instanceof ServerPlayer sp ? sp : null;
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.header"), false);
-        source.sendSuccess(() -> Component.literal(p.motd.replace("&", "§")), false);
+        for (Component line : buildMotdLines(p.motd, player)) {
+            source.sendSuccess(() -> line, false);
+        }
         if (!p.timestamp.isEmpty()) {
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp), false);
         }
@@ -228,14 +234,15 @@ public class MotdCommand {
             return 0;
         }
         MotdManager.MotdProfile p = mgr.getActiveProfile();
-        Component motdComp = Component.literal(p.motd.replace("&", "§"));
         int sent = 0;
         for (ServerPlayer player : players) {
             PermissionValidator.PermissionResult pr =
                     PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.motd");
             if (pr.hasPermission()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.broadcast_header"));
-                player.sendSystemMessage(motdComp);
+                for (Component line : buildMotdLines(p.motd, player)) {
+                    player.sendSystemMessage(line);
+                }
                 if (!p.timestamp.isEmpty()) {
                     player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp));
                 }
@@ -351,9 +358,77 @@ public class MotdCommand {
         if (!mgr.hasMotd()) return;
         MotdManager.MotdProfile p = mgr.getActiveProfile();
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.join_header"));
-        player.sendSystemMessage(Component.literal(p.motd.replace("&", "§")));
+        for (Component line : buildMotdLines(p.motd, player)) {
+            player.sendSystemMessage(line);
+        }
         if (!p.timestamp.isEmpty()) {
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", p.author, p.timestamp));
         }
+    }
+
+    // ── MOTD rendering ─────────────────────────────────────────────────────────
+
+    /**
+     * Resolve and split a MOTD string into display-ready {@link Component}s,
+     * one per visual line.
+     *
+     * <p>Processing pipeline:
+     * <ol>
+     *   <li>Short-form placeholder aliases:
+     *       {@code {player}} / {@code {name}} → player name,
+     *       {@code {online}} / {@code {players}} → online count,
+     *       {@code {max}} → max players,
+     *       {@code {time}} → current wall-clock time (12 h)</li>
+     *   <li>Full {@link PlaceholderAPI} resolution
+     *       ({@code {neoessentials_...}}, {@code {luckperms_...}}, etc.)</li>
+     *   <li>{@code &}-codes → {@code §} Minecraft formatting codes</li>
+     *   <li>Literal {@code \n} sequences (e.g. typed in a command) and real
+     *       newline characters are both used to split into individual lines.</li>
+     * </ol>
+     *
+     * @param motd   raw MOTD text from the active profile
+     * @param player player context; {@code null} when called by console / server
+     * @return one {@link Component} per visual line (never {@code null})
+     */
+    public static List<Component> buildMotdLines(String motd, @Nullable ServerPlayer player) {
+        if (motd == null || motd.isEmpty()) return List.of();
+
+        String text = motd;
+
+        // 1. Short-form aliases — resolved before PlaceholderAPI so they work
+        //    without requiring the full neoessentials_ prefix.
+        if (player != null) {
+            text = text
+                .replace("{player}", player.getName().getString())
+                .replace("{name}",   player.getName().getString());
+            if (player.getServer() != null) {
+                text = text
+                    .replace("{online}",  String.valueOf(player.getServer().getPlayerCount()))
+                    .replace("{players}", String.valueOf(player.getServer().getPlayerCount()))
+                    .replace("{max}",     String.valueOf(player.getServer().getMaxPlayers()));
+            }
+        }
+        // Wall-clock time alias (usable even without a player context)
+        text = text.replace("{time}", java.time.LocalTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")));
+
+        // 2. Full PlaceholderAPI resolution ({neoessentials_name}, {luckperms_prefix}, …)
+        text = PlaceholderAPI.setPlaceholders(player, text);
+
+        // 3. & → § Minecraft color/formatting codes
+        text = text.replace("&", "§");
+
+        // 4. Normalise line separators:
+        //    • "\\n" = literal backslash-n (from /motd set … or direct JSON editing)
+        //    • "\n"  = real newline (Gson-parsed JSON or previously stored text)
+        //    Both are converted to a real newline so a single split() covers all cases.
+        text = text.replace("\\n", "\n");
+
+        String[] lines = text.split("\n", -1);
+        List<Component> result = new ArrayList<>(lines.length);
+        for (String line : lines) {
+            result.add(Component.literal(line));
+        }
+        return result;
     }
 }

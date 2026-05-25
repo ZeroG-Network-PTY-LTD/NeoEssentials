@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Manages all kit operations including creation, deletion, usage tracking, and cooldowns.
@@ -354,7 +353,7 @@ public class KitManager {
                 .filter(kit -> kit.isEnabled())
                 .filter(kit -> kit.getPermission() == null || 
                               PermissionAPI.hasPermission(player.getUUID(), kit.getPermission()))
-                .collect(Collectors.toList());
+                .toList();
     }
     
     /**

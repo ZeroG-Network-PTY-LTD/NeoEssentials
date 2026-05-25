@@ -18,7 +18,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Manages user authentication, sessions, and permissions
@@ -328,7 +327,7 @@ public class AuthenticationManager {
     public Collection<Session> getActiveSessions() {
         return sessions.values().stream()
             .filter(Session::isValid)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     /**

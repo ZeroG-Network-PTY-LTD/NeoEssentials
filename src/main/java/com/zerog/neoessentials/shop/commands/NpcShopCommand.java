@@ -128,7 +128,7 @@ public class NpcShopCommand {
                 return 0;
             }
 
-            ArmorStand target = nearby.get(0);
+            ArmorStand target = nearby.getFirst();
             UUID shopId = ShopNpcEntity.getShopId(target);
             target.discard();
 

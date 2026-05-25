@@ -6,6 +6,237 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.159] — 2026-05-25
+
+### 🧹 Code Quality — Config Comment Migration (`//` / `/* */` style)
+
+All NeoEssentials config files have been migrated from bloated JSON-key comments
+(`xxx_comment`, `_doc_*`, `_step*`, `_how_*`, etc.) to proper `//` single-line and
+`/* */` block comments.  The config parser was updated to support this format via
+Gson's lenient `JsonReader`.
+
+#### Problem
+
+Every setting in every config file had a companion `key_comment: "..."` entry:
+
+```json
+"port": 8080,
+"port_comment": "Port number for the web dashboard HTTP server (1024-65535)...",
+"websocketPort": 8081,
+"websocketPort_comment": "Port number for the WebSocket server...",
+```
+
+This doubled the file size, made it hard to find actual settings, and was **not** a
+standard JSON practice — the comment keys were genuine data the parser had to skip.
+
+#### Solution
+
+**Before:**
+```json
+"port": 8080,
+"port_comment": "Port number for the web dashboard HTTP server (1024-65535). Requires server restart to take effect",
+```
+
+**After:**
+```json
+// HTTP server port (1024–65535). Restart required after changing.
+"port": 8080,
+```
+
+#### Technical details
+
+| Change | Detail |
+|--------|--------|
+| `ConfigManager.parseJsonWithComments()` | New helper wrapping `JsonReader.setLenient(true)` — allows `//` and `/* */` in all config files |
+| `stripLegacyCommentKeys(JsonObject)` | New recursive method that removes keys ending with `_comment`, ending with `-description`, or starting with `_` (except `_configVersion`) from user config files during version upgrade |
+| Config version upgrades | On next server start, all existing user config files are automatically cleaned of old comment keys and have their version bumped |
+
+#### Files rewritten
+
+| Config file | Old version | New version | Key changes |
+|------------|-------------|-------------|-------------|
+| `config.json` | v21 | v22 | Removed ~150 `xxx_comment` and `xxx-description` keys |
+| `discord_auth.json` | v7 | v8 | Removed `_step*`, `_how_*`, `_example`, `_role_*` keys |
+| `economy.json` | v2 | v3 | Removed `_configVersion_comment` |
+| `kits.json` | v1 | v2 | Removed `_configVersion_comment` |
+| `permissions.json` | v6 | v7 | Removed `_configVersion_comment` |
+| `tablist.json` | v4 | v5 | Removed `_doc_*` and `_comment*` array keys |
+| `animations.json` | v1 | v2 | Removed `_doc` and `_comment*` inline keys |
+
+**Files changed:** `ConfigManager.java`, all 7 config resource files
+
+---
+
+## [1.0.2.6+build.158] — 2026-05-25
+
+### ✨ Feature — Named Animation System (`{animation:NAME}` Placeholder)
+
+Adds a full text-animation engine to NeoEssentials.  Animations are defined in a new first-class config file (`animations.json`) and can be referenced anywhere placeholder processing is active via `{animation:NAME}`.
+
+#### How it works
+
+1. **Define** animations in `config/neoessentials/animations.json`:
+   ```json
+   {
+     "animations": [
+       {
+         "name": "Rainbow",
+         "frames": [
+           "&cR&6a&eo&6b&cn&6w",
+           "&6R&ca&eo&cb&cn&6w",
+           "..."
+         ],
+         "frameDuration": 500
+       }
+     ]
+   }
+   ```
+2. **Use** the placeholder anywhere that supports it:
+   - Tablist header/footer: `&7Welcome {animation:Rainbow} to the server!`
+   - Any future text path that calls `AnimationManager.getInstance().resolveAnimations(text)`
+
+3. **Reload** with `/tablist reload` — reloads both `tablist.json` and `animations.json`.
+
+#### Timing model
+
+- `frameDuration` is in **milliseconds** (minimum 50 ms).
+- `AnimationManager.tick()` is called on **every server tick** (before the tablist refresh guard), so frame transitions are accurate to within one server tick (~50 ms) regardless of `refreshInterval`.
+- Drift-prevention logic aligns the next deadline to `lastFrameTime + frameDuration` rather than the moment the check runs.
+
+#### Default animations bundled
+
+| Name | Description | Duration |
+|------|-------------|----------|
+| `Rainbow` | Classic letter-colour cycling effect | 500 ms/frame |
+| `PulseStar` | `★` cycling gold/red/yellow | 400 ms/frame |
+| `StatusDot` | Blinking green/grey dot | 750 ms/frame |
+| `LoadingDots` | Scrolling `Loading.` / `..` / `...` | 400 ms/frame |
+| `GoldBanner` | Gradient-shift welcome banner | 600 ms/frame |
+| `Spinner` | `| / — \` spinning pipe | 200 ms/frame |
+| `HeartBeat` | Alternating `❤` colour pattern | 600 ms/frame |
+
+#### New admin command
+
+```
+/tablist animations list   — lists all loaded animations with frame count and duration
+```
+
+#### New files
+
+| File | Purpose |
+|------|---------|
+| `AnimationManager.java` | Singleton — loads animations, ticks frames, resolves `{animation:NAME}` |
+| `animations.json` (resource) | Default animation definitions shipped with the mod |
+
+#### Config changes
+
+- `ConfigManager.ANIMATIONS_CONFIG = "animations.json"` constant added; registered as version-tracked config (v1).
+- `tablist.json` `_configVersion` bumped `3 → 4` (doc-only; no user-value changes needed).
+- `tablist.json` `_doc_header` updated to document `{animation:NAME}`.
+
+**Files changed:** `AnimationManager.java` *(new)*, `animations.json` *(new resource)*, `TablistManager.java`, `TablistCommand.java`, `ConfigManager.java`, `tablist.json`
+
+---
+
+## [1.0.2.6+build.157] — 2026-05-25
+
+### 🐛 Bug Fix — TPA Request: Wrong Argument Passed to Sender Confirmation Message
+
+`TeleportRequestManager.sendTeleportRequest()` built a `typeText` string (`"to you"` / `"you to them"`) to describe the request direction, then passed it as argument `{1}` of both:
+
+1. `commands.neoessentials.teleport.request.sent` → `"Teleport request sent to {0}. Expires in {1} second(s)."` — `{1}` expects the timeout in seconds, but received `"to you"`, producing the broken message **"Teleport request sent to Xtron. Expires in to you second(s)."**
+2. `commands.neoessentials.teleport.request.received` → `"{0} wants {1}. Use /tpaccept or /tpdeny."` — `{1}` correctly expects a direction phrase, so this message was fine.
+
+**Fix:**
+- `sent` message now receives `requestTimeoutSeconds` as `{1}` (e.g. `"Teleport request sent to Xtron. Expires in 30 second(s)."`).
+- `typeText` is now only passed to the `received` message (target-side), where it belongs.
+- Corrected `typeText` from `"to you"` / `"you to them"` → `"to teleport to you"` / `"you to teleport to them"` to match the phrasing already used in `getPendingRequestInfo()`.
+
+**Files changed:** `TeleportRequestManager.java`
+
+---
+
+## [1.0.2.6+build.156] — 2026-05-25
+
+### 🧹 Code Quality — Warning Audit Pass (Part 3)
+
+Continued IDE-warning audit: `Arrays.asList` → `List.of` / `Set.of` sweep, `.get(0)` → `.getFirst()` modernisation, and miscellaneous handler cleanup.
+
+**`Arrays.asList` → `List.of` / `Set.of` replacements:**
+
+- **`ConfigSplitter`** — `FILE_SECTIONS_MAP` entry for `main.json`: `Arrays.asList(...)` → `List.of(...)` (static final immutable list).
+- **`ProxyIntegration`** — `knownServers.addAll(Arrays.asList(servers))` → `Collections.addAll(knownServers, servers)`.
+- **`PermissionsCommand`** — All 15+ inline `java.util.Arrays.asList(...)` tab-completion lists → `java.util.List.of(...)`.
+- **`FunCommands`** — Inline `Arrays.asList(...)` colour list → `List.of(...)`; removed now-unused `import java.util.Arrays`.
+- **`ItemCustomisationCommands`** — Inline `Arrays.asList(...)` → `List.of(...)`.
+- **`UtilityCommands`** — Two `Arrays.asList(...)` (static final + inline) → `List.of(...)`.
+- **`ServerAdminCommands`** — Static final `Arrays.asList(...)` → `List.of(...)`.
+- **`WorldInteractionCommands`** — Two `private static final` lists: `Arrays.asList(...)` → `List.of(...)`; removed `import java.util.Arrays`.
+- **`DashboardFileManager`** — `private static final DASHBOARD_FILES`: `Arrays.asList(...)` → `List.of(...)`.
+- **`AuthHandler`** — `roles.addAll(Arrays.asList(...))` → `Collections.addAll(roles, ...)`; removed `import java.util.Arrays`.
+- **`CommandExecutionHandler`** — `new HashSet<>(Arrays.asList(...))` static final → `Set.of(...)`.
+- **`FileManagementHandler`** — `ALLOWED_PATHS`: `Arrays.asList(...)` → `List.of(...)`; `EDITABLE_EXTENSIONS`: `new HashSet<>(Arrays.asList(...))` → `Set.of(...)`.
+- **`AfkManager`** — `new HashSet<>(java.util.Arrays.asList(...))` → `new HashSet<>(java.util.List.of(...))`.
+
+**`.get(0)` → `.getFirst()` modernisation (Java 21):**
+
+- **`WarnManager`** — `.get(0)` → `.getFirst()`.
+- **`JailCommand`** — `.get(0)` → `.getFirst()`.
+- **`NpcShopCommand`** — `.get(0)` → `.getFirst()`.
+- **`RealnameCommand`** — Two `.get(0)` → `.getFirst()`.
+- **`DiscordPermissionSync`** — `.get(0)` → `.getFirst()`.
+- **`ProxyIntegration`** — `.get(0)` → `.getFirst()` in `getAnyPlayer()`.
+- **`TaskScheduler`** — `.get(0)` → `.getFirst()`.
+
+**`ProxyIntegration` additional fixes:**
+
+- Added `@SuppressWarnings("unused")` to `BUNGEE_CHANNEL`, `BUNGEE_CHANNEL_LEGACY` (public API constants).
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to `onPluginMessage()` (registered externally).
+- Renamed `player` param → `ignoredPlayer` in stub `sendBungeeMessage()`.
+- Added `@SuppressWarnings("unused")` to `isShowNetworkPlayers()`.
+
+**`CommandExecutionHandler` additional fixes:**
+
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to class (handler instantiated via reflection/DI).
+- Added `@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")` to `commandOutputs` (populated for future use).
+- `commandHistory.remove(0)` → `commandHistory.removeFirst()`.
+
+**`FileManagementHandler` fix:**
+
+- Added `//noinspection resource` to `p.serverLevel()` call — `ServerLevel` lifecycle is managed by the Minecraft server; manually calling `close()` on it would be incorrect.
+
+**Files changed:** `ConfigSplitter.java`, `ProxyIntegration.java`, `PermissionsCommand.java`, `FunCommands.java`, `ItemCustomisationCommands.java`, `UtilityCommands.java`, `ServerAdminCommands.java`, `WorldInteractionCommands.java`, `DashboardFileManager.java`, `AuthHandler.java`, `CommandExecutionHandler.java`, `FileManagementHandler.java`, `AfkManager.java`, `WarnManager.java`, `JailCommand.java`, `NpcShopCommand.java`, `RealnameCommand.java`, `DiscordPermissionSync.java`, `TaskScheduler.java`
+
+---
+
+## [1.0.2.6+build.155] — 2026-05-25
+
+### 🧹 Code Quality — Warning Audit Pass (Part 2)
+
+Continued IDE-warning audit across previously unreviewed packages: `inventory/`, `items/`, `integrations/`, `api/`, `core/`, `shop/` sub-packages, `vault/`, `webdashboard/`.
+
+**Java fixes:**
+
+- **`PermissionScanner`** — Replaced `Arrays.asList()` with `List.of()` for two static final `Pattern` lists (`PERMISSION_PATTERNS`, `DYNAMIC_PATTERNS`); removed now-unused `import java.util.Arrays`; removed always-true `if (sourcePath != null)` null-check (`Paths.get(URI)` never returns null); removed `throws IOException` from `scanJarFile()` signature (exception is fully caught inside the method, never propagates); fixed `peek()` optimization warning — replaced `stream.peek(this::scanClassFile).count()` with `.toList()` + `forEach()` (terminal `count()` may skip intermediate `peek()` in Java 21); renamed unused `source` parameter in `addDiscoveredPermission()` to `ignoredSource`; added `@SuppressWarnings("unused")` to `getFilePermissionMap()`, `generateDynamicPermissions()`, and `exportDiscoveredPermissions()`.
+- **`ExternalPermissionProvider`** — Added `@SuppressWarnings("unused")` to `getPermissionsStartingWith()` and `exportForPermissionsEX()` (intentional public API surface).
+- **`PermissionValidator`** — Removed unused `import java.util.stream.Collectors`.
+- **`PermissionManager`** — Modernised inline `collect(java.util.stream.Collectors.toList())` → `.toList()`.
+- **`ModerationManager` / `WarnManager`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` imports.
+- **`BanCommand` / `FreezeCommand` / `JailCommand` / `VanishCommand`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` imports.
+- **`ModRootCommand`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+- **`DocumentationManager`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+- **`EconomyLeaderboard`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+- **`BaltopCommand`** — Removed unused `import java.util.stream.Collectors`.
+- **`KitManager`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+- **`ListKitsCommand`** — `collect(Collectors.toList())` → `.toList()`; `Collectors` import retained (`Collectors.toSet()` still used).
+- **`ShopEntityManager`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+- **`HelpCommand` / `ListCommand` / `RealnameCommand` / `ServerAdminCommands` / `UtilityCommands`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` imports.
+- **`webdashboard/security/AuthenticationManager`** — `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**Files changed:** `PermissionScanner.java`, `ExternalPermissionProvider.java`, `PermissionValidator.java`, `PermissionManager.java`, `ModerationManager.java`, `WarnManager.java`, `BanCommand.java`, `FreezeCommand.java`, `JailCommand.java`, `VanishCommand.java`, `ModRootCommand.java`, `DocumentationManager.java`, `EconomyLeaderboard.java`, `BaltopCommand.java`, `KitManager.java`, `ListKitsCommand.java`, `ShopEntityManager.java`, `HelpCommand.java`, `ListCommand.java`, `RealnameCommand.java`, `ServerAdminCommands.java`, `UtilityCommands.java`, `AuthenticationManager.java` (security)
+
+---
+
 ## [1.0.2.6+build.154] — 2026-05-20
 
 ### 🧹 Code Quality — Comprehensive Warning & Bug Fix Pass

@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Utility commands ported from EssentialsX:
@@ -70,7 +69,7 @@ public class UtilityCommands {
             // /ptime <value> [player]
             .then(Commands.argument("time", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    Arrays.asList("reset","day","noon","night","midnight","sunrise","0","1000","6000","12000","18000"), b))
+                    List.of("reset","day","noon","night","midnight","sunrise","0","1000","6000","12000","18000"), b))
                 .executes(ctx -> executePtimeSet(ctx, parseTimeTicks(StringArgumentType.getString(ctx, "time")), null))
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
@@ -225,7 +224,7 @@ public class UtilityCommands {
                 .then(Commands.argument("effect", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                         BuiltInRegistries.MOB_EFFECT.keySet().stream()
-                            .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                            .map(ResourceLocation::getPath).toList(), b))
                     .executes(ctx -> executeEffectApply(ctx,
                         StringArgumentType.getString(ctx, "target"),
                         StringArgumentType.getString(ctx, "effect"), 30, 0))
@@ -298,7 +297,7 @@ public class UtilityCommands {
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                        .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                        .map(ResourceLocation::getPath).toList(), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -319,7 +318,7 @@ public class UtilityCommands {
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                        .map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                        .map(ResourceLocation::getPath).toList(), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -486,7 +485,7 @@ public class UtilityCommands {
     }
 
     // Condense rules: item → (required count, result item, result count)
-    private static final List<CondenseRule> CONDENSE_RULES = Arrays.asList(
+    private static final List<CondenseRule> CONDENSE_RULES = List.of(
         // Nuggets → Ingots
         new CondenseRule("minecraft:iron_nugget", 9, "minecraft:iron_ingot", 1),
         new CondenseRule("minecraft:gold_nugget", 9, "minecraft:gold_ingot", 1),

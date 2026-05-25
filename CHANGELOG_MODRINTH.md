@@ -4,6 +4,75 @@
 
 ---
 
+## 1.0.2.6+build.158 — 2026-05-25
+
+### ✨ Feature — Named Animation System (`{animation:NAME}`)
+
+Define text animations in `config/neoessentials/animations.json` and use them anywhere in the tablist (header/footer) via `{animation:NAME}`.
+
+**Each animation has:**
+- `name` — identifier for the placeholder (case-insensitive)
+- `frames` — list of text frames supporting `&`-codes, `&#RRGGBB` hex, `<gradient:…>`, `<rainbow>`, etc.
+- `frameDuration` — milliseconds per frame (minimum 50 ms)
+
+**Example** — the `Rainbow` animation from the bundled default config:
+```json
+{ "name": "Rainbow", "frames": ["&cR&6a&eo&6b&cn&6w", "..."], "frameDuration": 500 }
+```
+Use in tablist: `"&7Server: {animation:Rainbow} &8| &e{online}&8/&e{max}"`
+
+**Bundled animations:** `Rainbow`, `PulseStar`, `StatusDot`, `LoadingDots`, `GoldBanner`, `Spinner`, `HeartBeat`
+
+**Timing:** frames advance on wall-clock time (accurate to ~50 ms) independent of the tablist `refreshInterval`. Reload with `/tablist reload`.
+
+**New command:** `/tablist animations list` — shows all loaded animations with frame count and duration.
+
+**Files changed:** `AnimationManager.java` *(new)*, `animations.json` *(new resource)*, `TablistManager.java`, `TablistCommand.java`, `ConfigManager.java`, `tablist.json`
+
+---
+
+## 1.0.2.6+build.157 — 2026-05-25
+
+### 🐛 Bug Fix — TPA Request Confirmation Message Shows "to you" Instead of Seconds
+
+`/tpa` displayed **"Teleport request sent to Xtron. Expires in to you second(s)."** — the direction phrase `"to you"` was mistakenly passed as the timeout-seconds argument to the sender's confirmation message. Fixed: the sender now sees the correct expiry countdown (e.g. `"Expires in 30 second(s)."`), and the target-side message receives the direction phrase as intended.
+
+**Files changed:** `TeleportRequestManager.java`
+
+---
+
+## 1.0.2.6+build.156 — 2026-05-25
+
+### 🧹 Code Quality — Warning Audit Pass (Part 3)
+
+Continued IDE-warning audit: `Arrays.asList` → `List.of` / `Set.of`, `.get(0)` → `.getFirst()`, and handler cleanup.
+
+- **13 files** — Global `Arrays.asList(...)` → `List.of(...)` / `Set.of(...)` sweep: all static final immutable lists now use `List.of` or `Set.of`; removed now-unused `Arrays` imports where applicable.
+- **7 files** — Global `.get(0)` → `.getFirst()` modernisation (Java 21) in `WarnManager`, `JailCommand`, `NpcShopCommand`, `RealnameCommand`, `DiscordPermissionSync`, `ProxyIntegration`, `TaskScheduler`.
+- **`ProxyIntegration`** — `Collections.addAll` for runtime array-to-collection copy; `@SuppressWarnings("unused")` on API constants, `onPluginMessage()`, and `isShowNetworkPlayers()`.
+- **`CommandExecutionHandler`** — `@SuppressWarnings("unused")` on class; `@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")` on `commandOutputs`; `removeFirst()` modernisation.
+- **`FileManagementHandler`** — `//noinspection resource` on `p.serverLevel()` (lifecycle managed by server).
+
+**Files changed:** 19 Java files
+
+---
+
+## 1.0.2.6+build.155 — 2026-05-25
+
+### 🧹 Code Quality — Warning Audit Pass (Part 2)
+
+Continued IDE-warning audit across `inventory/`, `items/`, `integrations/`, `api/`, `core/`, `shop/` sub-packages, `vault/`, and `webdashboard/` packages.
+
+- **`PermissionScanner`** — `List.of()` for static final pattern lists; removed dead null-check (`Paths.get()` never returns null); removed `throws IOException` (caught internally); fixed `peek().count()` optimization warning (collect + forEach); renamed unused param `source` → `ignoredSource`; `@SuppressWarnings("unused")` on three public API methods.
+- **`ExternalPermissionProvider`** — `@SuppressWarnings("unused")` on `getPermissionsStartingWith()` and `exportForPermissionsEX()`.
+- **`PermissionValidator` / `BaltopCommand`** — Removed unused `Collectors` import.
+- **`PermissionManager`** — Inline `collect(Collectors.toList())` → `.toList()`.
+- **22 files** — Global `collect(Collectors.toList())` → `.toList()` modernisation (Java 21) across moderation, economy, kits, shop, util, and webdashboard packages; removed now-unused `Collectors` imports where applicable.
+
+**Files changed:** 23 Java files
+
+---
+
 ## 1.0.2.6+build.154 — 2026-05-20
 
 ### 🧹 Code Quality — Warning & Bug Fix Pass

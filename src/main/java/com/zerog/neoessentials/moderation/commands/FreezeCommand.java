@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Freeze commands: /freeze, /unfreeze, /freezeall, /unfreezeall, /freezelist
@@ -30,7 +29,7 @@ public class FreezeCommand {
         return SharedSuggestionProvider.suggest(
             freezeManager.getAllFrozenPlayers().stream()
                 .map(freeze -> freeze.playerName)
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };
@@ -262,7 +261,7 @@ public class FreezeCommand {
                     // Don't freeze already frozen players
                     return !freezeManager.isPlayerFrozen(player.getUUID());
                 })
-                .collect(Collectors.toList());
+                .toList();
 
             if (playersToFreeze.isEmpty()) {
                 String message = MessageUtil.localize("neoessentials.moderation.freezeall_no_players");

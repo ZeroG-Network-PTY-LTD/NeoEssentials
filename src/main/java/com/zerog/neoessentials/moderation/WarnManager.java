@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Manages player warnings with persistent JSON storage.
@@ -65,7 +64,7 @@ public class WarnManager {
         List<WarnEntry> list = warnMap.getOrDefault(targetId, new ArrayList<>());
         return list.stream()
             .sorted((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     /**
@@ -114,7 +113,7 @@ public class WarnManager {
     public UUID findUUIDByName(String playerName) {
         for (Map.Entry<UUID, List<WarnEntry>> entry : warnMap.entrySet()) {
             if (!entry.getValue().isEmpty()) {
-                String stored = entry.getValue().get(0).getTargetName();
+                String stored = entry.getValue().getFirst().getTargetName();
                 if (stored.equalsIgnoreCase(playerName)) {
                     return entry.getKey();
                 }

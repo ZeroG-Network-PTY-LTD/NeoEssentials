@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * /help [page|command] — Paginated help system ported from EssentialsX Commandhelp.
@@ -111,7 +110,7 @@ public class HelpCommand {
                     || PermissionAPI.hasPermission(uuid, "neoessentials.*");
             })
             .sorted(Comparator.comparing(CommandRegistry.CommandInfo::getName))
-            .collect(Collectors.toList());
+            .toList();
 
         // If searching for a specific command
         if (search != null && !search.isEmpty()) {
@@ -128,7 +127,7 @@ public class HelpCommand {
             accessible = accessible.stream()
                 .filter(c -> c.getName().toLowerCase().contains(query)
                     || (c.getDescription() != null && c.getDescription().toLowerCase().contains(query)))
-                .collect(Collectors.toList());
+                .toList();
             if (accessible.isEmpty()) {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.help.not_found", search));
                 return 0;

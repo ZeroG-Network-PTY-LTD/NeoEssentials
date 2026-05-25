@@ -74,7 +74,7 @@ public class PermissionsCommand {
                                 }
                             } catch (Exception e) {}
                             return SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
                         })
                         .executes(ctx -> showGroupInfo(ctx))))
@@ -108,7 +108,7 @@ public class PermissionsCommand {
                                 }
                             } catch (Exception e) {}
                             return SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
                         })
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
@@ -133,7 +133,7 @@ public class PermissionsCommand {
                                 }
                             } catch (Exception e) {}
                             return SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
                         })
                         .executes(ctx -> deleteGroup(ctx)))))
@@ -150,7 +150,7 @@ public class PermissionsCommand {
                                 }
                             } catch (Exception e) {}
                             return SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
                         })
                         .then(Commands.argument("newName", StringArgumentType.word())
@@ -168,7 +168,7 @@ public class PermissionsCommand {
                                 }
                             } catch (Exception e) {}
                             return SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
                         })
                         .then(Commands.argument("newGroup", StringArgumentType.word())
@@ -191,7 +191,7 @@ public class PermissionsCommand {
                         
                         // Fallback to common group names if no groups are loaded
                         return SharedSuggestionProvider.suggest(
-                            java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"), 
+                            java.util.List.of("admin", "moderator", "player", "vip", "default"), 
                             builder);
                     })
                     .then(Commands.literal("setprefix")
@@ -222,7 +222,7 @@ public class PermissionsCommand {
                                 } catch (Exception e) {
                                     // Fallback to basic suggestions if dynamic loading fails
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList(
+                                        java.util.List.of(
                                             "neoessentials.*",
                                             "neoessentials.admin.*",
                                             "neoessentials.economy.*",
@@ -250,7 +250,7 @@ public class PermissionsCommand {
                                 } catch (Exception e) {
                                     // Fallback to basic suggestions if dynamic loading fails
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList(
+                                        java.util.List.of(
                                             "neoessentials.*",
                                             "neoessentials.admin.*",
                                             "neoessentials.economy.*",
@@ -276,7 +276,7 @@ public class PermissionsCommand {
                                         }
                                     } catch (Exception e) {}
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                        java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                         builder);
                                 })
                                 .executes(ctx -> addGroupInheritance(ctx))))
@@ -291,7 +291,7 @@ public class PermissionsCommand {
                                         }
                                     } catch (Exception e) {}
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"),
+                                        java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                         builder);
                                 })
                                 .executes(ctx -> removeGroupInheritance(ctx)))))
@@ -306,12 +306,12 @@ public class PermissionsCommand {
                                         perms.stream().filter(p -> p.toLowerCase().startsWith(input)).toList(), builder);
                                 } catch (Exception e) {
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList("neoessentials.*","neoessentials.admin.*"), builder);
+                                        java.util.List.of("neoessentials.*","neoessentials.admin.*"), builder);
                                 }
                             })
                             .then(Commands.argument("duration", StringArgumentType.word())
                                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                    java.util.Arrays.asList("30m","1h","6h","12h","1d","7d","30d"), builder))
+                                    java.util.List.of("30m","1h","6h","12h","1d","7d","30d"), builder))
                                 .executes(ctx -> addGroupTempPermission(ctx)))))
                     .then(Commands.literal("removetemp")
                         .then(Commands.argument("permission", StringArgumentType.word())
@@ -401,7 +401,7 @@ public class PermissionsCommand {
                                 } catch (Exception e) {
                                     // Fallback to basic suggestions if dynamic loading fails
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList(
+                                        java.util.List.of(
                                             "neoessentials.*",
                                             "neoessentials.admin.*",
                                             "neoessentials.economy.*",
@@ -429,7 +429,7 @@ public class PermissionsCommand {
                                 } catch (Exception e) {
                                     // Fallback to basic suggestions if dynamic loading fails
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList(
+                                        java.util.List.of(
                                             "neoessentials.*",
                                             "neoessentials.admin.*",
                                             "neoessentials.economy.*",
@@ -454,12 +454,12 @@ public class PermissionsCommand {
                                     return SharedSuggestionProvider.suggest(filtered, builder);
                                 } catch (Exception e) {
                                     return SharedSuggestionProvider.suggest(
-                                        java.util.Arrays.asList("neoessentials.*","neoessentials.admin.*"), builder);
+                                        java.util.List.of("neoessentials.*","neoessentials.admin.*"), builder);
                                 }
                             })
                             .then(Commands.argument("duration", StringArgumentType.word())
                                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                    java.util.Arrays.asList("30m","1h","6h","12h","1d","7d","30d"), builder))
+                                    java.util.List.of("30m","1h","6h","12h","1d","7d","30d"), builder))
                                 .executes(ctx -> addUserTempPermission(ctx)))))
                     .then(Commands.literal("removetemp")
                         .then(Commands.argument("permission", StringArgumentType.word())

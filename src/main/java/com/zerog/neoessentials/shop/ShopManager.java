@@ -105,6 +105,7 @@ public class ShopManager {
     }
 
     /** Remove all shops owned by the given UUID. */
+    //noinspection unused
     @SuppressWarnings("unused")
     public int removeShopsByOwner(UUID ownerUUID) {
         List<ShopData> toRemove = shopsBySign.values().stream()

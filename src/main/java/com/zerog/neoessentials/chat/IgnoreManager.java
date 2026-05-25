@@ -118,6 +118,7 @@ public class IgnoreManager {
     /**
      * Get the ignore list for a player
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static Set<String> getIgnoreList(ServerPlayer player) {
         String playerName = player.getName().getString().toLowerCase();
@@ -130,6 +131,7 @@ public class IgnoreManager {
      * NOTE: Ignore lists are persisted and intentionally NOT removed here —
      * a player should still have their ignore list when they reconnect.
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static void cleanupPlayer(ServerPlayer ignoredPlayer) {
         // Nothing to clean up — ignore lists survive sessions via persistence.

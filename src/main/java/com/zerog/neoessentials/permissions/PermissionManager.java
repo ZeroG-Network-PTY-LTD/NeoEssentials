@@ -470,7 +470,7 @@ public class PermissionManager {
                     int pb = (gb != null) ? gb.getPriority() : 0;
                     return Integer.compare(pb, pa); // descending
                 })
-                .collect(java.util.stream.Collectors.toList());
+                .toList();
     }
 
     // ── Temporary permission checks ───────────────────────────────────────────

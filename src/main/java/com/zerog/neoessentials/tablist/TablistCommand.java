@@ -435,13 +435,33 @@ public class TablistCommand {
                     })
                 )
             )
+
+            // ── /tablist animations list ──────────────────────────────────────
+            .then(Commands.literal("animations")
+                .then(Commands.literal("list")
+                    .executes(ctx -> {
+                        AnimationManager am = AnimationManager.getInstance();
+                        ctx.getSource().sendSuccess(() -> Component.literal(
+                            "§6§lLoaded Animations (" + am.getAnimationCount() + "):"
+                        ), false);
+                        for (String line : am.getSummaryLines()) {
+                            String colored = line.replace("&", "§");
+                            ctx.getSource().sendSuccess(() -> Component.literal(colored), false);
+                        }
+                        ctx.getSource().sendSuccess(() -> Component.literal(
+                            "§7Use §e{animation:NAME}§7 in tablist header/footer or MOTD."
+                        ), false);
+                        return 1;
+                    })
+                )
+            )
         );
     }
 
     private static void showHelp(CommandSourceStack src) {
         src.sendSuccess(() -> Component.literal(
             "§6§lTablist Commands (BungeeTabListPlus-style):\n" +
-            "§e/tablist reload §7— reload tablist.json config\n" +
+            "§e/tablist reload §7— reload tablist.json + animations.json\n" +
             "§e/tablist enable/disable §7— toggle tablist system\n" +
             "§e/tablist preview §7— preview your header/footer\n" +
             "§e/tablist info §7— full status, proxy, layout, fake players\n" +
@@ -463,9 +483,14 @@ public class TablistCommand {
             "§6Independent mode:\n" +
             "§e/tablist independent §7— show mode\n" +
             "§e/tablist independent on/off §7— toggle\n" +
+            "§6Animations:\n" +
+            "§e/tablist animations list §7— list loaded animations\n" +
+            "§7Use §e{animation:NAME}§7 in headers, footers, MOTD, etc.\n" +
             "§7Config: §fconfig/neoessentials/tablist.json\n" +
+            "§7Animations: §fconfig/neoessentials/animations.json\n" +
             "§7Placeholders: §f{network_online} {server_online:NAME} {current_server}\n" +
-            "§7             {rank_weight} {session_minutes} {level} {health} {afk}"
+            "§7             {rank_weight} {session_minutes} {level} {health} {afk}\n" +
+            "§7             §e{animation:NAME}"
         ), false);
     }
 }

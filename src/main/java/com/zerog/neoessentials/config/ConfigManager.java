@@ -1209,7 +1209,7 @@ public class ConfigManager {
                 File splitFile = ResourceUtil.getConfigFile(configName + ".json");
                 if (splitFile.exists()) {
                     try (FileReader splitReader = new FileReader(splitFile, StandardCharsets.UTF_8)) {
-                        JsonObject fileObj = JsonParser.parseReader(splitReader).getAsJsonObject();
+                        JsonObject fileObj = parseJsonWithComments(splitReader).getAsJsonObject();
                         // Split files wrap their content under the section key: {"chat": {...}}
                         if (fileObj.has(configName) && fileObj.get(configName).isJsonObject()) {
                             JsonObject section = fileObj.getAsJsonObject(configName);
@@ -1232,7 +1232,7 @@ public class ConfigManager {
 
             File file = ResourceUtil.getConfigFile(configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
-            JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonObject obj = parseJsonWithComments(reader).getAsJsonObject();
             configCache.put(configName, obj);
             return obj;
         } catch (IOException e) {
@@ -1250,6 +1250,25 @@ public class ConfigManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
     // private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    /**
+     * Parse a JSON file in "lenient" mode, which allows {@code //} single-line comments and
+     * {@code /* ... *\/} block comments in the file.  Comments are ignored by the parser; the
+     * resulting {@link JsonObject} contains only the actual data keys.
+     *
+     * <p>This is the sole entry-point for reading config files from disk or from JAR resources
+     * so that admins can annotate their config files with comments without breaking the loader.
+     *
+     * <p><strong>Note:</strong> When a config is written back (e.g. after a version merge) it is
+     * serialised through Gson's pretty-printer which does <em>not</em> emit comments.  Comments
+     * are therefore intentionally only present in the default/template copy (first install or
+     * JAR resource), not in files that have been through a round-trip write.
+     */
+    private static JsonObject parseJsonWithComments(java.io.Reader reader) throws IOException {
+        com.google.gson.stream.JsonReader jsonReader = new com.google.gson.stream.JsonReader(reader);
+        jsonReader.setLenient(true);
+        return JsonParser.parseReader(jsonReader).getAsJsonObject();
+    }
 
     // Thread-safe singleton
     private static class SingletonHolder {
@@ -1272,18 +1291,20 @@ public class ConfigManager {
     public static final String KITS_CONFIG = "kits.json";
     public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
     public static final String TABLIST_CONFIG = "tablist.json";
+    public static final String ANIMATIONS_CONFIG = "animations.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 20);
-        put(ECONOMY_CONFIG, 2);
-        put(PERMISSIONS_CONFIG, 5);
-        put(KITS_CONFIG, 1);
-        put(DISCORD_AUTH_CONFIG, 7);
-        put(TABLIST_CONFIG, 2);
+        put(MAIN_CONFIG, 22);          // v22 — migrated to // comment style
+        put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
+        put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
+        put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
+        put(DISCORD_AUTH_CONFIG, 8);   // v8  — migrated to // comment style
+        put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
+        put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
     }};
 
     private ConfigManager() {
@@ -1298,7 +1319,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG
         };
 
         // Check if split configs are enabled
@@ -1366,7 +1387,7 @@ public class ConfigManager {
         }
 
         try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
-            JsonObject onDisk = JsonParser.parseReader(reader).getAsJsonObject();
+            JsonObject onDisk = parseJsonWithComments(reader).getAsJsonObject();
 
             int currentVersion = 0;
             if (onDisk.has(CONFIG_VERSION_KEY)) {
@@ -1377,11 +1398,11 @@ public class ConfigManager {
                 LOGGER.warn("Config file {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
                     configName, currentVersion, expectedVersion);
 
-                // Load JAR template
+                // Load JAR template (may contain // comments — use lenient reader)
                 JsonObject jarTemplate = null;
                 try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
                     if (in != null) {
-                        jarTemplate = JsonParser.parseReader(
+                        jarTemplate = parseJsonWithComments(
                             new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
                     }
                 } catch (Exception e) {
@@ -1399,6 +1420,14 @@ public class ConfigManager {
                 // Deep-merge: add keys that exist in JAR but are missing on disk.
                 // Never overwrite existing user values.
                 boolean changed = mergeNewKeys(jarTemplate, onDisk);
+
+                // Strip legacy comment keys (xxx_comment, _doc_*, _step*, etc.)
+                // from the user's file as part of this upgrade.
+                boolean stripped = stripLegacyCommentKeys(onDisk);
+                if (stripped) {
+                    changed = true;
+                    LOGGER.info("Config file {}: removed legacy _comment/_doc keys (comment migration).", configName);
+                }
 
                 // Always bump the version so we don't re-run this on next start
                 onDisk.addProperty(CONFIG_VERSION_KEY, expectedVersion);
@@ -1449,6 +1478,45 @@ public class ConfigManager {
             // If key exists and isn't an object, leave the user's value alone
         }
         return changed;
+    }
+
+    /**
+     * Recursively remove legacy "comment" keys from a {@link JsonObject}.
+     *
+     * <p>A key is considered a legacy comment key if it:
+     * <ul>
+     *   <li>ends with {@code _comment}  (e.g. {@code currencySymbol_comment})</li>
+     *   <li>ends with {@code -description} (e.g. {@code chat-format-description})</li>
+     *   <li>starts with {@code _} <em>and</em> is not {@code _configVersion}
+     *       (catches {@code _comment}, {@code _doc_*}, {@code _step*}, {@code _how_*},
+     *        {@code _example}, {@code _role_*}, {@code _important}, etc.)</li>
+     * </ul>
+     *
+     * @return {@code true} if at least one key was removed
+     */
+    private boolean stripLegacyCommentKeys(com.google.gson.JsonObject obj) {
+        boolean changed = false;
+        List<String> toRemove = new ArrayList<>();
+        for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : obj.entrySet()) {
+            String key = entry.getKey();
+            if (isLegacyCommentKey(key)) {
+                toRemove.add(key);
+            } else if (entry.getValue().isJsonObject()) {
+                changed |= stripLegacyCommentKeys(entry.getValue().getAsJsonObject());
+            }
+        }
+        for (String key : toRemove) {
+            obj.remove(key);
+            changed = true;
+            LOGGER.debug("  - Removed legacy comment key: {}", key);
+        }
+        return changed;
+    }
+
+    private static boolean isLegacyCommentKey(String key) {
+        if ("_configVersion".equals(key)) return false; // keep the version field
+        // Pattern: ends with _comment, ends with -description, or starts with _ (doc/step/how/example...)
+        return key.endsWith("_comment") || key.endsWith("-description") || key.startsWith("_");
     }
 
     /**

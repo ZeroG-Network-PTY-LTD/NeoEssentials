@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.stream.Collectors;
+
 
 /**
  * External Permission Provider for integration with permission plugins like PermissionsEX.
@@ -51,7 +51,7 @@ public class ExternalPermissionProvider {
             
             cachedPermissions = allPermissions.stream()
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
                     
             lastCacheTime = now;
             
@@ -71,11 +71,13 @@ public class ExternalPermissionProvider {
      * @param prefix The prefix to filter by
      * @return List of permissions starting with the prefix
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public static List<String> getPermissionsStartingWith(String prefix) {
         try {
             return getAllNeoEssentialsPermissions().stream()
                     .filter(perm -> perm.toLowerCase().startsWith(prefix.toLowerCase()))
-                    .collect(Collectors.toList());
+                    .toList();
                     
         } catch (Exception e) {
             LOGGER.error("Failed to filter permissions for external plugin", e);
@@ -111,7 +113,7 @@ public class ExternalPermissionProvider {
                         String[] parts = perm.split("\\.");
                         return parts.length >= 2 && parts[1].equalsIgnoreCase(category);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
                     
         } catch (Exception e) {
             LOGGER.error("Failed to get permissions by category for external plugin", e);
@@ -187,6 +189,8 @@ public class ExternalPermissionProvider {
      * 
      * @return Formatted string for PermissionsEX import
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public static String exportForPermissionsEX() {
         StringBuilder sb = new StringBuilder();
         

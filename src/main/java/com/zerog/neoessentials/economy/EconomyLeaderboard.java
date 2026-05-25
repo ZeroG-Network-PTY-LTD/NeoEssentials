@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class EconomyLeaderboard {
     /**
@@ -20,7 +19,7 @@ public class EconomyLeaderboard {
         return allBalances.entrySet().stream()
                 .sorted(Map.Entry.<UUID, BigDecimal>comparingByValue().reversed())
                 .limit(topN)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

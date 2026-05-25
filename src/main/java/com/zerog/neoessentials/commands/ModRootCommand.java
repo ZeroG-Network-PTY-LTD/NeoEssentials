@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Main NeoEssentials mod command providing system management and command routing functionality.
@@ -179,7 +178,7 @@ public class ModRootCommand {
         CommandRegistry registry = CommandRegistry.getInstance();
         List<String> commandNames = registry.getAllCommandNames().stream()
             .sorted()
-            .collect(Collectors.toList());
+            .toList();
         
         return net.minecraft.commands.SharedSuggestionProvider.suggest(commandNames, builder);
     }

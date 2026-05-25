@@ -85,7 +85,7 @@ public class AfkManager {
     private double rotationThreshold = 5.0;
 
     // Configurable excluded commands for AFK activity tracking
-    private java.util.Set<String> excludedCommands = new java.util.HashSet<>(java.util.Arrays.asList(
+    private java.util.Set<String> excludedCommands = new java.util.HashSet<>(java.util.List.of(
         "afk", "list", "who", "tps", "ping", "help", "?"
     ));
     

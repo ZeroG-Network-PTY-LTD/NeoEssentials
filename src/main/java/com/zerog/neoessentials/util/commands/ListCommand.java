@@ -16,7 +16,6 @@ import com.zerog.neoessentials.util.PermissionValidator;
 import net.neoforged.fml.ModList;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Implements the /list command - Shows online players with advanced formatting
@@ -96,7 +95,7 @@ public class ListCommand {
         if (!canSeeVanished) {
             onlinePlayers = onlinePlayers.stream()
                 .filter(player -> !isVanished(player))
-                .collect(Collectors.toList());
+                .toList();
         }
 
         // Send header

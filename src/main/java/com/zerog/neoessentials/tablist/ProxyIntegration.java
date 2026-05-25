@@ -47,9 +47,11 @@ public class ProxyIntegration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyIntegration.class);
 
     /** BungeeCord plugin-messaging channel (modern ResourceLocation style). */
+    @SuppressWarnings("unused")
     public static final ResourceLocation BUNGEE_CHANNEL =
         ResourceLocation.fromNamespaceAndPath("bungeecord", "main");
     /** Legacy channel name sent in the REGISTER payload. */
+    @SuppressWarnings("unused")
     public static final String BUNGEE_CHANNEL_LEGACY = "BungeeCord";
 
     // ── Singleton ─────────────────────────────────────────────────────────────
@@ -137,6 +139,8 @@ public class ProxyIntegration {
      * The payload format mirrors the BungeeCord plugin-messaging protocol:
      * UTF sub-channel, then sub-channel-specific data.
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public void onPluginMessage(ServerPlayer player, byte[] data) {
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
@@ -150,7 +154,7 @@ public class ProxyIntegration {
                 case "GetServers" -> {
                     String[] servers = in.readUTF().split(", ");
                     knownServers.clear();
-                    knownServers.addAll(Arrays.asList(servers));
+                    Collections.addAll(knownServers, servers);
                     proxyDetected.set(true);
                     LOGGER.debug("ProxyIntegration: discovered servers — {}", Arrays.toString(servers));
                     // Now poll each server's player count
@@ -214,7 +218,7 @@ public class ProxyIntegration {
      * are received via the {@code onPluginMessage} callback and work independently of
      * this method.
      */
-    private void sendBungeeMessage(ServerPlayer player, String... parts) {
+    private void sendBungeeMessage(@SuppressWarnings("unused") ServerPlayer ignoredPlayer, String... parts) {
         LOGGER.debug("ProxyIntegration: sendBungeeMessage stub called (channel=bungeecord:main, parts={}) — " +
             "outbound BungeeCord messaging pending StreamCodec registration in a future build.", parts.length);
     }
@@ -228,7 +232,7 @@ public class ProxyIntegration {
     private static ServerPlayer getAnyPlayer(MinecraftServer server) {
         if (server == null) return null;
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
-        return players.isEmpty() ? null : players.get(0);
+        return players.isEmpty() ? null : players.getFirst();
     }
 
     private static JsonObject getTablistSection() {
@@ -273,7 +277,7 @@ public class ProxyIntegration {
     public List<String> getKnownServers() { return Collections.unmodifiableList(knownServers); }
 
     /** @return true if the tablist should include players across all network servers. */
-    public boolean isShowNetworkPlayers() { return showNetworkPlayers; }
+    @SuppressWarnings("unused") public boolean isShowNetworkPlayers() { return showNetworkPlayers; }
 
     /** @return per-server player count map snapshot. */
     public Map<String, Integer> getServerPlayerCounts() {

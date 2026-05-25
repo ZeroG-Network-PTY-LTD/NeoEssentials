@@ -243,7 +243,7 @@ public class TaskScheduler {
             throw new RuntimeException("No message specified");
         }
         
-        String message = commands.get(0);
+        String message = commands.getFirst();
         Component chatMessage = Component.literal(message);
         
         server.execute(() -> {

@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Ban system commands: /ban, /tempban, /banip, /unban, /unbanip, /banlist
@@ -31,7 +30,7 @@ public class BanCommand {
         return SharedSuggestionProvider.suggest(
             banManager.getAllPlayerBans().stream()
                 .map(ban -> ban.playerName)
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };
@@ -41,7 +40,7 @@ public class BanCommand {
         return SharedSuggestionProvider.suggest(
             banManager.getAllIPBans().stream()
                 .map(ban -> ban.ipAddress)
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };

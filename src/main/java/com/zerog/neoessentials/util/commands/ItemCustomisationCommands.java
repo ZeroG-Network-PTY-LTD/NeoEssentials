@@ -405,7 +405,7 @@ public class ItemCustomisationCommands {
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.remove"); })
             .then(Commands.argument("type", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    Arrays.asList("all","items","drops","mobs","animals","monsters",
+                    List.of("all","items","drops","mobs","animals","monsters",
                         "arrows","xp","paintings","boats","minecarts","tnt","boats"), b))
                 .executes(ctx -> executeRemove(ctx, StringArgumentType.getString(ctx, "type"), 200))
                 .then(Commands.argument("radius", IntegerArgumentType.integer(1, 10000))

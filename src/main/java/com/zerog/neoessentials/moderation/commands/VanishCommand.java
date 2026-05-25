@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Vanish commands: /vanish, /unvanish, /vanishlist
@@ -33,7 +32,7 @@ public class VanishCommand {
                 .map(uuid -> ctx.getSource().getServer().getPlayerList().getPlayer(uuid))
                 .filter(player -> player != null)
                 .map(player -> player.getName().getString())
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };

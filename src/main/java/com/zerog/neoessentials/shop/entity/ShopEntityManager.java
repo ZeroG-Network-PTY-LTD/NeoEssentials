@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Singleton manager for NPC shop persistence.
@@ -78,7 +77,7 @@ public class ShopEntityManager {
     public List<ShopEntityData> getByOwner(UUID ownerUUID) {
         return byShopId.values().stream()
                 .filter(d -> ownerUUID.equals(d.ownerUUID))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public int getShopCount() { return byShopId.size(); }

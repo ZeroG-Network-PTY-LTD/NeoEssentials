@@ -19,7 +19,6 @@ import com.zerog.neoessentials.util.InputValidator;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Jail commands: /jail, /unjail, /setjail, /jaillist, /jailinfo
@@ -32,7 +31,7 @@ public class JailCommand {
         return SharedSuggestionProvider.suggest(
             jailManager.getAllJailedPlayers().stream()
                 .map(jail -> jail.playerName)
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };
@@ -42,7 +41,7 @@ public class JailCommand {
         return SharedSuggestionProvider.suggest(
             jailManager.getAllJailLocations().stream()
                 .map(jail -> jail.name)
-                .collect(Collectors.toList()),
+                .toList(),
             builder
         );
     };
@@ -220,7 +219,7 @@ public class JailCommand {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.jail.no_locations"));
                 return 0;
             }
-            String jailName = locations.get(0).name;
+            String jailName = locations.getFirst().name;
             boolean ok = jailManager.jailPlayer(resolvedName, playerId, "Toggled by staff", getCommandSender(source), jailName, 0L);
             if (ok) {
                 final String name = resolvedName;

@@ -38,12 +38,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <h2>Placeholder reference</h2>
  * <pre>
- * Standard : {player} {displayname} {online} {max} {ping} {world} {tps} {time}
- *            {server_name} {x} {y} {z} {balance} {prefix} {suffix} {group}
- * BTLP-style: {network_online} {server_online:NAME} {current_server} {server_label}
- *             {rank_weight} {session_minutes} {session_hours}
- *             {level} {health} {max_health} {afk}
- * Decoration: {newline} {bar}
+     * Standard : {player} {displayname} {online} {max} {ping} {world} {tps} {time}
+     *            {server_name} {x} {y} {z} {balance} {prefix} {suffix} {group}
+     * BTLP-style: {network_online} {server_online:NAME} {current_server} {server_label}
+     *             {rank_weight} {session_minutes} {session_hours}
+     *             {level} {health} {max_health} {afk}
+     * Decoration: {newline} {bar}
+     * Animations: {animation:NAME}  — replaced with current frame from animations.json
  * </pre>
  *
  * References: TAB [1.7.x-1.21.x], BungeeTabListPlus, Simple TabList
@@ -190,11 +191,13 @@ public class TablistManager {
             ProxyIntegration.getInstance().loadConfig();
             FakePlayerManager.getInstance().loadConfig();
             TablistLayout.getInstance().loadConfig();
+            AnimationManager.getInstance().loadConfig();
 
             LOGGER.info("TablistManager loaded — {} header frame(s), {} footer frame(s), {} group override(s), " +
-                "refresh every {} ticks. independentMode={}, proxyEnabled={}.",
+                "refresh every {} ticks. independentMode={}, proxyEnabled={}, animations={}.",
                 headerFrames.size(), footerFrames.size(), groupHeaderFrames.size(), refreshIntervalTicks,
-                independentMode, ProxyIntegration.getInstance().isProxyEnabled());
+                independentMode, ProxyIntegration.getInstance().isProxyEnabled(),
+                AnimationManager.getInstance().getAnimationCount());
         } catch (Exception e) {
             LOGGER.error("Failed to load tablist config: {}", e.getMessage());
         }
@@ -203,6 +206,10 @@ public class TablistManager {
     // ── Tick ──────────────────────────────────────────────────────────────────
     public void onTick(MinecraftServer server) {
         if (!enabled) return;
+        // Tick animations on every call so frameDuration timing is accurate
+        // even when the tablist refresh interval is longer than a frame duration.
+        AnimationManager.getInstance().tick(System.currentTimeMillis());
+
         tickCounter++;
         if (tickCounter < refreshIntervalTicks) return;
         tickCounter = 0;
@@ -454,6 +461,9 @@ public class TablistManager {
 
         // Resolve dynamic {server_online:ServerName} tokens
         result = resolveServerOnlinePlaceholders(result, proxy);
+
+        // Resolve {animation:NAME} tokens — expands to the current animation frame
+        result = AnimationManager.getInstance().resolveAnimations(result);
 
         return result;
     }

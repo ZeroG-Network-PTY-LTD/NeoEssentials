@@ -12,7 +12,6 @@ import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.moderation.VanishManager;
 import com.zerog.neoessentials.chat.AfkManager;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implements the /realname command - Shows the real username of a player who has a nickname
@@ -101,10 +100,10 @@ public class RealnameCommand {
                 String cleanNickname = nickname.replaceAll("&[0-9a-fk-or]", "").toLowerCase();
                 return cleanNickname.equals(query.toLowerCase());
             })
-            .collect(Collectors.toList());
+            .toList();
         
         if (nicknameMatches.size() == 1) {
-            return showPlayerInfo(source, nicknameMatches.get(0), false);
+            return showPlayerInfo(source, nicknameMatches.getFirst(), false);
         } else if (nicknameMatches.size() > 1) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.realname.multiple_matches", query));
             
@@ -135,13 +134,13 @@ public class RealnameCommand {
                 
                 return false;
             })
-            .collect(Collectors.toList());
+            .toList();
         
         if (partialMatches.isEmpty()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.realname.not_found", query));
             return 0;
         } else if (partialMatches.size() == 1) {
-            return showPlayerInfo(source, partialMatches.get(0), false);
+            return showPlayerInfo(source, partialMatches.getFirst(), false);
         } else {
             // Multiple partial matches
             source.sendFailure(MessageUtil.error("commands.neoessentials.realname.multiple_matches", query));

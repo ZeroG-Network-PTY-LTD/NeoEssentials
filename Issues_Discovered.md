@@ -2,9 +2,220 @@
 ---
 #  Issues That Were Discovered
 
+- When you want to set MOTD "\n" formatting does not allow new lines, it just shows "\n" in the MOTD.
+    - example MOTD: 
+    - **{
+      "motd": "&6Welcome, &f{player}&6!\n&e- &6Do &c[/kit Guide] &6for the starter guide!\n&6Type &c[/list] &6to see who else is online.\n&6Players online: &c{online} &6- World time: &c{time}\n&6-------------------&f★&6-------------------\n&e- &6Type &c[/rules] &6for a list of more commands! &e-",
+      "author": "Admin",
+      "timestamp": "05/21/2026 15:21"
+      }**
+---
+
+- Bloated Config comments to be commented out with '//' and '/* */' instead of being part of the actual config file, this is to make the config file cleaner and easier to read, and also to make it easier for server admins to find the actual config options without having to scroll through a lot of comments.
 ---
 
 # ✅ Issues That Were Fixed
+
+## ✨ Feature — Build #158 — 2026-05-25
+
+**Named Animation System — `{animation:NAME}` placeholder**
+
+- Tablist had no support for named, reusable text animations defined in a dedicated config file.
+- Requested: an `animations.json` file containing named animations (each with `frames[]` and `frameDuration`), with a universal `{animation:NAME}` placeholder usable anywhere in the mod.
+- **Implemented:**
+  - `AnimationManager.java` — new singleton that loads `animations.json`, ticks frame indices on every server tick using wall-clock ms, and resolves `{animation:NAME}` tokens.
+  - `animations.json` — new default config bundled with the mod; includes `Rainbow`, `PulseStar`, `StatusDot`, `LoadingDots`, `GoldBanner`, `Spinner`, `HeartBeat`.
+  - `TablistManager` — `AnimationManager.tick()` called on every server tick (before refresh-rate guard); `resolveAnimations()` called at end of `applyPlaceholders()`.
+  - `TablistCommand` — new `/tablist animations list` sub-command.
+  - `ConfigManager` — `ANIMATIONS_CONFIG = "animations.json"` registered as a version-tracked config (v1).
+  - `tablist.json` `_doc_header` updated to document `{animation:NAME}`; `_configVersion` bumped `3 → 4`.
+
+---
+
+## 🐛 Bug Fix — Build #157 — 2026-05-25
+
+**`TeleportRequestManager.java` — TPA confirmation message showed `"to you"` instead of the expiry countdown**
+
+- `sendTeleportRequest()` computed a `typeText` string (`"to you"` for `/tpa`, `"you to them"` for `/tpahere`) to describe the request direction, then incorrectly passed it as argument `{1}` of the **sender's** confirmation message `"commands.neoessentials.teleport.request.sent"` (`"Teleport request sent to {0}. Expires in {1} second(s)."`).
+- Result: `"Teleport request sent to Xtron. Expires in to you second(s)."` — `"to you"` appeared where the seconds countdown should be.
+- **Root cause**: `{1}` in the `sent` message expects the expiry time (an integer), but `typeText` (a string) was passed instead. `typeText` should only be used in the **target-side** `received` message (`"{0} wants {1}. Use /tpaccept or /tpdeny."`).
+- **Fix**: `sent` message now receives `requestTimeoutSeconds` as `{1}`; `typeText` is kept only for the `received` message.
+- **Bonus**: Aligned `typeText` values from `"to you"` / `"you to them"` to `"to teleport to you"` / `"you to teleport to them"` to match the phrasing already used in `getPendingRequestInfo()`.
+
+---
+
+## 🧹 Code Quality Pass — Build #156 — 2026-05-25
+
+**`Arrays.asList` → `List.of` / `Set.of` sweep**
+
+- **`ConfigSplitter.java`** — `FILE_SECTIONS_MAP` entry for `main.json`: `Arrays.asList(...)` → `List.of(...)`.
+- **`ProxyIntegration.java`** — Runtime `knownServers.addAll(Arrays.asList(servers))` → `Collections.addAll(knownServers, servers)`.
+- **`PermissionsCommand.java`** — All 15+ inline `java.util.Arrays.asList(...)` → `java.util.List.of(...)` (tab-completion lists).
+- **`FunCommands.java`** — Inline colour list `Arrays.asList(...)` → `List.of(...)`; removed now-unused `import java.util.Arrays`.
+- **`ItemCustomisationCommands.java`** — Inline `Arrays.asList(...)` → `List.of(...)`.
+- **`UtilityCommands.java`** — Static final + inline `Arrays.asList(...)` → `List.of(...)`.
+- **`ServerAdminCommands.java`** — `private static final TIME_NAMES = Arrays.asList(...)` → `List.of(...)`.
+- **`WorldInteractionCommands.java`** — Two static final lists: `Arrays.asList(...)` → `List.of(...)`; removed `import java.util.Arrays`.
+- **`DashboardFileManager.java`** — `private static final DASHBOARD_FILES`: `Arrays.asList(...)` → `List.of(...)`.
+- **`AuthHandler.java`** — `roles.addAll(Arrays.asList("Admin", "Moderator", "Staff"))` → `Collections.addAll(roles, "Admin", "Moderator", "Staff")`; removed `import java.util.Arrays`.
+- **`CommandExecutionHandler.java`** — `new HashSet<>(Arrays.asList(...))` static final set → `Set.of(...)`.
+- **`FileManagementHandler.java`** — `ALLOWED_PATHS`: `Arrays.asList(...)` → `List.of(...)`; `EDITABLE_EXTENSIONS`: `new HashSet<>(Arrays.asList(...))` → `Set.of(...)`.
+- **`AfkManager.java`** — `new HashSet<>(java.util.Arrays.asList(...))` → `new HashSet<>(java.util.List.of(...))`.
+
+**`.get(0)` → `.getFirst()` modernisation (Java 21)**
+
+- **`WarnManager.java`** — `entry.getValue().get(0).getTargetName()` → `.getFirst()`.
+- **`JailCommand.java`** — `locations.get(0).name` → `.getFirst()`.
+- **`NpcShopCommand.java`** — `nearby.get(0)` → `.getFirst()`.
+- **`RealnameCommand.java`** — Two `matches.get(0)` → `.getFirst()`.
+- **`DiscordPermissionSync.java`** — `permissions.get(0)` → `.getFirst()`.
+- **`ProxyIntegration.java`** — `players.get(0)` → `.getFirst()` in `getAnyPlayer()`.
+- **`TaskScheduler.java`** — `commands.get(0)` → `.getFirst()`.
+
+**`ProxyIntegration.java` additional fixes**
+
+- Added `@SuppressWarnings("unused")` to `BUNGEE_CHANNEL` and `BUNGEE_CHANNEL_LEGACY` (public API constants, referenced externally).
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to `onPluginMessage()` (registered via NeoForge plugin-messaging API, not called from Java code directly).
+- Renamed unused `player` param in stub `sendBungeeMessage()` to `ignoredPlayer`.
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to `isShowNetworkPlayers()` (public API).
+
+**`CommandExecutionHandler.java` additional fixes**
+
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to the class — handler is registered by the web-dashboard init code, not instantiated via normal Java call chain visible to IntelliJ.
+- Added `@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")` to `commandOutputs` — the map is written for future use; IntelliJ "Contents of collection ... are updated but never queried".
+- `commandHistory.remove(0)` → `commandHistory.removeFirst()` (Java 21).
+
+**`FileManagementHandler.java` fix**
+
+- Added `//noinspection resource` before `p.serverLevel()` call — `ServerLevel` implements `AutoCloseable` but its lifecycle is managed entirely by the Minecraft server; closing it manually would be incorrect.
+
+---
+
+## 🧹 Code Quality Pass — Build #155 — 2026-05-25
+
+**PermissionScanner.java**
+- Replaced `Arrays.asList()` with `List.of()` for `PERMISSION_PATTERNS` and `DYNAMIC_PATTERNS` static final fields — `List.of()` is unmodifiable and null-hostile, correctly expressing immutable intent.
+- Removed unused `import java.util.Arrays`.
+- Removed always-true `if (sourcePath != null)` null-check — `Paths.get(URI)` never returns null; IDE reported "Condition is always true".
+- Removed `throws IOException` from `scanJarFile()` signature — the entire method body is wrapped in `catch (Exception e)`, so `IOException` is never thrown to callers; IDE reported "Checked exception never thrown".
+- Fixed `peek()` optimization warning — replaced `stream.peek(this::scanClassFile).count()` with `.toList()` + `forEach()`. In Java 21, the terminal `count()` operation may short-circuit intermediate `peek()` calls; collecting first guarantees all elements are processed.
+- Renamed unused `source` parameter in `addDiscoveredPermission()` to `ignoredSource`.
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to `getFilePermissionMap()`, `generateDynamicPermissions()`, and `exportDiscoveredPermissions()` (intentional public API surface).
+
+**ExternalPermissionProvider.java**
+- `collect(Collectors.toList())` → `.toList()` (×3); removed `import java.util.stream.Collectors`.
+- Added `//noinspection unused` + `@SuppressWarnings("unused")` to `getPermissionsStartingWith()` and `exportForPermissionsEX()` (intentional public API surface).
+
+**PermissionValidator.java**
+- Removed unused `import java.util.stream.Collectors` (no `Collectors.` usage in file).
+
+**PermissionManager.java**
+- Inline `collect(java.util.stream.Collectors.toList())` → `.toList()`.
+
+**BaltopCommand.java**
+- Removed unused `import java.util.stream.Collectors`.
+
+**ModerationManager.java / WarnManager.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` imports.
+
+**BanCommand.java / FreezeCommand.java / JailCommand.java / VanishCommand.java (moderation/commands)**
+- `collect(Collectors.toList())` → `.toList()` (×2 each for Ban/Freeze/Jail); removed `Collectors` imports.
+
+**ModRootCommand.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**DocumentationManager.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**EconomyLeaderboard.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**KitManager.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**ListKitsCommand.java**
+- `collect(Collectors.toList())` → `.toList()`; `Collectors` import kept (`Collectors.toSet()` still used).
+
+**ShopEntityManager.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+**HelpCommand.java / ListCommand.java / RealnameCommand.java / ServerAdminCommands.java / UtilityCommands.java**
+- `collect(Collectors.toList())` → `.toList()` (multiple instances); removed `Collectors` imports.
+
+**webdashboard/security/AuthenticationManager.java**
+- `collect(Collectors.toList())` → `.toList()`; removed `Collectors` import.
+
+---
+
+## 🧹 Code Quality Pass — Build #154 — 2026-05-20
+
+**IgnoreManager.java**
+- Removed always-false `IGNORE_FILE == null` check (static final field initialised at class-load, never null). `||` branch was dead code — IDE reported "Condition 'IGNORE_FILE == null' is always 'false'".
+- Fixed: `File.mkdirs()` result silently ignored in `save()`. Now logs a WARN if parent directory creation fails.
+- Added `@SuppressWarnings("unused")` to `getIgnoreList()` (intentional public API).
+- Renamed `cleanupPlayer(ServerPlayer player)` unused-param to `ignoredPlayer` (body is intentionally empty by design).
+
+**MuteManager.java**
+- Removed always-false `MUTE_FILE == null` check — same pattern as IgnoreManager.
+- Fixed: `File.mkdirs()` result silently ignored in `save()`.
+- Removed dead `mute(ServerPlayer sender, String targetName)` and `unmute(ServerPlayer sender, String targetName)` overloads — `sender` was accepted but never read; callers now use `mute(String)` / `unmute(String)` directly.
+- Added `@SuppressWarnings("unused")` to `getMuteExpiry()` (intentional public API).
+
+**MuteCommand.java / UnmuteCommand.java**
+- Updated callers to drop the unused `sender` argument and call `MuteManager.mute(targetName)` / `MuteManager.unmute(targetName)` directly.
+
+**MessageUtil.java**
+- Replaced `e.printStackTrace()` with `LOGGER.error(...)` in `loadCustomLanguageFile()` — stack traces should always go through SLF4J.
+- Merged identical `FileNotFoundException` and `Exception` catch branches into a single `Exception` catch.
+- Fixed: `File.delete()` result ignored in `deleteDirectoryRecursively()` — now logs a WARN on failure.
+- Removed unused `import java.io.FileNotFoundException` (no longer referenced after catch merge).
+- Removed dead private `getLanguageVersion(Map)` method (never called).
+- Removed deprecated dead private `escapeNamedPlaceholders(String)` method (`@Deprecated`, never called).
+- Added `@SuppressWarnings("unused")` to intentional API-surface public methods: `getDebugInfo`, `clickableSuggestion`, `balanceComponent`, `playerComponent`, `permissionComponent`, `progressBar`, `loadAllCustomLanguages`.
+
+**PlayerChatFormatManager.java**
+- Fixed: `File.mkdirs()` result ignored in `save()` — now logs WARN on failure.
+- Added `@SuppressWarnings("unused")` to `hasFormat()`.
+
+**ShopManager.java**
+- Modernised `collect(Collectors.toList())` → `.toList()` (Java 21) in both `removeShopsByOwner()` and `getShopsByOwner()`.
+- Removed now-unused `import java.util.stream.Collectors`.
+- Added `@SuppressWarnings("unused")` to `removeShopsByOwner()`.
+
+**PlayerJoinQuitHandler.java**
+- Fixed: `File.mkdirs()` result ignored — now logs WARN.
+- Removed always-true `if (config != null)` dead-code guard (config was already used at line 57 without NPE, so the check at line 103 was redundant).
+- Fixed: `player.getServer().getPlayerList()` called without null-checking `getServer()` at both join and quit broadcast paths (lines 152 and 210). While `ServerPlayer.getServer()` is rarely null, IntelliJ marks it `@Nullable`. Now guarded with `var server = player.getServer(); if (server != null) { ... }`.
+
+**LocalizationManager.java**
+- Fixed resource leak: `Files.list(langDirectory)` in `loadDashboardTranslations()` used without `try`-with-resources. `DirectoryStream<Path>` is `Closeable` — if `forEach` threw, the stream would never be closed. Wrapped in `try (var dirStream = Files.list(...))`.
+- Added `@SuppressWarnings("unused")` to `translate(key, language, args)` and `getAllTranslations()`.
+- Added `isLanguageUnsupported(String)` convenience inverse method so every call site that previously used `!isLanguageSupported(...)` can use the clearer positive form.
+
+**TranslationHandler.java**
+- Updated both `!isLanguageSupported(language)` call sites to use the new `isLanguageUnsupported(language)`.
+
+**TaskManager.java**
+- `history.add(0, execution)` → `history.addFirst(execution)` (Java 21 `Deque` API).
+- `history.remove(history.size() - 1)` → `history.removeLast()`.
+- Simplified time-range check: `if (t < start || t > end) return false; ... return true;` → `return t >= start && t <= end;`.
+
+**BanManager.java**
+- `server.getProfileCache().get(uuid)` returned an `Optional`; code did `.isPresent()` then `.get()` — refactored to `.orElse(null)` to avoid the IDE NPE warning on `Optional.get()`.
+- Removed always-true ternary null checks on `entry.getReason()` and `entry.getSource()` in vanilla-ban import path (both fields are set by `UserBanListEntry` constructor and can't be null at that point).
+
+**Web Dashboard — HTML Accessibility (`for` / `aria-label`)**
+- `index.html` — Changed `href="#players"` / `href="#performance"` / `href="#worlds"` / `href="#events"` to `href="#"` (navigation is JS-driven via `data-page`; unresolvable anchors caused IDE warnings); added `aria-label` to `#broadcastInput`.
+- `shop.html` — Added `aria-label` to `#filterInput` and `#typeFilter`.
+- `permissions.html` — Added `aria-label` to `#userSearchInput`.
+- `kits.html` — Added `aria-label` to `#kitSearch`.
+- `moderation.html` — Added `aria-label` to `#warnSearch`; added `for` attributes to ban-form labels (`banTarget`, `banName`, `banReason`, `banType`, `banDuration`).
+- `users.html` — Added `for` to create-user form labels; added `aria-label` to modal `#roleSelect` and `#pwInput`.
+- `cloud.html` — Added `for` to Dropbox and Google Drive config labels.
+- `discord.html` — Added `for` to OAuth2 config labels (`cfgDefaultRole`, `cfgClientId`, `cfgClientSecret`, `cfgRedirectUri`).
+- `holograms.html` — Added `aria-label` to `#holoSearch`; added `for` to all Create-modal and Edit-modal labels.
+
+---
 
 ## ✨ Bug Hunt — Build #147 — 2026-05-19
 

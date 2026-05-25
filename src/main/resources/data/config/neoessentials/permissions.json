@@ -1,7 +1,16 @@
 {
-  "_configVersion": 6,
-  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 7,
+
+  /* ================================================================
+     NeoEssentials — Permissions  (permissions.json)
+     Manage groups, prefixes, suffixes, and permission nodes here.
+     Changes take effect after /permissions reload.
+  ================================================================ */
+
+  // The group assigned to players with no explicit group
   "defaultGroup": "default",
+
   "groups": [
     {
       "name": "default",

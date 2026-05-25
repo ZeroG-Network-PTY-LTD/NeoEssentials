@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +31,7 @@ public class PermissionScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionScanner.class);
     
     // Regex patterns to find permission nodes in code
-    private static final List<Pattern> PERMISSION_PATTERNS = Arrays.asList(
+    private static final List<Pattern> PERMISSION_PATTERNS = List.of(
         // Direct string literals: "neoessentials.something"
         Pattern.compile("\"(neoessentials\\.[a-z0-9._-]+)\"", Pattern.CASE_INSENSITIVE),
         
@@ -53,7 +52,7 @@ public class PermissionScanner {
     );
     
     // Additional patterns for dynamic permissions (like kit permissions)
-    private static final List<Pattern> DYNAMIC_PATTERNS = Arrays.asList(
+    private static final List<Pattern> DYNAMIC_PATTERNS = List.of(
         // Pattern for kit permission generation: "neoessentials.kits." + kitName
         Pattern.compile("\"neoessentials\\.kits\\.\"\\s*\\+\\s*([a-zA-Z0-9_]+)", Pattern.CASE_INSENSITIVE),
         
@@ -105,19 +104,12 @@ public class PermissionScanner {
             } else {
                 // Development environment - scan source files
                 Path sourcePath = Paths.get(sourceUri);
-                
-                // Handle null or invalid paths gracefully
-                if (sourcePath != null) {
-                    Path rootPath = sourcePath.getParent();
-                    if (rootPath != null) {
-                        LOGGER.debug("Detected development environment: {}", rootPath);
-                        scanSourceDirectory(rootPath);
-                    } else {
-                        LOGGER.debug("Could not determine root path, using fallback discovery");
-                        generateKnownPermissions();
-                    }
+                Path rootPath = sourcePath.getParent();
+                if (rootPath != null) {
+                    LOGGER.debug("Detected development environment: {}", rootPath);
+                    scanSourceDirectory(rootPath);
                 } else {
-                    LOGGER.debug("Source path is null, using fallback discovery");
+                    LOGGER.debug("Could not determine root path, using fallback discovery");
                     generateKnownPermissions();
                 }
             }
@@ -164,20 +156,20 @@ public class PermissionScanner {
     /**
      * Scan JAR file for Java classes
      */
-    private void scanJarFile(URI jarUri) throws IOException {
+    private void scanJarFile(URI jarUri) {
         LOGGER.debug("Attempting to scan JAR file: {}", jarUri);
         
         try (FileSystem jarFs = FileSystems.newFileSystem(jarUri, Collections.emptyMap())) {
             Path jarRoot = jarFs.getPath("/");
             
             try (Stream<Path> paths = Files.walk(jarRoot)) {
-                long classCount = paths.filter(path -> path.toString().endsWith(".class"))
+                // Collect to list first so forEach processes all elements eagerly
+                var classFiles = paths.filter(path -> path.toString().endsWith(".class"))
                      .filter(path -> path.toString().contains("neoessentials"))
                      .peek(path -> LOGGER.debug("Scanning class file: {}", path))
-                     .peek(this::scanClassFile)
-                     .count();
-                     
-                LOGGER.debug("Scanned {} class files from JAR", classCount);
+                     .toList();
+                classFiles.forEach(this::scanClassFile);
+                LOGGER.debug("Scanned {} class files from JAR", classFiles.size());
             }
         } catch (Exception e) {
             LOGGER.warn("Failed to scan JAR file: {}. Error: {}", jarUri, e.getMessage());
@@ -305,6 +297,8 @@ public class PermissionScanner {
     /**
      * Get permissions by file
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public Map<String, Set<String>> getFilePermissionMap() {
         return new HashMap<>(filePermissionMap);
     }
@@ -330,6 +324,8 @@ public class PermissionScanner {
      * Generate expanded permissions for dynamic prefixes
      * This can be used to generate kit permissions, etc.
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public Set<String> generateDynamicPermissions(Set<String> dynamicValues) {
         Set<String> generated = new HashSet<>();
         
@@ -372,6 +368,8 @@ public class PermissionScanner {
     /**
      * Export all discovered permissions to a list (for external use)
      */
+    //noinspection unused
+    @SuppressWarnings("unused")
     public List<String> exportDiscoveredPermissions() {
         List<String> export = new ArrayList<>();
         export.add("# Auto-Discovered NeoEssentials Permissions");
@@ -495,7 +493,7 @@ public class PermissionScanner {
     /**
      * Helper method to add discovered permissions
      */
-    private void addDiscoveredPermission(String permission, String source) {
+    private void addDiscoveredPermission(String permission, String ignoredSource) {
         if (isValidPermission(permission)) {
             discoveredPermissions.add(permission);
             LOGGER.debug("Added fallback permission: {}", permission);

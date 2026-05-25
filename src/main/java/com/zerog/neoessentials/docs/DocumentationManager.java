@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Manages built-in documentation for the NeoEssentials dashboard.
@@ -1095,7 +1094,7 @@ public class DocumentationManager {
                     faq.answer.toLowerCase().contains(lowerQuery) ||
                     faq.tags.stream().anyMatch(tag -> tag.toLowerCase().contains(lowerQuery))
                 )
-                .collect(Collectors.toList());
+                .toList();
     }
     
     public List<VideoTutorial> getAllVideoTutorials() {

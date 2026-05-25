@@ -21,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,7 +38,7 @@ public class WorldInteractionCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldInteractionCommands.class);
 
     /** Projectile type names → NeoForge EntityType */
-    private static final List<String> PROJECTILE_TYPES = Arrays.asList(
+    private static final List<String> PROJECTILE_TYPES = List.of(
         "fireball", "small", "large", "arrow", "skull", "egg",
         "snowball", "expbottle", "dragon", "trident", "windcharge"
     );
@@ -173,7 +172,7 @@ public class WorldInteractionCommands {
 
     // ── /tree <type> / /bigtree ───────────────────────────────────────────────
     // Essentials: Commandtree — grow a tree at the looked-at block.
-    private static final List<String> TREE_TYPES = Arrays.asList(
+    private static final List<String> TREE_TYPES = List.of(
         "oak", "birch", "spruce", "jungle", "acacia", "darkoak",
         "mangrove", "cherry", "azalea", "bigoak", "mega_spruce", "mega_jungle"
     );

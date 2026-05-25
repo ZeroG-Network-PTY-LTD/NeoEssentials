@@ -14,7 +14,6 @@ import java.nio.file.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Manages server bans and whitelist entries.
@@ -140,7 +139,7 @@ public class ModerationManager {
         return bans.values().stream()
             .filter(BanEntry::isActive)
             .filter(ban -> !ban.isExpired())
-            .collect(Collectors.toList());
+            .toList();
     }
     
     /**
@@ -193,7 +192,7 @@ public class ModerationManager {
         return bans.values().stream()
             .filter(ban -> ban.getTarget().equals(target))
             .sorted(Comparator.comparing(BanEntry::getBannedAt).reversed())
-            .collect(Collectors.toList());
+            .toList();
     }
     
     /**

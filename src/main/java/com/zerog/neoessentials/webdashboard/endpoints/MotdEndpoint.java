@@ -240,13 +240,18 @@ public class MotdEndpoint implements HttpHandler {
         if (server == null) return error("Server is not available");
 
         MotdManager.MotdProfile p = mgr.getActiveProfile();
-        net.minecraft.network.chat.Component motdComp =
-                net.minecraft.network.chat.Component.literal(p.motd.replace("&", "§"));
 
         int sent = 0;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[MOTD]"));
-            player.sendSystemMessage(motdComp);
+            for (net.minecraft.network.chat.Component line :
+                    com.zerog.neoessentials.util.commands.MotdCommand.buildMotdLines(p.motd, player)) {
+                player.sendSystemMessage(line);
+            }
+            if (!p.timestamp.isEmpty()) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§7Set by §f" + p.author + " §7on §f" + p.timestamp));
+            }
             sent++;
         }
 

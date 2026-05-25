@@ -29,7 +29,6 @@ import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -92,7 +91,7 @@ public class FunCommands {
             .then(Commands.literal("color")
                 .then(Commands.argument("options", StringArgumentType.greedyString())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                        Arrays.asList("FF0000", "00FF00", "0000FF", "FFFF00", "FF00FF", "00FFFF",
+                        List.of("FF0000", "00FF00", "0000FF", "FFFF00", "FF00FF", "00FFFF",
                             "FFFFFF", "000000", "FF8800", "8800FF"), b))
                     .executes(ctx -> executeFireworkColor(ctx, StringArgumentType.getString(ctx, "options")))
                 )

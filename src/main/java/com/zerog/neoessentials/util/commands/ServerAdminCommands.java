@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -43,7 +42,7 @@ public class ServerAdminCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerAdminCommands.class);
 
     // Named time values matching Essentials
-    private static final List<String> TIME_NAMES = Arrays.asList(
+    private static final List<String> TIME_NAMES = List.of(
         "sunrise", "day", "morning", "noon", "afternoon", "sunset", "night", "midnight"
     );
 
@@ -503,7 +502,7 @@ public class ServerAdminCommands {
             .then(Commands.argument("dimension", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     StreamSupport.stream(ctx.getSource().getServer().getAllLevels().spliterator(), false)
-                        .map(l -> l.dimension().location().getPath()).collect(Collectors.toList()), b))
+                        .map(l -> l.dimension().location().getPath()).toList(), b))
                 .executes(ctx -> executeWorld(ctx, StringArgumentType.getString(ctx, "dimension"), null))
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
@@ -552,7 +551,7 @@ public class ServerAdminCommands {
                 || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.spawner"))
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(ResourceLocation::getPath).toList(), b))
                 .executes(ctx -> executeSpawner(ctx, StringArgumentType.getString(ctx, "mob")))
             )
         );
@@ -603,7 +602,7 @@ public class ServerAdminCommands {
             .executes(ctx -> executeRecipe(ctx, null))
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::getPath).collect(Collectors.toList()), b))
+                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::getPath).toList(), b))
                 .executes(ctx -> executeRecipe(ctx, StringArgumentType.getString(ctx, "item")))
             )
         );

@@ -137,6 +137,7 @@ public class MuteManager {
      * Returns the expiry timestamp (ms) for a muted player, or -1 if not muted,
      * or 0 if permanently muted.
      */
+    //noinspection unused
     @SuppressWarnings("unused")
     public static long getMuteExpiry(String playerName) {
         Long expireTime = mutedPlayers.get(playerName.toLowerCase());

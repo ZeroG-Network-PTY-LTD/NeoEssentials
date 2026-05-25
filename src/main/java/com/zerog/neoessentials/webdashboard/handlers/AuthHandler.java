@@ -370,7 +370,7 @@ public class AuthHandler implements HttpHandler {
         
         // Default roles if not configured
         if (roles.isEmpty()) {
-            roles.addAll(Arrays.asList("Admin", "Moderator", "Staff"));
+            Collections.addAll(roles, "Admin", "Moderator", "Staff");
         }
         
         return roles;

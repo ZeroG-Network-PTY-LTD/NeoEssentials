@@ -132,6 +132,7 @@ public class PlayerChatFormatManager {
     }
 
     /** @return {@code true} if a per-player format override exists */
+    //noinspection unused
     @SuppressWarnings("unused")
     public boolean hasFormat(UUID playerUUID) {
         return playerFormats.containsKey(playerUUID);

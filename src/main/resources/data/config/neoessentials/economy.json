@@ -1,23 +1,43 @@
 {
-  "_configVersion": 2,
-  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 3,
+
+  /* ================================================================
+     NeoEssentials — Economy Database  (economy.json)
+  ================================================================ */
+
   "enabled": true,
-  "startingBalance": 100.0,
+  // Symbol shown before money amounts (e.g. "$100.00")
   "currencySymbol": "$",
+  // Singular currency name shown in messages
   "currencyName": "coins",
+  // Plural currency name
   "currencyNamePlural": "coins",
+  // Maximum balance a player can hold (999999999.99 = ~1 billion)
   "maxBalance": 999999999.99,
+  // Global tax percentage on all transfers (0.0 = no tax)
   "taxPercentage": 0.0,
+  // Allow player balances to go negative
   "allowNegativeBalances": false,
+  // Java format string for displaying balances (%.2f = 2 decimal places)
   "balanceFormat": "%.2f",
+  // Log every transaction to server logs
   "logTransactions": true,
+  // Maximum number of transactions kept per player for /history
   "transactionHistoryLimit": 50,
+  // Seconds between automatic economy data backups (300 = 5 minutes)
   "backupInterval": 300,
+  // Seconds between auto-saves of the economy database to disk
   "autoSaveInterval": 60,
+  // Maximum amount that can be sent in a single /pay transfer
   "maxTransferAmount": 10000.0,
+  // Default state of /paytoggle (true = payments enabled on join)
   "paytoggleDefault": true,
+  // Caffeine cache maximum size for in-memory balance lookups
   "cacheMaximumSize": 10000,
+  // Minutes after last access before a cache entry expires
   "cacheExpireAfterAccessMinutes": 60,
+  // Remove economy accounts for players inactive longer than inactiveAccountCleanupDays
   "cleanupInactiveAccounts": true,
   "inactiveAccountCleanupDays": 30
 }

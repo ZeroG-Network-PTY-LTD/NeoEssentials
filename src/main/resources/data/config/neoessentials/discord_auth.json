@@ -1,82 +1,92 @@
 {
-  "_configVersion": 7,
-  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
-  "_comment": "Discord Authentication Configuration - OAuth2 login button AND role-based Minecraft permissions",
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 8,
 
+  /* ================================================================
+     Discord Authentication Configuration
+     OAuth2 login button  +  role-based Minecraft permissions
+  ================================================================ */
+
+  // Enable/disable Discord authentication. Shows the 'Login with Discord' button on the dashboard.
+  // Works standalone with OAuth2 — Simple Discord Link mod is optional.
   "enabled": false,
-  "enabled_comment": "Enable/disable Discord authentication. Set to true to show the 'Login with Discord' button on the dashboard. Works standalone with OAuth2 — Simple Discord Link mod is optional.",
 
+  /* OAuth2 settings for the 'Login with Discord' button.
+   * Create an application at https://discord.com/developers/applications:
+   *  1. Open your application → OAuth2 → General: copy Client ID and Client Secret
+   *  2. OAuth2 → Redirects: add  http://YOUR_SERVER_IP:YOUR_DASHBOARD_PORT/api/auth/discord/callback
+   *  3. Paste the values below, OR configure them from Dashboard → Discord Integration (admin only)
+   */
   "oauth2": {
-    "_comment": "Discord OAuth2 settings for the 'Login with Discord' button. Create an application at https://discord.com/developers/applications",
-    "_step1": "Go to https://discord.com/developers/applications and create or open your application",
-    "_step2": "Under OAuth2 > General, copy your Client ID and Client Secret",
-    "_step3": "Under OAuth2 > Redirects, add: http://YOUR_SERVER_IP:YOUR_DASHBOARD_PORT/api/auth/discord/callback",
-    "_step4": "Paste those values below — OR configure them from the Dashboard > Discord Integration page (admin only)",
+    // Discord Application Client ID (visible on the OAuth2 General page)
     "clientId": "",
-    "clientId_comment": "Discord Application Client ID (visible on the OAuth2 General page)",
+    // Discord Application Client Secret — keep this private, never share it
     "clientSecret": "",
-    "clientSecret_comment": "Discord Application Client Secret — keep this private, never share it",
+    // Must exactly match a redirect URI registered in your Discord application
     "redirectUri": "http://localhost:8080/api/auth/discord/callback",
-    "redirectUri_comment": "Must exactly match one of the redirect URIs registered in your Discord application. Use your public IP/domain and dashboard port.",
-    "scopes": "identify guilds.members.read",
-    "scopes_comment": "OAuth2 scopes to request. 'identify' = basic user info. 'guilds.members.read' = server roles (required for role mapping). Do not change unless you know what you are doing."
+    // OAuth2 scopes. Do not change unless you know what you are doing.
+    // 'identify' = basic user info, 'guilds.members.read' = server roles (required for role mapping)
+    "scopes": "identify guilds.members.read"
   },
 
+  // When true, only players linked via the Discord bot (Simple Discord Link) can use Discord login.
+  // Set false (recommended) when SDLink is not installed.
   "requireLinkedAccount": false,
-  "requireLinkedAccount_comment": "When true, only players who linked their Minecraft account via the Discord bot (Simple Discord Link) can use Discord login. Set to false to allow any Discord user to log in (recommended when SDLink is not installed).",
 
+  // Automatically create dashboard accounts for Discord users on first login (recommended: true)
   "allowAutoRegistration": true,
-  "allowAutoRegistration_comment": "Automatically create dashboard accounts for Discord users on first login (recommended: true)",
 
+  // Default role for users with no Discord role mapping (ADMIN | MODERATOR | VIEWER)
   "defaultRole": "VIEWER",
-  "defaultRole_comment": "Default role for users with no Discord role mapping (ADMIN, MODERATOR, or VIEWER)",
-  
+
+  /* Map Discord role IDs to Dashboard roles.
+   * Use role IDs (right-click a role in Discord → Copy ID) NOT role names.
+   * Requires Discord Developer Mode: Discord Settings → Advanced → Developer Mode.
+   */
   "roleMapping": {
-    "_comment": "Map Discord role IDs to Dashboard roles. Use role IDs (right-click role in Discord > Copy ID) NOT names. Requires Discord Developer Mode enabled.",
-    "_example": "Discord Role ID -> ADMIN, MODERATOR, or VIEWER",
-    "_how_to_get_id": "Enable Developer Mode in Discord Settings > Advanced > Developer Mode. Then right-click any role and select 'Copy ID'",
     "709352979668533341": "ADMIN",
     "709353103530655857": "MODERATOR",
     "709353464475680788": "VIEWER"
   },
-  
+
+  // Define which dashboard roles each Discord role ID grants (for multi-role users)
   "roleHierarchy": {
-    "_comment": "Define which dashboard roles each Discord role ID grants (optional, for multi-role users). Use role IDs, not names.",
     "709352979668533341": ["ADMIN", "MODERATOR", "VIEWER"],
     "709353103530655857": ["MODERATOR", "VIEWER"],
     "709353464475680788": ["VIEWER"]
   },
-  
+
+  // Only allow Discord users with these role IDs (empty = allow all)
   "whitelistedRoles": [],
-  "whitelistedRoles_comment": "Only allow Discord users with these role IDs (empty = allow all). Use role IDs, not names. Example: ['1234567890123456789', '9876543210987654321']",
-  
+
+  // Block specific Discord user IDs from logging in
   "blacklistedUsers": [],
-  "blacklistedUsers_comment": "Block specific Discord user IDs from logging in. Example: ['123456789012345678']",
-  
+
+  // Session duration in milliseconds (86400000 = 24 hours)
   "sessionDuration": 86400000,
-  "sessionDuration_comment": "Session duration in milliseconds (86400000 = 24 hours)",
-  
+
+  /* Automatically sync Minecraft permissions based on Discord roles.
+   * When players join, their Discord roles are retrieved and mapped to Minecraft permissions.
+   * Works with LuckPerms or the built-in permission system.
+   */
   "permissionSync": {
-    "_comment": "Automatically sync Minecraft permissions based on Discord roles (Build #124+, Fixed in #132)",
-    "_how_it_works": "When players join, their Discord roles are retrieved and mapped to Minecraft permissions. Works with LuckPerms or built-in permission system.",
-    
+
+    // Enable/disable Discord role → Minecraft permission synchronization
     "enabled": true,
-    "enabled_comment": "Enable/disable Discord role -> Minecraft permission synchronization",
-    
+
+    // Automatically sync permissions when a player joins the server (recommended: true)
     "syncOnJoin": true,
-    "syncOnJoin_comment": "Automatically sync permissions when player joins server (recommended: true)",
-    
+
+    // Permission grant method: 'auto' (detect LuckPerms/built-in) | 'luckperms' | 'builtin'
     "syncMethod": "auto",
-    "syncMethod_comment": "Permission grant method: 'auto' (detect LuckPerms/built-in), 'luckperms', 'builtin'. Auto-detect recommended.",
-    
+
+    /* Map Discord Role IDs to Minecraft permission nodes.
+     * Players receive ALL permissions from ALL their Discord roles (permissions are combined).
+     * Use Discord Role IDs (numbers), NOT role names.
+     * Enable Developer Mode: Discord Settings → Advanced → Developer Mode, then
+     *   Server Settings → Roles → right-click role → Copy ID.
+     */
     "permissionMappings": {
-      "_comment": "Map Discord Role IDs to Minecraft permission nodes. Players get ALL permissions from ALL their Discord roles (permissions are combined).",
-      "_important": "Use Discord Role IDs (numbers), NOT role names. Enable Developer Mode in Discord to copy role IDs.",
-      "_how_to_get_role_id": "Discord Settings > Advanced > Developer Mode ON, then Server Settings > Roles > Right-click role > Copy ID",
-      "_role_mod_plus_plus": "Mod++ (709352979668533341) - Full admin access",
-      "_role_mod_plus": "Mod+ (709353103530655857) - Moderator with temp password generation",
-      "_role_helper": "Helper (709353464475680788) - Basic viewer/helper access",
-      
       "709352979668533341": [
         "neoessentials.*",
         "neoessentials.dashboard.admin",
@@ -84,7 +94,6 @@
         "neoessentials.dashboard.status",
         "neoessentials.discord.syncperms.others"
       ],
-      
       "709353103530655857": [
         "neoessentials.dashboard.temppass",
         "neoessentials.dashboard.status",
@@ -93,7 +102,6 @@
         "neoessentials.mute",
         "neoessentials.ban"
       ],
-      
       "709353464475680788": [
         "neoessentials.dashboard.status",
         "neoessentials.discord.syncperms",
@@ -102,12 +110,13 @@
         "neoessentials.warp"
       ]
     },
-    
-    "permissionMappings_common_examples": {
-      "_admin_role": "['neoessentials.*'] - Full access to all NeoEssentials features",
-      "_moderator_role": "['neoessentials.dashboard.temppass', 'neoessentials.kick', 'neoessentials.mute'] - Moderation tools",
-      "_helper_role": "['neoessentials.dashboard.status', 'neoessentials.discord.syncperms'] - Basic staff access",
-      "_member_role": "['neoessentials.home', 'neoessentials.tpa', 'neoessentials.warp'] - Player utilities"
-    }
+
+    /* Common permission mapping examples (for reference — not loaded by the mod):
+     * admin_role   : ["neoessentials.*"]  — full access to all NeoEssentials features
+     * mod_role     : ["neoessentials.dashboard.temppass","neoessentials.kick","neoessentials.mute"]
+     * helper_role  : ["neoessentials.dashboard.status","neoessentials.discord.syncperms"]
+     * member_role  : ["neoessentials.home","neoessentials.tpa","neoessentials.warp"]
+     */
+    "permissionMappings_common_examples": {}
   }
 }

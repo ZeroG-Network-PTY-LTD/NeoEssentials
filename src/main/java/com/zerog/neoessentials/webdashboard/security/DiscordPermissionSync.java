@@ -118,7 +118,7 @@ public class DiscordPermissionSync {
                 // For now, we treat the first permission as a group name
                 // In the future, this could be extended to grant multiple individual permissions
                 if (permissions != null && !permissions.isEmpty()) {
-                    String mappedGroup = permissions.get(0);
+                    String mappedGroup = permissions.getFirst();
                     LOGGER.debug("Found custom role mapping: Discord role '{}' -> permission group '{}'", discordRole, mappedGroup);
                     return mappedGroup;
                 }

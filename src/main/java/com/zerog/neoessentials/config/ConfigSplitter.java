@@ -59,7 +59,7 @@ public class ConfigSplitter {
      * This is the authoritative mapping used for generation and validation.
      */
     public static final Map<String, List<String>> FILE_SECTIONS_MAP = new LinkedHashMap<>() {{
-        put("main.json",          Arrays.asList("modules", "logging", "permissions", "kits", "economy"));
+        put("main.json",          List.of("modules", "logging", "permissions", "kits", "economy"));
         put("commands.json",      Collections.singletonList("commands"));
         put("chat.json",          Collections.singletonList("chat"));
         put("teleportation.json", Collections.singletonList("teleportation"));

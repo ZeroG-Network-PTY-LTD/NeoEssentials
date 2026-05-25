@@ -29,7 +29,7 @@ public class FileManagementHandler implements HttpHandler {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     
     // Allowed directories for file operations (security)
-    private static final List<Path> ALLOWED_PATHS = Arrays.asList(
+    private static final List<Path> ALLOWED_PATHS = List.of(
         Paths.get("config"),
         Paths.get("logs"),
         Paths.get("neoessentials"),
@@ -37,9 +37,7 @@ public class FileManagementHandler implements HttpHandler {
     );
     
     // Allowed file extensions for editing
-    private static final Set<String> EDITABLE_EXTENSIONS = new HashSet<>(Arrays.asList(
-        ".json", ".txt", ".properties", ".yml", ".yaml", ".toml", ".conf", ".cfg", ".log"
-    ));
+    private static final Set<String> EDITABLE_EXTENSIONS = Set.of(".json", ".txt", ".properties", ".yml", ".yaml", ".toml", ".conf", ".cfg", ".log");
     
     // Maximum file size for reading/editing (10 MB)
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -720,6 +718,7 @@ public class FileManagementHandler implements HttpHandler {
         JsonObject obj = new JsonObject();
         obj.addProperty("name", p.getName().getString());
         obj.addProperty("uuid", p.getStringUUID());
+        //noinspection resource — ServerLevel lifecycle managed by the Minecraft server
         obj.addProperty("world", p.serverLevel().dimension().location().toString());
         obj.addProperty("health", p.getHealth());
         obj.addProperty("maxHealth", p.getMaxHealth());
