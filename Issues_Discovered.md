@@ -2,17 +2,39 @@
 ---
 #  Issues That Were Discovered
 
-- When you want to set MOTD "\n" formatting does not allow new lines, it just shows "\n" in the MOTD.
-    - example MOTD: 
-    - **{
-      "motd": "&6Welcome, &f{player}&6!\n&e- &6Do &c[/kit Guide] &6for the starter guide!\n&6Type &c[/list] &6to see who else is online.\n&6Players online: &c{online} &6- World time: &c{time}\n&6-------------------&f★&6-------------------\n&e- &6Type &c[/rules] &6for a list of more commands! &e-",
-      "author": "Admin",
-      "timestamp": "05/21/2026 15:21"
-      }**
+- Player Warps having issues
+
 ---
 
-- Bloated Config comments to be commented out with '//' and '/* */' instead of being part of the actual config file, this is to make the config file cleaner and easier to read, and also to make it easier for server admins to find the actual config options without having to scroll through a lot of comments.
+- config missing its own key we added for languages.
+
 ---
+
+- **NeoEssentials Chat Rich Text Formatting Ignores Config (NeoForge 1.21.1, build.1.0.2.6+119)**  
+  Rich text formatting is applied to chat messages even when it is disabled in the configuration.
+    - Environment:
+        - NeoEssentials Version: `1.0.2.6 build 119`
+        - Minecraft Version: `1.21.1`
+        - NeoForge Version: `21.1.227`
+        - Java Version: `openjdk 21.0.10`
+        - Dedicated Server
+    - Observed Behavior:
+        - Debug output shows formatting stages:
+          ```
+          After placeholder resolution: [&c[Admin] &4OtaaRL &8> &f&4d]
+          After conditional formatting: [&c[Admin] &4OtaaRL &8> &f&4d]
+          After cleanup: [&c[Admin] &4OtaaRL &8> &f&4d]
+          After rich text: [[Admin] OtaaRL > d]
+          ```  
+        - Final output applies rich text formatting (`[[Admin] OtaaRL > d]`) even though config has `rich_text=false`.
+    - Expected Behavior:
+        - Rich text formatting should be skipped entirely when disabled in config.
+    - Need to investigate:
+        - Whether `ChatFormatter` ignores the config flag and always applies rich text cleanup.
+        - If conditional formatting step incorrectly forces rich text regardless of settings.
+        - Possible fix: add explicit bypass logic for rich text when disabled.
+---
+
 
 # ✅ Issues That Were Fixed
 

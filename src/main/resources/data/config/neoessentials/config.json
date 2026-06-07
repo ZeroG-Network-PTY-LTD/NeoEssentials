@@ -707,6 +707,11 @@
      *   {neoessentials_x/y/z}, {neoessentials_health}, {neoessentials_level}, and more via PAPI.
      * Use '&' for color codes  (e.g. &c = red, &6 = gold).
      */
+    "localization": {
+      "language": ""
+    },
+
+
     "chat-format": {
       "default": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
       "group:admin": "&c[Admin] {neoessentials_username}: {MESSAGE}",

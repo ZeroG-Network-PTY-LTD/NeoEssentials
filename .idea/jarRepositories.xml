@@ -31,5 +31,15 @@
       <option name="name" value="CurseMaven" />
       <option name="url" value="https://cursemaven.com" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="PB4 Maven" />
+      <option name="name" value="PB4 Maven" />
+      <option name="url" value="https://maven.pb4.eu/release/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="Nucleoid Maven" />
+      <option name="name" value="Nucleoid Maven" />
+      <option name="url" value="https://maven.nucleoid.xyz/" />
+    </remote-repository>
   </component>
 </project>
