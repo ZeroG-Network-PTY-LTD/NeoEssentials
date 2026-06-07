@@ -1,4 +1,4 @@
-// NeoEssentials Dashboard JavaScript
+﻿// NeoEssentials Dashboard JavaScript
 
 // Configuration
 const API_BASE_URL = window.location.origin + '/api';
@@ -127,10 +127,6 @@ function showDashboard() {
     if (usernameDisplay && username) { usernameDisplay.textContent = username; }
     const userNameEl = document.getElementById('userName');
     if (userNameEl && username) { userNameEl.textContent = username; }
-
-
-
-
     
     // Show admin controls if user is admin
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
@@ -407,9 +403,9 @@ async function handleLogin() {
                 localStorage.setItem('isAdmin', data.user.role === 'ADMIN' || data.user.isAdmin || false);
                 localStorage.setItem('role', data.user.role || 'VIEWER');
             } else {
-                localStorage.setItem('username', username.trim());
-                localStorage.setItem('isAdmin', false);
-                localStorage.setItem('role', 'VIEWER');
+                localStorage.setItem('username', data.username || username.trim());
+                localStorage.setItem('isAdmin', data.isAdmin === true);
+                localStorage.setItem('role', data.isAdmin === true ? 'ADMIN' : 'VIEWER');
             }
 
             // Show dashboard
