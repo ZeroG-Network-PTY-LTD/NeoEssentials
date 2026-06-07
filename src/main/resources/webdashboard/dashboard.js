@@ -93,6 +93,7 @@ async function checkAuthentication() {
             const data = await response.json();
             localStorage.setItem('username', data.username);
             localStorage.setItem('isAdmin', data.isAdmin);
+            if (data.isAdmin === true) { localStorage.setItem('role', 'ADMIN'); }
             localStorage.setItem('authType', data.authType);
             showDashboard();
         } else {
