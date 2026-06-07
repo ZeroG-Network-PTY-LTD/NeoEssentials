@@ -270,9 +270,9 @@ function setupEventListeners() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const page = item.getAttribute('data-page');
             if (page) {
+                e.preventDefault();
                 switchPage(page);
             }
         });
@@ -445,6 +445,13 @@ function setupNavigation() {
     
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
+            const pageName = item.getAttribute('data-page');
+            // Items without data-page (e.g. permissions.html, admin.html) navigate normally
+            if (!pageName) {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                return;
+            }
             e.preventDefault();
             
             // Remove active class from all items
@@ -453,8 +460,7 @@ function setupNavigation() {
             // Add active class to clicked item
             item.classList.add('active');
             
-            // Get page name
-            const pageName = item.getAttribute('data-page');
+            // Get page name (already fetched above)
             const pageTitle = item.querySelector('.nav-text').textContent;
             
             // Update page title
