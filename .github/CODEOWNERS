@@ -1,0 +1,14 @@
+# GitHub CODEOWNERS
+
+# Default owner for everything in the repository
+
+*    @MrWhiteFlamesYT
+*    @ZeroG-Network
+
+# Optional: You can later expand this for specific folders like this:
+
+# /src/ @MrWhiteFlamesYT
+
+# /docs/ @MrWhiteFlamesYT
+
+# /.github/ @MrWhiteFlamesYT
