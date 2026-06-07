@@ -23,7 +23,8 @@ async function initPermissionSystem() {
     setupPermissionEventListeners();
 
     // Load overview data
-    if (document.getElementById('permOverviewTab').classList.contains('active')) {
+    const _permTab = document.getElementById('permOverviewTab');
+    if (_permTab && _permTab.classList.contains('active')) {
         await loadPermissionOverview();
     }
 }
