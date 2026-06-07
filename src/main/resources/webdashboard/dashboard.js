@@ -93,6 +93,7 @@ async function checkAuthentication() {
             const data = await response.json();
             localStorage.setItem('username', data.username);
             localStorage.setItem('isAdmin', data.isAdmin);
+            if (data.isAdmin === true) { localStorage.setItem('role', 'ADMIN'); }
             localStorage.setItem('authType', data.authType);
             showDashboard();
         } else {
@@ -403,9 +404,9 @@ async function handleLogin() {
                 localStorage.setItem('isAdmin', data.user.role === 'ADMIN' || data.user.isAdmin || false);
                 localStorage.setItem('role', data.user.role || 'VIEWER');
             } else {
-                localStorage.setItem('username', username.trim());
-                localStorage.setItem('isAdmin', false);
-                localStorage.setItem('role', 'VIEWER');
+                localStorage.setItem('username', data.username || username.trim());
+                localStorage.setItem('isAdmin', data.isAdmin === true);
+                localStorage.setItem('role', data.isAdmin === true ? 'ADMIN' : 'VIEWER');
             }
 
             // Show dashboard
