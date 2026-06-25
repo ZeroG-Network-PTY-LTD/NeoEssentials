@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.config;
+﻿package com.zerog.neoessentials.config;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -1090,7 +1090,7 @@ public class ConfigManager {
      * returns {@code false}. (permissions.vanillaOpFallback)
      *
      * <p>Unlike {@link #isOpsBypassPermissionsEnabled()} which skips permission
-     * checks entirely, this fires <em>after</em> all checks have run — so the
+     * checks entirely, this fires <em>after</em> all checks have run â€” so the
      * permission system is still consulted first in normal operation.  The fallback
      * is designed to prevent admin lockouts when configs are corrupted or an
      * external permission mod crashes.
@@ -1105,7 +1105,7 @@ public class ConfigManager {
                 return perms.get("vanillaOpFallback").getAsBoolean();
             }
         }
-        return true; // Safe default — prevents lockouts
+        return true; // Safe default â€” prevents lockouts
     }
 
     /**
@@ -1217,7 +1217,7 @@ public class ConfigManager {
                             LOGGER.debug("Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
                             return section;
                         }
-                        // File exists but uses a flat layout – return the whole object
+                        // File exists but uses a flat layout â€“ return the whole object
                         configCache.put(configName, fileObj);
                         LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
                         return fileObj;
@@ -1225,7 +1225,7 @@ public class ConfigManager {
                         LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
                     }
                 }
-                // Section missing – return empty (do not cache so it retries after reload)
+                // Section missing â€“ return empty (do not cache so it retries after reload)
                 LOGGER.debug("Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
                 return new JsonObject();
             }
@@ -1298,13 +1298,13 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 24);          // v24 — localization.language setting
-        put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
-        put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
-        put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
-        put(DISCORD_AUTH_CONFIG, 8);   // v8  — migrated to // comment style
-        put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
-        put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
+        put(MAIN_CONFIG, 24);          // v24 â€” localization.language setting
+        put(ECONOMY_CONFIG, 3);        // v3  â€” removed _configVersion_comment
+        put(PERMISSIONS_CONFIG, 7);    // v7  â€” removed _configVersion_comment
+        put(KITS_CONFIG, 2);           // v2  â€” removed _configVersion_comment
+        put(DISCORD_AUTH_CONFIG, 8);   // v8  â€” migrated to // comment style
+        put(TABLIST_CONFIG, 5);        // v5  â€” migrated to // comment style
+        put(ANIMATIONS_CONFIG, 2);     // v2  â€” migrated to // comment style
     }};
 
     /**
@@ -1390,11 +1390,11 @@ public class ConfigManager {
      * Check if a config file needs updating based on version mismatch.
      * <p>
      * Strategy:
-     *  - If the on-disk version is OLDER than expected → merge new/changed keys from the JAR
+     *  - If the on-disk version is OLDER than expected â†’ merge new/changed keys from the JAR
      *    template into the user's file (preserve all existing values) then bump _configVersion.
      *    A backup is still created before touching the file.
-     *  - If the on-disk version is NEWER than expected → warn only, do not touch.
-     *  - If equal → no-op.
+     *  - If the on-disk version is NEWER than expected â†’ warn only, do not touch.
+     *  - If equal â†’ no-op.
      * <p>
      * This prevents blowing away user-set values (role IDs, client secrets, custom settings)
      * every time the config gains a new field.
@@ -1417,7 +1417,7 @@ public class ConfigManager {
                 LOGGER.warn("Config file {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
                     configName, currentVersion, expectedVersion);
 
-                // Load JAR template (may contain // comments — use lenient reader)
+                // Load JAR template (may contain // comments â€” use lenient reader)
                 JsonObject jarTemplate = null;
                 try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
                     if (in != null) {
@@ -1486,12 +1486,12 @@ public class ConfigManager {
             com.google.gson.JsonElement sourceVal = entry.getValue();
 
             if (!target.has(key)) {
-                // Missing entirely — add from template
+                // Missing entirely â€” add from template
                 target.add(key, sourceVal.deepCopy());
                 changed = true;
                 LOGGER.debug("  + Added missing config key: {}", key);
             } else if (sourceVal.isJsonObject() && target.get(key).isJsonObject()) {
-                // Both sides are objects — recurse
+                // Both sides are objects â€” recurse
                 changed |= mergeNewKeys(sourceVal.getAsJsonObject(), target.get(key).getAsJsonObject());
             }
             // If key exists and isn't an object, leave the user's value alone
@@ -2224,7 +2224,7 @@ public class ConfigManager {
 
     /**
      * Returns true if per-warp permission checks are enabled (teleportation.warpSettings.perWarpPermission).
-     * Essentials: getPerWarpPermission() — checks neoessentials.warps.<name> per warp.
+     * Essentials: getPerWarpPermission() â€” checks neoessentials.warps.<name> per warp.
      * Defaults to false if not set.
      */
     public boolean isPerWarpPermissionEnabled() {
@@ -2275,182 +2275,6 @@ public class ConfigManager {
         return "neoessentials.moderation.seevanished";
     }
 
-    /**
-     * Returns the web dashboard port from webDashboard.port.
-     * Defaults to 8080 if not set.
-     */
-    public int getWebDashboardPort() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("port")) {
-                try {
-                    return dashboard.get("port").getAsInt();
-                } catch (Exception ignored) {}
-            }
-        }
-        return 8080;
-    }
-
-    /**
-     * Returns the web dashboard bind address from webDashboard.bindAddress.
-     * Defaults to "0.0.0.0" if not set.
-     */
-    public String getWebDashboardBindAddress() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("bindAddress")) {
-                String addr = dashboard.get("bindAddress").getAsString();
-                if (addr != null && !addr.trim().isEmpty()) return addr;
-            }
-        }
-        return "0.0.0.0";
-    }
-
-    /**
-     * Returns the web dashboard max threads from webDashboard.maxThreads.
-     * Defaults to 10 if not set.
-     */
-    public int getWebDashboardMaxThreads() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("maxThreads")) {
-                try {
-                    return dashboard.get("maxThreads").getAsInt();
-                } catch (Exception ignored) {}
-            }
-        }
-        return 10;
-    }
-
-    /**
-     * Returns the web dashboard WebSocket port from webDashboard.webSocketPort.
-     * Defaults to 8081 if not set.
-     */
-    public int getWebDashboardWebSocketPort() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("webSocketPort")) {
-                try {
-                    return dashboard.get("webSocketPort").getAsInt();
-                } catch (Exception ignored) {}
-            }
-        }
-        return 8081;
-    }
-
-    /**
-     * Returns the web dashboard hostname from webDashboard.hostname.
-     * Defaults to "localhost" if not set.
-     */
-    public String getWebDashboardHostname() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("hostname")) {
-                String hostname = dashboard.get("hostname").getAsString();
-                if (hostname != null && !hostname.trim().isEmpty()) return hostname;
-            }
-        }
-        return "localhost";
-    }
-
-    /**
-     * Returns the custom web dashboard URL from webDashboard.customUrl.
-     * Returns empty string if not set.
-     */
-    public String getWebDashboardCustomUrl() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("customUrl")) {
-                String customUrl = dashboard.get("customUrl").getAsString();
-                if (customUrl != null && !customUrl.trim().isEmpty()) return customUrl.trim();
-            }
-        }
-        return "";
-    }
-
-    /**
-     * Returns the dashboard URL to display to users.
-     * If customUrl is set, returns that. Otherwise builds URL from hostname and port.
-     */
-    public String getWebDashboardUrl() {
-        String customUrl = getWebDashboardCustomUrl();
-        if (!customUrl.isEmpty()) {
-            return customUrl;
-        }
-
-        String hostname = getWebDashboardHostname();
-        int port = getWebDashboardPort();
-
-        // Build URL with hostname and port
-        return "http://" + hostname + ":" + port;
-    }
-
-    /**
-     * Returns whether authentication is required for dashboard access.
-     * Reads webDashboard.securitySettings.requireAuthentication. Defaults to true.
-     */
-    public boolean isDashboardAuthRequired() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        try {
-            if (config.has("webDashboard")) {
-                JsonObject wd = config.getAsJsonObject("webDashboard");
-                JsonObject sec = null;
-                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
-                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
-                if (sec != null && sec.has("requireAuthentication")) {
-                    return sec.get("requireAuthentication").getAsBoolean();
-                }
-            }
-        } catch (Exception ignored) {}
-        return true; // Secure by default
-    }
-
-    /**
-     * Returns whether API rate limiting is enabled.
-     * Reads webDashboard.securitySettings.enableRateLimiting. Defaults to true.
-     */
-    public boolean isDashboardRateLimitingEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        try {
-            if (config.has("webDashboard")) {
-                JsonObject wd = config.getAsJsonObject("webDashboard");
-                JsonObject sec = null;
-                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
-                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
-                if (sec != null && sec.has("enableRateLimiting")) {
-                    return sec.get("enableRateLimiting").getAsBoolean();
-                }
-            }
-        } catch (Exception ignored) {}
-        return true; // Enabled by default
-    }
-
-    /**
-     * Returns the max requests per minute per IP for the dashboard API.
-     * Reads webDashboard.securitySettings.maxRequestsPerMinute. Defaults to 60.
-     */
-    public int getDashboardMaxRequestsPerMinute() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        try {
-            if (config.has("webDashboard")) {
-                JsonObject wd = config.getAsJsonObject("webDashboard");
-                JsonObject sec = null;
-                if (wd.has("securitySettings")) sec = wd.getAsJsonObject("securitySettings");
-                else if (wd.has("security")) sec = wd.getAsJsonObject("security");
-                if (sec != null && sec.has("maxRequestsPerMinute")) {
-                    int val = sec.get("maxRequestsPerMinute").getAsInt();
-                    return val > 0 ? val : 60;
-                }
-            }
-        } catch (Exception ignored) {}
-        return 60;
-    }
 
     /**
      * Returns max command length from security.maxCommandLength.

@@ -10,33 +10,37 @@
 
 ---
 
-- **NeoEssentials Chat Rich Text Formatting Ignores Config (NeoForge 1.21.1, build.1.0.2.6+119)**  
-  Rich text formatting is applied to chat messages even when it is disabled in the configuration.
-    - Environment:
-        - NeoEssentials Version: `1.0.2.6 build 119`
-        - Minecraft Version: `1.21.1`
-        - NeoForge Version: `21.1.227`
-        - Java Version: `openjdk 21.0.10`
-        - Dedicated Server
-    - Observed Behavior:
-        - Debug output shows formatting stages:
-          ```
-          After placeholder resolution: [&c[Admin] &4OtaaRL &8> &f&4d]
-          After conditional formatting: [&c[Admin] &4OtaaRL &8> &f&4d]
-          After cleanup: [&c[Admin] &4OtaaRL &8> &f&4d]
-          After rich text: [[Admin] OtaaRL > d]
-          ```  
-        - Final output applies rich text formatting (`[[Admin] OtaaRL > d]`) even though config has `rich_text=false`.
-    - Expected Behavior:
-        - Rich text formatting should be skipped entirely when disabled in config.
-    - Need to investigate:
-        - Whether `ChatFormatter` ignores the config flag and always applies rich text cleanup.
-        - If conditional formatting step incorrectly forces rich text regardless of settings.
-        - Possible fix: add explicit bypass logic for rich text when disabled.
+# ✅ Issues That Were Fixed
+
+## 🐛 Bug Fix — Chat Rich Text Formatting Ignores Config (NeoForge 1.21.1, build.1.0.2.6+119)
+
+**`RichTextFormatter.java` / `ChatFormatter.java` — Rich text applied even when `rich_text=false`**
+
+Rich text formatting was applied to chat messages even when disabled in configuration.
+
+- Observed: Debug output showed `After rich text: [[Admin] OtaaRL > d]` even with `rich_text=false` in config.
+- **Root Cause 1**: `preprocessTags()` only gated gradient/rainbow tags on `isRichTextEnabled()` but processed named-color and format tags (`<red>`, `<bold>`, etc.) unconditionally — stripping the tag markers from the string and applying color/format regardless of the setting.
+- **Root Cause 2**: The non-enhancement path in `ChatFormatter.formatMessage()` called `processRichText(formatted)` using the raw un-preprocessed string, bypassing the config gate entirely.
+
+**Fixes applied:**
+
+| File | Change |
+|---|---|
+| `RichTextFormatter.java` | All tag processing (gradient, rainbow, named-color, format tags) now gated on `isRichTextEnabled()`. Added `stripAllRichTags()` helper that removes tag markers without applying any formatting, used when rich text is disabled. |
+| `ChatFormatter.java` | Non-enhancement path now uses `richPreProcessed` (the output of `preprocessTags()`) instead of the raw `formatted` string. Added debug logging showing rich text enabled/disabled state. |
+
 ---
 
+## 🗑️ Feature Removed — Web Dashboard 429 Too Many Requests (NeoForge 1.21.1, build.1.0.2.6+119)
 
-# ✅ Issues That Were Fixed
+**N/A — Entire webdashboard removed**
+
+The web dashboard was reporting `429 Too Many Requests` errors — browser console showed repeated `HTTP 429` failures in `loadServerInfo()` inside `dashboard.js`, causing a perpetual "Connection Error" loop that could not be interrupted.
+
+- Observed: Client-side `refreshData()` loop spammed API endpoints; server-side rate limiting rejected the requests; dashboard became permanently unusable.
+- **Resolution**: The entire webdashboard feature was **completely removed** from NeoEssentials. All dashboard HTML/JS/CSS files, server-side endpoint handlers (`DashboardHttpServer`, `AuthHandler`, `CommandExecutionHandler`, `FileManagementHandler`, `PermissionEndpoint`, etc.), and all references in `NeoEssentials.java`, `ConfigManager.java`, `ConfigSplitter.java`, and `ModRootCommand.java` were deleted. The 429 rate-limiting issue, client-side refresh loop, and all related stability concerns are no longer applicable.
+
+---
 
 ## 🐛 Bug Fix — Teleportation Unsafe Fallback Triggered (NeoForge 1.21.1, build.1.0.2.6+119)
 

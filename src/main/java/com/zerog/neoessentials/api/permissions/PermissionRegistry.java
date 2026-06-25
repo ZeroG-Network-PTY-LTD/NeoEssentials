@@ -707,13 +707,6 @@ public class PermissionRegistry {
         register("neoessentials.playtime", "View own playtime", PermissionCategory.PLAYER, true);
         register("neoessentials.playtime.others", "View another player's playtime", PermissionCategory.PLAYER, false);
 
-        // ── Dashboard ────────────────────────────────────────────────────────
-        register("neoessentials.admin.dashboard", "Access web dashboard (admin)", PermissionCategory.ADMIN, false);
-        register("neoessentials.dashboard.access", "Register and access the web dashboard", PermissionCategory.MISC, false);
-        register("neoessentials.dashboard.view", "View-only dashboard access", PermissionCategory.MISC, false);
-        register("neoessentials.dashboard.manage", "Manage dashboard settings", PermissionCategory.ADMIN, false);
-        register("neoessentials.dashboard.moderator", "Moderator dashboard access", PermissionCategory.MODERATION, false);
-        register("neoessentials.dashboard.admin", "Full admin dashboard access", PermissionCategory.ADMIN, false);
 
         register("neoessentials.item", "Give yourself an item by name (/item)", PermissionCategory.ITEMS, false);
         register("neoessentials.rtoggle", "Toggle /r reply direction", PermissionCategory.CHAT, true);
