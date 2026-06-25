@@ -151,6 +151,7 @@ public class CreateKitCommand {
                 // Simulate Pastebin upload (replace with real API if needed)
                 String kitJson = kitToJsonString(kitName, displayName, description, items, cooldownMillis, permission);
                 String pastebinUrl = uploadToPastebin(kitJson);
+                //noinspection ConstantConditions (mock always returns non-null; real impl may return null)
                 if (pastebinUrl != null) {
                     source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.createkit.pastebin_success", pastebinUrl), false);
                     LOGGER.info("Kit '{}' exported to Pastebin by {}: {}", kitName, player.getName().getString(), pastebinUrl);
@@ -230,6 +231,7 @@ public class CreateKitCommand {
             if (item.isEmpty()) continue;
             net.minecraft.resources.ResourceLocation itemKey =
                     net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem());
+            //noinspection ConstantConditions (defensive guard for modded environments)
             if (itemKey == null) continue; // Skip unregistered items
             com.google.gson.JsonObject itemJson = new com.google.gson.JsonObject();
             itemJson.addProperty("item", itemKey.toString());

@@ -635,21 +635,21 @@ public class ConfigManager {
     }
 
     /**
-     * Returns true if IP bans are enabled in moderation.banSettings.enableIPBans
-     * Defaults to true if not set.
+     * Returns true if IP bans are disabled in moderation.banSettings.enableIPBans.
+     * Defaults to false if not set.
      */
-    public boolean isIPBansEnabled() {
+    public boolean isIPBansDisabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
         if (config.has("moderation")) {
             JsonObject moderation = config.getAsJsonObject("moderation");
             if (moderation.has("banSettings")) {
                 JsonObject banSettings = moderation.getAsJsonObject("banSettings");
                 if (banSettings.has("enableIPBans")) {
-                    return banSettings.get("enableIPBans").getAsBoolean();
+                    return !banSettings.get("enableIPBans").getAsBoolean();
                 }
             }
         }
-        return true;
+        return false;
     }
 
     /**
@@ -1388,14 +1388,14 @@ public class ConfigManager {
 
     /**
      * Check if a config file needs updating based on version mismatch.
-     *
+     * <p>
      * Strategy:
      *  - If the on-disk version is OLDER than expected → merge new/changed keys from the JAR
      *    template into the user's file (preserve all existing values) then bump _configVersion.
      *    A backup is still created before touching the file.
      *  - If the on-disk version is NEWER than expected → warn only, do not touch.
      *  - If equal → no-op.
-     *
+     * <p>
      * This prevents blowing away user-set values (role IDs, client secrets, custom settings)
      * every time the config gains a new field.
      */

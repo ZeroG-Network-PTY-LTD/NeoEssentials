@@ -83,7 +83,7 @@ public class ConfigSplitter {
 
     /**
      * Current monolithic config version — must stay in sync with the JAR's config.json
-     * {@code _configVersion} field and {@link ConfigManager#EXPECTED_CONFIG_VERSIONS}.
+     * {@code _configVersion} field and {@code ConfigManager.EXPECTED_CONFIG_VERSIONS}.
      */
     private static final int CURRENT_MAIN_VERSION = 23;
 
@@ -680,7 +680,7 @@ public class ConfigSplitter {
      * Parse a JSON reader in lenient mode so that {@code //} and {@code /* *\/} comments
      * (present in config.json since v22) are accepted without errors.
      */
-    private static JsonObject parseLenient(java.io.Reader reader) throws IOException {
+    private static JsonObject parseLenient(java.io.Reader reader) {
         com.google.gson.stream.JsonReader jr = new com.google.gson.stream.JsonReader(reader);
         jr.setLenient(true);
         return JsonParser.parseReader(jr).getAsJsonObject();

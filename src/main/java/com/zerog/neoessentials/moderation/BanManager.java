@@ -320,7 +320,7 @@ public class BanManager {
             return false; // Already banned
         }
         // Enforce config: check if IP bans are enabled
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansEnabled()) {
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansDisabled()) {
             LOGGER.warn("IP bans are disabled in config. Cannot ban IP {}.", ipAddress);
             return false;
         }
@@ -357,7 +357,7 @@ public class BanManager {
      */
     public boolean tempBanIP(String ipAddress, String reason, String bannedBy, long durationMillis) {
         if (isIPBanned(ipAddress)) return false;
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansEnabled()) {
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansDisabled()) {
             LOGGER.warn("IP bans are disabled. Cannot temp-ban IP {}.", ipAddress);
             return false;
         }

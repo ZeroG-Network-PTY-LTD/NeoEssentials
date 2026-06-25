@@ -138,9 +138,10 @@ public class Kit {
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
                 try {
-                    // Guard against null registry key (e.g. unregistered/modded items)
+                    // Guard against null registry key (defensive — modded environments may differ)
                     net.minecraft.resources.ResourceLocation itemKey =
                             BuiltInRegistries.ITEM.getKey(item.getItem());
+                    //noinspection ConstantConditions
                     if (itemKey == null) {
                         // Skip items with no registry key to avoid NPE
                         continue;

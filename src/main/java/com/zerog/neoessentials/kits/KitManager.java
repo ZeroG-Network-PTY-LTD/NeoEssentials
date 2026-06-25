@@ -127,7 +127,9 @@ public class KitManager {
             // Ensure directory exists
             File parentDir = kitsFile.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
+                if (!parentDir.mkdirs()) {
+                    LOGGER.warn("Failed to create kits config directory: {}", parentDir.getAbsolutePath());
+                }
             }
             
             JsonObject config = new JsonObject();
@@ -223,11 +225,13 @@ public class KitManager {
             // Ensure directory exists
             File parentDir = playerDataFile.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
+                if (!parentDir.mkdirs()) {
+                    LOGGER.warn("Failed to create kit player data directory: {}", parentDir.getAbsolutePath());
+                }
             }
-            
+
             JsonObject data = new JsonObject();
-            
+
             // Save cooldowns
             JsonObject cooldownsJson = new JsonObject();
             for (Map.Entry<UUID, Map<String, Long>> playerEntry : playerCooldowns.entrySet()) {
@@ -354,8 +358,8 @@ public class KitManager {
             initialize();
         }
         return kits.values().stream()
-                .filter(kit -> kit.isEnabled())
-                .filter(kit -> kit.getPermission() == null || 
+                .filter(Kit::isEnabled)
+                .filter(kit -> kit.getPermission() == null ||
                               PermissionAPI.hasPermission(player.getUUID(), kit.getPermission()))
                 .toList();
     }
@@ -387,7 +391,7 @@ public class KitManager {
         }
         
         // Check cooldown (unless player has exemption)
-        if (!hasCooldownExemption(player, kitName)) {
+        if (!isCooldownExempt(player, kitName)) {
             long remainingCooldown = getRemainingCooldown(player.getUUID(), kitName);
             if (remainingCooldown > 0) {
                 return new KitUsageResult(false, "Kit is still on cooldown for " + formatTime(remainingCooldown));
@@ -404,7 +408,7 @@ public class KitManager {
 
         // Enforce maxKitsPerPlayer (active cooldowns)
         int maxKits = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxKitsPerPlayer();
-        if (maxKits > 0 && !hasCooldownExemption(player, kitName)) {
+        if (maxKits > 0 && !isCooldownExempt(player, kitName)) {
             // Count number of kits with active cooldowns for this player
             int activeCooldowns = 0;
             Map<String, Long> cooldownMap = playerCooldowns.get(player.getUUID());
@@ -444,7 +448,7 @@ public class KitManager {
         if (!(com.zerog.neoessentials.config.ConfigManager.getInstance().isAllowKitOverrideEnabled() &&
               com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.override"))) {
             int maxKits = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxKitsPerPlayer();
-            if (maxKits > 0 && !hasCooldownExemption(player, kitName)) {
+            if (maxKits > 0 && !isCooldownExempt(player, kitName)) {
                 Map<String, Long> cooldownMap = playerCooldowns.get(player.getUUID());
                 int activeCooldowns = 0;
                 long now = System.currentTimeMillis();
@@ -554,7 +558,7 @@ public class KitManager {
 
             // Update cooldown and usage tracking
             // Only set cooldown if player doesn't have exemption
-            if (!hasCooldownExemption(player, kitName)) {
+            if (!isCooldownExempt(player, kitName)) {
                 setCooldown(player.getUUID(), kitName, System.currentTimeMillis() + kit.getCooldownMillis());
             }
             incrementUsage(player.getUUID(), kitName);
@@ -612,6 +616,7 @@ public class KitManager {
     /**
      * Reset ALL kit cooldowns for a player.
      */
+    @SuppressWarnings("unused") // Public API — may be called by external integrations
     public void resetAllCooldowns(UUID playerId) {
         playerCooldowns.remove(playerId);
         savePlayerData();
@@ -637,7 +642,7 @@ public class KitManager {
      * Checks if a player has cooldown exemption for a kit.
      * Checks both global cooldown exemption and per-kit exemption.
      */
-    private boolean hasCooldownExemption(ServerPlayer player, String kitName) {
+    private boolean isCooldownExempt(ServerPlayer player, String kitName) {
         UUID playerId = player.getUUID();
         // Check override permission if allowKitOverride is enabled
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAllowKitOverrideEnabled()) {
@@ -649,14 +654,9 @@ public class KitManager {
         if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.kits.nocooldown")) {
             return true;
         }
-        
         // Check per-kit cooldown exemption
         String kitNocooldownPermission = "neoessentials.kits." + kitName.toLowerCase() + ".nocooldown";
-        if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, kitNocooldownPermission)) {
-            return true;
-        }
-        
-        return false;
+        return com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, kitNocooldownPermission);
     }
     
     private String formatTime(long millis) {
