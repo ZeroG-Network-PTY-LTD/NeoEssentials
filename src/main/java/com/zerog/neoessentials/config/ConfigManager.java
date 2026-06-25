@@ -1,4 +1,4 @@
-﻿package com.zerog.neoessentials.config;
+package com.zerog.neoessentials.config;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
