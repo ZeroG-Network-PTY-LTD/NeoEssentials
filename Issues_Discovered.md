@@ -38,6 +38,35 @@
 
 # ✅ Issues That Were Fixed
 
+## 🐛 Bug Fix — Teleportation Unsafe Fallback Triggered (NeoForge 1.21.1, build.1.0.2.6+119)
+
+**`SpawnManager.java` — `/spawn` always fell back to world-spawn when target chunks were unloaded**
+
+Three interlocking bugs caused `/spawn` (and less commonly `/home`) to show "teleportation is unsafe" messages and fall through to the vanilla world-spawn fallback, even when safety checks were disabled in config.
+
+**Root Cause 1 — Safety check ran BEFORE chunks were loaded (primary bug):**
+`SpawnManager.teleportToSpawn()` called `spawnLocation.isSafe()` before any chunk-loading had occurred. `TeleportLocation.isSafe()` returns `false` whenever `!level.isLoaded(pos)` — so if the spawn world's chunks weren't already resident in memory (common in multiworld setups), `isSafe()` returned `false`, `findSafeLocation()` likewise found nothing (all candidate positions were also unloaded), and `teleportToWorldSpawn()` was unconditionally invoked. The server log showed: `Player Ovaredge teleported to world spawn fallback`.
+`TeleportUtil.teleportPlayer()` already force-loads the surrounding 3×3 chunk grid *before* checking safety, but the pre-check in `SpawnManager` ran *before* `TeleportUtil` was ever called — making the chunk-loading code unreachable for this code path.
+
+**Root Cause 2 — `requireSafeLocation` overridden by stale `spawn.json` value:**
+The constructor calls `loadConfig()` first (reads `enableSpawnSafety` from `config.json`), then calls `loadSpawn()` which read `requireSafeLocation` from the legacy `config` section of `spawn.json` — **overwriting** the value just set by `loadConfig()`. If `spawn.json` was saved when safety was enabled (the default), setting `enableSpawnSafety: false` in `config.json` had no effect — it was silently reverted on every server start.
+
+**Root Cause 3 — `teleportToWorldSpawn()` hardcoded `findSafe=true`:**
+The fallback always passed `true` for safety checks regardless of what `requireSafeLocation` was configured as, making it impossible to safely reach the vanilla world spawn when safety was disabled.
+
+**Fixes applied:**
+
+| File | Change |
+|---|---|
+| `SpawnManager.java` | `teleportToSpawn()`: added `TeleportUtil.preloadChunksForTeleport()` for the 3×3 chunk grid **before** the safety check — matching the pattern already in `HomeManager.teleportToHome()`. Safety is now read at runtime via `ConfigManager.isSpawnSafetyEnabled()` (not from the cached field). `TeleportUtil.teleportPlayer()` is called with `findSafe=false` since safety is fully resolved above, matching `HomeManager`. |
+| `SpawnManager.java` | `loadSpawn()`: removed the `requireSafeLocation` read from the legacy `spawn.json` config section. Safety config is the sole responsibility of `config.json` via `loadConfig()` / `isSpawnSafetyEnabled()`. |
+| `SpawnManager.java` | `teleportToWorldSpawn()`: changed hardcoded `findSafe=true` → `requireSafeLocation` so the fallback respects the configured safety setting. |
+| `ConfigManager.java` | Added `isSpawnSafetyEnabled()` — reads `teleportation.spawnSettings.enableSpawnSafety` at runtime, analogous to `isHomeTeleportSafetyEnabled()`. |
+
+Debug logging added throughout `teleportToSpawn()` — when `logging.enableDebugLogging = true`, log lines show which chunk grid is being preloaded, whether safety is active, and when spawn is moved to a safe location.
+
+---
+
 ## ✨ Feature — Build #158 — 2026-05-25
 
 **Named Animation System — `{animation:NAME}` placeholder**

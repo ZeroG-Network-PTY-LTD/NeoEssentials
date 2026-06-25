@@ -2795,6 +2795,24 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if spawn teleport safety is enabled in teleportation.spawnSettings config section.
+     * (teleportation.spawnSettings.enableSpawnSafety)
+     */
+    public boolean isSpawnSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("spawnSettings")) {
+                JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("enableSpawnSafety")) {
+                    return spawnSettings.get("enableSpawnSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true for safety
+    }
+
+    /**
      * Returns true if home teleport safety is enabled in teleportation.homeSettings config section.
      * Accepts both "enableHomeTeleportSafety" (canonical) and "enableHomeSafety" (alias, consistent with enableWarpSafety).
      * (teleportation.homeSettings.enableHomeTeleportSafety or teleportation.homeSettings.enableHomeSafety)

@@ -211,12 +211,34 @@ public class SpawnManager {
             }
         }
         
-        // Check if spawn location is still safe (only enforce if safety is required)
-        if (spawnLocation != null && requireSafeLocation) {
+        // Always read safety setting at runtime from config (not the cached field) so that
+        // config reloads are respected — mirroring the pattern used in HomeManager.
+        boolean requireSafe = com.zerog.neoessentials.config.ConfigManager.getInstance().isSpawnSafetyEnabled();
+        boolean debug = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
+        if (debug) {
+            LOGGER.info("[DEBUG] Spawn teleport safety: {} (from config)", requireSafe);
+        }
+
+        // Force-load the target chunk AND its 8 neighbours BEFORE any safety check.
+        // isSafe() / findSafeLocation() both return false/null when the chunk is not yet
+        // loaded, which previously caused a spurious fallback to world-spawn even though
+        // the configured spawn location was perfectly fine.
+        net.minecraft.server.level.ServerLevel spawnLevel = spawnLocation.getLevel();
+        if (spawnLevel != null) {
+            net.minecraft.core.BlockPos spawnBlockPos = new net.minecraft.core.BlockPos(
+                (int) spawnLocation.getX(), (int) spawnLocation.getY(), (int) spawnLocation.getZ());
+            if (debug) LOGGER.info("[DEBUG] Pre-loading 3×3 chunk grid around ({},{}) for spawn teleport.",
+                spawnBlockPos.getX() >> 4, spawnBlockPos.getZ() >> 4);
+            TeleportUtil.preloadChunksForTeleport(spawnLevel, spawnBlockPos);
+        }
+
+        // Check if spawn location is still safe (chunks are now loaded, so isSafe() is accurate)
+        if (requireSafe) {
             if (!spawnLocation.isSafe()) {
                 TeleportLocation safeLocation = spawnLocation.findSafeLocation();
                 if (safeLocation == null) {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.unsafe"));
+                    if (debug) LOGGER.info("[DEBUG] No safe location found near spawn; triggering world-spawn fallback.");
                     teleportToWorldSpawn(player);
                     return;
                 }
@@ -225,9 +247,12 @@ public class SpawnManager {
                 spawnLocation = safeLocation;
                 saveSpawn();
                 player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.spawn.moved_to_safety"));
+                if (debug) LOGGER.info("[DEBUG] Spawn moved to safe location.");
             }
+        } else {
+            // Safety checks disabled — teleport directly to configured location
+            if (debug) LOGGER.info("[DEBUG] Spawn teleport safety is disabled. Teleporting to configured location.");
         }
-        // If safety is not required, allow teleportation to unsafe locations
 
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
@@ -252,8 +277,9 @@ public class SpawnManager {
             }
         }
 
-        // Perform teleportation
-        TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, requireSafeLocation).thenAccept(result -> {
+        // Perform teleportation — safety already resolved above, so pass findSafe=false
+        // (matching the pattern in HomeManager.teleportToHome)
+        TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.success"));
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
@@ -288,7 +314,7 @@ public class SpawnManager {
                 "world"
             );
             
-            TeleportUtil.teleportPlayer(player, fallbackLocation, 0, true).thenAccept(result -> {
+            TeleportUtil.teleportPlayer(player, fallbackLocation, 0, requireSafeLocation).thenAccept(result -> {
                 if (result.isSuccess()) {
                     player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.spawn.fallback_success"));
                     if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
@@ -364,13 +390,14 @@ public class SpawnManager {
                 }
             }
             
-            // Load configuration (legacy support from spawn.json — settings now in config.json)
+            // Load legacy configuration fields from spawn.json.
+            // NOTE: requireSafeLocation is intentionally NOT read here; it is read at
+            // runtime from config.json by isSpawnSafetyEnabled(). Reading it from
+            // spawn.json would silently override any change made to enableSpawnSafety
+            // in config.json after the initial save.
             if (root.has("config")) {
                 JsonObject config = root.getAsJsonObject("config");
                 // teleportDelay is now read from config.json (generalSettings.teleportDelay), not spawn.json
-                if (config.has("requireSafeLocation")) {
-                    requireSafeLocation = config.get("requireSafeLocation").getAsBoolean();
-                }
                 if (config.has("allowSetSpawnInNether")) {
                     allowSetSpawnInNether = config.get("allowSetSpawnInNether").getAsBoolean();
                 }
