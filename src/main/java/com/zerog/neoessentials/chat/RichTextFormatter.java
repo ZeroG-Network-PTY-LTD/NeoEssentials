@@ -113,16 +113,20 @@ public class RichTextFormatter {
     public static String preprocessTags(String text) {
         try {
             if (isRichTextEnabled()) {
+                // Rich text ON — convert all tag syntax to & codes / internal markers
                 text = processGradients(text);
                 text = processRainbow(text);
+                text = processNamedColorTags(text);
+                text = processFormatTags(text);
+                text = processColorHexTags(text);
+                text = processHoverTags(text);
+                text = processClickTags(text);
+            } else {
+                // Rich text OFF — strip all <tag> syntax without converting.
+                // Legacy & codes from the format template are left intact so
+                // template colours still render; only XML-style tags are removed.
+                text = stripAllRichTags(text);
             }
-            // Named colors, format codes, hex-color spans, and hover/click events are
-            // always processed (they don't require the richText.enabled flag).
-            text = processNamedColorTags(text);
-            text = processFormatTags(text);
-            text = processColorHexTags(text);
-            text = processHoverTags(text);
-            text = processClickTags(text);
             return text;
         } catch (Exception e) {
             LOGGER.error("Error pre-processing rich text tags: {}", e.getMessage(), e);
@@ -176,18 +180,17 @@ public class RichTextFormatter {
     /**
      * Process rich text formatting tags and convert to colored Component.
      * Used when {@code enableChatEnhancements} is {@code false}.
+     * <p>
+     * NOTE: expects a string that has <em>already</em> been through
+     * {@link #preprocessTags(String)}, so all tag conversion / stripping has
+     * already happened.  This method only needs to call {@code parseColorCodes}
+     * to convert the remaining {@code &}-codes to a Component.
      */
     public static Component processRichText(String text) {
         try {
-            if (isRichTextEnabled()) {
-                text = processGradients(text);
-                text = processRainbow(text);
-            }
-            text = processNamedColorTags(text);
-            text = processFormatTags(text);
-            text = processColorHexTags(text);
-            // Note: hover/click markers are handled by the component builder in ChatFormatter.
-            // Strip them here to avoid garbage if the non-enhancement path is used.
+            // Tags have already been handled by preprocessTags().
+            // Strip any hover/click markers that cannot be rendered without the
+            // enhancement component builder, then parse & colour codes.
             text = stripHoverClickMarkers(text);
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
         } catch (Exception e) {
@@ -464,6 +467,57 @@ public class RichTextFormatter {
             }
         } catch (Exception e) { /* ignore */ }
         return false;
+    }
+
+    /**
+     * Strip ALL XML-style rich text tags from {@code text} without converting them.
+     * Used when {@code richText.enabled = false} so that tags are removed cleanly
+     * but legacy {@code &}-codes from the format template are left intact.
+     *
+     * <p>For container tags (gradient, rainbow, hover, click) the inner visible
+     * text is preserved; open/close simple tags are just removed.</p>
+     */
+    static String stripAllRichTags(String text) {
+        // Container tags — keep inner text
+        text = GRADIENT_PATTERN.matcher(text).replaceAll("$2");
+        text = RAINBOW_PATTERN.matcher(text).replaceAll("$1");
+        text = HOVER_TAG_PATTERN.matcher(text).replaceAll("$2");
+        text = CLICK_TAG_PATTERN.matcher(text).replaceAll("$3");
+        // Named-color open and close tags
+        text = processNamedColorTagsStrip(text);
+        // Format open and close tags
+        text = processFormatTagsStrip(text);
+        // <color:#RRGGBB> and </color>
+        text = COLOR_HEX_TAG_PATTERN.matcher(text).replaceAll("");
+        text = text.replace("</color>", "");
+        // Strip any internal hover/click markers left over
+        text = stripHoverClickMarkers(text);
+        return text;
+    }
+
+    /** Remove named-color open tags and their close counterparts without replacing. */
+    private static String processNamedColorTagsStrip(String text) {
+        for (String tag : new String[]{
+            "black","dark_blue","dark_green","dark_aqua","dark_cyan","dark_red","dark_purple",
+            "gold","gray","grey","dark_gray","dark_grey","blue","green","aqua","cyan",
+            "red","light_purple","pink","yellow","white"}) {
+            text = text.replace("<" + tag + ">", "").replace("</" + tag + ">", "")
+                       .replace("<" + tag.toUpperCase() + ">", "").replace("</" + tag.toUpperCase() + ">", "");
+        }
+        text = CLOSE_COLOR_TAG_PATTERN.matcher(text).replaceAll("");
+        return text;
+    }
+
+    /** Remove format open tags and their close counterparts without replacing. */
+    private static String processFormatTagsStrip(String text) {
+        for (String tag : new String[]{
+            "bold","b","italic","i","underline","underlined","u",
+            "strikethrough","s","obfuscated","magic","reset","r"}) {
+            text = text.replace("<" + tag + ">", "").replace("</" + tag + ">", "")
+                       .replace("<" + tag.toUpperCase() + ">", "").replace("</" + tag.toUpperCase() + ">", "");
+        }
+        text = CLOSE_FORMAT_TAG_PATTERN.matcher(text).replaceAll("");
+        return text;
     }
 }
 

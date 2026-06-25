@@ -119,13 +119,16 @@ public class ChatFormatter {
                 LOGGER.info("After cleanup: [{}]", formatted);
             }
 
-            // Phase 4: Pre-process rich text tags (gradient/rainbow → &#RRGGBB hex codes).
-            // We keep the result as a String so that & color codes are preserved for the
-            // enhancement phase.  componentToFormattedString() used to call getString()
-            // here, which stripped all formatting and produced white-only chat output.
+            // Phase 4: Pre-process rich text tags.
+            // When richText.enabled=true  → converts <tag> syntax to & codes / internal markers.
+            // When richText.enabled=false → strips <tag> syntax, leaving legacy & codes intact.
+            if (debugEnabled) {
+                boolean richTextOn = isRichTextEnabled();
+                LOGGER.info("Rich text enabled: {}", richTextOn);
+            }
             String richPreProcessed = RichTextFormatter.preprocessTags(formatted);
             if (debugEnabled) {
-                LOGGER.info("After rich text tag pre-processing: [{}]", richPreProcessed);
+                LOGGER.info("After rich text pre-processing: [{}]", richPreProcessed);
             }
 
             // Apply Phase 2 enhancements if enabled
@@ -136,8 +139,9 @@ public class ChatFormatter {
                 // codes are honoured correctly.
                 result = enhanceMessage(richPreProcessed, player, player.getServer());
             } else {
-                // No enhancements – do full rich text processing (parseColorCodes included).
-                result = RichTextFormatter.processRichText(formatted);
+                // No enhancements — richPreProcessed already has tags stripped/converted;
+                // use it directly instead of re-processing the original formatted string.
+                result = RichTextFormatter.processRichText(richPreProcessed);
             }
 
             if (debugEnabled) {
@@ -774,5 +778,20 @@ public class ChatFormatter {
             // Default to enabled on any error
         }
         return true;
+    }
+
+    /**
+     * Returns true if rich text tag processing ({@code <red>}, {@code <gradient:…>} etc.)
+     * is enabled.  Delegates to {@link RichTextFormatter}'s own check so the two stay
+     * in sync.  Only used for debug-logging in this class.
+     */
+    private static boolean isRichTextEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("richText")) {
+                return chatConfig.getAsJsonObject("richText").get("enabled").getAsBoolean();
+            }
+        } catch (Exception ignored) { /* ignore */ }
+        return false;
     }
 }
