@@ -47,11 +47,6 @@ public class MessageUtil {
     private static final int CURRENT_LANG_VERSION = 16;
 
     /**
-     * Load translations from server directory, updating from JAR if needed.
-     * If the deployed file exists but is at an older version, any missing keys
-     * are merged in from the JAR without overwriting user edits.
-     */
-    /**
      * Returns the configured server language code, e.g. "fr_fr".
      * Safe to call before config is fully loaded (falls back to "en_us").
      */
@@ -206,6 +201,8 @@ public class MessageUtil {
     /**
      * Load translations from JAR resource (en_us fallback).
      */
+    //noinspection unused
+    @SuppressWarnings("unused") // convenience overload kept for external callers
     private static Map<String, String> loadJarTranslations() {
         Map<String, String> result = loadJarTranslations("en_us");
         if (result == null) {
@@ -534,37 +531,59 @@ public class MessageUtil {
     }
     
     /**
-     * Force update/merge the language file if config version is updated.
-     * Ensures all keys from the JAR are present in the server language file.
+     * Merge any new JAR keys into the deployed server language file without overwriting
+     * existing user edits. Called after a config version bump to ensure all translation
+     * keys added in a new mod build are present on disk.
+     *
+     * <p>Strategy:
+     * <ul>
+     *   <li>Keys present in the JAR but missing from the server file → added.</li>
+     *   <li>Keys already on disk → left unchanged (user edits are preserved).</li>
+     *   <li>File missing entirely → written fresh from the JAR.</li>
+     * </ul>
      */
     public static void ensureLanguageFileUpToDate() {
         String langCode = getConfiguredLanguage();
         File serverLangFile = new File(getNeoEssentialsLangCustomDir(), langCode + ".json");
         Map<String, String> jarTranslations = buildJarTranslationsWithFallback(langCode);
-        Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
-        boolean needsUpdate = false;
         if (jarTranslations == null) {
             LOGGER.error("JAR translations are null, cannot update language file.");
             return;
         }
+
+        Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
         if (serverTranslations == null) {
-            needsUpdate = true;
+            // File missing — write from JAR (no user edits to preserve)
+            updateServerLanguageFile(serverLangFile, jarTranslations);
+            LOGGER.info("Language file created from JAR (was missing).");
         } else {
-            // Check for missing keys
-            for (String key : jarTranslations.keySet()) {
-                if (!serverTranslations.containsKey(key)) {
-                    needsUpdate = true;
-                    break;
+            // Merge: only add keys that are absent from the server file
+            int added = 0;
+            for (Map.Entry<String, String> entry : jarTranslations.entrySet()) {
+                if (!serverTranslations.containsKey(entry.getKey())) {
+                    serverTranslations.put(entry.getKey(), entry.getValue());
+                    added++;
                 }
             }
+            if (added > 0) {
+                // Bump the version so loadTranslations() doesn't re-merge on the same boot
+                serverTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
+                try (java.io.FileWriter fw = new java.io.FileWriter(serverLangFile)) {
+                    new com.google.gson.GsonBuilder().setPrettyPrinting()
+                        .disableHtmlEscaping().create().toJson(serverTranslations, fw);
+                    LOGGER.info("Language file merged: {} new key(s) added (user edits preserved).", added);
+                } catch (Exception ex) {
+                    LOGGER.warn("Could not save merged language file: {}", ex.getMessage());
+                }
+            } else {
+                LOGGER.debug("Language file is already up to date, no merge needed.");
+            }
         }
-        if (needsUpdate) {
-            updateServerLanguageFile(serverLangFile, jarTranslations);
-            translations.clear();
-            loaded = false;
-            loadTranslations();
-            LOGGER.info("Language file updated/merged due to config version update.");
-        }
+
+        // Invalidate the in-memory cache so the next call to localize() picks up the updated file
+        translations.clear();
+        loaded = false;
+        loadTranslations();
     }
 
     /**
@@ -686,6 +705,8 @@ public class MessageUtil {
     /**
      * Create a separator line
      */
+    //noinspection unused
+    @SuppressWarnings("unused") // public API
     public static Component separator(int length, char character, net.minecraft.ChatFormatting color) {
         return ChatComponentUtil.createSeparator(length, character, color);
     }

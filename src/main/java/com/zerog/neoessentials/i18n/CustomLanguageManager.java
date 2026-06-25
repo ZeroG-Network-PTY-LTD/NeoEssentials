@@ -13,7 +13,6 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +24,7 @@ public class CustomLanguageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomLanguageManager.class);
     private static CustomLanguageManager INSTANCE;
     // Use only the correct path under the mod's data directory
+    @SuppressWarnings("unused") // kept for external tools that may reference this constant
     private static final String LANG_DIR = "neoessentials/languages/custom/";
     private static final String LANG_FILE = "en_us.json";
     private final Path customLangDir;
@@ -201,6 +201,7 @@ public class CustomLanguageManager {
      * Get translation from custom language file, with fallback to MessageUtil.
      * Admin overrides take priority over everything.
      */
+    @SuppressWarnings("unused") // public API — called by TranslationHandler and external integrations
     public String getTranslation(String key, String languageCode) {
         // Admin overrides take top priority
         if (overrides.containsKey(key)) {
@@ -228,6 +229,7 @@ public class CustomLanguageManager {
     /**
      * Check if a custom language is available
      */
+    @SuppressWarnings("unused") // public API
     public boolean hasCustomLanguage(String languageCode) {
         return customTranslations.containsKey(languageCode);
     }
@@ -351,12 +353,19 @@ public class CustomLanguageManager {
     }
 
     /**
-     * Reload all custom language files
+     * Reload all custom language files.
+     *
+     * <p>Also re-runs {@link #deployBundledLanguageFiles()} so that any new keys
+     * added to bundled JAR translations (fr_fr, de_de, etc.) since the last server
+     * start are merged into the on-disk files before they are re-read into memory.
+     * User edits are preserved — only missing keys are added.
      */
     public void reload() {
         customTranslations.clear();
         languageFiles.clear();
         overrides.clear();
+        // Re-merge new JAR keys into all bundled language files before re-scanning disk
+        deployBundledLanguageFiles();
         scanCustomLanguageFiles();
         loadOverrides();
         LOGGER.info("Reloaded custom languages: {}", languageFiles.keySet());
@@ -417,6 +426,7 @@ public class CustomLanguageManager {
         public String getEnglishName() { return englishName; }
         public String getAuthor() { return author; }
         public String getVersion() { return version; }
+        @SuppressWarnings("unused") // public API
         public Path getFilePath() { return filePath; }
     }
 
@@ -702,11 +712,13 @@ public class CustomLanguageManager {
             this.errorMessage = errorMessage;
         }
 
+        @SuppressWarnings("unused") // public API
         public String getLanguageCode() { return languageCode; }
         public int getTotalKeys() { return totalKeys; }
         public int getPresentKeys() { return presentKeys; }
         public int getCoveragePercent() { return coveragePercent; }
         public List<String> getMissingKeys() { return missingKeys; }
+        @SuppressWarnings("unused") // public API
         public List<String> getExtraKeys() { return extraKeys; }
         public boolean hasError() { return errorMessage != null; }
         public String getErrorMessage() { return errorMessage; }
@@ -715,41 +727,27 @@ public class CustomLanguageManager {
     }
 
     private InputStream findLangResource(String filename) {
-        // Try with and without leading slash
+        // Try class.getResourceAsStream with and without leading slash
         String[] paths = {"/data/lang/" + filename, "data/lang/" + filename};
         for (String path : paths) {
             InputStream in = getClass().getResourceAsStream(path);
             if (in != null) {
-                LOGGER.info("Found language resource at: {}", path);
+                LOGGER.debug("Found language resource at: {}", path);
                 return in;
-            } else {
-                LOGGER.warn("Language resource not found at: {}", path);
             }
         }
         // Try classloader as fallback
         for (String path : paths) {
-            InputStream in = getClass().getClassLoader().getResourceAsStream(path.startsWith("/") ? path.substring(1) : path);
+            String normalised = path.startsWith("/") ? path.substring(1) : path;
+            InputStream in = getClass().getClassLoader().getResourceAsStream(normalised);
             if (in != null) {
-                LOGGER.info("Found language resource via classloader at: {}", path);
+                LOGGER.debug("Found language resource via classloader at: {}", normalised);
                 return in;
-            } else {
-                LOGGER.warn("ClassLoader: Language resource not found at: {}", path);
             }
         }
-        // Log all resources in the JAR for debugging
-        try {
-            LOGGER.error("Language resource not found. Listing all resources in JAR for debugging:");
-            var jar = getClass().getProtectionDomain().getCodeSource().getLocation();
-            try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(jar.getPath())) {
-                jarFile.stream().forEach(entry -> {
-                    if (entry.getName().contains("lang")) {
-                        LOGGER.error("  JAR entry: {}", entry.getName());
-                    }
-                });
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to list JAR resources: {}", e.getMessage());
-        }
+        // Truly not found — log once at WARN level (not ERROR, and no expensive JAR listing)
+        LOGGER.warn("Language resource not found in JAR for: {} (tried paths: /data/lang/{}, data/lang/{})",
+            filename, filename, filename);
         return null;
     }
 
