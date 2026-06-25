@@ -191,8 +191,9 @@ public class CreateKitCommand {
         if (name.length() > 32) {
             return false;
         }
-        // Check characters (alphanumeric, underscore, dash)
-        return name.matches("^[a-zA-Z0-9_-]+$");
+        // Only allow lowercase letters, digits, and underscore — matches Kit constructor sanitization.
+        // Hyphens are intentionally excluded: Kit() strips them which would cause a silent name mismatch.
+        return name.matches("^[a-zA-Z0-9_]+$");
     }
 
     // Helper method to format cooldown duration
@@ -226,8 +227,12 @@ public class CreateKitCommand {
         json.addProperty("permission", permission);
         com.google.gson.JsonArray itemsArray = new com.google.gson.JsonArray();
         for (ItemStack item : items) {
+            if (item.isEmpty()) continue;
+            net.minecraft.resources.ResourceLocation itemKey =
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem());
+            if (itemKey == null) continue; // Skip unregistered items
             com.google.gson.JsonObject itemJson = new com.google.gson.JsonObject();
-            itemJson.addProperty("item", item.getItem().toString());
+            itemJson.addProperty("item", itemKey.toString());
             itemJson.addProperty("count", item.getCount());
             itemsArray.add(itemJson);
         }

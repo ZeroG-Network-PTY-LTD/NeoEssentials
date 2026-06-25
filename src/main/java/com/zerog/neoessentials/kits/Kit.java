@@ -137,18 +137,32 @@ public class Kit {
         JsonArray itemsArray = new JsonArray();
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
-                JsonObject itemJson = new JsonObject();
-                itemJson.addProperty("item", BuiltInRegistries.ITEM.getKey(item.getItem()).toString());
-                itemJson.addProperty("count", item.getCount());
-                
-                if (item.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
-                    var customData = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
-                    if (customData != null) {
-                        itemJson.addProperty("nbt", customData.toString());
+                try {
+                    // Guard against null registry key (e.g. unregistered/modded items)
+                    net.minecraft.resources.ResourceLocation itemKey =
+                            BuiltInRegistries.ITEM.getKey(item.getItem());
+                    if (itemKey == null) {
+                        // Skip items with no registry key to avoid NPE
+                        continue;
                     }
+
+                    JsonObject itemJson = new JsonObject();
+                    itemJson.addProperty("item", itemKey.toString());
+                    itemJson.addProperty("count", item.getCount());
+
+                    if (item.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
+                        var customData = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+                        if (customData != null) {
+                            // Use copyTag().toString() — CustomData.toString() is a Java record
+                            // representation, NOT a parseable NBT string.
+                            itemJson.addProperty("nbt", customData.copyTag().toString());
+                        }
+                    }
+
+                    itemsArray.add(itemJson);
+                } catch (Exception e) {
+                    // Skip individual items that fail to serialize; don't abort the whole kit
                 }
-                
-                itemsArray.add(itemJson);
             }
         }
         json.add("items", itemsArray);

@@ -137,7 +137,11 @@ public class KitManager {
             
             JsonArray kitsArray = new JsonArray();
             for (Kit kit : kits.values()) {
-                kitsArray.add(kit.toJson());
+                try {
+                    kitsArray.add(kit.toJson());
+                } catch (Exception e) {
+                    LOGGER.warn("Skipping kit '{}' during save due to serialization error: {}", kit.getName(), e.getMessage());
+                }
             }
             config.add("kits", kitsArray);
             
