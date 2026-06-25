@@ -1,4 +1,4 @@
-// NeoEssentials Dashboard JavaScript
+﻿// NeoEssentials Dashboard JavaScript
 
 // Configuration
 const API_BASE_URL = window.location.origin + '/api';
@@ -93,6 +93,7 @@ async function checkAuthentication() {
             const data = await response.json();
             localStorage.setItem('username', data.username);
             localStorage.setItem('isAdmin', data.isAdmin);
+            if (data.isAdmin === true) { localStorage.setItem('role', 'ADMIN'); }
             localStorage.setItem('authType', data.authType);
             showDashboard();
         } else {
@@ -124,9 +125,9 @@ function showDashboard() {
     // Update username display
     const username = localStorage.getItem('username');
     const usernameDisplay = document.getElementById('usernameDisplay');
-    if (usernameDisplay && username) {
-        usernameDisplay.textContent = username;
-    }
+    if (usernameDisplay && username) { usernameDisplay.textContent = username; }
+    const userNameEl = document.getElementById('userName');
+    if (userNameEl && username) { userNameEl.textContent = username; }
     
     // Show admin controls if user is admin
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
@@ -270,9 +271,9 @@ function setupEventListeners() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const page = item.getAttribute('data-page');
             if (page) {
+                e.preventDefault();
                 switchPage(page);
             }
         });
@@ -403,9 +404,9 @@ async function handleLogin() {
                 localStorage.setItem('isAdmin', data.user.role === 'ADMIN' || data.user.isAdmin || false);
                 localStorage.setItem('role', data.user.role || 'VIEWER');
             } else {
-                localStorage.setItem('username', username.trim());
-                localStorage.setItem('isAdmin', false);
-                localStorage.setItem('role', 'VIEWER');
+                localStorage.setItem('username', data.username || username.trim());
+                localStorage.setItem('isAdmin', data.isAdmin === true);
+                localStorage.setItem('role', data.isAdmin === true ? 'ADMIN' : 'VIEWER');
             }
 
             // Show dashboard
@@ -445,6 +446,13 @@ function setupNavigation() {
     
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
+            const pageName = item.getAttribute('data-page');
+            // Items without data-page (e.g. permissions.html, admin.html) navigate normally
+            if (!pageName) {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                return;
+            }
             e.preventDefault();
             
             // Remove active class from all items
@@ -453,8 +461,7 @@ function setupNavigation() {
             // Add active class to clicked item
             item.classList.add('active');
             
-            // Get page name
-            const pageName = item.getAttribute('data-page');
+            // Get page name (already fetched above)
             const pageTitle = item.querySelector('.nav-text').textContent;
             
             // Update page title
