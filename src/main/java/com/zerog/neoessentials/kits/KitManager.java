@@ -60,7 +60,7 @@ public class KitManager {
             loadPlayerData();
             initialized = true;
             LOGGER.info("Kit Manager initialized with {} kits", kits.size());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Failed to initialize Kit Manager: {}", e.getMessage(), e);
         }
     }
@@ -92,12 +92,12 @@ public class KitManager {
                                         try {
                                             com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
                                                 .registerKitPermission(kit.getName());
-                                        } catch (Exception e) {
+                                        } catch (Throwable e) {
                                             LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
                                         }
 
                                         loadedCount++;
-                                    } catch (Exception e) {
+                                    } catch (Throwable e) {
                                         LOGGER.warn("Failed to load kit from config: {}", e.getMessage());
                                     }
                                 }
@@ -112,7 +112,7 @@ public class KitManager {
                 // Create default config
                 saveKits();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Failed to load kits from configuration: {}", e.getMessage(), e);
         }
     }

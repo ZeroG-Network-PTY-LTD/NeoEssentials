@@ -24,7 +24,7 @@ public class KitCommands {
         try {
             com.zerog.neoessentials.kits.KitManager.getInstance().initialize();
             LOGGER.info("KitManager initialized successfully");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Failed to initialize KitManager: {}", e.getMessage(), e);
         }
 

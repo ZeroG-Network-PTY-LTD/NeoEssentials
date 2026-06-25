@@ -215,7 +215,7 @@ public class Kit {
                     }
                     
                     items.add(stack);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     // Skip invalid items
                 }
             }

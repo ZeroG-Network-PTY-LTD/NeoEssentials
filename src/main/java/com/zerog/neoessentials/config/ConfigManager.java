@@ -1943,20 +1943,6 @@ public class ConfigManager {
         return true;
     }
 
-    /**
-     * Returns true if web dashboard is enabled (webDashboard.enabled).
-     * Defaults to true if not set.
-     */
-    public static boolean isWebDashboardEnabled() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("enabled")) {
-                return dashboard.get("enabled").getAsBoolean();
-            }
-        }
-        return true;
-    }
 
     /**
      * Returns true if unsafe enchantments are allowed (items.unsafe-enchantments).

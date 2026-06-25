@@ -21,7 +21,6 @@ import java.util.*;
  *   chat.json         — chat formatting, channels, anti-spam, badges
  *   teleportation.json— home, warp, spawn, tpa settings
  *   moderation.json   — ban, jail, freeze, kick, vanish settings
- *   webdashboard.json — web dashboard settings
  *   items.json        — item spawn settings
  *   afk.json          — AFK system settings
  *   security.json     — security and validation settings
@@ -45,7 +44,6 @@ public class ConfigSplitter {
         put("economy",       "main.json");   // economy config settings
         put("security",      "security.json");
         put("commands",      "commands.json");
-        put("webDashboard",  "webdashboard.json");
         put("items",         "items.json");
         put("afk",           "afk.json");
         put("teleportation", "teleportation.json");
@@ -64,7 +62,6 @@ public class ConfigSplitter {
         put("chat.json",          Collections.singletonList("chat"));
         put("teleportation.json", Collections.singletonList("teleportation"));
         put("moderation.json",    Collections.singletonList("moderation"));
-        put("webdashboard.json",  Collections.singletonList("webDashboard"));
         put("items.json",         Collections.singletonList("items"));
         put("afk.json",           Collections.singletonList("afk"));
         put("security.json",      Collections.singletonList("security"));
@@ -78,7 +75,6 @@ public class ConfigSplitter {
         put("chat.json",          1);
         put("teleportation.json", 1);
         put("moderation.json",    1);
-        put("webdashboard.json",  1);
         put("items.json",         1);
         put("afk.json",           2);  // v2  — invulnerableWhenAfk option
         put("security.json",      1);

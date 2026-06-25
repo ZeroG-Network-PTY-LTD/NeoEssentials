@@ -154,11 +154,6 @@ public class NeoEssentials {
             com.zerog.neoessentials.kits.KitManager.class,
             com.zerog.neoessentials.kits.KitManager::getInstance);
         
-        // Dashboard Managers
-        registry.registerManager("AuthenticationManager", "dashboard",
-            com.zerog.neoessentials.webdashboard.security.AuthenticationManager.class,
-            com.zerog.neoessentials.webdashboard.security.AuthenticationManager::getInstance);
-        
         // Shop Managers
         registry.registerManager("ShopManager", "shop",
             com.zerog.neoessentials.shop.ShopManager.class,
@@ -823,7 +818,11 @@ public class NeoEssentials {
         registry.registerCommand("createkit", "Create a new kit");
         registry.registerCommand("delkit", "Delete a kit");
         registry.registerCommand("kitreset", "Reset a kit cooldown");
-        com.zerog.neoessentials.kits.command.KitCommands.register(dispatcher);
+        try {
+            com.zerog.neoessentials.kits.command.KitCommands.register(dispatcher);
+        } catch (Throwable e) {
+            LOGGER.error("Kit commands failed to register (non-fatal): {}", e.getMessage(), e);
+        }
 
         // ========== UTILITY COMMANDS ==========
         registry.registerCommand("afk", "Toggle AFK status");
@@ -899,11 +898,6 @@ public class NeoEssentials {
         com.zerog.neoessentials.util.commands.WhoisCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.GamemodeCommand.register(dispatcher);
         
-        // ========== WEB DASHBOARD COMMANDS ==========
-        registry.registerCommand("dashboard", "Manage web dashboard");
-        com.zerog.neoessentials.commands.utility.DashboardCommand.register(dispatcher);
-        registry.registerCommand("dashboardregister", "Register a dashboard account");
-        com.zerog.neoessentials.commands.utility.DashboardRegisterCommand.register(dispatcher);
 
         // ========== ITEM COMMANDS ==========
         registry.registerCommand("repair", "Repair items");

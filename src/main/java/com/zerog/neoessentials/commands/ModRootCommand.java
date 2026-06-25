@@ -492,7 +492,6 @@ public class ModRootCommand {
                 source.sendSuccess(() -> MessageUtil.info("  - chat.json (chat system settings)"), false);
                 source.sendSuccess(() -> MessageUtil.info("  - teleportation.json (teleport settings)"), false);
                 source.sendSuccess(() -> MessageUtil.info("  - moderation.json (ban, jail, freeze, etc.)"), false);
-                source.sendSuccess(() -> MessageUtil.info("  - webdashboard.json (web interface settings)"), false);
                 source.sendSuccess(() -> MessageUtil.info("  - items.json (item spawn settings)"), false);
                 source.sendSuccess(() -> MessageUtil.info("  - afk.json (AFK system settings)"), false);
                 source.sendSuccess(() -> MessageUtil.info("  - security.json (security settings)"), false);
