@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - NeoEssentials Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border,#313244); margin-bottom: 2rem; }
+        .tab-btn { padding: 0.6rem 1.25rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary,#a6adc8); transition: color 0.15s, border-color 0.15s; }
+        .tab-btn:hover { color: var(--text-primary,#cdd6f4); }
+        .tab-btn.active { color: #89b4fa; border-bottom-color: #89b4fa; }
+        .tab-panel { display: none; } .tab-panel.active { display: block; }
+
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; padding: 1.25rem; }
+        .stat-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary,#a6adc8); font-weight: 600; margin-bottom: .4rem; }
+        .stat-card .value { font-size: 1.6rem; font-weight: 700; color: var(--text-primary,#cdd6f4); }
+        .stat-card .sub { font-size: 0.75rem; color: var(--text-secondary,#a6adc8); margin-top: .25rem; }
+
+        .card { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border,#313244); }
+        .card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: .6rem 1rem; text-align: left; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary,#a6adc8); background: rgba(255,255,255,.03); border-bottom: 1px solid var(--border,#313244); }
+        td { padding: .75rem 1rem; font-size: .875rem; color: var(--text-primary,#cdd6f4); border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,.02); }
+
+        .role-badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; }
+        .role-ADMIN    { background: rgba(243,139,168,0.15); color: #f38ba8; }
+        .role-OPERATOR { background: rgba(249,226,175,0.15); color: #f9e2af; }
+        .role-MODERATOR{ background: rgba(137,180,250,0.15); color: #89b4fa; }
+        .role-VIEWER   { background: rgba(88,91,112,0.3);    color: #a6adc8; }
+
+        .enabled-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .enabled-dot.on  { background: #a6e3a1; }
+        .enabled-dot.off { background: #f38ba8; }
+
+        .action-cell { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-sm { padding: 0.3rem 0.65rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: opacity 0.15s; }
+        .btn-sm:hover { opacity: 0.8; }
+        .btn-role   { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid rgba(137,180,250,0.3); }
+        .btn-pw     { background: rgba(249,226,175,0.15); color: #f9e2af; border: 1px solid rgba(249,226,175,0.3); }
+        .btn-toggle { background: rgba(166,227,161,0.15); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.3); }
+        .btn-del    { background: rgba(243,139,168,0.15); color: #f38ba8; border: 1px solid rgba(243,139,168,0.4); }
+        .btn-revoke { background: rgba(243,139,168,0.15); color: #f38ba8; border: 1px solid rgba(243,139,168,0.4); }
+
+        .create-panel { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .create-panel h3 { margin: 0 0 1.25rem; font-size: 1rem; font-weight: 600; }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+        .form-field { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 150px; }
+        .form-field label { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary,#a6adc8); }
+        .form-field input, .form-field select { background: rgba(255,255,255,0.06); border: 1px solid var(--border,#45475a); border-radius: 6px; color: var(--text-primary,#cdd6f4); padding: 0.5rem 0.75rem; font-size: 0.9rem; }
+        .form-field input:focus, .form-field select:focus { outline: none; border-color: #89b4fa; }
+
+        .status-banner { display: none; padding: 0.75rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 500; }
+        .status-banner.success { background: rgba(166,227,161,0.15); color: #a6e3a1; border: 1px solid #a6e3a1; }
+        .status-banner.error   { background: rgba(243,139,168,0.15); color: #f38ba8; border: 1px solid #f38ba8; }
+        .status-banner.loading { background: rgba(137,180,250,0.15); color: #89b4fa; border: 1px solid #89b4fa; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary,#a6adc8); }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+        /* modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #1e1e2e; border: 1px solid #313244; border-radius: 14px; padding: 2rem; max-width: 380px; width: 90%; }
+        .modal h3 { margin: 0 0 1rem; }
+        .modal p  { margin: 0 0 1rem; color: #a6adc8; font-size: 0.88rem; line-height: 1.5; }
+        .modal-btns { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+        .btn-cancel { background: #313244; color: #cdd6f4; padding: 0.5rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; }
+        .modal-input { background: rgba(255,255,255,0.06); border: 1px solid #45475a; border-radius: 6px; color: #cdd6f4; padding: 0.5rem 0.75rem; font-size: 0.9rem; width: 100%; margin-bottom: 0.75rem; box-sizing: border-box; }
+        .modal-input:focus { outline: none; border-color: #89b4fa; }
+        .modal-select { background: rgba(255,255,255,0.06); border: 1px solid #45475a; border-radius: 6px; color: #cdd6f4; padding: 0.5rem 0.75rem; font-size: 0.9rem; width: 100%; margin-bottom: 0.75rem; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+<div class="dashboard-wrapper" id="dashboardWrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo"><span class="logo-icon">⚡</span><span class="logo-text">NeoEssentials</span></div></div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
+            <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+            <a href="backup.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
+            <a href="cloud.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+            <a href="users.html" class="nav-item admin-only active"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+            <a href="moderation.html" class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+            <a href="kits.html" class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+            <a href="holograms.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+            <a href="shop.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+            <a href="stats.html" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+            <a href="discord.html" class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
+        </nav>
+        <div class="sidebar-footer"><div class="server-status-mini"><span class="status-dot"></span><span class="status-text">Server Online</span></div></div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
+                <h2 class="page-title">👤 User Management</h2>
+            </div>
+            <div class="topbar-right">
+                <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
+                <div class="user-info" id="userInfo"><div class="user-avatar">?</div><span class="user-name" id="userName">Guest</span></div>
+                <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="status-banner" id="statusBanner"></div>
+
+            <!-- Stats -->
+            <div class="stat-cards">
+                <div class="stat-card"><div class="label">Total Users</div><div class="value" id="statTotal">—</div><div class="sub">dashboard accounts</div></div>
+                <div class="stat-card"><div class="label">Admins</div><div class="value" id="statAdmins" style="color:#f38ba8;">—</div><div class="sub">full access</div></div>
+                <div class="stat-card"><div class="label">Active Sessions</div><div class="value" id="statSessions" style="color:#a6e3a1;">—</div><div class="sub">currently online</div></div>
+                <div class="stat-card"><div class="label">Disabled</div><div class="value" id="statDisabled" style="color:#f9e2af;">—</div><div class="sub">locked out</div></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('users',this)">👥 Users</button>
+                <button class="tab-btn" onclick="switchTab('sessions',this)">🖥️ Active Sessions</button>
+                <button class="tab-btn admin-only" onclick="switchTab('create',this)">➕ Add User</button>
+            </div>
+
+            <!-- Users tab -->
+            <div class="tab-panel active" id="usersPanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>👥 Dashboard Users</h3>
+                        <button class="btn-secondary btn-sm" id="refreshUsersBtn">🔄 Refresh</button>
+                    </div>
+                    <div id="usersTableWrap">
+                        <div class="empty-state"><div class="icon"><span class="spinner"></span></div><div>Loading…</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions tab -->
+            <div class="tab-panel" id="sessionsPanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🖥️ Active Sessions</h3>
+                        <button class="btn-secondary btn-sm" id="refreshSessionsBtn">🔄 Refresh</button>
+                    </div>
+                    <div id="sessionsTableWrap">
+                        <div class="empty-state"><div class="icon"></div><div>Loading sessions…</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create tab -->
+            <div class="tab-panel" id="createPanel">
+                <div class="create-panel">
+                    <h3>➕ Create Dashboard User</h3>
+                    <div class="form-row">
+                        <div class="form-field"><label>Username</label><input type="text" id="newUsername" placeholder="admin2"></div>
+                        <div class="form-field"><label>Password</label><input type="password" id="newPassword" placeholder="Min 8 characters"></div>
+                        <div class="form-field"><label>Email <em style="opacity:0.6;">(optional)</em></label><input type="email" id="newEmail" placeholder="user@example.com"></div>
+                        <div class="form-field"><label>Role</label>
+                            <select id="newRole">
+                                <option value="VIEWER">Viewer — read-only</option>
+                                <option value="MODERATOR">Moderator — moderation actions</option>
+                                <option value="OPERATOR">Operator — most admin tasks</option>
+                                <option value="ADMIN">Admin — full access</option>
+                            </select>
+                        </div>
+                        <div class="form-field" style="flex:0;">
+                            <label>&nbsp;</label>
+                            <button class="btn-primary" id="createUserBtn">Create User</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Role change modal -->
+<div class="modal-overlay" id="roleModal">
+    <div class="modal">
+        <h3> Change Role</h3>
+        <p id="roleModalDesc">Change the role for this user.</p>
+        <select class="modal-select" id="roleSelect">
+            <option value="VIEWER">Viewer</option>
+            <option value="MODERATOR">Moderator</option>
+            <option value="OPERATOR">Operator</option>
+            <option value="ADMIN">Admin</option>
+        </select>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal('roleModal')">Cancel</button>
+            <button class="btn-primary" id="confirmRoleBtn">Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Password reset modal -->
+<div class="modal-overlay" id="pwModal">
+    <div class="modal">
+        <h3> Reset Password</h3>
+        <p>Leave blank to generate a temporary password that requires a change on next login.</p>
+        <input type="password" class="modal-input" id="pwInput" placeholder="New password (min 8 chars)">
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal('pwModal')">Cancel</button>
+            <button class="btn-primary" id="confirmPwBtn">Reset</button>
+        </div>
+    </div>
+</div>
+
+<script src="dashboard.js?v=144"></script>
+<script src="users.js?v=144"></script>
+<script>
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(name + 'Panel').classList.add('active');
+    if (name === 'sessions') window.loadSessions && window.loadSessions();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

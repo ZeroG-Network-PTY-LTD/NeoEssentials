@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics - NeoEssentials Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        /* ── Tabs ─────────────────────────────────────────────────────── */
+        .tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border,#313244); margin-bottom: 2rem; }
+        .tab-btn {
+            padding: 0.6rem 1.25rem; background: none; border: none; border-bottom: 2px solid transparent;
+            cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary,#a6adc8);
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .tab-btn:hover  { color: var(--text-primary,#cdd6f4); }
+        .tab-btn.active { color: #89b4fa; border-bottom-color: #89b4fa; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Stat cards ───────────────────────────────────────────────── */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; padding: 1.25rem; }
+        .stat-card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary,#a6adc8); font-weight: 600; margin-bottom: .4rem; }
+        .stat-card .value { font-size: 1.6rem; font-weight: 700; color: var(--text-primary,#cdd6f4); line-height: 1.1; }
+        .stat-card .sub   { font-size: 0.75rem; color: var(--text-secondary,#a6adc8); margin-top: .25rem; }
+        .stat-card.green .value  { color: #a6e3a1; }
+        .stat-card.yellow .value { color: #f9e2af; }
+        .stat-card.blue .value   { color: #89b4fa; }
+        .stat-card.red .value    { color: #f38ba8; }
+
+        /* ── Charts ───────────────────────────────────────────────────── */
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fill,minmax(380px,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-card { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; padding: 1.5rem; }
+        .chart-card h4 { margin: 0 0 1.25rem; font-size: .95rem; font-weight: 600; }
+        .chart-card canvas { max-height: 220px; }
+
+        /* ── Tables ───────────────────────────────────────────────────── */
+        .table-card { background: var(--card-bg,#1e1e2e); border: 1px solid var(--border,#313244); border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
+        .table-card h4 { margin: 0; padding: 1.1rem 1.5rem; font-size: .9rem; font-weight: 600; border-bottom: 1px solid var(--border,#313244); }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: .6rem 1rem; text-align: left; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary,#a6adc8); background: rgba(255,255,255,.03); border-bottom: 1px solid var(--border,#313244); }
+        td { padding: .75rem 1rem; font-size: .875rem; color: var(--text-primary,#cdd6f4); border-bottom: 1px solid rgba(255,255,255,.04); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,.02); }
+
+        /* Progress bar inside table */
+        .bar-wrap { display: flex; align-items: center; gap: .6rem; }
+        .bar { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background: #89b4fa; border-radius: 4px; transition: width .4s; }
+        .bar-fill.green { background: #a6e3a1; }
+
+        /* Online dot */
+        .dot-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #a6e3a1; margin-right: 4px; }
+        .dot-offline { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #6c7086; margin-right: 4px; }
+
+        /* Performance gauge row */
+        .gauge-row { display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem; }
+        .gauge-label { font-size: .8rem; font-weight: 500; color: var(--text-secondary,#a6adc8); width: 3.5rem; }
+        .gauge-bar { flex: 1; height: 10px; background: rgba(255,255,255,.08); border-radius: 6px; overflow: hidden; }
+        .gauge-fill { height: 100%; border-radius: 6px; transition: width .5s; }
+        .gauge-val { font-size: .85rem; font-weight: 600; color: var(--text-primary,#cdd6f4); width: 5rem; text-align: right; }
+
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.2); border-top-color: #89b4fa; border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .refresh-bar { display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: .5rem; }
+        .auto-badge { font-size: .72rem; color: var(--text-secondary,#a6adc8); align-self: center; }
+    </style>
+</head>
+<body>
+<div class="dashboard-wrapper" id="dashboardWrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">NeoEssentials</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></a>
+            <a href="permissions.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔐</span><span class="nav-text">Permissions</span></a>
+            <a href="admin.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-text">Admin Controls</span></a>
+            <a href="teleport.html" class="nav-item admin-only" style="display:none;"><span class="nav-icon">🌀</span><span class="nav-text">Teleport Settings</span></a>
+            <a href="backup.html"     class="nav-item admin-only" style="display:none;"><span class="nav-icon">💾</span><span class="nav-text">Backup &amp; Restore</span></a>
+            <a href="cloud.html"      class="nav-item admin-only" style="display:none;"><span class="nav-icon">☁️</span><span class="nav-text">Cloud Storage</span></a>
+            <a href="users.html"      class="nav-item admin-only" style="display:none;"><span class="nav-icon">👤</span><span class="nav-text">User Management</span></a>
+            <a href="moderation.html" class="nav-item"><span class="nav-icon">🛡️</span><span class="nav-text">Moderation</span></a>
+            <a href="kits.html"       class="nav-item"><span class="nav-icon">🎒</span><span class="nav-text">Kits</span></a>
+            <a href="holograms.html"  class="nav-item admin-only" style="display:none;"><span class="nav-icon">🔮</span><span class="nav-text">Holograms</span></a>
+            <a href="shop.html"       class="nav-item admin-only" style="display:none;"><span class="nav-icon">🛒</span><span class="nav-text">Shops</span></a>
+            <a href="stats.html"      class="nav-item active"><span class="nav-icon">📈</span><span class="nav-text">Statistics</span></a>
+            <a href="discord.html"    class="nav-item"><span class="nav-icon">🤖</span><span class="nav-text">Discord Integration</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="server-status-mini"><span class="status-dot"></span><span class="status-text">Server Online</span></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="sidebarToggle"><span>☰</span></button>
+                <h2 class="page-title">📈 Statistics</h2>
+            </div>
+            <div class="topbar-right">
+                <div class="status-badge" id="serverStatusBadge"><span class="dot"></span><span id="serverStatusText">Online</span></div>
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar">?</div>
+                    <span class="user-name" id="userName">Guest</span>
+                </div>
+                <button class="btn-icon" id="logoutBtn" title="Logout"><span>🚪</span></button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="refresh-bar">
+                <span class="auto-badge" id="autoRefreshBadge">Auto-refresh: 30s</span>
+                <button class="btn btn-primary" id="refreshBtn" style="padding:.4rem 1rem;font-size:.82rem;">🔄 Refresh</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="performance">⚡ Performance</button>
+                <button class="tab-btn" data-tab="economy">💰 Economy</button>
+                <button class="tab-btn" data-tab="activity">👥 Activity</button>
+            </div>
+
+            <!-- ── Performance Tab ── -->
+            <div class="tab-panel active" id="tab-performance">
+                <div class="stat-grid">
+                    <div class="stat-card" id="perfTpsCard">
+                        <div class="label">TPS</div>
+                        <div class="value" id="perfTps">—</div>
+                        <div class="sub">target: 20.0</div>
+                    </div>
+                    <div class="stat-card" id="perfTickCard">
+                        <div class="label">Tick Time</div>
+                        <div class="value" id="perfTick">—</div>
+                        <div class="sub">ms avg (max 50ms)</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="label">Players</div>
+                        <div class="value" id="perfPlayers">—</div>
+                        <div class="sub" id="perfPlayersMax">/ — max</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Uptime</div>
+                        <div class="value" id="perfUptime">—</div>
+                        <div class="sub">h:m since start</div>
+                    </div>
+                    <div class="stat-card yellow">
+                        <div class="label">Memory Used</div>
+                        <div class="value" id="perfMem">—</div>
+                        <div class="sub" id="perfMemMax">/ — MB max</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">CPU Cores</div>
+                        <div class="value" id="perfCpu">—</div>
+                        <div class="sub" id="perfLoad">load avg —</div>
+                    </div>
+                </div>
+
+                <!-- Memory / TPS gauge bars -->
+                <div class="chart-card" style="margin-bottom:1.5rem;">
+                    <h4>Resource Usage</h4>
+                    <div class="gauge-row">
+                        <div class="gauge-label">Memory</div>
+                        <div class="gauge-bar"><div class="gauge-fill" id="memGaugeFill" style="width:0%;background:#f9e2af;"></div></div>
+                        <div class="gauge-val" id="memGaugeVal">— %</div>
+                    </div>
+                    <div class="gauge-row">
+                        <div class="gauge-label">TPS</div>
+                        <div class="gauge-bar"><div class="gauge-fill" id="tpsGaugeFill" style="width:0%;background:#a6e3a1;"></div></div>
+                        <div class="gauge-val" id="tpsGaugeVal">— / 20</div>
+                    </div>
+                    <div class="gauge-row">
+                        <div class="gauge-label">Players</div>
+                        <div class="gauge-bar"><div class="gauge-fill" id="playerGaugeFill" style="width:0%;background:#89b4fa;"></div></div>
+                        <div class="gauge-val" id="playerGaugeVal">— / —</div>
+                    </div>
+                </div>
+
+                <!-- TPS + Memory history charts -->
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h4>TPS History (last 60 samples)</h4>
+                        <canvas id="tpsChart"></canvas>
+                        <div id="tpsChartEmpty" style="text-align:center;color:#6c7086;padding:2rem;display:none;">No history yet — data collected every minute.</div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Memory History (MB used)</h4>
+                        <canvas id="memChart"></canvas>
+                        <div id="memChartEmpty" style="text-align:center;color:#6c7086;padding:2rem;display:none;">No history yet — data collected every minute.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Economy Tab ── -->
+            <div class="tab-panel" id="tab-economy">
+                <div class="stat-grid">
+                    <div class="stat-card green">
+                        <div class="label">Total Wealth</div>
+                        <div class="value" id="ecoTotalWealth">—</div>
+                        <div class="sub" id="ecoCurrency">across all accounts</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="label">Accounts</div>
+                        <div class="value" id="ecoAccounts">—</div>
+                        <div class="sub">with balance</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Avg Balance</div>
+                        <div class="value" id="ecoAvgBalance">—</div>
+                        <div class="sub">non-zero accounts</div>
+                    </div>
+                    <div class="stat-card yellow">
+                        <div class="label">Starting Balance</div>
+                        <div class="value" id="ecoStartBal">—</div>
+                        <div class="sub">new players</div>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h4>💰 Top 10 Balances</h4>
+                        <canvas id="baltopChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4>📊 Balance Distribution</h4>
+                        <canvas id="distChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <h4>🏆 Richest Players</h4>
+                    <div id="baltopTableWrap">
+                        <div style="padding:2rem;text-align:center;"><span class="spinner"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Activity Tab ── -->
+            <div class="tab-panel" id="tab-activity">
+                <div class="stat-grid">
+                    <div class="stat-card green">
+                        <div class="label">Online Now</div>
+                        <div class="value" id="actOnline">—</div>
+                        <div class="sub">active sessions</div>
+                    </div>
+                    <div class="stat-card blue">
+                        <div class="label">Peak Today</div>
+                        <div class="value" id="actPeak">—</div>
+                        <div class="sub">highest concurrent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Unique Today</div>
+                        <div class="value" id="actUnique">—</div>
+                        <div class="sub">different players</div>
+                    </div>
+                    <div class="stat-card yellow">
+                        <div class="label">Avg Session</div>
+                        <div class="value" id="actAvgSession">—</div>
+                        <div class="sub">minutes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Total Play Today</div>
+                        <div class="value" id="actTotalPlay">—</div>
+                        <div class="sub">minutes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Sessions Today</div>
+                        <div class="value" id="actSessions">—</div>
+                        <div class="sub">completed</div>
+                    </div>
+                </div>
+
+                <!-- Active sessions table -->
+                <div class="table-card">
+                    <h4>🟢 Active Sessions</h4>
+                    <div id="activeSessionsWrap">
+                        <div style="padding:2rem;text-align:center;"><span class="spinner"></span></div>
+                    </div>
+                </div>
+
+                <!-- Recent sessions table -->
+                <div class="table-card">
+                    <h4>🕓 Recent Sessions (last 10 completed)</h4>
+                    <div id="recentSessionsWrap">
+                        <div style="padding:2rem;text-align:center;"><span class="spinner"></span></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="dashboard.js?v=144"></script>
+<script src="stats.js?v=144"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoEssentials Dashboard — Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Full-page centred login for standalone login.html */
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+        }
+        /* Reuse .login-container but always visible */
+        .login-container {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-logo">⚡</div>
+                <h1>NeoEssentials</h1>
+                <p>Server Dashboard Login</p>
+            </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Dashboard Username</label>
+                    <input type="text" id="username" placeholder="Enter your dashboard username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                <div id="loginError" class="login-error" style="display: none;"></div>
+                <button type="submit" class="btn btn-login">
+                    <span> Login</span>
+                </button>
+                <div class="login-divider"><span>or</span></div>
+                <button type="button" class="btn btn-discord" id="discordLoginBtn" onclick="handleDiscordLogin()">
+                    <span>Discord Login</span>
+                </button>
+                <div class="login-info">
+                    <small> Register in-game: <strong>/dashboardregister discord</strong> or /dashboardregister start</small>
+                    <small> No longer requires being online to log in!</small>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Minimal API base URL for standalone login page
+        const API_BASE_URL = window.location.origin + '/api';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if we arrived here with an error from a Discord callback
+            const urlParams = new URLSearchParams(window.location.search);
+            const authError = urlParams.get('error') || urlParams.get('auth_error');
+
+            if (authError) {
+                const readable = {
+                    discord_auth_failed : 'Discord login failed. Check your server\'s discord_auth.json config.',
+                    access_denied       : 'You denied the Discord authorisation.',
+                    missing_code        : 'Discord authorisation code missing. Please try again.',
+                    state_mismatch      : 'Discord login failed: security check failed. Please try again.',
+                };
+                showError(readable[authError] || ('Discord error: ' + authError));
+            }
+
+            // Clear any stale OAuth state if we're back on the login page with an error
+            if (authError) sessionStorage.removeItem('discordOAuthState');
+
+            // If already logged in, skip to dashboard
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                validateAndRedirect(token);
+            }
+
+            // Wire up the form
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleLogin();
+            });
+
+            // Check if Discord auth is configured and update button visibility
+            checkDiscordAuthStatus();
+        });
+
+        function showError(message) {
+            const el = document.getElementById('loginError');
+            if (el) {
+                el.textContent = message;
+                el.style.display = 'block';
+            }
+        }
+
+        async function validateAndRedirect(token) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/validate`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    window.location.href = 'index.html';
+                }
+            } catch (_) {
+                // Invalid token — stay on login page
+                localStorage.removeItem('authToken');
+            }
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const loginError = document.getElementById('loginError');
+            const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+
+            if (!username || !password) {
+                showError('Please enter your username and password.');
+                return;
+            }
+
+            if (loginError) loginError.style.display = 'none';
+            if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = 'Authenticating…'; }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    localStorage.setItem('authToken', data.sessionId || data.token);
+                    localStorage.setItem('sessionId', data.sessionId);
+                    localStorage.setItem('authType', data.authType || 'password');
+
+                    if (data.user) {
+                        localStorage.setItem('username', data.user.username || username);
+                        localStorage.setItem('isAdmin', String(data.user.role === 'ADMIN'));
+                        localStorage.setItem('role', data.user.role || 'VIEWER');
+                    } else {
+                        localStorage.setItem('username', data.username || username);
+                        localStorage.setItem('isAdmin', String(data.isAdmin === true));
+                        localStorage.setItem('role', data.isAdmin ? 'ADMIN' : 'VIEWER');
+                    }
+
+                    window.location.href = 'index.html';
+                } else {
+                    showError(data.error || 'Invalid credentials. Try registering in-game: /dashboardregister start');
+                    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = ' Login'; }
+                }
+            } catch (err) {
+                showError('Connection error. Is the server running?');
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = ' Login'; }
+            }
+        }
+
+        async function checkDiscordAuthStatus() {
+            const discordBtn     = document.getElementById('discordLoginBtn');
+            const discordDivider = document.querySelector('.login-divider');
+            if (!discordBtn) return;
+
+            try {
+                const res  = await fetch(`${API_BASE_URL}/auth/discord/status`);
+                const data = await res.json();
+
+                if (res.ok && data.enabled && data.configured) {
+                    discordBtn.style.display = '';
+                    if (discordDivider) discordDivider.style.display = '';
+
+                    if (!data.sdlinkAvailable && data.requiresLinkedAccount) {
+                        discordBtn.title = 'Warning: Simple Discord Link mod not detected. Login will fail if requireLinkedAccount=true.';
+                    }
+                } else {
+                    discordBtn.style.display = 'none';
+                    if (discordDivider) discordDivider.style.display = 'none';
+                }
+            } catch (_err) {
+                discordBtn.style.display = 'none';
+                if (discordDivider) discordDivider.style.display = 'none';
+            }
+        }
+
+        async function handleDiscordLogin() {
+            const discordBtn = document.getElementById('discordLoginBtn');
+            const loginError = document.getElementById('loginError');
+            if (discordBtn) { discordBtn.disabled = true; discordBtn.innerHTML = '<span>⏳ Connecting to Discord…</span>'; }
+            if (loginError) loginError.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/discord/authorize`);
+                const data = await res.json();
+
+                if (res.ok && data.success && data.authorizeUrl) {
+                    // Store state in sessionStorage for CSRF verification on callback return
+                    if (data.state) {
+                        sessionStorage.setItem('discordOAuthState', data.state);
+                    }
+                    window.location.href = data.authorizeUrl;
+                } else {
+                    showError(data.error || 'Discord login is not configured on this server.');
+                    if (discordBtn) { discordBtn.disabled = false; discordBtn.innerHTML = '<span>Discord Login</span>'; }
+                }
+            } catch (err) {
+                showError('Could not reach server. Is the dashboard running?');
+                if (discordBtn) { discordBtn.disabled = false; discordBtn.innerHTML = '<span>Discord Login</span>'; }
+            }
+        }
+    </script>
+</body>
+</html>
+
