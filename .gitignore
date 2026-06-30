@@ -59,3 +59,7 @@ fix_todo_translations.py
 docs/DASHBOARD_TODO_IMPLEMENTATION.md
 docs/DASHBOARD_V2_REDESIGN.md
 Issues_Discovered.md
+
+*.zip
+/build/
+/dist/
