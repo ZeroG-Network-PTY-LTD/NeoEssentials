@@ -88,7 +88,7 @@ public class WhoisCommand {
         if (canSeeDetailed) {
             MutableComponent uuidComponent = Component.literal("§bUUID: §7" + targetPlayer.getUUID().toString())
                 .withStyle(style -> style
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, targetPlayer.getUUID().toString()))
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, targetPlayer.getUUID().toString()))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy UUID")))
                 );
             source.sendSuccess(() -> uuidComponent, false);
@@ -145,7 +145,7 @@ public class WhoisCommand {
                 DECIMAL_FORMAT.format(x) + ", " + DECIMAL_FORMAT.format(y) + ", " + DECIMAL_FORMAT.format(z) + 
                 " §7in §f" + dimension)
                 .withStyle(style -> style
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, 
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, 
                         "/tp " + DECIMAL_FORMAT.format(x) + " " + DECIMAL_FORMAT.format(y) + " " + DECIMAL_FORMAT.format(z)))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to get teleport command")))
                 );

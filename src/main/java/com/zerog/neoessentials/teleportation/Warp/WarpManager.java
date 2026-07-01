@@ -493,6 +493,69 @@ public class WarpManager {
     }
     
     /**
+     * Create a warp — admin/console variant that doesn't require a ServerPlayer
+     * (used by the web dashboard, where there's no in-game player to message).
+     * Applies the same validation as {@link #createWarp(ServerPlayer, String, TeleportLocation)}
+     * (name format, warp limit, cross-dimension/overworld-only restrictions, safety check)
+     * but reports failures via the returned reason instead of chat messages.
+     *
+     * @return {@code null} on success, or a short reason string on failure.
+     */
+    public String createWarpByAdmin(String warpName, TeleportLocation location, String createdBy) {
+        if (!isValidWarpName(warpName)) {
+            return "invalid_name";
+        }
+
+        if (warps.size() >= maxWarps) {
+            return "limit_reached";
+        }
+
+        if (!allowCrossDimensionWarps && !isOverworld(location)) {
+            return "cross_dimension_disabled";
+        }
+
+        if (allowOverworldOnly && !isOverworld(location)) {
+            return "overworld_only";
+        }
+
+        boolean requireSafe = true;
+        try {
+            JsonObject config = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
+            if (config.has("teleportation")) {
+                JsonObject tp = config.getAsJsonObject("teleportation");
+                if (tp.has("warpSettings")) {
+                    JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+                    if (warpSettings.has("enableWarpSafety")) {
+                        requireSafe = warpSettings.get("enableWarpSafety").getAsBoolean();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to read warp safety config, defaulting to enabled: {}", e.getMessage());
+        }
+
+        if (requireSafe && !location.isSafe()) {
+            TeleportLocation safeLocation = location.findSafeLocation();
+            if (safeLocation == null) {
+                return "unsafe_location";
+            }
+            location = safeLocation;
+        }
+
+        String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
+        TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
+        if (existing != null) {
+            return "already_exists";
+        }
+
+        saveWarps();
+        if (ConfigManager.getInstance().isLogWarpActionsEnabled()) {
+            LOGGER.info("Warp '{}' created by {} at {}", warpName, createdBy, location.getLocationString());
+        }
+        return null;
+    }
+
+    /**
      * Delete a warp by name — admin/console variant that doesn't require a ServerPlayer.
      * Essentials: Warps.removeWarp(name)
      */

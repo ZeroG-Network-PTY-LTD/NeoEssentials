@@ -26,6 +26,9 @@ import java.util.*;
  *  GET  /api/moderation/warns           – all warn entries (all players)
  *  GET  /api/moderation/warns/{name}    – warns for a specific player name
  *  DELETE /api/moderation/warn/{id}     – remove a specific warn (body: {targetName})
+ *  GET  /api/moderation/mutes           – list currently muted player names
+ *  POST /api/moderation/mute            – mute a player {targetName, duration?} (seconds; omit = indefinite)
+ *  DELETE /api/moderation/mute/{name}   – unmute a player
  */
 public class ModerationEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModerationEndpoint.class);
@@ -72,6 +75,15 @@ public class ModerationEndpoint implements HttpHandler {
                 requireAdmin(exchange);
                 String warnId = path.substring(path.lastIndexOf('/') + 1);
                 handleRemoveWarn(exchange, warnId);
+            } else if ("GET".equals(method) && path.endsWith("/mutes")) {
+                handleMutes(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/mute")) {
+                requireAdmin(exchange);
+                handleCreateMute(exchange);
+            } else if ("DELETE".equals(method) && path.contains("/mute/")) {
+                requireAdmin(exchange);
+                String targetName = path.substring(path.lastIndexOf('/') + 1);
+                handleRemoveMute(exchange, targetName);
             } else {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown moderation endpoint\"}");
             }
@@ -93,7 +105,7 @@ public class ModerationEndpoint implements HttpHandler {
             mm.getAllBans().stream().filter(b -> b != null && b.isActive()).count();
         long totalBans  = mm == null ? 0L : mm.getAllBans().size();
         long totalWarns = wm.getAllWarnings().stream().mapToLong(java.util.List::size).sum();
-        int mutedCount  = 0; // MuteManager placeholder
+        int mutedCount  = com.zerog.neoessentials.chat.MuteManager.getMutedPlayers().size();
         int jailedCount = 0;
         try {
             jailedCount = JailManager.getInstance().getAllJailedPlayers().size();
@@ -219,6 +231,42 @@ public class ModerationEndpoint implements HttpHandler {
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + targetName)); return; }
         boolean removed = wm.removeWarn(uuid, warnId);
         sendJson(exchange, 200, json(removed, removed ? "Warning removed" : "Warning not found"));
+    }
+
+    // ── Mutes ─────────────────────────────────────────────────────────────────────
+
+    private void handleMutes(HttpExchange exchange) throws IOException {
+        Set<String> muted = com.zerog.neoessentials.chat.MuteManager.getMutedPlayers();
+        StringBuilder sb = new StringBuilder("{\"success\":true,\"count\":").append(muted.size()).append(",\"muted\":[");
+        boolean first = true;
+        for (String name : muted) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("\"").append(esc(name)).append("\"");
+        }
+        sb.append("]}");
+        sendJson(exchange, 200, sb.toString());
+    }
+
+    private void handleCreateMute(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        if (!body.has("targetName")) {
+            sendJson(exchange, 400, json(false, "Body must contain 'targetName'"));
+            return;
+        }
+        String targetName = body.get("targetName").getAsString();
+        if (body.has("duration")) {
+            long durationSeconds = body.get("duration").getAsLong();
+            com.zerog.neoessentials.chat.MuteManager.mute(targetName, durationSeconds * 1000L);
+        } else {
+            com.zerog.neoessentials.chat.MuteManager.mute(targetName);
+        }
+        sendJson(exchange, 200, json(true, targetName + " muted"));
+    }
+
+    private void handleRemoveMute(HttpExchange exchange, String targetName) throws IOException {
+        com.zerog.neoessentials.chat.MuteManager.unmute(targetName);
+        sendJson(exchange, 200, json(true, targetName + " unmuted"));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────────

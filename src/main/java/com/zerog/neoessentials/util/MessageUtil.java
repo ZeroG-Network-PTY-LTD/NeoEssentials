@@ -2,7 +2,9 @@ package com.zerog.neoessentials.util;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
@@ -124,7 +126,7 @@ public class MessageUtil {
                             }
                         }
                         finalTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
-                        try (java.io.FileWriter fw = new java.io.FileWriter(serverLangFile)) {
+                        try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
                             new com.google.gson.GsonBuilder().setPrettyPrinting()
                                 .disableHtmlEscaping().create().toJson(finalTranslations, fw);
                         } catch (Exception ex) {
@@ -249,7 +251,7 @@ public class MessageUtil {
     private static Map<String, String> loadServerTranslations(File serverFile) {
         if (!serverFile.exists()) return null;
         
-        try (FileReader reader = new FileReader(serverFile)) {
+        try (FileReader reader = new FileReader(serverFile, StandardCharsets.UTF_8)) {
             Gson gson = new Gson();
             Type type = new TypeToken<Map<String, String>>(){}.getType();
             return gson.fromJson(reader, type);
@@ -275,7 +277,7 @@ public class MessageUtil {
             }
             Map<String, String> translationsWithVersion = new HashMap<>(jarTranslations);
             translationsWithVersion.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
-            try (java.io.FileWriter writer = new java.io.FileWriter(serverFile)) {
+            try (FileWriter writer = new FileWriter(serverFile, StandardCharsets.UTF_8)) {
                 Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
                 gson.toJson(translationsWithVersion, writer);
                 LOGGER.debug("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
@@ -576,7 +578,7 @@ public class MessageUtil {
             if (added > 0) {
                 // Bump the version so loadTranslations() doesn't re-merge on the same boot
                 serverTranslations.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
-                try (java.io.FileWriter fw = new java.io.FileWriter(serverLangFile)) {
+                try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
                     new com.google.gson.GsonBuilder().setPrettyPrinting()
                         .disableHtmlEscaping().create().toJson(serverTranslations, fw);
                     LOGGER.info("Language file merged: {} new key(s) added (user edits preserved).", added);
@@ -734,11 +736,11 @@ public class MessageUtil {
     public static MutableComponent homeConfirmComponent(String homeName, String action, String commandConfirm, String commandDeny) {
         MutableComponent confirm = Component.literal("[Confirm]")
             .withStyle(style -> style.withColor(TextColor.fromRgb(0x4CAF50)))
-            .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, commandConfirm)))
+            .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandConfirm)))
             .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to confirm " + action + " of home '" + homeName + "'"))));
         MutableComponent deny = Component.literal("[Deny]")
             .withStyle(style -> style.withColor(TextColor.fromRgb(0xF44336)))
-            .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, commandDeny)))
+            .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandDeny)))
             .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to cancel " + action + " of home '" + homeName + "'"))));
         return Component.literal("")
             .append(Component.literal("Are you sure you want to "+action+" home '").withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD600))))
@@ -814,7 +816,7 @@ public class MessageUtil {
         if (!customLangFile.exists()) {
             return null;
         }
-        try (FileReader reader = new FileReader(customLangFile)) {
+        try (FileReader reader = new FileReader(customLangFile, StandardCharsets.UTF_8)) {
             Gson gson = new Gson();
             Type type = new TypeToken<Map<String, String>>() {}.getType();
             return gson.fromJson(reader, type);

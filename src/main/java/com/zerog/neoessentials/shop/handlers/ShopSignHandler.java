@@ -277,7 +277,7 @@ public class ShopSignHandler {
                 + shop.signX + " " + shop.signY + " " + shop.signZ;
             Component holoPrompt = Component.literal("§eWant a hologram above your shop? ")
                 .append(Component.literal("§a§l[Click to Enable]")
-                    .withStyle(s -> s.withClickEvent(new ClickEvent(
+                    .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, enableCmd)))
                     .withStyle(s -> s.withHoverEvent(
                         new net.minecraft.network.chat.HoverEvent(

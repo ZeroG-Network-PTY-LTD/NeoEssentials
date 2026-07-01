@@ -213,7 +213,7 @@ public class RulesCommand {
             if (page > 1) {
                 footer.append(Component.literal("§7[§a◀ Prev§7]")
                     .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/rules " + (page - 1)))
+                        .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/rules " + (page - 1)))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§7Click to view previous page")))
                     ));
                 footer.append(Component.literal(" "));
@@ -222,7 +222,7 @@ public class RulesCommand {
             if (page < totalPages) {
                 footer.append(Component.literal("§7[§aNext ▶§7]")
                     .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/rules " + (page + 1)))
+                        .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/rules " + (page + 1)))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§7Click to view next page")))
                     ));
             }

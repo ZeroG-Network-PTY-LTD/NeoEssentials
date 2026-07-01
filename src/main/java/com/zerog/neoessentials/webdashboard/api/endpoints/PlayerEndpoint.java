@@ -57,6 +57,12 @@ public class PlayerEndpoint implements HttpHandler {
                 } else if (path.matches("/api/player/gamemode/.*")) {
                     String username = path.substring("/api/player/gamemode/".length());
                     handleGamemode(exchange, username);
+                } else if (path.matches("/api/player/teleport/.*")) {
+                    String username = path.substring("/api/player/teleport/".length());
+                    handleTeleport(exchange, username);
+                } else if (path.matches("/api/player/heal/.*")) {
+                    String username = path.substring("/api/player/heal/".length());
+                    handleHeal(exchange, username);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
                 }
@@ -226,6 +232,129 @@ public class PlayerEndpoint implements HttpHandler {
                 player.setGameMode(finalMode);
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + "'s game mode is now " + finalMode.getName());
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        JsonObject result;
+        try {
+            result = future.get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            result = new JsonObject();
+            result.addProperty("success", false);
+            result.addProperty("error", "Timeout or server error: " + e.getMessage());
+        }
+        int status = result.has("success") && result.get("success").getAsBoolean() ? 200 : 400;
+        sendResponse(exchange, status, result.toString());
+    }
+
+    // ── POST /api/player/teleport/{username} ─────────────────────────────────
+    // Body: {"targetUsername": "..."} OR {"x":, "y":, "z":, "world"?: "minecraft:overworld"}
+
+    private void handleTeleport(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject body;
+        try {
+            body = JsonParser.parseString(bodyJson).getAsJsonObject();
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid JSON body\"}");
+            return;
+        }
+        final JsonObject finalBody = body;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+
+                if (finalBody.has("targetUsername")) {
+                    String targetName = finalBody.get("targetUsername").getAsString();
+                    ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
+                    if (target == null) {
+                        resp.addProperty("success", false);
+                        resp.addProperty("error", "Target player '" + targetName + "' is not online");
+                        return resp;
+                    }
+                    player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(),
+                        player.getYRot(), player.getXRot());
+                    resp.addProperty("success", true);
+                    resp.addProperty("message", username + " teleported to " + targetName);
+                } else if (finalBody.has("x") && finalBody.has("y") && finalBody.has("z")) {
+                    net.minecraft.server.level.ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
+                    if (finalBody.has("world")) {
+                        String worldName = finalBody.get("world").getAsString();
+                        net.minecraft.resources.ResourceLocation worldKey = worldName.contains(":")
+                            ? net.minecraft.resources.ResourceLocation.parse(worldName)
+                            : net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", worldName);
+                        net.minecraft.server.level.ServerLevel requested = server.getLevel(
+                            net.minecraft.resources.ResourceKey.create(
+                                net.minecraft.core.registries.Registries.DIMENSION, worldKey));
+                        if (requested != null) level = requested;
+                    }
+                    double x = finalBody.get("x").getAsDouble();
+                    double y = finalBody.get("y").getAsDouble();
+                    double z = finalBody.get("z").getAsDouble();
+                    player.teleportTo(level, x, y, z, player.getYRot(), player.getXRot());
+                    resp.addProperty("success", true);
+                    resp.addProperty("message", username + " teleported to " + x + ", " + y + ", " + z);
+                } else {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Body must contain 'targetUsername' or 'x'/'y'/'z'");
+                }
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        JsonObject result;
+        try {
+            result = future.get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            result = new JsonObject();
+            result.addProperty("success", false);
+            result.addProperty("error", "Timeout or server error: " + e.getMessage());
+        }
+        int status = result.has("success") && result.get("success").getAsBoolean() ? 200 : 400;
+        sendResponse(exchange, status, result.toString());
+    }
+
+    // ── POST /api/player/heal/{username} ──────────────────────────────────────
+    // Heals to full health and feeds to full hunger/saturation.
+
+    private void handleHeal(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                player.setHealth(player.getMaxHealth());
+                player.getFoodData().setFoodLevel(20);
+                player.getFoodData().setSaturation(20.0f);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " healed and fed");
             } catch (Exception e) {
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());

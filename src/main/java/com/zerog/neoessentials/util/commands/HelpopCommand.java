@@ -126,7 +126,7 @@ public class HelpopCommand {
             
             locationComponent = Component.literal("§e" + location)
                 .withStyle(style -> style
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
                         Component.literal("§7Click to teleport to " + playerName)))
                 );
@@ -141,7 +141,7 @@ public class HelpopCommand {
         String replyCommand = "/msg " + playerName + " ";
         Component replyComponent = Component.literal("§a[Reply]")
             .withStyle(style -> style
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, replyCommand))
+                .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, replyCommand))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
                     Component.literal("§7Click to reply to " + playerName)))
             );

@@ -728,6 +728,10 @@ public class PlayerDataCollector {
             playerObj.addProperty("health", player.getHealth());
             playerObj.addProperty("foodLevel", player.getFoodData().getFoodLevel());
             playerObj.addProperty("experienceLevel", player.experienceLevel);
+            playerObj.addProperty("x", player.getX());
+            playerObj.addProperty("y", player.getY());
+            playerObj.addProperty("z", player.getZ());
+            playerObj.addProperty("dimension", player.level().dimension().location().toString());
             onlinePlayers.add(playerObj);
             onlineUsernames.add(player.getName().getString());
         });

@@ -334,16 +334,31 @@ public class TeleportUtil {
      * ticket (timeout ≈ 300 ticks / 15 s) and is loaded synchronously so it is
      * immediately accessible for block-state queries and teleportation.</p>
      */
+    private static volatile boolean loggedTicketFallback = false;
+
     public static void preloadChunksForTeleport(ServerLevel level, BlockPos pos) {
         ChunkPos center = new ChunkPos(pos);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
                 // Always add a fresh ticket to reset the 300-tick expiry counter.
-                level.getChunkSource().addRegionTicket(
-                    net.minecraft.server.level.TicketType.PORTAL,
-                    cp, 3, cp.getWorldPosition()
-                );
+                // NOTE: addRegionTicket's erased signature has proven fragile across
+                // Minecraft versions (same class of issue as MinecraftServer#tell and
+                // Entity#serverLevel — see the DelayedTaskScheduler/LevelCompat notes).
+                // If it's missing/renamed at runtime, skip the ticket rather than crash;
+                // the getChunk() force-load below still guarantees the chunk is loaded.
+                try {
+                    level.getChunkSource().addRegionTicket(
+                        net.minecraft.server.level.TicketType.PORTAL,
+                        cp, 3, cp.getWorldPosition()
+                    );
+                } catch (NoSuchMethodError e) {
+                    if (!loggedTicketFallback) {
+                        loggedTicketFallback = true;
+                        LOGGER.warn("ServerChunkCache#addRegionTicket is unavailable on this Minecraft version — " +
+                            "skipping chunk keep-alive ticket (chunks will still be force-loaded). ({})", e.getMessage());
+                    }
+                }
                 if (!level.isLoaded(cp.getWorldPosition())) {
                     LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
                         cp.x, cp.z, level.dimension().location());

@@ -364,7 +364,7 @@ public class ListCommand {
 
         component = component.withStyle(style -> style
             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText))
-            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
         );
 
         return component;

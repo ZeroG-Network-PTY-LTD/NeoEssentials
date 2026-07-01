@@ -644,7 +644,7 @@ public class ChatFormatter {
             .withStyle(color)
             .withStyle(ChatFormatting.BOLD)
             .withStyle(style -> style
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
+                .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                     Component.literal("Click to message " + playerName).withStyle(ChatFormatting.GRAY)))
             );
@@ -659,7 +659,7 @@ public class ChatFormatter {
         // Wrap into a MutableComponent so we can attach events
         MutableComponent comp = Component.empty().append(base);
         comp.withStyle(style -> style
-            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                 "/msg " + player.getName().getString() + " "))
             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                 Component.literal("✉ Click to message " + player.getName().getString())

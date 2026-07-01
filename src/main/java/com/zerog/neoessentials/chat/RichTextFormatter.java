@@ -456,7 +456,7 @@ public class RichTextFormatter {
             case "copy_to_clipboard"  -> ClickEvent.Action.COPY_TO_CLIPBOARD;
             default                   -> ClickEvent.Action.SUGGEST_COMMAND;
         };
-        return visible.withStyle(Style.EMPTY.withClickEvent(new ClickEvent(clickAction, value)));
+        return visible.withStyle(Style.EMPTY.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(clickAction, value)));
     }
 
     private static boolean isRichTextEnabled() {

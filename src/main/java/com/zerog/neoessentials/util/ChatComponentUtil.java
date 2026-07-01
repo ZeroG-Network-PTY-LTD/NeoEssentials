@@ -32,7 +32,7 @@ public class ChatComponentUtil {
         
         // Add click event to run command
         component.setStyle(Style.EMPTY
-            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + command))
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/" + command))
             .withHoverEvent(hoverText != null ? 
                 new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.YELLOW)
@@ -53,7 +53,7 @@ public class ChatComponentUtil {
         MutableComponent component = Component.literal(text);
         
         component.setStyle(Style.EMPTY
-            .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/" + command))
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/" + command))
             .withHoverEvent(hoverText != null ? 
                 new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.AQUA)
@@ -74,7 +74,7 @@ public class ChatComponentUtil {
         MutableComponent component = Component.literal(text);
         
         component.setStyle(Style.EMPTY
-            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.OPEN_URL, url))
             .withHoverEvent(hoverText != null ? 
                 new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.BLUE)
@@ -139,7 +139,7 @@ public class ChatComponentUtil {
         
         MutableComponent component = Component.literal(permission);
         component.setStyle(Style.EMPTY
-            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, permission))
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, permission))
             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
             .withColor(ChatFormatting.LIGHT_PURPLE)
         );

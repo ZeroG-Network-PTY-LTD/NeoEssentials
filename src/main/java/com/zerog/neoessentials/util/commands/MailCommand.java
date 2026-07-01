@@ -390,7 +390,7 @@ public class MailCommand {
 
             line = line.withStyle(s -> s
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                     "/mail delete " + mail.id))
             );
             player.sendSystemMessage(line);
@@ -401,13 +401,13 @@ public class MailCommand {
             MutableComponent footer = Component.literal("§7");
             if (page > 1) {
                 footer.append(Component.literal("§7[§a◀ Prev§7] ")
-                    .withStyle(s -> s.withClickEvent(new ClickEvent(
+                    .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, "/mail read " + (page - 1)))));
             }
             footer.append(Component.literal("§7Page §f" + page + "§7/§f" + totalPages));
             if (page < totalPages) {
                 footer.append(Component.literal(" §7[§aNext ▶§7]")
-                    .withStyle(s -> s.withClickEvent(new ClickEvent(
+                    .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, "/mail read " + (page + 1)))));
             }
             player.sendSystemMessage(footer);
