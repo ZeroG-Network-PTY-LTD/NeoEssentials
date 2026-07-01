@@ -708,7 +708,16 @@
      * Use '&' for color codes  (e.g. &c = red, &6 = gold).
      */
     "localization": {
-      "language": ""
+      "language": "",
+
+      /* If true, the mod will never modify the on-disk language file after first
+       * creation — not even to add newly translated keys or auto-fix legacy
+       * {NAME}/{HOME} placeholders left over from older versions.
+       * Keys missing from your file will show a readable placeholder derived from
+       * the key name instead of the real translation.
+       * Leave false unless you are hand-maintaining a fully custom translation file.
+       */
+      "preserveCustomTranslations": false
     },
 
 

@@ -78,6 +78,11 @@ public class MessageUtil {
         File serverLangFile = new File(customLangDir, langCode + ".json");
         LOGGER.debug("Server language file path: {}", serverLangFile.getAbsolutePath());
 
+        boolean preserveCustom = false;
+        try {
+            preserveCustom = com.zerog.neoessentials.config.ConfigManager.isPreserveCustomTranslationsEnabled();
+        } catch (Exception ignored) {}
+
         Map<String, String> finalTranslations;
         if (serverLangFile.exists() && serverLangFile.length() > 0) {
             finalTranslations = loadServerTranslations(serverLangFile);
@@ -89,7 +94,10 @@ public class MessageUtil {
                         finalTranslations.getOrDefault(LANG_VERSION_KEY, "0"));
                 } catch (NumberFormatException ignored) {}
 
-                if (deployedVersion < CURRENT_LANG_VERSION) {
+                if (preserveCustom) {
+                    LOGGER.info("NeoEssentials: localization.preserveCustomTranslations is enabled — " +
+                        "skipping merge/auto-fix of '{}'.", serverLangFile.getName());
+                } else if (deployedVersion < CURRENT_LANG_VERSION) {
                     LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
                         deployedVersion, CURRENT_LANG_VERSION);
                     // Build merge source: configured language + en_us fallback for missing keys

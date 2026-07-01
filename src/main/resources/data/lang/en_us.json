@@ -83,6 +83,7 @@
     "commands.neoessentials.teleport.home.moved_to_safety":  "Home \u0027\u0027{0}\u0027\u0027 location adjusted to nearby safe location.",
     "commands.neoessentials.teleport.home.none_set":  "You don\u0027\u0027t have any homes set.",
     "commands.neoessentials.teleport.home.not_found":  "Home \u0027\u0027{0}\u0027\u0027 not found.",
+    "commands.neoessentials.teleport.home.unsafe":  "Home ''{0}'' is unsafe and no safe location was found.",
     "commands.neoessentials.teleport.home.overworld_only":  "Homes can only be set in the Overworld.",
     "commands.neoessentials.teleport.home.delete_confirm":  "Are you sure you want to delete home \u0027\u0027{0}\u0027\u0027? This action cannot be undone. Click [Confirm] or [Deny].",
     "commands.neoessentials.teleport.home.delete_success":  "Home \u0027\u0027{0}\u0027\u0027 has been deleted successfully.",

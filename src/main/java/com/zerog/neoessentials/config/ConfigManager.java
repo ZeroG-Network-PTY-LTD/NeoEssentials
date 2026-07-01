@@ -1298,7 +1298,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 24);          // v24 â€” localization.language setting
+        put(MAIN_CONFIG, 25);          // v25 â€” localization.preserveCustomTranslations setting
         put(ECONOMY_CONFIG, 3);        // v3  â€” removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  â€” removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  â€” removed _configVersion_comment
@@ -1324,6 +1324,24 @@ public class ConfigManager {
             }
         } catch (Exception ignored) {}
         return "en_us";
+    }
+
+    /**
+     * Returns whether custom-edited language files should be left completely untouched.
+     * Reads from localization.preserveCustomTranslations in config.json. Defaults to false.
+     * When true, the mod will not merge in new keys or auto-fix legacy placeholders on startup.
+     */
+    public static boolean isPreserveCustomTranslationsEnabled() {
+        try {
+            JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+            if (config.has("localization")) {
+                JsonObject loc = config.getAsJsonObject("localization");
+                if (loc.has("preserveCustomTranslations")) {
+                    return loc.get("preserveCustomTranslations").getAsBoolean();
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private ConfigManager() {
