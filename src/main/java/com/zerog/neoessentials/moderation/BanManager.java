@@ -220,19 +220,25 @@ public class BanManager {
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
         saveBans();
+        // Build the fully-localized/formatted ban message once, and store THAT (not the
+        // raw reason) as the vanilla ban-list entry's reason. Vanilla's own login-time ban
+        // check (used when this player reconnects later) wraps whatever we put there in its
+        // own client-locale "You are banned...\nReason: %s" template — we can't override that
+        // wrapper without a mixin, but the substituted banMessageFormat text still comes
+        // through verbatim as the "%s", so the admin's configured/localized message is what
+        // the player actually sees instead of just the raw ban reason.
+        String format = com.zerog.neoessentials.config.ConfigManager.getBanMessageFormat();
+        String formattedMessage = format.replace("{reason}", reason != null ? reason : "N/A")
+                            .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
+                            .replace("{duration}", "Permanent");
         // Also add to vanilla ban list so it is visible to /banlist and vanilla kick logic
-        addToVanillaBanList(playerId, playerName, reason, bannedBy, null);
+        addToVanillaBanList(playerId, playerName, formattedMessage, bannedBy, null);
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
-                String format = com.zerog.neoessentials.config.ConfigManager.getBanMessageFormat();
-                String duration = "Permanent";
-                String message = format.replace("{reason}", reason != null ? reason : "N/A")
-                                    .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
-                                    .replace("{duration}", duration);
-                player.connection.disconnect(Component.literal(message));
+                player.connection.disconnect(Component.literal(formattedMessage));
             }
             // Broadcast to staff if enabled
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
@@ -274,24 +280,26 @@ public class BanManager {
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
         saveBans();
+        // Build the fully-localized/formatted ban message once (see banPlayer() for why this,
+        // rather than the raw reason, is what gets stored as the vanilla ban entry's reason).
+        String format = com.zerog.neoessentials.config.ConfigManager.getTempBanMessageFormat();
+        String duration = formatDuration(durationMillis);
+        String expiry = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(java.time.ZoneId.systemDefault())
+            .format(java.time.Instant.ofEpochMilli(System.currentTimeMillis() + durationMillis));
+        String formattedMessage = format.replace("{reason}", reason != null ? reason : "N/A")
+                            .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
+                            .replace("{duration}", duration)
+                            .replace("{expiry}", expiry);
         // Sync to vanilla ban list with expiry
         java.util.Date expireDate = new java.util.Date(System.currentTimeMillis() + durationMillis);
-        addToVanillaBanList(playerId, playerName, reason, bannedBy, expireDate);
+        addToVanillaBanList(playerId, playerName, formattedMessage, bannedBy, expireDate);
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
-                String format = com.zerog.neoessentials.config.ConfigManager.getTempBanMessageFormat();
-                String duration = formatDuration(durationMillis);
-                String expiry = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                    .withZone(java.time.ZoneId.systemDefault())
-                    .format(java.time.Instant.ofEpochMilli(System.currentTimeMillis() + durationMillis));
-                String message = format.replace("{reason}", reason != null ? reason : "N/A")
-                                    .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
-                                    .replace("{duration}", duration)
-                                    .replace("{expiry}", expiry);
-                player.connection.disconnect(Component.literal(message));
+                player.connection.disconnect(Component.literal(formattedMessage));
             }
             // Broadcast to staff if enabled
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
@@ -414,8 +422,18 @@ public class BanManager {
 
     // ── Vanilla ban list helpers ───────────────────────────────────────────────
 
-    /** Add a player to the vanilla UserBanList so vanilla kick/join blocking works. */
-    private void addToVanillaBanList(UUID playerId, String playerName, String reason,
+    /**
+     * Add a player to the vanilla UserBanList so vanilla kick/join blocking works.
+     *
+     * @param displayReason the text shown to the player when they try to reconnect —
+     *                       pass the fully-formatted/localized ban message (banMessageFormat
+     *                       or tempBanMessageFormat with placeholders substituted), not the
+     *                       raw ban reason. Vanilla's own login-time ban check wraps whatever
+     *                       is stored here in its own client-locale "Reason: %s" template, so
+     *                       this is the only way the configured message format actually
+     *                       reaches a player banned while offline / reconnecting later.
+     */
+    private void addToVanillaBanList(UUID playerId, String playerName, String displayReason,
                                      String bannedBy, java.util.Date expires) {
         try {
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -426,7 +444,7 @@ public class BanManager {
             if (!vanillaBans.isBanned(profile)) {
                 String src = bannedBy != null ? bannedBy : "NeoEssentials";
                 net.minecraft.server.players.UserBanListEntry entry = new net.minecraft.server.players.UserBanListEntry(
-                    profile, null, src, expires, reason != null ? reason : "Banned");
+                    profile, null, src, expires, displayReason != null ? displayReason : "Banned");
                 vanillaBans.add(entry);
                 LOGGER.debug("Added {} to vanilla ban list", playerName);
             }

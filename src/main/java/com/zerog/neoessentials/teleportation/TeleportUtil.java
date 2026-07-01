@@ -18,7 +18,33 @@ import java.util.concurrent.CompletableFuture;
  */
 public class TeleportUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeleportUtil.class);
-    
+
+    private static volatile boolean loggedSoundFallback = false;
+
+    /**
+     * Plays the teleport sound, tolerating cross-version signature drift on
+     * {@code ServerLevel#playSound} (same class of issue as the tell/serverLevel/
+     * addRegionTicket/ClickEvent fixes elsewhere in this mod). Sound is purely
+     * cosmetic, so a missing overload just skips it instead of failing the teleport.
+     */
+    private static void playTeleportSound(ServerLevel level, double x, double y, double z) {
+        try {
+            level.playSound(
+                null, // No specific player, play for all nearby
+                x, y, z,
+                SoundEvents.ENDERMAN_TELEPORT,
+                SoundSource.PLAYERS,
+                1.0F, 1.0F
+            );
+        } catch (NoSuchMethodError e) {
+            if (!loggedSoundFallback) {
+                loggedSoundFallback = true;
+                LOGGER.warn("ServerLevel#playSound(Player, double, double, double, SoundEvent, SoundSource, float, float) " +
+                    "is unavailable on this Minecraft version — skipping teleport sound effects. ({})", e.getMessage());
+            }
+        }
+    }
+
     // Teleport delays (in ticks)
     public static final int INSTANT_TELEPORT = 0;
     public static final int SHORT_DELAY = 20;   // 1 second
@@ -236,13 +262,7 @@ public class TeleportUtil {
             // Sound effects (source)
             if (com.zerog.neoessentials.config.ConfigManager.getEnableSoundEffects()) {
                 if (player.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.playSound(
-                        null, // No specific player, play for all nearby
-                        player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.ENDERMAN_TELEPORT,
-                        SoundSource.PLAYERS,
-                        1.0F, 1.0F
-                    );
+                    playTeleportSound(serverLevel, player.getX(), player.getY(), player.getZ());
                 }
             }
 
@@ -302,13 +322,7 @@ public class TeleportUtil {
 
             // Sound effects (destination)
             if (com.zerog.neoessentials.config.ConfigManager.getEnableSoundEffects()) {
-                targetLevel.playSound(
-                    null, // No specific player, play for all nearby
-                    location.getX(), location.getY(), location.getZ(),
-                    SoundEvents.ENDERMAN_TELEPORT,
-                    SoundSource.PLAYERS,
-                    1.0F, 1.0F
-                );
+                playTeleportSound(targetLevel, location.getX(), location.getY(), location.getZ());
             }
 
             LOGGER.debug("Teleported {} to {}", player.getName().getString(), location.getLocationString());
