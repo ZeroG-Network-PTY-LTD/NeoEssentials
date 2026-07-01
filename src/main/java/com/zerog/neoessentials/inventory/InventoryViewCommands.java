@@ -302,31 +302,29 @@ public class InventoryViewCommands {
 
     /**
      * Open a read-only view of another player's inventory (item copies — no changes possible).
+     * Uses locked slots that cannot be picked up, preventing item duplication.
      */
     private static void openReadOnlyInventory(ServerPlayer viewer, ServerPlayer target) {
         int invSize = target.getInventory().getContainerSize();
-        if (invSize <= 27) {
-            net.minecraft.world.Container inventoryCopy = new net.minecraft.world.SimpleContainer(invSize);
-            for (int i = 0; i < invSize; i++) {
-                inventoryCopy.setItem(i, target.getInventory().getItem(i).copy());
-            }
-            viewer.openMenu(new SimpleMenuProvider(
-                (id, playerInventory, player) -> ChestMenu.threeRows(id, playerInventory, inventoryCopy),
-                Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
-            ));
-        } else {
-            net.minecraft.world.SimpleContainer inventoryCopy = new net.minecraft.world.SimpleContainer(54);
-            for (int i = 0; i < invSize; i++) {
-                inventoryCopy.setItem(i, target.getInventory().getItem(i).copy());
-            }
-            for (int i = invSize; i < 54; i++) {
-                inventoryCopy.setItem(i, net.minecraft.world.item.ItemStack.EMPTY.copy());
-            }
-            viewer.openMenu(new SimpleMenuProvider(
-                (id, playerInventory, player) -> ChestMenu.sixRows(id, playerInventory, inventoryCopy),
-                Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
-            ));
+        boolean sixRow = invSize > 27;
+        int displaySlots = sixRow ? 54 : 27;
+        int chestRows = sixRow ? 6 : 3;
+
+        // Snapshot: copies so the target's actual inventory is never touched
+        net.minecraft.world.SimpleContainer snapshot = new net.minecraft.world.SimpleContainer(displaySlots);
+        for (int i = 0; i < Math.min(invSize, displaySlots); i++) {
+            snapshot.setItem(i, target.getInventory().getItem(i).copy());
         }
+
+        net.minecraft.world.inventory.MenuType<?> menuType = sixRow
+            ? net.minecraft.world.inventory.MenuType.GENERIC_9x6
+            : net.minecraft.world.inventory.MenuType.GENERIC_9x3;
+        final int rows = chestRows;
+
+        viewer.openMenu(new SimpleMenuProvider(
+            (id, playerInv, p) -> buildReadOnlyMenu(id, playerInv, snapshot, rows, menuType),
+            Component.literal(target.getName().getString() + "'s Inventory (Read-Only)")
+        ));
     }
 
     /**
@@ -341,16 +339,88 @@ public class InventoryViewCommands {
 
     /**
      * Open a read-only view of another player's ender chest (item copies — no changes possible).
+     * Uses locked slots that cannot be picked up, preventing item duplication.
      */
     private static void openReadOnlyEnderChest(ServerPlayer viewer, ServerPlayer target) {
-        net.minecraft.world.Container enderChestCopy = new net.minecraft.world.SimpleContainer(27);
+        net.minecraft.world.SimpleContainer snapshot = new net.minecraft.world.SimpleContainer(27);
         for (int i = 0; i < 27; i++) {
-            enderChestCopy.setItem(i, target.getEnderChestInventory().getItem(i).copy());
+            snapshot.setItem(i, target.getEnderChestInventory().getItem(i).copy());
         }
         viewer.openMenu(new SimpleMenuProvider(
-            (id, playerInventory, player) -> ChestMenu.threeRows(id, playerInventory, enderChestCopy),
+            (id, playerInv, p) -> buildReadOnlyMenu(id, playerInv, snapshot, 3,
+                net.minecraft.world.inventory.MenuType.GENERIC_9x3),
             Component.literal(target.getName().getString() + "'s Ender Chest (Read-Only)")
         ));
+    }
+
+    // ── Read-only menu builder ───────────────────────────────────────────────
+
+    /**
+     * Build an {@link net.minecraft.world.inventory.AbstractContainerMenu} whose upper
+     * {@code rows*9} slots are <b>locked</b> (cannot be picked up or placed into),
+     * backed by {@code snapshot}.  The viewer's own inventory and hotbar are appended
+     * as normal interactive slots so the GUI renders correctly.
+     *
+     * <p>This is the duplication-safe replacement for {@code ChestMenu.threeRows} /
+     * {@code ChestMenu.sixRows}: the old approach used a {@code SimpleContainer} filled
+     * with item copies but opened it through a standard {@code ChestMenu}, which allows
+     * items to be freely moved out of the container — letting a viewer steal copies while
+     * the original items remained in the target's inventory.
+     */
+    private static net.minecraft.world.inventory.AbstractContainerMenu buildReadOnlyMenu(
+            int menuId,
+            net.minecraft.world.entity.player.Inventory viewerInv,
+            net.minecraft.world.Container snapshot,
+            int rows,
+            net.minecraft.world.inventory.MenuType<?> menuType) {
+
+        return new net.minecraft.world.inventory.AbstractContainerMenu(menuType, menuId) {
+            {
+                // ── Locked display slots (target's items — not takeable) ──────
+                int displaySlots = rows * 9;
+                for (int i = 0; i < displaySlots; i++) {
+                    int sx = 8 + (i % 9) * 18;
+                    int sy = 18 + (i / 9) * 18;
+                    // Anonymous Slot override: disallow pickup and placement
+                    addSlot(new net.minecraft.world.inventory.Slot(snapshot, i, sx, sy) {
+                        @Override
+                        public boolean mayPickup(net.minecraft.world.entity.player.Player player) {
+                            return false; // prevent item theft / duplication
+                        }
+                        @Override
+                        public boolean mayPlace(net.minecraft.world.item.ItemStack stack) {
+                            return false; // prevent placing into display slots
+                        }
+                    });
+                }
+                // ── Viewer's main inventory (rows 1-3) ────────────────────────
+                // Standard NeoForge positions: chest rows end at y = 18 + rows*18,
+                // then 14 px gap before viewer inventory.
+                int invTopY = 18 + rows * 18 + 14;
+                for (int i = 0; i < 27; i++) {
+                    addSlot(new net.minecraft.world.inventory.Slot(
+                        viewerInv, i + 9, 8 + (i % 9) * 18, invTopY + (i / 9) * 18));
+                }
+                // ── Viewer's hotbar ───────────────────────────────────────────
+                int hotbarY = invTopY + 3 * 18 + 4;
+                for (int i = 0; i < 9; i++) {
+                    addSlot(new net.minecraft.world.inventory.Slot(
+                        viewerInv, i, 8 + i * 18, hotbarY));
+                }
+            }
+
+            @Override
+            public boolean stillValid(net.minecraft.world.entity.player.Player player) {
+                return true;
+            }
+
+            @Override
+            public net.minecraft.world.item.ItemStack quickMoveStack(
+                    net.minecraft.world.entity.player.Player player, int index) {
+                // Shift-click is disabled entirely for read-only views
+                return net.minecraft.world.item.ItemStack.EMPTY;
+            }
+        };
     }
 
     /**

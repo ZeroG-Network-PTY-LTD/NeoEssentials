@@ -22,7 +22,10 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 /**
  * Auto-creates holographic displays above sign shops so that long item names
  * and pricing info are visible even when they don't fit on the sign itself.
@@ -205,9 +208,50 @@ public class ShopHologramManager {
         }
     }
     /**
-     * Refresh the hologram text for a shop (e.g. after a transaction updates stock).
+     * Remove all shop holograms from {@link HologramManager} that no longer have a
+     * corresponding shop in {@link ShopManager}.
+     *
+     * <p>Call this after {@code ShopManager.reload()} or during server startup (once both
+     * managers are initialized) to prevent orphaned holograms from re-spawning on
+     * level load when shops are manually deleted from {@code shops.json}.
+     *
+     * <p>Despawning the in-world entities is attempted but may silently fail if the
+     * level is not yet loaded (e.g. during early server start-up).  In that case the
+     * stale-entity sweep that {@link HologramRenderer#spawnAllForWorld} performs on each
+     * level load will discard any leftover tagged entities automatically.
      */
-    public static void refreshShopHologram(ShopData shop) {
+    public static void cleanOrphanedShopHolograms() {
+        try {
+            // Collect IDs of all holograms that SHOULD exist for currently loaded shops
+            Set<String> validIds = ShopManager.getInstance().getAllShops().stream()
+                .filter(s -> s.hologramEnabled)
+                .map(ShopHologramManager::shopHologramId)
+                .collect(Collectors.toSet());
+
+            // Find holograms with the shop_ prefix that are NOT in the valid set
+            List<HologramData> orphans = HologramManager.getInstance().getAllHolograms().stream()
+                .filter(h -> h.id.startsWith(SHOP_HOLOGRAM_PREFIX))
+                .filter(h -> !validIds.contains(h.id))
+                .collect(Collectors.toList());
+
+            for (HologramData orphan : orphans) {
+                // Best-effort in-world despawn (level may not be available yet)
+                ServerLevel level = findLevel(orphan.world);
+                if (level != null) HologramRenderer.despawn(orphan, level);
+                HologramManager.getInstance().removeHologram(orphan.id);
+                LOGGER.info("[ShopHologram] Removed orphaned shop hologram '{}' (no matching shop found).", orphan.id);
+            }
+            if (!orphans.isEmpty()) {
+                LOGGER.info("[ShopHologram] Cleaned {} orphaned shop hologram(s).", orphans.size());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("[ShopHologram] cleanOrphanedShopHolograms failed: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Refresh the hologram text for a shop (e.g. after a transaction updates stock).
+     */    public static void refreshShopHologram(ShopData shop) {
         try {
             String id = shopHologramId(shop);
             HologramData data = HologramManager.getInstance().getHologram(id);

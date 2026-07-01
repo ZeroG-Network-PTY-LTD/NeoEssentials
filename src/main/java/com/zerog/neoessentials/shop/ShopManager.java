@@ -198,6 +198,13 @@ public class ShopManager {
         } catch (Exception e) {
             LOGGER.error("[ChestShop] Reload failed", e);
         }
+        // Remove any shop holograms whose shop no longer exists (e.g. manually deleted
+        // from shops.json, or removed by other means without hologram cleanup).
+        try {
+            com.zerog.neoessentials.hologram.integration.ShopHologramManager.cleanOrphanedShopHolograms();
+        } catch (Exception e) {
+            LOGGER.warn("[ChestShop] Orphan hologram cleanup failed during reload: {}", e.getMessage());
+        }
     }
 }
 

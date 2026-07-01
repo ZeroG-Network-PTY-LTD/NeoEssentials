@@ -12,6 +12,64 @@
 
 # ✅ Issues That Were Fixed
 
+## 🐛 Bug Fix — Inventory & Ender Chest Duplication Exploit (NeoForge 1.21.1, build.1.0.2.6+119, fixed build.214)
+
+**`InventoryViewCommands.java` / `PlayerInventoryContainerMenu.java`**
+
+**Root cause (read-only mode):** `/invsee`, `/inv`, `/ec`, `/enderchest` created a
+`SimpleContainer` filled with `.copy()` items and opened it via the standard
+`ChestMenu.threeRows` / `ChestMenu.sixRows`.  Standard chest menus allow items to be
+freely moved out of the container, so a viewer could drag copies into their own
+inventory while the originals remained in the target's inventory — duplicating every
+item they touched.
+
+**Fix:** Both read-only open methods now use `buildReadOnlyMenu()`, a custom
+`AbstractContainerMenu` factory whose top-section slots override `mayPickup() → false`
+and `mayPlace() → false`.  Items are display-only and cannot be removed or inserted.
+
+**Secondary fix (edit mode desync):** `PlayerInventoryContainerMenu` now registers the
+viewer's own inventory and hotbar slots.  Previously they were absent, causing
+server-client desync when the viewer tried to move items between the target's inventory
+and their own.
+
+---
+
+## 🐛 Bug Fix — Shop Hologram Not Removed When Sign Is Broken (NeoForge 1.21.1, fixed build.214)
+
+**`ShopSignHandler.java`**
+
+When a player physically broke a shop sign, no event handler called `ShopManager.removeShop()`.
+The shop entry remained in `shops.json` and the hologram entity stayed floating in the world.
+
+**Fix:** Added `BlockEvent.BreakEvent` listener to `ShopSignHandler`.  When a `SignBlock` is
+broken, any shop at that position is removed atomically via `ShopManager.removeShop()`, which
+in turn calls `ShopHologramManager.deleteShopHologram()` to clean up the entity.
+
+---
+
+## 🐛 Bug Fix — Shop Hologram Orphaned After Manual shops.json Edit (NeoForge 1.21.1, fixed build.214)
+
+**`ShopHologramManager.java` / `ShopManager.java` / `NeoEssentials.java`**
+
+Manually deleting a shop from `shops.json` left its hologram ID in `holograms.json`.
+On the next server start or `/chestshop reload` the hologram entity was re-spawned
+even though no matching shop existed.
+
+**Fix:** Added `ShopHologramManager.cleanOrphanedShopHolograms()`.  It computes the
+expected hologram ID for every active shop, then removes any `shop_*` holograms from
+`HologramManager` that are not in that set.  Called after both managers are loaded at
+server start, and at the end of `ShopManager.reload()`.
+
+---
+
+## ✅ TPA Message Key Already Fixed (build.157)
+
+`commands.neoessentials.teleport.request.recived` (typo) was corrected to
+`commands.neoessentials.teleport.request.received` and sender context was added in
+build 157.  Confirmed absent from codebase in build.214.
+
+---
+
 ## 🐛 Bug Fix — Chat Rich Text Formatting Ignores Config (NeoForge 1.21.1, build.1.0.2.6+119)
 
 **`RichTextFormatter.java` / `ChatFormatter.java` — Rich text applied even when `rich_text=false`**

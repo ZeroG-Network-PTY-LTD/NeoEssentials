@@ -318,6 +318,14 @@ public class NeoEssentials {
                 ManagerRegistry.getInstance().markFailed("HologramManager", e.getMessage());
             }
 
+            // Cross-check: remove shop holograms that have no matching shop entry.
+            // Both ShopManager and HologramManager are now loaded, so this is safe.
+            try {
+                com.zerog.neoessentials.hologram.integration.ShopHologramManager.cleanOrphanedShopHolograms();
+            } catch (Exception e) {
+                LOGGER.warn("Shop hologram orphan cleanup failed: {}", e.getMessage());
+            }
+
             // Initialize custom language system
             try {
                 LOGGER.info("⚙ Initializing custom language system...");

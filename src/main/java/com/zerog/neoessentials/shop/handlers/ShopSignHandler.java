@@ -17,15 +17,17 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Listens for sign placement and subsequent text finalization to register new ChestShop signs.
+ * Listens for sign placement, text finalization, and sign breakage to manage ChestShop signs.
  *
- * <h3>Flow</h3>
+ * <h3>Registration flow</h3>
  * <ol>
  *   <li>{@link BlockEvent.EntityPlaceEvent} — a sign is placed; we record the position + player as "pending".</li>
  *   <li>{@link ServerTickEvent.Post} — every tick we re-check pending signs.
@@ -33,11 +35,19 @@ import java.util.concurrent.ConcurrentHashMap;
  *       as a shop. Pending entries time out after 30 seconds if never filled.</li>
  * </ol>
  *
+ * <h3>Removal flow</h3>
+ * <ul>
+ *   <li>{@link BlockEvent.BreakEvent} — when a sign block is broken, any shop registered at
+ *       that position is removed (including its hologram) via {@link ShopManager#removeShop}.</li>
+ * </ul>
+ *
  * This deferred approach is necessary because NeoForge 1.21.1 has no sign-text-written event;
  * the {@code ServerboundSignUpdatePacket} is processed server-side before any NeoForge event fires.
  */
 @EventBusSubscriber(modid = "neoessentials")
 public class ShopSignHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopSignHandler.class);
 
     // ── Pending sign queue ────────────────────────────────────────────────────
 
@@ -63,6 +73,34 @@ public class ShopSignHandler {
         String dimension = level.dimension().location().toString();
         String key = dimension + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
         pending.put(key, new PendingSign(player.getUUID(), dimension, System.currentTimeMillis()));
+    }
+
+    // ── Sign broken ───────────────────────────────────────────────────────────
+
+    /**
+     * When a sign block is broken, remove any shop registered at that position.
+     * ShopManager.removeShop() also calls ShopHologramManager.deleteShopHologram()
+     * so the floating hologram is cleaned up atomically with the shop data.
+     *
+     * <p>This fires BEFORE the block is removed from the world, so the BlockEntity
+     * is still accessible (though we only need the position and dimension here).
+     */
+    @SubscribeEvent
+    public static void onSignBroken(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        BlockPos pos = event.getPos();
+        // Only care about sign blocks
+        if (!(level.getBlockState(pos).getBlock() instanceof SignBlock)) return;
+        String dimension = level.dimension().location().toString();
+        // Also remove from the pending queue in case the sign was placed but never written
+        String key = dimension + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
+        pending.remove(key);
+        // Remove the shop (and its hologram via ShopManager → ShopHologramManager)
+        ShopData removed = ShopManager.getInstance().removeShop(dimension, pos);
+        if (removed != null) {
+            LOGGER.debug("[ChestShop] Removed shop at {} (sign broken by {})",
+                key, event.getPlayer() != null ? event.getPlayer().getName().getString() : "unknown");
+        }
     }
 
     // ── Tick check ────────────────────────────────────────────────────────────

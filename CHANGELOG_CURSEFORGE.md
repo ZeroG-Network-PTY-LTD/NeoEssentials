@@ -4,7 +4,29 @@
 
 ---
 
-## 1.0.2.6+build.159 — 2026-05-25
+## 1.0.2.6+build.214 — 2026-07-01
+
+### 🐛 Bug Fixes
+
+#### Inventory / Ender Chest Duplication Exploit Closed
+- **`/invsee`, `/inv`, `/ec`, `/enderchest` (read-only):** Opening a read-only view
+  used a snapshot container via a standard `ChestMenu`, which allowed items to be
+  freely dragged out — duplicating them while the originals stayed in the target's
+  inventory.  Fixed by switching to a custom menu with **locked slots** (`mayPickup` →
+  `false`, `mayPlace` → `false`) so the snapshot is purely display-only.
+- **Edit mode (`/invseeedit`, `/ecedit`):** The editable inventory menu now also
+  registers the viewer's own inventory and hotbar as proper slots, eliminating a
+  server-client desync that could occur when transferring items between the target's
+  and viewer's inventory.
+
+#### Shop Hologram Orphan / Stale Entity Fixes
+- Breaking a shop sign now removes the shop **and** its hologram atomically (new
+  `BlockEvent.BreakEvent` handler in `ShopSignHandler`).
+- Shop holograms left over after manually removing entries from `shops.json` are
+  purged by the new `ShopHologramManager.cleanOrphanedShopHolograms()` routine, which
+  runs on server start and on `/chestshop reload`.
+
+
 
 ### 🧹 Code Quality — Config Comment Migration (`//` / `/* */` style)
 

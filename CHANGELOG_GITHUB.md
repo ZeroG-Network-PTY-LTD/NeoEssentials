@@ -6,7 +6,51 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.159] — 2026-05-25
+## [1.0.2.6+build.214] — 2026-07-01
+
+### 🐛 Bug Fixes
+
+#### Inventory & Ender Chest Duplication Exploit Closed
+**Commands:** `/invsee`, `/inv`, `/ec`, `/enderchest`
+
+- **Root cause:** `openReadOnlyInventory()` and `openReadOnlyEnderChest()` created a
+  `SimpleContainer` filled with `.copy()` items and opened it via the standard
+  `ChestMenu.threeRows` / `ChestMenu.sixRows`.  Standard chest menus allow items to
+  be freely moved out of the container, so a viewer could drag copies into their own
+  inventory while the originals remained in the target's inventory.
+- **Fix:** Both read-only methods now use a custom `AbstractContainerMenu` built by
+  the new `buildReadOnlyMenu()` helper.  The top-section slots override `mayPickup()`
+  → `false` and `mayPlace()` → `false`, making them display-only — items cannot be
+  removed from or placed into the snapshot container regardless of client action.
+- **Fix (secondary):** `PlayerInventoryContainerMenu` (editable mode) now registers
+  the viewer's own inventory and hotbar slots in the menu layout.  Previously they
+  were absent, causing server-client desync when the viewer tried to move items
+  between the target's inventory and their own.
+
+#### Shop Hologram Orphan / Stale Entity Bugs
+- **Root cause 1 — Sign break not handled:** When a player physically broke a shop
+  sign, no event handler removed the shop entry or its hologram.  The shop stayed in
+  `shops.json` and the hologram entity remained floating in the world indefinitely.
+  **Fix:** Added `BlockEvent.BreakEvent` listener in `ShopSignHandler`.  When a sign
+  block is broken, the shop at that position (and its hologram) is removed atomically
+  via `ShopManager.removeShop()`.
+- **Root cause 2 — Manual file edit leaves orphaned holograms:** If a shop was
+  manually deleted from `shops.json`, the corresponding hologram ID was still present
+  in `holograms.json`.  On the next server start or `/chestshop reload` the hologram
+  entity was re-spawned even though no shop existed.  
+  **Fix:** Added `ShopHologramManager.cleanOrphanedShopHolograms()`.  It iterates all
+  `shop_*` holograms, computes the expected hologram IDs from the currently loaded
+  shop list, and removes any holograms whose shop no longer exists.  Called:
+  - After `HologramManager.initialize()` on server start (both managers are fully
+    loaded at that point).
+  - At the end of `ShopManager.reload()` (triggered by `/chestshop reload`).
+
+### ✅ Previously Fixed (Confirmation)
+- **TPA message key typo** (`commands.neoessentials.teleport.request.recived`) was
+  corrected to `received` and sender context was added in build 157.  Confirmed
+  absent from the codebase; no action needed in this build.
+
+
 
 ### 🧹 Code Quality — Config Comment Migration (`//` / `/* */` style)
 
