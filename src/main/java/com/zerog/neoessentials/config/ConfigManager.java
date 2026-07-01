@@ -1344,6 +1344,126 @@ public class ConfigManager {
         return false;
     }
 
+    /**
+     * Returns true if the web dashboard is enabled (webDashboard.enabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isWebDashboardEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("enabled")) {
+                return dashboard.get("enabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns the web dashboard HTTP port (webDashboard.port). Defaults to 8080.
+     */
+    public int getWebDashboardPort() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("port")) {
+                return dashboard.get("port").getAsInt();
+            }
+        }
+        return 8080;
+    }
+
+    /**
+     * Returns the web dashboard WebSocket port (webDashboard.websocketPort). Defaults to 8081.
+     */
+    public int getWebDashboardWebSocketPort() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("websocketPort")) {
+                return dashboard.get("websocketPort").getAsInt();
+            }
+        }
+        return 8081;
+    }
+
+    /**
+     * Returns the web dashboard bind address (webDashboard.bindAddress). Defaults to "0.0.0.0".
+     */
+    public String getWebDashboardBindAddress() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("bindAddress")) {
+                String val = dashboard.get("bindAddress").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val.trim();
+            }
+        }
+        return "0.0.0.0";
+    }
+
+    /**
+     * Returns a friendly URL for accessing the web dashboard, derived from webDashboard.port.
+     * Uses "localhost" since the actual reachable address depends on the server's public IP.
+     */
+    public String getWebDashboardUrl() {
+        return "http://localhost:" + getWebDashboardPort();
+    }
+
+    /**
+     * Returns true if per-IP rate limiting is enabled for the dashboard API
+     * (webDashboard.securitySettings.enableRateLimiting). Defaults to true.
+     */
+    public boolean isDashboardRateLimitingEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("securitySettings")) {
+                JsonObject security = dashboard.getAsJsonObject("securitySettings");
+                if (security.has("enableRateLimiting")) {
+                    return security.get("enableRateLimiting").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns the maximum dashboard API requests per IP per minute
+     * (webDashboard.securitySettings.maxRequestsPerMinute). Defaults to 60.
+     */
+    public int getDashboardMaxRequestsPerMinute() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("securitySettings")) {
+                JsonObject security = dashboard.getAsJsonObject("securitySettings");
+                if (security.has("maxRequestsPerMinute")) {
+                    return security.get("maxRequestsPerMinute").getAsInt();
+                }
+            }
+        }
+        return 60;
+    }
+
+    /**
+     * Returns true if Bearer token authentication is required on dashboard API endpoints
+     * (webDashboard.securitySettings.requireAuthentication). Defaults to true.
+     */
+    public boolean isDashboardAuthRequired() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("securitySettings")) {
+                JsonObject security = dashboard.getAsJsonObject("securitySettings");
+                if (security.has("requireAuthentication")) {
+                    return security.get("requireAuthentication").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
     private ConfigManager() {
         // On first construction, ensure all required config files exist
         ensureDefaultConfigs();
