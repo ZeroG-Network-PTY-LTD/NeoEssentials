@@ -50,17 +50,20 @@ public class DashboardLifecycleManager {
             DashboardAPI.getInstance().start();
 
             // Start WebSocket server
+            // NOTE: catches Throwable, not just Exception — a missing Java-WebSocket
+            // dependency surfaces as NoClassDefFoundError (an Error), which would
+            // otherwise escape this handler and crash the whole server.
             try {
                 int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
                 DashboardWebSocketServer wsServer = DashboardWebSocketServer.getInstance(wsPort);
                 wsServer.start();
                 LOGGER.info("Dashboard WebSocket server started on port {}", wsPort);
-            } catch (Exception wsEx) {
+            } catch (Throwable wsEx) {
                 LOGGER.error("Failed to start WebSocket server: {}", wsEx.getMessage(), wsEx);
             }
 
             LOGGER.info("Dashboard auto-started successfully");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Failed to auto-start dashboard", e);
         }
     }
@@ -84,7 +87,7 @@ public class DashboardLifecycleManager {
                 try {
                     DashboardWebSocketServer.getInstance().stop(2000);
                     LOGGER.info("Dashboard WebSocket server stopped");
-                } catch (Exception wsEx) {
+                } catch (Throwable wsEx) {
                     LOGGER.warn("Error stopping WebSocket server: {}", wsEx.getMessage());
                 }
 
@@ -98,7 +101,7 @@ public class DashboardLifecycleManager {
             }
             // Always shut down the MOTD rotation scheduler on server stop
             MotdManager.getInstance().shutdown();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error("Error stopping dashboard", e);
         }
     }
@@ -125,7 +128,7 @@ public class DashboardLifecycleManager {
             try {
                 int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
                 DashboardWebSocketServer.getInstance(wsPort).start();
-            } catch (Exception wsEx) {
+            } catch (Throwable wsEx) {
                 LOGGER.error("Failed to start WebSocket server (manual): {}", wsEx.getMessage(), wsEx);
             }
 
@@ -152,7 +155,7 @@ public class DashboardLifecycleManager {
             // Stop WebSocket server
             try {
                 DashboardWebSocketServer.getInstance().stop(2000);
-            } catch (Exception wsEx) {
+            } catch (Throwable wsEx) {
                 LOGGER.warn("Error stopping WebSocket server (manual): {}", wsEx.getMessage());
             }
 

@@ -611,17 +611,14 @@ public class FunCommands {
 
         // Schedule explosion after 20 ticks (1 second)
         final var catRef = cat;
-        level.getServer().tell(new net.minecraft.server.TickTask(
-            level.getServer().getTickCount() + 20,
-            () -> {
-                if (catRef.isAlive()) {
-                    var loc = catRef.position();
-                    catRef.discard();
-                    level.explode(null, loc.x, loc.y, loc.z, 0f,
-                        Level.ExplosionInteraction.NONE);
-                }
+        com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(20, () -> {
+            if (catRef.isAlive()) {
+                var loc = catRef.position();
+                catRef.discard();
+                level.explode(null, loc.x, loc.y, loc.z, 0f,
+                    Level.ExplosionInteraction.NONE);
             }
-        ));
+        });
 
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.kittycannon.fired"), false);
         return 1;

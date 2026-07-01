@@ -353,6 +353,16 @@ public class PermissionSystem {
                     LOGGER.error("Failed to save permissions during shutdown", e);
                 }
             }
+            // Unsubscribe external adapter listeners (e.g. LuckPerms event bus)
+            // so no permission-sync callbacks fire after the server starts stopping.
+            var externalAdapter = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter();
+            if (externalAdapter instanceof LuckPermsAdapter luckPermsAdapter) {
+                try {
+                    luckPermsAdapter.shutdown();
+                } catch (Exception e) {
+                    LOGGER.error("Failed to shut down LuckPerms adapter", e);
+                }
+            }
             LOGGER.info("Permission system shutdown complete");
         } catch (Exception e) {
             LOGGER.error("Failed to shutdown permission system", e);

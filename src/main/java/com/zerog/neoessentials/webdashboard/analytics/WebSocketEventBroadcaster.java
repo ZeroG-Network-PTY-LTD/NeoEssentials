@@ -62,7 +62,7 @@ public class WebSocketEventBroadcaster {
 
         } catch (IllegalStateException e) {
             // WebSocket server not running yet — silently ignore
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.debug("[WSBroadcast] Stats pulse error: {}", e.getMessage());
         }
     }
@@ -79,7 +79,7 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", name + " joined the server");
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
     }
 
     // ── Player leave ─────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", name + " left the server");
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
     }
 
     // ── Server chat ───────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ public class WebSocketEventBroadcaster {
             evt.addProperty("player",  name);
             evt.addProperty("message", "<" + name + "> " + text);
             DashboardWebSocketServer.getInstance().broadcast("events", evt);
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
     }
 
     // ── Player death ─────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", deathMsg);
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
     }
 }
 

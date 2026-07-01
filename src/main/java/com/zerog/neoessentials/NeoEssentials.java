@@ -479,9 +479,9 @@ public class NeoEssentials {
                             // Marshal message sending back onto the server thread
                             server.execute(() -> {
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§l                    CONFIG SPLITTING AVAILABLE"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§l  CONFIG SPLITTING AVAILABLE"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your config.json file is large and could be easier to manage!"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7NeoEssentials can split it into smaller, focused files."));
@@ -493,7 +493,7 @@ public class NeoEssentials {
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eRun: §b/neoessentials config split §eto enable"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l════════════════════════════════════════════════════════════════"));
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                             });
                         }, "NeoEssentials-AdminNotify");

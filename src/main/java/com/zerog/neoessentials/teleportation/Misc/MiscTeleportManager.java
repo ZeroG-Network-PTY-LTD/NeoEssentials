@@ -485,11 +485,9 @@ public class MiscTeleportManager {
             net.minecraft.server.MinecraftServer server = player.getServer();
             if (server == null) return;
             // Delay one tick so the hint arrives after vanilla respawn messages
-            server.tell(new net.minecraft.server.TickTask(
-                server.getTickCount() + 1,
+            com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1,
                 () -> player.sendSystemMessage(
-                    MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved"))
-            ));
+                    MessageUtil.info("commands.neoessentials.teleport.misc.death_location_saved")));
         }
     }
     

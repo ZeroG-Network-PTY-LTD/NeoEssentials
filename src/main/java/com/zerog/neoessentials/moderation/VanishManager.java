@@ -15,7 +15,6 @@ import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityType;
@@ -307,14 +306,14 @@ public class VanishManager {
             player.sendSystemMessage(MessageUtil.info(
                 MessageUtil.localize("neoessentials.moderation.vanish_reminder")));
             if (server != null) {
-                server.tell(new TickTask(server.getTickCount() + 1,
-                    () -> hidePlayerFromOthers(player)));
+                com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1,
+                    () -> hidePlayerFromOthers(player));
             }
         }
 
         // After 1 tick, handle what the joining player should (or should not) see.
         if (server != null) {
-            server.tell(new TickTask(server.getTickCount() + 1, () -> {
+            com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
                 if (canPlayerSeeVanished(playerId)) {
                     // Show all vanished players whose priority is >= this observer's priority
                     int viewerPriority = viewerPriorities.getOrDefault(playerId, 10);
@@ -338,10 +337,10 @@ public class VanishManager {
                         }
                     }
                 }
-            }));
+            });
         }
     }
-    
+
     /**
      * Handle player leave - cleanup vanish state
      */

@@ -337,6 +337,22 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         return null;
     }
 
+    /**
+     * Unsubscribes from LuckPerms events so no permission-sync callbacks (which
+     * touch {@link ServerLifecycleHooks#getCurrentServer()}) can fire after the
+     * server has started shutting down. Call from the mod's server-stopping hook.
+     */
+    public void shutdown() {
+        if (userDataSubscription != null) {
+            userDataSubscription.close();
+            userDataSubscription = null;
+        }
+        if (groupDataSubscription != null) {
+            groupDataSubscription.close();
+            groupDataSubscription = null;
+        }
+    }
+
     @Override
     public void reload() {
         // LuckPerms handles its own reloading via /lp reload

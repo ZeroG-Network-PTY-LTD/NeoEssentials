@@ -128,7 +128,7 @@ public class ModerationEventHandler {
             if (jailLevel == null) return;
 
             // Schedule 1-tick delayed teleport so respawn completes first
-            server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> {
+            com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
                 if (player.isAlive()) {
                     player.teleportTo(jailLevel,
                         jailLoc.position.getX() + 0.5,
@@ -137,7 +137,7 @@ public class ModerationEventHandler {
                         player.getYRot(), player.getXRot());
                     player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.jail.message"));
                 }
-            }));
+            });
         } catch (Exception e) {
             LOGGER.error("Error redirecting jailed player respawn", e);
         }

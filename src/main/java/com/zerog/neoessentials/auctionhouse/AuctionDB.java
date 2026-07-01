@@ -103,6 +103,10 @@ public final class AuctionDB {
     /** Load all active listings from the database. */
     public List<AuctionItem> loadAllActive() {
         List<AuctionItem> list = new ArrayList<>();
+        if (connection == null) {
+            LOGGER.warn("[AuctionHouse] Database not initialized — skipping load of active listings.");
+            return list;
+        }
         try (Statement stmt = connection.createStatement();
              ResultSet rs   = stmt.executeQuery("SELECT * FROM auctionhouse")) {
             while (rs.next()) {
@@ -121,6 +125,10 @@ public final class AuctionDB {
      */
     public int addItem(String playerUuid, String owner, String nbt, String itemKey,
                        int count, double price, long secondsLeft) {
+        if (connection == null) {
+            LOGGER.warn("[AuctionHouse] Database not initialized — cannot insert listing.");
+            return -1;
+        }
         String sql = "INSERT INTO auctionhouse(playeruuid,owner,nbt,item,count,price,secondsLeft) VALUES(?,?,?,?,?,?,?)";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, playerUuid);
@@ -142,6 +150,7 @@ public final class AuctionDB {
 
     /** Permanently delete an active listing (e.g., item was sold or cancelled). */
     public void removeActive(int id) {
+        if (connection == null) return;
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM auctionhouse WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -152,6 +161,7 @@ public final class AuctionDB {
 
     /** Update the remaining time for an active listing. */
     public void updateTime(int id, long secondsLeft) {
+        if (connection == null) return;
         try (PreparedStatement ps = connection.prepareStatement(
                 "UPDATE auctionhouse SET secondsLeft=? WHERE id=?")) {
             ps.setLong(1, secondsLeft);
@@ -164,6 +174,7 @@ public final class AuctionDB {
 
     /** Count how many active listings a player currently has. */
     public int countActiveForPlayer(String playerUuid) {
+        if (connection == null) return 0;
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT COUNT(*) FROM auctionhouse WHERE playeruuid=?")) {
             ps.setString(1, playerUuid);
@@ -180,6 +191,10 @@ public final class AuctionDB {
     /** Load all expired items from the database. */
     public List<AuctionItem> loadAllExpired() {
         List<AuctionItem> list = new ArrayList<>();
+        if (connection == null) {
+            LOGGER.warn("[AuctionHouse] Database not initialized — skipping load of expired items.");
+            return list;
+        }
         try (Statement stmt = connection.createStatement();
              ResultSet rs   = stmt.executeQuery("SELECT * FROM expireditems")) {
             while (rs.next()) {
@@ -196,6 +211,7 @@ public final class AuctionDB {
      * The original listing is deleted from {@code auctionhouse}.
      */
     public void expireItem(AuctionItem item) {
+        if (connection == null) return;
         // Remove from active table first
         removeActive(item.getId());
         // Insert into expired table
@@ -216,6 +232,7 @@ public final class AuctionDB {
 
     /** Delete an expired item once the player has collected it. */
     public void removeExpired(int id) {
+        if (connection == null) return;
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM expireditems WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();

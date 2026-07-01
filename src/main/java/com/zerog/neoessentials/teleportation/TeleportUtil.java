@@ -172,10 +172,7 @@ public class TeleportUtil {
         }
 
         // Schedule the teleport.
-        // IMPORTANT: TickTask's first arg is an ABSOLUTE server tick count (not a
-        // relative delay), so we must add the current tick to get the correct future tick.
-        int wantedTick = player.getServer().getTickCount() + delayTicks;
-        player.getServer().tell(new net.minecraft.server.TickTask(wantedTick, () -> {
+        com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(delayTicks, () -> {
             // Unregister damage cancel (teleport completed or cancelled)
             if (cancelOnDamage) {
                 com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.unregisterPendingTeleport(player);
@@ -203,7 +200,7 @@ public class TeleportUtil {
                     (int) location.getX(), (int) location.getY(), (int) location.getZ()));
             }
             executeTeleport(player, location, future);
-        }));
+        });
     }
     
     /**
