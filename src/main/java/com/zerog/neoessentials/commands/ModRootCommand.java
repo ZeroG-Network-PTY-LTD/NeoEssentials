@@ -602,13 +602,14 @@ public class ModRootCommand {
         }
         
         for (CommandRegistry.CommandInfo info : availableCommands) {
+            String localizedDesc = getLocalizedDescription(info);
             if (info.hasAliases()) {
                 String aliases = String.join(", /", info.getAliases());
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.root.command_with_aliases", 
-                    info.getName(), aliases, info.getDescription()), false);
+                    info.getName(), aliases, localizedDesc), false);
             } else {
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.root.command_simple", 
-                    info.getName(), info.getDescription()), false);
+                    info.getName(), localizedDesc), false);
             }
         }
         
@@ -617,6 +618,20 @@ public class ModRootCommand {
         return 1;
     }
     
+    /**
+     * Get a localized description for a command.
+     * Checks for a translation key "commands.neoessentials.cmd.NAME.description" first;
+     * falls back to the registered English description if not found.
+     */
+    private static String getLocalizedDescription(CommandRegistry.CommandInfo cmd) {
+        String descKey = "commands.neoessentials.cmd." + cmd.getName().toLowerCase() + ".description";
+        if (com.zerog.neoessentials.util.MessageUtil.hasTranslation(descKey)) {
+            return com.zerog.neoessentials.util.MessageUtil.localize(descKey);
+        }
+        String fallback = cmd.getDescription();
+        return (fallback != null && !fallback.isEmpty()) ? fallback : "NeoEssentials command";
+    }
+
     /**
      * Check if a player has permission to use a specific command.
      * @param player Player to check

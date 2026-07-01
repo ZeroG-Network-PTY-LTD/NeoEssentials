@@ -140,35 +140,59 @@ public class HelpCommand {
         int end = Math.min(start + CMDS_PER_PAGE, accessible.size());
 
         // Header
-        src.sendSuccess(() -> Component.literal(
-            "§6════ §eNeoEssentials Help §7(Page " + p + "/" + totalPages + ") §6════"), false);
+        final int pFinal = p;
+        final int totalPagesFinal = totalPages;
+        src.sendSuccess(() -> MessageUtil.component(
+            "commands.neoessentials.help.header", pFinal, totalPagesFinal), false);
 
         // List commands
         for (int i = start; i < end; i++) {
             CommandRegistry.CommandInfo cmd = accessible.get(i);
-            String desc = cmd.getDescription() != null ? cmd.getDescription() : "No description";
-            src.sendSuccess(() -> Component.literal("  §e/" + cmd.getName() + " §7- " + desc), false);
+            String desc = getLocalizedDescription(cmd);
+            src.sendSuccess(() -> MessageUtil.component(
+                "commands.neoessentials.help.entry", cmd.getName(), desc), false);
         }
 
         // Footer
         if (totalPages > 1) {
-            src.sendSuccess(() -> Component.literal(
-                "§7Use §e/help " + (p < totalPages ? (p + 1) : 1) + "§7 for the next page, or §e/help <command>§7 for details."), false);
+            final int nextPage = p < totalPages ? (p + 1) : 1;
+            src.sendSuccess(() -> MessageUtil.component(
+                "commands.neoessentials.help.footer_next", nextPage), false);
         } else {
-            src.sendSuccess(() -> Component.literal("§7Use §e/help <command>§7 for details on a specific command."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.help.footer"), false);
         }
         return 1;
     }
 
     private static void showCommandDetail(CommandSourceStack src, CommandRegistry.CommandInfo cmd) {
-        src.sendSuccess(() -> Component.literal("§6════ §e/" + cmd.getName() + " §6════"), false);
-        String desc = cmd.getDescription() != null ? cmd.getDescription() : "No description available.";
+        src.sendSuccess(() -> MessageUtil.component(
+            "commands.neoessentials.help.detail_header", cmd.getName()), false);
+        String desc = getLocalizedDescription(cmd);
         src.sendSuccess(() -> Component.literal("§7" + desc), false);
-        src.sendSuccess(() -> Component.literal("§7Permission: §e" + "neoessentials." + cmd.getName()), false);
+        src.sendSuccess(() -> MessageUtil.component(
+            "commands.neoessentials.help.detail_permission", "neoessentials." + cmd.getName()), false);
         List<String> aliases = cmd.getAliases();
         if (aliases != null && !aliases.isEmpty()) {
-            src.sendSuccess(() -> Component.literal("§7Aliases: §e" + String.join("§7, §e", aliases)), false);
+            src.sendSuccess(() -> MessageUtil.component(
+                "commands.neoessentials.help.detail_aliases", String.join("§7, §e", aliases)), false);
         }
+    }
+
+    /**
+     * Get a localized description for a command.
+     * Checks for a translation key "commands.neoessentials.cmd.NAME.description" first;
+     * falls back to the registered English description if not found.
+     */
+    private static String getLocalizedDescription(CommandRegistry.CommandInfo cmd) {
+        String name = cmd.getName().toLowerCase();
+        String descKey = "commands.neoessentials.cmd." + name + ".description";
+        if (MessageUtil.hasTranslation(descKey)) {
+            return MessageUtil.localize(descKey);
+        }
+        String fallback = cmd.getDescription();
+        return (fallback != null && !fallback.isEmpty())
+            ? fallback
+            : MessageUtil.localize("commands.neoessentials.help.no_description");
     }
 
     @SuppressWarnings("unchecked")

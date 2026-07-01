@@ -44,7 +44,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 16;
+    private static final int CURRENT_LANG_VERSION = 18;
 
     /**
      * Returns the configured server language code, e.g. "fr_fr".
