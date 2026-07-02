@@ -149,6 +149,12 @@ public class JailManager {
      * Ported from Essentials: checkJailTimeout pattern.
      */
     public boolean jailPlayer(String playerName, UUID playerId, String reason, String jailedBy, String jailName, long durationMillis) {
+        // Enforce config: check maxJailReason
+        int maxReason = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxJailReasonLength();
+        if (reason != null && reason.length() > maxReason) {
+            LOGGER.warn("Jail reason too long ({} > {}). Cannot jail player {}.", reason.length(), maxReason, playerName);
+            return false;
+        }
         // Check if already jailed atomically using putIfAbsent
         if (jailedPlayers.putIfAbsent(playerId, null) != null) {
             // Already jailed

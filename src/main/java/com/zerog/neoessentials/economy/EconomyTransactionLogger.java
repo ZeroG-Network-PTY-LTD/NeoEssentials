@@ -21,6 +21,7 @@ public class EconomyTransactionLogger {
     });
 
     public static void log(String type, String sender, String receiver, String amount, String reason) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isLogTransactionsEnabled()) return;
         String timestamp = LocalDateTime.now().format(FORMATTER);
         String entry = String.format("[%s] %s | %s -> %s | %s | %s\n", timestamp, type, sender, receiver, amount, reason);
         LOG_EXECUTOR.submit(() -> {

@@ -33,13 +33,13 @@ public class ConditionalFormatter {
 
         try {
             // Process time-based conditionals
-            text = processTimeConditionals(text);
+            if (isTimeConditionalsAllowed()) text = processTimeConditionals(text);
 
             // Process stat-based conditionals
-            text = processStatConditionals(player, text);
+            if (isStatConditionalsAllowed()) text = processStatConditionals(player, text);
 
             // Process state-based conditionals
-            text = processStateConditionals(player, text);
+            if (isStateConditionalsAllowed()) text = processStateConditionals(player, text);
 
             return text;
 
@@ -213,5 +213,44 @@ public class ConditionalFormatter {
             // Ignore
         }
         return false;
+    }
+
+    private static boolean isTimeConditionalsAllowed() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            var cf = chatConfig.getAsJsonObject("conditionalFormatting");
+            if (cf != null && cf.has("allowTimeConditionals")) {
+                return cf.get("allowTimeConditionals").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static boolean isStatConditionalsAllowed() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            var cf = chatConfig.getAsJsonObject("conditionalFormatting");
+            if (cf != null && cf.has("allowStatConditionals")) {
+                return cf.get("allowStatConditionals").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
+    }
+
+    private static boolean isStateConditionalsAllowed() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            var cf = chatConfig.getAsJsonObject("conditionalFormatting");
+            if (cf != null && cf.has("allowStateConditionals")) {
+                return cf.get("allowStateConditionals").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return true;
     }
 }

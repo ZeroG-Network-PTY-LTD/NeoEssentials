@@ -732,6 +732,8 @@ public class PlayerDataCollector {
             playerObj.addProperty("y", player.getY());
             playerObj.addProperty("z", player.getZ());
             playerObj.addProperty("dimension", player.level().dimension().location().toString());
+            playerObj.addProperty("operator", player.hasPermissions(4));
+            playerObj.addProperty("maxHealth", player.getMaxHealth());
             onlinePlayers.add(playerObj);
             onlineUsernames.add(player.getName().getString());
         });

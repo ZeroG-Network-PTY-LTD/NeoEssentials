@@ -31,7 +31,9 @@ public class TransactionHistoryManager {
         return instance;
     }
 
-    private static final int HISTORY_LIMIT = 20; // Configurable if needed
+    private static int historyLimit() {
+        return com.zerog.neoessentials.config.ConfigManager.getTransactionHistoryLimit();
+    }
     private final Map<UUID, Deque<String>> historyMap = new ConcurrentHashMap<>();
     private final File historyFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
     private final Gson gson = new Gson();
@@ -104,7 +106,7 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
         // Use compute() for atomic read-modify-write — prevents race conditions
         historyMap.compute(player, (uuid, deque) -> {
             if (deque == null) deque = new ArrayDeque<>();
-            if (deque.size() >= HISTORY_LIMIT) deque.removeFirst();
+            if (deque.size() >= historyLimit()) deque.removeFirst();
             deque.addLast(entry);
             return deque;
         });

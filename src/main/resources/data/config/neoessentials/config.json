@@ -233,59 +233,14 @@
     "websocketPort": 8081,
     // Bind address: '0.0.0.0' = all interfaces, '127.0.0.1' = localhost only (more secure)
     "bindAddress": "0.0.0.0",
-    // Enable CORS headers (needed for external integrations / development)
-    "enableCORS": true,
-    // Maximum concurrent HTTP request handler threads
-    "maxThreads": 4,
-
-    "apiSettings": {
-      "enablePlayersEndpoint": true,
-      "enableServerEndpoint": true,
-      "enableLogsEndpoint": true,
-      "enableConfigEndpoint": true,
-      // Maximum log lines that can be requested at once
-      "maxLogLines": 1000,
-      // Default log lines when the request does not specify a count
-      "defaultLogLines": 100,
-      // Automatically filter IPs, UUIDs, and passwords from log output
-      "enableSensitiveInfoFiltering": true,
-      // Cache API responses for this many seconds to reduce server load (0 = disabled)
-      "cacheTimeout": 5
-    },
 
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)
       "requireAuthentication": true,
-      // Allow config file editing via the web interface
-      "allowConfigEditing": true,
-      // Config file paths that cannot be edited via the dashboard
-      "restrictedConfigPaths": [],
       // Enable per-IP rate limiting on dashboard API requests
       "enableRateLimiting": true,
       // Maximum API requests per IP per minute when rate limiting is enabled
       "maxRequestsPerMinute": 60
-    },
-
-    "uiSettings": {
-      // Auto-refresh interval in seconds for dashboard data
-      "refreshInterval": 10,
-      // Show TPS / memory performance charts
-      "enableCharts": true,
-      // Dashboard theme: 'space' | 'dark' | 'light'  (only 'space' currently available)
-      "theme": "space",
-      // Show player UUIDs in the player list
-      "showPlayerUUIDs": false,
-      // Enable browser notifications for important server events
-      "enableNotifications": true
-    },
-
-    "loggingSettings": {
-      // Log when the dashboard is accessed
-      "logDashboardAccess": true,
-      // Log all API requests (verbose, for debugging)
-      "logAPIRequests": false,
-      // Log when config files are modified via the dashboard
-      "logConfigChanges": true
     }
   },
 
@@ -297,8 +252,6 @@
     "maxCommandLength": 256,
     "maxReasonLength": 500,
     "allowUnsafeCommands": false,
-    "enablePathTraversalProtection": true,
-    "enableXSSProtection": true,
     // Controls whether the CommandLengthEnforcer event handler validates player commands
     "enableCommandLengthEnforcer": true
   },
@@ -401,8 +354,6 @@
     "maxKitsPerPlayer": 10,
     // Allow players with the override permission to bypass kit cooldowns
     "allowKitOverride": true,
-    // Allow /kit preview before claiming
-    "enableKitPreview": true,
     // Log kit usage to server logs
     "logKitUsage": true,
 
@@ -565,26 +516,6 @@
       "teleportDelay": 3,
       // Cooldown between /back uses in seconds (0 = disabled)
       "backCooldown": 0
-    },
-
-    // Economy cost per teleportation command use (0 = free)
-    "commandCosts": {
-      "home": 0,
-      "sethome": 0,
-      "delhome": 0,
-      "listhomes": 0,
-      "warp": 0,
-      "setwarp": 0,
-      "delwarp": 0,
-      "listwarps": 0,
-      "spawn": 0,
-      "setspawn": 0,
-      "tpa": 0,
-      "tphere": 0,
-      "tpaccept": 0,
-      "tpdeny": 0,
-      "tp": 0,
-      "tpall": 0
     }
   },
 
@@ -676,19 +607,8 @@
     },
 
     "generalSettings": {
-      // Require staff to provide a reason for moderation actions
-      "requireReasonForActions": false,
-      "maxActionReason": 500,
-      // Keep a history of moderation actions per player
-      "enableModerationHistory": true,
-      // Maximum history entries kept per player
-      "historyLimit": 100,
-      // Send notifications to staff about moderation actions
-      "enableStaffNotifications": true,
       // Permission required to receive staff moderation notifications
       "staffNotificationPermission": "neoessentials.moderation.notify",
-      // Log file name for moderation actions (in server logs directory)
-      "moderationLogFile": "moderation.log",
       // Permission node required to see vanished players
       "seeVanishedPermission": "neoessentials.vanish.see"
     }
@@ -864,11 +784,7 @@
       // Allow <gradient:FF0000-0000FF>text</gradient> syntax
       "allowGradients": true,
       // Allow <rainbow>text</rainbow> syntax
-      "allowRainbow": true,
-      // Require 'neoessentials.chat.richtext' permission to use rich text
-      "requirePermission": false,
-      "gradientPermission": "neoessentials.chat.gradient",
-      "rainbowPermission": "neoessentials.chat.rainbow"
+      "allowRainbow": true
     },
 
     "conditionalFormatting": {

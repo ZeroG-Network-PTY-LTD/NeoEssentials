@@ -36,7 +36,12 @@ public class DashboardLifecycleManager {
             LOGGER.info("Dashboard was manually disabled and will not auto-start");
             return;
         }
-        
+
+        if (!ConfigManager.isWebDashboardAutoStartEnabled()) {
+            LOGGER.info("Dashboard auto-start is disabled in configuration — use /dashboard start to start it manually");
+            return;
+        }
+
         try {
             MinecraftServer server = event.getServer();
 

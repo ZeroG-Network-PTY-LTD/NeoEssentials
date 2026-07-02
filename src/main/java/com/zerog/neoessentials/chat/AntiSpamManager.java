@@ -99,13 +99,14 @@ public class AntiSpamManager {
             return new FilterResult(true, message, null);
         }
 
+        var config = getSpamFilterConfig();
+
         // Bypass permission
-        if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.chat.spam.bypass")) {
+        if (PermissionAPI.hasPermission(player.getUUID(), bypassPermission(config, "neoessentials.chat.spam.bypass"))) {
             return new FilterResult(true, message, null);
         }
 
         try {
-            var config = getSpamFilterConfig();
             int maxMessages = config.get("messagesPerPeriod").getAsInt();
             int periodSeconds = config.get("periodSeconds").getAsInt();
 
@@ -136,8 +137,10 @@ public class AntiSpamManager {
             return new FilterResult(true, message, null);
         }
 
+        var repeatConfig = getRepeatFilterConfig();
+
         // Bypass permission
-        if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.chat.repeat.bypass")) {
+        if (PermissionAPI.hasPermission(player.getUUID(), bypassPermission(repeatConfig, "neoessentials.chat.repeat.bypass"))) {
             return new FilterResult(true, message, null);
         }
 
@@ -147,7 +150,7 @@ public class AntiSpamManager {
             Long lastTime = lastMessageTimes.get(playerId);
 
             if (lastMessage != null && lastMessage.equals(message)) {
-                var config = getRepeatFilterConfig();
+                var config = repeatConfig;
                 int cooldown = config.get("cooldownSeconds").getAsInt();
                 long currentTime = System.currentTimeMillis();
 
@@ -175,13 +178,15 @@ public class AntiSpamManager {
             return new FilterResult(true, message, null);
         }
 
+        var linkConfig = getLinkFilterConfig();
+
         // Bypass permission
-        if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.chat.links.bypass")) {
+        if (PermissionAPI.hasPermission(player.getUUID(), bypassPermission(linkConfig, "neoessentials.chat.links.bypass"))) {
             return new FilterResult(true, message, null);
         }
 
         try {
-            var config = getLinkFilterConfig();
+            var config = linkConfig;
             String action = config.get("action").getAsString();
 
             // Allow all links
@@ -231,13 +236,15 @@ public class AntiSpamManager {
             return new FilterResult(true, message, null);
         }
 
+        var capsConfig = getCapsFilterConfig();
+
         // Bypass permission
-        if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.chat.caps.bypass")) {
+        if (PermissionAPI.hasPermission(player.getUUID(), bypassPermission(capsConfig, "neoessentials.chat.caps.bypass"))) {
             return new FilterResult(true, message, null);
         }
 
         try {
-            var config = getCapsFilterConfig();
+            var config = capsConfig;
             int minLength = config.get("minimumLength").getAsInt();
 
             // Don't check short messages
@@ -392,6 +399,16 @@ public class AntiSpamManager {
         var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
         var antiSpam = getSafeJsonObject(chatConfig, "antiSpam");
         return getSafeJsonObject(antiSpam, "capsFilter");
+    }
+
+    /** Reads a filter's configured bypassPermission, falling back to {@code fallback} if unset. */
+    private String bypassPermission(JsonObject filterConfig, String fallback) {
+        if (filterConfig != null && filterConfig.has("bypassPermission")) {
+            try {
+                return filterConfig.get("bypassPermission").getAsString();
+            } catch (Exception ignored) {}
+        }
+        return fallback;
     }
 
     /**

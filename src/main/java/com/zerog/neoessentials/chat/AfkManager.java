@@ -84,6 +84,9 @@ public class AfkManager {
     // Configurable rotation threshold for AFK detection
     private double rotationThreshold = 5.0;
 
+    // Configurable movement distance threshold for AFK detection
+    private double movementThreshold = 0.1;
+
     // Whether AFK players are invulnerable to all damage
     private boolean invulnerableWhenAfk = false;
 
@@ -492,6 +495,18 @@ public class AfkManager {
             this.rotationThreshold = 5.0;
         }
 
+        // Support movementThreshold from config
+        if (afkConfig.has("movementThreshold")) {
+            try {
+                this.movementThreshold = afkConfig.get("movementThreshold").getAsDouble();
+            } catch (Exception e) {
+                this.movementThreshold = 0.1;
+                LOGGER.warn("Invalid value for movementThreshold in config, using default 0.1");
+            }
+        } else {
+            this.movementThreshold = 0.1;
+        }
+
         // Support excludedCommands from config
         if (afkConfig.has("excludedCommands") && afkConfig.get("excludedCommands").isJsonArray()) {
             try {
@@ -621,6 +636,7 @@ public class AfkManager {
     public boolean isTrackCommands() { return trackCommands; }
     public boolean isTrackInteractions() { return trackInteractions; }
     public double getRotationThreshold() { return rotationThreshold; }
+    public double getMovementThreshold() { return movementThreshold; }
     public boolean isAutoSave() { return autoSave; }
     public int getSaveIntervalSeconds() { return saveIntervalSeconds; }
     public java.util.Set<String> getExcludedCommands() { return excludedCommands; }

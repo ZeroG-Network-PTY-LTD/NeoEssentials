@@ -23,9 +23,6 @@ import java.util.concurrent.TimeUnit;
 public class AfkMovementDetector {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkMovementDetector.class);
     
-    // Minimum distance to consider as movement (in blocks)
-    private static final double MOVEMENT_THRESHOLD = 0.1;
-    
     // Store last known positions
     private static final Map<UUID, PlayerPosition> lastPositions = new HashMap<>();
     
@@ -90,10 +87,11 @@ public class AfkMovementDetector {
             double distanceMoved = currentPos.distanceTo(lastPos);
             double rotationChanged = currentPos.rotationDifference(lastPos);
 
-            // Use configurable rotation threshold from AfkManager
+            // Use configurable thresholds from AfkManager
             double rotationThreshold = AfkManager.getInstance().getRotationThreshold();
+            double movementThreshold = AfkManager.getInstance().getMovementThreshold();
             // If player moved significantly or rotated significantly
-            if (distanceMoved > MOVEMENT_THRESHOLD || rotationChanged > rotationThreshold) {
+            if (distanceMoved > movementThreshold || rotationChanged > rotationThreshold) {
                 AfkManager.getInstance().updateActivity(playerId);
                 LOGGER.debug("Movement activity tracked for {}: distance={}, rotation={} (threshold={})",
                     player.getName().getString(), distanceMoved, rotationChanged, rotationThreshold);

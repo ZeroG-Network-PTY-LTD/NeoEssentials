@@ -496,6 +496,11 @@ public class ChatFormatter {
      * Markup mentions and play sounds.
      */
     private static String markupMentions(String text, ServerPlayer sender, net.minecraft.server.MinecraftServer server) {
+        if (isMentionPermissionRequired()
+                && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), getMentionPermission())) {
+            return text;
+        }
+
         Matcher matcher = MENTION_PATTERN.matcher(text);
         StringBuilder result = new StringBuilder();
 
@@ -626,7 +631,7 @@ public class ChatFormatter {
 
         if (!mainHandItem.isEmpty()) {
             component.setStyle(component.getStyle()
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM,
+                .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_ITEM,
                     new HoverEvent.ItemStackInfo(mainHandItem)))
             );
         }
@@ -645,7 +650,7 @@ public class ChatFormatter {
             .withStyle(ChatFormatting.BOLD)
             .withStyle(style -> style
                 .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
                     Component.literal("Click to message " + playerName).withStyle(ChatFormatting.GRAY)))
             );
     }
@@ -661,7 +666,7 @@ public class ChatFormatter {
         comp.withStyle(style -> style
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                 "/msg " + player.getName().getString() + " "))
-            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+            .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
                 Component.literal("✉ Click to message " + player.getName().getString())
                     .withStyle(ChatFormatting.GRAY)))
         );
@@ -675,7 +680,7 @@ public class ChatFormatter {
         try {
             float volume = getMentionSoundVolume();
             player.playNotifySound(
-                net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP,
+                getMentionSoundEvent(),
                 net.minecraft.sounds.SoundSource.PLAYERS,
                 volume,
                 1.0f
@@ -735,6 +740,30 @@ public class ChatFormatter {
         return true;
     }
 
+    private static boolean isMentionPermissionRequired() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("requirePermission")) {
+                return chatConfig.getAsJsonObject("mentions").get("requirePermission").getAsBoolean();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return false;
+    }
+
+    private static String getMentionPermission() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("permission")) {
+                return chatConfig.getAsJsonObject("mentions").get("permission").getAsString();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return "neoessentials.chat.mention";
+    }
+
     private static ChatFormatting getMentionColor() {
         try {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
@@ -762,6 +791,24 @@ public class ChatFormatter {
             // Ignore
         }
         return 1.0f;
+    }
+
+    /** Resolves chat.mentions.soundName to a registered SoundEvent, falling back if unset/invalid. */
+    private static net.minecraft.sounds.SoundEvent getMentionSoundEvent() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("soundName")) {
+                String soundName = chatConfig.getAsJsonObject("mentions").get("soundName").getAsString();
+                net.minecraft.resources.ResourceLocation id = soundName.contains(":")
+                    ? net.minecraft.resources.ResourceLocation.parse(soundName)
+                    : net.minecraft.resources.ResourceLocation.withDefaultNamespace(soundName);
+                var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(id);
+                if (sound != null) return sound;
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP;
     }
 
     /**

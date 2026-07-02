@@ -500,27 +500,18 @@ public class FunCommands {
         var src = ctx.getSource();
         var player = src.getPlayer();
 
-        ConfigManager cfg = ConfigManager.getInstance();
-        String motd = cfg.getMotd();
-        String rules = cfg.getRules();
-
+        String motd = com.zerog.neoessentials.util.motd.MotdManager.getInstance().getActiveMotd();
         if (motd == null) motd = "";
-        if (rules == null) rules = "";
 
         String playerName = player != null ? player.getName().getString() : "Server";
         String motdResolved = motd.replace("{player}", playerName).replace("{name}", playerName);
-        final String finalRules = rules;
 
-        // Show MOTD + Rules summary together as /info
+        // Show MOTD + a pointer to /rules as /info
         src.sendSuccess(() -> Component.literal(
             "§b============ §fServer Info §b============\n" +
             motdResolved + "\n" +
             "§7Type §f/rules §7to view server rules."
         ), false);
-
-        if (!finalRules.isEmpty() && !finalRules.equals("No rules set.")) {
-            src.sendSuccess(() -> Component.literal("§e--- §fRules §e---\n" + finalRules), false);
-        }
         return 1;
     }
 

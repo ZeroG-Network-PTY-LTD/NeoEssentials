@@ -77,9 +77,6 @@
     // Automatically sync permissions when a player joins the server (recommended: true)
     "syncOnJoin": true,
 
-    // Permission grant method: 'auto' (detect LuckPerms/built-in) | 'luckperms' | 'builtin'
-    "syncMethod": "auto",
-
     /* Map Discord Role IDs to Minecraft permission nodes.
      * Players receive ALL permissions from ALL their Discord roles (permissions are combined).
      * Use Discord Role IDs (numbers), NOT role names.

@@ -114,8 +114,8 @@ public class RichTextFormatter {
         try {
             if (isRichTextEnabled()) {
                 // Rich text ON — convert all tag syntax to & codes / internal markers
-                text = processGradients(text);
-                text = processRainbow(text);
+                if (isGradientAllowed()) text = processGradients(text);
+                if (isRainbowAllowed()) text = processRainbow(text);
                 text = processNamedColorTags(text);
                 text = processFormatTags(text);
                 text = processColorHexTags(text);
@@ -440,7 +440,7 @@ public class RichTextFormatter {
         MutableComponent visible = (MutableComponent)
             com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(visibleText);
         return visible.withStyle(style ->
-            style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover)));
+            style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, hover)));
     }
 
     /**
@@ -467,6 +467,26 @@ public class RichTextFormatter {
             }
         } catch (Exception e) { /* ignore */ }
         return false;
+    }
+
+    private static boolean isGradientAllowed() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("richText") && chatConfig.getAsJsonObject("richText").has("allowGradients")) {
+                return chatConfig.getAsJsonObject("richText").get("allowGradients").getAsBoolean();
+            }
+        } catch (Exception e) { /* ignore */ }
+        return true;
+    }
+
+    private static boolean isRainbowAllowed() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("richText") && chatConfig.getAsJsonObject("richText").has("allowRainbow")) {
+                return chatConfig.getAsJsonObject("richText").get("allowRainbow").getAsBoolean();
+            }
+        } catch (Exception e) { /* ignore */ }
+        return true;
     }
 
     /**

@@ -635,6 +635,27 @@ public class ConfigManager {
     }
 
     /**
+     * Returns the max jail reason length from moderation.jailSettings.maxJailReason.
+     * Defaults to 500 if not set or invalid.
+     */
+    public int getMaxJailReasonLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jailSettings")) {
+                JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                if (jailSettings.has("maxJailReason")) {
+                    try {
+                        int val = jailSettings.get("maxJailReason").getAsInt();
+                        if (val > 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return 500;
+    }
+
+    /**
      * Returns true if IP bans are disabled in moderation.banSettings.enableIPBans.
      * Defaults to false if not set.
      */
@@ -1360,6 +1381,22 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if the web dashboard should start automatically on server boot
+     * (webDashboard.autoStart). If false, use /dashboard start to start it manually.
+     * Defaults to true if not set.
+     */
+    public static boolean isWebDashboardAutoStartEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("autoStart")) {
+                return dashboard.get("autoStart").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
      * Returns the web dashboard HTTP port (webDashboard.port). Defaults to 8080.
      */
     public int getWebDashboardPort() {
@@ -1739,20 +1776,6 @@ public class ConfigManager {
     }
 
     /**
-     * Check if XSS protection is enabled (security.enableXSSProtection)
-     */
-    public boolean isXSSProtectionEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("enableXSSProtection")) {
-                return security.get("enableXSSProtection").getAsBoolean();
-            }
-        }
-        return true; // Default to enabled
-    }
-
-    /**
      * Check if input validation is enabled (security.enableInputValidation)
      */
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -1843,6 +1866,35 @@ public class ConfigManager {
             } catch (Exception ignored) {}
         }
         return 100.0;
+    }
+
+    /**
+     * Returns whether economy transactions should be logged to logs/neoessentials/transactions.log
+     * (economy.json logTransactions). Defaults to true if not set.
+     */
+    public static boolean isLogTransactionsEnabled() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("logTransactions")) {
+            try {
+                return config.get("logTransactions").getAsBoolean();
+            } catch (Exception ignored) {}
+        }
+        return true;
+    }
+
+    /**
+     * Returns the max transactions kept per player for /history
+     * (economy.json transactionHistoryLimit). Defaults to 20 if not set.
+     */
+    public static int getTransactionHistoryLimit() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("transactionHistoryLimit")) {
+            try {
+                int val = config.get("transactionHistoryLimit").getAsInt();
+                if (val > 0) return val;
+            } catch (Exception ignored) {}
+        }
+        return 20;
     }
 
     /**
@@ -2449,36 +2501,20 @@ public class ConfigManager {
     }
 
     /**
-     * Returns max economy amount from security.maxEconomyAmount.
-     * Defaults to 999999999.99 if not set.
+     * Returns the max economy amount a single validated input can be — reuses
+     * economy.json's maxBalance (there's no separate security-side cap; a
+     * transaction amount can never usefully exceed the max a balance can hold).
      */
     public BigDecimal getMaxEconomyAmount() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("maxEconomyAmount")) {
-                try {
-                    return BigDecimal.valueOf(security.get("maxEconomyAmount").getAsDouble());
-                } catch (Exception ignored) {}
-            }
-        }
-        return BigDecimal.valueOf(999999999.99);
+        return BigDecimal.valueOf(getMaxBalance());
     }
 
     /**
-     * Returns min economy amount from security.minEconomyAmount.
-     * Defaults to 0.01 if not set.
+     * Returns the minimum economy amount a validated input must be. Not
+     * separately configurable — 0.01 is the smallest unit two-decimal
+     * currency formatting can display.
      */
     public BigDecimal getMinEconomyAmount() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("minEconomyAmount")) {
-                try {
-                    return BigDecimal.valueOf(security.get("minEconomyAmount").getAsDouble());
-                } catch (Exception ignored) {}
-            }
-        }
         return BigDecimal.valueOf(0.01);
     }
 
@@ -2498,16 +2534,16 @@ public class ConfigManager {
     }
 
     /**
-     * Returns max unsafe enchantment level from security.maxUnsafeEnchantmentLevel.
+     * Returns max unsafe enchantment level from items.max-unsafe-enchantment-level.
      * Defaults to 10 if not set.
      */
     public int getMaxUnsafeEnchantmentLevel() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("maxUnsafeEnchantmentLevel")) {
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("max-unsafe-enchantment-level")) {
                 try {
-                    return security.get("maxUnsafeEnchantmentLevel").getAsInt();
+                    return items.get("max-unsafe-enchantment-level").getAsInt();
                 } catch (Exception ignored) {}
             }
         }
@@ -2515,29 +2551,32 @@ public class ConfigManager {
     }
 
     /**
-     * Check if jail system is enabled (modules.jailEnabled)
+     * Check if jail system is enabled (moderation.jailSettings.enableJailSystem)
      */
     public static boolean isJailSystemEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("modules")) {
-            JsonObject modules = config.getAsJsonObject("modules");
-            if (modules.has("jailEnabled")) {
-                return modules.get("jailEnabled").getAsBoolean();
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jailSettings")) {
+                JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                if (jailSettings.has("enableJailSystem")) {
+                    return jailSettings.get("enableJailSystem").getAsBoolean();
+                }
             }
         }
         return true; // Default to enabled
     }
 
     /**
-     * Get max jails before permanent ban from moderation.jail.maxJailsBeforePermBan
+     * Get max jails before permanent ban from moderation.jailSettings.maxJailsBeforePermBan
      * Defaults to 3 if not set
      */
     public static int getMaxJailsBeforePermBan() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation")) {
             JsonObject moderation = config.getAsJsonObject("moderation");
-            if (moderation.has("jail")) {
-                JsonObject jail = moderation.getAsJsonObject("jail");
+            if (moderation.has("jailSettings")) {
+                JsonObject jail = moderation.getAsJsonObject("jailSettings");
                 if (jail.has("maxJailsBeforePermBan")) {
                     return jail.get("maxJailsBeforePermBan").getAsInt();
                 }
@@ -2547,15 +2586,15 @@ public class ConfigManager {
     }
 
     /**
-     * Get temp ban duration in minutes from moderation.jail.tempBanDurationMinutes
+     * Get temp ban duration in minutes from moderation.jailSettings.tempBanDurationMinutes
      * Defaults to 1440 (24 hours) if not set
      */
     public static int getTempBanDurationMinutes() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("moderation")) {
             JsonObject moderation = config.getAsJsonObject("moderation");
-            if (moderation.has("jail")) {
-                JsonObject jail = moderation.getAsJsonObject("jail");
+            if (moderation.has("jailSettings")) {
+                JsonObject jail = moderation.getAsJsonObject("jailSettings");
                 if (jail.has("tempBanDurationMinutes")) {
                     return jail.get("tempBanDurationMinutes").getAsInt();
                 }
@@ -2633,15 +2672,15 @@ public class ConfigManager {
     }
 
     /**
-     * Check if debug mode is enabled from debug.enabled
+     * Check if debug mode is enabled from logging.enableDebugLogging
      * Defaults to false if not set
      */
     public static boolean isDebugModeEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("debug")) {
-            JsonObject debug = config.getAsJsonObject("debug");
-            if (debug.has("enabled")) {
-                return debug.get("enabled").getAsBoolean();
+        if (config.has("logging")) {
+            JsonObject logging = config.getAsJsonObject("logging");
+            if (logging.has("enableDebugLogging")) {
+                return logging.get("enableDebugLogging").getAsBoolean();
             }
         }
         return false;
@@ -2815,30 +2854,6 @@ public class ConfigManager {
         File configDir = new File(ResourceUtil.CONFIG_DIR);
         ResourceUtil.ensureDirectoryExists(ResourceUtil.CONFIG_DIR);
         return configDir;
-    }
-
-    /** Returns the MOTD string from general.motd, or null if not set. */
-    public String getMotd() {
-        try {
-            JsonObject config = getConfig(MAIN_CONFIG);
-            if (config.has("general") && config.getAsJsonObject("general").has("motd")) {
-                String val = config.getAsJsonObject("general").get("motd").getAsString();
-                return val.isBlank() ? null : val;
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
-
-    /** Returns the rules string from general.rules, or null if not set. */
-    public String getRules() {
-        try {
-            JsonObject config = getConfig(MAIN_CONFIG);
-            if (config.has("general") && config.getAsJsonObject("general").has("rules")) {
-                String val = config.getAsJsonObject("general").get("rules").getAsString();
-                return val.isBlank() ? null : val;
-            }
-        } catch (Exception ignored) {}
-        return null;
     }
 
     /** Returns the backup-command string from commands.backupCommand, or null if not set. */
