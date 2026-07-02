@@ -218,7 +218,7 @@ public class RandomTeleportManager {
                         ix, iz);
             }
 
-            if (y <= level.getMinBuildHeight()) {
+            if (y <= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level)) {
                 return null;
             }
 
@@ -252,7 +252,7 @@ public class RandomTeleportManager {
      * Nether Y scan: scan up from y=32 to find an air gap below the bedrock ceiling.
      */
     private int findNetherY(ServerLevel level, int x, int z) {
-        int maxScan = level.getMaxBuildHeight() - 1;
+        int maxScan = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 1;
         for (int y = 32; y < maxScan; y++) {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState state = level.getBlockState(pos);
@@ -331,7 +331,7 @@ public class RandomTeleportManager {
     private boolean isValid(TeleportLocation loc, String locationName) {
         ServerLevel level = loc.getLevel();
         if (level == null) return false;
-        if (loc.getY() <= level.getMinBuildHeight()) return false;
+        if (loc.getY() <= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level)) return false;
 
         // Excluded biomes check
         if (locationName != null) {

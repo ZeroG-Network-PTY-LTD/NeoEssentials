@@ -543,10 +543,10 @@ public class MiscTeleportManager {
         
         int currentX = (int) player.getX();
         int currentZ = (int) player.getZ();
-        int maxY = player.level().getMaxBuildHeight() - 1;
+        int maxY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(player.level()) - 1;
         
         // Find the highest solid block
-        for (int y = maxY; y >= player.level().getMinBuildHeight(); y--) {
+        for (int y = maxY; y >= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(player.level()); y--) {
             if (!player.level().getBlockState(new net.minecraft.core.BlockPos(currentX, y, currentZ)).isAir()) {
                 final int targetY = y + 1;
                 TeleportLocation topLocation = new TeleportLocation(
@@ -680,8 +680,8 @@ public class MiscTeleportManager {
             int randomZ = (int) player.getZ() + random.nextInt(maxDistance * 2) - maxDistance;
             
             // Find safe Y coordinate (highest solid block + 1)
-            int maxY = player.level().getMaxBuildHeight() - 1;
-            for (int y = maxY; y >= player.level().getMinBuildHeight(); y--) {
+            int maxY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(player.level()) - 1;
+            for (int y = maxY; y >= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(player.level()); y--) {
                 net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(randomX, y, randomZ);
                 net.minecraft.core.BlockPos posAbove = pos.above();
                 net.minecraft.core.BlockPos posAbove2 = posAbove.above();

@@ -347,7 +347,7 @@ public class WorldInteractionCommands {
                 var level = com.zerog.neoessentials.util.LevelCompat.of(player);
                 int x = player.getBlockX();
                 int z = player.getBlockZ();
-                int minY = level.getMinBuildHeight();
+                int minY = com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level);
 
                 // Find the lowest safe Y (solid block + air above it)
                 BlockPos safePos = null;

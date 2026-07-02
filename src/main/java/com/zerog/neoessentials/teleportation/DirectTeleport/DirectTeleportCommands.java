@@ -286,7 +286,7 @@ public class DirectTeleportCommands {
             BlockPos currentPos = player.blockPosition();
             ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             BlockPos highestPos = null;
-            for (int y = level.getMaxBuildHeight() - 1; y > currentPos.getY(); y--) {
+            for (int y = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 1; y > currentPos.getY(); y--) {
                 BlockPos checkPos = new BlockPos(currentPos.getX(), y, currentPos.getZ());
                 if (!level.getBlockState(checkPos).isAir() && level.getBlockState(checkPos.above()).isAir()) {
                     highestPos = checkPos.above();

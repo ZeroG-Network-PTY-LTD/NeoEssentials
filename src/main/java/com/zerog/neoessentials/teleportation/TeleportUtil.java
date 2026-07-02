@@ -388,7 +388,7 @@ public class TeleportUtil {
      * Scans top-down for a solid, non-dangerous ground with two clear blocks above.
      */
     public static int getHighestSafeY(ServerLevel level, int x, int z) {
-        for (int y = level.getMaxBuildHeight() - 2; y >= level.getMinBuildHeight() + 1; y--) {
+        for (int y = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 2; y >= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level) + 1; y--) {
             BlockPos testPos = new BlockPos(x, y, z);
             if (isSafeLocation(level, testPos)) {
                 return y;

@@ -275,7 +275,7 @@ public class FunCommands {
             // Spawn a 5x5 grid of TNT 64 blocks above the player
             int bx = target.getBlockX();
             int bz = target.getBlockZ();
-            int topY = level.getMaxBuildHeight();
+            int topY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level);
             for (int x = -10; x <= 10; x += 5) {
                 for (int z = -10; z <= 10; z += 5) {
                     PrimedTnt tnt = EntityType.TNT.create(level);
@@ -518,7 +518,7 @@ public class FunCommands {
     // ── Helpers ───────────────────────────────────────────────────────────────
     @SuppressWarnings("unused")
     private static BlockPos getHighestBlock(ServerLevel level, int x, int z) {
-        return BlockPos.containing(x, level.getMaxBuildHeight(), z);
+        return BlockPos.containing(x, com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level), z);
     }
 
     // ── /antioch ──────────────────────────────────────────────────────────────
