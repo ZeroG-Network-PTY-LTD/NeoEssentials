@@ -328,27 +328,27 @@ public class MessageUtil {
         StringBuilder result = null; // lazily created only if a repair actually happens
         int i = 0;
         int n = value.length();
+        int segmentStart = 0; // start of the run of characters (ASCII or not) not yet appended
         while (i < n) {
             char c = value.charAt(i);
             if (c < 0x80) {
                 i++;
                 continue;
             }
-            int start = i;
+            int runStart = i;
             while (i < n && value.charAt(i) >= 0x80) i++;
-            String run = value.substring(start, i);
+            String run = value.substring(runStart, i);
             String repairedRun = tryReverseCorruption(run);
             if (repairedRun != null) {
-                if (result == null) {
-                    result = new StringBuilder(value.length());
-                    result.append(value, 0, start);
-                }
+                if (result == null) result = new StringBuilder(value.length());
+                result.append(value, segmentStart, runStart); // preceding ASCII (and any untouched runs)
                 result.append(repairedRun);
-            } else if (result != null) {
-                result.append(run);
+                segmentStart = i;
             }
         }
-        return result != null ? result.toString() : value;
+        if (result == null) return value;
+        result.append(value, segmentStart, n); // trailing text after the last repaired run
+        return result.toString();
     }
 
     /**
