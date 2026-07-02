@@ -143,7 +143,7 @@ public class WorldInteractionCommands {
                 yield df;
             }
             case "windcharge" -> {
-                var wc = net.minecraft.world.entity.EntityType.WIND_CHARGE.create(level);
+                var wc = com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.WIND_CHARGE, level);
                 if (wc != null) {
                     wc.setOwner(player);
                     wc.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);

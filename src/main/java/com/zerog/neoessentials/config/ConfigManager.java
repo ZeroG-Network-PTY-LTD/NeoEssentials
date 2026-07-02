@@ -2536,7 +2536,10 @@ public class ConfigManager {
 
     /**
      * Returns whether unsafe commands are allowed from security.allowUnsafeCommands.
-     * Defaults to false if not set.
+     * Defaults to true (the dangerous-pattern/character check in
+     * {@link com.zerog.neoessentials.util.InputValidator#validateCommand} is opt-in via
+     * this flag, not opt-out) — set it to {@code false} explicitly to enable stricter
+     * command scanning for powertool-bound commands.
      */
     public boolean isUnsafeCommandsAllowed() {
         JsonObject config = getConfig(MAIN_CONFIG);
@@ -2546,7 +2549,7 @@ public class ConfigManager {
                 return security.get("allowUnsafeCommands").getAsBoolean();
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -2776,8 +2779,9 @@ public class ConfigManager {
         lock.writeLock().lock();
         try {
             if (ConfigSplitter.isSplittingEnabled() && configName.equals(MAIN_CONFIG)) {
-                LOGGER.info("Split configs enabled - skipping write to config.json, updating split files only");
-                // Optionally, update split files here if needed
+                LOGGER.info("Split configs enabled - writing changes to split files instead of config.json");
+                ConfigSplitter.saveMergedConfigToSplitFiles(config);
+                configCache.put(configName, config);
                 return;
             }
             File file = ResourceUtil.getConfigFile(configName);

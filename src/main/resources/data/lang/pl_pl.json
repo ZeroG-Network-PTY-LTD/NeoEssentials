@@ -70,6 +70,13 @@
   "commands.neoessentials.gamemode.changed_self": "Twój tryb gry został zmieniony na {0}.",
   "commands.neoessentials.motd.header": "§6=== Wiadomość dnia ===",
   "commands.neoessentials.channel.switched": "§aPrzełączono na kanał {0}.",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "Tylko dla graczy.",
+  "commands.neoessentials.ah.sell.need_item": "§cMusisz trzymać przedmiot, aby go sprzedać!",
+  "commands.neoessentials.ah.sell.invalid_price": "§cCena musi być większa niż 0!",
+  "commands.neoessentials.ah.sell.max_listings": "§cOsiągnięto maksymalną liczbę ofert na gracza ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cNie udało się wystawić przedmiotu. Spróbuj ponownie.",
+  "commands.neoessentials.ah.sell.success": "§aWystawiono §e{0} §aza §6{1}§a! (ID: {2})",
+  "commands.neoessentials.ah.reload.success": "§aPrzeładowano konfigurację domu aukcyjnego.",
+  "commands.neoessentials.ah.help": "§6§l-- Komendy domu aukcyjnego --\n§e/ah§7 - Otwórz dom aukcyjny\n§e/ah sell <cena>§7 - Wystaw trzymany przedmiot na sprzedaż\n§e/ah selling§7 - Zobacz swoje aktywne oferty\n§e/ah expired§7 - Odbierz wygasłe oferty\n§e/ah reload§7 - Przeładuj konfigurację (admin)\n§e/auctionhouse§7 - Alias dla /ah"
 }
-

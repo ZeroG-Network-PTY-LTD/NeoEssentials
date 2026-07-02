@@ -76,6 +76,13 @@
   "commands.neoessentials.gamemode.changed_self": "Seu modo de jogo foi alterado para {0}.",
   "commands.neoessentials.motd.header": "§6=== Mensagem do Dia ===",
   "commands.neoessentials.channel.switched": "§aVocê mudou para o canal {0}.",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "Somente para jogadores.",
+  "commands.neoessentials.ah.sell.need_item": "§cVocê precisa estar segurando um item para vendê-lo!",
+  "commands.neoessentials.ah.sell.invalid_price": "§cO preço deve ser maior que 0!",
+  "commands.neoessentials.ah.sell.max_listings": "§cVocê atingiu o número máximo de anúncios por jogador ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cFalha ao listar o item. Tente novamente.",
+  "commands.neoessentials.ah.sell.success": "§aListado §e{0} §apor §6{1}§a! (ID: {2})",
+  "commands.neoessentials.ah.reload.success": "§aConfiguração da Casa de Leilões recarregada.",
+  "commands.neoessentials.ah.help": "§6§l-- Comandos da Casa de Leilões --\n§e/ah§7 - Abrir a Casa de Leilões\n§e/ah sell <preço>§7 - Listar o item na mão para venda\n§e/ah selling§7 - Ver seus anúncios ativos\n§e/ah expired§7 - Coletar anúncios expirados\n§e/ah reload§7 - Recarregar configuração (admin)\n§e/auctionhouse§7 - Atalho para /ah"
 }
-

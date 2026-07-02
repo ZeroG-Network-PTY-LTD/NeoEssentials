@@ -76,6 +76,13 @@
   "commands.neoessentials.gamemode.changed_self": "你的游戏模式已更改为 {0}。",
   "commands.neoessentials.motd.header": "§6=== 今日消息 ===",
   "commands.neoessentials.channel.switched": "§a你已切换到频道 {0}。",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "仅限玩家使用。",
+  "commands.neoessentials.ah.sell.need_item": "§c你必须手持物品才能出售！",
+  "commands.neoessentials.ah.sell.invalid_price": "§c价格必须大于0！",
+  "commands.neoessentials.ah.sell.max_listings": "§c你已达到每位玩家的最大上架数量（{0}）。",
+  "commands.neoessentials.ah.sell.failed": "§c上架物品失败，请重试。",
+  "commands.neoessentials.ah.sell.success": "§a已上架 §e{0} §a，价格为 §6{1}§a！（ID：{2}）",
+  "commands.neoessentials.ah.reload.success": "§a拍卖行配置已重新加载。",
+  "commands.neoessentials.ah.help": "§6§l-- 拍卖行命令 --\n§e/ah§7 - 打开拍卖行\n§e/ah sell <价格>§7 - 上架手持物品出售\n§e/ah selling§7 - 查看你的活跃拍卖\n§e/ah expired§7 - 领取过期拍卖\n§e/ah reload§7 - 重新加载配置（管理员）\n§e/auctionhouse§7 - /ah 的别名"
 }
-

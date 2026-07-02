@@ -7,9 +7,9 @@ import com.zerog.neoessentials.auctionhouse.AuctionHouseManager;
 import com.zerog.neoessentials.auctionhouse.gui.GUIAuctionHouse;
 import com.zerog.neoessentials.auctionhouse.gui.GUIExpiredItems;
 import com.zerog.neoessentials.auctionhouse.gui.GUIPersonalAuctionHouse;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 /**
@@ -39,62 +39,54 @@ public final class AuctionHouseCommand {
         dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("ah")));
     }
     private static int executeOpen(CommandSourceStack source) {
-        if (!source.isPlayer()) { source.sendFailure(Component.literal("Players only.")); return 0; }
+        if (!source.isPlayer()) { source.sendFailure(MessageUtil.error("commands.neoessentials.ah.players_only")); return 0; }
         GUIAuctionHouse.open(source.getPlayer());
         return Command.SINGLE_SUCCESS;
     }
     private static int executeSell(CommandSourceStack source, double price) {
-        if (!source.isPlayer()) { source.sendFailure(Component.literal("Players only.")); return 0; }
+        if (!source.isPlayer()) { source.sendFailure(MessageUtil.error("commands.neoessentials.ah.players_only")); return 0; }
         ServerPlayer player = source.getPlayer();
         ItemStack held = player.getMainHandItem();
         if (held.isEmpty()) {
-            player.sendSystemMessage(Component.literal("\u00a7cYou must hold an item to sell!"));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.ah.sell.need_item"));
             return 0;
         }
         if (price <= 0) {
-            player.sendSystemMessage(Component.literal("\u00a7cPrice must be greater than 0!"));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.ah.sell.invalid_price"));
             return 0;
         }
         ItemStack toSell = held.copy();
         int result = AuctionHouseManager.getInstance().sellItem(player, toSell, price);
         switch (result) {
-            case -2 -> player.sendSystemMessage(Component.literal(
-                    "\u00a7cYou have reached the maximum listings per player (" + AuctionConfig.get().getMaxItemsPerPlayer() + ")."));
-            case -1 -> player.sendSystemMessage(Component.literal("\u00a7cFailed to list item. Please try again."));
+            case -2 -> player.sendSystemMessage(MessageUtil.error("commands.neoessentials.ah.sell.max_listings",
+                    AuctionConfig.get().getMaxItemsPerPlayer()));
+            case -1 -> player.sendSystemMessage(MessageUtil.error("commands.neoessentials.ah.sell.failed"));
             default -> {
                 player.getMainHandItem().shrink(toSell.getCount());
-                player.sendSystemMessage(Component.literal(
-                        "\u00a7aListed \u00a7e" + toSell.getHoverName().getString() +
-                        " \u00a7afor \u00a76" + String.format("%.2f", price) + "\u00a7a! (ID: " + result + ")"));
+                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.ah.sell.success",
+                        toSell.getHoverName().getString(), String.format("%.2f", price), result));
             }
         }
         return Command.SINGLE_SUCCESS;
     }
     private static int executeSelling(CommandSourceStack source) {
-        if (!source.isPlayer()) { source.sendFailure(Component.literal("Players only.")); return 0; }
+        if (!source.isPlayer()) { source.sendFailure(MessageUtil.error("commands.neoessentials.ah.players_only")); return 0; }
         GUIPersonalAuctionHouse.open(source.getPlayer());
         return Command.SINGLE_SUCCESS;
     }
     private static int executeExpired(CommandSourceStack source) {
-        if (!source.isPlayer()) { source.sendFailure(Component.literal("Players only.")); return 0; }
+        if (!source.isPlayer()) { source.sendFailure(MessageUtil.error("commands.neoessentials.ah.players_only")); return 0; }
         GUIExpiredItems.open(source.getPlayer());
         return Command.SINGLE_SUCCESS;
     }
     private static int executeReload(CommandSourceStack source) {
         AuctionConfig.invalidate();
         AuctionConfig.load();
-        source.sendSuccess(() -> Component.literal("\u00a7aAuction House config reloaded."), true);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.ah.reload.success"), true);
         return Command.SINGLE_SUCCESS;
     }
     private static int executeHelp(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal(
-                "\u00a76\u00a7l-- Auction House Commands --\n" +
-                "\u00a7e/ah\u00a77 - Open the Auction House\n" +
-                "\u00a7e/ah sell <price>\u00a77 - List held item for sale\n" +
-                "\u00a7e/ah selling\u00a77 - View your active listings\n" +
-                "\u00a7e/ah expired\u00a77 - Collect expired listings\n" +
-                "\u00a7e/ah reload\u00a77 - Reload config (admin)\n" +
-                "\u00a7e/auctionhouse\u00a77 - Alias for /ah"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.ah.help"), false);
         return Command.SINGLE_SUCCESS;
     }
 }

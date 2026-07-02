@@ -112,6 +112,13 @@
   "commands.neoessentials.channel.switched": "§aHas cambiado al canal {0}.",
   "commands.neoessentials.powertool.assign.success": "¡Comando de powertool asignado!",
   "commands.neoessentials.powertool.no_item": "§c¡Debes sostener un objeto para usar este comando!",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "Solo para jugadores.",
+  "commands.neoessentials.ah.sell.need_item": "§c¡Debes sostener un objeto para venderlo!",
+  "commands.neoessentials.ah.sell.invalid_price": "§c¡El precio debe ser mayor que 0!",
+  "commands.neoessentials.ah.sell.max_listings": "§cHas alcanzado el máximo de anuncios por jugador ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cError al publicar el objeto. Inténtalo de nuevo.",
+  "commands.neoessentials.ah.sell.success": "§aPublicado §e{0} §apor §6{1}§a! (ID: {2})",
+  "commands.neoessentials.ah.reload.success": "§aConfiguración de la Casa de Subastas recargada.",
+  "commands.neoessentials.ah.help": "§6§l-- Comandos de la Casa de Subastas --\n§e/ah§7 - Abrir la Casa de Subastas\n§e/ah sell <precio>§7 - Publicar el objeto en mano\n§e/ah selling§7 - Ver tus anuncios activos\n§e/ah expired§7 - Recoger anuncios caducados\n§e/ah reload§7 - Recargar configuración (admin)\n§e/auctionhouse§7 - Alias de /ah"
 }
-

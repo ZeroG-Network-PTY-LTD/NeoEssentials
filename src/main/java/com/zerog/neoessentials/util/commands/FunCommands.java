@@ -278,7 +278,7 @@ public class FunCommands {
             int topY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level);
             for (int x = -10; x <= 10; x += 5) {
                 for (int z = -10; z <= 10; z += 5) {
-                    PrimedTnt tnt = EntityType.TNT.create(level);
+                    PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
                     if (tnt != null) {
                         tnt.moveTo(bx + x, topY, bz + z);
                         tnt.setFuse(80); // 4 seconds
@@ -553,7 +553,7 @@ public class FunCommands {
         var hit = player.pick(20, 1.0f, false);
         var pos = hit.getLocation();
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-        PrimedTnt tnt = EntityType.TNT.create(level);
+        PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
         if (tnt != null) {
             tnt.moveTo(pos.x, pos.y, pos.z);
             tnt.setFuse(80);
@@ -583,7 +583,7 @@ public class FunCommands {
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-        Cat cat = EntityType.CAT.create(level);
+        Cat cat = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.CAT, level);
         if (cat == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.general.error"));
             return 0;
@@ -638,7 +638,7 @@ public class FunCommands {
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {
-            var bee = EntityType.BEE.create(level);
+            var bee = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.BEE, level);
             if (bee != null) {
                 bee.moveTo(player.getX(), player.getEyeY(), player.getZ());
                 var look = player.getLookAngle().normalize().scale(1.5 + RANDOM.nextDouble() * 0.5);

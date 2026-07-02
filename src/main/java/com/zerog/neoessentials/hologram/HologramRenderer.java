@@ -69,7 +69,7 @@ public final class HologramRenderer {
             LOGGER.error("[Hologram] Failed to resolve Display.TextDisplay data accessors.", e);
         }
         try {
-            DATA_BILLBOARD          = reflectAccessor(Display.class, "DATA_BILLBOARD_CONSTRAINTS_ID");
+            DATA_BILLBOARD          = reflectAccessor(Display.class, "DATA_BILLBOARD_RENDER_CONSTRAINTS_ID");
             DATA_LEFT_ROTATION      = reflectAccessor(Display.class, "DATA_LEFT_ROTATION_ID");
             DATA_INTERP_DURATION    = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID");
             DATA_INTERP_START_DELTA = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID");
@@ -97,12 +97,13 @@ public final class HologramRenderer {
         // Seed the player-facing yaw before the first spawn so the text has a
         // sensible orientation immediately (defaults to 0 if no players are present).
         refreshPlayerFacingYaw(data, level);
+        ServerPlayer nearestPlayer = findNearestPlayer(data, level);
         for (int i = 0; i < data.lines.size(); i++) {
             HologramLine line = data.lines.get(i);
             double lineY = data.lineYWithHover(i);
-            Component text = HologramTextProcessor.processStatic(line.currentText());
+            Component text = HologramTextProcessor.process(line.currentText(), nearestPlayer);
             try {
-                Display.TextDisplay entity = EntityType.TEXT_DISPLAY.create(level);
+                Display.TextDisplay entity = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TEXT_DISPLAY, level);
                 if (entity == null) continue;
                 entity.setPos(data.x, lineY, data.z);
                 entity.setNoGravity(true);
@@ -114,12 +115,50 @@ public final class HologramRenderer {
                 applyBillboardAndRotation(entity, data);
                 level.addFreshEntity(entity);
                 data.entityUUIDs.add(entity.getUUID());
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                // Catches Errors too (e.g. a version-drifted vanilla API elsewhere in this loop)
+                // so a single bad hologram line can't crash the whole server-started event.
                 LOGGER.error("[Hologram] Failed to spawn line {} of '{}': {}", i, data.id, e.getMessage(), e);
             }
         }
+        if (data.interactive) {
+            spawnInteractionEntity(data, level);
+        }
         data.lastRefreshMs = System.currentTimeMillis();
         LOGGER.debug("[Hologram] Spawned {} line entity(ies) for '{}'.", data.entityUUIDs.size(), data.id);
+    }
+    /**
+     * Spawns (or re-spawns) the invisible {@code minecraft:interaction} hitbox that makes
+     * this hologram clickable — see {@link HologramData#interactionEntityUUID} for why this
+     * is necessary at all (a {@code Display.TextDisplay} can never be targeted directly).
+     * Sized to cover the full vertical span of the hologram's lines, centred horizontally.
+     */
+    private static void spawnInteractionEntity(HologramData data, ServerLevel level) {
+        try {
+            net.minecraft.world.entity.Interaction entity =
+                com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.INTERACTION, level);
+            if (entity == null) return;
+
+            double topY = data.lineY(data.lines.size() - 1);
+            double bottomY = data.lineY(0);
+            float height = (float) Math.max(0.5, (topY - bottomY) + 0.6);
+            float width = 2.0f;
+
+            net.minecraft.nbt.CompoundTag dims = new net.minecraft.nbt.CompoundTag();
+            dims.putFloat("width", width);
+            dims.putFloat("height", height);
+            entity.load(dims);
+
+            entity.setPos(data.x, bottomY - 0.2, data.z);
+            entity.setInvulnerable(true);
+            entity.setSilent(true);
+            entity.getPersistentData().putBoolean(TAG_MARKER, true);
+            entity.getPersistentData().putString(TAG_ID, data.id);
+            level.addFreshEntity(entity);
+            data.interactionEntityUUID = entity.getUUID();
+        } catch (Throwable e) {
+            LOGGER.error("[Hologram] Failed to spawn interaction hitbox for '{}': {}", data.id, e.getMessage(), e);
+        }
     }
     /**
      * Update the rotation (spin) and Y position (hover) for all live entities
@@ -163,25 +202,87 @@ public final class HologramRenderer {
         }
     }
     /**
-     * Discard all tracked TextDisplay entities and reset the UUID list.
+     * Discard all TextDisplay entities for this hologram and reset the UUID list.
+     *
+     * <p>Removes both the tracked UUIDs (fast path) and, as a fallback, any
+     * {@code Display.TextDisplay} in the level whose persistent data tags it as
+     * belonging to this hologram's id — this catches orphaned/duplicate entities
+     * left behind by a previous crash, an unloaded-chunk race, or manual world
+     * edits, which the tracked-UUID list alone would silently miss (leaving a
+     * "deleted" hologram still visibly rendering in the world).</p>
      */
     public static void despawn(HologramData data, ServerLevel level) {
-        if (data.entityUUIDs == null) { data.entityUUIDs = new ArrayList<>(); return; }
-        for (UUID uuid : new ArrayList<>(data.entityUUIDs)) {
+        // Force-load the chunk so entities there (tracked or orphaned) are actually
+        // visible to level.getEntity()/getAllEntities() below, same reasoning as the
+        // startup cleanup in spawnAllForWorld().
+        try {
+            net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(data.x, data.y, data.z);
+            if (!level.isLoaded(pos)) {
+                net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
+                level.getChunk(cp.x, cp.z);
+            }
+        } catch (Exception ignored) {}
+
+        if (data.entityUUIDs == null) {
+            data.entityUUIDs = new ArrayList<>();
+        } else {
+            for (UUID uuid : new ArrayList<>(data.entityUUIDs)) {
+                try {
+                    net.minecraft.world.entity.Entity e = level.getEntity(uuid);
+                    if (e != null) e.discard();
+                } catch (Exception ignored) {}
+            }
+            data.entityUUIDs.clear();
+        }
+        if (data.interactionEntityUUID != null) {
             try {
-                net.minecraft.world.entity.Entity e = level.getEntity(uuid);
+                net.minecraft.world.entity.Entity e = level.getEntity(data.interactionEntityUUID);
                 if (e != null) e.discard();
             } catch (Exception ignored) {}
+            data.interactionEntityUUID = null;
         }
-        data.entityUUIDs.clear();
+
+        try {
+            List<net.minecraft.world.entity.Entity> orphans = new ArrayList<>();
+            level.getAllEntities().forEach(entity -> {
+                if ((entity instanceof Display.TextDisplay || entity instanceof net.minecraft.world.entity.Interaction)
+                        && entity.getPersistentData().contains(TAG_MARKER)
+                        && data.id.equals(entity.getPersistentData().getString(TAG_ID))) {
+                    orphans.add(entity);
+                }
+            });
+            for (var e : orphans) e.discard();
+            if (!orphans.isEmpty()) {
+                LOGGER.debug("[Hologram] Discarded {} orphaned/untracked entity(ies) for '{}'.",
+                    orphans.size(), data.id);
+            }
+        } catch (Exception ignored) {}
     }
     /**
      * Spawn all holograms in the given dimension.
      * Orphaned entities saved to world NBT are cleaned up first.
      */
     public static void spawnAllForWorld(ServerLevel level, String dimKey) {
+        List<HologramData> holograms = HologramManager.getInstance().getHologramsForWorld(dimKey);
+        // cleanStaleEntities()/despawn() only see currently-loaded entities. At server
+        // startup a hologram's chunk is usually NOT loaded yet (no players nearby), so any
+        // stale entity saved in that chunk's NBT would be missed by cleanup here and then
+        // reappear alongside the freshly-spawned one once a player later loads the chunk —
+        // producing visible duplicates. Force-load each hologram's chunk first so cleanup
+        // and spawn both see the real, current state of that chunk.
+        for (HologramData d : holograms) {
+            try {
+                net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(d.x, d.y, d.z);
+                if (!level.isLoaded(pos)) {
+                    net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
+                    level.getChunk(cp.x, cp.z);
+                }
+            } catch (Exception e) {
+                LOGGER.debug("[Hologram] Failed to preload chunk for '{}': {}", d.id, e.getMessage());
+            }
+        }
         cleanStaleEntities(level);
-        for (HologramData d : HologramManager.getInstance().getHologramsForWorld(dimKey)) {
+        for (HologramData d : holograms) {
             spawn(d, level);
         }
     }
@@ -196,15 +297,18 @@ public final class HologramRenderer {
     /**
      * Refresh all line texts (called by the scheduler for placeholder updates).
      *
-     * @param player optional player for per-player placeholder context; may be {@code null}
+     * @param player optional player for per-player placeholder context; if {@code null}
+     *               (e.g. the scheduler's periodic tick has no specific viewer in mind),
+     *               falls back to the nearest online player — see {@link #findNearestPlayer}
      */
     public static void refreshAllLines(HologramData data, ServerLevel level, @Nullable ServerPlayer player) {
         if (data.entityUUIDs == null || data.entityUUIDs.size() != data.lines.size()) {
             spawn(data, level);
             return;
         }
+        ServerPlayer effectivePlayer = player != null ? player : findNearestPlayer(data, level);
         for (int i = 0; i < data.lines.size(); i++) {
-            Component text = HologramTextProcessor.process(data.lines.get(i).currentText(), player);
+            Component text = HologramTextProcessor.process(data.lines.get(i).currentText(), effectivePlayer);
             updateLineText(data, i, text, level);
         }
         data.lastRefreshMs = System.currentTimeMillis();
@@ -358,6 +462,26 @@ public final class HologramRenderer {
         }
     }
     /**
+     * Finds the nearest online player (in this level) to the hologram, or {@code null}
+     * if nobody is online there. A shared {@code Display.TextDisplay} has exactly one
+     * text value visible to everyone — there's no per-viewer rendering — so player-context
+     * placeholders like {@code {neoessentials_name}} can't mean "whoever's currently
+     * looking"; the nearest player is the closest well-defined stand-in for that.
+     */
+    @Nullable
+    private static ServerPlayer findNearestPlayer(HologramData data, ServerLevel level) {
+        ServerPlayer nearest = null;
+        double minDist = Double.MAX_VALUE;
+        for (ServerPlayer player : level.players()) {
+            double dist = data.distanceXZ(player.getX(), player.getZ());
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+    /**
      * Returns {@code true} when Y-axis tracking spin is active:
      * spin is enabled, axis is "Y", and player tracking is enabled.
      */
@@ -374,7 +498,7 @@ public final class HologramRenderer {
         try {
             List<net.minecraft.world.entity.Entity> stale = new ArrayList<>();
             level.getAllEntities().forEach(entity -> {
-                if (entity instanceof Display.TextDisplay
+                if ((entity instanceof Display.TextDisplay || entity instanceof net.minecraft.world.entity.Interaction)
                         && entity.getPersistentData().contains(TAG_MARKER)) {
                     stale.add(entity);
                 }

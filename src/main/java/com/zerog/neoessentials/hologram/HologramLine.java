@@ -43,6 +43,14 @@ public class HologramLine {
     public transient int currentFrame = 0;
     /** Tick counter for animation; not persisted. */
     public transient int animTickCount = 0;
+    /**
+     * Last resolved (post-placeholder) plain text, used by the scheduler's fast
+     * animation tick to detect when an {@code {animation:NAME}} placeholder inside
+     * {@link #text}/{@link #frames} has advanced to a new frame — since the raw
+     * template string itself never changes for a placeholder-driven animation, only
+     * what it resolves to. Not persisted.
+     */
+    public transient String lastResolvedText = null;
 
     // ── Constructors ─────────────────────────────────────────────────────────
 
@@ -73,5 +81,11 @@ public class HologramLine {
             return true;
         }
         return false;
+    }
+
+    /** Cheap pre-check for whether this line's raw template might reference an {@code {animation:NAME}} token. */
+    public boolean mayContainAnimationPlaceholder() {
+        String t = currentText();
+        return t != null && t.toLowerCase().contains("{animation:");
     }
 }

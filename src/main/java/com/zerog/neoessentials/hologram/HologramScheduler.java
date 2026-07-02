@@ -63,8 +63,20 @@ public class HologramScheduler {
             boolean textChanged = false;
             // Frame animation
             for (int i = 0; i < data.lines.size(); i++) {
-                if (data.lines.get(i).tickAnimation()) {
+                HologramLine line = data.lines.get(i);
+                if (line.tickAnimation()) {
                     textChanged = true;
+                }
+                // {animation:NAME} placeholder tokens don't change the raw template text —
+                // only what they resolve to — so tickAnimation() alone can't see them
+                // advance. Re-resolve any line that might reference one and compare
+                // against its last resolved value to detect a frame change.
+                if (line.mayContainAnimationPlaceholder()) {
+                    String resolved = HologramTextProcessor.processStatic(line.currentText()).getString();
+                    if (!resolved.equals(line.lastResolvedText)) {
+                        line.lastResolvedText = resolved;
+                        textChanged = true;
+                    }
                 }
             }
 
@@ -98,12 +110,14 @@ public class HologramScheduler {
                         HologramRenderer.updateRotationsAndPositions(fd, level);
                     }
 
-                    // Update animated text frames
+                    // Update animated text frames — either the line's own frame list
+                    // (/hologram addframes) or a plain-text line referencing {animation:NAME}.
                     if (fText) {
                         for (int i = 0; i < fd.lines.size(); i++) {
-                            if (!fd.lines.get(i).frames.isEmpty()) {
+                            HologramLine line = fd.lines.get(i);
+                            if (!line.frames.isEmpty() || line.mayContainAnimationPlaceholder()) {
                                 HologramRenderer.updateLineText(fd, i,
-                                    HologramTextProcessor.processStatic(fd.lines.get(i).currentText()), level);
+                                    HologramTextProcessor.processStatic(line.currentText()), level);
                             }
                         }
                     }
