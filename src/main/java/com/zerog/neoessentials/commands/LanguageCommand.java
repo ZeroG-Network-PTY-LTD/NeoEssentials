@@ -40,6 +40,12 @@ public class LanguageCommand {
                     .executes(LanguageCommand::clearMissingKeys))
                 .then(Commands.literal("info")
                     .executes(LanguageCommand::showInfo))
+                .then(Commands.literal("set")
+                    .then(Commands.argument("languageCode", StringArgumentType.word())
+                        .executes(LanguageCommand::setLanguage)))
+                // Bare `/language <code>` as a shortcut for `/language set <code>`
+                .then(Commands.argument("languageCode", StringArgumentType.word())
+                    .executes(LanguageCommand::setLanguage))
                 // --- New subcommands ---
                 .then(Commands.literal("validate")
                     .then(Commands.argument("languageCode", StringArgumentType.word())
@@ -83,10 +89,10 @@ public class LanguageCommand {
             source.sendSuccess(() -> MessageUtil.info("To add a language, place a .json file in: neoessentials/languages/custom/"), false);
             source.sendSuccess(() -> MessageUtil.info("Use '/language template <code>' to generate a template."), false);
         } else {
-            source.sendSuccess(() -> MessageUtil.success("â•â•â• Custom Languages ({0}) â•â•â•", languages.size()), false);
+            source.sendSuccess(() -> MessageUtil.success("═══ Custom Languages ({0}) ═══", languages.size()), false);
 
             for (LanguageFileInfo lang : languages) {
-                String info = String.format("  Â§e%s Â§7- Â§f%s Â§7(Â§f%sÂ§7) Â§7by Â§f%s Â§7v%s",
+                String info = String.format("  §e%s §7- §f%s §7(§f%s§7) §7by §f%s §7v%s",
                     lang.getLanguageCode(),
                     lang.getNativeName(),
                     lang.getEnglishName(),
@@ -95,6 +101,44 @@ public class LanguageCommand {
                 );
                 source.sendSuccess(() -> MessageUtil.component(info), false);
             }
+        }
+
+        return 1;
+    }
+
+    /**
+     * Switch the active server language and persist it to config.json (localization.language).
+     * Validates the code against the deployed custom-language files before switching, and
+     * reloads translations immediately so the change applies without a restart.
+     */
+    private static int setLanguage(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        String languageCode = StringArgumentType.getString(ctx, "languageCode").trim().toLowerCase();
+
+        List<LanguageFileInfo> available = CustomLanguageManager.getInstance().getCustomLanguages();
+        boolean valid = available.stream().anyMatch(l -> l.getLanguageCode().equalsIgnoreCase(languageCode));
+
+        if (!valid) {
+            source.sendFailure(MessageUtil.error("Unknown language code: §f{0}", languageCode));
+            if (available.isEmpty()) {
+                source.sendFailure(MessageUtil.error("No languages are deployed. Run /language reload first."));
+            } else {
+                String codes = available.stream().map(LanguageFileInfo::getLanguageCode)
+                    .sorted().reduce((a, b) -> a + ", " + b).orElse("");
+                source.sendFailure(MessageUtil.error("Available languages: §f{0}", codes));
+            }
+            return 0;
+        }
+
+        try {
+            com.zerog.neoessentials.config.ConfigManager.setServerLanguage(languageCode);
+            MessageUtil.reloadTranslations();
+            source.sendSuccess(() -> MessageUtil.success("Server language set to: §e{0}", languageCode), true);
+            LOGGER.info("Server language changed to '{}' by {}", languageCode, source.getTextName());
+        } catch (Exception e) {
+            source.sendFailure(MessageUtil.error("Failed to set language: {0}", e.getMessage()));
+            LOGGER.error("Failed to set server language to {}", languageCode, e);
+            return 0;
         }
 
         return 1;
@@ -127,17 +171,17 @@ public class LanguageCommand {
         CommandSourceStack source = ctx.getSource();
         Map<String, Object> stats = CustomLanguageManager.getInstance().getStatistics();
 
-        source.sendSuccess(() -> MessageUtil.success("â•â•â• Language System Statistics â•â•â•"), false);
+        source.sendSuccess(() -> MessageUtil.success("═══ Language System Statistics ═══"), false);
         source.sendSuccess(() -> MessageUtil.info("Custom languages loaded: {0}", stats.get("customLanguagesLoaded")), false);
         source.sendSuccess(() -> MessageUtil.info("Missing keys tracked: {0}", stats.get("missingKeysTracked")), false);
         source.sendSuccess(() -> MessageUtil.info("Active admin overrides: {0}", stats.get("overrideCount")), false);
-        source.sendSuccess(() -> MessageUtil.info("Custom language directory: Â§e{0}", stats.get("customLanguageDirectory")), false);
-        source.sendSuccess(() -> MessageUtil.info("Template directory: Â§e{0}", stats.get("templateDirectory")), false);
+        source.sendSuccess(() -> MessageUtil.info("Custom language directory: §e{0}", stats.get("customLanguageDirectory")), false);
+        source.sendSuccess(() -> MessageUtil.info("Template directory: §e{0}", stats.get("templateDirectory")), false);
 
         @SuppressWarnings("unchecked")
         List<String> codes = (List<String>) stats.get("languageCodes");
         if (!codes.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.info("Available languages: Â§e{0}", String.join(", ", codes)), false);
+            source.sendSuccess(() -> MessageUtil.info("Available languages: §e{0}", String.join(", ", codes)), false);
         }
 
         return 1;
@@ -158,11 +202,11 @@ public class LanguageCommand {
             );
 
             source.sendSuccess(() -> MessageUtil.success("Generated template for language: {0}", languageCode), true);
-            source.sendSuccess(() -> MessageUtil.info("Template saved to: Â§eneoessentials/languages/templates/{0}", fileName), false);
+            source.sendSuccess(() -> MessageUtil.info("Template saved to: §eneoessentials/languages/templates/{0}", fileName), false);
             source.sendSuccess(() -> MessageUtil.info("Instructions:"), false);
             source.sendSuccess(() -> MessageUtil.info("  1. Edit the template file and translate the text"), false);
-            source.sendSuccess(() -> MessageUtil.info("  2. Save it as Â§e{0}.jsonÂ§7 in Â§eneoessentials/languages/custom/", languageCode), false);
-            source.sendSuccess(() -> MessageUtil.info("  3. Run Â§e/language reloadÂ§7 to load it"), false);
+            source.sendSuccess(() -> MessageUtil.info("  2. Save it as §e{0}.json§7 in §eneoessentials/languages/custom/", languageCode), false);
+            source.sendSuccess(() -> MessageUtil.info("  3. Run §e/language reload§7 to load it"), false);
 
             LOGGER.info("Generated language template for {} by {}", languageCode, source.getTextName());
         } catch (Exception e) {
@@ -194,7 +238,7 @@ public class LanguageCommand {
             );
 
             source.sendSuccess(() -> MessageUtil.success("Exported {0} missing keys", count), true);
-            source.sendSuccess(() -> MessageUtil.info("File: Â§eneoessentials/languages/templates/{0}", fileName), false);
+            source.sendSuccess(() -> MessageUtil.info("File: §eneoessentials/languages/templates/{0}", fileName), false);
 
             LOGGER.info("Exported {} missing keys by {}", count, source.getTextName());
         } catch (Exception e) {
@@ -225,30 +269,31 @@ public class LanguageCommand {
     private static int showInfo(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
 
-        source.sendSuccess(() -> MessageUtil.success("â•â•â• NeoEssentials Language System â•â•â•"), false);
+        source.sendSuccess(() -> MessageUtil.success("═══ NeoEssentials Language System ═══"), false);
         source.sendSuccess(() -> MessageUtil.info("The language system supports custom translations."), false);
         source.sendSuccess(() -> MessageUtil.info(""), false);
-        source.sendSuccess(() -> MessageUtil.info("Â§eAvailable Commands:"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language list Â§7- List all custom languages"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language reload Â§7- Reload language files"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language stats Â§7- Show statistics"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language template <code> Â§7- Generate template"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language exportmissing Â§7- Export missing keys"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language clearmissing Â§7- Clear missing keys tracker"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language validate <code> Â§7- Validate a language file"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language regenerate <code> Â§7- Regenerate from JAR (backs up first)"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override set <key> <value> Â§7- Override a message key"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override list Â§7- List all overrides"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override get <key> Â§7- Show override for a key"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override remove <key> Â§7- Remove an override"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override clear Â§7- Clear all overrides"), false);
-        source.sendSuccess(() -> MessageUtil.info("  Â§e/language override reload Â§7- Reload overrides from disk"), false);
+        source.sendSuccess(() -> MessageUtil.info("§eAvailable Commands:"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language <code> §7- Switch the active server language (e.g. /language ru_ru)"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language list §7- List all custom languages"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language reload §7- Reload language files"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language stats §7- Show statistics"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language template <code> §7- Generate template"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language exportmissing §7- Export missing keys"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language clearmissing §7- Clear missing keys tracker"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language validate <code> §7- Validate a language file"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language regenerate <code> §7- Regenerate from JAR (backs up first)"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override set <key> <value> §7- Override a message key"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override list §7- List all overrides"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override get <key> §7- Show override for a key"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override remove <key> §7- Remove an override"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override clear §7- Clear all overrides"), false);
+        source.sendSuccess(() -> MessageUtil.info("  §e/language override reload §7- Reload overrides from disk"), false);
         source.sendSuccess(() -> MessageUtil.info(""), false);
-        source.sendSuccess(() -> MessageUtil.info("Â§eTo create a custom language:"), false);
-        source.sendSuccess(() -> MessageUtil.info("  1. Use Â§e/language template <code>Â§7 to generate a template"), false);
+        source.sendSuccess(() -> MessageUtil.info("§eTo create a custom language:"), false);
+        source.sendSuccess(() -> MessageUtil.info("  1. Use §e/language template <code>§7 to generate a template"), false);
         source.sendSuccess(() -> MessageUtil.info("  2. Translate the text in the template file"), false);
-        source.sendSuccess(() -> MessageUtil.info("  3. Save as Â§e<code>.jsonÂ§7 in Â§eneoessentials/languages/custom/"), false);
-        source.sendSuccess(() -> MessageUtil.info("  4. Run Â§e/language reload"), false);
+        source.sendSuccess(() -> MessageUtil.info("  3. Save as §e<code>.json§7 in §eneoessentials/languages/custom/"), false);
+        source.sendSuccess(() -> MessageUtil.info("  4. Run §e/language reload"), false);
 
         return 1;
     }
@@ -271,23 +316,23 @@ public class LanguageCommand {
             return 0;
         }
 
-        // Coverage colour: red <50%, yellow 50â€“89%, green â‰¥90%
-        String coverageColor = report.getCoveragePercent() >= 90 ? "Â§a" :
-                               report.getCoveragePercent() >= 50 ? "Â§e" : "Â§c";
+        // Coverage colour: red <50%, yellow 50–89%, green ≥90%
+        String coverageColor = report.getCoveragePercent() >= 90 ? "§a" :
+                               report.getCoveragePercent() >= 50 ? "§e" : "§c";
 
-        source.sendSuccess(() -> MessageUtil.success("â•â•â• Language Validation: {0} â•â•â•", languageCode), false);
-        source.sendSuccess(() -> MessageUtil.info("Total base keys: Â§f{0}", report.getTotalKeys()), false);
-        source.sendSuccess(() -> MessageUtil.info("Translated keys: Â§f{0}", report.getPresentKeys()), false);
+        source.sendSuccess(() -> MessageUtil.success("═══ Language Validation: {0} ═══", languageCode), false);
+        source.sendSuccess(() -> MessageUtil.info("Total base keys: §f{0}", report.getTotalKeys()), false);
+        source.sendSuccess(() -> MessageUtil.info("Translated keys: §f{0}", report.getPresentKeys()), false);
         source.sendSuccess(() -> MessageUtil.component("  Coverage: " + coverageColor + report.getCoveragePercent() + "%"), false);
-        source.sendSuccess(() -> MessageUtil.info("Missing keys: Â§f{0}", report.getMissingCount()), false);
-        source.sendSuccess(() -> MessageUtil.info("Extra keys (not in base): Â§f{0}", report.getExtraCount()), false);
+        source.sendSuccess(() -> MessageUtil.info("Missing keys: §f{0}", report.getMissingCount()), false);
+        source.sendSuccess(() -> MessageUtil.info("Extra keys (not in base): §f{0}", report.getExtraCount()), false);
 
         if (report.getMissingCount() > 0) {
             int toShow = Math.min(report.getMissingCount(), 10);
             source.sendSuccess(() -> MessageUtil.warning("First {0} missing key(s):", toShow), false);
             for (int i = 0; i < toShow; i++) {
                 final String key = report.getMissingKeys().get(i);
-                source.sendSuccess(() -> MessageUtil.component("  Â§7- Â§f" + key), false);
+                source.sendSuccess(() -> MessageUtil.component("  §7- §f" + key), false);
             }
             if (report.getMissingCount() > 10) {
                 source.sendSuccess(() -> MessageUtil.info("  ... and {0} more. Run /language exportmissing to export all.", report.getMissingCount() - 10), false);
@@ -295,9 +340,9 @@ public class LanguageCommand {
         }
 
         if (report.getCoveragePercent() < 100) {
-            source.sendSuccess(() -> MessageUtil.info("Run Â§e/language regenerate {0}Â§7 to update the file from JAR.", languageCode), false);
+            source.sendSuccess(() -> MessageUtil.info("Run §e/language regenerate {0}§7 to update the file from JAR.", languageCode), false);
         } else {
-            source.sendSuccess(() -> MessageUtil.success("âœ“ Language file is fully up-to-date."), false);
+            source.sendSuccess(() -> MessageUtil.success("✓ Language file is fully up-to-date."), false);
         }
 
         LOGGER.info("Language validation for {} by {}: {}% coverage, {} missing, {} extra",
@@ -320,9 +365,9 @@ public class LanguageCommand {
         try {
             int newKeys = CustomLanguageManager.getInstance().regenerate(languageCode);
             source.sendSuccess(() -> MessageUtil.success("Regenerated {0}.json from JAR. {1} new key(s) added.", languageCode, newKeys), true);
-            source.sendSuccess(() -> MessageUtil.info("Your previous file was backed up to Â§e{0}.json.bakÂ§7.", languageCode), false);
+            source.sendSuccess(() -> MessageUtil.info("Your previous file was backed up to §e{0}.json.bak§7.", languageCode), false);
             if (newKeys == 0) {
-                source.sendSuccess(() -> MessageUtil.info("No new keys were needed â€” file was already up to date."), false);
+                source.sendSuccess(() -> MessageUtil.info("No new keys were needed — file was already up to date."), false);
             }
             LOGGER.info("Regenerated language {} by {} ({} new keys)", languageCode, source.getTextName(), newKeys);
         } catch (Exception e) {
@@ -345,7 +390,7 @@ public class LanguageCommand {
         // Also force MessageUtil to reload so the override is picked up immediately
         MessageUtil.reloadTranslations();
 
-        source.sendSuccess(() -> MessageUtil.success("Override set: Â§e{0} Â§7â†’ Â§f{1}", key, value), true);
+        source.sendSuccess(() -> MessageUtil.success("Override set: §e{0} §7→ §f{1}", key, value), true);
         LOGGER.info("{} set translation override: {} = {}", source.getTextName(), key, value);
         return 1;
     }
@@ -356,9 +401,9 @@ public class LanguageCommand {
 
         String value = CustomLanguageManager.getInstance().getOverride(key);
         if (value == null) {
-            source.sendSuccess(() -> MessageUtil.warning("No override set for key: Â§f{0}", key), false);
+            source.sendSuccess(() -> MessageUtil.warning("No override set for key: §f{0}", key), false);
         } else {
-            source.sendSuccess(() -> MessageUtil.info("Override for Â§e{0}Â§7: Â§f{1}", key, value), false);
+            source.sendSuccess(() -> MessageUtil.info("Override for §e{0}§7: §f{1}", key, value), false);
         }
         return 1;
     }
@@ -370,10 +415,10 @@ public class LanguageCommand {
         boolean removed = CustomLanguageManager.getInstance().removeOverride(key);
         if (removed) {
             MessageUtil.reloadTranslations();
-            source.sendSuccess(() -> MessageUtil.success("Override removed for key: Â§f{0}", key), true);
+            source.sendSuccess(() -> MessageUtil.success("Override removed for key: §f{0}", key), true);
             LOGGER.info("{} removed translation override for: {}", source.getTextName(), key);
         } else {
-            source.sendSuccess(() -> MessageUtil.warning("No override found for key: Â§f{0}", key), false);
+            source.sendSuccess(() -> MessageUtil.warning("No override found for key: §f{0}", key), false);
         }
         return 1;
     }
@@ -384,11 +429,11 @@ public class LanguageCommand {
 
         if (overrides.isEmpty()) {
             source.sendSuccess(() -> MessageUtil.info("No admin translation overrides are set."), false);
-            source.sendSuccess(() -> MessageUtil.info("Use Â§e/language override set <key> <value>Â§7 to add one."), false);
+            source.sendSuccess(() -> MessageUtil.info("Use §e/language override set <key> <value>§7 to add one."), false);
         } else {
-            source.sendSuccess(() -> MessageUtil.success("â•â•â• Translation Overrides ({0}) â•â•â•", overrides.size()), false);
+            source.sendSuccess(() -> MessageUtil.success("═══ Translation Overrides ({0}) ═══", overrides.size()), false);
             for (Map.Entry<String, String> entry : overrides.entrySet()) {
-                source.sendSuccess(() -> MessageUtil.component("  Â§e" + entry.getKey() + " Â§7â†’ Â§f" + entry.getValue()), false);
+                source.sendSuccess(() -> MessageUtil.component("  §e" + entry.getKey() + " §7→ §f" + entry.getValue()), false);
             }
         }
         return 1;

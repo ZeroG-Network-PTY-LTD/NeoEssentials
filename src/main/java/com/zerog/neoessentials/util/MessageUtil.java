@@ -96,12 +96,48 @@ public class MessageUtil {
                         finalTranslations.getOrDefault(LANG_VERSION_KEY, "0"));
                 } catch (NumberFormatException ignored) {}
 
+                // One-time repair of the "§" double-UTF-8-encoding corruption that could be
+                // baked into a server's custom lang file from before this was fixed at the
+                // source (old FileReader/FileWriter calls used the JVM's platform-default
+                // charset instead of UTF-8). Values corrupted before that fix stay corrupted
+                // forever under the additive-only merge below, since merge only ADDS missing
+                // keys — it never touches existing values. Skipped under preserveCustom, same
+                // as the merge/legacy-placeholder auto-fix.
+                int repaired = 0;
+                if (!preserveCustom) {
+                    repaired = repairMojibake(finalTranslations);
+                    if (repaired > 0) {
+                        LOGGER.info("NeoEssentials: repaired {} corrupted §-formatting entries in '{}'",
+                            repaired, serverLangFile.getName());
+                    }
+                }
+
+                // Coverage check — some bundled non-English language files carry a stale
+                // _langVersion (from an unrelated template-versioning scheme) that is numerically
+                // higher than CURRENT_LANG_VERSION even though the file itself is only a small
+                // fraction translated. Relying on the version number alone would then skip the
+                // English-fallback merge below forever, leaving most keys to render as an
+                // auto-generated "humanized key" placeholder instead of real text. Force the merge
+                // whenever coverage is suspiciously low, regardless of what the version says.
+                boolean lowCoverage = false;
+                if (!preserveCustom && !"en_us".equals(langCode)) {
+                    Map<String, String> enUs = loadJarTranslations("en_us");
+                    if (enUs != null && !enUs.isEmpty()) {
+                        lowCoverage = finalTranslations.size() < enUs.size() * 0.5;
+                    }
+                }
+
                 if (preserveCustom) {
                     LOGGER.info("NeoEssentials: localization.preserveCustomTranslations is enabled — " +
                         "skipping merge/auto-fix of '{}'.", serverLangFile.getName());
-                } else if (deployedVersion < CURRENT_LANG_VERSION) {
-                    LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
-                        deployedVersion, CURRENT_LANG_VERSION);
+                } else if (deployedVersion < CURRENT_LANG_VERSION || lowCoverage) {
+                    if (lowCoverage) {
+                        LOGGER.info("NeoEssentials: lang file '{}' has low key coverage ({} keys) — " +
+                            "merging with en_us fallback...", serverLangFile.getName(), finalTranslations.size());
+                    } else {
+                        LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
+                            deployedVersion, CURRENT_LANG_VERSION);
+                    }
                     // Build merge source: configured language + en_us fallback for missing keys
                     Map<String, String> mergeSource = buildJarTranslationsWithFallback(langCode);
                     if (mergeSource != null) {
@@ -134,6 +170,15 @@ public class MessageUtil {
                         }
                         LOGGER.info("NeoEssentials: merged {} new + {} updated translation keys (total: {})",
                             added, updated, finalTranslations.size());
+                    }
+                } else if (repaired > 0) {
+                    // No key merge needed, but the mojibake repair above changed values —
+                    // persist those fixes so they don't need to be repaired again next boot.
+                    try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
+                        new com.google.gson.GsonBuilder().setPrettyPrinting()
+                            .disableHtmlEscaping().create().toJson(finalTranslations, fw);
+                    } catch (Exception ex) {
+                        LOGGER.warn("NeoEssentials: could not save repaired lang file: {}", ex.getMessage());
                     }
                 }
                 translations.putAll(finalTranslations);
@@ -245,6 +290,118 @@ public class MessageUtil {
         return merged;
     }
     
+    /**
+     * Repairs the "§" double-UTF-8-encoding mojibake (§ formatting codes stored as the
+     * two-character sequence U+00C2 U+00A7 instead of the single character U+00A7) that
+     * can be baked into a server's on-disk custom lang file from before this was fixed
+     * at the source. Mutates {@code translations} in place.
+     *
+     * @return the number of entries that were fixed
+     */
+    private static int repairMojibake(Map<String, String> translations) {
+        int fixed = 0;
+        for (Map.Entry<String, String> entry : translations.entrySet()) {
+            String value = entry.getValue();
+            if (value == null) continue;
+            String repaired = repairMojibakeString(value);
+            if (repaired != null && !repaired.equals(value)) {
+                entry.setValue(repaired);
+                fixed++;
+            }
+        }
+        return fixed;
+    }
+
+    /**
+     * Repairs double-UTF-8-encoded mojibake within a single string (§, box-drawing
+     * characters, en/em dashes, arrows, checkmarks, etc. that were re-encoded through
+     * Windows-1252 at some point). Only touches contiguous non-ASCII runs — a run only
+     * gets replaced if reversing it (encode as windows-1252, re-decode as UTF-8) round-trips
+     * cleanly, so already-correctly-encoded text (which won't round-trip this way) is left
+     * untouched even when mixed in the same string as genuinely corrupted text.
+     *
+     * @return the repaired string (identical to the input if nothing needed fixing),
+     *         or {@code null} if {@code value} contained no non-ASCII characters at all
+     */
+    private static String repairMojibakeString(String value) {
+        if (value.isEmpty()) return value;
+        StringBuilder result = null; // lazily created only if a repair actually happens
+        int i = 0;
+        int n = value.length();
+        while (i < n) {
+            char c = value.charAt(i);
+            if (c < 0x80) {
+                i++;
+                continue;
+            }
+            int start = i;
+            while (i < n && value.charAt(i) >= 0x80) i++;
+            String run = value.substring(start, i);
+            String repairedRun = tryReverseCorruption(run);
+            if (repairedRun != null) {
+                if (result == null) {
+                    result = new StringBuilder(value.length());
+                    result.append(value, 0, start);
+                }
+                result.append(repairedRun);
+            } else if (result != null) {
+                result.append(run);
+            }
+        }
+        return result != null ? result.toString() : value;
+    }
+
+    /**
+     * Reverse lookup for the buggy "Windows-1252 read, with undefined 0x80-0x9F slots
+     * passed through as their raw byte value (Latin-1-style)" decode used by whatever
+     * tool originally produced this corruption. Built once from Java's own windows-1252
+     * charset so it stays in sync with the JDK's mapping table rather than a hand-copied one.
+     */
+    private static final Map<Character, Byte> BUGGY_CP1252_REVERSE = buildBuggyCp1252ReverseMap();
+
+    private static Map<Character, Byte> buildBuggyCp1252ReverseMap() {
+        Map<Character, Byte> map = new HashMap<>();
+        java.nio.charset.Charset cp1252 = java.nio.charset.Charset.forName("windows-1252");
+        for (int b = 0; b <= 0xFF; b++) {
+            java.nio.charset.CharsetDecoder decoder = cp1252.newDecoder();
+            decoder.onMalformedInput(java.nio.charset.CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
+            char decoded;
+            try {
+                decoded = decoder.decode(java.nio.ByteBuffer.wrap(new byte[]{(byte) b})).charAt(0);
+            } catch (Exception e) {
+                // Undefined cp1252 slot (0x81, 0x8D, 0x8F, 0x90, 0x9D) — buggy tools commonly
+                // pass these through as their raw byte value instead of failing, same as Latin-1.
+                decoded = (char) b;
+            }
+            map.put(decoded, (byte) b);
+        }
+        return map;
+    }
+
+    /**
+     * Attempts to reverse one round of "read UTF-8 bytes as buggy Windows-1252, re-encode
+     * as UTF-8" corruption. Returns {@code null} if {@code run} doesn't round-trip cleanly
+     * (i.e. it's not this specific kind of mojibake — including already-correct text, which
+     * won't round-trip this way and is safely left untouched).
+     */
+    private static String tryReverseCorruption(String run) {
+        byte[] bytes = new byte[run.length()];
+        for (int i = 0; i < run.length(); i++) {
+            Byte b = BUGGY_CP1252_REVERSE.get(run.charAt(i));
+            if (b == null) return null;
+            bytes[i] = b;
+        }
+        try {
+            java.nio.charset.CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+            decoder.onMalformedInput(java.nio.charset.CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
+            return decoder.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /**
      * Load translations from server file
      */

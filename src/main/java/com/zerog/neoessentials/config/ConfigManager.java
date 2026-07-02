@@ -1111,7 +1111,7 @@ public class ConfigManager {
      * returns {@code false}. (permissions.vanillaOpFallback)
      *
      * <p>Unlike {@link #isOpsBypassPermissionsEnabled()} which skips permission
-     * checks entirely, this fires <em>after</em> all checks have run â€” so the
+     * checks entirely, this fires <em>after</em> all checks have run — so the
      * permission system is still consulted first in normal operation.  The fallback
      * is designed to prevent admin lockouts when configs are corrupted or an
      * external permission mod crashes.
@@ -1126,7 +1126,7 @@ public class ConfigManager {
                 return perms.get("vanillaOpFallback").getAsBoolean();
             }
         }
-        return true; // Safe default â€” prevents lockouts
+        return true; // Safe default — prevents lockouts
     }
 
     /**
@@ -1238,7 +1238,7 @@ public class ConfigManager {
                             LOGGER.debug("Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
                             return section;
                         }
-                        // File exists but uses a flat layout â€“ return the whole object
+                        // File exists but uses a flat layout – return the whole object
                         configCache.put(configName, fileObj);
                         LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
                         return fileObj;
@@ -1246,7 +1246,7 @@ public class ConfigManager {
                         LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
                     }
                 }
-                // Section missing â€“ return empty (do not cache so it retries after reload)
+                // Section missing – return empty (do not cache so it retries after reload)
                 LOGGER.debug("Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
                 return new JsonObject();
             }
@@ -1319,13 +1319,13 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 25);          // v25 â€” localization.preserveCustomTranslations setting
-        put(ECONOMY_CONFIG, 3);        // v3  â€” removed _configVersion_comment
-        put(PERMISSIONS_CONFIG, 7);    // v7  â€” removed _configVersion_comment
-        put(KITS_CONFIG, 2);           // v2  â€” removed _configVersion_comment
-        put(DISCORD_AUTH_CONFIG, 8);   // v8  â€” migrated to // comment style
-        put(TABLIST_CONFIG, 5);        // v5  â€” migrated to // comment style
-        put(ANIMATIONS_CONFIG, 2);     // v2  â€” migrated to // comment style
+        put(MAIN_CONFIG, 25);          // v25 — localization.preserveCustomTranslations setting
+        put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
+        put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
+        put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
+        put(DISCORD_AUTH_CONFIG, 8);   // v8  — migrated to // comment style
+        put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
+        put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
     }};
 
     /**
@@ -1345,6 +1345,22 @@ public class ConfigManager {
             }
         } catch (Exception ignored) {}
         return "en_us";
+    }
+
+    /**
+     * Sets the active server language (localization.language) and persists it to config.json.
+     * Does not reload translations — call {@link com.zerog.neoessentials.util.MessageUtil#reloadTranslations()}
+     * afterward to apply the change immediately.
+     */
+    public static void setServerLanguage(String languageCode) {
+        ConfigManager instance = getInstance();
+        JsonObject config = instance.getConfig(MAIN_CONFIG);
+        JsonObject loc = config.has("localization") && config.get("localization").isJsonObject()
+            ? config.getAsJsonObject("localization")
+            : new JsonObject();
+        loc.addProperty("language", languageCode.trim().toLowerCase());
+        config.add("localization", loc);
+        instance.saveConfig(MAIN_CONFIG, config);
     }
 
     /**
@@ -1565,11 +1581,11 @@ public class ConfigManager {
      * Check if a config file needs updating based on version mismatch.
      * <p>
      * Strategy:
-     *  - If the on-disk version is OLDER than expected â†’ merge new/changed keys from the JAR
+     *  - If the on-disk version is OLDER than expected → merge new/changed keys from the JAR
      *    template into the user's file (preserve all existing values) then bump _configVersion.
      *    A backup is still created before touching the file.
-     *  - If the on-disk version is NEWER than expected â†’ warn only, do not touch.
-     *  - If equal â†’ no-op.
+     *  - If the on-disk version is NEWER than expected → warn only, do not touch.
+     *  - If equal → no-op.
      * <p>
      * This prevents blowing away user-set values (role IDs, client secrets, custom settings)
      * every time the config gains a new field.
@@ -1592,7 +1608,7 @@ public class ConfigManager {
                 LOGGER.warn("Config file {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
                     configName, currentVersion, expectedVersion);
 
-                // Load JAR template (may contain // comments â€” use lenient reader)
+                // Load JAR template (may contain // comments — use lenient reader)
                 JsonObject jarTemplate = null;
                 try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
                     if (in != null) {
@@ -1661,12 +1677,12 @@ public class ConfigManager {
             com.google.gson.JsonElement sourceVal = entry.getValue();
 
             if (!target.has(key)) {
-                // Missing entirely â€” add from template
+                // Missing entirely — add from template
                 target.add(key, sourceVal.deepCopy());
                 changed = true;
                 LOGGER.debug("  + Added missing config key: {}", key);
             } else if (sourceVal.isJsonObject() && target.get(key).isJsonObject()) {
-                // Both sides are objects â€” recurse
+                // Both sides are objects — recurse
                 changed |= mergeNewKeys(sourceVal.getAsJsonObject(), target.get(key).getAsJsonObject());
             }
             // If key exists and isn't an object, leave the user's value alone
@@ -2414,7 +2430,7 @@ public class ConfigManager {
 
     /**
      * Returns true if per-warp permission checks are enabled (teleportation.warpSettings.perWarpPermission).
-     * Essentials: getPerWarpPermission() â€” checks neoessentials.warps.<name> per warp.
+     * Essentials: getPerWarpPermission() — checks neoessentials.warps.<name> per warp.
      * Defaults to false if not set.
      */
     public boolean isPerWarpPermissionEnabled() {

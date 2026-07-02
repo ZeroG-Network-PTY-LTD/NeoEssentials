@@ -180,8 +180,8 @@ public class TeleportLocation {
             }
             for (int sign : new int[]{1, -1}) {
                 BlockPos candidate = new BlockPos(ix, iy + sign * dy, iz);
-                if (candidate.getY() < level.getMinBuildHeight() + 1 ||
-                    candidate.getY() > level.getMaxBuildHeight() - 2) continue;
+                if (candidate.getY() < com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level) + 1 ||
+                    candidate.getY() > com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 2) continue;
                 TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);
                 if (loc.isSafe()) return loc;
             }
@@ -216,7 +216,7 @@ public class TeleportLocation {
      * find a safe surface spot.
      *
      * <p>Uses {@code level.dimensionType().logicalHeight()} rather than
-     * {@code level.getMaxBuildHeight()} so that in the Nether
+     * {@code com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level)} so that in the Nether
      * (logicalHeight=128, maxBuildHeight=256) the scan never starts above the bedrock
      * ceiling and therefore never finds Y=128 (directly above the bedrock roof) as a
      * valid landing spot.</p>
@@ -225,8 +225,8 @@ public class TeleportLocation {
         // Cap to logical height — prevents landing above the nether ceiling (Y≥128)
         // or above any other dimension's intended play space.
         int logicalHeight = level.dimensionType().logicalHeight();
-        int maxY = Math.min(level.getMaxBuildHeight() - 2, logicalHeight - 1);
-        int minY = level.getMinBuildHeight() + 1;
+        int maxY = Math.min(com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 2, logicalHeight - 1);
+        int minY = com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level) + 1;
         for (int by = maxY; by >= minY; by--) {
             BlockPos candidate = new BlockPos(bx, by, bz);
             TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);

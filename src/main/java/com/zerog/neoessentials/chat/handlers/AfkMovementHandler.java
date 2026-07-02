@@ -144,16 +144,6 @@ public class AfkMovementHandler {
             // Update AFK status
             AfkManager.getInstance().updateActivity(uuid);
 
-            // Log movement (debug level)
-            if (positionChanged) {
-                LOGGER.debug("Activity tracked for {}: moved {:.2f} blocks",
-                    player.getName().getString(), distanceMoved);
-            }
-            if (rotationChanged) {
-                LOGGER.debug("Activity tracked for {}: rotated {:.1f} degrees",
-                    player.getName().getString(), rotationDiff);
-            }
-
             // Update stored position
             lastPositions.put(uuid, new PlayerPosition(currentPosition, currentYaw, currentPitch));
         }
