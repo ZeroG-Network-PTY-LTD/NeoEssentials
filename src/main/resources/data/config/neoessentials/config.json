@@ -251,7 +251,7 @@
     "enableInputValidation": true,
     "maxCommandLength": 256,
     "maxReasonLength": 500,
-    "allowUnsafeCommands": false,
+    "allowUnsafeCommands": true,
     // Controls whether the CommandLengthEnforcer event handler validates player commands
     "enableCommandLengthEnforcer": true
   },

@@ -136,6 +136,17 @@ public class HologramData {
     // ── Transient state ───────────────────────────────────────────────────────
     public transient long   lastRefreshMs   = 0L;
     public transient List<UUID> entityUUIDs = new ArrayList<>();
+    /**
+     * UUID of this hologram's invisible {@code minecraft:interaction} hitbox entity,
+     * or {@code null} if not spawned. Only created when {@link #interactive} is
+     * {@code true} — vanilla {@code Display} entities never override
+     * {@code Entity#isPickable()} (defaults to {@code false}), so a {@code Display.TextDisplay}
+     * can never be targeted by interaction/attack raycasting on its own; the
+     * {@code Interaction} entity is Mojang's own dedicated companion type for exactly
+     * this purpose. Kept separate from {@link #entityUUIDs} (one per line) so line-count
+     * bookkeeping elsewhere doesn't need to account for it. Not persisted.
+     */
+    public transient UUID interactionEntityUUID = null;
     /** Current spin angle in degrees (runtime only, not persisted). */
     public transient float  currentSpinAngle = 0f;
     /**

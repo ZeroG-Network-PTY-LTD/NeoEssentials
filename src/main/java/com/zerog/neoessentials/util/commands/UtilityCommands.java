@@ -361,7 +361,7 @@ public class UtilityCommands {
         var level = com.zerog.neoessentials.util.LevelCompat.of(spawnAt);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {
-            var entity = entityType.create(level);
+            var entity = com.zerog.neoessentials.util.EntityTypeCompat.create(entityType, level);
             if (entity == null) break;
             entity.moveTo(spawnAt.getX(), spawnAt.getY(), spawnAt.getZ(), spawnAt.getYRot(), 0f);
             if (entity instanceof Mob mob) {

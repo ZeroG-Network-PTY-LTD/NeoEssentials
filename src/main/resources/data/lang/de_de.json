@@ -116,6 +116,13 @@
   "commands.neoessentials.channel.switched": "§aDu hast den Kanal {0} gewechselt.",
   "commands.neoessentials.powertool.assign.success": "Powertool-Befehl zugewiesen!",
   "commands.neoessentials.powertool.no_item": "§cDu musst einen Gegenstand halten, um diesen Befehl zu verwenden!",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "Nur für Spieler.",
+  "commands.neoessentials.ah.sell.need_item": "§cDu musst einen Gegenstand in der Hand halten, um ihn zu verkaufen!",
+  "commands.neoessentials.ah.sell.invalid_price": "§cDer Preis muss größer als 0 sein!",
+  "commands.neoessentials.ah.sell.max_listings": "§cDu hast die maximale Anzahl an Angeboten pro Spieler erreicht ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cGegenstand konnte nicht gelistet werden. Bitte versuche es erneut.",
+  "commands.neoessentials.ah.sell.success": "§aGelistet: §e{0} §afür §6{1}§a! (ID: {2})",
+  "commands.neoessentials.ah.reload.success": "§aAuktionshaus-Konfiguration neu geladen.",
+  "commands.neoessentials.ah.help": "§6§l-- Auktionshaus-Befehle --\n§e/ah§7 - Auktionshaus öffnen\n§e/ah sell <Preis>§7 - Gehaltenen Gegenstand zum Verkauf anbieten\n§e/ah selling§7 - Deine aktiven Angebote anzeigen\n§e/ah expired§7 - Abgelaufene Angebote abholen\n§e/ah reload§7 - Konfiguration neu laden (Admin)\n§e/auctionhouse§7 - Alias für /ah"
 }
-

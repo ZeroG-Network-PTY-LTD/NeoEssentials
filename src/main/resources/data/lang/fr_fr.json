@@ -216,6 +216,13 @@
   "commands.neoessentials.channel.switched": "§aVous avez rejoint le canal {0}.",
   "commands.neoessentials.powertool.assign.success": "Commande d'outil de puissance assignée !",
   "commands.neoessentials.powertool.no_item": "§cVous devez tenir un objet pour utiliser cette commande !",
-  "commands.neoessentials.powertool.remove.success": "§aOutil de puissance supprimé de l'objet !"
+  "commands.neoessentials.powertool.remove.success": "§aOutil de puissance supprimé de l'objet !",
+  "commands.neoessentials.ah.players_only": "Réservé aux joueurs.",
+  "commands.neoessentials.ah.sell.need_item": "§cVous devez tenir un objet pour le vendre !",
+  "commands.neoessentials.ah.sell.invalid_price": "§cLe prix doit être supérieur à 0 !",
+  "commands.neoessentials.ah.sell.max_listings": "§cVous avez atteint le nombre maximum d'annonces par joueur ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cÉchec de la mise en vente de l'objet. Veuillez réessayer.",
+  "commands.neoessentials.ah.sell.success": "§aMis en vente §e{0} §apour §6{1}§a ! (ID : {2})",
+  "commands.neoessentials.ah.reload.success": "§aConfiguration de l'Hôtel des ventes rechargée.",
+  "commands.neoessentials.ah.help": "§6§l-- Commandes de l'Hôtel des ventes --\n§e/ah§7 - Ouvrir l'Hôtel des ventes\n§e/ah sell <prix>§7 - Mettre en vente l'objet en main\n§e/ah selling§7 - Voir vos annonces actives\n§e/ah expired§7 - Récupérer les annonces expirées\n§e/ah reload§7 - Recharger la configuration (admin)\n§e/auctionhouse§7 - Alias de /ah"
 }
-

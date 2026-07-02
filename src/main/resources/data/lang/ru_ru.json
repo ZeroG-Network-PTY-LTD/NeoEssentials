@@ -1,4 +1,4 @@
-﻿{
+{
     "_langVersion":  "18",
     "_language":  "ru_ru",
     "_language_name":  "Русский (Россия)",
@@ -1366,5 +1366,13 @@
     "commands.neoessentials.cmd.warpinfo.description":  "Информация о варпе",
     "commands.neoessentials.cmd.bc.description":  "Транслировать сообщение (псевдоним)",
     "commands.neoessentials.cmd.trash.description":  "Выбросить предметы (псевдоним)",
-    "commands.neoessentials.cmd.cshop.description":  "Система табличных магазинов (псевдоним)"
+    "commands.neoessentials.cmd.cshop.description":  "Система табличных магазинов (псевдоним)",
+    "commands.neoessentials.ah.players_only":  "Только для игроков.",
+    "commands.neoessentials.ah.sell.need_item":  "§cВы должны держать предмет в руке, чтобы продать его!",
+    "commands.neoessentials.ah.sell.invalid_price":  "§cЦена должна быть больше 0!",
+    "commands.neoessentials.ah.sell.max_listings":  "§cВы достигли максимального количества лотов на игрока ({0}).",
+    "commands.neoessentials.ah.sell.failed":  "§cНе удалось выставить предмет. Попробуйте снова.",
+    "commands.neoessentials.ah.sell.success":  "§aВыставлено §e{0} §aза §6{1}§a! (ID: {2})",
+    "commands.neoessentials.ah.reload.success":  "§aКонфигурация аукциона перезагружена.",
+    "commands.neoessentials.ah.help":  "§6§l-- Команды аукциона --\n§e/ah§7 - Открыть аукцион\n§e/ah sell <цена>§7 - Выставить предмет в руке на продажу\n§e/ah selling§7 - Просмотреть свои активные лоты\n§e/ah expired§7 - Забрать просроченные лоты\n§e/ah reload§7 - Перезагрузить конфигурацию (админ)\n§e/auctionhouse§7 - Псевдоним для /ah"
 }

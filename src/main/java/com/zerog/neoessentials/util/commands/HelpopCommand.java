@@ -136,22 +136,49 @@ public class HelpopCommand {
         
         // Create message component
         Component messageComponent = Component.literal("§f" + message);
-        
+
         // Create reply component with click-to-reply
         String replyCommand = "/msg " + playerName + " ";
         Component replyComponent = Component.literal("§a[Reply]")
             .withStyle(style -> style
                 .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, replyCommand))
-                .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, 
+                .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
                     Component.literal("§7Click to reply to " + playerName)))
             );
-        
+
+        // Build the actions line: [Reply] plus optional teleport shortcuts, gated by
+        // the same permission nodes /tpo and /tpohere themselves require.
+        net.minecraft.network.chat.MutableComponent actionsLine = Component.literal(MessageUtil.localize("commands.neoessentials.helpop.actions"))
+            .append(replyComponent);
+
+        if (PermissionValidator.validatePermission(staff.createCommandSourceStack(), "neoessentials.teleport.admin.tp").hasPermission()) {
+            String tpToThemCommand = "/tp " + playerName;
+            Component tpToThemComponent = Component.literal(" §b[TP to them]")
+                .withStyle(style -> style
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, tpToThemCommand))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("§7Click to teleport to " + playerName)))
+                );
+            actionsLine.append(tpToThemComponent);
+        }
+
+        if (PermissionValidator.validatePermission(staff.createCommandSourceStack(), "neoessentials.teleport.admin.tphere").hasPermission()) {
+            String tpToMeCommand = "/tphere " + playerName;
+            Component tpToMeComponent = Component.literal(" §d[TP to me]")
+                .withStyle(style -> style
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, tpToMeCommand))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("§7Click to bring " + playerName + " to you")))
+                );
+            actionsLine.append(tpToMeComponent);
+        }
+
         // Send all components to staff member
         staff.sendSystemMessage(MessageUtil.component("commands.neoessentials.helpop.header"));
         staff.sendSystemMessage(header);
         staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.location")).append(locationComponent));
         staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.message")).append(messageComponent));
-        staff.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.helpop.actions")).append(replyComponent));
+        staff.sendSystemMessage(actionsLine);
         staff.sendSystemMessage(MessageUtil.component("commands.neoessentials.helpop.footer"));
     }
 }

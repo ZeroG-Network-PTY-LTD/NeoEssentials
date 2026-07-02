@@ -46,11 +46,24 @@ import java.util.List;
  */
 public class HologramCommand {
     private static final String PERM = "neoessentials.hologram.admin";
+
+    /** Tab-completion for an existing hologram's id. Not used on `create`, which types a new id. */
+    private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestHologramIds(
+            com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx,
+            com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+        java.util.List<String> ids = HologramManager.getInstance().getAllHolograms().stream()
+            .map(d -> d.id)
+            .sorted()
+            .toList();
+        return net.minecraft.commands.SharedSuggestionProvider.suggest(ids, builder);
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var root = Commands.literal("hologram")
             .requires(src -> hasPermission(src))
             .then(Commands.literal("create")
                 // /hologram create <id>  — creates at player's current position
+                // (no id suggestions here: this is a *new* id being typed, not an existing one)
                 .then(Commands.argument("id", StringArgumentType.word())
                     .executes(ctx -> cmdCreateHere(ctx.getSource(),
                         StringArgumentType.getString(ctx, "id")))
@@ -71,52 +84,52 @@ public class HologramCommand {
                                         DoubleArgumentType.getDouble(ctx, "z"),
                                         StringArgumentType.getString(ctx, "world")))))))))
             .then(Commands.literal("delete")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdDelete(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("rename")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("newid", StringArgumentType.word())
                         .executes(ctx -> cmdRename(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "newid"))))))
             .then(Commands.literal("copy")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("newid", StringArgumentType.word())
                         .executes(ctx -> cmdCopy(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "newid"))))))
             .then(Commands.literal("addline")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("text", StringArgumentType.greedyString())
                         .executes(ctx -> cmdAddLine(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "text"))))))
             .then(Commands.literal("insertline")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("index", IntegerArgumentType.integer(1))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> cmdInsertLine(ctx.getSource(),
                                 StringArgumentType.getString(ctx, "id"),
                                 IntegerArgumentType.getInteger(ctx, "index"),
                                 StringArgumentType.getString(ctx, "text")))))))
             .then(Commands.literal("setline")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("index", IntegerArgumentType.integer(1))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> cmdSetLine(ctx.getSource(),
                                 StringArgumentType.getString(ctx, "id"),
                                 IntegerArgumentType.getInteger(ctx, "index"),
                                 StringArgumentType.getString(ctx, "text")))))))
             .then(Commands.literal("removeline")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("index", IntegerArgumentType.integer(1))
                         .executes(ctx -> cmdRemoveLine(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "index"))))))
             // /hologram addframes <id> <lineIndex> <intervalTicks> <frame1|frame2|...>
             .then(Commands.literal("addframes")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("lineIndex", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("lineIndex", IntegerArgumentType.integer(1))
                         .then(Commands.argument("intervalTicks", IntegerArgumentType.integer(1, 200))
                             .then(Commands.argument("frames", StringArgumentType.greedyString())
                                 .executes(ctx -> cmdAddFrames(ctx.getSource(),
@@ -126,13 +139,13 @@ public class HologramCommand {
                                     StringArgumentType.getString(ctx, "frames"))))))))
             // /hologram removeframes <id> <lineIndex>
             .then(Commands.literal("removeframes")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("lineIndex", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("lineIndex", IntegerArgumentType.integer(1))
                         .executes(ctx -> cmdRemoveFrames(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "lineIndex"))))))
             .then(Commands.literal("moveto")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("x", DoubleArgumentType.doubleArg())
                         .then(Commands.argument("y", DoubleArgumentType.doubleArg())
                             .then(Commands.argument("z", DoubleArgumentType.doubleArg())
@@ -142,49 +155,49 @@ public class HologramCommand {
                                     DoubleArgumentType.getDouble(ctx, "y"),
                                     DoubleArgumentType.getDouble(ctx, "z"))))))))
             .then(Commands.literal("movehere")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdMoveHere(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("align")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdAlign(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("tp")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdTp(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("near")
                 .executes(ctx -> cmdNear(ctx.getSource(), 20.0))
                 .then(Commands.argument("radius", DoubleArgumentType.doubleArg(1, 1000))
                     .executes(ctx -> cmdNear(ctx.getSource(), DoubleArgumentType.getDouble(ctx, "radius")))))
             .then(Commands.literal("setrefresh")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("seconds", IntegerArgumentType.integer(0))
                         .executes(ctx -> cmdSetRefresh(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "seconds"))))))
             .then(Commands.literal("toggle")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdToggle(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("list")
                 .executes(ctx -> cmdList(ctx.getSource())))
             .then(Commands.literal("info")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdInfo(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("reload")
                 .executes(ctx -> cmdReload(ctx.getSource())))
             // ── Billboard / rotation sub-commands ─────────────────────────────
             .then(Commands.literal("billboard")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("mode", StringArgumentType.word())
                         .executes(ctx -> cmdBillboard(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "mode"))))))
             .then(Commands.literal("textalign")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("align", StringArgumentType.word())
                         .executes(ctx -> cmdTextAlign(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "align"))))))
             .then(Commands.literal("spin")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.literal("off")
                         .executes(ctx -> cmdSpinOff(ctx.getSource(), StringArgumentType.getString(ctx, "id"))))
                     .then(Commands.literal("on")
@@ -201,7 +214,7 @@ public class HologramCommand {
                                     StringArgumentType.getString(ctx, "axis"))))))))
             // /hologram spintrack <id> <on|off>  — toggle player-tracking for Y-axis spin
             .then(Commands.literal("spintrack")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.literal("on")
                         .executes(ctx -> cmdSpinTrack(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"), true)))
@@ -209,7 +222,7 @@ public class HologramCommand {
                         .executes(ctx -> cmdSpinTrack(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"), false)))))
             .then(Commands.literal("hover")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.literal("off")
                         .executes(ctx -> cmdHoverOff(ctx.getSource(), StringArgumentType.getString(ctx, "id"))))
                     .then(Commands.literal("on")
@@ -226,60 +239,60 @@ public class HologramCommand {
                                     FloatArgumentType.getFloat(ctx, "speed"))))))))
             // ── Visual appearance sub-commands ─────────────────────────────────
             .then(Commands.literal("scale")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("scale", FloatArgumentType.floatArg(0.1f, 10.0f))
                         .executes(ctx -> cmdScale(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             FloatArgumentType.getFloat(ctx, "scale"))))))
             .then(Commands.literal("linespacing")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("spacing", FloatArgumentType.floatArg(0.05f, 3.0f))
                         .executes(ctx -> cmdLineSpacing(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             FloatArgumentType.getFloat(ctx, "spacing"))))))
             .then(Commands.literal("shadow")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.literal("on")
                         .executes(ctx -> cmdShadow(ctx.getSource(), StringArgumentType.getString(ctx, "id"), true)))
                     .then(Commands.literal("off")
                         .executes(ctx -> cmdShadow(ctx.getSource(), StringArgumentType.getString(ctx, "id"), false)))))
             .then(Commands.literal("seethrough")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.literal("on")
                         .executes(ctx -> cmdSeeThrough(ctx.getSource(), StringArgumentType.getString(ctx, "id"), true)))
                     .then(Commands.literal("off")
                         .executes(ctx -> cmdSeeThrough(ctx.getSource(), StringArgumentType.getString(ctx, "id"), false)))))
             .then(Commands.literal("opacity")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("opacity", IntegerArgumentType.integer(0, 255))
                         .executes(ctx -> cmdOpacity(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "opacity"))))))
             .then(Commands.literal("viewrange")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("range", FloatArgumentType.floatArg(0.1f, 8.0f))
                         .executes(ctx -> cmdViewRange(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             FloatArgumentType.getFloat(ctx, "range"))))))
             .then(Commands.literal("linewidth")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("pixels", IntegerArgumentType.integer(1, 4096))
                         .executes(ctx -> cmdLineWidth(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             IntegerArgumentType.getInteger(ctx, "pixels"))))))
             .then(Commands.literal("clearlines")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .executes(ctx -> cmdClearLines(ctx.getSource(), StringArgumentType.getString(ctx, "id")))))
             .then(Commands.literal("moveline")
-                .then(Commands.argument("id", StringArgumentType.word())
-                    .then(Commands.argument("from", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("to", IntegerArgumentType.integer(0))
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
+                    .then(Commands.argument("from", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("to", IntegerArgumentType.integer(1))
                             .executes(ctx -> cmdMoveLine(ctx.getSource(),
                                 StringArgumentType.getString(ctx, "id"),
                                 IntegerArgumentType.getInteger(ctx, "from"),
                                 IntegerArgumentType.getInteger(ctx, "to")))))))
             .then(Commands.literal("background")
-                .then(Commands.argument("id", StringArgumentType.word())
+                .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("color", StringArgumentType.word())
                         .executes(ctx -> cmdBackground(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
@@ -348,24 +361,27 @@ public class HologramCommand {
         src.sendSuccess(() -> Component.literal("§a✓ Line added to '§e" + id + "§a'. Total lines: " + data.lines.size()), true);
         return 1;
     }
-    private static int cmdInsertLine(CommandSourceStack src, String id, int index, String text) {
+    private static int cmdInsertLine(CommandSourceStack src, String id, int userIndex, String text) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
-        // Allow inserting at the end (index == size) as well as within the list
+        // Line numbers are 1-based for players. Allow inserting after the last line too
+        // (userIndex == size + 1), so valid input is 1..size+1.
+        int index = userIndex - 1;
         if (index < 0 || index > data.lines.size()) {
-            src.sendFailure(Component.literal("§cLine index out of range (0–" + data.lines.size() + ")."));
+            src.sendFailure(Component.literal("§cLine number out of range (1–" + (data.lines.size() + 1) + ")."));
             return 0;
         }
         data.lines.add(index, new HologramLine(text));
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("§a✓ Line inserted at §e" + index + "§a in '§e" + id + "§a'. Total lines: " + data.lines.size()), true);
+        src.sendSuccess(() -> Component.literal("§a✓ Line inserted at §e" + userIndex + "§a in '§e" + id + "§a'. Total lines: " + data.lines.size()), true);
         return 1;
     }
-    private static int cmdSetLine(CommandSourceStack src, String id, int index, String text) {
+    private static int cmdSetLine(CommandSourceStack src, String id, int userIndex, String text) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
-        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("\u00a7cLine index out of range (0\u2013" + (data.lines.size()-1) + ").")); return 0; }
+        int index = userIndex - 1;
+        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("§cLine number out of range (1–" + data.lines.size() + ").")); return 0; }
         HologramLine line = data.lines.get(index);
         line.text = text;
         // Clear any frame animation so the new static text is shown immediately
@@ -375,28 +391,30 @@ public class HologramCommand {
         line.animTickCount = 0;
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line \u00a7e" + index + "\u00a7a updated."), true);
+        src.sendSuccess(() -> Component.literal("§a✔ Line §e" + userIndex + "§a updated."), true);
         return 1;
     }
-    private static int cmdRemoveLine(CommandSourceStack src, String id, int index) {
+    private static int cmdRemoveLine(CommandSourceStack src, String id, int userIndex) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
-        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("§cLine index out of range.")); return 0; }
+        int index = userIndex - 1;
+        if (index < 0 || index >= data.lines.size()) { src.sendFailure(Component.literal("§cLine number out of range (1–" + data.lines.size() + ").")); return 0; }
         data.lines.remove(index);
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("§a✓ Line §e" + index + "§a removed."), true);
+        src.sendSuccess(() -> Component.literal("§a✓ Line §e" + userIndex + "§a removed."), true);
         return 1;
     }
     /**
      * /hologram addframes &lt;id&gt; &lt;lineIndex&gt; &lt;intervalTicks&gt; &lt;frame1|frame2|...&gt;
      * Frames are separated by {@code |}.
      */
-    private static int cmdAddFrames(CommandSourceStack src, String id, int lineIndex, int intervalTicks, String framesRaw) {
+    private static int cmdAddFrames(CommandSourceStack src, String id, int userLineIndex, int intervalTicks, String framesRaw) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        int lineIndex = userLineIndex - 1;
         if (lineIndex < 0 || lineIndex >= data.lines.size()) {
-            src.sendFailure(Component.literal("§cLine index out of range (0–" + (data.lines.size()-1) + ")."));
+            src.sendFailure(Component.literal("§cLine number out of range (1–" + data.lines.size() + ")."));
             return 0;
         }
         String[] parts = framesRaw.split("\\|");
@@ -413,14 +431,15 @@ public class HologramCommand {
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
         int fc = line.frames.size();
-        src.sendSuccess(() -> Component.literal("§a✓ §e" + fc + "§a frame(s) set on line §e" + lineIndex + "§a of '§e" + id + "§a' (every §e" + intervalTicks + "§a ticks)."), true);
+        src.sendSuccess(() -> Component.literal("§a✓ §e" + fc + "§a frame(s) set on line §e" + userLineIndex + "§a of '§e" + id + "§a' (every §e" + intervalTicks + "§a ticks)."), true);
         return 1;
     }
-    private static int cmdRemoveFrames(CommandSourceStack src, String id, int lineIndex) {
+    private static int cmdRemoveFrames(CommandSourceStack src, String id, int userLineIndex) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("§cHologram '§e" + id + "§c' not found.")); return 0; }
+        int lineIndex = userLineIndex - 1;
         if (lineIndex < 0 || lineIndex >= data.lines.size()) {
-            src.sendFailure(Component.literal("§cLine index out of range (0–" + (data.lines.size()-1) + ")."));
+            src.sendFailure(Component.literal("§cLine number out of range (1–" + data.lines.size() + ")."));
             return 0;
         }
         HologramLine line = data.lines.get(lineIndex);
@@ -429,7 +448,7 @@ public class HologramCommand {
         line.currentFrame = 0;
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("§a✓ Frame animation removed from line §e" + lineIndex + "§a of '§e" + id + "§a'."), true);
+        src.sendSuccess(() -> Component.literal("§a✓ Frame animation removed from line §e" + userLineIndex + "§a of '§e" + id + "§a'."), true);
         return 1;
     }
     private static int cmdMoveTo(CommandSourceStack src, String id, double x, double y, double z) {
@@ -563,7 +582,7 @@ public class HologramCommand {
         sb.append("§7Lines (").append(data.lines.size()).append("):\n");
         for (int i = 0; i < data.lines.size(); i++) {
             HologramLine line = data.lines.get(i);
-            sb.append("  §e").append(i).append("§7: §f").append(line.currentText());
+            sb.append("  §e").append(i + 1).append("§7: §f").append(line.currentText());
             if (!line.frames.isEmpty()) sb.append(" §8[animated, ").append(line.frames.size()).append(" frames, every ").append(line.animFrameIntervalTicks).append("t]");
             sb.append("\n");
         }
@@ -724,24 +743,26 @@ public class HologramCommand {
         return 1;
     }
     /** /hologram moveline <id> <from> <to> – reorder a line within the hologram. */
-    private static int cmdMoveLine(CommandSourceStack src, String id, int from, int to) {
+    private static int cmdMoveLine(CommandSourceStack src, String id, int userFrom, int userTo) {
         HologramData data = HologramManager.getInstance().getHologram(id);
         if (data == null) { src.sendFailure(Component.literal("\u00a7cHologram '\u00a7e" + id + "\u00a7c' not found.")); return 0; }
         int size = data.lines.size();
+        int from = userFrom - 1;
         if (from < 0 || from >= size) {
-            src.sendFailure(Component.literal("\u00a7c'from' index \u00a7e" + from + "\u00a7c out of range (0\u2013" + (size - 1) + ")."));
+            src.sendFailure(Component.literal("\u00a7c'from' line number \u00a7e" + userFrom + "\u00a7c out of range (1\u2013" + size + ")."));
             return 0;
         }
-        int clampedTo = Math.max(0, Math.min(size - 1, to));
+        int clampedTo = Math.max(0, Math.min(size - 1, userTo - 1));
         if (from == clampedTo) {
-            src.sendSuccess(() -> Component.literal("\u00a77Line is already at index \u00a7e" + from + "\u00a77."), false);
+            src.sendSuccess(() -> Component.literal("\u00a77Line is already at position \u00a7e" + userFrom + "\u00a77."), false);
             return 1;
         }
         HologramLine line = data.lines.remove(from);
         data.lines.add(clampedTo, line);
         HologramManager.getInstance().registerHologram(data);
         respawn(src, data);
-        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line moved from \u00a7e" + from + "\u00a7a to \u00a7e" + clampedTo + "\u00a7a in '\u00a7e" + id + "\u00a7a'."), true);
+        int newPos = clampedTo + 1;
+        src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Line moved from \u00a7e" + userFrom + "\u00a7a to \u00a7e" + newPos + "\u00a7a in '\u00a7e" + id + "\u00a7a'."), true);
         return 1;
     }
     private static int cmdOpacity(CommandSourceStack src, String id, int opacity) {
@@ -793,6 +814,9 @@ public class HologramCommand {
                 String dimKey = HologramRenderer.dimensionKey(level);
                 HologramRenderer.spawnAllForWorld(level, dimKey);
             }
+            // Shop holograms need NBT_SHOP_KEY re-applied after a full respawn — the generic
+            // spawnAllForWorld() path has no concept of shops (see retagAllShopHolograms doc).
+            com.zerog.neoessentials.hologram.integration.ShopHologramManager.retagAllShopHolograms();
             src.sendSuccess(() -> Component.literal("§a✓ Holograms reloaded. " + HologramManager.getInstance().getAllHolograms().size() + " hologram(s) active."), true);
         } catch (Exception e) {
             src.sendFailure(Component.literal("§cReload failed: " + e.getMessage()));

@@ -42,6 +42,7 @@ public class ConfigSplitter {
         put("permissions",   "main.json");
         put("kits",          "main.json");   // kits SETTINGS; kits.json = kit definitions (JsonArray)
         put("economy",       "main.json");   // economy config settings
+        put("localization",  "main.json");
         put("security",      "security.json");
         put("commands",      "commands.json");
         put("items",         "items.json");
@@ -57,7 +58,7 @@ public class ConfigSplitter {
      * This is the authoritative mapping used for generation and validation.
      */
     public static final Map<String, List<String>> FILE_SECTIONS_MAP = new LinkedHashMap<>() {{
-        put("main.json",          List.of("modules", "logging", "permissions", "kits", "economy"));
+        put("main.json",          List.of("modules", "logging", "permissions", "kits", "economy", "localization"));
         put("commands.json",      Collections.singletonList("commands"));
         put("chat.json",          Collections.singletonList("chat"));
         put("teleportation.json", Collections.singletonList("teleportation"));
@@ -434,6 +435,39 @@ public class ConfigSplitter {
         }
 
         return merged;
+    }
+
+    /**
+     * Persists a merged/virtual config view (as produced by {@link #mergeSplitConfigs()},
+     * then possibly mutated by a caller) back out to the individual split files, one section
+     * at a time. Used by {@link ConfigManager#saveConfig} when split configs are active, since
+     * writes must land in {@code main.json}/{@code chat.json}/etc. rather than a nonexistent
+     * monolithic {@code config.json}.
+     */
+    public static void saveMergedConfigToSplitFiles(JsonObject merged) {
+        for (Map.Entry<String, List<String>> entry : FILE_SECTIONS_MAP.entrySet()) {
+            String fileName = entry.getKey();
+            List<String> sections = entry.getValue();
+            File configFile = ResourceUtil.getConfigFile(fileName);
+
+            JsonObject fileObj = configFile.exists() ? readJsonFile(configFile) : null;
+            if (fileObj == null) fileObj = new JsonObject();
+
+            boolean changed = false;
+            for (String section : sections) {
+                if (merged.has(section)) {
+                    fileObj.add(section, merged.get(section));
+                    changed = true;
+                }
+            }
+            if (!changed) continue;
+
+            try {
+                writeJsonFile(configFile, fileObj);
+            } catch (IOException e) {
+                LOGGER.error("Failed to write split config file '{}': {}", fileName, e.getMessage());
+            }
+        }
     }
 
     // ── Startup prompt ────────────────────────────────────────────────────────

@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Display;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -284,9 +283,13 @@ public class ShopHologramManager {
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
-        if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
+        // Display entities never override Entity#isPickable() (defaults to false), so they
+        // can never actually be the target of an interact/attack raycast — the invisible
+        // Interaction entity spawned alongside the hologram (see HologramRenderer) is what
+        // receives clicks.
+        if (!(event.getTarget() instanceof net.minecraft.world.entity.Interaction hitbox)) return;
 
-        ShopData shop = shopFromHologramEntity(display, com.zerog.neoessentials.util.LevelCompat.of(player));
+        ShopData shop = shopFromHologramEntity(hitbox, com.zerog.neoessentials.util.LevelCompat.of(player));
         if (shop == null) return;
 
         // Guard: only process if the hologram is marked interactive
@@ -339,9 +342,9 @@ public class ShopHologramManager {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
+        if (!(event.getTarget() instanceof net.minecraft.world.entity.Interaction hitbox)) return;
 
-        ShopData shop = shopFromHologramEntity(display, com.zerog.neoessentials.util.LevelCompat.of(player));
+        ShopData shop = shopFromHologramEntity(hitbox, com.zerog.neoessentials.util.LevelCompat.of(player));
         if (shop == null) return;
 
         // Guard: only process if the hologram is marked interactive
@@ -383,7 +386,7 @@ public class ShopHologramManager {
      * default placement offsets (0.5, 1.8, 0.5) — this works as long as the
      * hologram has never been moved.
      */
-    private static ShopData shopFromHologramEntity(Display.TextDisplay entity, ServerLevel level) {
+    private static ShopData shopFromHologramEntity(net.minecraft.world.entity.Entity entity, ServerLevel level) {
         try {
             net.minecraft.nbt.CompoundTag nbt = entity.getPersistentData();
             if (!nbt.contains("neoessentials_hologram")) return null;
@@ -482,14 +485,58 @@ public class ShopHologramManager {
      * restarts and lets {@link #shopFromHologramEntity} recover the correct shop
      * even after the hologram has been repositioned.
      */
+    /**
+     * Re-applies the {@code NBT_SHOP_KEY} tag to every shop hologram's entities.
+     *
+     * <p>{@link #createShopHologram} re-tags entities itself whenever it respawns a
+     * hologram (e.g. after a transaction), but the generic startup path —
+     * {@link com.zerog.neoessentials.hologram.HologramRenderer#spawnAllForWorld} —
+     * has no concept of shops and doesn't. Since that path always creates brand-new
+     * entities, every shop hologram loses its {@code NBT_SHOP_KEY} tag on every server
+     * restart, leaving {@link #shopFromHologramEntity} to fall back to a reverse
+     * position guess using hardcoded default offsets that don't account for a shop's
+     * actual configured {@code hologramOffsetX/Y/Z} — silently breaking clicks on any
+     * shop whose hologram isn't at the default offset. Call this once, shortly after
+     * {@code spawnAllForWorld} runs at server start, to restore the tags immediately
+     * instead of waiting for the fallback's opportunistic (and unreliable) caching.
+     */
+    public static void retagAllShopHolograms() {
+        try {
+            int tagged = 0;
+            for (ShopData shop : ShopManager.getInstance().getAllShops()) {
+                if (!shop.hologramEnabled) continue;
+                HologramData holo = getHologramForShop(shop);
+                if (holo == null) continue;
+                tagEntitiesWithShopKey(holo, shop);
+                tagged++;
+            }
+            if (tagged > 0) {
+                LOGGER.debug("[ShopHologram] Re-tagged {} shop hologram(s) after startup respawn.", tagged);
+            }
+        } catch (Exception e) {
+            LOGGER.error("[ShopHologram] Failed to re-tag shop holograms: {}", e.getMessage(), e);
+        }
+    }
+
     private static void tagEntitiesWithShopKey(HologramData data, ShopData shop) {
-        if (data.entityUUIDs == null || data.entityUUIDs.isEmpty()) return;
         ServerLevel level = findLevel(data.world);
         if (level == null) return;
         String shopKey = shop.toKey();
-        for (java.util.UUID uuid : data.entityUUIDs) {
+        if (data.entityUUIDs != null) {
+            for (java.util.UUID uuid : data.entityUUIDs) {
+                try {
+                    net.minecraft.world.entity.Entity entity = level.getEntity(uuid);
+                    if (entity != null) {
+                        entity.getPersistentData().putString(NBT_SHOP_KEY, shopKey);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        // The clickable hitbox is the entity that actually receives interact/attack
+        // events (see HologramData#interactionEntityUUID) — it needs the shop key too.
+        if (data.interactionEntityUUID != null) {
             try {
-                net.minecraft.world.entity.Entity entity = level.getEntity(uuid);
+                net.minecraft.world.entity.Entity entity = level.getEntity(data.interactionEntityUUID);
                 if (entity != null) {
                     entity.getPersistentData().putString(NBT_SHOP_KEY, shopKey);
                 }

@@ -436,19 +436,36 @@ public class NeoEssentials {
                 LOGGER.error("Failed to initialize TablistManager: {}", e.getMessage());
             }
 
-            // Spawn holograms in their respective levels and start the scheduler
-            try {
-                net.minecraft.server.MinecraftServer mcServer = event.getServer();
-                for (net.minecraft.server.level.ServerLevel level : mcServer.getAllLevels()) {
-                    String dimKey = com.zerog.neoessentials.hologram.HologramRenderer.dimensionKey(level);
-                    com.zerog.neoessentials.hologram.HologramRenderer.spawnAllForWorld(level, dimKey);
+            // Spawn holograms in their respective levels and start the scheduler.
+            //
+            // Delayed by a few ticks: entities (unlike terrain chunks) are loaded from
+            // their own per-region storage on a separate, not-strictly-synchronous path,
+            // so immediately after onServerStarted a chunk we just force-loaded via
+            // level.getChunk() can still be mid-flight loading its saved entities. Running
+            // cleanStaleEntities() at that exact moment can find nothing to remove (the old
+            // hologram entity hasn't finished loading in yet), spawn a fresh entity anyway,
+            // and then have the old one materialize moments later once loading catches up —
+            // producing a visible duplicate that "looks cached" even though our chunk
+            // force-load already ran. A short delay lets that settle first.
+            net.minecraft.server.MinecraftServer mcServer = event.getServer();
+            com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(40, () -> {
+                try {
+                    for (net.minecraft.server.level.ServerLevel level : mcServer.getAllLevels()) {
+                        String dimKey = com.zerog.neoessentials.hologram.HologramRenderer.dimensionKey(level);
+                        com.zerog.neoessentials.hologram.HologramRenderer.spawnAllForWorld(level, dimKey);
+                    }
+                    // Shop holograms lose their NBT_SHOP_KEY tag on every fresh respawn above
+                    // (spawnAllForWorld doesn't know about shops) — restore it immediately so
+                    // buy/sell clicks work right away instead of relying on the fallback's
+                    // fragile reverse-position guess.
+                    com.zerog.neoessentials.hologram.integration.ShopHologramManager.retagAllShopHolograms();
+                    com.zerog.neoessentials.hologram.HologramScheduler.start();
+                    LOGGER.info("✓ Holograms spawned and scheduler started ({} hologram(s)).",
+                        com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
+                } catch (Exception e) {
+                    LOGGER.error("Failed to spawn holograms / start scheduler: {}", e.getMessage(), e);
                 }
-                com.zerog.neoessentials.hologram.HologramScheduler.start();
-                LOGGER.info("✓ Holograms spawned and scheduler started ({} hologram(s)).",
-                    com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
-            } catch (Exception e) {
-                LOGGER.error("Failed to spawn holograms / start scheduler: {}", e.getMessage(), e);
-            }
+            });
         }
         
         @SubscribeEvent

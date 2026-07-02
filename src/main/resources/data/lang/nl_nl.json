@@ -70,6 +70,13 @@
   "commands.neoessentials.gamemode.changed_self": "Je spelmodus is gewijzigd naar {0}.",
   "commands.neoessentials.motd.header": "§6=== Bericht van de dag ===",
   "commands.neoessentials.channel.switched": "§aJe bent overgestapt naar kanaal {0}.",
-  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}"
+  "commands.neoessentials.baltop.entry": "§e{0}. §f{1} §7- §a{2}{3}",
+  "commands.neoessentials.ah.players_only": "Alleen voor spelers.",
+  "commands.neoessentials.ah.sell.need_item": "§cJe moet een voorwerp vasthouden om het te verkopen!",
+  "commands.neoessentials.ah.sell.invalid_price": "§cDe prijs moet hoger zijn dan 0!",
+  "commands.neoessentials.ah.sell.max_listings": "§cJe hebt het maximale aantal aanbiedingen per speler bereikt ({0}).",
+  "commands.neoessentials.ah.sell.failed": "§cHet plaatsen van het voorwerp is mislukt. Probeer het opnieuw.",
+  "commands.neoessentials.ah.sell.success": "§aGeplaatst §e{0} §avoor §6{1}§a! (ID: {2})",
+  "commands.neoessentials.ah.reload.success": "§aVeilinghuis-configuratie herladen.",
+  "commands.neoessentials.ah.help": "§6§l-- Veilinghuis-commando's --\n§e/ah§7 - Open het veilinghuis\n§e/ah sell <prijs>§7 - Plaats het voorwerp in je hand te koop\n§e/ah selling§7 - Bekijk je actieve aanbiedingen\n§e/ah expired§7 - Verzamel verlopen aanbiedingen\n§e/ah reload§7 - Herlaad configuratie (admin)\n§e/auctionhouse§7 - Alias voor /ah"
 }
-

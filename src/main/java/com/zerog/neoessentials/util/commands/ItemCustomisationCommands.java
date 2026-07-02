@@ -234,7 +234,7 @@ public class ItemCustomisationCommands {
     }
 
     private static void strikeLightning(net.minecraft.server.level.ServerLevel level, double x, double y, double z) {
-        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        LightningBolt bolt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.LIGHTNING_BOLT, level);
         if (bolt != null) {
             bolt.moveTo(x, y, z);
             level.addFreshEntity(bolt);
