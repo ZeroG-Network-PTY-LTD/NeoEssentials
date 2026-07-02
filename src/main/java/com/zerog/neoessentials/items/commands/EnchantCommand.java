@@ -285,24 +285,34 @@ public class EnchantCommand {
     /**
      * Check if an enchantment is compatible with an item stack
      */
+    private static volatile boolean loggedEnchantableFallback = false;
+
     private static boolean isEnchantmentCompatible(Enchantment enchantment, ItemStack stack) {
         try {
             // Check if the item is enchantable at all
             if (!stack.getItem().isEnchantable(stack)) {
                 return false;
             }
-            
+
             // For books, allow all enchantments
             if (stack.getItem().toString().contains("book")) {
                 return true;
             }
-            
+
             // Try to check enchantment category compatibility
             // This is a basic implementation - in practice you'd need more sophisticated checking
             return stack.getItem().isEnchantable(stack);
-            
-        } catch (Exception e) {
-            // Fallback: if we can't determine compatibility, allow it
+
+        } catch (Throwable e) {
+            // Item.isEnchantable(ItemStack) was reworked into a DataComponents-based check on
+            // newer Minecraft versions and can throw NoSuchMethodError here (an Error, not an
+            // Exception — must be caught explicitly). Fallback: if we can't determine
+            // compatibility, allow it.
+            if (e instanceof NoSuchMethodError && !loggedEnchantableFallback) {
+                loggedEnchantableFallback = true;
+                LOGGER.warn("Item.isEnchantable(ItemStack) is unavailable on this Minecraft version — " +
+                    "skipping item-compatibility checks for /enchant. ({})", e.getMessage());
+            }
             return true;
         }
     }
@@ -320,8 +330,14 @@ public class EnchantCommand {
 
         // Respect unsafe-enchantments config
         boolean allowUnsafeEnchants = com.zerog.neoessentials.config.ConfigManager.isUnsafeEnchantsAllowed();
-        if (!allowUnsafeEnchants && level > enchantment.getMaxLevel()) {
-            return false;
+        try {
+            if (!allowUnsafeEnchants && level > enchantment.getMaxLevel()) {
+                return false;
+            }
+        } catch (Throwable e) {
+            // If getMaxLevel() itself is unavailable on this Minecraft version, we can't enforce
+            // the max-level cap — fall through and let the enchantment apply rather than crash.
+            LOGGER.warn("Enchantment.getMaxLevel() failed — skipping unsafe-level check for /enchant.", e);
         }
 
         try {
@@ -358,7 +374,10 @@ public class EnchantCommand {
             stack.set(DataComponents.ENCHANTMENTS, builder.toImmutable());
             return true;
             
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches both regular Exceptions and Errors (e.g. NoSuchMethodError from a
+            // version-drifted registry/DataComponents API) so a mismatch degrades to a
+            // failed-enchant message instead of crashing the command.
             LOGGER.error("Failed to apply enchantment to item", e);
             return false;
         }
