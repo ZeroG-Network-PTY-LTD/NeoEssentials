@@ -104,7 +104,7 @@ public class UtilityCommands {
         if (ticks < 0) {
             playerTimes.remove(target.getUUID());
             // Reset to real world time
-            sendTimePacket(target, target.serverLevel().getDayTime(), false);
+            sendTimePacket(target, com.zerog.neoessentials.util.LevelCompat.of(target).getDayTime(), false);
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.ptime.reset", target.getName().getString()), false);
         } else {
             playerTimes.put(target.getUUID(), ticks);
@@ -118,7 +118,7 @@ public class UtilityCommands {
     @SuppressWarnings("resource") // ServerLevel does not implement AutoCloseable — IDE false positive
     private static void sendTimePacket(ServerPlayer player, long ticks, boolean lock) {
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTimePacket(
-            player.serverLevel().getGameTime(), ticks, !lock));
+            com.zerog.neoessentials.util.LevelCompat.of(player).getGameTime(), ticks, !lock));
     }
 
     // ── /pweather [reset|sun|storm] [player] ─────────────────────────────────
@@ -174,7 +174,7 @@ public class UtilityCommands {
 
         if (type == null) {
             playerWeather.remove(target.getUUID());
-            sendWeatherPacket(target, target.serverLevel().isRaining());
+            sendWeatherPacket(target, com.zerog.neoessentials.util.LevelCompat.of(target).isRaining());
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.pweather.reset", target.getName().getString()), false);
         } else {
             playerWeather.put(target.getUUID(), type);
@@ -358,7 +358,7 @@ public class UtilityCommands {
             return 0;
         }
         EntityType<?> entityType = typeOpt.get();
-        var level = spawnAt.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(spawnAt);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {
             var entity = entityType.create(level);

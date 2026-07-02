@@ -389,7 +389,7 @@ public class MailCommand {
                 .append(Component.literal("§7Click to delete this message"));
 
             line = line.withStyle(s -> s
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover))
+                .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, hover))
                 .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                     "/mail delete " + mail.id))
             );

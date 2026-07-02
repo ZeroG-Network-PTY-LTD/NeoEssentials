@@ -39,7 +39,7 @@ public class ShopInteractHandler {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
 
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         BlockPos pos = event.getPos();
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SignBlockEntity)) return;
@@ -119,7 +119,7 @@ public class ShopInteractHandler {
     public static void onLeftClick(PlayerInteractEvent.LeftClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         BlockPos pos = event.getPos();
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SignBlockEntity)) return;

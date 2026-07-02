@@ -177,7 +177,7 @@ public class ShopCommand {
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             String dimension = level.dimension().location().toString();
 
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
@@ -220,7 +220,7 @@ public class ShopCommand {
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             BlockEntity be = level.getBlockEntity(pos);
             if (!(be instanceof SignBlockEntity sign)) {
                 src.sendFailure(Component.literal("§cNot a sign."));
@@ -249,7 +249,7 @@ public class ShopCommand {
         }
         try {
             ServerPlayer player = src.getPlayerOrException();
-            String dimension = player.serverLevel().dimension().location().toString();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
             BlockPos pos = new BlockPos(x, y, z);
             ShopData removed = ShopManager.getInstance().removeShop(dimension, pos);
             if (removed == null) {
@@ -293,7 +293,7 @@ public class ShopCommand {
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             String dimension = level.dimension().location().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
             if (shop == null) {
@@ -445,7 +445,7 @@ public class ShopCommand {
     private static int executeHologramEnablePos(CommandSourceStack src, int x, int y, int z) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            String dimension = player.serverLevel().dimension().location().toString();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
             if (shop == null) { src.sendFailure(Component.literal("§cNo shop found at that position.")); return 0; }
             if (!isShopOwner(player, shop)) {
@@ -533,7 +533,7 @@ public class ShopCommand {
         HitResult hit = player.pick(5.0, 0.0f, false);
         if (hit.getType() != HitResult.Type.BLOCK) return null;
         BlockPos pos = ((BlockHitResult) hit).getBlockPos();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         String dimension = level.dimension().location().toString();
         return ShopManager.getInstance().getShopBySign(dimension, pos);
     }

@@ -146,7 +146,7 @@ public class FunCommands {
             return 0;
         }
 
-        var level = player.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
         for (int i = 0; i < amount; i++) {
             var look = player.getLookAngle().normalize();
             var fw = new net.minecraft.world.entity.projectile.FireworkRocketEntity(
@@ -269,7 +269,7 @@ public class FunCommands {
 
         int nuked = 0;
         for (ServerPlayer target : targets) {
-            ServerLevel level = target.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(target);
             // Message the target
             target.sendSystemMessage(Component.literal("§c☢ INCOMING NUKE! ☢"));
             // Spawn a 5x5 grid of TNT 64 blocks above the player
@@ -552,7 +552,7 @@ public class FunCommands {
 
         var hit = player.pick(20, 1.0f, false);
         var pos = hit.getLocation();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         PrimedTnt tnt = EntityType.TNT.create(level);
         if (tnt != null) {
             tnt.moveTo(pos.x, pos.y, pos.z);
@@ -582,7 +582,7 @@ public class FunCommands {
         var player = src.getPlayer();
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         Cat cat = EntityType.CAT.create(level);
         if (cat == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.general.error"));
@@ -635,7 +635,7 @@ public class FunCommands {
         var player = ctx.getSource().getPlayer();
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {
             var bee = EntityType.BEE.create(level);

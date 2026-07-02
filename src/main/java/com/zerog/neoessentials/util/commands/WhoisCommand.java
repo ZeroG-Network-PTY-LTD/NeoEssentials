@@ -89,7 +89,7 @@ public class WhoisCommand {
             MutableComponent uuidComponent = Component.literal("§bUUID: §7" + targetPlayer.getUUID().toString())
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, targetPlayer.getUUID().toString()))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy UUID")))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy UUID")))
                 );
             source.sendSuccess(() -> uuidComponent, false);
         }
@@ -147,7 +147,7 @@ public class WhoisCommand {
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, 
                         "/tp " + DECIMAL_FORMAT.format(x) + " " + DECIMAL_FORMAT.format(y) + " " + DECIMAL_FORMAT.format(z)))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to get teleport command")))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to get teleport command")))
                 );
             source.sendSuccess(() -> locationComponent, false);
         }

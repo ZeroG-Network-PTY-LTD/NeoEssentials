@@ -219,7 +219,7 @@ public class ItemCustomisationCommands {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", targetName));
                 return 0;
             }
-            strikeLightning(target.serverLevel(), target.getX(), target.getY(), target.getZ());
+            strikeLightning(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ());
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.lightning.struck", targetName), true);
         } else {
             // Strike at self's look target
@@ -227,7 +227,7 @@ public class ItemCustomisationCommands {
             if (self == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
             var hit = self.pick(100, 1.0f, false);
             var pos = hit.getLocation();
-            strikeLightning(self.serverLevel(), pos.x, pos.y, pos.z);
+            strikeLightning(com.zerog.neoessentials.util.LevelCompat.of(self), pos.x, pos.y, pos.z);
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.lightning.self"), false);
         }
         return 1;
@@ -422,7 +422,7 @@ public class ItemCustomisationCommands {
         var player = src.getPlayer();
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
-        var level = player.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
         var pos = player.blockPosition();
         int removed = 0;
 

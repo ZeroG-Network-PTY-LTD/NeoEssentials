@@ -207,7 +207,7 @@ public class DirectTeleportCommands {
             }
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
+            player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_player",
                 player.getName().getString(), target.getName().getString()), true);
             return 1;
@@ -221,7 +221,7 @@ public class DirectTeleportCommands {
         try {
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(player.serverLevel(), x, y, z, player.getYRot(), player.getXRot());
+            player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), x, y, z, player.getYRot(), player.getXRot());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_player_coords",
                 player.getName().getString(), String.valueOf((int) x), String.valueOf((int) y), String.valueOf((int) z)), true);
             return 1;
@@ -236,7 +236,7 @@ public class DirectTeleportCommands {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             // Save back location BEFORE teleporting so /back works (for the player being moved)
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
-            target.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
+            target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_to",
                 target.getName().getString()), true);
             target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.admin.player_teleported_to_you",
@@ -262,7 +262,7 @@ public class DirectTeleportCommands {
                 if (target != player) {
                     // Save back location BEFORE teleporting so /back works for each player
                     com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
-                    target.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
+                    target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
                     count++;
                 }
             }
@@ -284,7 +284,7 @@ public class DirectTeleportCommands {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             BlockPos currentPos = player.blockPosition();
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             BlockPos highestPos = null;
             for (int y = level.getMaxBuildHeight() - 1; y > currentPos.getY(); y--) {
                 BlockPos checkPos = new BlockPos(currentPos.getX(), y, currentPos.getZ());
@@ -311,7 +311,7 @@ public class DirectTeleportCommands {
     private static int jumpToTargetBlock(CommandContext<CommandSourceStack> ctx) {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             Vec3 start = player.getEyePosition();
             Vec3 end = start.add(player.getLookAngle().scale(100));
             BlockHitResult hit = level.clip(new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));

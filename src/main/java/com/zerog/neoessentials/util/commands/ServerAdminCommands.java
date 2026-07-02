@@ -379,7 +379,7 @@ public class ServerAdminCommands {
                     String name = StringArgumentType.getString(ctx, "target");
                     ServerPlayer target = src.getServer().getPlayerList().getPlayerByName(name);
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
-                    self.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
+                    self.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpo.success", name), false);
                     return 1;
                 })
@@ -397,7 +397,7 @@ public class ServerAdminCommands {
                     String name = StringArgumentType.getString(ctx, "target");
                     ServerPlayer target = src.getServer().getPlayerList().getPlayerByName(name);
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
-                    target.teleportTo(self.serverLevel(), self.getX(), self.getY(), self.getZ(), self.getYRot(), self.getXRot());
+                    target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(self), self.getX(), self.getY(), self.getZ(), self.getYRot(), self.getXRot());
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpohere.success", name), true);
                     target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.tpohere.notify", self.getName().getString()));
                     return 1;
@@ -422,7 +422,7 @@ public class ServerAdminCommands {
                     ServerPlayer online = src.getServer().getPlayerList().getPlayerByName(name);
                     if (online != null) {
                         // Player is online — just use tpo logic
-                        self.teleportTo(online.serverLevel(), online.getX(), online.getY(), online.getZ(), online.getYRot(), online.getXRot());
+                        self.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(online), online.getX(), online.getY(), online.getZ(), online.getYRot(), online.getXRot());
                         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpoffline.online", name), false);
                         return 1;
                     }
@@ -585,7 +585,7 @@ public class ServerAdminCommands {
         if (typeOpt.isEmpty()) { src.sendFailure(MessageUtil.error("commands.neoessentials.spawnmob.unknown", mobName)); return 0; }
         var hit = player.pick(6, 1.0f, false);
         BlockPos bpos = BlockPos.containing(hit.getLocation());
-        var level = player.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
         var state = level.getBlockState(bpos);
         if (!state.is(Blocks.SPAWNER) || !(level.getBlockEntity(bpos) instanceof SpawnerBlockEntity spawnerBE)) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.spawner.not_looking_at_spawner")); return 0;

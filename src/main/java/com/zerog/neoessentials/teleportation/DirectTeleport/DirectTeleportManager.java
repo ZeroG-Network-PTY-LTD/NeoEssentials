@@ -116,7 +116,7 @@ public class DirectTeleportManager {
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
         TeleportLocation targetLocation = new TeleportLocation(
-            player.serverLevel().dimension().location().toString(), x, y, z, 0f, 0f, 
+            com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString(), x, y, z, 0f, 0f, 
             executor.getName().getString());
         
         return TeleportUtil.teleportPlayer(player, targetLocation, teleportDelay * 20, !bypassSafetyChecks)
@@ -221,7 +221,7 @@ public class DirectTeleportManager {
      */
     public void teleportAllPlayersToCoordinates(ServerPlayer executor, double x, double y, double z) {
         TeleportLocation targetLocation = new TeleportLocation(
-            executor.serverLevel().dimension().location().toString(), x, y, z, 0f, 0f, 
+            com.zerog.neoessentials.util.LevelCompat.of(executor).dimension().location().toString(), x, y, z, 0f, 0f, 
             executor.getName().getString());
         teleportAllPlayers(executor, targetLocation);
     }

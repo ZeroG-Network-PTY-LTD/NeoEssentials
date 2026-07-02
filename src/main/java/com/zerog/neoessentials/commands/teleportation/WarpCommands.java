@@ -216,7 +216,7 @@ public class WarpCommands {
         String name = StringArgumentType.getString(ctx, "name");
         try {
             BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             return WarpManager.getInstance().createWarp(player, name, level, pos) ? 1 : 0;
         } catch (Exception e) {
             ctx.getSource().sendFailure(MessageUtil.error("teleport.warp.invalid_coordinates"));

@@ -199,7 +199,7 @@ public class SpawnCommands {
         
         try {
             BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             
             if (spawnManager.setSpawn(player, level, pos)) {
                 return 1;

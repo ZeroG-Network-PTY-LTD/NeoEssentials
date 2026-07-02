@@ -466,7 +466,7 @@ public class HologramCommand {
             src.sendFailure(Component.literal("Â§cThis command can only be run by a player."));
             return 0;
         }
-        String dimKey = HologramRenderer.dimensionKey(player.serverLevel());
+        String dimKey = HologramRenderer.dimensionKey(com.zerog.neoessentials.util.LevelCompat.of(player));
         double px = player.getX(), pz = player.getZ();
         List<HologramData> nearby = new ArrayList<>();
         for (HologramData d : HologramManager.getInstance().getAllHolograms()) {
@@ -850,10 +850,10 @@ public class HologramCommand {
         data.x = player.getX();
         data.y = player.getY() + 1.5;
         data.z = player.getZ();
-        data.world = HologramRenderer.dimensionKey(player.serverLevel());
+        data.world = HologramRenderer.dimensionKey(com.zerog.neoessentials.util.LevelCompat.of(player));
         data.refreshInterval = 5;
         HologramManager.getInstance().registerHologram(data);
-        HologramRenderer.spawn(data, player.serverLevel());
+        HologramRenderer.spawn(data, com.zerog.neoessentials.util.LevelCompat.of(player));
         double nx = data.x, ny = data.y, nz = data.z;
         src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Hologram '\u00a7e" + id + "\u00a7a' created at your position \u00a77(" + fmt(nx) + ", " + fmt(ny) + ", " + fmt(nz) + ")\u00a7a.\n\u00a77Use \u00a7f/hologram addline " + id + " <text> \u00a77to add lines."), true);
         return 1;

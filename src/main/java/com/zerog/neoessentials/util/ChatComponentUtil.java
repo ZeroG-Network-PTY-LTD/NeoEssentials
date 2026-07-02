@@ -34,7 +34,7 @@ public class ChatComponentUtil {
         component.setStyle(Style.EMPTY
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/" + command))
             .withHoverEvent(hoverText != null ? 
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
+                com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.YELLOW)
             .withUnderlined(true)
         );
@@ -55,7 +55,7 @@ public class ChatComponentUtil {
         component.setStyle(Style.EMPTY
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/" + command))
             .withHoverEvent(hoverText != null ? 
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
+                com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.AQUA)
             .withUnderlined(true)
         );
@@ -76,7 +76,7 @@ public class ChatComponentUtil {
         component.setStyle(Style.EMPTY
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.OPEN_URL, url))
             .withHoverEvent(hoverText != null ? 
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
+                com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)) : null)
             .withColor(ChatFormatting.BLUE)
             .withUnderlined(true)
         );
@@ -95,7 +95,7 @@ public class ChatComponentUtil {
         MutableComponent component = Component.literal(text);
         
         component.setStyle(Style.EMPTY
-            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
+            .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
             .withColor(color != null ? color : ChatFormatting.WHITE)
         );
         
@@ -140,7 +140,7 @@ public class ChatComponentUtil {
         MutableComponent component = Component.literal(permission);
         component.setStyle(Style.EMPTY
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, permission))
-            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
+            .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
             .withColor(ChatFormatting.LIGHT_PURPLE)
         );
         

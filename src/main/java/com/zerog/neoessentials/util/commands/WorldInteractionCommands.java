@@ -91,7 +91,7 @@ public class WorldInteractionCommands {
             return 0;
         }
 
-        var level = player.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
         Vec3 eyePos = player.getEyePosition();
         Vec3 dir = player.getLookAngle().scale(speed);
         Vec3 spawnPos = eyePos.add(dir);
@@ -199,7 +199,7 @@ public class WorldInteractionCommands {
         var player = src.getPlayer();
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
-        var level = player.serverLevel();
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
         // Raycast to find target block, then plant one block above
         var hit = player.pick(20, 1.0f, false);
         BlockPos target = BlockPos.containing(hit.getLocation()).above();
@@ -273,7 +273,7 @@ public class WorldInteractionCommands {
                 }
                 BlockPos bpos = BlockPos.containing(hit.getLocation());
                 @SuppressWarnings("resource") // ServerLevel is not AutoCloseable
-                var level = player.serverLevel();
+                var level = com.zerog.neoessentials.util.LevelCompat.of(player);
                 BlockState state = level.getBlockState(bpos);
 
                 if (state.isAir()) {
@@ -344,7 +344,7 @@ public class WorldInteractionCommands {
                 var player = src.getPlayer();
                 if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
-                var level = player.serverLevel();
+                var level = com.zerog.neoessentials.util.LevelCompat.of(player);
                 int x = player.getBlockX();
                 int z = player.getBlockZ();
                 int minY = level.getMinBuildHeight();
@@ -439,7 +439,7 @@ public class WorldInteractionCommands {
                     int count = 0;
                     for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) {
                         @SuppressWarnings("resource") // ServerLevel is not AutoCloseable
-                        boolean sameLevel = p.serverLevel() == targetLevel;
+                        boolean sameLevel = com.zerog.neoessentials.util.LevelCompat.of(p) == targetLevel;
                         if (sameLevel) {
                             p.sendSystemMessage(broadcast);
                             count++;

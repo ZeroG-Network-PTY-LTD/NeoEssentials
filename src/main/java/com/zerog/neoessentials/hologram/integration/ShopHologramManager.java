@@ -286,7 +286,7 @@ public class ShopHologramManager {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
 
-        ShopData shop = shopFromHologramEntity(display, player.serverLevel());
+        ShopData shop = shopFromHologramEntity(display, com.zerog.neoessentials.util.LevelCompat.of(player));
         if (shop == null) return;
 
         // Guard: only process if the hologram is marked interactive
@@ -327,7 +327,7 @@ public class ShopHologramManager {
             player.sendSystemMessage(Component.literal("§cThis shop does not sell items."));
             return;
         }
-        TransactionResult result = ShopTransaction.executeBuy(player, shop, player.serverLevel());
+        TransactionResult result = ShopTransaction.executeBuy(player, shop, com.zerog.neoessentials.util.LevelCompat.of(player));
         sendTransactionResult(player, result, shop, true);
     }
 
@@ -341,7 +341,7 @@ public class ShopHologramManager {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!(event.getTarget() instanceof Display.TextDisplay display)) return;
 
-        ShopData shop = shopFromHologramEntity(display, player.serverLevel());
+        ShopData shop = shopFromHologramEntity(display, com.zerog.neoessentials.util.LevelCompat.of(player));
         if (shop == null) return;
 
         // Guard: only process if the hologram is marked interactive
@@ -364,7 +364,7 @@ public class ShopHologramManager {
             player.sendSystemMessage(Component.literal("§cThis shop does not buy items."));
             return;
         }
-        TransactionResult result = ShopTransaction.executeSell(player, shop, player.serverLevel());
+        TransactionResult result = ShopTransaction.executeSell(player, shop, com.zerog.neoessentials.util.LevelCompat.of(player));
         sendTransactionResult(player, result, shop, false);
     }
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -737,11 +737,11 @@ public class MessageUtil {
         MutableComponent confirm = Component.literal("[Confirm]")
             .withStyle(style -> style.withColor(TextColor.fromRgb(0x4CAF50)))
             .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandConfirm)))
-            .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to confirm " + action + " of home '" + homeName + "'"))));
+            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to confirm " + action + " of home '" + homeName + "'"))));
         MutableComponent deny = Component.literal("[Deny]")
             .withStyle(style -> style.withColor(TextColor.fromRgb(0xF44336)))
             .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandDeny)))
-            .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to cancel " + action + " of home '" + homeName + "'"))));
+            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to cancel " + action + " of home '" + homeName + "'"))));
         return Component.literal("")
             .append(Component.literal("Are you sure you want to "+action+" home '").withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD600))))
             .append(Component.literal(homeName).withStyle(style -> style.withColor(TextColor.fromRgb(0xFF9800))))

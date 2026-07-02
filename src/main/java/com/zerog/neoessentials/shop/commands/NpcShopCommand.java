@@ -93,11 +93,11 @@ public class NpcShopCommand {
             shopData.spawnZ    = player.getZ();
 
             // Spawn a vanilla ArmorStand — no custom EntityType needed client-side
-            ArmorStand npc = ShopNpcEntity.create(player.serverLevel(), shopData.shopId, name);
+            ArmorStand npc = ShopNpcEntity.create(com.zerog.neoessentials.util.LevelCompat.of(player), shopData.shopId, name);
             npc.setPos(player.getX(), player.getY(), player.getZ());
             shopData.entityUUID = npc.getUUID();
 
-            player.serverLevel().addFreshEntity(npc);
+            com.zerog.neoessentials.util.LevelCompat.of(player).addFreshEntity(npc);
             ShopEntityManager.getInstance().register(shopData);
 
             src.sendSuccess(() -> Component.literal("§aNPC shop §f\"" + name + "\"§a created. " +
@@ -117,7 +117,7 @@ public class NpcShopCommand {
             ServerPlayer player = src.getPlayerOrException();
 
             // Find nearest NeoEssentials shop ArmorStand within 5 blocks
-            List<ArmorStand> nearby = player.serverLevel().getEntitiesOfClass(
+            List<ArmorStand> nearby = com.zerog.neoessentials.util.LevelCompat.of(player).getEntitiesOfClass(
                     ArmorStand.class,
                     new AABB(player.getX() - 5, player.getY() - 5, player.getZ() - 5,
                              player.getX() + 5, player.getY() + 5, player.getZ() + 5),

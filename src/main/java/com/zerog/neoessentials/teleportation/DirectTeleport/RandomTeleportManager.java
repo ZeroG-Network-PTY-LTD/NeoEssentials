@@ -83,7 +83,7 @@ public class RandomTeleportManager {
         player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.tpr_searching"));
 
         CompletableFuture<Boolean> result = new CompletableFuture<>();
-        getRandomLocation(player.serverLevel(), name)
+        getRandomLocation(com.zerog.neoessentials.util.LevelCompat.of(player), name)
                 .thenAccept(loc -> {
                     if (loc == null) {
                         player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_no_safe_location"));
@@ -112,7 +112,7 @@ public class RandomTeleportManager {
                                     result.complete(true);
 
                                     // Pre-warm cache in background
-                                    prewarmCache(player.serverLevel(), name);
+                                    prewarmCache(com.zerog.neoessentials.util.LevelCompat.of(player), name);
                                 } else {
                                     player.sendSystemMessage(MessageUtil.error(
                                             "commands.neoessentials.teleport.misc.tpr_failed",

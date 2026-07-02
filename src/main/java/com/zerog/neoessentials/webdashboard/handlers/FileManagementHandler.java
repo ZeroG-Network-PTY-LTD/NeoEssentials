@@ -720,7 +720,7 @@ public class FileManagementHandler implements HttpHandler {
         JsonObject obj = new JsonObject();
         obj.addProperty("name", p.getName().getString());
         obj.addProperty("uuid", p.getStringUUID());
-        obj.addProperty("world", p.serverLevel().dimension().location().toString());
+        obj.addProperty("world", com.zerog.neoessentials.util.LevelCompat.of(p).dimension().location().toString());
         obj.addProperty("health", p.getHealth());
         obj.addProperty("maxHealth", p.getMaxHealth());
         obj.addProperty("foodLevel", p.getFoodData().getFoodLevel());
