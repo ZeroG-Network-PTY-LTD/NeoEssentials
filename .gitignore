@@ -29,7 +29,7 @@ bin/
 # gradle
 build
 .gradle
-.gradle/*
+.gradle/buildOutputCleanup
 
 # other
 eclipse
