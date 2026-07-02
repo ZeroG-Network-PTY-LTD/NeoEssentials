@@ -1,0 +1,60 @@
+/*
+  ZeroG Network dashboard — design tokens.
+
+  Direction: a mining/ore control panel, not a generic SaaS admin.
+  Dark slate-blue (not pure black) reads as "underground/server room"
+  without the near-black+neon-accent cliche. Copper is the primary
+  action color (ore, warmth); moss green marks online/healthy state
+  (the other half of an ore vein). Ember red is reserved for
+  destructive actions only, so it stays meaningful.
+
+  Display face: Space Grotesk — geometric, slightly blocky, echoes
+  voxel geometry without resorting to a literal pixel font.
+  Body face: Inter — quiet, legible at small sizes.
+  Data face: JetBrains Mono — coordinates, balances, commands, logs
+  are all fundamentally technical strings; monospace makes columns
+  of numbers scan correctly.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --mc-bg-base: #12151a;
+  --mc-bg-surface: #1b1f27;
+  --mc-bg-surface-raised: #232833;
+  --mc-border: #2e3440;
+  --mc-border-strong: #3a4150;
+
+  --mc-text-primary: #e8e6dd;
+  --mc-text-secondary: #9a9ca8;
+  --mc-text-muted: #6b6e7a;
+
+  --mc-copper-50: #2a2019;
+  --mc-copper-400: #c97b3d;
+  --mc-copper-500: #d9822b;
+  --mc-copper-600: #b4661f;
+
+  --mc-moss-50: #182219;
+  --mc-moss-400: #6b9b5e;
+  --mc-moss-500: #7fb072;
+
+  --mc-ember-50: #2a1818;
+  --mc-ember-400: #d9534f;
+  --mc-ember-500: #e06864;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-data: 'JetBrains Mono', monospace;
+
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+body {
+  background: var(--mc-bg-base);
+  color: var(--mc-text-primary);
+  font-family: var(--font-body);
+}
+
+.font-display { font-family: var(--font-display); }
+.font-data { font-family: var(--font-data); }
