@@ -69,7 +69,7 @@
 | `/tpahere` | `/tpahere <player>` | `neoessentials.teleport.tpahere` | ✅ | Request a player teleport to you |
 | `/tpaccept` | `/tpaccept` | `neoessentials.teleport.tpaccept` | ✅ | Accept a pending teleport request |
 | `/tpdeny` | `/tpdeny` | `neoessentials.teleport.tpdeny` | ✅ | Deny a pending teleport request |
-| `/tpacancel` | `/tpacancel` | `neoessentials.teleport.tpacancel` | ✅ | Cancel your outgoing teleport request |
+| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.tpacancel` | ✅ | Cancel your outgoing teleport request |
 
 ### Random Teleport
 | Command | Syntax | Permission | Default | Description |
@@ -86,11 +86,11 @@
 
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/home` | `/home [name]` | `neoessentials.home` | ✅ | Teleport to your home (or named home) |
-| `/sethome` | `/sethome [name]` | `neoessentials.home.set` | ✅ | Set your home at current location |
-| `/delhome` | `/delhome [name]` | `neoessentials.home.delete` | ✅ | Delete a home |
+| `/home` | `/home [name]` | `neoessentials.teleport.home` | ✅ | Teleport to your home (or named home) |
+| `/sethome` | `/sethome [name]` | `neoessentials.teleport.home.set` | ✅ | Set your home at current location |
+| `/delhome` | `/delhome [name]` | `neoessentials.teleport.home.delete` | ✅ | Delete a home |
 | `/deletehome` | alias for `/delhome` | same | ✅ | Alias |
-| `/homes` | `/homes` | `neoessentials.home.list` | ✅ | List all your homes |
+| `/homes` | `/homes` | `neoessentials.teleport.home.list` | ✅ | List all your homes |
 
 ---
 
@@ -99,18 +99,19 @@
 ### Server Warps
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/warp` | `/warp <name>` | `neoessentials.warp` | ✅ | Teleport to a named warp |
-| `/setwarp` | `/setwarp <name>` | `neoessentials.warp.set` | 🔒 | Create a warp at current location |
-| `/delwarp` | `/delwarp <name>` | `neoessentials.warp.delete` | 🔒 | Delete a warp |
-| `/warps` | `/warps [page]` | `neoessentials.warp.list` | ✅ | List all available warps |
+| `/warp` | `/warp <name>` | `neoessentials.teleport.warp` | ✅ | Teleport to a named warp |
+| `/setwarp` | `/setwarp <name>` | `neoessentials.teleport.warp.create` | 🔒 | Create a warp at current location |
+| `/delwarp` | `/delwarp <name>` | `neoessentials.teleport.warp.delete` | 🔒 | Delete a warp |
+| `/warps` | `/warps [page]` | `neoessentials.teleport.warp.list` | ✅ | List all available warps |
+| `/warpinfo` | `/warpinfo <name>` | `neoessentials.warpinfo` | 🔒 | Show warp coordinates and world |
 
 ### Player Warps
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/pwarp` | `/pwarp <name>` | `neoessentials.pwarp` | ✅ | Teleport to a player warp |
-| `/setpwarp` | `/setpwarp <name>` | `neoessentials.pwarp.set` | ✅ | Create your own player warp |
-| `/delpwarp` | `/delpwarp <name>` | `neoessentials.pwarp.delete` | ✅ | Delete one of your player warps |
-| `/pwarps` | `/pwarps` | `neoessentials.pwarp.list` | ✅ | List your player warps |
+| `/pwarp` | `/pwarp <name>` | `neoessentials.teleport.pwarp` | ✅ | Teleport to a player warp |
+| `/setpwarp` | `/setpwarp <name>` | `neoessentials.teleport.pwarp.create` | ✅ | Create your own player warp |
+| `/delpwarp` | `/delpwarp <name>` | `neoessentials.teleport.pwarp.delete` | ✅ | Delete one of your player warps |
+| `/pwarps` | `/pwarps` | `neoessentials.teleport.pwarp.list` | ✅ | List your player warps |
 
 ---
 
@@ -118,8 +119,8 @@
 
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/spawn` | `/spawn` | `neoessentials.spawn` | ✅ | Teleport to server spawn |
-| `/setspawn` | `/setspawn` | `neoessentials.spawn.set` | 🔒 | Set the server spawn at your location |
+| `/spawn` | `/spawn` | `neoessentials.teleport.spawn` | ✅ | Teleport to server spawn |
+| `/setspawn` | `/setspawn` | `neoessentials.teleport.spawn.set` | 🔒 | Set the server spawn at your location |
 
 ---
 
@@ -260,8 +261,13 @@
 | `/trash` | alias for `/dispose` | same | ✅ | Alias |
 | `/clearinventory` | `/clearinventory [player]` | `neoessentials.item.clearinventory` | 🔒 | Clear a player's inventory |
 | `/ci` | alias for `/clearinventory` | same | 🔒 | Alias |
-| `/clear` | alias for `/clearinventory` | same | 🔒 | Alias |
+| `/item` | `/item <id> [amount]` | `neoessentials.item` | 🔒 | Give yourself an item by registry ID |
+| `/i` | alias for `/item` | same | 🔒 | Alias |
+| `/potion` | `/potion <add\|remove\|clear> <effect> [duration] [amp]` | `neoessentials.potion` | 🔒 | Edit potion effects on held potion |
 | `/powertool` | `/powertool <command>` or `/powertool clear` | `neoessentials.item.powertool` | 🔒 | Bind a command to held item |
+| `/ptool` | alias for `/powertool` | same | 🔒 | Alias |
+| `/powertooltoggle` | `/powertooltoggle` | `neoessentials.item.powertool` | 🔒 | Toggle all powertools on/off |
+| `/ptt` | alias for `/powertooltoggle` | same | 🔒 | Alias |
 | `/pt` | alias for `/powertool` | same | 🔒 | Alias (also alias for paytoggle — use with care) |
 
 > **⚠️ Powertool command filter** — by default, commands containing relative coordinates (`~`), `@` selectors, `{...}` NBT, or shell-like characters are blocked.  
@@ -284,12 +290,14 @@
 ### Portable Workstations
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/anvil` | `/anvil` | `neoessentials.item.anvil` | 🔒 | Open portable anvil |
-| `/workbench` | `/workbench` | `neoessentials.item.workbench` | 🔒 | Open portable crafting table |
+| `/anvil` | `/anvil` | `neoessentials.anvil` | 🔒 | Open portable anvil |
+| `/workbench` | `/workbench` | `neoessentials.crafting` | 🔒 | Open portable crafting table |
 | `/crafting` | alias for `/workbench` | same | 🔒 | Alias |
 | `/craft` | alias for `/workbench` | same | 🔒 | Alias |
-| `/grindstone` | `/grindstone` | `neoessentials.item.grindstone` | 🔒 | Open portable grindstone |
-| `/smithing` | `/smithing` | `neoessentials.item.smithing` | 🔒 | Open portable smithing table |
+| `/grindstone` | `/grindstone` | `neoessentials.grindstone` | 🔒 | Open portable grindstone |
+| `/smithing` | `/smithing` | `neoessentials.smithing` | 🔒 | Open portable smithing table |
+| `/stonecutting` | `/stonecutting` | `neoessentials.stonecutting` | 🔒 | Open portable stonecutter |
+| `/stonecutter` | alias for `/stonecutting` | same | 🔒 | Alias |
 | `/loom` | `/loom` | `neoessentials.loom` | 🔒 | Open portable loom |
 | `/cartography` | `/cartography` | `neoessentials.cartography` | 🔒 | Open portable cartography table |
 | `/cartographytable` | alias for `/cartography` | same | 🔒 | Alias |
@@ -352,7 +360,7 @@
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
 | `/seen` | `/seen <player>` | `neoessentials.seen` | ✅ | Show if a player is online with location/ping, or offline |
-| `/near` | `/near [radius]` | `neoessentials.near` | ✅ | List players within radius (default 200 blocks) with distance |
+| `/near` | `/near [radius]` | `neoessentials.near` | ✅ | List players within radius (default 100 blocks, max 500) with distance |
 | `/ping` | `/ping [player]` | `neoessentials.ping` / `.ping.others` | ✅ | Show network latency in ms. Green <80ms, yellow <200ms, red otherwise |
 | `/playtime` | `/playtime [player]` | `neoessentials.playtime` / `.playtime.others` | ✅ | Show total server play time (hours/minutes/seconds) from vanilla stats |
 | `/whois` | `/whois <player>` | `neoessentials.whois` | 🔒 | Show UUID, world, coordinates, gamemode, ping, health and food level |

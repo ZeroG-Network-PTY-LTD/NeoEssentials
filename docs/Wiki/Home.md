@@ -17,6 +17,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Kit Management](KitManagement) | Kits, cooldowns, give-to-others, kitreset |
 | [Item Management](ItemManagement) | Repair, enchant, powertool, clearinv, condense |
 | [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
+| [Hologram System](HologramSystem) | Animated `/hologram` displays, billboard/spin/hover, shop hologram click-to-trade, dashboard API |
 | [Permission System](PermissionSystem) | All permission nodes, groups, wildcards, external mods |
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders, stat tokens |
@@ -39,10 +40,10 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
    - `moderation.json` — ban, jail, freeze, kick
    - `tablist.json` — tablist header/footer/formatting
    - `security.json` — input validation, `allowUnsafeCommands` (powertool filter), XSS protection
-   - `webdashboard.json` — web dashboard port and auth
    - `economy.json` — player balances (runtime data)
    - `permissions.json` — groups and permission nodes
    - `kits.json` — kit definitions
+   - `webDashboard` port/auth/UI settings currently live only in the monolithic `config.json` (not migrated to a split file — see [Split Config System](SplitConfigs))
    - See [Split Config System](SplitConfigs) for the complete reference
 4. Assign permissions to players/groups via `/permissions` or LuckPerms/FTBRanks
 

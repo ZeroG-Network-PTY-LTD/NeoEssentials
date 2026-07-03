@@ -49,7 +49,7 @@ Item management commands for repair, disposal, enchanting, inventory management,
 | `/itemlore` | `/itemlore add\|set <n>\|remove <n>\|clear <text>` | `neoessentials.itemlore` | Edit held item lore lines |
 | `/more` | `/more [amount]` | `neoessentials.more` | Fill held stack to max |
 | `/hat` | `/hat` | `neoessentials.hat` | Wear held item as helmet |
-| `/item` | `/item <id> [amount]` | `neoessentials.item.give` | Give yourself an item by registry ID |
+| `/item` | `/item <id> [amount]` | `neoessentials.item` | Give yourself an item by registry ID |
 | `/i` | alias | same | Alias |
 | `/skull` | `/skull [player]` | `neoessentials.skull` | Get a player head item |
 
@@ -125,7 +125,7 @@ Then run `/neoe reload` — no restart needed.
 | Command | Permission | Description |
 |---|---|---|
 | `/anvil` | `neoessentials.anvil` | Open portable anvil |
-| `/workbench` / `/crafting` / `/craft` | `neoessentials.workbench` | Open portable crafting table |
+| `/workbench` / `/crafting` / `/craft` | `neoessentials.crafting` | Open portable crafting table |
 | `/grindstone` | `neoessentials.grindstone` | Open portable grindstone |
 | `/smithing` | `neoessentials.smithing` | Open portable smithing table |
 | `/stonecutting` / `/stonecutter` | `neoessentials.stonecutting` | Open portable stonecutter |

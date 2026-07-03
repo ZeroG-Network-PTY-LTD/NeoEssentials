@@ -58,11 +58,11 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/home` | `/home [name]` | `neoessentials.home` | Teleport to a home |
-| `/sethome` | `/sethome [name]` | `neoessentials.home.set` | Set home at current location |
-| `/delhome` | `/delhome [name]` | `neoessentials.home.delete` | Delete a home |
+| `/home` | `/home [name]` | `neoessentials.teleport.home` | Teleport to a home |
+| `/sethome` | `/sethome [name]` | `neoessentials.teleport.home.set` | Set home at current location |
+| `/delhome` | `/delhome [name]` | `neoessentials.teleport.home.delete` | Delete a home |
 | `/deletehome` | alias | same | Alias |
-| `/homes` | `/homes` | `neoessentials.home.list` | List all homes |
+| `/homes` | `/homes` | `neoessentials.teleport.home.list` | List all homes |
 | `/renamehome` | `/renamehome <old> <new>` | `neoessentials.renamehome` | Rename a home |
 
 ### Config (`teleportation.homeSettings`)
@@ -71,11 +71,13 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 |---|---|---|
 | `maxHomes` | `5` | Max homes per player |
 | `allowCrossDimensionHomes` | `true` | Allow homes in other dimensions |
+| `homeSetCooldown` | `30` | Seconds between `/sethome` uses (0 = disabled) |
+| `homeTeleportCooldown` | `5` | Seconds a player must wait between `/home` uses (0 = disabled) |
+| `homeDeleteCooldown` | `10` | Seconds between `/delhome` uses (0 = disabled) |
+| `requireConfirmationForDelete` | `true` | Require a confirmation dialog before deleting a home |
 | `enableHomeTeleportSafety` | `true` | Check safe location on home TP |
-| `homeTeleportCooldown` | `0` | Seconds a player must wait between `/home` uses (0 = disabled) |
-| `cancelOnMovement` | `true` | Cancel if player moves during warm-up delay |
 
-> `teleportDelay` (warmup before the teleport fires) is a **global** setting in `generalSettings.teleportDelay`, not per-feature.
+> `teleportDelay` (warmup before the teleport fires) and `cancelOnMovement` (cancel if the player moves during warm-up) are **global** settings under `generalSettings`, not per-feature — see the table below.
 
 ---
 
@@ -85,7 +87,7 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 |---|---|---|---|
 | Warmup delay | `generalSettings.teleportDelay` | `config.json` | Seconds to wait before any teleport completes. `0` = instant. |
 | Warmup countdown | `generalSettings.enableTeleportWarmup` | `config.json` | Show a countdown message to the player during the warmup. |
-| Cancel on move | `teleportation.homeSettings.cancelOnMovement` | same for warp/spawn | Cancel teleport if the player moves during warmup. |
+| Cancel on move | `teleportation.generalSettings.cancelOnMovement` | `config.json` | Cancel teleport if the player moves during warmup (applies to all teleport types). |
 | Home cooldown | `teleportation.homeSettings.homeTeleportCooldown` | `config.json` | Seconds between successive `/home` uses. `0` = no cooldown. |
 | Warp cooldown | `teleportation.warpSettings.warpCooldown` | `config.json` | Seconds between successive `/warp` uses. `0` = no cooldown. |
 | Spawn cooldown | `teleportation.spawnSettings.spawnCooldown` | `config.json` | Seconds between successive `/spawn` uses. `0` = no cooldown. |
@@ -135,7 +137,7 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | `/tpahere` | `/tpahere <player>` | `neoessentials.teleport.tpahere` | Request player TP to you |
 | `/tpaccept` | `/tpaccept` | `neoessentials.teleport.tpaccept` | Accept incoming request |
 | `/tpdeny` | `/tpdeny` | `neoessentials.teleport.tpdeny` | Deny incoming request |
-| `/tpacancel` | `/tpacancel` | `neoessentials.teleport.tpacancel` | Cancel your outgoing request |
+| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.tpacancel` | Cancel your outgoing request |
 | `/tptoggle` | `/tptoggle [on\|off]` | `neoessentials.tptoggle` | Toggle accepting TP requests |
 | `/tpauto` | `/tpauto [on\|off]` | `neoessentials.tpauto` | Auto-accept all incoming TPA requests |
 | `/tpaall` | `/tpaall [player]` | `neoessentials.tpaall` | Send TPA-here to all online players |
@@ -155,12 +157,14 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 
 | Key | Default | Description |
 |---|---|---|
-| `defaultMinRange` | `500` | Minimum distance from centre |
-| `defaultMaxRange` | `10000` | Maximum distance from centre |
+| `defaultMinRange` | `0` | Minimum distance from centre (global default) |
+| `defaultMaxRange` | `10000` | Maximum distance from centre (-1 = half the world border) |
 | `findAttempts` | `10` | Attempts to find a safe spot |
-| `cooldown` | `300` | Seconds between uses per player |
+| `cooldown` | `60` | Seconds between uses per player |
 | `cacheThreshold` | `10` | Pre-computed location cache size |
-| `excludedBiomes` | `[ocean, deep_ocean, void]` | Biomes to avoid |
+| `excludedBiomes` | `[]` | Biomes excluded globally (empty by default) |
+
+> The built-in `"default"` named location under `randomTeleportSettings.locations` additionally excludes all ocean variants and `minecraft:the_void` — configure per-location via `/settpr <name>`.
 
 ---
 
@@ -194,9 +198,10 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 
 | File | Contents |
 |---|---|
-| `neoessentials/homes.json` | Player UUID → named home locations |
+| `neoessentials/playerdata/homes/<uuid>.json` | Per-player named home locations (current format) |
+| `neoessentials/homes.json` | Legacy single-file home storage — only read for one-time migration to the per-player format |
 | `neoessentials/warps.json` | Server warp locations |
-| `neoessentials/player_warps.json` | Player-created warp locations |
+| `playerwarps.json` | Player-created warp locations |
 | `neoessentials/spawn.json` | Spawn location (coordinates & world) |
 
 ---

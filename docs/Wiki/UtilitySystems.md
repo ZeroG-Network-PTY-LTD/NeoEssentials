@@ -297,6 +297,7 @@ Shows Y-coordinate information including depth below sea level and height above 
 | `/more` | `/more [amount]` | `neoessentials.more` | Fill held stack to max |
 | `/hat` | `/hat` | `neoessentials.hat` | Wear held item as helmet |
 | `/exp` | `/exp [show\|set\|give] [amount] [player]` | `neoessentials.exp` | Show, set, or give XP |
+| `/xp` | alias | same | Alias for `/exp` |
 | `/gamemode` | `/gamemode <mode\|0-3> [player]` | `neoessentials.gamemode` | Change gamemode |
 | `/gms`, `/gmc`, `/gma`, `/gmsp` | shortcut | same | Gamemode shortcuts |
 
