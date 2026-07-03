@@ -217,11 +217,13 @@ public class TablistManager {
 
     // ── Tick ──────────────────────────────────────────────────────────────────
     public void onTick(MinecraftServer server) {
-        if (!enabled) return;
-        // Tick animations on every call so frameDuration timing is accurate
-        // even when the tablist refresh interval is longer than a frame duration.
+        // Tick animations unconditionally, even when the tablist system itself is disabled —
+        // {animation:name} tokens are also usable in chat/permission-prefix contexts now
+        // (via RichTextFormatter.processTablistText), so frame timing must keep advancing
+        // regardless of `tablist.enabled`.
         AnimationManager.getInstance().tick(System.currentTimeMillis());
 
+        if (!enabled) return;
         tickCounter++;
         if (tickCounter < refreshIntervalTicks) return;
         tickCounter = 0;
@@ -588,6 +590,29 @@ public class TablistManager {
         return !PermissionAPI.hasPermission(viewer.getUUID(), "neoessentials.vanish.see");
     }
 
+    /**
+     * Vanish-aware online count from {@code viewer}'s perspective — the same computation
+     * {@code {online}} uses in tablist headers. Public so other systems (e.g. chat's
+     * short-form placeholder support) can reuse it.
+     */
+    public int countOnlineExcludingVanish(MinecraftServer server, ServerPlayer viewer) {
+        return (int) server.getPlayerList().getPlayers().stream()
+            .filter(p -> !isVanishedFromPlayer(p, viewer))
+            .count();
+    }
+
+    /** Total minutes elapsed in {@code uuid}'s current session (not capped to 0-59; pair with {@link #getSessionHours}). */
+    public long getSessionMinutes(UUID uuid) {
+        long sessionMs = System.currentTimeMillis()
+            - sessionStartTimes.getOrDefault(uuid, System.currentTimeMillis());
+        return sessionMs / 60_000;
+    }
+
+    /** Full hours elapsed in {@code uuid}'s current session. */
+    public long getSessionHours(UUID uuid) {
+        return getSessionMinutes(uuid) / 60;
+    }
+
     private boolean isAfk(ServerPlayer player) {
         try {
             return com.zerog.neoessentials.chat.AfkManager.getInstance().isAfk(player.getUUID());
@@ -606,7 +631,8 @@ public class TablistManager {
         return player.getName().getString();
     }
 
-    private double getTps(MinecraftServer server) {
+    /** Public so other systems (e.g. chat's short-form placeholder support) can reuse it. */
+    public double getTps(MinecraftServer server) {
         try {
             double avgMs = server.getAverageTickTimeNanos() / 1_000_000.0;
             return Math.min(20.0, 1000.0 / Math.max(avgMs, 1.0));
@@ -661,7 +687,8 @@ public class TablistManager {
         return "default";
     }
 
-    private int getGroupWeight(ServerPlayer player) {
+    /** Public so other systems (e.g. chat's short-form placeholder support) can reuse it. */
+    public int getGroupWeight(ServerPlayer player) {
         try {
             com.zerog.neoessentials.permissions.PermissionManager mgr =
                 com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();

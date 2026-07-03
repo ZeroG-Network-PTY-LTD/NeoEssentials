@@ -20,6 +20,9 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.EconomyPlayerUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.chat.RichTextFormatter;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import java.util.UUID;
 import java.util.Optional;
 
@@ -1054,10 +1057,21 @@ public class PermissionsCommand {
         
         ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.permissions.groups_header"), false);
         for (PermissionGroup group : groups) {
-            String prefix = group.getPrefix() != null ? group.getPrefix() : MessageUtil.localize("commands.neoessentials.permissions.none");
-            String suffix = group.getSuffix() != null ? group.getSuffix() : MessageUtil.localize("commands.neoessentials.permissions.none");
-            ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.group_entry", 
-                group.getName(), prefix, suffix), false);
+            // "group_entry" template is "§7- §f{0} §7(priority: {1})" — only 2 placeholders
+            // (name, priority). Prefix/suffix are shown on a separate line below since they're
+            // admin-authored &-code/hex/gradient strings that need RichTextFormatter, not a
+            // translation-template arg (which would show the raw "&7"/"<gradient:...>" text).
+            ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.group_entry",
+                group.getName(), group.getPriority()), false);
+            if ((group.getPrefix() != null && !group.getPrefix().isEmpty())
+                || (group.getSuffix() != null && !group.getSuffix().isEmpty())) {
+                ctx.getSource().sendSuccess(() -> Component.literal("    Prefix: ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(group.getPrefix() != null && !group.getPrefix().isEmpty()
+                        ? RichTextFormatter.processTablistText(group.getPrefix()) : Component.literal("none"))
+                    .append(Component.literal("  Suffix: ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(group.getSuffix() != null && !group.getSuffix().isEmpty()
+                        ? RichTextFormatter.processTablistText(group.getSuffix()) : Component.literal("none")), false);
+            }
         }
         return 1;
     }
@@ -1133,8 +1147,14 @@ public class PermissionsCommand {
         }
 
         ctx.getSource().sendSuccess(() -> MessageUtil.info("=== Group: " + group.getName() + " ==="), false);
-        ctx.getSource().sendSuccess(() -> MessageUtil.info("Prefix: " + (group.getPrefix() != null ? group.getPrefix() : "None")), false);
-        ctx.getSource().sendSuccess(() -> MessageUtil.info("Suffix: " + (group.getSuffix() != null ? group.getSuffix() : "None")), false);
+        // Prefix/suffix are admin-authored &-code/hex/gradient strings, not translation keys —
+        // route them through RichTextFormatter (always processes rich text, like tablist/holograms)
+        // instead of MessageUtil.info(), which would wrap them in Component.literal() unconverted
+        // and show the raw "&7"/"<gradient:...>" text instead of the actual colors.
+        ctx.getSource().sendSuccess(() -> Component.literal("Prefix: ").withStyle(ChatFormatting.AQUA)
+            .append(group.getPrefix() != null ? RichTextFormatter.processTablistText(group.getPrefix()) : Component.literal("None")), false);
+        ctx.getSource().sendSuccess(() -> Component.literal("Suffix: ").withStyle(ChatFormatting.AQUA)
+            .append(group.getSuffix() != null ? RichTextFormatter.processTablistText(group.getSuffix()) : Component.literal("None")), false);
         ctx.getSource().sendSuccess(() -> MessageUtil.info("Priority: " + group.getPriority()), false);
         ctx.getSource().sendSuccess(() -> MessageUtil.info("Permissions (" + group.getPermissions().size() + "):"), false);
 
@@ -2036,8 +2056,13 @@ public class PermissionsCommand {
             return;
         }
 
+        // Legacy &-codes need converting to § before concatenation into this plain-string
+        // §-colour tree view (send() wraps the final string in Component.literal() with no
+        // further processing) — otherwise "&7" etc. shows up as literal text. Gradient/hex
+        // tags aren't expanded here (this is a plain-text tree view, not a rich preview);
+        // use `/permissions info <group>` for a fully rendered prefix/suffix.
         String prefixInfo = (group.getPrefix() != null && !group.getPrefix().isEmpty())
-                ? " §8(prefix: §r" + group.getPrefix() + "§8)" : "";
+                ? " §8(prefix: §r" + group.getPrefix().replaceAll("&([0-9a-fA-Fk-orK-OR])", "§$1") + "§8)" : "";
         send(ctx, "§7" + indent + "§f" + groupName + " §8[" + group.getPermissions().size() + " nodes]" + prefixInfo);
 
         int count = 0;
