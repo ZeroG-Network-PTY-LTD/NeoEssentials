@@ -820,7 +820,8 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.chat.mute` |  op-only | Mute a player | `/mute` |
 | `neoessentials.chat.unmute` |  op-only | Unmute a player | `/unmute` |
 | `neoessentials.chat.mutelist` |  op-only | View muted players | `/mutelist` |
-| `neoessentials.chat.exempt` |  op-only | Exempt from being muted | |
+| `neoessentials.chat.mute.exempt` |  op-only | Exempt from being muted | |
+| `neoessentials.chat.ignore.exempt` |  op-only | Exempt from being ignored | |
 
 #### Formatting & Colours
 | Node | Default | Description |
@@ -828,9 +829,10 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.chat.color` |  op-only | Use `&0-9`, `&a-f` colour codes in chat |
 | `neoessentials.chat.color.hex` |  op-only | Use `&#RRGGBB` hex colours in chat |
 | `neoessentials.chat.format` |  op-only | Use `&k-o`, `&r` formatting codes in chat |
-| `neoessentials.chat.richtext` |  op-only | Use gradient/rainbow rich text effects |
-| `neoessentials.chat.gradient` |  op-only | Use gradient text effects |
-| `neoessentials.chat.rainbow` |  op-only | Use rainbow text effects |
+| `neoessentials.chat.namedcolors` |  op-only | Use `<tag>`-style rich text (named colors, gradient, rainbow, hover, click) in chat messages — this is the node actually enforced by the chat pipeline |
+| `neoessentials.chat.richtext` |  op-only | Registered node — not currently checked anywhere |
+| `neoessentials.chat.gradient` |  op-only | Registered node — not currently checked anywhere |
+| `neoessentials.chat.rainbow` |  op-only | Registered node — not currently checked anywhere |
 
 #### Chat Channels
 | Node | Default | Description |

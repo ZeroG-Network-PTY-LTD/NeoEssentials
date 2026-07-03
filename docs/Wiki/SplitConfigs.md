@@ -23,7 +23,6 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 | `chat.json` | `chat` (formatting, channels, anti-spam, badges, rich text) |
 | `teleportation.json` | `teleportation` (homes, warps, spawn, TPA, random TP) |
 | `moderation.json` | `moderation` (ban, jail, vanish, freeze, kick) |
-| `webdashboard.json` | `webDashboard` (dashboard port, auth, UI settings) |
 | `items.json` | `items` (item spawn, enchantments, stack sizes) |
 | `afk.json` | `afk` (AFK timeout, kick, broadcast messages) |
 | `security.json` | `security` (input validation, unsafe commands) |
@@ -31,6 +30,15 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 
 > **Note:** `kits.json` holds **kit definitions** (the actual kit contents as a JSON array).  
 > Kit *settings* (cooldowns, costs, auto-equip flags) live in `main.json` under the `kits` key.
+
+> **Note — `webDashboard` is not part of the split system.** Unlike every other top-level
+> section, `webDashboard` (dashboard port, auth, UI settings) is **not** migrated to its own
+> split file by `ConfigSplitter` (see `ConfigSplitter.FILE_SECTIONS_MAP` in the source).
+> When split configs are enabled, the merged virtual config has no `webDashboard` section, so
+> `ConfigManager.getWebDashboardPort()` / `isWebDashboardEnabled()` / related getters silently
+> fall back to their hard-coded defaults (port `8080`, enabled `true`, etc.). If you need to
+> customise the web dashboard, do so **before** migrating to split configs, or edit it back into
+> `config.json` while running in monolithic mode.
 
 ---
 
@@ -77,7 +85,6 @@ Files:
   ✔ chat.json          — chat
   ✔ teleportation.json — teleportation
   ✔ moderation.json    — moderation
-  ✔ webdashboard.json  — webDashboard
   ✔ items.json         — items
   ✔ afk.json           — afk
   ✔ security.json      — security
