@@ -1100,6 +1100,14 @@ public class NeoEssentials {
         // ========== AUCTION HOUSE COMMANDS ==========
         registry.registerCommand("ah", "Auction House — buy and sell items", "auctionhouse");
         com.zerog.neoessentials.auctionhouse.command.AuctionHouseCommand.register(dispatcher);
+
+        // ========== TABLIST COMMANDS ==========
+        // NOTE: TablistCommand existed but was never wired up here — every /tablist
+        // subcommand (reload, enable/disable, set header/footer, fakeplayer add/remove,
+        // group/player overrides, etc.) was unreachable ("Unknown command") even though
+        // the passive per-tick header/footer rendering worked fine via TablistEventHandler.
+        registry.registerCommand("tablist", "Manage the player list header/footer/entries");
+        com.zerog.neoessentials.tablist.TablistCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.

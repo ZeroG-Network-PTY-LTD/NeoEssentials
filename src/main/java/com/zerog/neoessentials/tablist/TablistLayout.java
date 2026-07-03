@@ -184,10 +184,18 @@ public class TablistLayout {
      */
     public void applySortingTeams(MinecraftServer server) {
         if (!sortByGroupWeight) return;
+        net.minecraft.server.ServerScoreboard scoreboard;
         try {
-            net.minecraft.server.ServerScoreboard scoreboard = server.getScoreboard();
-            // Re-sort all online players into weight-ordered teams
-            for (ServerPlayer player : sortedPlayers(server)) {
+            scoreboard = server.getScoreboard();
+        } catch (Throwable e) {
+            LOGGER.debug("TablistLayout: applySortingTeams error: {}", e.getMessage());
+            return;
+        }
+        // Re-sort all online players into weight-ordered teams. Each player is wrapped in
+        // its own try/catch (catching Errors too, e.g. a version-drifted Scoreboard/PlayerTeam
+        // API) so one player's failure can't abort sorting for everyone else this tick.
+        for (ServerPlayer player : sortedPlayers(server)) {
+            try {
                 int weight = getGroupWeight(player);
                 String group = getGroup(player);
                 // Team name encodes sort key: "neL_" + zero-padded inverse weight + "_" + group (max 16 chars)
@@ -205,9 +213,10 @@ public class TablistLayout {
                     if (current != null) scoreboard.removePlayerFromTeam(playerName, current);
                     scoreboard.addPlayerToTeam(playerName, team);
                 }
+            } catch (Throwable e) {
+                LOGGER.debug("TablistLayout: applySortingTeams error for {}: {}",
+                    player.getName().getString(), e.getMessage());
             }
-        } catch (Exception e) {
-            LOGGER.debug("TablistLayout: applySortingTeams error: {}", e.getMessage());
         }
     }
 

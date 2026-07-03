@@ -144,7 +144,7 @@ public class FakePlayerManager {
             net.minecraft.network.chat.Component display =
                 RichTextFormatter.processTablistText(fe.display());
 
-            ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(
+            ClientboundPlayerInfoUpdatePacket.Entry entry = com.zerog.neoessentials.util.TabListEntryCompat.create(
                 uuid,
                 new GameProfile(uuid, fe.profileName()),
                 fe.listed(),
@@ -153,6 +153,7 @@ public class FakePlayerManager {
                 display,
                 null   // no chat session
             );
+            if (entry == null) continue; // construction failed even via the compat fallback — skip this entry
 
             if (alreadyInjected.contains(uuid)) {
                 toUpdate.add(entry);

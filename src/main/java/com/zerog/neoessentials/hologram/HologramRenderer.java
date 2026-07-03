@@ -247,7 +247,7 @@ public final class HologramRenderer {
             level.getAllEntities().forEach(entity -> {
                 if ((entity instanceof Display.TextDisplay || entity instanceof net.minecraft.world.entity.Interaction)
                         && entity.getPersistentData().contains(TAG_MARKER)
-                        && data.id.equals(entity.getPersistentData().getString(TAG_ID))) {
+                        && data.id.equals(com.zerog.neoessentials.util.CompoundTagCompat.getString(entity.getPersistentData(), TAG_ID))) {
                     orphans.add(entity);
                 }
             });

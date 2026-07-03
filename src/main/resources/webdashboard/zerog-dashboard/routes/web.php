@@ -29,8 +29,12 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
         ->middleware('can:economy.manage')->name('economy.adjust');
 
     Route::get('/commands', [ConsoleController::class, 'commands'])->name('commands.index');
+    // 20 commands/minute per authenticated user — generous enough for normal admin
+    // use, tight enough to stop a compromised/careless session from hammering the
+    // mod's console with runCommand() calls. Named limiter (not the request-path
+    // default) so it's keyed per-user rather than per-IP.
     Route::post('/commands/run', [ConsoleController::class, 'runCommand'])
-        ->middleware('can:console.run')->name('commands.run');
+        ->middleware(['can:console.run', 'throttle:commands-run'])->name('commands.run');
 
     Route::get('/logs', [ConsoleController::class, 'logs'])->name('logs.index');
 });

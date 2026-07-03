@@ -390,12 +390,12 @@ public class ShopHologramManager {
         try {
             net.minecraft.nbt.CompoundTag nbt = entity.getPersistentData();
             if (!nbt.contains("neoessentials_hologram")) return null;
-            String holoId = nbt.getString("neoessentials_hologram_id");
+            String holoId = com.zerog.neoessentials.util.CompoundTagCompat.getString(nbt, "neoessentials_hologram_id");
             if (!holoId.startsWith(SHOP_HOLOGRAM_PREFIX)) return null;
 
             // ── Primary path: shop key stored directly in entity NBT ─────────
             if (nbt.contains(NBT_SHOP_KEY)) {
-                String shopKey = nbt.getString(NBT_SHOP_KEY);
+                String shopKey = com.zerog.neoessentials.util.CompoundTagCompat.getString(nbt, NBT_SHOP_KEY);
                 return ShopManager.getInstance().getShopByKey(shopKey);
             }
 

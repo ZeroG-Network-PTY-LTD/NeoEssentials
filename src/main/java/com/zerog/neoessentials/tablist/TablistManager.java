@@ -226,13 +226,29 @@ public class TablistManager {
         if (tickCounter < refreshIntervalTicks) return;
         tickCounter = 0;
 
-        if (headerFrames.size() > 1) headerFrame = (headerFrame + 1) % headerFrames.size();
-        if (footerFrames.size() > 1) footerFrame = (footerFrame + 1) % footerFrames.size();
+        // Advance using the LARGEST frame count across the global list AND every
+        // per-group/per-player override — not just headerFrames.size(). Otherwise a
+        // server with a single (unanimated) default header but a multi-frame per-group
+        // header (e.g. VIP) would never advance headerFrame at all, since the old check
+        // only looked at the global list's size — the per-group frames would be stuck on
+        // index 0 forever even though getHeaderFrame() correctly indexes into them.
+        int maxHeaderFrames = maxFrameCount(headerFrames, groupHeaderFrames, playerHeaderFrames);
+        int maxFooterFrames = maxFrameCount(footerFrames, groupFooterFrames, playerFooterFrames);
+        if (maxHeaderFrames > 1) headerFrame = (headerFrame + 1) % maxHeaderFrames;
+        if (maxFooterFrames > 1) footerFrame = (footerFrame + 1) % maxFooterFrames;
 
         // Tick proxy integration (polls proxy data at its own configured rate)
         ProxyIntegration.getInstance().onTick(server);
 
         updateAll(server);
+    }
+
+    /** Largest frame-list size across the global list and every per-group/per-player override. */
+    private static int maxFrameCount(List<String> global, Map<String, List<String>> byGroup, Map<UUID, List<String>> byPlayer) {
+        int max = global.size();
+        for (List<String> frames : byGroup.values()) max = Math.max(max, frames.size());
+        for (List<String> frames : byPlayer.values()) max = Math.max(max, frames.size());
+        return max;
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -256,13 +272,23 @@ public class TablistManager {
             Component footerComp = RichTextFormatter.processTablistText(footerText);
             ClientboundTabListPacket packet = new ClientboundTabListPacket(headerComp, footerComp);
             player.connection.send(packet);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches Errors too (e.g. a version-drifted vanilla API) so one player's
+            // failure can't abort the header/footer send for every other player this tick.
             LOGGER.debug("Failed to send tablist packet to {}: {}", player.getName().getString(), e.getMessage());
         }
-        updatePlayerTeam(player, server);
+        try {
+            updatePlayerTeam(player, server);
+        } catch (Throwable e) {
+            LOGGER.debug("Failed to update tablist team for {}: {}", player.getName().getString(), e.getMessage());
+        }
         // Inject fake-player decorative entries (BTLP-style fakePlayers)
         if (FakePlayerManager.getInstance().isEnabled()) {
-            FakePlayerManager.getInstance().injectForPlayer(player, server);
+            try {
+                FakePlayerManager.getInstance().injectForPlayer(player, server);
+            } catch (Throwable e) {
+                LOGGER.debug("Failed to inject fake tablist entries for {}: {}", player.getName().getString(), e.getMessage());
+            }
         }
     }
 
@@ -340,7 +366,9 @@ public class TablistManager {
                 scoreboard.addPlayerToTeam(player.getName().getString(), team);
             }
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches Errors too — Scoreboard/PlayerTeam are exactly the kind of vanilla
+            // API Mojang has reworked across 1.21.x versions elsewhere in this mod.
             LOGGER.debug("Failed to update team for {}: {}", player.getName().getString(), e.getMessage());
         }
     }
@@ -567,7 +595,9 @@ public class TablistManager {
         try {
             double avgMs = server.getAverageTickTimeNanos() / 1_000_000.0;
             return Math.min(20.0, 1000.0 / Math.max(avgMs, 1.0));
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches Errors too — MinecraftServer's tick-time accessor has had naming/shape
+            // changes across versions before (getAverageTickTime() vs getAverageTickTimeNanos()).
             return 20.0;
         }
     }

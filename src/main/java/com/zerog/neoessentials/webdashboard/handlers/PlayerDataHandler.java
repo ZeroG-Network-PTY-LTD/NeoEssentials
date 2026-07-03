@@ -176,9 +176,9 @@ public class PlayerDataHandler implements HttpHandler {
                                         playerJson.addProperty("_world", worldDir.getName());
                                         String playerName = uuidToName.getOrDefault(uuid, uuid);
                                         if (tag.contains("Name")) {
-                                            playerName = tag.getString("Name");
+                                            playerName = com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, "Name");
                                         } else if (tag.contains("name")) {
-                                            playerName = tag.getString("name");
+                                            playerName = com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, "name");
                                         } else if (playerJson.has("Name")) {
                                             playerName = playerJson.get("Name").getAsString();
                                         } else if (playerJson.has("name")) {
@@ -227,25 +227,25 @@ public class PlayerDataHandler implements HttpHandler {
                 int typeId = nbtValue.getId();
                 switch (typeId) {
                     case net.minecraft.nbt.Tag.TAG_INT:
-                        obj.addProperty(key, tag.getInt(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getInt(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_FLOAT:
-                        obj.addProperty(key, tag.getFloat(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getFloat(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_STRING:
-                        obj.addProperty(key, tag.getString(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_DOUBLE:
-                        obj.addProperty(key, tag.getDouble(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getDouble(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_LONG:
-                        obj.addProperty(key, tag.getLong(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getLong(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_BYTE:
-                        obj.addProperty(key, tag.getByte(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getByte(tag, key));
                         break;
                     case net.minecraft.nbt.Tag.TAG_SHORT:
-                        obj.addProperty(key, tag.getShort(key));
+                        obj.addProperty(key, com.zerog.neoessentials.util.CompoundTagCompat.getShort(tag, key));
                         break;
                     default:
                         // Null-safe toString for NBT values

@@ -451,7 +451,7 @@ public class ServerAdminCommands {
 
                     // Dimension
                     var dimKey = tag.contains("Dimension")
-                        ? ResourceLocation.tryParse(tag.getString("Dimension")) : null;
+                        ? ResourceLocation.tryParse(com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, "Dimension")) : null;
                     ServerLevel level = dimKey != null
                         ? StreamSupport.stream(src.getServer().getAllLevels().spliterator(), false)
                             .filter(l -> l.dimension().location().equals(dimKey))

@@ -185,28 +185,44 @@ class MinecraftApiService
         return $this->post('api/commands/execute', ['command' => $command]);
     }
 
-    /** Recent join/leave/block-break activity, shaped to match LogEntry[]. */
+    /** Recent join/leave/chat/command activity, shaped to match LogEntry[]. */
     public function logs(?int $since = null): array
     {
         $data = $this->get('api/game/events');
         $events = $data['events'] ?? [];
-        $players = $this->players();
-        $namesByUuid = array_column($players, 'username', 'uuid');
 
-        $entries = array_map(function (array $e) use ($namesByUuid) {
-            $type = match (true) {
-                str_starts_with($e['type'] ?? '', 'player.join') => 'join',
-                str_starts_with($e['type'] ?? '', 'player.leave') => 'leave',
-                default => 'command',
-            };
+        // Types with a LogEntry equivalent — anything else (e.g. block.break, which
+        // the mod also queues for the activity-summary/top-blocks endpoints) has no
+        // matching LogEntryType and is dropped here rather than mismapped.
+        $typeMap = [
+            'player.join' => 'join',
+            'player.leave' => 'leave',
+            'player.chat' => 'chat',
+            'player.command' => 'command',
+        ];
 
-            return [
+        $entries = [];
+        foreach ($events as $e) {
+            $type = $typeMap[$e['type'] ?? ''] ?? null;
+            if ($type === null) {
+                continue;
+            }
+
+            $message = $e['message'] ?? '';
+            // Every message the mod generates for these types starts with the
+            // player's name (e.g. "Steve joined the game", "Steve: hi", "Steve ran:
+            // /tp"). Extracting it from there — rather than looking the uuid up in
+            // the online-players list — works for `leave` and any historical event
+            // whose player has since disconnected, not just currently-online ones.
+            $username = str_contains($message, ' ') ? strstr($message, ' ', true) : $message;
+
+            $entries[] = [
                 'timestamp' => (int) round(($e['timestamp'] ?? 0) / 1000), // ms -> seconds
                 'type' => $type,
-                'username' => $namesByUuid[$e['playerUuid'] ?? ''] ?? '',
-                'message' => $e['message'] ?? '',
+                'username' => $username ?: '',
+                'message' => $message,
             ];
-        }, $events);
+        }
 
         if ($since !== null) {
             $entries = array_values(array_filter($entries, fn (array $e) => $e['timestamp'] >= $since));

@@ -63,6 +63,23 @@ npm install lucide-react
 Everything else (Inertia, Tailwind, TypeScript) is assumed already present
 per the existing ZeroG Network setup.
 
+## Rate limiting
+
+`/dashboard/commands/run` is throttled via a named limiter (`commands-run`,
+20 requests/minute per authenticated user) rather than Laravel's IP-keyed
+default, so it can't be bypassed by requests coming through a shared proxy.
+Register it in your app's rate limiter bootstrapping (Laravel 11:
+`bootstrap/app.php`; Laravel 10 and earlier: `RouteServiceProvider::boot()`):
+
+```php
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
+
+RateLimiter::for('commands-run', fn ($request) =>
+    Limit::perMinute(20)->by($request->user()->id)
+);
+```
+
 ## Permissions
 
 Routes for kick/ban/mute, economy adjustments, and raw commands are gated
@@ -99,7 +116,7 @@ what the Inertia pages expect:
 | `warps()` / `createWarp()` / `deleteWarp()` | `GET/POST/DELETE /api/warps` |
 | `homes()` | `GET /api/player/homes/{username}` |
 | `runCommand()` | `POST /api/commands/execute` |
-| `logs()` | `GET /api/game/events` (join/leave/block-break only — no chat/command log yet) |
+| `logs()` | `GET /api/game/events` (join, leave, chat, command — `block.break` events also flow through this endpoint but have no `LogEntryType` match, so `logs()` drops them) |
 
 Important: the mod's player-action endpoints are keyed by **username**, not
 uuid, but the frontend only knows a player's uuid (the `McPlayer` primary
@@ -111,14 +128,6 @@ own behavior for these specific endpoints.
 ## Known gaps to fill in before shipping
 
 - Auth/login pages aren't included — reuses whatever ZeroG Network already has.
-- No rate limiting on `/dashboard/commands/run` — add Laravel's throttle
-  middleware before exposing this beyond trusted admins.
-- Ban/mute confirmation modal in `Players.tsx` is a stub (`window.prompt` for
-  kick reason, ban button doesn't yet open a real confirm dialog) — flagged
-  in the component, worth replacing with a proper modal before production use.
-- `logs()` only surfaces player join/leave and block-break events — the mod
-  doesn't currently log chat messages or executed commands into the same
-  event queue, so `LogEntryType`'s `'chat'` value never actually appears yet.
 - `players()`'s `rank` field is approximated from operator status (`op` vs
   `player`) — the mod's real permission groups aren't cheap to look up for a
   bulk player list, so `'owner'`, `'mod'`, `'vip'` never get returned. Fine
