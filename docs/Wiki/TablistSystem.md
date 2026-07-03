@@ -21,8 +21,8 @@ while optionally integrating with a BungeeCord/Velocity proxy for cross-server d
 | **20+ placeholders** | Standard, proxy-aware, economy, session, stats, and AFK tokens |
 | **Per-group / per-player** | Different header/footer per permission group or per player UUID |
 | **Group-weight sorting** | Players sorted by rank weight (admins first) then alphabetically — BTLP `ContextAwareOrdering` |
-| **Fake player entries** | Decorative separator rows, section labels, and padding — BTLP `fakePlayers` concept |
-| **Layout configuration** | 1–4 columns, playersByServer grouping, excludeServers/hiddenServers |
+| **Fake player entries** | Decorative separator rows, section labels, padding, and custom skins/heads — BTLP `fakePlayers` concept |
+| **Layout configuration** | 1–4 column grid with per-group column sections + headers, playersByServer grouping, excludeServers/hiddenServers |
 | **Proxy integration** | Optional BungeeCord bridge for `{network_online}` / `{server_online:X}` data |
 | **Hex / gradients / rainbow** | Full `RichTextFormatter` syntax support — `&#RRGGBB`, `<gradient:…>`, `<rainbow>` |
 
@@ -64,6 +64,18 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
 <red>  <gold>  <green>  <aqua>  <blue>  <white>  <gray>  …
 <bold>  <italic>  <underline>  <strikethrough>  <reset>
 ```
+
+> **Always close your `<gradient:...>` tags.** An unclosed `<gradient:...>` (no matching
+> `</gradient>`) is treated as "gradient the rest of the line" — handy when you genuinely want a
+> gradient to run to the end of a header/footer line, but if you follow it with plain `&`-codes
+> (e.g. `&r`, `&8`, `&e`) intending them to reset back to normal color, those codes get folded
+> into the swallowed gradient region instead. As of the current build, single legacy `&`-codes
+> (`&0`–`&f`, `&k`–`&r`) inside a gradient region are passed through atomically rather than being
+> split character-by-character, so this degrades gracefully — but closing the tag explicitly is
+> still the clearest way to control exactly where a gradient starts and stops:
+> ```
+> <gradient:00FFC8-0080FF>&lGradiented Text</gradient>&r &8| &enormal text again
+> ```
 
 ---
 
@@ -336,9 +348,32 @@ for separator lines, section headers, or grid padding.
 | `name` | string | `""` | Display text — supports all color/format syntax |
 | `latency` | int | `0` | Displayed ping bar ms. `-1` = disconnected icon, `0` = green |
 | `listed` | boolean | `true` | Whether the entry appears in the visible tab list |
+| `skinOwner` | string | — | Mirror a real player's current skin (resolved async, see below) |
+| `skinTexture` | string | — | Raw base64 `textures` property value for a fully custom skin/head |
+| `skinSignature` | string | — | Signature paired with `skinTexture` (optional — vanilla doesn't re-verify it for tab-list rendering) |
 
 Each fake entry uses a **stable UUID** derived from its `id` via `UUID.nameUUIDFromBytes()",
 so the same entry is always represented by the same UUID across server restarts and reloads.
+
+### Custom Skins / Heads
+
+Fake entries show the default Steve/Alex head unless given a skin:
+
+```json
+{ "id": "npc1", "name": "&bNotch", "latency": 0, "listed": true, "skinOwner": "Notch" }
+```
+```json
+{ "id": "npc2", "name": "&aCustom", "latency": 0, "listed": true,
+  "skinTexture": "<base64 value from mineskin.org or minecraft-heads.com>",
+  "skinSignature": "<base64 signature>" }
+```
+
+- `skinTexture`/`skinSignature` take priority over `skinOwner` when both are present, and apply
+  immediately (no network call needed).
+- `skinOwner` is resolved **asynchronously** via the server's profile cache + session service —
+  the entry briefly shows the default skin until resolution completes, after which the tab list
+  refreshes automatically. Results are cached until the next `/tablist reload`.
+- If `skinOwner` names an unknown player, a warning is logged and the entry keeps the default skin.
 
 Manage at runtime with `/tablist fakeplayer`:
 ```
@@ -354,13 +389,21 @@ Manage at runtime with `/tablist fakeplayer`:
 
 ```json
 "layout": {
-  "columns": 1,
+  "columns": 4,
   "sortByGroupWeight": true,
-  "groupSections": false,
+  "groupSections": true,
   "playersByServer": false,
   "excludeServers": [],
   "hiddenServers": [],
-  "maxSlotsPerColumn": 20
+  "maxSlotsPerColumn": 20,
+  "fillEmptySlots": true,
+  "sectionHeaders": {
+    "owner":  "&c&l⚑ OWNERS",
+    "admin":  "&6&l⚑ ADMINS",
+    "mod":    "&6✪ STAFF",
+    "vip":    "&b★ VIP",
+    "member": "&7MEMBERS"
+  }
 }
 ```
 
@@ -368,15 +411,61 @@ Manage at runtime with `/tablist fakeplayer`:
 |-------|------|---------|-------------|
 | `columns` | int (1–4) | `1` | Visual columns (BTLP supports up to 4×20 = 80 slots) |
 | `sortByGroupWeight` | boolean | `true` | Sort players by descending group weight then alphabetically |
-| `groupSections` | boolean | `false` | Insert separator rows between permission-group buckets |
+| `groupSections` | boolean | `false` | Enable the BTLP-style column grid: each permission group gets its own column(s), with padding + optional header row (see below) |
 | `playersByServer` | boolean | `false` | Bucket players by proxy server name (requires `proxy.enabled`) |
 | `excludeServers` | array | `[]` | Server names fully excluded from this tab (BTLP `excludeServers`) |
 | `hiddenServers` | array | `[]` | Server names whose players are hidden (BTLP `hiddenServers`) |
-| `maxSlotsPerColumn` | int | `20` | Slots per column; total = `columns × maxSlotsPerColumn` |
+| `maxSlotsPerColumn` | int | `20` | Rows per column; total grid size = `columns × maxSlotsPerColumn` |
+| `fillEmptySlots` | boolean | `true` | Pad the grid out to the full `columns × maxSlotsPerColumn` size with invisible filler rows (only relevant when `groupSections` is on) |
+| `sectionHeaders` | object | `{}` | Per-group header row text shown at the top of that group's column (only relevant when `groupSections` is on) |
 
-**Sorting** encodes group weight into scoreboard team names (`neL_<sortKey>_<group>`) so the
-Minecraft client renders players in the correct order without packet interception — the same
-approach BungeeTabListPlus uses via `ContextAwareOrdering`.
+**Sorting** (`sortByGroupWeight`, `groupSections` off) encodes group weight into scoreboard team
+names (`ne_<sortKey>_<group>`) so the Minecraft client renders players in the correct order
+without packet interception — the same approach BungeeTabListPlus uses via `ContextAwareOrdering`.
+
+### The Column Grid (`groupSections`)
+
+Vanilla Minecraft has **no packet field for "use N columns"** on this mod's target version
+(1.21.1) — the client always computes the column count itself from the total number of tab
+entries (real players + any decorative ones). BungeeTabListPlus's classic trick, and the one used
+here, is to **pad the tab list to a fixed total entry count** so the client's auto-computed
+column count stays stable no matter how many real players are online.
+
+When `groupSections: true`:
+
+1. Online players are bucketed by permission group, highest weight first (same order as
+   `groupColors`).
+2. Each group is packed into consecutive slots. Before a **new** group starts, the grid is padded
+   with invisible filler rows up to the next column boundary — so a group's players never
+   straddle two columns.
+3. If `sectionHeaders` has an entry for that group, a header row is inserted at the very top of
+   its column, using the same `&`/hex/gradient syntax as everything else.
+4. If `fillEmptySlots` is true (default), any slots remaining after the last group are padded
+   with invisible fillers too, so the grid is always exactly `columns × maxSlotsPerColumn` entries
+   — keeping the client's column count fixed even when very few players are online.
+
+Example with the config above (4 columns × 20 rows = 80 slots) and players in `owner`, `vip`,
+and `member`:
+
+```
+Column 1          Column 2          Column 3          Column 4
+⚑ OWNERS          ★ VIP             MEMBERS           (empty, filler-padded)
+Steve                Alex              Bob
+(17 filler rows)  (19 filler rows) (17 filler rows)  (20 filler rows)
+```
+
+Ordering is enforced the same way as plain weight-sorting — via scoreboard team names — but each
+slot (including headers and fillers) gets a **unique, zero-padded position key** so the client's
+alphabetical team sort reproduces the exact grid layout computed above. This is recomputed once
+per tick cycle (not per-viewer, since scoreboard teams are global state) so it stays in sync as
+players join, leave, or switch groups.
+
+**Caveats carried over from BTLP-era plugins:**
+- If real players + header rows exceed `columns × maxSlotsPerColumn`, the overflow simply spills
+  past the last column — size the grid generously for your expected peak population.
+- Groups with zero online players are skipped entirely (no empty header row for an empty group).
+- This feature and `playersByServer` are independent — you can combine per-group columns with
+  proxy server bucketing, though the two aren't merged into a single grid automatically.
 
 ---
 

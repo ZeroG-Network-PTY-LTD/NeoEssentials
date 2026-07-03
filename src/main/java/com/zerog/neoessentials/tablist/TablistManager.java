@@ -256,6 +256,9 @@ public class TablistManager {
         if (!enabled || server == null) return;
         // Apply BTLP-style group weight sorting teams
         TablistLayout.getInstance().applySortingTeams(server);
+        // Recompute the BTLP-style column grid (section headers + fillers) once per cycle —
+        // scoreboard teams are global state, so this must not run per-viewer.
+        TablistLayout.getInstance().recomputeColumnLayout(server);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             updatePlayer(player, server);
         }
@@ -290,6 +293,14 @@ public class TablistManager {
                 LOGGER.debug("Failed to inject fake tablist entries for {}: {}", player.getName().getString(), e.getMessage());
             }
         }
+        // Inject the BTLP-style column grid's section headers + blank fillers, if enabled
+        if (TablistLayout.getInstance().isGroupSections()) {
+            try {
+                FakePlayerManager.getInstance().injectColumnSlots(player, server);
+            } catch (Throwable e) {
+                LOGGER.debug("Failed to inject column layout entries for {}: {}", player.getName().getString(), e.getMessage());
+            }
+        }
     }
 
     // ── Scoreboard Team Prefix (player name row) ──────────────────────────────
@@ -306,9 +317,13 @@ public class TablistManager {
                 effectiveSuffix = suffix + afkSuffix;
             }
 
-            // BTLP-style: encode group weight into team name for client-side sort order.
+            // BTLP-style: encode group weight (or, with groupSections on, the exact column-grid
+            // slot) into the team name for client-side sort order.
             String rawTeamName;
-            if (TablistLayout.getInstance().isSortByGroupWeight()) {
+            String columnKey = TablistLayout.getInstance().getColumnTeamKey(player.getUUID());
+            if (columnKey != null) {
+                rawTeamName = columnKey;
+            } else if (TablistLayout.getInstance().isSortByGroupWeight()) {
                 int weight = getGroupWeight(player);
                 int sortKey = 9999 - Math.min(weight, 9999);
                 rawTeamName = String.format("ne_%04d_%s", sortKey, group);
@@ -794,6 +809,7 @@ public class TablistManager {
         lastTeamSuffix.remove(uuid);
         ProxyIntegration.getInstance().onPlayerQuit(uuid);
         FakePlayerManager.getInstance().removeForPlayer(player);
+        FakePlayerManager.getInstance().removeColumnSlotsForPlayer(player);
         server.execute(() -> updateAll(server));
     }
 

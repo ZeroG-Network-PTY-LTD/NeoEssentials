@@ -276,9 +276,9 @@ Obtain a token from `POST /api/auth/login`. Enable in `config.json` → `webDash
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | No | Log in with username + password → returns session token |
+| `POST` | `/api/auth/login` | No | Log in with username + password (or Discord OAuth2 code) → returns session token |
 | `POST` | `/api/auth/logout` | Yes | Invalidate session token |
-| `GET` | `/api/auth/status` | Yes | Check if current session is valid |
+| `GET` | `/api/auth/validate` | Yes | Check if current session is valid |
 
 ```bash
 # Login

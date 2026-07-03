@@ -39,9 +39,23 @@ import java.util.*;
  *   "playersByServer": false,
  *   "excludeServers": [],
  *   "hiddenServers": [],
- *   "maxSlotsPerColumn": 20
+ *   "maxSlotsPerColumn": 20,
+ *   "fillEmptySlots": true,
+ *   "sectionHeaders": {
+ *     "owner": "&c&l⚑ OWNERS",
+ *     "admin": "&6&l⚑ ADMINS",
+ *     "member": "&7MEMBERS"
+ *   }
  * }
  * }</pre>
+ *
+ * <p>When {@code groupSections} is enabled, each permission group (highest weight first) is
+ * packed into consecutive tab-list slots, padded out to the next column boundary before the
+ * next group starts (so groups never straddle two columns), with an optional header row from
+ * {@code sectionHeaders} at the top of its column. {@code fillEmptySlots} pads the remainder of
+ * the {@code columns × maxSlotsPerColumn} grid with invisible filler entries so the vanilla
+ * client's auto-computed column count stays stable regardless of how many players are online —
+ * this mirrors BTLP's fixed-grid trick, since vanilla has no server-side "set column count" API.
  *
  * Reference: BungeeTabListPlus {@code PlayersByServerComponentTemplate},
  * {@code PlayersByServerComponentView}, {@code MainConfig#excludeServers},
@@ -70,6 +84,22 @@ public class TablistLayout {
     private final Set<String> excludeServers = new LinkedHashSet<>();
     /** Server names whose players are hidden from the list but the server header may still show. */
     private final Set<String> hiddenServers = new LinkedHashSet<>();
+    /** Per-group section header text (BTLP-style column header row), keyed by group name. */
+    private final Map<String, String> sectionHeaders = new LinkedHashMap<>();
+    /** Pad the grid out to {@code columns × maxSlotsPerColumn} total slots with invisible fillers. */
+    private boolean fillEmptySlots = true;
+
+    /**
+     * A single synthetic (non-real-player) slot in the BTLP-style column grid — either a
+     * section header row or a blank filler used to pad a column or the whole grid.
+     * {@code position} is the slot's absolute index in the linear (column-major) ordering.
+     */
+    public record ColumnSlot(int position, UUID uuid, String profileName, String display, boolean header) {}
+
+    /** Per-player team key assigned by {@link #recomputeColumnLayout}, populated only when {@code groupSections} is on. */
+    private volatile Map<UUID, String> columnTeamKeys = Collections.emptyMap();
+    /** Synthetic header/filler slots computed by {@link #recomputeColumnLayout}. */
+    private volatile List<ColumnSlot> syntheticSlots = Collections.emptyList();
 
     private TablistLayout() {}
 
@@ -94,6 +124,14 @@ public class TablistLayout {
             if (layout.has("hiddenServers") && layout.get("hiddenServers").isJsonArray()) {
                 for (var el : layout.getAsJsonArray("hiddenServers")) hiddenServers.add(el.getAsString());
             }
+
+            sectionHeaders.clear();
+            if (layout.has("sectionHeaders") && layout.get("sectionHeaders").isJsonObject()) {
+                for (var entry : layout.getAsJsonObject("sectionHeaders").entrySet()) {
+                    sectionHeaders.put(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+            fillEmptySlots = !layout.has("fillEmptySlots") || layout.get("fillEmptySlots").getAsBoolean();
 
             LOGGER.info("TablistLayout loaded — columns={}, sortByWeight={}, groupSections={}, playersByServer={}",
                 columns, sortByGroupWeight, groupSections, playersByServer);
@@ -219,6 +257,125 @@ public class TablistLayout {
             }
         }
     }
+
+    /**
+     * Computes the BTLP-style column grid: each permission group (in weight-descending order)
+     * is packed into consecutive slots, padded up to the next column boundary before the next
+     * group starts, with an optional header row (from {@code sectionHeaders}) at the top of its
+     * column. Only runs when {@code groupSections} is enabled — otherwise clears any previous
+     * layout so callers fall back to plain weight-based sorting.
+     *
+     * <p>Must be called once per tick cycle (not per-viewer) since scoreboard teams are global
+     * state; {@link com.zerog.neoessentials.tablist.TablistManager#updateAll} does this.
+     *
+     * @param server the server whose online players should be laid out
+     */
+    public void recomputeColumnLayout(MinecraftServer server) {
+        if (!groupSections) {
+            if (!columnTeamKeys.isEmpty() || !syntheticSlots.isEmpty()) {
+                columnTeamKeys = Collections.emptyMap();
+                syntheticSlots = Collections.emptyList();
+            }
+            return;
+        }
+
+        int rows = Math.max(1, maxSlotsPerColumn);
+        int totalSlots = columns * rows;
+        LinkedHashMap<String, List<ServerPlayer>> byGroup = groupedByPermGroup(server);
+
+        Map<UUID, String> newKeys = new HashMap<>();
+        List<ColumnSlot> newSynthetic = new ArrayList<>();
+        int position = 0;
+
+        for (var e : byGroup.entrySet()) {
+            List<ServerPlayer> players = e.getValue();
+            if (players.isEmpty()) continue;
+
+            // Pad up to the start of the next column before beginning a new group's section,
+            // unless we're already sitting exactly on a column boundary (or this is the first group).
+            if (position > 0 && position % rows != 0) {
+                int pad = rows - (position % rows);
+                for (int i = 0; i < pad && position < totalSlots; i++) {
+                    newSynthetic.add(fillerSlot(position));
+                    position++;
+                }
+            }
+            if (position >= totalSlots) break;
+
+            String headerText = sectionHeaders.get(e.getKey());
+            if (headerText != null && !headerText.isEmpty()) {
+                newSynthetic.add(headerSlot(position, headerText));
+                position++;
+            }
+            for (ServerPlayer p : players) {
+                if (position >= totalSlots) break;
+                newKeys.put(p.getUUID(), slotTeamKey(position));
+                position++;
+            }
+        }
+
+        if (fillEmptySlots) {
+            while (position < totalSlots) {
+                newSynthetic.add(fillerSlot(position));
+                position++;
+            }
+        }
+
+        columnTeamKeys = newKeys;
+        syntheticSlots = newSynthetic;
+
+        // Assign the (global) scoreboard sort-teams for the synthetic slots once here, rather
+        // than per-viewer — team membership is shared server state, not per-connection.
+        try {
+            var scoreboard = server.getScoreboard();
+            for (ColumnSlot slot : newSynthetic) {
+                assignToSortTeam(scoreboard, slot.profileName(), slotTeamKey(slot.position()));
+            }
+        } catch (Throwable e) {
+            LOGGER.debug("TablistLayout: failed to assign column sort-teams: {}", e.getMessage());
+        }
+    }
+
+    private static ColumnSlot fillerSlot(int position) {
+        return new ColumnSlot(position, slotUuid(position), slotProfileName(position), "", false);
+    }
+
+    private static ColumnSlot headerSlot(int position, String text) {
+        return new ColumnSlot(position, slotUuid(position), slotProfileName(position), text, true);
+    }
+
+    private static UUID slotUuid(int position) {
+        return UUID.nameUUIDFromBytes(("NeoEssentials|ColumnSlot|" + position)
+            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private static String slotProfileName(int position) {
+        return "~NC_" + position;
+    }
+
+    /** Zero-padded team name so lexicographic (client-side) sort order matches numeric slot order. */
+    private static String slotTeamKey(int position) {
+        String raw = String.format("nc%05d", position);
+        return raw.length() > 16 ? raw.substring(0, 16) : raw;
+    }
+
+    private static void assignToSortTeam(net.minecraft.server.ServerScoreboard scoreboard, String scoreEntryName, String teamName) {
+        try {
+            net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(teamName);
+            if (team == null) team = scoreboard.addPlayerTeam(teamName);
+            net.minecraft.world.scores.PlayerTeam current = scoreboard.getPlayersTeam(scoreEntryName);
+            if (current == null || !current.getName().equals(teamName)) {
+                if (current != null) scoreboard.removePlayerFromTeam(scoreEntryName, current);
+                scoreboard.addPlayerToTeam(scoreEntryName, team);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    /** Column-layout team key for a real player, or {@code null} when column layout isn't active for them. */
+    public String getColumnTeamKey(UUID uuid) { return columnTeamKeys.get(uuid); }
+
+    /** Current synthetic (header/filler) slots — empty unless {@code groupSections} is enabled. */
+    public List<ColumnSlot> getSyntheticSlots() { return syntheticSlots; }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
     private int getGroupWeight(ServerPlayer player) {
