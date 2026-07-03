@@ -35,7 +35,8 @@ The AFK system automatically marks players as AFK after a configurable period of
 | `trackInteractions` | `true` | Block/entity interactions reset AFK timer |
 | `movementThreshold` | `0.1` | Minimum movement distance to count as activity |
 | `rotationThreshold` | `5.0` | Minimum look-rotation change to count as activity |
-| `excludedCommands` | `["afk","list","who","ping","help","?"]` | Commands that do NOT reset the AFK timer |
+| `excludedCommands` | `["afk","list","who","tps","ping","help","?"]` | Commands that do NOT reset the AFK timer |
+| `invulnerableWhenAfk` | `false` | Make AFK players immune to damage while AFK |
 | `autoSave` | `true` | Periodically save AFK state to disk |
 | `saveInterval` | `60` | Auto-save interval in seconds |
 
@@ -45,7 +46,7 @@ The AFK system automatically marks players as AFK after a configurable period of
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/afk` | `/afk` | `neoessentials.afk` | Toggle your AFK status manually |
+| `/afk` | `/afk [message]` | `neoessentials.afk` | Toggle your AFK status manually, optionally with a custom reason shown in the broadcast |
 | `/away` | alias | same | Alias |
 
 ---
@@ -55,7 +56,6 @@ The AFK system automatically marks players as AFK after a configurable period of
 | Node | Default | Description |
 |---|---|---|
 | `neoessentials.afk` | ✅ | Use `/afk` to manually toggle AFK |
-| `neoessentials.afk.others` | 🔒 | Force another player in/out of AFK |
 | `neoessentials.afk.exempt` | 🔒 | Exempt from AFK kick timer |
 
 ---
@@ -67,6 +67,7 @@ The AFK system automatically marks players as AFK after a configurable period of
 3. **Return** — Any qualifying activity while AFK removes the AFK flag and broadcasts the return message.
 4. **Kick** — If `kickTimeout > 0`, a player who remains AFK longer than that value is kicked with `afkkickMessage`.
 5. **Sleep** — With `ignoreAfkInSleep: true`, AFK players are excluded from the sleep count so the night can be skipped without them.
+6. **Invulnerability** — With `invulnerableWhenAfk: true`, players take no damage while AFK.
 
 ---
 
