@@ -1003,14 +1003,19 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ### Web Dashboard
 
-| Node | Default | Description |
-|---|---|---|
-| `neoessentials.admin.dashboard` |  op-only | Access the admin dashboard command |
-| `neoessentials.dashboard.access` |  op-only | Register an account and log in to the dashboard |
-| `neoessentials.dashboard.view` |  op-only | View-only dashboard access |
-| `neoessentials.dashboard.manage` |  op-only | Manage dashboard settings |
-| `neoessentials.dashboard.moderator` |  op-only | Moderator-level dashboard access |
-| `neoessentials.dashboard.admin` |  op-only | Full admin dashboard access |
+> Unlike the sections above, dashboard nodes are **not** pre-registered via
+> `PermissionRegistry.registerAllPermissions()` — they are checked ad hoc by the `/dashboard`
+> and `/dashboardregister` commands and the dashboard's own auth layer, so they won't appear in
+> `/permissions list` / `/permissions search`. Grant them explicitly per group.
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.admin.dashboard` |  op-only | Start/stop/restart/update the dashboard server | `/dashboard` |
+| `neoessentials.dashboard.access` |  op-only | Register an account and log in to the dashboard | `/dashboardregister` |
+| `neoessentials.dashboard.view` |  op-only | View-only dashboard access | |
+| `neoessentials.dashboard.manage` |  op-only | Manage dashboard settings | |
+| `neoessentials.dashboard.moderator` |  op-only | Moderator-level dashboard access | |
+| `neoessentials.dashboard.admin` |  op-only | Full admin dashboard access | |
 
 ---
 
