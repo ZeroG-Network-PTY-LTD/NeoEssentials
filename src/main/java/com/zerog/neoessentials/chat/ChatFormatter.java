@@ -107,6 +107,14 @@ public class ChatFormatter {
                 LOGGER.info("After placeholder resolution: [{}]", formatted);
             }
 
+            // Tablist-style short-form tokens ({tps}, {online}, {animation:name}, etc.) that
+            // have no {neoessentials_*} equivalent — lets tablist/hologram snippets be reused in chat.
+            formatted = resolveShortPlaceholders(formatted, player);
+            formatted = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(formatted);
+            if (debugEnabled) {
+                LOGGER.info("After short-form placeholders/animations: [{}]", formatted);
+            }
+
             // Phase 4: Apply conditional formatting
             formatted = ConditionalFormatter.processConditionals(player, formatted);
             if (debugEnabled) {
@@ -335,6 +343,59 @@ public class ChatFormatter {
         return result;
     }
     
+    /**
+     * Resolves tablist-style short-form tokens that have no {@code {neoessentials_*}}
+     * equivalent, so header/footer-style snippets can be copy-pasted into chat formats.
+     * Values reflect the sending player's own context (e.g. {@code {ping}} is the
+     * sender's latency — there's only one recipient-agnostic broadcast, unlike tablist
+     * where each viewer sees their own ping).
+     *
+     * <p>Tokens already covered by {@code {neoessentials_*}} PlaceholderAPI expansions
+     * (prefix/suffix/group/balance/ping/world/x/y/z/level/health/afk/time/server_name)
+     * are intentionally NOT duplicated here — this only fills the gap.
+     */
+    private static String resolveShortPlaceholders(String text, ServerPlayer player) {
+        if (text.indexOf('{') < 0) return text;
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        if (server == null) return text;
+
+        if (text.contains("{tps}")) {
+            double tps = com.zerog.neoessentials.tablist.TablistManager.getInstance().getTps(server);
+            String tpsStr = tps >= 19.0 ? "&a" + String.format("%.1f", tps)
+                          : tps >= 15.0 ? "&e" + String.format("%.1f", tps)
+                          : "&c" + String.format("%.1f", tps);
+            text = text.replace("{tps}", tpsStr);
+        }
+        if (text.contains("{online}")) {
+            int online = com.zerog.neoessentials.tablist.TablistManager.getInstance()
+                .countOnlineExcludingVanish(server, player);
+            text = text.replace("{online}", String.valueOf(online));
+        }
+        if (text.contains("{max}")) {
+            text = text.replace("{max}", String.valueOf(server.getMaxPlayers()));
+        }
+        if (text.contains("{rank_weight}")) {
+            int weight = com.zerog.neoessentials.tablist.TablistManager.getInstance().getGroupWeight(player);
+            text = text.replace("{rank_weight}", String.valueOf(weight));
+        }
+        if (text.contains("{network_online}") || text.contains("{current_server}") || text.contains("{server_label}")) {
+            var proxy = com.zerog.neoessentials.tablist.ProxyIntegration.getInstance();
+            int networkOnline = proxy.isProxyEnabled() ? proxy.getNetworkOnline()
+                : com.zerog.neoessentials.tablist.TablistManager.getInstance().countOnlineExcludingVanish(server, player);
+            String currentServer = proxy.isProxyEnabled() ? proxy.getPlayerServer(player.getUUID()) : proxy.getServerLabel();
+            text = text.replace("{network_online}", String.valueOf(networkOnline))
+                       .replace("{current_server}", currentServer)
+                       .replace("{server_label}", proxy.getServerLabel());
+        }
+        if (text.contains("{session_minutes}") || text.contains("{session_hours}")) {
+            var tablist = com.zerog.neoessentials.tablist.TablistManager.getInstance();
+            text = text.replace("{session_minutes}", String.valueOf(tablist.getSessionMinutes(player.getUUID())))
+                       .replace("{session_hours}", String.valueOf(tablist.getSessionHours(player.getUUID())));
+        }
+        text = text.replace("{newline}", "\n").replace("{bar}", "&8&m──────────");
+        return text;
+    }
+
     /**
      * Convert legacy uppercase placeholders to lowercase format.
      */

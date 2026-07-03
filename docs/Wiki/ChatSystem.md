@@ -88,6 +88,36 @@ A channel with neither `radius` nor `permission` behaves as global chat. `chat.c
 | `{neoessentials_displayname}` | Alias for `{displayname}` |
 | `{MESSAGE}` | Alias for `{message}` (case-insensitive) |
 
+### Tablist-Style Short Tokens
+
+These tokens have no `{neoessentials_*}` equivalent — they were previously tablist/hologram-only,
+but now also resolve in chat formats (per-player override, per-group format, or the global
+`chat-format` default). Values reflect the **sending player's own context** — e.g. `{ping}`
+(already available as `{neoessentials_ping}`) means the sender's own latency, since a broadcast
+chat message has one sender but many recipients, unlike the tablist where each viewer sees their
+own ping.
+
+| Placeholder | Value |
+|---|---|
+| `{tps}` | Server TPS — auto-coloured green (≥19) / yellow (≥15) / red (<15) |
+| `{online}` | Online player count (vanish-aware, from the sender's permission level) |
+| `{max}` | Server max player slots |
+| `{rank_weight}` | Sender's numeric permission group weight/priority |
+| `{network_online}` | Total players on the proxy network (requires `tablist.proxy.enabled`; falls back to local `{online}` otherwise) |
+| `{current_server}` | Proxy server name the sender is on (falls back to `tablist.proxy.serverLabel` if proxy is off) |
+| `{server_label}` | This server's configured display label (`tablist.proxy.serverLabel`) |
+| `{session_minutes}` | Total minutes elapsed in the sender's current session (not capped to 0–59 — pair with `{session_hours}`, same semantics as tablist) |
+| `{session_hours}` | Full hours elapsed in the sender's current session |
+| `{newline}` | Line break `\n` |
+| `{bar}` | Decorative strikethrough separator (`&8&m──────────`) |
+
+### Animations
+
+`{animation:name}` tokens (defined in `animations.json`, the same ones usable in tablist
+headers/footers) also resolve in chat formats — e.g. `{animation:network_pulse}` in a
+per-group chat format. Animation frames advance on a global wall-clock timer independent of the
+tablist system, so this works even if the tablist feature itself is disabled.
+
 ---
 
 ## Format Priority

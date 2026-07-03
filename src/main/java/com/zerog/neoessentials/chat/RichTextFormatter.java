@@ -34,8 +34,11 @@ public class RichTextFormatter {
 
     // ── Gradient / Rainbow ────────────────────────────────────────────────────
     // Supports 2+ color stops: <gradient:FF0000-FFFF00-00FF00>text</gradient>
+    // Each stop also tolerates an optional leading '#' (e.g. <gradient:#FF0000-#FFFF00>),
+    // matching the '#' convention used by <color:#RRGGBB> — stripped before parsing in
+    // processGradients()/sanitizeStops().
     private static final Pattern GRADIENT_PATTERN = Pattern.compile(
-        "<gradient:((?:[0-9a-fA-F]{6})(?:-[0-9a-fA-F]{6})+)>(.*?)</gradient>",
+        "<gradient:(#?[0-9a-fA-F]{6}(?:-#?[0-9a-fA-F]{6})+)>(.*?)</gradient>",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern RAINBOW_PATTERN = Pattern.compile(
         "<rainbow>(.*?)</rainbow>",
@@ -46,7 +49,7 @@ public class RichTextFormatter {
     // left after GRADIENT_PATTERN has already consumed every properly-closed occurrence,
     // and colors everything from the tag to the end of the string.
     private static final Pattern GRADIENT_UNCLOSED_PATTERN = Pattern.compile(
-        "<gradient:((?:[0-9a-fA-F]{6})(?:-[0-9a-fA-F]{6})+)>(.*)$",
+        "<gradient:(#?[0-9a-fA-F]{6}(?:-#?[0-9a-fA-F]{6})+)>(.*)$",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     // ── Named-color close tags (stripped) ────────────────────────────────────
@@ -166,6 +169,13 @@ public class RichTextFormatter {
      */
     public static Component processTablistText(String text) {
         try {
+            // Resolve {animation:name} tokens first (so an animated frame's own &/gradient
+            // syntax still gets processed below). Safe to call unconditionally — it's a no-op
+            // when the text contains no "{animation:" token, and idempotent if a caller (e.g.
+            // TablistManager's header/footer builder) already resolved animations upstream —
+            // this is what lets {animation:...} work in permission-group prefixes/suffixes,
+            // fake-player names, and hologram text, not just header/footer frames.
+            text = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(text);
             // Gradient and rainbow are ALWAYS enabled for tablist
             text = processGradients(text);
             text = processRainbow(text);
@@ -340,9 +350,9 @@ public class RichTextFormatter {
         Matcher matcher = GRADIENT_PATTERN.matcher(text);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
-            String stopsRaw = matcher.group(1);   // e.g. "FF0000-FFFF00-00FF00"
+            String stopsRaw = matcher.group(1);   // e.g. "FF0000-FFFF00-00FF00" (stops may have a leading '#')
             String content  = matcher.group(2);
-            String[] stops  = stopsRaw.split("-");
+            String[] stops  = sanitizeStops(stopsRaw.split("-"));
             matcher.appendReplacement(result, Matcher.quoteReplacement(
                 createMultiStopGradient(content, stops)));
         }
@@ -355,11 +365,19 @@ public class RichTextFormatter {
         if (unclosed.find()) {
             String stopsRaw = unclosed.group(1);
             String content  = unclosed.group(2);
-            String[] stops  = stopsRaw.split("-");
+            String[] stops  = sanitizeStops(stopsRaw.split("-"));
             text = text.substring(0, unclosed.start())
                 + createMultiStopGradient(content, stops);
         }
         return text;
+    }
+
+    /** Strips an optional leading '#' from each gradient stop (e.g. "#FF0000" → "FF0000"). */
+    private static String[] sanitizeStops(String[] stops) {
+        for (int i = 0; i < stops.length; i++) {
+            if (stops[i].startsWith("#")) stops[i] = stops[i].substring(1);
+        }
+        return stops;
     }
 
     /**

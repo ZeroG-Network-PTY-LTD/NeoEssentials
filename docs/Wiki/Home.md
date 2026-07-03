@@ -22,9 +22,9 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Web Dashboard](WebDashboard) | Setup, login, dashboard features, Discord auth |
 | [API & Placeholder System](APISystem) | PlaceholderAPI, Vault, custom placeholders, stat tokens |
 | [Chat Channels](ChatChannels) | Channel config, permissions, Discord relay |
-| [**Split Config System**](SplitConfigs) | Split config files, validation, repair, migration guide |
-| [**Tablist System**](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player, PlaceholderAPI support |
-| [**Localization System**](LocalizationSystem) | Server language selection, custom translations, language override commands |
+| [Split Config System](SplitConfigs) | Split config files, validation, repair, migration guide |
+| [Tablist System](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player, PlaceholderAPI support |
+| [Localization System](LocalizationSystem) | Server language selection, custom translations, language override commands |
 
 ---
 
