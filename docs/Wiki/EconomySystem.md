@@ -12,23 +12,34 @@ NeoEssentials provides a full server economy with player balances, payments, adm
 
 ## Config (`economy.json`)
 
+Note: `modules.economyEnabled` (in `config.json`) is the master on/off switch — `economy.json` itself has no `enabled` key.
+
 | Key | Default | Description |
 |---|---|---|
-| `enabled` | `true` | Enable/disable the economy system |
-| `startingBalance` | `1000.0` | Balance given to new players |
+| `startingBalance` | `100.0` | Balance given to new players |
 | `currencySymbol` | `"$"` | Symbol prepended to all amounts |
-| `currencyNameSingular` | `"Dollar"` | Full currency name (singular) |
-| `currencyNamePlural` | `"Dollars"` | Full currency name (plural) |
-| `maxBalance` | `1000000000.0` | Maximum balance a player can hold |
+| `currencyName` | *(currency symbol)* | Full currency name (singular) |
+| `currencyNamePlural` | *(currencyName)* | Full currency name (plural) |
+| `maxBalance` | `999999999.99` | Maximum balance a player can hold |
 | `allowNegativeBalances` | `false` | Allow balances below zero |
-| `taxPercentage` | `0.0` | Tax applied to `/pay` transfers (0.0–1.0) |
-| `maxTransferAmount` | `0` | Max single `/pay` amount (0 = unlimited) |
+| `taxPercentage` | `0.0` | Tax applied to `/pay` transfers (as a percent, e.g. `5` = 5%) |
+| `maxTransferAmount` | `10000.0` | Max single `/pay` amount (overridable per-player via LuckPerms meta) |
 | `paytoggleDefault` | `true` | Whether players accept payments by default |
-| `payConfirmThreshold` | `0` | Ask for confirmation above this amount (0 = off) |
+| `logTransactions` | `true` | Log transactions to `logs/neoessentials/transactions.log` |
+| `transactionHistoryLimit` | `20` | Max entries kept per player for `/eco history` |
+| `cleanupInactiveAccounts` | `true` | Automatically delete balances for long-inactive accounts |
+| `inactiveAccountCleanupDays` | `30` | Inactivity threshold (days) before an account is cleaned up |
+| `cacheMaximumSize` | `10000` | Max entries in the balance cache |
+| `cacheExpireAfterAccessMinutes` | `60` | Cache entry expiry (minutes) |
+
+`/sell`'s multiplier and named-item rule are read from **`config.json` → `economy`** (not `economy.json`):
+
+| Key | Default | Description |
+|---|---|---|
 | `sellMultiplier` | `1.0` | Global multiplier applied to all `/sell` prices |
 | `allowSellNamedItems` | `false` | Allow selling renamed items |
-| `baltopCacheSeconds` | `60` | How often the `/baltop` leaderboard refreshes |
-| `baltopPageSize` | `10` | Entries per `/baltop` page |
+
+`/baltop`'s page size (10) and cache lifetime (60s) are currently hardcoded and not configurable.
 
 ---
 
@@ -38,24 +49,31 @@ NeoEssentials provides a full server economy with player balances, payments, adm
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/balance` | `/balance [player]` | `neoessentials.economy.balance` | Check your balance |
+| `/balance` | `/balance [player]` | `neoessentials.economy.balance` (own) / `neoessentials.economy.balance.others` (other players) | Check your balance |
 | `/bal` | alias | same | Alias |
-| `/pay` | `/pay <player> <amount>` | `neoessentials.economy.pay` | Send money to a player |
-| `/paytoggle` | `/paytoggle` | `neoessentials.economy.pay.toggle` | Toggle receiving payments |
-| `/baltop` | `/baltop [page]` | `neoessentials.economy.baltop` | View top balances (paginated, async) |
+| `/pay` | `/pay <player> <amount>` | `neoessentials.economy.pay` | Send money to a player (applies tax; has a per-player cooldown) |
+| `/p` | alias | same | Alias |
+| `/paytoggle` | `/paytoggle` | `neoessentials.economy.paytoggle` | Toggle receiving payments |
+| `/pt` | alias | same | Alias |
+| `/baltop` | `/baltop [page]` | `neoessentials.economy.baltop` | View top balances (paginated, async, exempt via `neoessentials.economy.baltop.exempt`) |
+| `/balancetop`, `/btop` | alias | same | Aliases |
 | `/worth` | `/worth [item\|hand] [qty]` | `neoessentials.worth` | Check sell value of an item |
-| `/sell` | `/sell hand\|inventory\|all\|<item> [qty]` | `neoessentials.sell` | Sell items for money |
-| `/payconfirmtoggle` | `/payconfirmtoggle` | `neoessentials.economy.pay.toggle` | Toggle payment confirmation prompts |
+| `/sell` | `/sell hand\|inventory\|all\|<item> [qty]` | `neoessentials.sell` (+ `neoessentials.sell.hand` / `neoessentials.sell.bulk`) | Sell items for money |
+| `/payconfirmtoggle` | `/payconfirmtoggle` | `neoessentials.payconfirmtoggle` | Toggle payment confirmation prompts (registered by the item/misc commands module, not the economy module) |
 
 ### Admin Commands
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/eco give` | `/eco give <player> <amount[%]>` | `neoessentials.economy.eco` | Give money (supports `10%` of balance) |
-| `/eco take` | `/eco take <player> <amount[%]>` | `neoessentials.economy.eco` | Take money |
+| `/eco give` | `/eco give <player> <amount>` | `neoessentials.economy.eco` | Give money |
+| `/eco take` | `/eco take <player> <amount>` | `neoessentials.economy.eco` | Take money |
 | `/eco set` | `/eco set <player> <amount>` | `neoessentials.economy.eco` | Set balance |
 | `/eco reset` | `/eco reset <player>` | `neoessentials.economy.eco` | Reset to starting balance |
+| `/eco history [player]` | `/eco history [player]` | none for self; op (level 2) for `[player]` | View transaction history (own, or another player's) |
+| `/economy` | alias for `/eco` | same | Alias |
 | `/setworth` | `/setworth <item\|hand> <price\|remove>` | `neoessentials.setworth` | Set/remove an item's sell price |
+
+Note: `/eco give\|take\|set` take a plain numeric `<amount>` — percentage syntax (`10%`) is not supported.
 
 ---
 
