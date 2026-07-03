@@ -102,23 +102,43 @@ Use `Admin Shop` on line 1 — requires `neoessentials.shop.create.admin`. Admin
 
 ### Commands
 
+`/chestshop` (alias `/cshop`) with no arguments prints an in-game help listing.
+
 | Command | Permission | Description |
 |---|---|---|
-| `/chestshop list [player]` | `neoessentials.shop.list` | List shops |
-| `/chestshop info` | `neoessentials.shop.use` | Show info about a looked-at shop |
-| `/chestshop remove <x y z>` | `neoessentials.shop.admin.remove` | Admin-remove a shop by coordinates |
-| `/chestshop reload` | `neoessentials.shop.admin.reload` | Reload shops from disk |
+| `/chestshop list [player]` | none (self) / `neoessentials.shop.list.others` (other player) | List shops owned by you or another player |
+| `/chestshop info` | none | Show info about the looked-at shop sign |
+| `/chestshop convert` | `neoessentials.shop.create` | Register the looked-at (pre-existing) sign as a shop |
+| `/chestshop setprice <buy\|sell\|both> <price>` | shop owner, or `neoessentials.shop.setprice` / `neoessentials.shop.admin.setprice` | Change the price(s) on the looked-at shop sign |
+| `/chestshop stats` | none | Show your total shops, sales count, and top seller |
+| `/chestshop limit` | none | Show how many shops you've placed vs. your `shop.maxShopsPerPlayer` limit |
+| `/chestshop pricing` | none | Show whether the dynamic pricing engine is enabled and its rule count |
+| `/chestshop hologram enable` | shop owner only | Enable a floating price hologram on the looked-at shop |
+| `/chestshop hologram disable` | shop owner only | Remove the hologram from the looked-at shop |
+| `/chestshop hologram move <x> <y> <z>` | shop owner only | Reposition the hologram (offset from the sign, ±4.5 blocks per axis) |
+| `/chestshop export` | `neoessentials.shop.admin.csv.export` | Export all shops to a CSV file |
+| `/chestshop import [create]` | `neoessentials.shop.admin.csv.import` | Import shops from CSV (`create` also creates new signs) |
+| `/chestshop remove <x> <y> <z>` | `neoessentials.shop.admin.remove` | Admin-remove a shop by coordinates |
+| `/chestshop reload` | `neoessentials.shop.admin.reload` | Reload shop data and the dynamic pricing config |
+
+### Dynamic Pricing & Holograms
+
+Shops support optional per-shop **holograms** (floating buy/sell display, clickable) and a configurable **dynamic pricing engine** (`shop.pricing` in `config.json`) with rules such as bulk-quantity discounts, time-based discounts, and supply/demand adjustment. These are off by default — `/chestshop pricing` reports current status.
 
 ### Permissions
 
 | Node | Description |
 |---|---|
-| `neoessentials.shop.create` | Create player shops |
+| `neoessentials.shop.create` | Create player shops / register signs via `/chestshop convert` |
 | `neoessentials.shop.create.admin` | Create admin shops |
 | `neoessentials.shop.use` | Buy/sell at shops |
-| `neoessentials.shop.list.others` | View other players' shops |
+| `neoessentials.shop.list.others` | View other players' shops via `/chestshop list <player>` |
+| `neoessentials.shop.setprice` | Change prices on your own shops via `/chestshop setprice` |
+| `neoessentials.shop.admin.setprice` | Change prices on any shop |
 | `neoessentials.shop.admin.remove` | Remove any shop |
 | `neoessentials.shop.admin.reload` | Reload shop data |
+| `neoessentials.shop.admin.csv.export` | Export shops to CSV |
+| `neoessentials.shop.admin.csv.import` | Import shops from CSV |
 
 ---
 
