@@ -18,11 +18,57 @@ Full-featured chat system with format templates, rich text (gradients/rainbow/ho
 | `enable-chat-formatting` | `true` | Apply format templates to messages |
 | `chat-format` | `"<{prefix}{name}{suffix}> {message}"` | Default format. Supports placeholders, color codes, and rich text tags |
 | `logChatToConsole` | `true` | Print formatted messages to server console |
-| `localChatRadius` | `0` | Block radius for local chat (0 = global) |
-| `joinMessage` | `"§e{player} joined the server"` | Join broadcast (blank = disabled) |
-| `quitMessage` | `"§e{player} left the server"` | Quit broadcast |
-| `richText.enabled` | `true` | Enable gradient/rainbow/hover/click MiniMessage tags |
-| `richText.allowedRoles` | `[]` | Groups allowed to use rich text in messages (empty = all) |
+| `customJoinMessage` | `"none"` | Custom join broadcast (placeholders supported via PlaceholderAPI). `"none"` = use vanilla join message |
+| `customQuitMessage` | `"none"` | Custom quit broadcast. `"none"` = use vanilla quit message |
+| `channels` | *(object)* | Per-channel definitions — see [Chat Channels](#chat-channels) below |
+| `richText.enabled` | `true` | Enable gradient/rainbow/hover/click tags |
+
+> There is no global `localChatRadius`/`joinMessage`/`quitMessage` key — proximity-based chat is
+> configured per-channel (see below), and join/quit broadcasts are controlled by
+> `customJoinMessage` / `customQuitMessage`.
+
+---
+
+## Chat Channels
+
+Channels are defined under `config.json` → `chat.channels` and are resolved (in order) by
+explicit prefix, per-player channel state (set via channel-switch commands), then the channel
+flagged `"default": true`, falling back to `"global"` if none matches.
+
+```json
+"channels": {
+  "enabled": true,
+  "global": {
+    "enabled": true,
+    "default": true
+  },
+  "local": {
+    "enabled": true,
+    "prefix": "!",
+    "radius": 100
+  },
+  "staff": {
+    "enabled": true,
+    "prefix": "@",
+    "permission": "neoessentials.chat.staff",
+    "discord": {
+      "enabled": true,
+      "channelId": "123456789012345678"
+    }
+  }
+}
+```
+
+| Key (per channel) | Description |
+|---|---|
+| `enabled` | Enable this channel |
+| `prefix` | Message prefix that switches to this channel for a single message (e.g. `!hello`) |
+| `default` | Marks the channel used when the player has no explicit channel and typed no prefix |
+| `radius` | If set, makes the channel proximity-based (blocks); only players within `radius` blocks in the same dimension receive the message |
+| `permission` | If set, only players holding this permission receive the message (and it gates Discord relay for the channel) |
+| `discord.enabled` / `discord.channelId` | Relay this channel's messages to a specific Discord channel (see [Discord Integration](#discord-integration-simple-discord-link)) |
+
+A channel with neither `radius` nor `permission` behaves as global chat. `chat.channels.enabled: false` disables the whole channel system (falls back to plain global chat).
 
 ---
 
@@ -150,12 +196,23 @@ When `richText.enabled` is `true`, the format string (and messages by players wi
 | `<gradient:FFD700-FF8C00>VIP</gradient>` | Gold → dark-orange gradient |
 | `<gradient:00c6ff-0072ff>text</gradient>` | Sky-blue gradient |
 
-Gradients work in both format templates and in player messages (if the player has the `neoessentials.chat.richtext` permission).
+Gradients work in both format templates and in player messages (if the player has the `neoessentials.chat.namedcolors` permission — see [Player Message Colour Permissions](#player-message-colour-permissions)).
 
 **Format template example with gradient prefix:**
 ```json
 "group:vip": "<gradient:FFD700-FF8C00>[VIP]</gradient> &f{neoessentials_username}&7: &f{MESSAGE}"
 ```
+
+> **Always close your `<gradient:...>` tags.** An unclosed `<gradient:...>` (no matching
+> `</gradient>`) is treated as "gradient the rest of the line" — everything after the tag,
+> including any `&`-color codes you meant to reset back to normal color (e.g. `&r`, `&8`), gets
+> swallowed into the gradient region. Single legacy `&`-codes inside that region are passed
+> through atomically rather than being shredded character-by-character, so this degrades
+> gracefully, but closing the tag explicitly is still the clearest way to control exactly where
+> a gradient starts and stops:
+> ```
+> <gradient:00FFC8-0080FF>&lGradiented Text</gradient>&r &8| &enormal text again
+> ```
 
 ### Rainbow
 
@@ -265,9 +322,14 @@ Players must have the appropriate permissions to use color/formatting in their o
 | `neoessentials.chat.color` | Allow `&`-color codes in messages |
 | `neoessentials.chat.color.hex` | Allow `&#RRGGBB` hex colors in messages |
 | `neoessentials.chat.format` | Allow `&`-format codes (bold, italic, etc.) in messages |
-| `neoessentials.chat.richtext` | Allow rich text tags (gradient, rainbow, hover, click) in messages |
+| `neoessentials.chat.namedcolors` | Allow `<tag>`-style rich text (named colors, gradient, rainbow, hover, click) in messages |
 
 > Format strings set by admins (in `config.json` or via `/chatformat set`) are **not** subject to these restrictions — they always render fully.
+>
+> `neoessentials.chat.richtext`, `neoessentials.chat.gradient`, and `neoessentials.chat.rainbow` are
+> registered permission nodes (visible in `/permissions search`) but are not currently consulted
+> anywhere in the chat pipeline — `neoessentials.chat.namedcolors` is the node that actually gates
+> `<gradient>`/`<rainbow>`/`<hover>`/`<click>`/named-color tags in a player's own chat message.
 
 ---
 
@@ -293,23 +355,38 @@ Players must have the appropriate permissions to use color/formatting in their o
 | `/unignore` | `/unignore <player>` | `neoessentials.chat.ignore` | Unignore a player |
 | `/ignorelist` | `/ignorelist` | `neoessentials.chat.ignore` | List ignored players |
 
+> A player holding `neoessentials.chat.ignore.exempt` cannot be ignored. A player holding
+> `neoessentials.chat.mute.exempt` cannot be muted with `/mute`.
+
 ---
 
 ## Discord Integration (Simple Discord Link)
 
-When **Simple Discord Link** is installed, NeoEssentials automatically:
-- Relays Minecraft chat → Discord channel (configurable `channelId`)
-- Relays Discord messages → Minecraft chat
-- Formats messages using the configured Discord chat format
+When **Simple Discord Link** is installed, NeoEssentials relays chat to/from Discord **per
+channel**, using the `discord` object nested inside that channel's entry under
+`chat.channels` (see [Chat Channels](#chat-channels)):
 
-Config (`config.json` → `discord` section per channel):
+```json
+"channels": {
+  "global": {
+    "enabled": true,
+    "default": true,
+    "discord": {
+      "enabled": true,
+      "channelId": "123456789012345678"
+    }
+  }
+}
+```
 
 | Key | Description |
 |---|---|
-| `channelId` | Discord channel ID to relay to/from |
-| `relayToDiscord` | Send MC chat to Discord |
-| `relayFromDiscord` | Send Discord messages to MC |
-| `format` | Message format for Discord → MC relay |
+| `discord.enabled` | Relay this channel's Minecraft chat to the given Discord channel |
+| `discord.channelId` | Discord channel ID to relay to |
+
+There is no separate top-level `discord` config section — relay settings live under each
+channel. If a channel has a `permission` requirement, players without it are excluded from the
+Discord relay as well as in-game delivery.
 
 Works standalone (no relay) if Simple Discord Link is not installed.
 

@@ -40,6 +40,14 @@ public class RichTextFormatter {
     private static final Pattern RAINBOW_PATTERN = Pattern.compile(
         "<rainbow>(.*?)</rainbow>",
         Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    // Fallback for a <gradient:...> tag with no matching </gradient> — very common when
+    // the gradient is meant to cover an entire line (header/footer, a full sign line, etc.)
+    // with nothing after it to mark where the gradient "ends". Applied only to whatever's
+    // left after GRADIENT_PATTERN has already consumed every properly-closed occurrence,
+    // and colors everything from the tag to the end of the string.
+    private static final Pattern GRADIENT_UNCLOSED_PATTERN = Pattern.compile(
+        "<gradient:((?:[0-9a-fA-F]{6})(?:-[0-9a-fA-F]{6})+)>(.*)$",
+        Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
     // ── Named-color close tags (stripped) ────────────────────────────────────
     private static final Pattern CLOSE_COLOR_TAG_PATTERN = Pattern.compile(
@@ -339,12 +347,48 @@ public class RichTextFormatter {
                 createMultiStopGradient(content, stops)));
         }
         matcher.appendTail(result);
-        return result.toString();
+        text = result.toString();
+
+        // Anything left with an unclosed <gradient:...> tag (no </gradient>) — treat the
+        // rest of the string as the gradient's content instead of leaving the tag literal.
+        Matcher unclosed = GRADIENT_UNCLOSED_PATTERN.matcher(text);
+        if (unclosed.find()) {
+            String stopsRaw = unclosed.group(1);
+            String content  = unclosed.group(2);
+            String[] stops  = stopsRaw.split("-");
+            text = text.substring(0, unclosed.start())
+                + createMultiStopGradient(content, stops);
+        }
+        return text;
+    }
+
+    /**
+     * All legacy {@code &x} code characters — colors ({@code 0-9a-f}) and formats
+     * ({@code k l m n o r}) — that a gradient should pass through untouched instead
+     * of shredding into individually-colored characters.
+     */
+    private static final String LEGACY_CODE_CHARS = "0123456789abcdefklmnor";
+
+    /**
+     * Returns {@code true} if {@code text.charAt(i)} starts a legacy {@code &x} code
+     * (color or format) that should be emitted as-is rather than treated as a
+     * "visible" character to gradient-color. This matters most for unclosed
+     * {@code <gradient:...>} tags, which swallow the rest of the line as content —
+     * any manual {@code &}-color codes further down the line (e.g. {@code &8}, {@code &r})
+     * would otherwise get split into two separately-colored characters, corrupting them.
+     */
+    private static boolean isFormatCodeAt(String text, int i) {
+        if (text.charAt(i) != '&' || i + 1 >= text.length()) return false;
+        return LEGACY_CODE_CHARS.indexOf(Character.toLowerCase(text.charAt(i + 1))) >= 0;
     }
 
     /**
      * Creates a per-character gradient string supporting 2+ color stops.
      * Spaces are passed through without coloring to preserve word separation.
+     * {@code &l}/{@code &o}/etc. format codes are passed through as an atomic 2-character
+     * unit (not split into two individually-colored characters, which would corrupt the
+     * code — {@code &l} would otherwise become "&" and "l" each with their own {@code &#HEX}
+     * prefix inserted between them) and don't count toward the gradient's visible-length.
      */
     private static String createMultiStopGradient(String text, String[] stops) {
         if (text.isEmpty() || stops.length == 0) return text;
@@ -353,6 +397,11 @@ public class RichTextFormatter {
             String hex = stops[0].toUpperCase();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < text.length(); i++) {
+                if (isFormatCodeAt(text, i)) {
+                    sb.append(text, i, i + 2);
+                    i++;
+                    continue;
+                }
                 char c = text.charAt(i);
                 if (c == ' ') { sb.append(c); continue; }
                 sb.append("&#").append(hex).append(c);
@@ -360,15 +409,23 @@ public class RichTextFormatter {
             return sb.toString();
         }
 
-        // Count non-space characters for interpolation
+        // Count non-space, non-format-code characters for interpolation
         int visibleLen = 0;
-        for (int i = 0; i < text.length(); i++) if (text.charAt(i) != ' ') visibleLen++;
+        for (int i = 0; i < text.length(); i++) {
+            if (isFormatCodeAt(text, i)) { i++; continue; }
+            if (text.charAt(i) != ' ') visibleLen++;
+        }
         if (visibleLen == 0) return text;
 
         int segmentCount = stops.length - 1;
         StringBuilder sb = new StringBuilder();
         int visibleIdx = 0;
         for (int i = 0; i < text.length(); i++) {
+            if (isFormatCodeAt(text, i)) {
+                sb.append(text, i, i + 2);
+                i++;
+                continue;
+            }
             char c = text.charAt(i);
             if (c == ' ') { sb.append(c); continue; }
 
@@ -500,6 +557,9 @@ public class RichTextFormatter {
     static String stripAllRichTags(String text) {
         // Container tags — keep inner text
         text = GRADIENT_PATTERN.matcher(text).replaceAll("$2");
+        // Unclosed <gradient:...> (no </gradient>, e.g. meant to cover the rest of the line) —
+        // strip the tag but keep the trailing text, same fallback as processGradients().
+        text = GRADIENT_UNCLOSED_PATTERN.matcher(text).replaceAll("$2");
         text = RAINBOW_PATTERN.matcher(text).replaceAll("$1");
         text = HOVER_TAG_PATTERN.matcher(text).replaceAll("$2");
         text = CLICK_TAG_PATTERN.matcher(text).replaceAll("$3");
