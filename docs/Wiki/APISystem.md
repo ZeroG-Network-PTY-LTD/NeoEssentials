@@ -116,6 +116,11 @@ Return `null` to leave the original token unchanged in the output string.
 Extend `PlaceholderExpansion` to register many related placeholders at once.
 Expansion id `"mymod"` → placeholders `{mymod_kills}`, `{mymod_deaths}`, `{mymod_playtime}`.
 
+> **Important:** the expansion identifier must be lowercase, alphanumeric, and contain **no underscores**.
+> Resolution splits a placeholder token on its first `_` to separate the expansion id from the
+> placeholder name (`{mymod_kills}` → id `mymod`, placeholder `kills`), so an id like `"my_mod"`
+> would never match — `{my_mod_kills}` would look for an expansion named `"my"`.
+
 ```java
 import com.zerog.neoessentials.api.PlaceholderExpansion;
 import com.zerog.neoessentials.api.PlaceholderAPI;
@@ -199,8 +204,9 @@ import com.zerog.neoessentials.api.economy.EconomyService;
 EconomyService eco = NeoEssentialsAPI.getEconomyService();
 eco.deposit(uuid, 100.0);
 eco.withdraw(uuid, 50.0);
-double balance = eco.getBalance(uuid);
-boolean has    = eco.has(uuid, 30.0);
+double balance   = eco.getBalance(uuid);
+boolean hasEnough = eco.getBalance(uuid) >= 30.0;   // no has(uuid, amount) helper — compare getBalance()
+boolean hasAcct   = eco.hasAccount(uuid);
 ```
 
 #### Economy Events (NeoForge event bus)
@@ -210,7 +216,7 @@ boolean has    = eco.has(uuid, 30.0);
 | `EconomyDepositEvent` | Balance increased | ✅ |
 | `EconomyWithdrawEvent` | Balance decreased | ✅ |
 
-Both events expose `getPlayerUUID()`, `getAmount()`, and `getNewBalance()`.
+Both events extend `EconomyEvent` and expose `getPlayerId()`, `getAmount()` (double), and `getBigDecimalAmount()` (precise `BigDecimal`). They implement `ICancellableEvent` — cancel the event to veto the deposit/withdrawal.
 
 ### Permissions API
 
@@ -418,7 +424,7 @@ Changes are preserved across mod updates — new keys from the JAR are merged in
 
 ```json
 {
-  "_langVersion": 16,
+  "_langVersion": 17,
   "commands.neoessentials.home.teleported": "§aTeleported to home §e{0}§a.",
   "commands.neoessentials.home.not_found": "§cHome §e{0}§c not found."
 }
