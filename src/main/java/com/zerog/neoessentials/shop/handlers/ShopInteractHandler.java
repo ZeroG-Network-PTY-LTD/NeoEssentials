@@ -90,14 +90,18 @@ public class ShopInteractHandler {
                         player.sendSystemMessage(Component.literal(
                             "§eHold the item you want this shop to trade, then right-click the sign."));
                     } else {
-                        // Assign the held item
+                        // Assign the held item — capture its DataComponents (custom name, NBT-backed
+                        // modded data, enchantments, etc.) too, not just the bare registry id, so the
+                        // shop trades the actual item the owner is holding rather than a data-less
+                        // lookalike reconstructed from just "modid:item_name".
                         shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                        shop.itemNbt     = com.zerog.neoessentials.shop.ShopParser.captureComponents(held);
                         shop.itemPending = false;
                         ShopManager.getInstance().registerShop(shop); // re-save with updated data
                         ShopSignHandler.writeSignLines(level, pos, com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
                         String currency = EconomyManager.getInstance().getCurrencySymbol();
                         player.sendSystemMessage(Component.literal(
-                            "§aItem set to §f" + com.zerog.neoessentials.shop.ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
+                            "§aItem set to §f" + com.zerog.neoessentials.shop.ShopParser.buildFullItemDisplayName(shop) + "§a!"));
                         if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
                             "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
                         if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
@@ -152,6 +156,13 @@ public class ShopInteractHandler {
         String dimension = level.dimension().location().toString();
         ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
         if (shop == null) return;
+
+        // Sneak+left-click bypasses the sell/info interception entirely, letting the swing
+        // fall through as a normal (uncanceled) attack/break attempt — otherwise every
+        // left-click on a shop sign is unconditionally canceled below (turned into a sell or
+        // an info message), so a BlockEvent.BreakEvent could never fire and the sign could
+        // never actually be broken/removed via left-click, sneaking or not.
+        if (player.isShiftKeyDown()) return;
 
         event.setCanceled(true);
         if (!tryConsumeInteractionCooldown(player)) return;
@@ -220,8 +231,9 @@ public class ShopInteractHandler {
     private static void sendTransactionResult(ServerPlayer player, TransactionResult result,
                                               ShopData shop, boolean buying) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        // Use buildItemDisplayName for readable modded item names (spaces, no namespace for vanilla)
-        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        // Full (untruncated) display name for chat — the 16-char truncation in
+        // buildItemDisplayName() exists only for the physical sign line, not chat messages.
+        String itemDisplay = ShopParser.buildFullItemDisplayName(shop);
         switch (result.type) {
             case SUCCESS -> {
                 if (buying) {
@@ -262,7 +274,7 @@ public class ShopInteractHandler {
 
     private static void sendShopInfo(ServerPlayer player, ShopData shop) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        String itemDisplay = ShopParser.buildFullItemDisplayName(shop);
         player.sendSystemMessage(Component.literal("§6§l--- Shop Info ---"));
         player.sendSystemMessage(Component.literal("§eOwner: §f" + shop.ownerName));
         player.sendSystemMessage(Component.literal("§eItem:  §f" + shop.quantity + "x " + itemDisplay));

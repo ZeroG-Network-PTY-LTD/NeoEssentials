@@ -49,6 +49,18 @@ public class ShopData {
     /** Resolved item registry id, e.g. {@code "minecraft:diamond"}. */
     public String itemId;
 
+    /**
+     * JSON-serialized {@code DataComponentMap} (custom name/lore, enchantments, modded data,
+     * NBT-backed capabilities, etc.) captured from the exact item the owner was holding when
+     * they assigned it to this shop — {@code null}/blank for a plain vanilla-default item.
+     * Applied on top of a fresh {@link net.minecraft.world.item.ItemStack} of {@link #itemId}
+     * in {@link com.zerog.neoessentials.shop.ShopTransaction#resolveItem(ShopData)} so shops
+     * trade the real item (with its data), not a data-less lookalike. See
+     * {@link com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer} for the codec —
+     * shared with the Auction House, which solves the exact same problem.
+     */
+    public String itemNbt;
+
     /** Position of the shop sign (map key). */
     public String signDimension;
     public int signX, signY, signZ;

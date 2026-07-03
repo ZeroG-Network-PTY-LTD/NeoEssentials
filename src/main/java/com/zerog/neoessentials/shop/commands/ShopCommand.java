@@ -48,6 +48,7 @@ public class ShopCommand {
             .then(Commands.literal("convert")
                 .executes(ctx -> executeConvert(ctx.getSource())))
             .then(Commands.literal("remove")
+                .executes(ctx -> executeRemoveLookAt(ctx.getSource()))
                 .then(Commands.argument("x", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
                     .then(Commands.argument("y", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
                         .then(Commands.argument("z", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
@@ -237,6 +238,52 @@ public class ShopCommand {
     }
 
     // ── /chestshop remove <x> <y> <z> ────────────────────────────────────────
+
+    /**
+     * {@code /chestshop remove} with no coordinates — removes whichever shop the player is
+     * currently looking at (sign or linked chest), if they own it or hold
+     * {@code neoessentials.shop.admin.remove}/OP 3. The coordinate-based {@link #executeRemove}
+     * variant below remains admin-only (it doesn't require looking at the shop at all, so an
+     * owner check there wouldn't be meaningful).
+     */
+    @SuppressWarnings("resource")
+    private static int executeRemoveLookAt(CommandSourceStack src) {
+        ServerPlayer player;
+        try {
+            player = src.getPlayerOrException();
+        } catch (Exception e) {
+            src.sendFailure(Component.literal("§cThis command must be run by a player, or use §f/chestshop remove <x> <y> <z>§c."));
+            return 0;
+        }
+
+        ShopData shop = getShopFromLookAt(player);
+        String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+        if (shop == null) {
+            // Fall back to the linked chest, in case the player is looking at that instead of the sign
+            HitResult hit = player.pick(5.0, 0.0f, false);
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                shop = ShopManager.getInstance().getShopByChest(dimension, ((BlockHitResult) hit).getBlockPos());
+            }
+        }
+        if (shop == null) {
+            src.sendFailure(Component.literal("§cYou must be looking at a shop sign or its linked chest."));
+            return 0;
+        }
+        if (!isShopOwnerOrAdmin(player, shop)) {
+            src.sendFailure(Component.literal("§cYou don't own this shop and don't have permission to remove it."));
+            return 0;
+        }
+
+        BlockPos signPos = shop.getSignPos();
+        ShopData removed = ShopManager.getInstance().removeShop(dimension, signPos);
+        if (removed == null) {
+            src.sendFailure(Component.literal("§cFailed to remove shop (already removed?)."));
+            return 0;
+        }
+        src.sendSuccess(() -> Component.literal("§aRemoved shop owned by §f" + removed.ownerName +
+            " §aat §7" + signPos.getX() + ", " + signPos.getY() + ", " + signPos.getZ()), true);
+        return 1;
+    }
 
     @SuppressWarnings("resource") // ServerLevel is not AutoCloseable; IntelliJ false positive
     private static int executeRemove(CommandSourceStack src, int x, int y, int z) {
@@ -613,7 +660,8 @@ public class ShopCommand {
         src.sendSuccess(() -> Component.literal("§e/chestshop export §7- Admin: export shops to CSV"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop import [create] §7- Admin: import from CSV"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop convert §7- Register looked-at sign as shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop remove <x> <y> <z> §7- Admin: remove shop"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop remove §7- Remove the shop you're looking at (owner or admin)"), false);
+        src.sendSuccess(() -> Component.literal("§e/chestshop remove <x> <y> <z> §7- Admin: remove shop at coordinates"), false);
         src.sendSuccess(() -> Component.literal("§e/chestshop reload §7- Admin: reload shop data"), false);
         src.sendSuccess(() -> Component.literal("§7Signs: [Name] / [Qty] / [B buy:S sell] / [item or ?]"), false);
         return 1;

@@ -331,7 +331,7 @@ public final class ShopParser {
         if (shop.itemPending || shop.itemId == null) {
             itemLine = "§e§l?";
         } else {
-            itemLine = buildItemDisplayName(shop.itemId);
+            itemLine = buildSignItemDisplayName(shop);
         }
 
         return new String[] {
@@ -365,6 +365,59 @@ public final class ShopParser {
             display = display.substring(0, 15) + "…";
         }
         return display;
+    }
+
+    /**
+     * Display name for the physical sign line (line 3) — prefers the item's REAL name
+     * (respecting a custom name from {@link ShopData#itemNbt}, e.g. a modded item's proper
+     * name instead of its raw registry id) via {@code getHoverName()}, truncated to the
+     * ~16-char sign-line limit. Falls back to the id-derived name ({@link #buildItemDisplayName})
+     * if the item can't be resolved.
+     */
+    public static String buildSignItemDisplayName(ShopData shop) {
+        String name = null;
+        try {
+            ItemStack resolved = com.zerog.neoessentials.shop.ShopTransaction.resolveItem(shop);
+            if (!resolved.isEmpty()) name = resolved.getHoverName().getString();
+        } catch (Exception ignored) {}
+        if (name == null || name.isBlank()) return buildItemDisplayName(shop.itemId);
+        return name.length() > 16 ? name.substring(0, 15) + "…" : name;
+    }
+
+    /**
+     * Full, untruncated display name for chat messages (shop info / transaction feedback) —
+     * unlike {@link #buildItemDisplayName}, which exists solely for the ~16-char sign line.
+     * Uses the item's real {@code getHoverName()} (respects custom names/lore from the shop's
+     * stored {@link ShopData#itemNbt}) when the item resolves; falls back to the id-based
+     * name if resolution fails (e.g. a since-removed modded item).
+     */
+    public static String buildFullItemDisplayName(ShopData shop) {
+        try {
+            ItemStack resolved = com.zerog.neoessentials.shop.ShopTransaction.resolveItem(shop);
+            if (!resolved.isEmpty()) return resolved.getHoverName().getString();
+        } catch (Exception ignored) {}
+        return buildItemDisplayName(shop.itemId).replace("…", "");
+    }
+
+    /**
+     * Captures a held item's {@code DataComponentMap} (custom name, enchantments, modded
+     * NBT-backed data, etc.) as a JSON string for {@link ShopData#itemNbt}, so a shop trades
+     * the actual item the owner held — not a data-less lookalike rebuilt from just its
+     * registry id. Returns {@code null} for a plain item with no non-default components
+     * (keeps old shops.json entries lean/unchanged) or if serialization fails.
+     */
+    public static String captureComponents(ItemStack held) {
+        try {
+            if (held.isEmpty()) return null;
+            net.minecraft.core.component.DataComponentMap defaults = new ItemStack(held.getItem()).getComponents();
+            if (held.getComponents().equals(defaults)) return null; // nothing custom to preserve
+            return com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer
+                .serialize(held.getComponents()).toString();
+        } catch (Exception e) {
+            LOGGER.warn("[ChestShop] Failed to capture item components for '{}': {}",
+                held.getItem(), e.getMessage());
+            return null;
+        }
     }
 }
 

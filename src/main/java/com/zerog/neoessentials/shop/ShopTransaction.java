@@ -73,7 +73,7 @@ public final class ShopTransaction {
         if (price == null) return fail(ResultType.ERROR);
         price = price.setScale(2, RoundingMode.HALF_UP);
 
-        ItemStack template = resolveItem(shop.itemId);
+        ItemStack template = resolveItem(shop);
         if (template.isEmpty()) return fail(ResultType.ERROR);
         ItemStack item = template.copyWithCount(shop.quantity);
 
@@ -130,7 +130,7 @@ public final class ShopTransaction {
         if (price == null) return fail(ResultType.ERROR);
         price = price.setScale(2, RoundingMode.HALF_UP);
 
-        ItemStack template = resolveItem(shop.itemId);
+        ItemStack template = resolveItem(shop);
         if (template.isEmpty()) return fail(ResultType.ERROR);
         ItemStack item = template.copyWithCount(shop.quantity);
 
@@ -218,6 +218,52 @@ public final class ShopTransaction {
         return ItemStack.EMPTY;
     }
 
+    /**
+     * Resolves a shop's traded item INCLUDING its stored {@link ShopData#itemNbt} components
+     * (custom name, enchantments, modded NBT-backed data) — so buy/sell actually trades the
+     * real item the owner set up, not a data-less lookalike built from just the registry id.
+     * Falls back to plain {@link #resolveItem(String)} when {@code itemNbt} is null/blank
+     * (legacy shops, or shops whose item genuinely has no non-default components).
+     */
+    public static ItemStack resolveItem(ShopData shop) {
+        ItemStack base = resolveItem(shop.itemId);
+        if (base.isEmpty() || shop.itemNbt == null || shop.itemNbt.isBlank()) return base;
+        try {
+            com.google.gson.JsonElement json = com.google.gson.JsonParser.parseString(shop.itemNbt);
+            net.minecraft.core.component.DataComponentMap components =
+                com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer.deserialize(json);
+            base.applyComponents(components);
+        } catch (Exception e) {
+            LOGGER.warn("[ChestShop] Failed to apply stored components for shop item '{}': {}",
+                shop.itemId, e.getMessage());
+        }
+        return base;
+    }
+
+    /**
+     * Whether {@code stack} carries any non-default {@code DataComponents} — used to decide
+     * how strictly two stacks must match (see {@link #matches}).
+     */
+    private static boolean hasCustomComponents(ItemStack stack) {
+        return !stack.getComponents().equals(new ItemStack(stack.getItem()).getComponents());
+    }
+
+    /**
+     * Item-matching predicate for chest/inventory scans. When {@code target} carries custom
+     * data (a modded item's defining components, a custom name, enchantments, etc.) matching
+     * requires an EXACT component match, so a shop configured for one specific data-bearing
+     * item variant doesn't accept/dispense a different variant of the same base item.
+     * Otherwise falls back to the loose registry-type-only match ({@link ItemStack#isSameItem})
+     * used historically, so a plain shop (e.g. "sell any diamond sword") isn't broken by
+     * incidental component differences (durability, etc.) between physical stacks.
+     */
+    private static boolean matches(ItemStack slot, ItemStack target) {
+        if (slot.isEmpty()) return false;
+        return hasCustomComponents(target)
+            ? ItemStack.isSameItemSameComponents(slot, target)
+            : ItemStack.isSameItem(slot, target);
+    }
+
     private static ChestBlockEntity getChest(ShopData shop, ServerLevel level) {
         if (!shop.hasChest) return null;
         BlockPos pos = shop.getChestPos();
@@ -229,7 +275,7 @@ public final class ShopTransaction {
         int count = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) count += slot.getCount();
+            if (matches(slot, target)) count += slot.getCount();
         }
         return count;
     }
@@ -238,7 +284,7 @@ public final class ShopTransaction {
         int toRemove = amount;
         for (int i = 0; i < container.getContainerSize() && toRemove > 0; i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) {
+            if (matches(slot, target)) {
                 int take = Math.min(slot.getCount(), toRemove);
                 slot.shrink(take);
                 toRemove -= take;
@@ -262,7 +308,7 @@ public final class ShopTransaction {
         int toAdd = amount;
         for (int i = 0; i < container.getContainerSize() && toAdd > 0; i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) {
+            if (matches(slot, target)) {
                 int space = slot.getMaxStackSize() - slot.getCount();
                 int add = Math.min(space, toAdd);
                 slot.grow(add); toAdd -= add;
@@ -284,7 +330,7 @@ public final class ShopTransaction {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
             if (slot.isEmpty()) canFit += target.getMaxStackSize();
-            else if (ItemStack.isSameItem(slot, target)) canFit += slot.getMaxStackSize() - slot.getCount();
+            else if (matches(slot, target)) canFit += slot.getMaxStackSize() - slot.getCount();
             if (canFit >= amount) return true;
         }
         return false;

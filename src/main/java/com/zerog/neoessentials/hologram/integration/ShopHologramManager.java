@@ -335,10 +335,11 @@ public class ShopHologramManager {
                     : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
             if (canAssign && !held.isEmpty()) {
                 shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                shop.itemNbt     = ShopParser.captureComponents(held);
                 shop.itemPending = false;
                 ShopManager.getInstance().registerShop(shop);
                 player.sendSystemMessage(Component.literal(
-                    "§aItem set to §f" + ShopParser.buildItemDisplayName(shop.itemId) + "§a!"));
+                    "§aItem set to §f" + ShopParser.buildFullItemDisplayName(shop) + "§a!"));
             } else {
                 player.sendSystemMessage(Component.literal("§eHold the item you want to trade, then right-click the hologram."));
             }
@@ -447,7 +448,7 @@ public class ShopHologramManager {
 
     private static void sendShopInfo(ServerPlayer player, ShopData shop) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        String itemDisplay = ShopParser.buildFullItemDisplayName(shop);
         player.sendSystemMessage(Component.literal("§6§l--- Shop Info ---"));
         player.sendSystemMessage(Component.literal("§eOwner: §f" + shop.ownerName));
         player.sendSystemMessage(Component.literal("§eItem:  §f" + shop.quantity + "x " + itemDisplay));
@@ -458,7 +459,7 @@ public class ShopHologramManager {
     private static void sendTransactionResult(ServerPlayer player, TransactionResult result,
                                               ShopData shop, boolean buying) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        String itemDisplay = ShopParser.buildItemDisplayName(shop.itemId);
+        String itemDisplay = ShopParser.buildFullItemDisplayName(shop);
         switch (result.type) {
             case SUCCESS -> {
                 if (buying) {
