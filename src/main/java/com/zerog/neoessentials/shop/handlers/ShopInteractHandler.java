@@ -32,6 +32,30 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 @EventBusSubscriber(modid = "neoessentials")
 public class ShopInteractHandler {
 
+    /**
+     * Minimum time between processed shop-sign interactions, per player.
+     *
+     * <p>Both {@link PlayerInteractEvent.RightClickBlock} and {@link PlayerInteractEvent.LeftClickBlock}
+     * are tied to the player's click/swing input — holding the mouse button down on a block
+     * fires them repeatedly (as fast as the client's attack-speed cooldown allows, which is a
+     * damage-scaling mechanic, not a click-rate limiter), so without a cooldown here each
+     * individual swing was processed as a separate full buy/sell transaction — "holding click
+     * to sell" would sell repeatedly instead of once. Same fix as
+     * {@link com.zerog.neoessentials.hologram.integration.ShopHologramManager}'s hologram
+     * click handlers, kept as a separate cooldown map since these are unrelated interaction
+     * surfaces (sign vs. hologram).
+     */
+    private static final long INTERACTION_COOLDOWN_MS = 400L;
+    private static final java.util.Map<java.util.UUID, Long> lastInteractionMs = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static boolean tryConsumeInteractionCooldown(ServerPlayer player) {
+        long now = System.currentTimeMillis();
+        Long last = lastInteractionMs.get(player.getUUID());
+        if (last != null && now - last < INTERACTION_COOLDOWN_MS) return false;
+        lastInteractionMs.put(player.getUUID(), now);
+        return true;
+    }
+
     // ── Right-click = BUY ─────────────────────────────────────────────────────
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -49,6 +73,7 @@ public class ShopInteractHandler {
         if (shop == null) return;
 
         event.setCanceled(true);
+        if (!tryConsumeInteractionCooldown(player)) return;
 
         try {
             // ── Item autofill: owner right-clicks a pending "?" shop with item in hand ──
@@ -129,6 +154,7 @@ public class ShopInteractHandler {
         if (shop == null) return;
 
         event.setCanceled(true);
+        if (!tryConsumeInteractionCooldown(player)) return;
 
         try {
             // Owner left-clicks → show info only

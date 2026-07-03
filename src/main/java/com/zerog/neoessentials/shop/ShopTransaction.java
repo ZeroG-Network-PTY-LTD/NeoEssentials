@@ -229,7 +229,7 @@ public final class ShopTransaction {
         int count = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, target)) count += slot.getCount();
+            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) count += slot.getCount();
         }
         return count;
     }
@@ -238,7 +238,7 @@ public final class ShopTransaction {
         int toRemove = amount;
         for (int i = 0; i < container.getContainerSize() && toRemove > 0; i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, target)) {
+            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) {
                 int take = Math.min(slot.getCount(), toRemove);
                 slot.shrink(take);
                 toRemove -= take;
@@ -262,7 +262,7 @@ public final class ShopTransaction {
         int toAdd = amount;
         for (int i = 0; i < container.getContainerSize() && toAdd > 0; i++) {
             ItemStack slot = container.getItem(i);
-            if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, target)) {
+            if (!slot.isEmpty() && ItemStack.isSameItem(slot, target)) {
                 int space = slot.getMaxStackSize() - slot.getCount();
                 int add = Math.min(space, toAdd);
                 slot.grow(add); toAdd -= add;
@@ -284,7 +284,7 @@ public final class ShopTransaction {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
             if (slot.isEmpty()) canFit += target.getMaxStackSize();
-            else if (ItemStack.isSameItemSameComponents(slot, target)) canFit += slot.getMaxStackSize() - slot.getCount();
+            else if (ItemStack.isSameItem(slot, target)) canFit += slot.getMaxStackSize() - slot.getCount();
             if (canFit >= amount) return true;
         }
         return false;

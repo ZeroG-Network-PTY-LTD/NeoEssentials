@@ -80,7 +80,7 @@ public class SupplyDemandRule implements PriceRule {
         int total = 0;
         for (int i = 0; i < chest.getContainerSize(); i++) {
             var slot = chest.getItem(i);
-            if (!slot.isEmpty() && net.minecraft.world.item.ItemStack.isSameItemSameComponents(slot, template)) {
+            if (!slot.isEmpty() && net.minecraft.world.item.ItemStack.isSameItem(slot, template)) {
                 total += slot.getCount();
             }
         }

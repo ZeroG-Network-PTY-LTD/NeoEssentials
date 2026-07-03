@@ -276,6 +276,28 @@ public class ShopHologramManager {
     // transaction, doubling entity churn for no benefit.
 
     /**
+     * Minimum time between processed shop-hologram interactions, per player.
+     *
+     * <p>Unlike right-clicking a block (fires once per click), {@link AttackEntityEvent}
+     * is tied to the player's attack-swing mechanic — holding the mouse button down on an
+     * entity fires it repeatedly (as fast as the client's attack-speed cooldown allows,
+     * which is a damage-scaling mechanic, not a click-rate limiter), so without a cooldown
+     * here each individual swing was processed as a separate full buy/sell transaction —
+     * "holding click to sell" would sell repeatedly instead of once.</p>
+     */
+    private static final long INTERACTION_COOLDOWN_MS = 400L;
+    private static final java.util.Map<java.util.UUID, Long> lastInteractionMs = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Returns {@code true} (and records the attempt) if this player is outside the cooldown window. */
+    private static boolean tryConsumeInteractionCooldown(ServerPlayer player) {
+        long now = System.currentTimeMillis();
+        Long last = lastInteractionMs.get(player.getUUID());
+        if (last != null && now - last < INTERACTION_COOLDOWN_MS) return false;
+        lastInteractionMs.put(player.getUUID(), now);
+        return true;
+    }
+
+    /**
      * Right-clicking a shop hologram entity is identical to right-clicking the sign → BUY.
      * Skipped if the hologram's {@code interactive} flag is {@code false}.
      */
@@ -297,6 +319,7 @@ public class ShopHologramManager {
         if (holo == null || !holo.interactive) return;
 
         event.setCanceled(true);
+        if (!tryConsumeInteractionCooldown(player)) return;
 
         // Owner right-clicks → show info (same behaviour as sign)
         if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
@@ -352,6 +375,7 @@ public class ShopHologramManager {
         if (holo == null || !holo.interactive) return;
 
         event.setCanceled(true);
+        if (!tryConsumeInteractionCooldown(player)) return;
 
         // Owner left-clicks → show info
         if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
