@@ -265,7 +265,8 @@ When a sign shop enables its hologram (via the shop hologram toggle — see [Eco
 |---|---|
 | Right-click (non-owner) | Buy from the shop (same as right-clicking the sign) — requires `neoessentials.shop.use`. |
 | Left-click / attack (non-owner) | Sell to the shop — requires `neoessentials.shop.use`. |
-| Right- or left-click (owner) | Shows shop info instead of transacting. |
+| Right-click (owner) | Shows shop info instead of transacting. |
+| **Shift+right-click** (owner), holding an item | (Re)assigns the shop's traded item to the held item, capturing its data (enchantments, custom name, modded NBT) — same gesture as the sign, see [Item Data / NBT](EconomySystem#item-data--nbt-modded-items) in the Economy System page. |
 
 Clicks are rate-limited to one processed interaction per player every 400 ms to prevent held-down attack-spam from firing repeated transactions.  
 Shop holograms can be repositioned relative to their sign (up to ±4.5 blocks per axis) via the shop's hologram-offset controls; admin `/hologram` commands can still be used to inspect them (`/hologram info shop_...`), but manual edits to their lines/position are overwritten the next time the shop transacts or reloads.

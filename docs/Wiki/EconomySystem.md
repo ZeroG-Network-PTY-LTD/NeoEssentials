@@ -94,11 +94,31 @@ Line 3: B 10:S 5                     ← buy price : sell price  (B only, S only
 Line 4: diamond                      ← item name, or ? to assign by right-clicking with item
 ```
 
+> Typing a name directly on line 4 only resolves a bare item ID — it can't carry enchantments,
+> custom names, or modded NBT-backed data. Use `?` (or shift+right-click afterward — see
+> [Item Data / NBT](#item-data--nbt-modded-items) below) to assign the item by holding the exact
+> stack instead, if it has data that needs to be preserved.
+
 **Price shortcuts:** `B FREE` = free to buy · `S FREE` = free to sell · `1K` = 1000 · `1.5M` = 1500000
 
 ### Admin Shops
 
 Use `Admin Shop` on line 1 — requires `neoessentials.shop.create.admin`. Admin shops have unlimited stock.
+
+### Item Data / NBT (Modded Items)
+
+Sign text alone can only encode a bare item ID (`diamond`, `thermal:copper_ingot`) — it cannot carry custom data (enchantments, custom names/lore, or a modded item's NBT-backed capability data). To make a shop trade an item **with its data intact**, assign it by holding the exact item and interacting with the sign/hologram rather than typing its name:
+
+| Gesture | When it applies | Effect |
+|---|---|---|
+| Right-click the sign/hologram while holding the item | Sign's item line is `?` (shop is "pending") | One-time setup — captures the held item's data and activates the shop |
+| **Shift+right-click** the sign/hologram while holding the item | Shop already has an item assigned (including ones set by typing a name on the sign) | Re-assigns the item, capturing its data — use this to attach/update NBT on an existing shop |
+
+Only the owner (or, for admin shops, a player with `neoessentials.shop.create.admin`) can do either. If a shop was created by typing an item name directly on the sign and buying/selling against a data-bearing item in the chest reports **"out of stock"** even though the chest visibly has stock, this is almost always the fix — the shop never captured the item's data, so it wasn't matching what's actually in the chest. Shift+right-click it with the correct item to fix.
+
+### Removing a Shop
+
+Left-click (attack) a shop sign to sell, same as always — but a single left-click swing on a shop sign is also the tool used to actually **break** it, so it's intercepted for the sell/info action by default. **Sneak (shift) + left-click** bypasses that interception and lets the swing through as a normal break attempt, removing the shop (if you're the owner or an admin).
 
 ### Commands
 
@@ -118,7 +138,8 @@ Use `Admin Shop` on line 1 — requires `neoessentials.shop.create.admin`. Admin
 | `/chestshop hologram move <x> <y> <z>` | shop owner only | Reposition the hologram (offset from the sign, ±4.5 blocks per axis) |
 | `/chestshop export` | `neoessentials.shop.admin.csv.export` | Export all shops to a CSV file |
 | `/chestshop import [create]` | `neoessentials.shop.admin.csv.import` | Import shops from CSV (`create` also creates new signs) |
-| `/chestshop remove <x> <y> <z>` | `neoessentials.shop.admin.remove` | Admin-remove a shop by coordinates |
+| `/chestshop remove` | shop owner, or `neoessentials.shop.admin.remove` / OP 3 | Remove the shop you're currently looking at (sign or its linked chest) |
+| `/chestshop remove <x> <y> <z>` | `neoessentials.shop.admin.remove` | Admin-only: remove a shop at specific coordinates, without needing to look at it |
 | `/chestshop reload` | `neoessentials.shop.admin.reload` | Reload shop data and the dynamic pricing config |
 
 ### Dynamic Pricing & Holograms
