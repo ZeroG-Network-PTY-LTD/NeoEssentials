@@ -81,7 +81,7 @@ public class WorldInfoCollector {
         dimObj.addProperty("name", getDimensionName(dimensionKey));
         
         // Spawn point
-        BlockPos spawnPos = level.getSharedSpawnPos();
+        BlockPos spawnPos = level.getRespawnData().pos();
         JsonObject spawnObj = new JsonObject();
         spawnObj.addProperty("x", spawnPos.getX());
         spawnObj.addProperty("y", spawnPos.getY());
@@ -197,7 +197,7 @@ public class WorldInfoCollector {
             spawnObj.addProperty("dimension", dimensionKey);
             spawnObj.addProperty("name", getDimensionName(dimensionKey));
             
-            BlockPos spawnPos = level.getSharedSpawnPos();
+            BlockPos spawnPos = level.getRespawnData().pos();
             spawnObj.addProperty("x", spawnPos.getX());
             spawnObj.addProperty("y", spawnPos.getY());
             spawnObj.addProperty("z", spawnPos.getZ());

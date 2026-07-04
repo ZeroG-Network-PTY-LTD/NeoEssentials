@@ -381,10 +381,10 @@ public class ServerAdminCommands {
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
                     self.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(target),
-                java.util.Set.of(),
                 target.getX(),
                 target.getY(),
                 target.getZ(),
+                java.util.Set.of(),
                 target.getYRot(),
                 target.getXRot(),
                 true
@@ -408,10 +408,10 @@ public class ServerAdminCommands {
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
                     target.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(self),
-                java.util.Set.of(),
                 self.getX(),
                 self.getY(),
                 self.getZ(),
+                java.util.Set.of(),
                 self.getYRot(),
                 self.getXRot(),
                 true
@@ -442,10 +442,10 @@ public class ServerAdminCommands {
                         // Player is online — just use tpo logic
                         self.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(online),
-                java.util.Set.of(),
                 online.getX(),
                 online.getY(),
                 online.getZ(),
+                java.util.Set.of(),
                 online.getYRot(),
                 online.getXRot(),
                 true
@@ -488,10 +488,10 @@ public class ServerAdminCommands {
                     final double fx = x, fy = y, fz = z;
                     self.teleportTo(
                 level,
-                java.util.Set.of(),
                 fx,
                 fy,
                 fz,
+                java.util.Set.of(),
                 yaw,
                 pitch,
                 true
@@ -577,14 +577,14 @@ public class ServerAdminCommands {
             }
         }
         if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.world.not_found", dimName)); return 0; }
-        BlockPos spawn = target.getSharedSpawnPos();
+        BlockPos spawn = target.getRespawnData().pos();
         final ServerLevel fl = target;
         player.teleportTo(
                 fl,
-                java.util.Set.of(),
                 spawn.getX() + 0.5,
                 spawn.getY(),
                 spawn.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

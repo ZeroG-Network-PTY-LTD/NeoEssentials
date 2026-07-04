@@ -209,10 +209,10 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(target),
-                java.util.Set.of(),
                 target.getX(),
                 target.getY(),
                 target.getZ(),
+                java.util.Set.of(),
                 target.getYRot(),
                 target.getXRot(),
                 true
@@ -232,10 +232,10 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(player),
-                java.util.Set.of(),
                 x,
                 y,
                 z,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
@@ -256,10 +256,10 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
             target.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(player),
-                java.util.Set.of(),
                 player.getX(),
                 player.getY(),
                 player.getZ(),
+                java.util.Set.of(),
                 target.getYRot(),
                 target.getXRot(),
                 true
@@ -291,10 +291,10 @@ public class DirectTeleportCommands {
                     com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
                     target.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(player),
-                java.util.Set.of(),
                 player.getX(),
                 player.getY(),
                 player.getZ(),
+                java.util.Set.of(),
                 target.getYRot(),
                 target.getXRot(),
                 true
@@ -337,10 +337,10 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(
                 level,
-                java.util.Set.of(),
                 highestPos.getX() + 0.5,
                 highestPos.getY(),
                 highestPos.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
@@ -373,10 +373,10 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(
                 level,
-                java.util.Set.of(),
                 teleportPos.getX() + 0.5,
                 teleportPos.getY(),
                 teleportPos.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

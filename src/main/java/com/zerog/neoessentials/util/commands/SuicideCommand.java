@@ -136,7 +136,7 @@ public class SuicideCommand {
         // Execute suicide with custom damage source
         try {
             DamageSource suicideDamage = new DamageSource(
-                player.level().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
+                player.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
                     .getHolderOrThrow(DamageTypes.GENERIC_KILL)
             );
             

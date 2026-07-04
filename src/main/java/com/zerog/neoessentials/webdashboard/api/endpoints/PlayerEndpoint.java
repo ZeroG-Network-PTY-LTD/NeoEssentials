@@ -289,10 +289,10 @@ public class PlayerEndpoint implements HttpHandler {
                     }
                     player.teleportTo(
                 com.zerog.neoessentials.util.LevelCompat.of(target),
-                java.util.Set.of(),
                 target.getX(),
                 target.getY(),
                 target.getZ(),
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
@@ -316,10 +316,10 @@ public class PlayerEndpoint implements HttpHandler {
                     double z = finalBody.get("z").getAsDouble();
                     player.teleportTo(
                 level,
-                java.util.Set.of(),
                 x,
                 y,
                 z,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

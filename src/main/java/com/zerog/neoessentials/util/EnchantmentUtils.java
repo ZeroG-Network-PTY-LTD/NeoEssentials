@@ -23,7 +23,7 @@ public class EnchantmentUtils {
      * @throws IllegalArgumentException if enchantment not found
      */
     public static Holder<Enchantment> getEnchantment(MinecraftServer server, String namespace, String path) {
-        var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+        var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
         ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
         return registry.getHolderOrThrow(key);
@@ -38,7 +38,7 @@ public class EnchantmentUtils {
      */
     public static Optional<Holder<Enchantment>> getEnchantmentSafely(MinecraftServer server, String namespace, String path) {
         try {
-            var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+            var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
             Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
             return registry.getHolder(key).map(holder -> holder);
@@ -55,7 +55,7 @@ public class EnchantmentUtils {
      */
     public static Optional<Holder<Enchantment>> getEnchantment(MinecraftServer server, Identifier location) {
         try {
-            var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+            var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, location);
             return registry.getHolder(key).map(holder -> holder);
         } catch (Exception e) {

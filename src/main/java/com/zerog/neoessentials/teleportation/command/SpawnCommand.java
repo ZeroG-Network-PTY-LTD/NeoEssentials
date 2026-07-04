@@ -25,7 +25,7 @@ public class SpawnCommand {
                     }
                     
                     var level = com.zerog.neoessentials.util.LevelCompat.of(player);
-                    var spawnPos = level.getSharedSpawnPos();
+                    var spawnPos = level.getRespawnData().pos();
                     var spawnLoc = new com.zerog.neoessentials.teleportation.TeleportLocation(
                         level,
                         spawnPos,

@@ -81,7 +81,7 @@ public class EnchantCommand {
                     .suggests((ctx, builder) -> {
                         return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                             ctx.getSource().getServer().registryAccess()
-                                .registryOrThrow(Registries.ENCHANTMENT)
+                                .lookupOrThrow(Registries.ENCHANTMENT)
                                 .keySet(), builder
                         );
                     })
@@ -99,7 +99,7 @@ public class EnchantCommand {
                         .suggests((ctx, builder) -> {
                             return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                                 ctx.getSource().getServer().registryAccess()
-                                    .registryOrThrow(Registries.ENCHANTMENT)
+                                    .lookupOrThrow(Registries.ENCHANTMENT)
                                     .keySet(), builder
                             );
                         })
@@ -125,7 +125,7 @@ public class EnchantCommand {
                     .suggests((ctx, builder) -> {
                         return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                             ctx.getSource().getServer().registryAccess()
-                                .registryOrThrow(Registries.ENCHANTMENT)
+                                .lookupOrThrow(Registries.ENCHANTMENT)
                                 .keySet(), builder
                         );
                     })
@@ -210,7 +210,7 @@ public class EnchantCommand {
         // Get the enchantment from registry
         net.minecraft.core.Registry<Enchantment> enchantRegistry = targetPlayer.level().getServer()
             .registryAccess()
-            .registryOrThrow(Registries.ENCHANTMENT);
+            .lookupOrThrow(Registries.ENCHANTMENT);
         
         if (!enchantRegistry.containsKey(enchantId)) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.unknown", enchantId.toString()));
@@ -344,7 +344,7 @@ public class EnchantCommand {
             // Get the enchantment holder from registry
             net.minecraft.core.Registry<Enchantment> registry = player.level().getServer()
                 .registryAccess()
-                .registryOrThrow(Registries.ENCHANTMENT);
+                .lookupOrThrow(Registries.ENCHANTMENT);
                 
             // Find the holder for this enchantment
             Holder<Enchantment> holder = null;

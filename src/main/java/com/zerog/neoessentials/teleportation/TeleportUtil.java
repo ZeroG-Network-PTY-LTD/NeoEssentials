@@ -285,10 +285,10 @@ public class TeleportUtil {
 
                 player.teleportTo(
                 targetLevel,
-                java.util.Set.of(),
                 location.getX(),
                 location.getY(),
                 location.getZ(),
+                java.util.Set.of(),
                 yaw,
                 pitch,
                 true

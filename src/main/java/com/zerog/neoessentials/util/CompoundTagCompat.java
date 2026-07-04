@@ -1,7 +1,11 @@
 package com.zerog.neoessentials.util;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * {@link CompoundTag} accessors with an explicit default value.
@@ -52,5 +56,20 @@ public final class CompoundTagCompat {
 
     public static ListTag getList(CompoundTag tag, String key) {
         return tag.getListOrEmpty(key);
+    }
+
+    public static CompoundTag getCompound(CompoundTag tag, String key) {
+        return tag.getCompoundOrEmpty(key);
+    }
+
+    /**
+     * 26.1 port: {@code ItemStack.parseOptional(RegistryAccess, CompoundTag)} was removed
+     * along with the old NBT-codec integration — item (de)serialization now goes through
+     * {@code ItemStack.CODEC} directly via {@link RegistryOps}. Returns {@link ItemStack#EMPTY}
+     * on any parse failure, matching {@code parseOptional}'s old error-tolerant behavior.
+     */
+    public static ItemStack parseItemStack(HolderLookup.Provider registries, CompoundTag tag) {
+        return ItemStack.CODEC.parse(RegistryOps.create(NbtOps.INSTANCE, registries), tag)
+            .result().orElse(ItemStack.EMPTY);
     }
 }

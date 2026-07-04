@@ -370,10 +370,10 @@ public class WorldInteractionCommands {
                 final BlockPos finalPos = safePos;
                 player.teleportTo(
                 level,
-                java.util.Set.of(),
                 finalPos.getX() + 0.5,
                 finalPos.getY(),
                 finalPos.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

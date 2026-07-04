@@ -378,9 +378,9 @@ public class ServerDataCollector {
             
             // World spawn
             JsonObject spawn = new JsonObject();
-            spawn.addProperty("x", level.getSharedSpawnPos().getX());
-            spawn.addProperty("y", level.getSharedSpawnPos().getY());
-            spawn.addProperty("z", level.getSharedSpawnPos().getZ());
+            spawn.addProperty("x", level.getRespawnData().pos().getX());
+            spawn.addProperty("y", level.getRespawnData().pos().getY());
+            spawn.addProperty("z", level.getRespawnData().pos().getZ());
             world.add("spawn", spawn);
             
             worldsList.add(world);

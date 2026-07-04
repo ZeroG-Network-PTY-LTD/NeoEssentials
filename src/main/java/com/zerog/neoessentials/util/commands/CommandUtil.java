@@ -56,7 +56,7 @@ public class CommandUtil {
      */
     public static String getBiomeName(Biome biome, Level level, BlockPos pos) {
         Identifier biomeKey = level.registryAccess()
-            .registryOrThrow(net.minecraft.core.registries.Registries.BIOME)
+            .lookupOrThrow(net.minecraft.core.registries.Registries.BIOME)
             .getKey(biome);
         
         if (biomeKey != null) {

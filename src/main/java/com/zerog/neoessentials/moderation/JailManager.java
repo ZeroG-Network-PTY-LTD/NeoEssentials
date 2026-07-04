@@ -443,10 +443,10 @@ public class JailManager {
             if (dimension != null) {
                 player.teleportTo(
                 dimension,
-                java.util.Set.of(),
                 jailLoc.position.getX() + 0.5,
                 jailLoc.position.getY() + 1,
                 jailLoc.position.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
@@ -482,10 +482,10 @@ public class JailManager {
             if (dimension != null) {
                 player.teleportTo(
                 dimension,
-                java.util.Set.of(),
                 jail.originalLocation.getX() + 0.5,
                 jail.originalLocation.getY() + 1,
                 jail.originalLocation.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

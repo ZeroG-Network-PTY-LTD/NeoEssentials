@@ -929,10 +929,10 @@ public class HologramCommand {
         }
         player.teleportTo(
                 targetLevel,
-                java.util.Set.of(),
                 data.x,
                 data.y,
                 data.z,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true

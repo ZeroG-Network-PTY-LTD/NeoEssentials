@@ -94,7 +94,7 @@ public class CompassCommand {
         String biomeName = CommandUtil.getBiomeName(biome, level, pos);
         
         // Calculate distance to spawn
-        BlockPos spawnPos = level.getSharedSpawnPos();
+        BlockPos spawnPos = level.getRespawnData().pos();
         double distanceToSpawn = Math.sqrt(Math.pow(pos.getX() - spawnPos.getX(), 2) + 
                                          Math.pow(pos.getZ() - spawnPos.getZ(), 2));
         

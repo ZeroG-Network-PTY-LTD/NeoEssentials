@@ -305,7 +305,7 @@ public class SpawnManager {
                 return;
             }
             ServerLevel overworld = server.overworld();
-            BlockPos worldSpawn = overworld.getSharedSpawnPos();
+            BlockPos worldSpawn = overworld.getRespawnData().pos();
             TeleportLocation fallbackLocation = new TeleportLocation(
                 overworld, 
                 worldSpawn, 

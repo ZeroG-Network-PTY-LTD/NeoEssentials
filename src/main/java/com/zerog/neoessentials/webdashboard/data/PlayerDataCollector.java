@@ -86,14 +86,14 @@ public class PlayerDataCollector {
             // If cache didn't work, try to get username from NBT
             if (username == null && playerData != null) {
                 if (playerData.contains("bukkit")) {
-                    CompoundTag bukkitData = playerData.getCompound("bukkit");
+                    CompoundTag bukkitData = com.zerog.neoessentials.util.CompoundTagCompat.getCompound(playerData, "bukkit");
                     if (bukkitData.contains("lastKnownName")) {
-                        username = bukkitData.getString("lastKnownName");
+                        username = com.zerog.neoessentials.util.CompoundTagCompat.getString(bukkitData, "lastKnownName");
                     }
                 }
                 // Some servers store it differently
                 if (username == null && playerData.contains("lastKnownName")) {
-                    username = playerData.getString("lastKnownName");
+                    username = com.zerog.neoessentials.util.CompoundTagCompat.getString(playerData, "lastKnownName");
                 }
             }
 
@@ -107,7 +107,7 @@ public class PlayerDataCollector {
 
             // Try to load game mode from player data file
             if (playerData != null) {
-                int gameModeId = playerData.getInt("playerGameType");
+                int gameModeId = com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "playerGameType");
                 String gameMode = switch (gameModeId) {
                     case 0 -> "survival";
                     case 1 -> "creative";
@@ -379,13 +379,18 @@ public class PlayerDataCollector {
         JsonArray offhand = new JsonArray();
         
         // Parse main inventory
-        if (playerData.contains("Inventory", 9)) { // 9 = ListTag
-            ListTag invList = playerData.getList("Inventory", 10); // 10 = CompoundTag
+        // 26.1 port: CompoundTag.contains(String, int) (tag-type-checked) was removed —
+        // plain contains(String) plus getListOrEmpty() covers the same "does it exist"
+        // check. ListTag.getCompound(int) now returns Optional<CompoundTag>, and
+        // ItemStack.parseOptional was replaced by ItemStack.CODEC via RegistryOps —
+        // see CompoundTagCompat.parseItemStack().
+        if (playerData.contains("Inventory")) {
+            ListTag invList = com.zerog.neoessentials.util.CompoundTagCompat.getList(playerData, "Inventory");
             for (int i = 0; i < invList.size(); i++) {
-                CompoundTag itemTag = invList.getCompound(i);
-                byte slot = itemTag.getByte("Slot");
+                CompoundTag itemTag = invList.getCompound(i).orElse(new CompoundTag());
+                byte slot = com.zerog.neoessentials.util.CompoundTagCompat.getByte(itemTag, "Slot");
                 // Get ItemStack from tag
-                ItemStack itemStack = ItemStack.parseOptional(server.registryAccess(), itemTag);
+                ItemStack itemStack = com.zerog.neoessentials.util.CompoundTagCompat.parseItemStack(server.registryAccess(), itemTag);
                 JsonObject item = serializeItemStack(itemStack);
                 item.addProperty("slot", slot);
                 
@@ -460,20 +465,20 @@ public class PlayerDataCollector {
             if (playerData != null) {
                 // Health and vital stats from saved data
                 if (playerData.contains("Health")) {
-                    float health = playerData.getFloat("Health");
+                    float health = com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "Health");
                     status.addProperty("health", health);
                     status.addProperty("maxHealth", 20.0f);
                     status.addProperty("healthPercent", (health / 20.0f) * 100);
                 }
 
                 if (playerData.contains("foodLevel")) {
-                    status.addProperty("foodLevel", playerData.getInt("foodLevel"));
+                    status.addProperty("foodLevel", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "foodLevel"));
                 }
                 if (playerData.contains("foodSaturationLevel")) {
-                    status.addProperty("saturation", playerData.getFloat("foodSaturationLevel"));
+                    status.addProperty("saturation", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "foodSaturationLevel"));
                 }
                 if (playerData.contains("AbsorptionAmount")) {
-                    status.addProperty("absorptionAmount", playerData.getFloat("AbsorptionAmount"));
+                    status.addProperty("absorptionAmount", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "AbsorptionAmount"));
                 }
 
                 // Armor value - offline players don't have this easily available
@@ -481,13 +486,13 @@ public class PlayerDataCollector {
 
                 // Experience
                 if (playerData.contains("XpLevel")) {
-                    status.addProperty("experienceLevel", playerData.getInt("XpLevel"));
+                    status.addProperty("experienceLevel", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "XpLevel"));
                 }
                 if (playerData.contains("XpP")) {
-                    status.addProperty("experienceProgress", playerData.getFloat("XpP"));
+                    status.addProperty("experienceProgress", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "XpP"));
                 }
                 if (playerData.contains("XpTotal")) {
-                    status.addProperty("totalExperience", playerData.getInt("XpTotal"));
+                    status.addProperty("totalExperience", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "XpTotal"));
                 }
 
                 // AFK is always false for offline players
@@ -524,7 +529,7 @@ public class PlayerDataCollector {
             if (playerData != null) {
                 // Health
                 if (playerData.contains("Health")) {
-                    float playerHealth = playerData.getFloat("Health");
+                    float playerHealth = com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "Health");
                     health.addProperty("health", playerHealth);
                     health.addProperty("maxHealth", 20.0f); // Default max health
                     health.addProperty("healthPercent", (playerHealth / 20.0f) * 100);
@@ -532,24 +537,24 @@ public class PlayerDataCollector {
 
                 // Food level
                 if (playerData.contains("foodLevel")) {
-                    health.addProperty("foodLevel", playerData.getInt("foodLevel"));
+                    health.addProperty("foodLevel", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "foodLevel"));
                 }
                 if (playerData.contains("foodSaturationLevel")) {
-                    health.addProperty("saturation", playerData.getFloat("foodSaturationLevel"));
+                    health.addProperty("saturation", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "foodSaturationLevel"));
                 }
                 if (playerData.contains("foodExhaustionLevel")) {
-                    health.addProperty("exhaustion", playerData.getFloat("foodExhaustionLevel"));
+                    health.addProperty("exhaustion", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "foodExhaustionLevel"));
                 }
 
                 // Air
                 if (playerData.contains("Air")) {
-                    health.addProperty("air", playerData.getShort("Air"));
+                    health.addProperty("air", com.zerog.neoessentials.util.CompoundTagCompat.getShort(playerData, "Air"));
                     health.addProperty("maxAir", 300); // Default max air
                 }
 
                 // Absorption amount
                 if (playerData.contains("AbsorptionAmount")) {
-                    health.addProperty("absorptionAmount", playerData.getFloat("AbsorptionAmount"));
+                    health.addProperty("absorptionAmount", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "AbsorptionAmount"));
                 }
 
                 // Armor value - need to calculate from inventory
@@ -580,13 +585,13 @@ public class PlayerDataCollector {
             CompoundTag playerData = loadOfflinePlayerData(playerUuid);
             if (playerData != null) {
                 if (playerData.contains("XpLevel")) {
-                    xp.addProperty("level", playerData.getInt("XpLevel"));
+                    xp.addProperty("level", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "XpLevel"));
                 }
                 if (playerData.contains("XpP")) {
-                    xp.addProperty("progress", playerData.getFloat("XpP"));
+                    xp.addProperty("progress", com.zerog.neoessentials.util.CompoundTagCompat.getFloat(playerData, "XpP"));
                 }
                 if (playerData.contains("XpTotal")) {
-                    xp.addProperty("totalXp", playerData.getInt("XpTotal"));
+                    xp.addProperty("totalXp", com.zerog.neoessentials.util.CompoundTagCompat.getInt(playerData, "XpTotal"));
                 }
                 // Can't calculate xpToNextLevel without server logic for offline players
                 xp.addProperty("xpToNextLevel", 0);
@@ -624,11 +629,11 @@ public class PlayerDataCollector {
             CompoundTag playerData = loadOfflinePlayerData(playerUuid);
             if (playerData != null && playerData.contains("Pos")) {
                 // Position is stored as ListTag of 3 doubles
-                var posList = playerData.getList("Pos", 6); // 6 = DoubleTag
+                var posList = com.zerog.neoessentials.util.CompoundTagCompat.getList(playerData, "Pos");
                 if (posList.size() >= 3) {
-                    double x = posList.getDouble(0);
-                    double y = posList.getDouble(1);
-                    double z = posList.getDouble(2);
+                    double x = posList.getDoubleOr(0, 0.0);
+                    double y = posList.getDoubleOr(1, 0.0);
+                    double z = posList.getDoubleOr(2, 0.0);
 
                     location.addProperty("x", (int) Math.floor(x));
                     location.addProperty("y", (int) Math.floor(y));
@@ -640,16 +645,16 @@ public class PlayerDataCollector {
 
                 // Rotation
                 if (playerData.contains("Rotation")) {
-                    var rotList = playerData.getList("Rotation", 5); // 5 = FloatTag
+                    var rotList = com.zerog.neoessentials.util.CompoundTagCompat.getList(playerData, "Rotation");
                     if (rotList.size() >= 2) {
-                        location.addProperty("yaw", rotList.getFloat(0));
-                        location.addProperty("pitch", rotList.getFloat(1));
+                        location.addProperty("yaw", rotList.getFloatOr(0, 0f));
+                        location.addProperty("pitch", rotList.getFloatOr(1, 0f));
                     }
                 }
 
                 // Dimension
                 if (playerData.contains("Dimension")) {
-                    String dimension = playerData.getString("Dimension");
+                    String dimension = com.zerog.neoessentials.util.CompoundTagCompat.getString(playerData, "Dimension");
                     location.addProperty("dimension", dimension);
                     location.addProperty("world", dimension);
                 }
@@ -789,16 +794,16 @@ public class PlayerDataCollector {
                                         @SuppressWarnings("ConstantConditions") // playerData can be null from I/O operations
                                         boolean hasBukkitData = playerData != null && playerData.contains("bukkit");
                                         if (hasBukkitData) {
-                                            CompoundTag bukkitData = playerData.getCompound("bukkit");
+                                            CompoundTag bukkitData = com.zerog.neoessentials.util.CompoundTagCompat.getCompound(playerData, "bukkit");
                                             if (bukkitData.contains("lastKnownName")) {
-                                                username = bukkitData.getString("lastKnownName");
+                                                username = com.zerog.neoessentials.util.CompoundTagCompat.getString(bukkitData, "lastKnownName");
                                             }
                                         }
                                         // Some servers store it differently
                                         @SuppressWarnings("ConstantConditions") // playerData can be null from I/O operations
                                         boolean hasLastKnownName = username == null && playerData != null && playerData.contains("lastKnownName");
                                         if (hasLastKnownName) {
-                                            username = playerData.getString("lastKnownName");
+                                            username = com.zerog.neoessentials.util.CompoundTagCompat.getString(playerData, "lastKnownName");
                                         }
                                     } catch (Exception e) {
                                         LOGGER.debug("Could not load username from NBT for {}: {}", uuid, e.getMessage());
@@ -976,7 +981,7 @@ public class PlayerDataCollector {
     private String getBiomeName(Level level, BlockPos pos) {
         try {
             var biomeKey = level.registryAccess()
-                .registryOrThrow(net.minecraft.core.registries.Registries.BIOME)
+                .lookupOrThrow(net.minecraft.core.registries.Registries.BIOME)
                 .getKey(level.getBiome(pos).value());
             return biomeKey != null ? biomeKey.toString() : "Unknown";
         } catch (Exception e) {

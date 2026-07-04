@@ -132,10 +132,10 @@ public class ModerationEventHandler {
                 if (player.isAlive()) {
                     player.teleportTo(
                 jailLevel,
-                java.util.Set.of(),
                 jailLoc.position.getX() + 0.5,
                 jailLoc.position.getY() + 1,
                 jailLoc.position.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
@@ -380,10 +380,10 @@ public class ModerationEventHandler {
 
             player.teleportTo(
                 level,
-                java.util.Set.of(),
                 jailLoc.position.getX() + 0.5,
                 jailLoc.position.getY() + 1,
                 jailLoc.position.getZ() + 0.5,
+                java.util.Set.of(),
                 player.getYRot(),
                 player.getXRot(),
                 true
