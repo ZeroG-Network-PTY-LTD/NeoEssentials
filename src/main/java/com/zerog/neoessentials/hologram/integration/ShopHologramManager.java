@@ -321,18 +321,18 @@ public class ShopHologramManager {
         event.setCanceled(true);
         if (!tryConsumeInteractionCooldown(player)) return;
 
-        // Owner right-clicks → show info (same behaviour as sign)
-        if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
-            sendShopInfo(player, shop);
-            return;
-        }
+        boolean isOwner = shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
 
-        // Item autofill: owner of a pending "?" shop right-clicks with item in hand
+        // Item autofill: owner of a pending "?" shop right-clicks with item in hand.
+        // Must run BEFORE the owner-info check below — previously the owner-info branch
+        // returned unconditionally first, so a player-owned pending shop's own owner could
+        // never actually complete assignment via the hologram at all (only admin shops,
+        // whose ownerUUID is null, ever reached this far).
         if (shop.itemPending) {
             net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
             boolean canAssign = shop.isAdminShop()
                     ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
-                    : (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID()));
+                    : isOwner;
             if (canAssign && !held.isEmpty()) {
                 shop.itemId      = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
                 shop.itemNbt     = ShopParser.captureComponents(held);
@@ -340,9 +340,35 @@ public class ShopHologramManager {
                 ShopManager.getInstance().registerShop(shop);
                 player.sendSystemMessage(Component.literal(
                     "§aItem set to §f" + ShopParser.buildFullItemDisplayName(shop) + "§a!"));
-            } else {
+            } else if (canAssign) {
                 player.sendSystemMessage(Component.literal("§eHold the item you want to trade, then right-click the hologram."));
+            } else {
+                player.sendSystemMessage(Component.literal("§cThis shop is not yet ready."));
             }
+            return;
+        }
+
+        // Owner sneak+right-click with an item in hand → (re)assign the item on an
+        // already-configured shop, same as the sign's shift+right-click gesture — the
+        // itemPending flow above only ever fires once, at shop creation.
+        if (isOwner && player.isShiftKeyDown()) {
+            net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
+            if (held.isEmpty()) {
+                player.sendSystemMessage(Component.literal(
+                    "§eHold the item you want this shop to trade, then shift+right-click the hologram."));
+            } else {
+                shop.itemId  = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                shop.itemNbt = ShopParser.captureComponents(held);
+                ShopManager.getInstance().registerShop(shop);
+                player.sendSystemMessage(Component.literal(
+                    "§aItem updated to §f" + ShopParser.buildFullItemDisplayName(shop) + "§a!"));
+            }
+            return;
+        }
+
+        // Owner right-clicks → show info (same behaviour as sign)
+        if (isOwner) {
+            sendShopInfo(player, shop);
             return;
         }
 
