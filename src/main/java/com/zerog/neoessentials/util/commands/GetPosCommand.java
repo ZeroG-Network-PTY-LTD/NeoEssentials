@@ -98,7 +98,7 @@ public class GetPosCommand {
         String blockAtFeet = level.getBlockState(pos.below()).getBlock().getName().getString();
         
         // Get time information
-        long worldTime = level.getDayTime();
+        long worldTime = com.zerog.neoessentials.util.WorldClockCompat.getTime(level);
         long gameTime = level.getGameTime();
         
         // Format coordinates

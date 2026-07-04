@@ -368,8 +368,16 @@ public class WorldInteractionCommands {
 
                 MiscTeleportManager.getInstance().saveBackLocation(player);
                 final BlockPos finalPos = safePos;
-                player.teleportTo(level, finalPos.getX() + 0.5, finalPos.getY(), finalPos.getZ() + 0.5,
-                    player.getYRot(), player.getXRot());
+                player.teleportTo(
+                level,
+                java.util.Set.of(),
+                finalPos.getX() + 0.5,
+                finalPos.getY(),
+                finalPos.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
                 src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.bottom.teleported",
                     level.dimension().identifier().getPath(), finalPos.getX(), finalPos.getY(), finalPos.getZ()), false);
                 return 1;

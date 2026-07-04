@@ -283,7 +283,16 @@ public class TeleportUtil {
                     LOGGER.warn("Invalid pitch during cross-dimension teleport, using 0.0f");
                 }
 
-                player.teleportTo(targetLevel, location.getX(), location.getY(), location.getZ(), yaw, pitch);
+                player.teleportTo(
+                targetLevel,
+                java.util.Set.of(),
+                location.getX(),
+                location.getY(),
+                location.getZ(),
+                yaw,
+                pitch,
+                true
+            );
             } else {
                 // Same dimension teleport
                 player.teleportTo(location.getX(), location.getY(), location.getZ());

@@ -441,12 +441,16 @@ public class JailManager {
             ServerLevel dimension = server.getLevel(dimensionKey);
             
             if (dimension != null) {
-                player.teleportTo(dimension, 
-                        jailLoc.position.getX() + 0.5, 
-                        jailLoc.position.getY() + 1, 
-                        jailLoc.position.getZ() + 0.5, 
-                        player.getYRot(), 
-                        player.getXRot());
+                player.teleportTo(
+                dimension,
+                java.util.Set.of(),
+                jailLoc.position.getX() + 0.5,
+                jailLoc.position.getY() + 1,
+                jailLoc.position.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
             }
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {} to jail {}", player.getName().getString(), jailLoc.name, e);
@@ -476,12 +480,16 @@ public class JailManager {
             ServerLevel dimension = server.getLevel(dimensionKey);
             
             if (dimension != null) {
-                player.teleportTo(dimension, 
-                        jail.originalLocation.getX() + 0.5, 
-                        jail.originalLocation.getY() + 1, 
-                        jail.originalLocation.getZ() + 0.5, 
-                        player.getYRot(), 
-                        player.getXRot());
+                player.teleportTo(
+                dimension,
+                java.util.Set.of(),
+                jail.originalLocation.getX() + 0.5,
+                jail.originalLocation.getY() + 1,
+                jail.originalLocation.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
             }
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {} back to original location", player.getName().getString(), e);

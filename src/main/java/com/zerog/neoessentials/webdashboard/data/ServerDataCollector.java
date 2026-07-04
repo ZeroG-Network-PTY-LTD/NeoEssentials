@@ -372,7 +372,7 @@ public class ServerDataCollector {
             }
             world.addProperty("entities", entityCount);
             
-            world.addProperty("time", level.getDayTime());
+            world.addProperty("time", com.zerog.neoessentials.util.WorldClockCompat.getTime(level));
             world.addProperty("raining", level.isRaining());
             world.addProperty("thundering", level.isThundering());
             

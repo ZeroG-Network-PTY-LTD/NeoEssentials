@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
@@ -111,29 +112,33 @@ public class ClearInventoryCommand {
         int armorCleared = 0;
         int offhandCleared = 0;
 
+        // 26.1 port: Inventory.items/armor/offhand are private now (armor/offhand were folded
+        // into a separate EntityEquipment object entirely) — count via the still-public
+        // getNonEquipmentItems()/getItemBySlot() accessors instead of the old field lists.
+        // clearContent() already clears both the main items AND the equipment in one call.
+
         // Main inventory
-        for (int i = 0; i < player.getInventory().items.size(); i++) {
-            if (!player.getInventory().items.get(i).isEmpty()) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
+            if (!stack.isEmpty()) {
                 mainCleared++;
             }
         }
-        player.getInventory().clearContent();
 
         // Armor
-        for (int i = 0; i < player.getInventory().armor.size(); i++) {
-            if (!player.getInventory().armor.get(i).isEmpty()) {
+        for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[]{
+                net.minecraft.world.entity.EquipmentSlot.FEET, net.minecraft.world.entity.EquipmentSlot.LEGS,
+                net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.HEAD}) {
+            if (!player.getItemBySlot(slot).isEmpty()) {
                 armorCleared++;
             }
         }
-        player.getInventory().armor.clear();
 
         // Offhand
-        for (int i = 0; i < player.getInventory().offhand.size(); i++) {
-            if (!player.getInventory().offhand.get(i).isEmpty()) {
-                offhandCleared++;
-            }
+        if (!player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND).isEmpty()) {
+            offhandCleared++;
         }
-        player.getInventory().offhand.clear();
+
+        player.getInventory().clearContent();
 
         // Log inventory clear for audit trail
         LOGGER.info("Player {} cleared inventory: {} main items, {} armor pieces, {} offhand items (total: {})", 

@@ -99,7 +99,7 @@ public class WorldInfoCollector {
         dimObj.add("worldBorder", borderObj);
         
         // World time
-        dimObj.addProperty("dayTime", level.getDayTime());
+        dimObj.addProperty("dayTime", com.zerog.neoessentials.util.WorldClockCompat.getTime(level));
         dimObj.addProperty("gameTime", level.getGameTime());
         
         // Weather

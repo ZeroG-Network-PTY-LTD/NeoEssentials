@@ -153,7 +153,7 @@ public class ServerAdminCommands {
     private static int executeTimeGet(CommandContext<CommandSourceStack> ctx) {
         var src = ctx.getSource();
         ServerLevel level = src.getLevel();
-        long time = level.getDayTime() % 24000;
+        long time = com.zerog.neoessentials.util.WorldClockCompat.getTime(level) % 24000;
         src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.time.current",
             level.dimension().identifier().getPath(), time, ticksToName(time)), false);
         return 1;
@@ -172,9 +172,9 @@ public class ServerAdminCommands {
         var src = ctx.getSource();
         for (ServerLevel level : src.getServer().getAllLevels()) {
             if (add) {
-                level.setDayTime(level.getDayTime() + ticks);
+                com.zerog.neoessentials.util.WorldClockCompat.setTime(level, com.zerog.neoessentials.util.WorldClockCompat.getTime(level) + ticks);
             } else {
-                level.setDayTime(ticks);
+                com.zerog.neoessentials.util.WorldClockCompat.setTime(level, ticks);
             }
         }
         String op = add ? "Added" : "Set";
@@ -379,7 +379,16 @@ public class ServerAdminCommands {
                     String name = StringArgumentType.getString(ctx, "target");
                     ServerPlayer target = src.getServer().getPlayerList().getPlayerByName(name);
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
-                    self.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
+                    self.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(target),
+                java.util.Set.of(),
+                target.getX(),
+                target.getY(),
+                target.getZ(),
+                target.getYRot(),
+                target.getXRot(),
+                true
+            );
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpo.success", name), false);
                     return 1;
                 })
@@ -397,7 +406,16 @@ public class ServerAdminCommands {
                     String name = StringArgumentType.getString(ctx, "target");
                     ServerPlayer target = src.getServer().getPlayerList().getPlayerByName(name);
                     if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", name)); return 0; }
-                    target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(self), self.getX(), self.getY(), self.getZ(), self.getYRot(), self.getXRot());
+                    target.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(self),
+                java.util.Set.of(),
+                self.getX(),
+                self.getY(),
+                self.getZ(),
+                self.getYRot(),
+                self.getXRot(),
+                true
+            );
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpohere.success", name), true);
                     target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.tpohere.notify", self.getName().getString()));
                     return 1;
@@ -422,7 +440,16 @@ public class ServerAdminCommands {
                     ServerPlayer online = src.getServer().getPlayerList().getPlayerByName(name);
                     if (online != null) {
                         // Player is online — just use tpo logic
-                        self.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(online), online.getX(), online.getY(), online.getZ(), online.getYRot(), online.getXRot());
+                        self.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(online),
+                java.util.Set.of(),
+                online.getX(),
+                online.getY(),
+                online.getZ(),
+                online.getYRot(),
+                online.getXRot(),
+                true
+            );
                         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpoffline.online", name), false);
                         return 1;
                     }
@@ -459,7 +486,16 @@ public class ServerAdminCommands {
                         : src.getServer().overworld();
 
                     final double fx = x, fy = y, fz = z;
-                    self.teleportTo(level, fx, fy, fz, yaw, pitch);
+                    self.teleportTo(
+                level,
+                java.util.Set.of(),
+                fx,
+                fy,
+                fz,
+                yaw,
+                pitch,
+                true
+            );
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.tpoffline.success",
                         name, String.format("%.1f, %.1f, %.1f", fx, fy, fz)), false);
                     return 1;
@@ -543,7 +579,16 @@ public class ServerAdminCommands {
         if (target == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.world.not_found", dimName)); return 0; }
         BlockPos spawn = target.getSharedSpawnPos();
         final ServerLevel fl = target;
-        player.teleportTo(fl, spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, player.getYRot(), player.getXRot());
+        player.teleportTo(
+                fl,
+                java.util.Set.of(),
+                spawn.getX() + 0.5,
+                spawn.getY(),
+                spawn.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
         final String fn = dimName;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.world.teleported", player.getName().getString(), fn), false);
         return 1;

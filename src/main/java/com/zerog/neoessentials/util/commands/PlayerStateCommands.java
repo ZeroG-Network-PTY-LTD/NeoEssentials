@@ -437,8 +437,8 @@ public class PlayerStateCommands {
                 if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
                 ItemStack held = player.getMainHandItem();
                 if (held.isEmpty()) { src.sendFailure(MessageUtil.error("commands.neoessentials.hat.no_item")); return 0; }
-                ItemStack current = player.getInventory().armor.get(3); // helmet slot (index 3)
-                player.getInventory().armor.set(3, held.copy());
+                ItemStack current = player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+                player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, held.copy());
                 player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, current);
                 src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.hat.success"), false);
                 return 1;

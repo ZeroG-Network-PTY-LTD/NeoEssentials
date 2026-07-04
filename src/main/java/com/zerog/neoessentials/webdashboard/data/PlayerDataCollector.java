@@ -321,11 +321,16 @@ public class PlayerDataCollector {
                 mainInventory.add(item);
             }
             
-            // Armor
-            player.getInventory().armor.forEach(itemStack -> armor.add(serializeItemStack(itemStack)));
+            // Armor (26.1 port: Inventory.armor/offhand were folded into a separate
+            // EntityEquipment object — use getItemBySlot() on the player instead)
+            for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[]{
+                    net.minecraft.world.entity.EquipmentSlot.FEET, net.minecraft.world.entity.EquipmentSlot.LEGS,
+                    net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.HEAD}) {
+                armor.add(serializeItemStack(player.getItemBySlot(slot)));
+            }
 
             // Offhand
-            player.getInventory().offhand.forEach(itemStack -> offhand.add(serializeItemStack(itemStack)));
+            offhand.add(serializeItemStack(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND)));
 
             inventory.add("main", mainInventory);
             inventory.add("armor", armor);

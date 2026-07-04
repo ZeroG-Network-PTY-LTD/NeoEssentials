@@ -484,9 +484,18 @@ public class KitManager {
             List<ItemStack> itemsDropped = new ArrayList<>();
             List<String> deniedItems = new ArrayList<>();
 
+            // 26.1 port: Inventory.armor/offhand were folded into a separate EntityEquipment
+            // object and are no longer directly accessible fields — use getItemBySlot()/
+            // setItemSlot() on the player (LivingEntity) instead, in the same
+            // feet/legs/chest/head order the old armor list used.
+            net.minecraft.world.entity.EquipmentSlot[] armorSlots = {
+                net.minecraft.world.entity.EquipmentSlot.FEET, net.minecraft.world.entity.EquipmentSlot.LEGS,
+                net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.HEAD
+            };
+
             boolean autoEquip = com.zerog.neoessentials.config.ConfigManager.isKitAutoEquipEnabled();
             // Check if all armor slots are empty
-            boolean armorSlotsEmpty = inventory.armor.stream().allMatch(ItemStack::isEmpty);
+            boolean armorSlotsEmpty = java.util.Arrays.stream(armorSlots).allMatch(slot -> player.getItemBySlot(slot).isEmpty());
 
             // Separate armor and non-armor items
             List<ItemStack> armorItems = new ArrayList<>();
@@ -508,9 +517,9 @@ public class KitManager {
                 for (ItemStack armor : armorItems) {
                     // Find first empty armor slot
                     boolean equipped = false;
-                    for (int i = 0; i < inventory.armor.size(); i++) {
-                        if (inventory.armor.get(i).isEmpty()) {
-                            inventory.armor.set(i, armor.copy());
+                    for (net.minecraft.world.entity.EquipmentSlot slot : armorSlots) {
+                        if (player.getItemBySlot(slot).isEmpty()) {
+                            player.setItemSlot(slot, armor.copy());
                             itemsGiven.add(armor.copy());
                             equipped = true;
                             break;

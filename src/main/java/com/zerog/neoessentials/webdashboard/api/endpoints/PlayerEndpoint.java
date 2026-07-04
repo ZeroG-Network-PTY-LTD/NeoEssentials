@@ -287,8 +287,16 @@ public class PlayerEndpoint implements HttpHandler {
                         resp.addProperty("error", "Target player '" + targetName + "' is not online");
                         return resp;
                     }
-                    player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(),
-                        player.getYRot(), player.getXRot());
+                    player.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(target),
+                java.util.Set.of(),
+                target.getX(),
+                target.getY(),
+                target.getZ(),
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
                     resp.addProperty("success", true);
                     resp.addProperty("message", username + " teleported to " + targetName);
                 } else if (finalBody.has("x") && finalBody.has("y") && finalBody.has("z")) {
@@ -306,7 +314,16 @@ public class PlayerEndpoint implements HttpHandler {
                     double x = finalBody.get("x").getAsDouble();
                     double y = finalBody.get("y").getAsDouble();
                     double z = finalBody.get("z").getAsDouble();
-                    player.teleportTo(level, x, y, z, player.getYRot(), player.getXRot());
+                    player.teleportTo(
+                level,
+                java.util.Set.of(),
+                x,
+                y,
+                z,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
                     resp.addProperty("success", true);
                     resp.addProperty("message", username + " teleported to " + x + ", " + y + ", " + z);
                 } else {

@@ -927,7 +927,16 @@ public class HologramCommand {
             src.sendFailure(Component.literal("\u00a7cCould not find world '\u00a7e" + data.world + "\u00a7c'."));
             return 0;
         }
-        player.teleportTo(targetLevel, data.x, data.y, data.z, player.getYRot(), player.getXRot());
+        player.teleportTo(
+                targetLevel,
+                java.util.Set.of(),
+                data.x,
+                data.y,
+                data.z,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
         src.sendSuccess(() -> Component.literal("\u00a7a\u2714 Teleported to hologram '\u00a7e" + id + "\u00a7a' at \u00a77(" + fmt(data.x) + ", " + fmt(data.y) + ", " + fmt(data.z) + ")\u00a7a."), true);
         return 1;
     }

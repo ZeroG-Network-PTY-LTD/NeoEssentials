@@ -207,7 +207,16 @@ public class DirectTeleportCommands {
             }
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
+            player.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(target),
+                java.util.Set.of(),
+                target.getX(),
+                target.getY(),
+                target.getZ(),
+                target.getYRot(),
+                target.getXRot(),
+                true
+            );
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_player",
                 player.getName().getString(), target.getName().getString()), true);
             return 1;
@@ -221,7 +230,16 @@ public class DirectTeleportCommands {
         try {
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), x, y, z, player.getYRot(), player.getXRot());
+            player.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(player),
+                java.util.Set.of(),
+                x,
+                y,
+                z,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_player_coords",
                 player.getName().getString(), String.valueOf((int) x), String.valueOf((int) y), String.valueOf((int) z)), true);
             return 1;
@@ -236,7 +254,16 @@ public class DirectTeleportCommands {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             // Save back location BEFORE teleporting so /back works (for the player being moved)
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
-            target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
+            target.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(player),
+                java.util.Set.of(),
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                target.getYRot(),
+                target.getXRot(),
+                true
+            );
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_to",
                 target.getName().getString()), true);
             target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.admin.player_teleported_to_you",
@@ -262,7 +289,16 @@ public class DirectTeleportCommands {
                 if (target != player) {
                     // Save back location BEFORE teleporting so /back works for each player
                     com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(target);
-                    target.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), player.getX(), player.getY(), player.getZ(), target.getYRot(), target.getXRot());
+                    target.teleportTo(
+                com.zerog.neoessentials.util.LevelCompat.of(player),
+                java.util.Set.of(),
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                target.getYRot(),
+                target.getXRot(),
+                true
+            );
                     count++;
                 }
             }
@@ -299,7 +335,16 @@ public class DirectTeleportCommands {
             }
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(level, highestPos.getX() + 0.5, highestPos.getY(), highestPos.getZ() + 0.5, player.getYRot(), player.getXRot());
+            player.teleportTo(
+                level,
+                java.util.Set.of(),
+                highestPos.getX() + 0.5,
+                highestPos.getY(),
+                highestPos.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.misc.top_success"), false);
             return 1;
         } catch (Exception e) {
@@ -326,7 +371,16 @@ public class DirectTeleportCommands {
             }
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
-            player.teleportTo(level, teleportPos.getX() + 0.5, teleportPos.getY(), teleportPos.getZ() + 0.5, player.getYRot(), player.getXRot());
+            player.teleportTo(
+                level,
+                java.util.Set.of(),
+                teleportPos.getX() + 0.5,
+                teleportPos.getY(),
+                teleportPos.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.misc.jumpto_success"), false);
             return 1;
         } catch (Exception e) {

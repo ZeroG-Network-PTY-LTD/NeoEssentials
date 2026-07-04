@@ -104,7 +104,7 @@ public class UtilityCommands {
         if (ticks < 0) {
             playerTimes.remove(target.getUUID());
             // Reset to real world time
-            sendTimePacket(target, com.zerog.neoessentials.util.LevelCompat.of(target).getDayTime(), false);
+            sendTimePacket(target, com.zerog.neoessentials.util.WorldClockCompat.getTime(com.zerog.neoessentials.util.LevelCompat.of(target)), false);
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.ptime.reset", target.getName().getString()), false);
         } else {
             playerTimes.put(target.getUUID(), ticks);

@@ -130,11 +130,16 @@ public class ModerationEventHandler {
             // Schedule 1-tick delayed teleport so respawn completes first
             com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
                 if (player.isAlive()) {
-                    player.teleportTo(jailLevel,
-                        jailLoc.position.getX() + 0.5,
-                        jailLoc.position.getY() + 1,
-                        jailLoc.position.getZ() + 0.5,
-                        player.getYRot(), player.getXRot());
+                    player.teleportTo(
+                jailLevel,
+                java.util.Set.of(),
+                jailLoc.position.getX() + 0.5,
+                jailLoc.position.getY() + 1,
+                jailLoc.position.getZ() + 0.5,
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
                     player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.jail.message"));
                 }
             });
@@ -373,11 +378,16 @@ public class ModerationEventHandler {
                     net.minecraft.core.registries.Registries.DIMENSION, dimId));
             if (level == null) level = server.overworld();
 
-            player.teleportTo(level,
+            player.teleportTo(
+                level,
+                java.util.Set.of(),
                 jailLoc.position.getX() + 0.5,
                 jailLoc.position.getY() + 1,
                 jailLoc.position.getZ() + 0.5,
-                player.getYRot(), player.getXRot());
+                player.getYRot(),
+                player.getXRot(),
+                true
+            );
 
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.jail.escape_prevented"));
             LOGGER.debug("Jailed player {} redirected back to jail ({}).", player.getName().getString(), reason);
