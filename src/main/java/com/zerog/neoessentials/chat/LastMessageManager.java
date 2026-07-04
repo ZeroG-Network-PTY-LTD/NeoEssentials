@@ -28,7 +28,7 @@ public class LastMessageManager {
      * Get the last player who messaged the given player
      */
     public static ServerPlayer getLastMessager(ServerPlayer player) {
-        if (player == null || player.getServer() == null) {
+        if (player == null || player.level().getServer() == null) {
             ChatDebugUtil.debug("LastMessageManager - getLastMessager called with null player or server");
             return null;
         }
@@ -44,7 +44,7 @@ public class LastMessageManager {
         }
         
         // Use more efficient player lookup by name
-        ServerPlayer target = player.getServer().getPlayerList().getPlayerByName(lastMessagerName);
+        ServerPlayer target = player.level().getServer().getPlayerList().getPlayerByName(lastMessagerName);
         ChatDebugUtil.debug("LastMessageManager - Player lookup for %s: %s", lastMessagerName, (target != null ? "found" : "not found"));
         
         if (target != null && target.connection != null) {

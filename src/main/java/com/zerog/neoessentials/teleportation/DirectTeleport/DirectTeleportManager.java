@@ -116,7 +116,7 @@ public class DirectTeleportManager {
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
         TeleportLocation targetLocation = new TeleportLocation(
-            com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString(), x, y, z, 0f, 0f, 
+            com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString(), x, y, z, 0f, 0f, 
             executor.getName().getString());
         
         return TeleportUtil.teleportPlayer(player, targetLocation, teleportDelay * 20, !bypassSafetyChecks)
@@ -163,7 +163,7 @@ public class DirectTeleportManager {
      * Teleport all players to a location (/tpall)
      */
     public void teleportAllPlayers(ServerPlayer executor, TeleportLocation targetLocation) {
-        Collection<ServerPlayer> players = executor.getServer().getPlayerList().getPlayers();
+        Collection<ServerPlayer> players = executor.level().getServer().getPlayerList().getPlayers();
         int totalPlayers = players.size();
         int excludingSelf = executor != null ? totalPlayers - 1 : totalPlayers;
         
@@ -221,7 +221,7 @@ public class DirectTeleportManager {
      */
     public void teleportAllPlayersToCoordinates(ServerPlayer executor, double x, double y, double z) {
         TeleportLocation targetLocation = new TeleportLocation(
-            com.zerog.neoessentials.util.LevelCompat.of(executor).dimension().location().toString(), x, y, z, 0f, 0f, 
+            com.zerog.neoessentials.util.LevelCompat.of(executor).dimension().identifier().toString(), x, y, z, 0f, 0f, 
             executor.getName().getString());
         teleportAllPlayers(executor, targetLocation);
     }
@@ -257,7 +257,7 @@ public class DirectTeleportManager {
     public boolean teleportToOfflinePlayer(ServerPlayer executor, String playerName) {
         try {
             // Get server for UUID lookup
-            net.minecraft.server.MinecraftServer server = executor.getServer();
+            net.minecraft.server.MinecraftServer server = executor.level().getServer();
             
             // Try to get UUID from cache (offline players)
             com.mojang.authlib.GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
@@ -268,7 +268,7 @@ public class DirectTeleportManager {
             
             // Get player data from NeoEssentialsManager
             com.zerog.neoessentials.NeoEssentialsManager manager = com.zerog.neoessentials.NeoEssentialsManager.getInstance();
-            com.zerog.neoessentials.NeoEssentialsManager.PlayerData playerData = manager.getPlayerData(profile.getId());
+            com.zerog.neoessentials.NeoEssentialsManager.PlayerData playerData = manager.getPlayerData(profile.id());
             
             String lastLocationString = playerData.getLastLocation();
             if (lastLocationString == null || lastLocationString.isEmpty()) {

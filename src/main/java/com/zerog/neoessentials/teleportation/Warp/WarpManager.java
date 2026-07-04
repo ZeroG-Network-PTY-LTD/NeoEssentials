@@ -329,7 +329,7 @@ public class WarpManager {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isAdmin(ServerPlayer player) {
         // Replace with your real admin/permission check
-        return player.hasPermissions(4); // Permission level 4 = admin/op
+        return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4); // Permission level 4 = admin/op
     }
 
     // --- Persistence for player warps ---

@@ -473,7 +473,7 @@ public class NeoEssentials {
             // Check if we should notify admins about config splitting
             if (ConfigSplitter.shouldNotifyAdmins() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
                 // Check if player has permission (OP or wildcard permission)
-                if (player.hasPermissions(4) ||
+                if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4) ||
                     com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "*") ||
                     com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.*") ||
                     com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*")) {
@@ -484,7 +484,7 @@ public class NeoEssentials {
                     // Send notification after a short delay to ensure player is fully connected.
                     // The sleep MUST happen on a background thread — sleeping inside server.execute()
                     // would block the Minecraft main tick thread for 2 seconds, causing a server freeze.
-                    net.minecraft.server.MinecraftServer server = player.getServer();
+                    net.minecraft.server.MinecraftServer server = player.level().getServer();
                     if (server != null) {
                         Thread notifyThread = new Thread(() -> {
                             try {

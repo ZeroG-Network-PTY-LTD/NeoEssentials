@@ -384,7 +384,7 @@ public class JailCommand {
             JailManager jailManager = JailManager.getInstance();
             
             BlockPos position = player.blockPosition();
-            String dimension = player.level().dimension().location().toString();
+            String dimension = player.level().dimension().identifier().toString();
             String createdBy = player.getName().getString();
             
             boolean success = jailManager.setJailLocation(jailName, position, dimension, createdBy);

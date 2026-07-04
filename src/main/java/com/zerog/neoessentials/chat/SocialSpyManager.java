@@ -125,7 +125,7 @@ public class SocialSpyManager {
         }
 
         // Broadcast to all players with SocialSpy active
-        for (ServerPlayer spy : sender.getServer().getPlayerList().getPlayers()) {
+        for (ServerPlayer spy : sender.level().getServer().getPlayerList().getPlayers()) {
             if (!hasSocialSpy(spy) || spy.equals(sender) || spy.equals(target)) continue;
 
             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(

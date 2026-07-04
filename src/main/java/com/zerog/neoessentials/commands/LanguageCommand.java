@@ -24,7 +24,7 @@ public class LanguageCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("language")
-                .requires(source -> source.hasPermission(4)) // Op level 4
+                .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4)) // Op level 4
                 .then(Commands.literal("list")
                     .executes(LanguageCommand::listLanguages))
                 .then(Commands.literal("reload")

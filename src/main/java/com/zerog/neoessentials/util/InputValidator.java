@@ -187,7 +187,7 @@ public class InputValidator {
             // If validation is disabled, just try to get the player (may be null)
             if (playerName == null) return ValidationResult.success(null);
             ServerPlayer player = server.getPlayerList().getPlayers().stream()
-                .filter(p -> p.getGameProfile().getName().equalsIgnoreCase(playerName))
+                .filter(p -> p.getGameProfile().name().equalsIgnoreCase(playerName))
                 .findFirst().orElse(null);
             return ValidationResult.success(player);
         }
@@ -197,7 +197,7 @@ public class InputValidator {
         }
         String validName = (String) nameValidation.getValue();
         ServerPlayer player = server.getPlayerList().getPlayers().stream()
-            .filter(p -> p.getGameProfile().getName().equalsIgnoreCase(validName))
+            .filter(p -> p.getGameProfile().name().equalsIgnoreCase(validName))
             .findFirst().orElse(null);
         if (player == null) {
             return ValidationResult.failure("Player '" + validName + "' not found or not online");

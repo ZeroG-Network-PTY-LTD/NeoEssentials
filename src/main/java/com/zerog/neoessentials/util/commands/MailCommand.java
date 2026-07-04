@@ -672,7 +672,7 @@ public class MailCommand {
         if (online != null) return online.getUUID();
         try {
             com.mojang.authlib.GameProfile p = server.getProfileCache().get(name).orElse(null);
-            if (p != null) return p.getId();
+            if (p != null) return p.id();
         } catch (Exception ignored) {}
         return null;
     }

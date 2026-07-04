@@ -42,7 +42,7 @@ public class ChatAPI {
         // Check if target has messages toggled off (with op exemption for sender)
         if (com.zerog.neoessentials.chat.MsgToggleManager.isMsgToggled(target)) {
             // Op players bypass msgtoggle
-            if (sender.hasPermissions(4) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
+            if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(sender, 4) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
                 return false; // Op/bypass permission = can still message
             }
             return true; // Normal player blocked by msgtoggle

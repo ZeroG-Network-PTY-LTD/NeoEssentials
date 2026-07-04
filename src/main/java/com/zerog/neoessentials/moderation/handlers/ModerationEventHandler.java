@@ -118,12 +118,12 @@ public class ModerationEventHandler {
             if (jailLoc == null) return;
 
             // NeoForge respawn: teleport after spawn tick
-            net.minecraft.server.MinecraftServer server = player.getServer();
+            net.minecraft.server.MinecraftServer server = player.level().getServer();
             if (server == null) return;
             ServerLevel jailLevel = server.getLevel(
                 net.minecraft.resources.ResourceKey.create(
                     net.minecraft.core.registries.Registries.DIMENSION,
-                    net.minecraft.resources.ResourceLocation.tryParse(
+                    net.minecraft.resources.Identifier.tryParse(
                         jailLoc.dimension != null ? jailLoc.dimension : "minecraft:overworld")));
             if (jailLevel == null) return;
 
@@ -362,11 +362,11 @@ public class ModerationEventHandler {
             JailManager.JailLocation jailLoc = jailManager.getJailLocation(jailEntry.jailName);
             if (jailLoc == null) return;
 
-            net.minecraft.server.MinecraftServer server = player.getServer();
+            net.minecraft.server.MinecraftServer server = player.level().getServer();
             if (server == null) return;
 
-            net.minecraft.resources.ResourceLocation dimId =
-                net.minecraft.resources.ResourceLocation.tryParse(
+            net.minecraft.resources.Identifier dimId =
+                net.minecraft.resources.Identifier.tryParse(
                     jailLoc.dimension != null ? jailLoc.dimension : "minecraft:overworld");
             ServerLevel level = server.getLevel(
                 net.minecraft.resources.ResourceKey.create(

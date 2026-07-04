@@ -159,8 +159,8 @@ public class PermissionConditionManager {
         }
 
         // op:true / op:false
-        if (atom.equals("op:true"))  return player != null && player.hasPermissions(2);
-        if (atom.equals("op:false")) return player == null || !player.hasPermissions(2);
+        if (atom.equals("op:true"))  return player != null && com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2);
+        if (atom.equals("op:false")) return player == null || !com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2);
 
         LOGGER.warn("Unknown condition atom '{}' — treating as true", atom);
         return true;

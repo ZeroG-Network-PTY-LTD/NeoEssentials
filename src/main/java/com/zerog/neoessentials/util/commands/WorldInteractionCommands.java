@@ -224,25 +224,25 @@ public class WorldInteractionCommands {
         return 1;
     }
 
-    private static net.minecraft.resources.ResourceLocation resolveTreeFeatureKey(String name) {
+    private static net.minecraft.resources.Identifier resolveTreeFeatureKey(String name) {
         return switch (name.toLowerCase()) {
-            case "oak"          -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("oak");
-            case "birch"        -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("birch");
-            case "spruce"       -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("spruce");
-            case "jungle"       -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("jungle_tree");
-            case "acacia"       -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("acacia");
-            case "darkoak", "dark_oak" -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("dark_oak");
-            case "mangrove"     -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("mangrove");
-            case "cherry"       -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("cherry");
-            case "bigoak", "big_oak" -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("fancy_oak");
-            case "mega_spruce"  -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("mega_spruce");
-            case "mega_jungle"  -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("mega_jungle_tree");
-            case "azalea"       -> net.minecraft.resources.ResourceLocation.withDefaultNamespace("azalea_tree");
+            case "oak"          -> net.minecraft.resources.Identifier.withDefaultNamespace("oak");
+            case "birch"        -> net.minecraft.resources.Identifier.withDefaultNamespace("birch");
+            case "spruce"       -> net.minecraft.resources.Identifier.withDefaultNamespace("spruce");
+            case "jungle"       -> net.minecraft.resources.Identifier.withDefaultNamespace("jungle_tree");
+            case "acacia"       -> net.minecraft.resources.Identifier.withDefaultNamespace("acacia");
+            case "darkoak", "dark_oak" -> net.minecraft.resources.Identifier.withDefaultNamespace("dark_oak");
+            case "mangrove"     -> net.minecraft.resources.Identifier.withDefaultNamespace("mangrove");
+            case "cherry"       -> net.minecraft.resources.Identifier.withDefaultNamespace("cherry");
+            case "bigoak", "big_oak" -> net.minecraft.resources.Identifier.withDefaultNamespace("fancy_oak");
+            case "mega_spruce"  -> net.minecraft.resources.Identifier.withDefaultNamespace("mega_spruce");
+            case "mega_jungle"  -> net.minecraft.resources.Identifier.withDefaultNamespace("mega_jungle_tree");
+            case "azalea"       -> net.minecraft.resources.Identifier.withDefaultNamespace("azalea_tree");
             default             -> null;
         };
     }
 
-    private static boolean tryPlaceTree(ServerLevel level, BlockPos pos, net.minecraft.resources.ResourceLocation featureKey) {
+    private static boolean tryPlaceTree(ServerLevel level, BlockPos pos, net.minecraft.resources.Identifier featureKey) {
         try {
             var registry = level.registryAccess().registry(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
             if (registry.isEmpty()) return false;
@@ -371,7 +371,7 @@ public class WorldInteractionCommands {
                 player.teleportTo(level, finalPos.getX() + 0.5, finalPos.getY(), finalPos.getZ() + 0.5,
                     player.getYRot(), player.getXRot());
                 src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.bottom.teleported",
-                    level.dimension().location().getPath(), finalPos.getX(), finalPos.getY(), finalPos.getZ()), false);
+                    level.dimension().identifier().getPath(), finalPos.getX(), finalPos.getY(), finalPos.getZ()), false);
                 return 1;
             })
         );
@@ -447,8 +447,8 @@ public class WorldInteractionCommands {
                     }
                     final int fc = count;
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.broadcastworld.sent",
-                        targetLevel.dimension().location().getPath(), fc), false);
-                    LOGGER.info("[BroadcastWorld:{}] {}", targetLevel.dimension().location().getPath(), resolved);
+                        targetLevel.dimension().identifier().getPath(), fc), false);
+                    LOGGER.info("[BroadcastWorld:{}] {}", targetLevel.dimension().identifier().getPath(), resolved);
                     return 1;
                 })
             )

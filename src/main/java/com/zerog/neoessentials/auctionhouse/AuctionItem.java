@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,7 @@ public class AuctionItem {
     public ItemStack getItemStack() {
         if (cachedStack != null) return cachedStack;
         try {
-            ResourceLocation rl   = ResourceLocation.parse(itemKey);
+            Identifier rl   = Identifier.parse(itemKey);
             var              item = BuiltInRegistries.ITEM.get(rl);
             cachedStack = new ItemStack(item, count);
 

@@ -53,7 +53,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("tp")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), PERMISSION_TP);
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> teleportToPlayer(ctx, ctx.getSource().getPlayerOrException(),
@@ -77,7 +77,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("tphere")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), PERMISSION_TPHERE);
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> teleportPlayerHere(ctx, EntityArgument.getPlayer(ctx, "player"))))
@@ -88,7 +88,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("tpall")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), "neoessentials.teleport.admin.tpall");
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .executes(DirectTeleportCommands::teleportAllPlayers)
         );
@@ -98,7 +98,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("tppos")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), PERMISSION_TPPOS);
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .then(Commands.argument("coordinates", Vec3Argument.vec3())
                 .executes(ctx -> {
@@ -119,7 +119,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("top")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), PERMISSION_TOP);
-                return source.hasPermission(0);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 0);
             })
             .executes(DirectTeleportCommands::teleportToTop)
         );
@@ -129,7 +129,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("jumpto")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), "neoessentials.teleport.jumpto");
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .executes(DirectTeleportCommands::jumpToTargetBlock)
         );
@@ -139,7 +139,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("jump")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), "neoessentials.teleport.jump");
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .executes(DirectTeleportCommands::jumpToTargetBlock)
         );
@@ -155,7 +155,7 @@ public class DirectTeleportCommands {
             dispatcher.register(Commands.literal(alias)
                 .requires(source -> {
                     if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), PERMISSION_TPR);
-                    return source.hasPermission(0);
+                    return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 0);
                 })
                 .executes(ctx -> randomTeleport(ctx, ""))
                 .then(Commands.argument("locationName", StringArgumentType.word())
@@ -177,7 +177,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("settpr")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), "neoessentials.teleport.settpr");
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .then(Commands.argument("locationName", StringArgumentType.word())
                 .executes(DirectTeleportCommands::setTprLocation))
@@ -188,7 +188,7 @@ public class DirectTeleportCommands {
         dispatcher.register(Commands.literal("tpo")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer p) return PermissionAPI.hasPermission(p.getUUID(), "neoessentials.teleport.admin.tpo");
-                return source.hasPermission(2);
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2);
             })
             .then(Commands.argument("player", StringArgumentType.word())
                 .executes(ctx -> teleportToOfflinePlayer(ctx, StringArgumentType.getString(ctx, "player"))))
@@ -251,7 +251,7 @@ public class DirectTeleportCommands {
     private static int teleportAllPlayers(CommandContext<CommandSourceStack> ctx) {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
-            net.minecraft.server.MinecraftServer server = player.getServer();
+            net.minecraft.server.MinecraftServer server = player.level().getServer();
             if (server == null) {
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed", "Server not available"));
                 return 0;
@@ -374,7 +374,7 @@ public class DirectTeleportCommands {
             center.addProperty("x", player.getX());
             center.addProperty("y", player.getY());
             center.addProperty("z", player.getZ());
-            center.addProperty("world", player.level().dimension().location().toString());
+            center.addProperty("world", player.level().dimension().identifier().toString());
             locEntry.add("center", center);
             if (!locEntry.has("minRange")) locEntry.addProperty("minRange", 0);
             if (!locEntry.has("maxRange")) locEntry.addProperty("maxRange", 10000);

@@ -8,7 +8,7 @@ import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
@@ -351,7 +351,7 @@ public class RandomTeleportManager {
         try {
             var biomeHolder = level.getBiome(pos);
             return biomeHolder.unwrapKey()
-                    .map(key -> key.location().toString())
+                    .map(key -> key.identifier().toString())
                     .orElse(null);
         } catch (Exception e) {
             return null;
@@ -406,7 +406,7 @@ public class RandomTeleportManager {
 
     private String resolveDefaultName(ServerPlayer player) {
         String def = getConfigString("defaultLocation", "{world}");
-        return def.replace("{world}", player.level().dimension().location().toString());
+        return def.replace("{world}", player.level().dimension().identifier().toString());
     }
 
     private double[] getCenter(ServerLevel level, String name) {

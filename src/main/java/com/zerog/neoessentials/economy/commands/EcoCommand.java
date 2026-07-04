@@ -27,12 +27,12 @@ public class EcoCommand {
     private static void registerEcoCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             net.minecraft.commands.Commands.literal(commandName)
-                .requires(src -> src.hasPermission(2) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.eco"))
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.eco"))
                 .then(net.minecraft.commands.Commands.literal("give")
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
@@ -41,7 +41,7 @@ public class EcoCommand {
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
@@ -50,7 +50,7 @@ public class EcoCommand {
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.0))
@@ -60,17 +60,17 @@ public class EcoCommand {
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .executes(ctx -> ecoAdminAction(ctx, "reset"))))
                 .then(net.minecraft.commands.Commands.literal("history")
                     .executes(ctx -> showHistory(ctx, ctx.getSource().getPlayerOrException()))
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
-                        .requires(src -> src.hasPermission(2))
+                        .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2))
                         .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .executes(ctx -> showOtherHistory(ctx))

@@ -130,7 +130,7 @@ public class HologramScheduler {
     // ── Helper ────────────────────────────────────────────────────────────────
     private static ServerLevel getLevelForDimension(MinecraftServer server, String dimensionKey) {
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.dimension().location().toString().equals(dimensionKey)) return level;
+            if (level.dimension().identifier().toString().equals(dimensionKey)) return level;
         }
         return null;
     }

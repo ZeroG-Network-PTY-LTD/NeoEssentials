@@ -295,9 +295,9 @@ public class PlayerEndpoint implements HttpHandler {
                     net.minecraft.server.level.ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
                     if (finalBody.has("world")) {
                         String worldName = finalBody.get("world").getAsString();
-                        net.minecraft.resources.ResourceLocation worldKey = worldName.contains(":")
-                            ? net.minecraft.resources.ResourceLocation.parse(worldName)
-                            : net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", worldName);
+                        net.minecraft.resources.Identifier worldKey = worldName.contains(":")
+                            ? net.minecraft.resources.Identifier.parse(worldName)
+                            : net.minecraft.resources.Identifier.fromNamespaceAndPath("minecraft", worldName);
                         net.minecraft.server.level.ServerLevel requested = server.getLevel(
                             net.minecraft.resources.ResourceKey.create(
                                 net.minecraft.core.registries.Registries.DIMENSION, worldKey));

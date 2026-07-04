@@ -2,7 +2,7 @@ package com.zerog.neoessentials.util;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -24,7 +24,7 @@ public class EnchantmentUtils {
      */
     public static Holder<Enchantment> getEnchantment(MinecraftServer server, String namespace, String path) {
         var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
+        Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
         ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
         return registry.getHolderOrThrow(key);
     }
@@ -39,7 +39,7 @@ public class EnchantmentUtils {
     public static Optional<Holder<Enchantment>> getEnchantmentSafely(MinecraftServer server, String namespace, String path) {
         try {
             var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
+            Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
             return registry.getHolder(key).map(holder -> holder);
         } catch (Exception e) {
@@ -48,12 +48,12 @@ public class EnchantmentUtils {
     }
     
     /**
-     * Get an enchantment by ResourceLocation
+     * Get an enchantment by Identifier
      * @param server The minecraft server instance
      * @param location The resource location of the enchantment
      * @return Optional containing the enchantment holder if found
      */
-    public static Optional<Holder<Enchantment>> getEnchantment(MinecraftServer server, ResourceLocation location) {
+    public static Optional<Holder<Enchantment>> getEnchantment(MinecraftServer server, Identifier location) {
         try {
             var registry = server.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, location);

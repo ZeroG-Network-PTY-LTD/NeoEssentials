@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.permissions;
 
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.permission.handler.IPermissionHandler;
 import net.neoforged.neoforge.server.permission.nodes.PermissionDynamicContext;
@@ -45,8 +45,8 @@ import java.util.UUID;
 public class NeoEssentialsPermissionHandler implements IPermissionHandler {
 
     /** The NeoForge handler identifier: {@code neoessentials:handler} */
-    public static final ResourceLocation IDENTIFIER =
-            ResourceLocation.fromNamespaceAndPath("neoessentials", "handler");
+    public static final Identifier IDENTIFIER =
+            Identifier.fromNamespaceAndPath("neoessentials", "handler");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsPermissionHandler.class);
 
@@ -64,7 +64,7 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
     }
 
     @Override
-    public ResourceLocation getIdentifier() {
+    public Identifier getIdentifier() {
         return IDENTIFIER;
     }
 

@@ -14,7 +14,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -68,7 +68,7 @@ public class MiscItemCommands {
             .executes(ctx -> executeCondense(ctx, null))
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::getPath), b))
+                    BuiltInRegistries.ITEM.keySet().stream().map(Identifier::getPath), b))
                 .executes(ctx -> executeCondense(ctx, StringArgumentType.getString(ctx, "item")))
             )
         );
@@ -128,8 +128,8 @@ public class MiscItemCommands {
                 if (!inputId.equals(filter)) continue;
             }
 
-            ResourceLocation inputLoc = ResourceLocation.tryParse(inputId);
-            ResourceLocation outputLoc = ResourceLocation.tryParse(recipe.outputItemId());
+            Identifier inputLoc = Identifier.tryParse(inputId);
+            Identifier outputLoc = Identifier.tryParse(recipe.outputItemId());
             if (inputLoc == null || outputLoc == null) continue;
 
             var inputItem = BuiltInRegistries.ITEM.get(inputLoc);
@@ -463,7 +463,7 @@ public class MiscItemCommands {
             })
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::toString), b))
+                    BuiltInRegistries.ITEM.keySet().stream().map(Identifier::toString), b))
                 .executes(ctx -> executeItem(ctx, StringArgumentType.getString(ctx, "item"), -1))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
                     .executes(ctx -> executeItem(ctx,
@@ -480,7 +480,7 @@ public class MiscItemCommands {
             })
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::toString), b))
+                    BuiltInRegistries.ITEM.keySet().stream().map(Identifier::toString), b))
                 .executes(ctx -> executeItem(ctx, StringArgumentType.getString(ctx, "item"), -1))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
                     .executes(ctx -> executeItem(ctx,
@@ -498,7 +498,7 @@ public class MiscItemCommands {
 
         // Resolve item
         String id = itemId.contains(":") ? itemId : "minecraft:" + itemId;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         if (loc == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.item.unknown", itemId));
             return 0;
@@ -507,7 +507,7 @@ public class MiscItemCommands {
         if (item == net.minecraft.world.item.Items.AIR && !itemId.equalsIgnoreCase("air")) {
             // Try path-only search
             item = BuiltInRegistries.ITEM.entrySet().stream()
-                .filter(e -> e.getKey().location().getPath().equals(itemId.toLowerCase()))
+                .filter(e -> e.getKey().identifier().getPath().equals(itemId.toLowerCase()))
                 .map(java.util.Map.Entry::getValue)
                 .findFirst().orElse(null);
         }

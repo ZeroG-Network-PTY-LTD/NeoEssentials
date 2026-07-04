@@ -43,7 +43,7 @@ public class TablistEventHandler {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return;
         TablistManager.getInstance().onPlayerJoin(player, server);
         // Restore the player's tab-list display name if they had a nickname stored
@@ -53,7 +53,7 @@ public class TablistEventHandler {
     @SubscribeEvent
     public static void onPlayerQuit(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return;
         TablistManager.getInstance().clearCustomName(player.getUUID());
         // Use the new full-signature quit that cleans up fake entries and proxy state

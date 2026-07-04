@@ -85,7 +85,7 @@ public class PermissionsCommand {
                     .then(Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .executes(ctx -> showUserInfo(ctx)))))
@@ -94,7 +94,7 @@ public class PermissionsCommand {
                     .then(Commands.argument("player", StringArgumentType.word())
                         .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                             ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(p -> p.getGameProfile().getName()),
+                                .map(p -> p.getGameProfile().name()),
                             builder
                         ))
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
@@ -376,7 +376,7 @@ public class PermissionsCommand {
                 .then(Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                            .map(p -> p.getGameProfile().getName()),
+                            .map(p -> p.getGameProfile().name()),
                         builder
                     ))
                     .then(Commands.literal("setgroup")
@@ -533,7 +533,7 @@ public class PermissionsCommand {
                 .then(Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                            .map(p -> p.getGameProfile().getName()),
+                            .map(p -> p.getGameProfile().name()),
                         builder
                     ))
                     .executes(ctx -> debugPlayerPermissions(ctx))));
@@ -543,7 +543,7 @@ public class PermissionsCommand {
     private static String getExecutorDisplay(CommandContext<CommandSourceStack> ctx) {
         try {
             ServerPlayer p = ctx.getSource().getPlayer();
-            return p != null ? p.getGameProfile().getName() : "CONSOLE";
+            return p != null ? p.getGameProfile().name() : "CONSOLE";
         } catch (Exception e) {
             return "CONSOLE";
         }
@@ -1110,7 +1110,7 @@ public class PermissionsCommand {
                 .findFirst();
                 
             if (onlinePlayer.isPresent()) {
-                displayName = onlinePlayer.get().getGameProfile().getName();
+                displayName = onlinePlayer.get().getGameProfile().name();
             } else {
                 // Try to get from profile cache
                 var profile = server.getProfileCache().get(uuid);
@@ -1964,7 +1964,7 @@ public class PermissionsCommand {
         try {
             ServerPlayer onlinePlayer = server.getPlayerList().getPlayer(uuid);
             if (onlinePlayer != null) {
-                isOp = onlinePlayer.hasPermissions(2);
+                isOp = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(onlinePlayer, 2);
             } else {
                 var profileCache = server.getProfileCache();
                 if (profileCache != null) {

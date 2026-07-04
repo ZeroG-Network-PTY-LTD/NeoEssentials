@@ -827,7 +827,7 @@ public class HologramCommand {
     private static boolean hasPermission(CommandSourceStack src) {
         try {
             if (src.getEntity() instanceof ServerPlayer player) {
-                return player.hasPermissions(4) ||
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4) ||
                     PermissionAPI.hasPermission(player.getUUID(), PERM) ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*");
             }

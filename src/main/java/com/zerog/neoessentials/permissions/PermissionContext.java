@@ -52,7 +52,7 @@ public final class PermissionContext {
      * @return populated context object
      */
     public static PermissionContext forPlayer(ServerPlayer player) {
-        String world    = player.level().dimension().location().getPath().toLowerCase();
+        String world    = player.level().dimension().identifier().getPath().toLowerCase();
         long   time     = player.level().getDayTime() % 24000L;
         String gamemodeStr = gamemodeStr(player);
         return new PermissionContext(world, time, gamemodeStr);

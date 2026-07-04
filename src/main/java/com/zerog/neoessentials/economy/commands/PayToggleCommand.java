@@ -14,7 +14,7 @@ public class PayToggleCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             net.minecraft.commands.Commands.literal("paytoggle")
-                .requires(src -> src.hasPermission(2) || // Allow ops
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || // Allow ops
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.paytoggle")))
                 .executes(ctx -> execute(ctx))
         );
@@ -22,7 +22,7 @@ public class PayToggleCommand {
         // Register "pt" alias for paytoggle
         dispatcher.register(
             net.minecraft.commands.Commands.literal("pt")
-                .requires(src -> src.hasPermission(2) || // Allow ops
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || // Allow ops
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.paytoggle")))
                 .executes(ctx -> execute(ctx))
         );

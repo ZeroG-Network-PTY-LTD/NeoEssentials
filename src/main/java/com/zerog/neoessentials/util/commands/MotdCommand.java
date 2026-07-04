@@ -401,11 +401,11 @@ public class MotdCommand {
             text = text
                 .replace("{player}", player.getName().getString())
                 .replace("{name}",   player.getName().getString());
-            if (player.getServer() != null) {
+            if (player.level().getServer() != null) {
                 text = text
-                    .replace("{online}",  String.valueOf(player.getServer().getPlayerCount()))
-                    .replace("{players}", String.valueOf(player.getServer().getPlayerCount()))
-                    .replace("{max}",     String.valueOf(player.getServer().getMaxPlayers()));
+                    .replace("{online}",  String.valueOf(player.level().getServer().getPlayerCount()))
+                    .replace("{players}", String.valueOf(player.level().getServer().getPlayerCount()))
+                    .replace("{max}",     String.valueOf(player.level().getServer().getMaxPlayers()));
             }
         }
         // Wall-clock time alias (usable even without a player context)

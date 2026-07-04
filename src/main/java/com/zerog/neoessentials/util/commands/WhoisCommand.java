@@ -139,7 +139,7 @@ public class WhoisCommand {
             double x = targetPlayer.getX();
             double y = targetPlayer.getY();
             double z = targetPlayer.getZ();
-            String dimension = targetPlayer.level().dimension().location().toString();
+            String dimension = targetPlayer.level().dimension().identifier().toString();
             
             MutableComponent locationComponent = Component.literal("§dLocation: §f" + 
                 DECIMAL_FORMAT.format(x) + ", " + DECIMAL_FORMAT.format(y) + ", " + DECIMAL_FORMAT.format(z) + 

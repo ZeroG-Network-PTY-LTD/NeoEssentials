@@ -25,7 +25,7 @@ public class VaultCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("vault")
-            .requires(src -> src.hasPermission(3) ||
+            .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                     src.getEntity() != null ? src.getEntity().getUUID() : null,
                     "neoessentials.vault.admin"))

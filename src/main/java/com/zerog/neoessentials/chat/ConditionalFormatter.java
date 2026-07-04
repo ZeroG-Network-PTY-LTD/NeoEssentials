@@ -169,16 +169,16 @@ public class ConditionalFormatter {
             case "creative" -> player.isCreative();
             case "survival" -> player.gameMode.getGameModeForPlayer() == net.minecraft.world.level.GameType.SURVIVAL;
             case "spectator" -> player.isSpectator();
-            case "op" -> player.hasPermissions(2);
+            case "op" -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2);
             case "sneaking" -> player.isCrouching();
             case "sprinting" -> player.isSprinting();
             case "swimming" -> player.isSwimming();
             case "onfire" -> player.isOnFire();
             case "wet" -> player.isInWaterOrRain();
             case "underground" -> player.getY() < 62;
-            case "nether" -> player.level().dimension().location().getPath().equals("the_nether");
-            case "end" -> player.level().dimension().location().getPath().equals("the_end");
-            case "overworld" -> player.level().dimension().location().getPath().equals("overworld");
+            case "nether" -> player.level().dimension().identifier().getPath().equals("the_nether");
+            case "end" -> player.level().dimension().identifier().getPath().equals("the_end");
+            case "overworld" -> player.level().dimension().identifier().getPath().equals("overworld");
             default -> false;
         };
     }

@@ -9,7 +9,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -210,7 +210,7 @@ public class JailManager {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
                 jail.originalLocation = player.blockPosition();
-                jail.originalDimension = player.level().dimension().location().toString();
+                jail.originalDimension = player.level().dimension().identifier().toString();
 
                 // Replace the null placeholder with actual jail entry
                 jailedPlayers.put(playerId, jail);
@@ -423,14 +423,14 @@ public class JailManager {
      */
     private void teleportToJail(ServerPlayer player, JailLocation jailLoc) {
         try {
-            MinecraftServer server = player.getServer();
+            MinecraftServer server = player.level().getServer();
             if (server == null) return;
             
             // Get the dimension from jail location or default to overworld
             ResourceKey<Level> dimensionKey = Level.OVERWORLD; // Default
             if (jailLoc.dimension != null && !jailLoc.dimension.isEmpty()) {
                 try {
-                    ResourceLocation dimensionId = ResourceLocation.tryParse(jailLoc.dimension);
+                    Identifier dimensionId = Identifier.tryParse(jailLoc.dimension);
                     if (dimensionId != null) {
                         dimensionKey = ResourceKey.create(Registries.DIMENSION, dimensionId);
                     }
@@ -458,14 +458,14 @@ public class JailManager {
      */
     private void teleportToOriginalLocation(ServerPlayer player, JailEntry jail) {
         try {
-            MinecraftServer server = player.getServer();
+            MinecraftServer server = player.level().getServer();
             if (server == null || jail.originalLocation == null) return;
             
             // Get the dimension from original location or default to overworld
             ResourceKey<Level> dimensionKey = Level.OVERWORLD; // Default
             if (jail.originalDimension != null && !jail.originalDimension.isEmpty()) {
                 try {
-                    ResourceLocation dimensionId = ResourceLocation.tryParse(jail.originalDimension);
+                    Identifier dimensionId = Identifier.tryParse(jail.originalDimension);
                     if (dimensionId != null) {
                         dimensionKey = ResourceKey.create(Registries.DIMENSION, dimensionId);
                     }

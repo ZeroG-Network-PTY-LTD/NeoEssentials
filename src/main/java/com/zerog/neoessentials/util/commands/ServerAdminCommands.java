@@ -13,7 +13,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -155,7 +155,7 @@ public class ServerAdminCommands {
         ServerLevel level = src.getLevel();
         long time = level.getDayTime() % 24000;
         src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.time.current",
-            level.dimension().location().getPath(), time, ticksToName(time)), false);
+            level.dimension().identifier().getPath(), time, ticksToName(time)), false);
         return 1;
     }
 
@@ -434,7 +434,7 @@ public class ServerAdminCommands {
                         src.sendFailure(MessageUtil.error("commands.neoessentials.teleport.tpoffline.not_found", name));
                         return 0;
                     }
-                    java.util.UUID uuid = profile.get().getId();
+                    java.util.UUID uuid = profile.get().id();
                     // Load offline player data from world save
                     net.minecraft.nbt.CompoundTag tag = loadOfflinePlayerData(src.getServer(), uuid);
 
@@ -451,10 +451,10 @@ public class ServerAdminCommands {
 
                     // Dimension
                     var dimKey = tag.contains("Dimension")
-                        ? ResourceLocation.tryParse(com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, "Dimension")) : null;
+                        ? Identifier.tryParse(com.zerog.neoessentials.util.CompoundTagCompat.getString(tag, "Dimension")) : null;
                     ServerLevel level = dimKey != null
                         ? StreamSupport.stream(src.getServer().getAllLevels().spliterator(), false)
-                            .filter(l -> l.dimension().location().equals(dimKey))
+                            .filter(l -> l.dimension().identifier().equals(dimKey))
                             .findFirst().orElse(src.getServer().overworld())
                         : src.getServer().overworld();
 
@@ -500,7 +500,7 @@ public class ServerAdminCommands {
                 var src = ctx.getSource();
                 List<String> worlds = new ArrayList<>();
                 for (ServerLevel level : src.getServer().getAllLevels())
-                    worlds.add(level.dimension().location().toString());
+                    worlds.add(level.dimension().identifier().toString());
                 src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.world.list",
                     String.join(", ", worlds)), false);
                 return 1;
@@ -508,7 +508,7 @@ public class ServerAdminCommands {
             .then(Commands.argument("dimension", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     StreamSupport.stream(ctx.getSource().getServer().getAllLevels().spliterator(), false)
-                        .map(l -> l.dimension().location().getPath()).toList(), b))
+                        .map(l -> l.dimension().identifier().getPath()).toList(), b))
                 .executes(ctx -> executeWorld(ctx, StringArgumentType.getString(ctx, "dimension"), null))
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
@@ -535,7 +535,7 @@ public class ServerAdminCommands {
         }
         ServerLevel target = null;
         for (ServerLevel level : src.getServer().getAllLevels()) {
-            ResourceLocation key = level.dimension().location();
+            Identifier key = level.dimension().identifier();
             if (key.getPath().equalsIgnoreCase(dimName) || key.toString().equalsIgnoreCase(dimName)) {
                 target = level; break;
             }
@@ -557,7 +557,7 @@ public class ServerAdminCommands {
                 || PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.spawner"))
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(ResourceLocation::getPath).toList(), b))
+                    BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(Identifier::getPath).toList(), b))
                 .executes(ctx -> executeSpawner(ctx, StringArgumentType.getString(ctx, "mob")))
             )
         );
@@ -573,12 +573,12 @@ public class ServerAdminCommands {
             return 0;
         }
         String id = mobName.contains(":") ? mobName : "minecraft:" + mobName;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         Optional<net.minecraft.world.entity.EntityType<?>> typeOpt = loc != null
             ? BuiltInRegistries.ENTITY_TYPE.getOptional(loc) : Optional.empty();
         if (typeOpt.isEmpty()) {
             typeOpt = BuiltInRegistries.ENTITY_TYPE.entrySet().stream()
-                .filter(e -> e.getKey().location().getPath().equalsIgnoreCase(mobName))
+                .filter(e -> e.getKey().identifier().getPath().equalsIgnoreCase(mobName))
                 .<net.minecraft.world.entity.EntityType<?>>map(Map.Entry::getValue)
                 .findFirst();
         }
@@ -608,7 +608,7 @@ public class ServerAdminCommands {
             .executes(ctx -> executeRecipe(ctx, null))
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
-                    BuiltInRegistries.ITEM.keySet().stream().map(ResourceLocation::getPath).toList(), b))
+                    BuiltInRegistries.ITEM.keySet().stream().map(Identifier::getPath).toList(), b))
                 .executes(ctx -> executeRecipe(ctx, StringArgumentType.getString(ctx, "item")))
             )
         );
@@ -625,7 +625,7 @@ public class ServerAdminCommands {
             item = held.getItem();
         } else {
             String id = itemName.contains(":") ? itemName : "minecraft:" + itemName;
-            ResourceLocation loc = ResourceLocation.tryParse(id);
+            Identifier loc = Identifier.tryParse(id);
             if (loc != null) item = BuiltInRegistries.ITEM.get(loc);
             if (item == null || item == net.minecraft.world.item.Items.AIR) {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.unknown_item", itemName)); return 0;

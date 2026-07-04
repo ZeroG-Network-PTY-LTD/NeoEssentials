@@ -15,10 +15,10 @@ public class BalanceCommand {
             net.minecraft.commands.Commands.literal("balance")
                 .executes(ctx -> execute(ctx))
                 .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
-                    .requires(src -> src.hasPermission(2) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.balance.others"))
+                    .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.balance.others"))
                     .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                            .map(p -> p.getGameProfile().getName()),
+                            .map(p -> p.getGameProfile().name()),
                         builder
                     ))
                     .executes(ctx -> executeOther(ctx))

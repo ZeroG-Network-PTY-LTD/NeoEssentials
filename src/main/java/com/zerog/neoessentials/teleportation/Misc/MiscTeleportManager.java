@@ -345,7 +345,7 @@ public class MiscTeleportManager {
         double dy = player.getY() - location.getY();
         double dz = player.getZ() - location.getZ();
         return Math.abs(dx) < 0.5 && Math.abs(dy) < 1.0 && Math.abs(dz) < 0.5 &&
-                player.level().dimension().location().toString().equals(location.getWorldName());
+                player.level().dimension().identifier().toString().equals(location.getWorldName());
     }
 
     /**
@@ -463,7 +463,7 @@ public class MiscTeleportManager {
             String.format("%.2f", player.getX()),
             String.format("%.2f", player.getY()),
             String.format("%.2f", player.getZ()),
-            player.level().dimension().location(),
+            player.level().dimension().identifier(),
             event.isCanceled());
         // Always save the death location, regardless of event cancellation status.
         // This ensures /back works even with keep-inventory or protection plugins.
@@ -482,7 +482,7 @@ public class MiscTeleportManager {
         // Only show the hint if this respawn was due to death (not /kill or end-portal return)
         UUID playerId = player.getUUID();
         if (mgr.deathLocations.containsKey(playerId) || mgr.deathLocationTimestamps.containsKey(playerId)) {
-            net.minecraft.server.MinecraftServer server = player.getServer();
+            net.minecraft.server.MinecraftServer server = player.level().getServer();
             if (server == null) return;
             // Delay one tick so the hint arrives after vanilla respawn messages
             com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1,
@@ -550,7 +550,7 @@ public class MiscTeleportManager {
             if (!player.level().getBlockState(new net.minecraft.core.BlockPos(currentX, y, currentZ)).isAir()) {
                 final int targetY = y + 1;
                 TeleportLocation topLocation = new TeleportLocation(
-                    player.level().dimension().location().toString(),
+                    player.level().dimension().identifier().toString(),
                     currentX + 0.5, targetY, currentZ + 0.5,
                     player.getYRot(), player.getXRot(), "system"
                 );
@@ -599,7 +599,7 @@ public class MiscTeleportManager {
                 
                 final int finalDistance = distance; // Make final for lambda
                 TeleportLocation jumpLocation = new TeleportLocation(
-                    player.level().dimension().location().toString(),
+                    player.level().dimension().identifier().toString(),
                     newX, newY, newZ,
                     player.getYRot(), player.getXRot(), "system"
                 );
@@ -638,7 +638,7 @@ public class MiscTeleportManager {
             
             // Teleport to one block above the target block
             TeleportLocation jumpToLocation = new TeleportLocation(
-                player.level().dimension().location().toString(),
+                player.level().dimension().identifier().toString(),
                 targetPos.getX() + 0.5, targetPos.getY() + 1.0, targetPos.getZ() + 0.5,
                 player.getYRot(), player.getXRot(), "system"
             );
@@ -693,7 +693,7 @@ public class MiscTeleportManager {
                     
                     final int safeY = y + 1; // Make final for lambda
                     TeleportLocation randomLocation = new TeleportLocation(
-                        player.level().dimension().location().toString(),
+                        player.level().dimension().identifier().toString(),
                         randomX + 0.5, safeY, randomZ + 0.5,
                         player.getYRot(), player.getXRot(), "system"
                     );

@@ -70,7 +70,7 @@ public class ShopSignHandler {
         if (!(state.getBlock() instanceof SignBlock)) return;
 
         BlockPos pos = event.getPos();
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         String key = dimension + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
         pending.put(key, new PendingSign(player.getUUID(), dimension, System.currentTimeMillis()));
     }
@@ -91,7 +91,7 @@ public class ShopSignHandler {
         BlockPos pos = event.getPos();
         // Only care about sign blocks
         if (!(level.getBlockState(pos).getBlock() instanceof SignBlock)) return;
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         // Also remove from the pending queue in case the sign was placed but never written
         String key = dimension + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
         pending.remove(key);
@@ -139,7 +139,7 @@ public class ShopSignHandler {
                 if (server == null) continue;
                 ServerLevel level = server.getAllLevels().iterator().next(); // fallback
                 for (ServerLevel sl : server.getAllLevels()) {
-                    if (sl.dimension().location().toString().equals(ps.dimension())) {
+                    if (sl.dimension().identifier().toString().equals(ps.dimension())) {
                         level = sl; break;
                     }
                 }

@@ -326,7 +326,7 @@ public class NickCommand {
      */
     private static void updatePlayerDisplayName(ServerPlayer player) {
         String nickname = NICKNAMES.get(player.getUUID());
-        net.minecraft.server.MinecraftServer server = player.getServer();
+        net.minecraft.server.MinecraftServer server = player.level().getServer();
         if (server == null) return;
 
         // Build the tab-list display name: formatted nickname, or null to revert to real username

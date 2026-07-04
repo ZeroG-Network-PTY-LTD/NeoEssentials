@@ -170,7 +170,7 @@ public class ServerDataCollector {
             final int[] totalLoadedChunks = {0}; // Use array to allow modification in lambda
             server.getAllLevels().forEach(level -> {
                 JsonObject worldChunk = new JsonObject();
-                worldChunk.addProperty("dimension", level.dimension().location().toString());
+                worldChunk.addProperty("dimension", level.dimension().identifier().toString());
 
                 // Count ACTUAL loaded chunks (not cached chunks)
                 int loadedChunks;
@@ -180,7 +180,7 @@ public class ServerDataCollector {
                     // NOT chunkMap.size() which includes all cached chunks
                     loadedChunks = chunkSource.getLoadedChunksCount();
                     LOGGER.debug("Loaded chunks for {}: {}",
-                        level.dimension().location(), loadedChunks);
+                        level.dimension().identifier(), loadedChunks);
                 } catch (Exception e) {
                     LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
                     loadedChunks = 0;
@@ -316,12 +316,12 @@ public class ServerDataCollector {
         // Log total players first
         LOGGER.info("Total players online: {}", server.getPlayerList().getPlayers().size());
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-                LOGGER.info("  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().location());
+                LOGGER.info("  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().identifier());
         }
         
         server.getAllLevels().forEach(level -> {
             JsonObject world = new JsonObject();
-            String dimensionKey = level.dimension().location().toString();
+            String dimensionKey = level.dimension().identifier().toString();
             LOGGER.info("Processing dimension: {}", dimensionKey);
             
             world.addProperty("dimension", dimensionKey);
@@ -331,7 +331,7 @@ public class ServerDataCollector {
             // Count players IN this specific dimension
             int playersInDimension = 0;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                String playerDim = player.level().dimension().location().toString();
+                String playerDim = player.level().dimension().identifier().toString();
                 boolean matches = playerDim.equals(dimensionKey);
                 LOGGER.info("  Checking player {}: dimension={}, matches={}", 
                     player.getName().getString(), playerDim, matches);

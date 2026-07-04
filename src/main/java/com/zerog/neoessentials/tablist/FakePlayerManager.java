@@ -210,7 +210,7 @@ public class FakePlayerManager {
             GameProfile profile = new GameProfile(uuid, fe.profileName());
             com.mojang.authlib.properties.Property skin = resolvedSkins.get(fe.slotId());
             if (skin != null) {
-                profile.getProperties().put("textures", skin);
+                profile.properties().put("textures", skin);
             }
 
             ClientboundPlayerInfoUpdatePacket.Entry entry = com.zerog.neoessentials.util.TabListEntryCompat.create(

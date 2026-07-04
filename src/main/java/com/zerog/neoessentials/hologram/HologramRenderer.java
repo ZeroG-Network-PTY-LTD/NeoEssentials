@@ -84,7 +84,7 @@ public final class HologramRenderer {
     // -- Public API -------------------------------------------------------------
     /** Returns the dimension key string (e.g. {@code "minecraft:overworld"}). */
     public static String dimensionKey(ServerLevel level) {
-        return level.dimension().location().toString();
+        return level.dimension().identifier().toString();
     }
     /**
      * Spawn all {@link Display.TextDisplay} entities for the hologram.
@@ -219,7 +219,7 @@ public final class HologramRenderer {
             net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(data.x, data.y, data.z);
             if (!level.isLoaded(pos)) {
                 net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
-                level.getChunk(cp.x, cp.z);
+                level.getChunk(cp.x(), cp.z());
             }
         } catch (Exception ignored) {}
 
@@ -275,7 +275,7 @@ public final class HologramRenderer {
                 net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(d.x, d.y, d.z);
                 if (!level.isLoaded(pos)) {
                     net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
-                    level.getChunk(cp.x, cp.z);
+                    level.getChunk(cp.x(), cp.z());
                 }
             } catch (Exception e) {
                 LOGGER.debug("[Hologram] Failed to preload chunk for '{}': {}", d.id, e.getMessage());

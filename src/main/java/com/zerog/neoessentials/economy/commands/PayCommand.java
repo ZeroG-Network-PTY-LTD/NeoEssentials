@@ -24,12 +24,12 @@ public class PayCommand {
         // Register main command
         dispatcher.register(
             net.minecraft.commands.Commands.literal("pay")
-                .requires(src -> src.hasPermission(2) || // Allow ops
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || // Allow ops
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.pay")))
                 .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                            .map(p -> p.getGameProfile().getName()),
+                            .map(p -> p.getGameProfile().name()),
                         builder
                     ))
                     .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
@@ -39,12 +39,12 @@ public class PayCommand {
         // Register alias
         dispatcher.register(
             net.minecraft.commands.Commands.literal("p")
-                .requires(src -> src.hasPermission(2) || // Allow ops
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2) || // Allow ops
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.pay")))
                 .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
-                            .map(p -> p.getGameProfile().getName()),
+                            .map(p -> p.getGameProfile().name()),
                         builder
                     ))
                     .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
@@ -202,7 +202,7 @@ public class PayCommand {
         if (onlineRecipient != null) {
             onlineRecipient.sendSystemMessage(MessageUtil.info(
                 "commands.neoessentials.pay.received_fee",
-                sender.getGameProfile().getName(), netAmount, fee, currency));
+                sender.getGameProfile().name(), netAmount, fee, currency));
         }
 
         com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance()
@@ -211,7 +211,7 @@ public class PayCommand {
         com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance()
             .addTransaction(finalRecipientUUID, MessageUtil.localize(
                 "commands.neoessentials.transaction.received", netAmount,
-                sender.getGameProfile().getName(), fee));
+                sender.getGameProfile().name(), fee));
 
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
             new com.zerog.neoessentials.economy.events.EconomyTransactionEvent(

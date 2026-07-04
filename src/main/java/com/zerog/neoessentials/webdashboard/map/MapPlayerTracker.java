@@ -28,7 +28,7 @@ public class MapPlayerTracker {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.updatePlayerLocation(player);
-            LOGGER.debug("Map: Player joined - {}", player.getGameProfile().getName());
+            LOGGER.debug("Map: Player joined - {}", player.getGameProfile().name());
         }
     }
     
@@ -40,7 +40,7 @@ public class MapPlayerTracker {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.removePlayer(player.getUUID());
-            LOGGER.debug("Map: Player left - {}", player.getGameProfile().getName());
+            LOGGER.debug("Map: Player left - {}", player.getGameProfile().name());
         }
     }
     

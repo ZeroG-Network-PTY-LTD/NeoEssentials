@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public class ItemSpawnHelper {
      */
     public static SpawnResult canSpawnItem(ServerPlayer player, Item item) {
         // Get item ID
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+        Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
         String itemIdString = itemId.toString();
         
         // Check blacklist first
@@ -83,7 +83,7 @@ public class ItemSpawnHelper {
      * @return true if blacklisted
      */
     public static boolean isBlacklisted(Item item) {
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+        Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
         String itemIdString = itemId.toString();
         List<String> blacklist = ConfigManager.getItemSpawnBlacklist();
         return blacklist.contains(itemIdString);

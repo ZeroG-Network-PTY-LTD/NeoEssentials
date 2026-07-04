@@ -3,7 +3,7 @@ package com.zerog.neoessentials.webdashboard.data;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public class ServerAssetCollector {
         Map<String, Integer> namespaceCount = new HashMap<>();
 
         for (var entry : BuiltInRegistries.ITEM.entrySet()) {
-            ResourceLocation itemId = entry.getKey().location();
+            Identifier itemId = entry.getKey().identifier();
 
             JsonObject itemData = new JsonObject();
             itemData.addProperty("id", itemId.toString());

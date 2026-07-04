@@ -22,10 +22,10 @@ public class PlayerAnalyticsListener {
         try {
             var player = event.getEntity();
             PlayerSessionTracker tracker = PlayerSessionTracker.getInstance();
-            tracker.trackPlayerJoin(player.getUUID(), player.getGameProfile().getName());
+            tracker.trackPlayerJoin(player.getUUID(), player.getGameProfile().name());
             
             LOGGER.debug("Analytics: Player joined - {} ({})", 
-                player.getGameProfile().getName(), player.getUUID());
+                player.getGameProfile().name(), player.getUUID());
         } catch (Exception e) {
             LOGGER.error("Error tracking player join event", e);
         }
@@ -42,7 +42,7 @@ public class PlayerAnalyticsListener {
             tracker.trackPlayerLeave(player.getUUID());
             
             LOGGER.debug("Analytics: Player left - {} ({})", 
-                player.getGameProfile().getName(), player.getUUID());
+                player.getGameProfile().name(), player.getUUID());
         } catch (Exception e) {
             LOGGER.error("Error tracking player leave event", e);
         }

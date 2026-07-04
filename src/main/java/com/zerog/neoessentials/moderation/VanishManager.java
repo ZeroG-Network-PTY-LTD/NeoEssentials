@@ -297,7 +297,7 @@ public class VanishManager {
      */
     public void onPlayerJoin(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
 
         // If this player is vanished, hide them from every other online player
         // (use a 1-tick delay so our hide packet arrives after the vanilla spawn

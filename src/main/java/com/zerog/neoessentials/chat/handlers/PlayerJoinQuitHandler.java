@@ -149,7 +149,7 @@ public class PlayerJoinQuitHandler {
                 Component formattedMessage = Component.literal(coloredMessage);
                 
                 // Broadcast the custom join message to all players
-                var server = player.getServer();
+                var server = player.level().getServer();
                 if (server != null) {
                     server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
                 }
@@ -210,7 +210,7 @@ public class PlayerJoinQuitHandler {
                 Component formattedMessage = Component.literal(coloredMessage);
                 
                 // Broadcast the custom quit message to all players
-                var server = player.getServer();
+                var server = player.level().getServer();
                 if (server != null) {
                     server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
                 }

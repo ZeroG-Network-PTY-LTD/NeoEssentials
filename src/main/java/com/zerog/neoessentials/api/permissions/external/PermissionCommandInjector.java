@@ -37,7 +37,7 @@ public class PermissionCommandInjector {
             // Register a fake "pex" command that includes our permissions in suggestions
             // This makes PermissionsEX tab completion work by piggy-backing on our command
             dispatcher.register(Commands.literal("neoessentials-pex-bridge")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
                 .then(Commands.literal("group")
                     .then(Commands.argument("groupname", StringArgumentType.word())
                         .then(Commands.literal("add")
@@ -161,7 +161,7 @@ public class PermissionCommandInjector {
      */
     public static void registerTestCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("test-pex-integration")
-            .requires(source -> source.hasPermission(4))
+            .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
             .executes(ctx -> {
                 List<String> permissions = ExternalPermissionProvider.getAllNeoEssentialsPermissions();
                 

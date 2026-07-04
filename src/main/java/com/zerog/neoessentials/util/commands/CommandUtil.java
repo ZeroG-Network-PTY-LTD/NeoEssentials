@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.util.commands;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 
@@ -18,7 +18,7 @@ public class CommandUtil {
      * @return User-friendly world name
      */
     public static String getWorldName(Level level) {
-        return getWorldName(level.dimension().location().toString());
+        return getWorldName(level.dimension().identifier().toString());
     }
     
     /**
@@ -43,7 +43,7 @@ public class CommandUtil {
      * @return Dimension key (e.g., "minecraft:overworld")
      */
     public static String getDimensionName(Level level) {
-        return level.dimension().location().toString();
+        return level.dimension().identifier().toString();
     }
     
     /**
@@ -55,7 +55,7 @@ public class CommandUtil {
      * @return Formatted biome name
      */
     public static String getBiomeName(Biome biome, Level level, BlockPos pos) {
-        ResourceLocation biomeKey = level.registryAccess()
+        Identifier biomeKey = level.registryAccess()
             .registryOrThrow(net.minecraft.core.registries.Registries.BIOME)
             .getKey(biome);
         

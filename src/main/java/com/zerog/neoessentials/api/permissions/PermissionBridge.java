@@ -33,7 +33,7 @@ public class PermissionBridge {
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register command to list all NeoEssentials permissions
         dispatcher.register(Commands.literal("neoessentials-permissions")
-            .requires(source -> source.hasPermission(4)) // Op level 4 required
+            .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4)) // Op level 4 required
             .executes(ctx -> {
                 listAllPermissions(ctx.getSource());
                 return 1;
@@ -69,14 +69,14 @@ public class PermissionBridge {
                 )
             )
             .then(Commands.literal("refresh")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
                 .executes(ctx -> {
                     refreshPermissions(ctx.getSource());
                     return 1;
                 })
             )
             .then(Commands.literal("scan")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
                 .executes(ctx -> {
                     scanPermissions(ctx.getSource());
                     return 1;
@@ -116,7 +116,7 @@ public class PermissionBridge {
         
         // Register a helper command that external plugins can use
         dispatcher.register(Commands.literal("neoe-perms")
-            .requires(source -> source.hasPermission(4))
+            .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
             .executes(ctx -> {
                 listAllPermissions(ctx.getSource());
                 return 1;

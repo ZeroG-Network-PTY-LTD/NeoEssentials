@@ -200,7 +200,7 @@ public class RealnameCommand {
         // Show if player has any special status
         StringBuilder statusBuilder = new StringBuilder();
         
-        if (player.hasPermissions(4)) {
+        if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4)) {
             statusBuilder.append("§cOperator");
         }
         

@@ -26,7 +26,7 @@ public class PermissionValidator {
             ServerPlayer player = source.getPlayer();
             if (player == null) {
                 // Console or other non-player source - allow if has admin level
-                if (source.hasPermission(2)) {
+                if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2)) {
                     return PermissionResult.success();
                 }
                 return PermissionResult.failure("This command can only be used by players or server operators");
@@ -37,7 +37,7 @@ public class PermissionValidator {
             // Validate permission
             if (!PermissionAPI.hasPermission(playerUuid, permission)) {
                 LOGGER.debug("Permission denied for player {} ({}): {}",
-                    player.getGameProfile().getName(), playerUuid, permission);
+                    player.getGameProfile().name(), playerUuid, permission);
                 String msg = "You don't have permission to use this command.\n§7Required: §f" + permission;
                 // Append human-friendly description from PermissionRegistry if available
                 try {
@@ -65,7 +65,7 @@ public class PermissionValidator {
         try {
             ServerPlayer player = source.getPlayer();
             if (player == null) {
-                if (source.hasPermission(2)) {
+                if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2)) {
                     return PermissionResult.success();
                 }
                 return PermissionResult.failure("This command can only be used by players or server operators");
@@ -81,7 +81,7 @@ public class PermissionValidator {
             }
             
             LOGGER.debug("Permission denied for player {} ({}): none of {}",
-                player.getGameProfile().getName(), playerUuid, java.util.Arrays.toString(permissions));
+                player.getGameProfile().name(), playerUuid, java.util.Arrays.toString(permissions));
             StringBuilder msg = new StringBuilder("You don't have permission to use this command.\n§7Required (any): §f")
                 .append(String.join("§7 or §f", permissions));
             // Append descriptions for each node from PermissionRegistry
@@ -109,7 +109,7 @@ public class PermissionValidator {
     public static PermissionResult validateAdminPermission(CommandSourceStack source, String adminPermission) {
         try {
             // First check operator status
-            if (source.hasPermission(2)) {
+            if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2)) {
                 return PermissionResult.success(source.getPlayer());
             }
             

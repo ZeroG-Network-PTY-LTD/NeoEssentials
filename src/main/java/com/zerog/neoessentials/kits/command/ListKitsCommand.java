@@ -40,7 +40,7 @@ public class ListKitsCommand {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.list");
                 }
-                return source.hasPermission(4); // Console/OP fallback
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4); // Console/OP fallback
             })
             .executes(ListKitsCommand::listFirstPage)
             .then(Commands.argument("page", IntegerArgumentType.integer(1))

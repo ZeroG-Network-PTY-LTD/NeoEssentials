@@ -75,7 +75,7 @@ public class HelpopCommand {
         String location = String.format("%s (%d, %d, %d)", worldName, pos.getX(), pos.getY(), pos.getZ());
         
         // Get all online players
-        List<ServerPlayer> onlinePlayers = sender.getServer().getPlayerList().getPlayers();
+        List<ServerPlayer> onlinePlayers = sender.level().getServer().getPlayerList().getPlayers();
         
         // Count staff members who will receive the message
         int staffCount = 0;
@@ -96,7 +96,7 @@ public class HelpopCommand {
             sender.sendSystemMessage(MessageUtil.success("commands.neoessentials.helpop.sent", staffCount));
             
             // Log the helpop request
-            sender.getServer().sendSystemMessage(
+            sender.level().getServer().sendSystemMessage(
                 MessageUtil.info("commands.neoessentials.helpop.log", playerName, location, message)
             );
         } else {

@@ -336,7 +336,7 @@ public class PermissionAPI {
                 // Try to get the player directly and check their permission level
                 net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(uuid);
                 if (player != null) {
-                    return player.hasPermissions(2); // Op level 2 or higher
+                    return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2); // Op level 2 or higher
                 }
                 
                 // If player is offline, check the ops file

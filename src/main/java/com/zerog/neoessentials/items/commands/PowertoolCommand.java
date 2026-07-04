@@ -11,7 +11,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -314,7 +314,7 @@ public class PowertoolCommand {
      * Get the item ID from an ItemStack.
      */
     private static String getItemId(ItemStack itemStack) {
-        ResourceLocation itemKey = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+        Identifier itemKey = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
         return itemKey.toString();
     }
 

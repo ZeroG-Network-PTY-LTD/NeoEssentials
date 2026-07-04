@@ -31,7 +31,7 @@ public final class AuctionHouseCommand {
                         .requires(CommandSourceStack::isPlayer)
                         .executes(ctx -> executeExpired(ctx.getSource())))
                 .then(Commands.literal("reload")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2))
                         .executes(ctx -> executeReload(ctx.getSource())))
                 .then(Commands.literal("help")
                         .executes(ctx -> executeHelp(ctx.getSource())));

@@ -32,7 +32,7 @@ public class DashboardRegisterCommand {
             .requires(source -> {
                 // Allow console to use the command too for testing
                 if (!source.isPlayer()) {
-                    return source.hasPermission(2); // Op level 2
+                    return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2); // Op level 2
                 }
                 // For players, check the dashboard access permission
                 return PermissionValidator.validatePermission(source,

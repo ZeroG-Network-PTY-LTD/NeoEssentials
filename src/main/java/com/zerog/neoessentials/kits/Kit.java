@@ -8,7 +8,7 @@ import com.google.gson.JsonElement;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import com.zerog.neoessentials.util.ResourceLocationHelper;
 
@@ -139,7 +139,7 @@ public class Kit {
             if (!item.isEmpty()) {
                 try {
                     // Guard against null registry key (defensive — modded environments may differ)
-                    net.minecraft.resources.ResourceLocation itemKey =
+                    net.minecraft.resources.Identifier itemKey =
                             BuiltInRegistries.ITEM.getKey(item.getItem());
                     //noinspection ConstantConditions
                     if (itemKey == null) {
@@ -205,8 +205,8 @@ public class Kit {
                 try {
                     String itemString = itemJson.get("item").getAsString();
 
-                    // Use helper to create ResourceLocation safely across versions
-                    ResourceLocation itemId = ResourceLocationHelper.parse(itemString);
+                    // Use helper to create Identifier safely across versions
+                    Identifier itemId = ResourceLocationHelper.parse(itemString);
 
                     // Use getOptional() for Minecraft 1.21.4+ compatibility
                     Item item = BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);

@@ -41,7 +41,7 @@ public class FakePermissionsEXCommand {
             
             // Register the fake /pex command
             dispatcher.register(Commands.literal("pex")
-                .requires(source -> source.hasPermission(2)) // Require op level 2
+                .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2)) // Require op level 2
                 
                 // /pex group <name> add <permission>
                 .then(Commands.literal("group")

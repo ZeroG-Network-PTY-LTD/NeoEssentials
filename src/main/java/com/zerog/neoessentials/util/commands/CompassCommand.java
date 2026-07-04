@@ -87,7 +87,7 @@ public class CompassCommand {
         double z = target.getZ();
         
         // Get world information
-        String worldName = CommandUtil.getWorldName(level.dimension().location().toString());
+        String worldName = CommandUtil.getWorldName(level.dimension().identifier().toString());
         
         // Get biome information
         Biome biome = level.getBiome(pos).value();

@@ -322,7 +322,7 @@ public class AuthenticationHandler implements HttpHandler {
             // 1. Try server's profile cache (for players who have logged in)
             com.mojang.authlib.GameProfile profile = server.getProfileCache().get(minecraftUsername).orElse(null);
             if (profile != null) {
-                playerUuid = profile.getId();
+                playerUuid = profile.id();
                 LOGGER.debug("Found player UUID from server profile cache: {}", playerUuid);
             }
 

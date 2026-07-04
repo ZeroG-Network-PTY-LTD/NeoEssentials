@@ -9,11 +9,11 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -73,11 +73,11 @@ public class EnchantCommand {
     private static void registerEnchantCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
-                .requires(cs -> cs.hasPermission(2) || // Allow ops
+                .requires(cs -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(cs, 2) || // Allow ops
                     (cs.getEntity() instanceof ServerPlayer player && 
                      com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")))
                 // Enchant item in hand
-                .then(Commands.argument("enchantment", ResourceLocationArgument.id())
+                .then(Commands.argument("enchantment", IdentifierArgument.id())
                     .suggests((ctx, builder) -> {
                         return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                             ctx.getSource().getServer().registryAccess()
@@ -92,10 +92,10 @@ public class EnchantCommand {
                 )
                 // Enchant target player's item in hand
                 .then(Commands.argument("target", EntityArgument.player())
-                    .requires(cs -> cs.hasPermission(2) || 
+                    .requires(cs -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(cs, 2) || 
                         (cs.getEntity() instanceof ServerPlayer player && 
                          com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant.others")))
-                    .then(Commands.argument("enchantment", ResourceLocationArgument.id())
+                    .then(Commands.argument("enchantment", IdentifierArgument.id())
                         .suggests((ctx, builder) -> {
                             return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                                 ctx.getSource().getServer().registryAccess()
@@ -118,10 +118,10 @@ public class EnchantCommand {
         // Keep enchanthand as alias for hand-only enchanting
         dispatcher.register(
             Commands.literal("enchanthand")
-                .requires(cs -> cs.hasPermission(2) ||
+                .requires(cs -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(cs, 2) ||
                     (cs.getEntity() instanceof ServerPlayer player && 
                      com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")))
-                .then(Commands.argument("enchantment", ResourceLocationArgument.id())
+                .then(Commands.argument("enchantment", IdentifierArgument.id())
                     .suggests((ctx, builder) -> {
                         return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                             ctx.getSource().getServer().registryAccess()
@@ -183,7 +183,7 @@ public class EnchantCommand {
         }
         
         // Get enchantment from argument
-        ResourceLocation enchantId = ResourceLocationArgument.getId(ctx, "enchantment");
+        Identifier enchantId = IdentifierArgument.getId(ctx, "enchantment");
         
         // Get level (default to 1 if not provided)
         int levelTemp = 1;
@@ -208,7 +208,7 @@ public class EnchantCommand {
         final int level = levelValidation.getValue(Integer.class);
         
         // Get the enchantment from registry
-        net.minecraft.core.Registry<Enchantment> enchantRegistry = targetPlayer.getServer()
+        net.minecraft.core.Registry<Enchantment> enchantRegistry = targetPlayer.level().getServer()
             .registryAccess()
             .registryOrThrow(Registries.ENCHANTMENT);
         
@@ -342,7 +342,7 @@ public class EnchantCommand {
 
         try {
             // Get the enchantment holder from registry
-            net.minecraft.core.Registry<Enchantment> registry = player.getServer()
+            net.minecraft.core.Registry<Enchantment> registry = player.level().getServer()
                 .registryAccess()
                 .registryOrThrow(Registries.ENCHANTMENT);
                 

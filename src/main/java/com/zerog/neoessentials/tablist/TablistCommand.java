@@ -102,7 +102,7 @@ public class TablistCommand {
                         ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
                         return 0;
                     }
-                    var server = player.getServer();
+                    var server = player.level().getServer();
                     if (server != null) TablistManager.getInstance().updatePlayer(player, server);
                     ctx.getSource().sendSuccess(() -> Component.literal("§aPreviewing your tablist header/footer."), false);
                     return 1;

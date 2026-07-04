@@ -2,7 +2,7 @@ package com.zerog.neoessentials.economy.worth;
 
 import com.google.gson.*;
 import com.zerog.neoessentials.util.ResourceUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -211,7 +211,7 @@ public class WorthManager {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public static String getItemId(ItemStack stack) {
-        ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Identifier key = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return key.toString(); // minecraft:diamond
     }
 
@@ -241,7 +241,7 @@ public class WorthManager {
 
         // 1. Try as-is if it has a namespace (modded or vanilla full id)
         if (trimmed.contains(":")) {
-            ResourceLocation loc = ResourceLocation.tryParse(trimmed);
+            Identifier loc = Identifier.tryParse(trimmed);
             if (loc != null) {
                 Item item = BuiltInRegistries.ITEM.get(loc);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
@@ -251,14 +251,14 @@ public class WorthManager {
         }
 
         // 2. Try minecraft: prefix for unqualified vanilla names
-        ResourceLocation vanillaLoc = ResourceLocation.tryParse("minecraft:" + trimmed);
+        Identifier vanillaLoc = Identifier.tryParse("minecraft:" + trimmed);
         if (vanillaLoc != null) {
             Item item = BuiltInRegistries.ITEM.get(vanillaLoc);
             if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
         }
 
         // 3. Fuzzy: exact path match across ALL namespaces (catches modded items by short name)
-        for (ResourceLocation key : BuiltInRegistries.ITEM.keySet()) {
+        for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
             if (key.getPath().equals(trimmed)) {
                 Item item = BuiltInRegistries.ITEM.get(key);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
@@ -266,7 +266,7 @@ public class WorthManager {
         }
 
         // 4. Fuzzy: path contains the search string (last resort)
-        for (ResourceLocation key : BuiltInRegistries.ITEM.keySet()) {
+        for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
             if (key.getPath().contains(trimmed)) {
                 Item item = BuiltInRegistries.ITEM.get(key);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);

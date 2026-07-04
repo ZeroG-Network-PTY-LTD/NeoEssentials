@@ -61,7 +61,7 @@ public class MsgCommand {
                             return 0;
                         }
                         
-                        MinecraftServer server = sender.getServer();
+                        MinecraftServer server = sender.level().getServer();
                         if (server == null) {
                             source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
                             return 0;
@@ -127,7 +127,7 @@ public class MsgCommand {
                         
                         if (com.zerog.neoessentials.chat.MsgToggleManager.isMsgToggled(target)) {
                             // Check if sender has bypass permission
-                            if (!sender.hasPermissions(4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
+                            if (!com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(sender, 4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
                                 ChatDebugUtil.debug("MsgCommand - FAILED: Target has messaging toggled off and sender lacks bypass");
                                 source.sendFailure(MessageUtil.error("commands.neoessentials.msg.target_toggled_off", target.getName().getString()));
                                 return 0;

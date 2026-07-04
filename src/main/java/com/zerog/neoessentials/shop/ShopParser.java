@@ -4,7 +4,7 @@ import com.zerog.neoessentials.economy.worth.WorthManager;
 import com.zerog.neoessentials.shop.model.ShopData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -243,7 +243,7 @@ public final class ShopParser {
         String id = itemStr.toLowerCase().trim();
         if (!id.contains(":")) id = "minecraft:" + id;
         try {
-            Optional<Item> item = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(id));
+            Optional<Item> item = BuiltInRegistries.ITEM.getOptional(Identifier.parse(id));
             if (item.isPresent()) return new ItemStack(item.get());
         } catch (Exception ignored) {}
 

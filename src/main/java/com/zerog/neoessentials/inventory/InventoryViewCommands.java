@@ -162,7 +162,7 @@ public class InventoryViewCommands {
                 net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
                 if (cache != null) {
                     java.util.Optional<com.mojang.authlib.GameProfile> profile = cache.get(uuid);
-                    if (profile.isPresent()) return profile.get().getName();
+                    if (profile.isPresent()) return profile.get().name();
                 }
             }
         } catch (Exception ignored) {}
@@ -210,7 +210,7 @@ public class InventoryViewCommands {
             UUID existingViewer = activeInvEdits.get(target.getUUID());
             if (existingViewer != null && !existingViewer.equals(viewer.getUUID())) {
                 // Another editor already has this inventory open
-                String editorName = getPlayerName(viewer.getServer(), existingViewer);
+                String editorName = getPlayerName(viewer.level().getServer(), existingViewer);
                 viewer.sendSystemMessage(MessageUtil.error(
                     "commands.neoessentials.invsee.concurrent_edit",
                     target.getName().getString(), editorName));
@@ -259,7 +259,7 @@ public class InventoryViewCommands {
             // ── Anti-duplication: enforce single-editor lock ──
             UUID existingViewer = activeEcEdits.get(target.getUUID());
             if (existingViewer != null && !existingViewer.equals(viewer.getUUID())) {
-                String editorName = getPlayerName(viewer.getServer(), existingViewer);
+                String editorName = getPlayerName(viewer.level().getServer(), existingViewer);
                 viewer.sendSystemMessage(MessageUtil.error(
                     "commands.neoessentials.ec.concurrent_edit",
                     target.getName().getString(), editorName));

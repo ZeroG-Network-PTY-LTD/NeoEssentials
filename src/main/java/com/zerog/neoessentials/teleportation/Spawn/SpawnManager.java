@@ -299,7 +299,7 @@ public class SpawnManager {
      */
     private void teleportToWorldSpawn(ServerPlayer player) {
         try {
-            MinecraftServer server = player.getServer();
+            MinecraftServer server = player.level().getServer();
             if (server == null) {
                 LOGGER.error("Cannot teleport to world spawn - server is null");
                 return;

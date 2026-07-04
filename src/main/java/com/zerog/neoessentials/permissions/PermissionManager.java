@@ -524,7 +524,7 @@ public class PermissionManager {
                                     "§eYour temporary permission §f" + node + "§e has expired."));
                             }
                             String playerName = online != null
-                                ? online.getGameProfile().getName()
+                                ? online.getGameProfile().name()
                                 : user.getUuid().toString();
                             LOGGER.info("[TempPerms] Expired user temp permission: {} -> {}", playerName, node);
                             PermissionAuditLogger.log("SYSTEM",

@@ -110,13 +110,13 @@ public class NearCommand {
         Vec3 playerPos = player.position();
         
         // Null safety check for server
-        if (player.getServer() == null) {
+        if (player.level().getServer() == null) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.near.server_error"));
             return 0;
         }
 
         // Get all nearby players (exclude self)
-        List<NearbyPlayerInfo> nearbyPlayers = player.getServer().getPlayerList().getPlayers().stream()
+        List<NearbyPlayerInfo> nearbyPlayers = player.level().getServer().getPlayerList().getPlayers().stream()
             .filter(p -> !p.equals(player))
             .filter(p -> p.level() == player.level()) // Same dimension
             .filter(p -> !isVanished(p) || canSeeVanished(player)) // Vanish check
@@ -175,7 +175,7 @@ public class NearCommand {
             statusList.add("§7Vanished");
         }
         
-        if (info.player.hasPermissions(4)) {
+        if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(info.player, 4)) {
             statusList.add("§cOP");
         }
         
@@ -188,7 +188,7 @@ public class NearCommand {
             .append(Component.literal("§6Player: §f" + info.player.getName().getString() + "\n"))
             .append(Component.literal("§6Distance: §f" + distanceStr + " blocks\n"))
             .append(Component.literal("§6Direction: §f" + direction + "\n"))
-            .append(Component.literal("§6World: §f" + info.player.level().dimension().location() + "\n"))
+            .append(Component.literal("§6World: §f" + info.player.level().dimension().identifier() + "\n"))
             .append(Component.literal("§6Coordinates: §f" +
                 (int)info.player.getX() + ", " + (int)info.player.getY() + ", " + (int)info.player.getZ() + "\n"))
             .append(Component.literal("§6Health: §f" + String.format("%.1f", info.player.getHealth()) + "/" + 

@@ -73,7 +73,7 @@ public class ShopCommand {
                 .then(Commands.literal("create")
                     .executes(ctx -> executeImport(ctx.getSource(), true))))
             .then(Commands.literal("reload")
-                .requires(src -> src.hasPermission(3) ||
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                     (src.getEntity() != null &&
                      PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.reload")))
                 .executes(ctx -> executeReload(ctx.getSource())))
@@ -122,7 +122,7 @@ public class ShopCommand {
                 uuid = self.getUUID();
                 displayName = self.getName().getString();
             } else {
-                boolean canListOthers = src.hasPermission(3) ||
+                boolean canListOthers = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                     (src.getEntity() != null &&
                      PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.list.others"));
                 if (!canListOthers) {
@@ -179,7 +179,7 @@ public class ShopCommand {
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
             ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-            String dimension = level.dimension().location().toString();
+            String dimension = level.dimension().identifier().toString();
 
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
             if (shop == null) {
@@ -227,7 +227,7 @@ public class ShopCommand {
                 src.sendFailure(Component.literal("§cNot a sign."));
                 return 0;
             }
-            String dimension = level.dimension().location().toString();
+            String dimension = level.dimension().identifier().toString();
             String[] lines = ShopSignHandler.readSignLines(sign);
             ShopSignHandler.tryRegisterShop(player, lines, pos, dimension, level);
             return 1;
@@ -257,7 +257,7 @@ public class ShopCommand {
         }
 
         ShopData shop = getShopFromLookAt(player);
-        String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+        String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString();
         if (shop == null) {
             // Fall back to the linked chest, in case the player is looking at that instead of the sign
             HitResult hit = player.pick(5.0, 0.0f, false);
@@ -287,7 +287,7 @@ public class ShopCommand {
 
     @SuppressWarnings("resource") // ServerLevel is not AutoCloseable; IntelliJ false positive
     private static int executeRemove(CommandSourceStack src, int x, int y, int z) {
-        boolean isAdmin = src.hasPermission(3) ||
+        boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
             (src.getEntity() != null &&
              PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.remove"));
         if (!isAdmin) {
@@ -296,7 +296,7 @@ public class ShopCommand {
         }
         try {
             ServerPlayer player = src.getPlayerOrException();
-            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString();
             BlockPos pos = new BlockPos(x, y, z);
             ShopData removed = ShopManager.getInstance().removeShop(dimension, pos);
             if (removed == null) {
@@ -327,7 +327,7 @@ public class ShopCommand {
     private static int executeSetPrice(CommandSourceStack src, String type, double price) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            boolean canSetPrice = src.hasPermission(3) ||
+            boolean canSetPrice = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.setprice") ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
             if (!canSetPrice) {
@@ -341,14 +341,14 @@ public class ShopCommand {
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
             ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-            String dimension = level.dimension().location().toString();
+            String dimension = level.dimension().identifier().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
             if (shop == null) {
                 src.sendFailure(Component.literal("§cNo shop at that sign."));
                 return 0;
             }
             // Owner or admin can set price
-            boolean isAdmin = src.hasPermission(3) ||
+            boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
             if (!isAdmin && (shop.ownerUUID == null || !shop.ownerUUID.equals(player.getUUID()))) {
                 src.sendFailure(Component.literal("§cYou can only set prices on your own shops."));
@@ -420,7 +420,7 @@ public class ShopCommand {
     // ── /chestshop export ─────────────────────────────────────────────────────
 
     private static int executeExport(CommandSourceStack src) {
-        boolean isAdmin = src.hasPermission(3) ||
+        boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 (src.getEntity() != null &&
                  PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.export"));
         if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
@@ -441,7 +441,7 @@ public class ShopCommand {
     // ── /chestshop import [create] ────────────────────────────────────────────
 
     private static int executeImport(CommandSourceStack src, boolean createNew) {
-        boolean isAdmin = src.hasPermission(3) ||
+        boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 (src.getEntity() != null &&
                  PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.import"));
         if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
@@ -492,7 +492,7 @@ public class ShopCommand {
     private static int executeHologramEnablePos(CommandSourceStack src, int x, int y, int z) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
             if (shop == null) { src.sendFailure(Component.literal("§cNo shop found at that position.")); return 0; }
             if (!isShopOwner(player, shop)) {
@@ -581,12 +581,12 @@ public class ShopCommand {
         if (hit.getType() != HitResult.Type.BLOCK) return null;
         BlockPos pos = ((BlockHitResult) hit).getBlockPos();
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         return ShopManager.getInstance().getShopBySign(dimension, pos);
     }
 
     private static boolean isShopOwnerOrAdmin(ServerPlayer player, ShopData shop) {
-        if (player.hasPermissions(3)) return true;
+        if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 3)) return true;
         if (PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.remove")) return true;
         return shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
     }

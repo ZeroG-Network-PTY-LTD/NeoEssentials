@@ -85,7 +85,7 @@ public class WarpCommands {
     }
 
     private static boolean hasAnyWarpPerm(CommandSourceStack src) {
-        if (src.getPlayer() == null) return src.hasPermission(2);
+        if (src.getPlayer() == null) return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 2);
         UUID id = src.getPlayer().getUUID();
         return PermissionAPI.hasPermission(id, PERMISSION_WARP)
             || PermissionAPI.hasPermission(id, PERMISSION_WARP_LIST);
@@ -192,7 +192,7 @@ public class WarpCommands {
         for (String alias : new String[]{"setwarp", "createwarp", "addwarp"}) {
             dispatcher.register(Commands.literal(alias)
                 .requires(src -> src.getPlayer() == null
-                    ? src.hasPermission(3)
+                    ? com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3)
                     : PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_SETWARP))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(WarpCommands::executeSetWarpHere)
@@ -229,7 +229,7 @@ public class WarpCommands {
         for (String alias : new String[]{"delwarp", "deletewarp", "removewarp", "rwarp"}) {
             dispatcher.register(Commands.literal(alias)
                 .requires(src -> src.getPlayer() == null
-                    ? src.hasPermission(3)
+                    ? com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3)
                     : PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_DELWARP))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .suggests(WARP_SUGGESTIONS)

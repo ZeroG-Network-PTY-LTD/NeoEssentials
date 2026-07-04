@@ -76,7 +76,7 @@ public class SpawnCommands {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SPAWN);
                 }
-                return source.hasPermission(2); // Console fallback
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2); // Console fallback
             })
             .executes(SpawnCommands::executeSpawn)
         );
@@ -91,7 +91,7 @@ public class SpawnCommands {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETSPAWN);
                 }
-                return source.hasPermission(3); // Console fallback
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 3); // Console fallback
             })
             .executes(SpawnCommands::executeSetSpawnHere)
             .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -114,7 +114,7 @@ public class SpawnCommands {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SPAWNINFO);
                 }
-                return source.hasPermission(2); // Console fallback
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 2); // Console fallback
             })
             .executes(SpawnCommands::executeSpawnInfo)
         );

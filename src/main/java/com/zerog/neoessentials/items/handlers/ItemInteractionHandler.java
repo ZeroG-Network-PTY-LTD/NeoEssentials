@@ -5,7 +5,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -66,7 +66,7 @@ public class ItemInteractionHandler {
             }
 
             // Look up by item TYPE (not slot)
-            ResourceLocation itemKey = BuiltInRegistries.ITEM.getKey(heldItem.getItem());
+            Identifier itemKey = BuiltInRegistries.ITEM.getKey(heldItem.getItem());
             String itemId = itemKey.toString();
 
             String command = PowertoolCommand.getPowertoolCommand(playerUUID, itemId);
@@ -90,7 +90,7 @@ public class ItemInteractionHandler {
                 cancellable.setCanceled(true);
             }
 
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server == null) return;
 
             try {

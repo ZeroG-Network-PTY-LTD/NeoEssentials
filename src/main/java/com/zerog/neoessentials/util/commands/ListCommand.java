@@ -316,7 +316,7 @@ public class ListCommand {
         }
 
         // Add OP indicator
-        if (player.hasPermissions(4)) {
+        if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4)) {
             statusIndicators.add("§cOP");
         }
 
@@ -330,7 +330,7 @@ public class ListCommand {
         hoverLines.add(Component.literal("§6Player: §f" + playerName));
         // Level objects in Minecraft don't need to be closed with try-with-resources
         @SuppressWarnings("resource")
-        String worldName = player.level().dimension().location().getPath();
+        String worldName = player.level().dimension().identifier().getPath();
         hoverLines.add(Component.literal("§6World: §f" + worldName));
         hoverLines.add(Component.literal("§6Location: §f" +
             (int)player.getX() + ", " + (int)player.getY() + ", " + (int)player.getZ()));
@@ -382,7 +382,7 @@ public class ListCommand {
         for (ServerPlayer player : players) {
             if (isAfk(player)) afkCount++;
             if (isVanished(player)) vanishedCount++;
-            if (player.hasPermissions(4)) opCount++;
+            if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4)) opCount++;
         }
 
         // Build status summary
@@ -451,7 +451,7 @@ public class ListCommand {
      */
     private static String getPlayerGroup(ServerPlayer player) {
         // Check for operator status
-        if (player.hasPermissions(4)) {
+        if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4)) {
             return "Operators";
         }
 

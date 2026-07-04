@@ -58,7 +58,7 @@ public class PlayerDataCollector {
             profile.addProperty("displayName", player.getDisplayName().getString());
             profile.addProperty("online", true);
             profile.addProperty("gameMode", player.gameMode.getGameModeForPlayer().getName());
-            profile.addProperty("operator", player.hasPermissions(4));
+            profile.addProperty("operator", com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4));
             
             // FUTURE: Add persistent player data from database
             // profile.addProperty("firstJoin", getFirstJoinTime(playerUuid));
@@ -75,8 +75,8 @@ public class PlayerDataCollector {
             net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
             if (cache != null) {
                 java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(playerUuid);
-                if (profileOpt.isPresent() && profileOpt.get().getName() != null) {
-                    username = profileOpt.get().getName();
+                if (profileOpt.isPresent() && profileOpt.get().name() != null) {
+                    username = profileOpt.get().name();
                 }
             }
 
@@ -612,7 +612,7 @@ public class PlayerDataCollector {
             location.addProperty("pitch", player.getXRot());
             Level level = player.level();
             location.addProperty("dimension", getDimensionName(level));
-            location.addProperty("world", level.dimension().location().toString());
+            location.addProperty("world", level.dimension().identifier().toString());
             location.addProperty("biome", getBiomeName(level, pos));
         } else {
             // Offline player - load from NBT
@@ -731,8 +731,8 @@ public class PlayerDataCollector {
             playerObj.addProperty("x", player.getX());
             playerObj.addProperty("y", player.getY());
             playerObj.addProperty("z", player.getZ());
-            playerObj.addProperty("dimension", player.level().dimension().location().toString());
-            playerObj.addProperty("operator", player.hasPermissions(4));
+            playerObj.addProperty("dimension", player.level().dimension().identifier().toString());
+            playerObj.addProperty("operator", com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4));
             playerObj.addProperty("maxHealth", player.getMaxHealth());
             onlinePlayers.add(playerObj);
             onlineUsernames.add(player.getName().getString());
@@ -772,8 +772,8 @@ public class PlayerDataCollector {
                                 // Try to get profile from cache first
                                 if (cache != null) {
                                     java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(uuid);
-                                    if (profileOpt.isPresent() && profileOpt.get().getName() != null) {
-                                        username = profileOpt.get().getName();
+                                    if (profileOpt.isPresent() && profileOpt.get().name() != null) {
+                                        username = profileOpt.get().name();
                                     }
                                 }
 
@@ -868,7 +868,7 @@ public class PlayerDataCollector {
         JsonObject item = new JsonObject();
         if (!itemStack.isEmpty()) {
             // Get the registry name (e.g., "minecraft:diamond_sword")
-            net.minecraft.resources.ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
+            net.minecraft.resources.Identifier itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM
                 .getKey(itemStack.getItem());
             String registryName = itemId.toString();
             
@@ -959,7 +959,7 @@ public class PlayerDataCollector {
     }
     
     private String getDimensionName(Level level) {
-        String dimensionKey = level.dimension().location().toString();
+        String dimensionKey = level.dimension().identifier().toString();
         return switch (dimensionKey) {
             case "minecraft:overworld" -> "Overworld";
             case "minecraft:the_nether" -> "Nether";

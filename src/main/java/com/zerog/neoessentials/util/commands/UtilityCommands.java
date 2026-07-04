@@ -10,7 +10,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
@@ -224,7 +224,7 @@ public class UtilityCommands {
                 .then(Commands.argument("effect", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                         BuiltInRegistries.MOB_EFFECT.keySet().stream()
-                            .map(ResourceLocation::getPath).toList(), b))
+                            .map(Identifier::getPath).toList(), b))
                     .executes(ctx -> executeEffectApply(ctx,
                         StringArgumentType.getString(ctx, "target"),
                         StringArgumentType.getString(ctx, "effect"), 30, 0))
@@ -263,7 +263,7 @@ public class UtilityCommands {
 
         // Resolve effect — try with and without minecraft: prefix
         String id = effectId.contains(":") ? effectId : "minecraft:" + effectId;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         if (loc == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.effect.unknown", effectId));
             return 0;
@@ -272,7 +272,7 @@ public class UtilityCommands {
         if (effectHolder == null) {
             // Try by path only across all namespaces
             effectHolder = BuiltInRegistries.MOB_EFFECT.entrySet().stream()
-                .filter(e -> e.getKey().location().getPath().equals(effectId.toLowerCase()))
+                .filter(e -> e.getKey().identifier().getPath().equals(effectId.toLowerCase()))
                 .map(Map.Entry::getValue)
                 .findFirst().orElse(null);
         }
@@ -297,7 +297,7 @@ public class UtilityCommands {
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                        .map(ResourceLocation::getPath).toList(), b))
+                        .map(Identifier::getPath).toList(), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -318,7 +318,7 @@ public class UtilityCommands {
             .then(Commands.argument("mob", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ENTITY_TYPE.keySet().stream()
-                        .map(ResourceLocation::getPath).toList(), b))
+                        .map(Identifier::getPath).toList(), b))
                 .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"), 1, null))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1, 100))
                     .executes(ctx -> executeSpawnMob(ctx, StringArgumentType.getString(ctx, "mob"),
@@ -341,7 +341,7 @@ public class UtilityCommands {
         }
 
         String id = mobId.contains(":") ? mobId : "minecraft:" + mobId;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         if (loc == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.spawnmob.unknown", mobId));
             return 0;
@@ -349,7 +349,7 @@ public class UtilityCommands {
         Optional<EntityType<?>> typeOpt = BuiltInRegistries.ENTITY_TYPE.getOptional(loc);
         if (typeOpt.isEmpty()) {
             typeOpt = BuiltInRegistries.ENTITY_TYPE.entrySet().stream()
-                .filter(e -> e.getKey().location().getPath().equals(mobId.toLowerCase()))
+                .filter(e -> e.getKey().identifier().getPath().equals(mobId.toLowerCase()))
                 .<EntityType<?>>map(Map.Entry::getValue)
                 .findFirst();
         }
@@ -439,7 +439,7 @@ public class UtilityCommands {
 
         // Resolve item ID
         String id = itemId.contains(":") ? itemId : "minecraft:" + itemId;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         if (loc == null || BuiltInRegistries.ITEM.get(loc) == net.minecraft.world.item.Items.AIR) {
             // Try hand
             if (itemId.equalsIgnoreCase("hand") && src.getPlayer() != null) {
@@ -548,7 +548,7 @@ public class UtilityCommands {
             }
 
             // Add outputs
-            ResourceLocation outLoc = ResourceLocation.tryParse(rule.outputId);
+            Identifier outLoc = Identifier.tryParse(rule.outputId);
             if (outLoc != null) {
                 net.minecraft.world.item.Item outItem = BuiltInRegistries.ITEM.get(outLoc);
                 if (outItem != net.minecraft.world.item.Items.AIR) {

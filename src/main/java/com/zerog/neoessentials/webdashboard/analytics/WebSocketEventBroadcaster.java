@@ -72,7 +72,7 @@ public class WebSocketEventBroadcaster {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         try {
-            String name = event.getEntity().getGameProfile().getName();
+            String name = event.getEntity().getGameProfile().name();
             JsonObject msg = new JsonObject();
             msg.addProperty("type",    "event");
             msg.addProperty("event",   "player_join");
@@ -87,7 +87,7 @@ public class WebSocketEventBroadcaster {
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         try {
-            String name = event.getEntity().getGameProfile().getName();
+            String name = event.getEntity().getGameProfile().name();
             JsonObject msg = new JsonObject();
             msg.addProperty("type",    "event");
             msg.addProperty("event",   "player_leave");
@@ -103,7 +103,7 @@ public class WebSocketEventBroadcaster {
     public static void onServerChat(ServerChatEvent event) {
         try {
             if (event.isCanceled()) return;
-            String name = event.getPlayer().getGameProfile().getName();
+            String name = event.getPlayer().getGameProfile().name();
             String text = event.getRawText();
 
             // Send to dedicated chat channel
@@ -129,7 +129,7 @@ public class WebSocketEventBroadcaster {
     public static void onPlayerDeath(LivingDeathEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer player)) return;
-            String name     = player.getGameProfile().getName();
+            String name     = player.getGameProfile().name();
             String deathMsg;
             try {
                 deathMsg = event.getSource().getLocalizedDeathMessage(event.getEntity()).getString();

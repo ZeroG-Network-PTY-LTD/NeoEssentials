@@ -55,7 +55,7 @@ public class ChatFormatter {
 
             if (debugEnabled) {
                 LOGGER.info("=== CHAT FORMATTING DEBUG ===");
-                LOGGER.info("Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
+                LOGGER.info("Player: {}, OP: {}", player.getName().getString(), com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2));
                 LOGGER.info("Original message: [{}]", message);
                 LOGGER.info("Template: [{}]", template);
             }
@@ -145,7 +145,7 @@ public class ChatFormatter {
                 // Pass the string with & color codes intact; buildComponentFromMarkup will
                 // call parseColorCodes on each plain-text segment so all & and &#RRGGBB
                 // codes are honoured correctly.
-                result = enhanceMessage(richPreProcessed, player, player.getServer());
+                result = enhanceMessage(richPreProcessed, player, player.level().getServer());
             } else {
                 // No enhancements — richPreProcessed already has tags stripped/converted;
                 // use it directly instead of re-processing the original formatted string.
@@ -356,7 +356,7 @@ public class ChatFormatter {
      */
     private static String resolveShortPlaceholders(String text, ServerPlayer player) {
         if (text.indexOf('{') < 0) return text;
-        net.minecraft.server.MinecraftServer server = player.getServer();
+        net.minecraft.server.MinecraftServer server = player.level().getServer();
         if (server == null) return text;
 
         if (text.contains("{tps}")) {
@@ -860,9 +860,9 @@ public class ChatFormatter {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
             if (chatConfig.has("mentions") && chatConfig.getAsJsonObject("mentions").has("soundName")) {
                 String soundName = chatConfig.getAsJsonObject("mentions").get("soundName").getAsString();
-                net.minecraft.resources.ResourceLocation id = soundName.contains(":")
-                    ? net.minecraft.resources.ResourceLocation.parse(soundName)
-                    : net.minecraft.resources.ResourceLocation.withDefaultNamespace(soundName);
+                net.minecraft.resources.Identifier id = soundName.contains(":")
+                    ? net.minecraft.resources.Identifier.parse(soundName)
+                    : net.minecraft.resources.Identifier.withDefaultNamespace(soundName);
                 var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(id);
                 if (sound != null) return sound;
             }

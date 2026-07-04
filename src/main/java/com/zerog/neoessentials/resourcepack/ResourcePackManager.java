@@ -142,7 +142,7 @@ public class ResourcePackManager {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server != null) {
                 // Sleep on a background thread, then marshal the send back to the server tick thread.
                 Thread t = new Thread(() -> {

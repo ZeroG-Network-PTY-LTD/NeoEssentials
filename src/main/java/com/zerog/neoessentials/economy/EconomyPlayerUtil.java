@@ -10,7 +10,7 @@ public class EconomyPlayerUtil {
     // Lookup online player by name
     public static Optional<ServerPlayer> getOnlinePlayer(MinecraftServer server, String name) {
         return server.getPlayerList().getPlayers().stream()
-            .filter(p -> p.getGameProfile().getName().equalsIgnoreCase(name))
+            .filter(p -> p.getGameProfile().name().equalsIgnoreCase(name))
             .findFirst();
     }
 
@@ -21,7 +21,7 @@ public class EconomyPlayerUtil {
         if (online.isPresent()) return Optional.of(online.get().getUUID());
         // Try offline (GameProfile cache)
         GameProfile profile = server.getProfileCache().get(name).orElse(null);
-        if (profile != null) return Optional.of(profile.getId());
+        if (profile != null) return Optional.of(profile.id());
         return Optional.empty();
     }
 }

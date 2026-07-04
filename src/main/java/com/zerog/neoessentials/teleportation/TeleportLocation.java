@@ -2,7 +2,7 @@ package com.zerog.neoessentials.teleportation;
 
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -35,7 +35,7 @@ public class TeleportLocation {
     
     @SuppressWarnings("resource") // Level is managed by Minecraft, not closeable by us
     public TeleportLocation(ServerPlayer player) {
-        this(player.level().dimension().location().toString(),
+        this(player.level().dimension().identifier().toString(),
              player.getX(),
              player.getY(),
              player.getZ(),
@@ -46,7 +46,7 @@ public class TeleportLocation {
     }
     
     public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy) {
-        this(level.dimension().location().toString(),
+        this(level.dimension().identifier().toString(),
              pos.getX() + 0.5,
              pos.getY(),
              pos.getZ() + 0.5,
@@ -70,14 +70,14 @@ public class TeleportLocation {
      */
     public ServerLevel getLevel() {
         try {
-            ResourceLocation worldKey;
+            Identifier worldKey;
 
-            // Parse ResourceLocation manually to avoid classloading issues
+            // Parse Identifier manually to avoid classloading issues
             if (worldName.contains(":")) {
                 String[] parts = worldName.split(":", 2);
-                worldKey = ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
+                worldKey = Identifier.fromNamespaceAndPath(parts[0], parts[1]);
             } else {
-                worldKey = ResourceLocation.fromNamespaceAndPath("minecraft", worldName);
+                worldKey = Identifier.fromNamespaceAndPath("minecraft", worldName);
             }
 
             var server = ServerLifecycleHooks.getCurrentServer();

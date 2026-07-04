@@ -4,7 +4,7 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.google.gson.JsonObject;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,10 +46,10 @@ public class ProxyIntegration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyIntegration.class);
 
-    /** BungeeCord plugin-messaging channel (modern ResourceLocation style). */
+    /** BungeeCord plugin-messaging channel (modern Identifier style). */
     @SuppressWarnings("unused")
-    public static final ResourceLocation BUNGEE_CHANNEL =
-        ResourceLocation.fromNamespaceAndPath("bungeecord", "main");
+    public static final Identifier BUNGEE_CHANNEL =
+        Identifier.fromNamespaceAndPath("bungeecord", "main");
     /** Legacy channel name sent in the REGISTER payload. */
     @SuppressWarnings("unused")
     public static final String BUNGEE_CHANNEL_LEGACY = "BungeeCord";

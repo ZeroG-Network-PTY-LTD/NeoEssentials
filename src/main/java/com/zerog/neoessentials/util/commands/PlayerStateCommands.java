@@ -609,7 +609,7 @@ public class PlayerStateCommands {
         long sessionMs = 0;
         Long start = sessionStart.get(target.getUUID());
         if (start != null) sessionMs = System.currentTimeMillis() - start;
-        // NeoForge 1.21.1: Stats.PLAY_TIME is a ResourceLocation key; use Stats.CUSTOM.get() for the Stat object
+        // NeoForge 1.21.1: Stats.PLAY_TIME is a Identifier key; use Stats.CUSTOM.get() for the Stat object
         int ticksPlayed = target.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME));
         long totalMs = (ticksPlayed * 50L) + sessionMs;
         String formatted = formatDuration(totalMs);

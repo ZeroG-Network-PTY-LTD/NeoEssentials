@@ -293,7 +293,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             @SuppressWarnings("resource") // Level is managed by Minecraft
             Level level = player.level();
-            return level.dimension().location().getPath();
+            return level.dimension().identifier().getPath();
         } catch (Exception e) {
             LOGGER.debug("Error getting world name for player {}: {}", player.getName().getString(), e.getMessage());
             return "unknown";
@@ -310,7 +310,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             @SuppressWarnings("resource") // Level is managed by Minecraft
             var biome = player.level().getBiome(player.blockPosition());
-            return biome.unwrapKey().map(key -> key.location().getPath()).orElse("unknown");
+            return biome.unwrapKey().map(key -> key.identifier().getPath()).orElse("unknown");
         } catch (Exception e) {
             LOGGER.debug("Error getting biome for player {}: {}", player.getName().getString(), e.getMessage());
             return "unknown";
@@ -410,8 +410,8 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      */
     private String getServerName(@Nullable ServerPlayer player) {
         try {
-            if (player != null && player.getServer() != null) {
-                return player.getServer().getMotd();
+            if (player != null && player.level().getServer() != null) {
+                return player.level().getServer().getMotd();
             }
         } catch (Exception e) {
             LOGGER.debug("Error getting server name: {}", e.getMessage());
@@ -424,8 +424,8 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      */
     private String getOnlinePlayerCount(@Nullable ServerPlayer player) {
         try {
-            if (player != null && player.getServer() != null) {
-                return String.valueOf(player.getServer().getPlayerCount());
+            if (player != null && player.level().getServer() != null) {
+                return String.valueOf(player.level().getServer().getPlayerCount());
             }
         } catch (Exception e) {
             LOGGER.debug("Error getting online player count: {}", e.getMessage());
@@ -438,8 +438,8 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      */
     private String getMaxPlayerCount(@Nullable ServerPlayer player) {
         try {
-            if (player != null && player.getServer() != null) {
-                return String.valueOf(player.getServer().getMaxPlayers());
+            if (player != null && player.level().getServer() != null) {
+                return String.valueOf(player.level().getServer().getMaxPlayers());
             }
         } catch (Exception e) {
             LOGGER.debug("Error getting max player count: {}", e.getMessage());

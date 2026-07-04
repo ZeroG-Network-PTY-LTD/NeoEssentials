@@ -42,7 +42,7 @@ public class CreateKitCommand {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.create");
                 }
-                return source.hasPermission(4); // Console/OP fallback
+                return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4); // Console/OP fallback
             })
             .then(Commands.argument("kitname", StringArgumentType.word())
                 .executes(CreateKitCommand::createBasicKit)
@@ -229,7 +229,7 @@ public class CreateKitCommand {
         com.google.gson.JsonArray itemsArray = new com.google.gson.JsonArray();
         for (ItemStack item : items) {
             if (item.isEmpty()) continue;
-            net.minecraft.resources.ResourceLocation itemKey =
+            net.minecraft.resources.Identifier itemKey =
                     net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem());
             //noinspection ConstantConditions (defensive guard for modded environments)
             if (itemKey == null) continue; // Skip unregistered items

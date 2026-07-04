@@ -38,7 +38,7 @@ public class NpcShopCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         var node = Commands.literal("npcshop")
-                .requires(src -> src.hasPermission(3) ||
+                .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                         (src.getEntity() != null && PermissionAPI.hasPermission(src.getEntity().getUUID(), PERM)))
                 .then(Commands.literal("create")
                         .then(Commands.argument("name", StringArgumentType.greedyString())
@@ -87,7 +87,7 @@ public class NpcShopCommand {
             shopData.shopId    = UUID.randomUUID();
             shopData.ownerUUID = player.getUUID();
             shopData.shopName  = name;
-            shopData.dimension = player.level().dimension().location().toString();
+            shopData.dimension = player.level().dimension().identifier().toString();
             shopData.spawnX    = player.getX();
             shopData.spawnY    = player.getY();
             shopData.spawnZ    = player.getZ();

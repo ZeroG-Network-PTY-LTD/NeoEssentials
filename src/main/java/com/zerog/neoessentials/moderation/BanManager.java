@@ -245,7 +245,7 @@ public class BanManager {
                 String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
                 String staffMsg = "[NeoEssentials] Player " + playerName + " was permanently banned by " + bannedBy + (reason != null && !reason.isEmpty() ? " for: " + reason : "");
                 for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
-                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                    if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(staff, 2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
                         staff.sendSystemMessage(Component.literal(staffMsg));
                     }
                 }
@@ -306,7 +306,7 @@ public class BanManager {
                 String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
                 String staffMsg = "[NeoEssentials] Player " + playerName + " was temporarily banned by " + bannedBy + " for " + formatDuration(durationMillis) + (reason != null && !reason.isEmpty() ? " - Reason: " + reason : "");
                 for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
-                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                    if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(staff, 2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
                         staff.sendSystemMessage(Component.literal(staffMsg));
                     }
                 }
@@ -406,7 +406,7 @@ public class BanManager {
                 String name = removed != null ? removed.playerName : playerId.toString();
                 String staffMsg = "[NeoEssentials] Player " + name + " was unbanned.";
                 for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
-                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                    if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(staff, 2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
                         staff.sendSystemMessage(Component.literal(staffMsg));
                     }
                 }
@@ -534,13 +534,13 @@ public class BanManager {
                         if (entry != null) {
                             String reason = entry.getReason();
                             String source = entry.getSource();
-                            BanEntry imported = new BanEntry(profile.getName(), playerId, reason, source);
+                            BanEntry imported = new BanEntry(profile.name(), playerId, reason, source);
                             if (entry.getExpires() != null) {
                                 imported.expireTime = entry.getExpires().getTime();
                             }
                             playerBans.put(playerId, imported);
                             saveBans();
-                            LOGGER.info("Imported vanilla ban for {} into NeoEssentials ban list", profile.getName());
+                            LOGGER.info("Imported vanilla ban for {} into NeoEssentials ban list", profile.name());
                         }
                         return true;
                     }

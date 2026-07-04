@@ -51,7 +51,7 @@ public class ReplyCommand {
                     LOGGER.debug("Player {} replying to {}", sender.getName().getString(), target.getName().getString());
                     
                     // Check if target is still online
-                    if (!target.getServer().getPlayerList().getPlayers().contains(target)) {
+                    if (!target.level().getServer().getPlayerList().getPlayers().contains(target)) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.reply.target_offline"));
                         return 0;
                     }
@@ -94,7 +94,7 @@ public class ReplyCommand {
                     
                     if (com.zerog.neoessentials.chat.MsgToggleManager.isMsgToggled(target)) {
                         // Check if sender has bypass permission
-                        if (!sender.hasPermissions(4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
+                        if (!com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(sender, 4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
                             source.sendFailure(MessageUtil.error("commands.neoessentials.reply.target_toggled_off", target.getName().getString()));
                             return 0;
                         }

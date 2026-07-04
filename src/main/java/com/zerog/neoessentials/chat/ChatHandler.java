@@ -198,7 +198,7 @@ public class ChatHandler {
             try {
                 @SuppressWarnings("resource") // Level is not closeable, warning is false positive
                 var level = player.level();
-                world = level.dimension().location().getPath();
+                world = level.dimension().identifier().getPath();
             } catch (Exception e) {
                 LOGGER.debug("Could not get world for player {}: {}", playerName, e.getMessage());
             }
@@ -232,7 +232,7 @@ public class ChatHandler {
                     requiredPermission = channelObj.get("permission").getAsString();
                 }
                 
-                var server = player.getServer();
+                var server = player.level().getServer();
                 @SuppressWarnings("ConstantConditions") // Defensive null check
                 var playerList = server != null ? server.getPlayerList() : null;
                 

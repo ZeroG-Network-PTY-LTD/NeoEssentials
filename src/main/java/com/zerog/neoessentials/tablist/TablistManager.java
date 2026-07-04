@@ -460,7 +460,7 @@ public class TablistManager {
             .count();
         int max = server.getMaxPlayers();
         int ping = player.connection.latency();
-        String world = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().getPath();
+        String world = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().getPath();
         String playerName = player.getName().getString();
         String displayName = getDisplayName(player);
 

@@ -31,7 +31,7 @@ public class MsgToggleCommand {
                     return 0;
                 }
                 // Check permissions with op bypass
-                if (!sender.hasPermissions(4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle")) {
+                if (!com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(sender, 4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle")) {
                     source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                     return 0;
                 }

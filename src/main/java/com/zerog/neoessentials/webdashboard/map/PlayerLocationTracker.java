@@ -40,7 +40,7 @@ public class PlayerLocationTracker {
         try {
             PlayerLocation location = new PlayerLocation();
             location.uuid = player.getUUID();
-            location.name = player.getGameProfile().getName();
+            location.name = player.getGameProfile().name();
             location.x = player.getX();
             location.y = player.getY();
             location.z = player.getZ();
@@ -48,12 +48,12 @@ public class PlayerLocationTracker {
             location.pitch = player.getXRot();
             location.health = player.getHealth();
             location.maxHealth = player.getMaxHealth();
-            location.dimension = player.level().dimension().location().toString();
+            location.dimension = player.level().dimension().identifier().toString();
             location.blockX = player.blockPosition().getX();
             location.blockY = player.blockPosition().getY();
             location.blockZ = player.blockPosition().getZ();
-            location.chunkX = player.chunkPosition().x;
-            location.chunkZ = player.chunkPosition().z;
+            location.chunkX = player.chunkPosition().x();
+            location.chunkZ = player.chunkPosition().z();
             location.timestamp = System.currentTimeMillis();
             
             playerLocations.put(player.getUUID(), location);
@@ -62,7 +62,7 @@ public class PlayerLocationTracker {
             notifyListeners(location);
             
         } catch (Exception e) {
-            LOGGER.error("Error updating player location: {}", player.getGameProfile().getName(), e);
+            LOGGER.error("Error updating player location: {}", player.getGameProfile().name(), e);
         }
     }
     

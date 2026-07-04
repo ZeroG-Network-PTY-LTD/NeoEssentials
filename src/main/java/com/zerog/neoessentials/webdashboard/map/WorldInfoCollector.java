@@ -76,7 +76,7 @@ public class WorldInfoCollector {
     public JsonObject getDimensionInfo(ServerLevel level) {
         JsonObject dimObj = new JsonObject();
         
-        String dimensionKey = level.dimension().location().toString();
+        String dimensionKey = level.dimension().identifier().toString();
         dimObj.addProperty("dimension", dimensionKey);
         dimObj.addProperty("name", getDimensionName(dimensionKey));
         
@@ -134,7 +134,7 @@ public class WorldInfoCollector {
         }
         
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.dimension().location().toString().equals(dimensionKey)) {
+            if (level.dimension().identifier().toString().equals(dimensionKey)) {
                 JsonObject response = new JsonObject();
                 response.addProperty("timestamp", System.currentTimeMillis());
                 response.add("dimension", getDimensionInfo(level));
@@ -163,7 +163,7 @@ public class WorldInfoCollector {
         JsonArray dimensionsArray = new JsonArray();
         for (ServerLevel level : server.getAllLevels()) {
             JsonObject dimObj = new JsonObject();
-            String dimensionKey = level.dimension().location().toString();
+            String dimensionKey = level.dimension().identifier().toString();
             dimObj.addProperty("key", dimensionKey);
             dimObj.addProperty("name", getDimensionName(dimensionKey));
             dimObj.addProperty("playerCount", level.players().size());
@@ -193,7 +193,7 @@ public class WorldInfoCollector {
         JsonArray spawnsArray = new JsonArray();
         for (ServerLevel level : server.getAllLevels()) {
             JsonObject spawnObj = new JsonObject();
-            String dimensionKey = level.dimension().location().toString();
+            String dimensionKey = level.dimension().identifier().toString();
             spawnObj.addProperty("dimension", dimensionKey);
             spawnObj.addProperty("name", getDimensionName(dimensionKey));
             

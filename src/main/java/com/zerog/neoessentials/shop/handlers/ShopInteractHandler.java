@@ -68,7 +68,7 @@ public class ShopInteractHandler {
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SignBlockEntity)) return;
 
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
         if (shop == null) return;
 
@@ -153,7 +153,7 @@ public class ShopInteractHandler {
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof SignBlockEntity)) return;
 
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
         if (shop == null) return;
 
@@ -203,7 +203,7 @@ public class ShopInteractHandler {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
 
         BlockPos pos = event.getPos();
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
 
         // Check if it's a shop sign
         ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);

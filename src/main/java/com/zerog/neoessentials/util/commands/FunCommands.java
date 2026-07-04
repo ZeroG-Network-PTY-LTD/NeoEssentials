@@ -14,7 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
@@ -308,7 +308,7 @@ public class FunCommands {
             .then(Commands.argument("item", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     BuiltInRegistries.ITEM.keySet().stream()
-                        .map(ResourceLocation::toString), b))
+                        .map(Identifier::toString), b))
                 .executes(ctx -> executeItemDb(ctx, StringArgumentType.getString(ctx, "item")))
             )
         );
@@ -329,7 +329,7 @@ public class FunCommands {
         } else {
             // Look up item by name
             String id = itemArg.contains(":") ? itemArg : "minecraft:" + itemArg;
-            ResourceLocation loc = ResourceLocation.tryParse(id);
+            Identifier loc = Identifier.tryParse(id);
             if (loc == null) {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.itemdb.unknown", itemArg));
                 return 0;
@@ -338,7 +338,7 @@ public class FunCommands {
             if (item == Items.AIR && !itemArg.equalsIgnoreCase("air")) {
                 // Try path-only search
                 item = BuiltInRegistries.ITEM.entrySet().stream()
-                    .filter(e -> e.getKey().location().getPath().equals(itemArg.toLowerCase()))
+                    .filter(e -> e.getKey().identifier().getPath().equals(itemArg.toLowerCase()))
                     .map(java.util.Map.Entry::getValue)
                     .findFirst().orElse(null);
             }
@@ -391,7 +391,7 @@ public class FunCommands {
                 .then(Commands.argument("effect", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                         BuiltInRegistries.MOB_EFFECT.keySet().stream()
-                            .map(ResourceLocation::getPath), b))
+                            .map(Identifier::getPath), b))
                     .executes(ctx -> executePotionAdd(ctx,
                         StringArgumentType.getString(ctx, "effect"), 30, 0))
                     .then(Commands.argument("duration", IntegerArgumentType.integer(1, 1000000))
@@ -440,11 +440,11 @@ public class FunCommands {
 
         // Resolve effect
         String id = effectId.contains(":") ? effectId : "minecraft:" + effectId;
-        ResourceLocation loc = ResourceLocation.tryParse(id);
+        Identifier loc = Identifier.tryParse(id);
         var effectHolder = loc != null ? BuiltInRegistries.MOB_EFFECT.get(loc) : null;
         if (effectHolder == null) {
             effectHolder = BuiltInRegistries.MOB_EFFECT.entrySet().stream()
-                .filter(e -> e.getKey().location().getPath().equals(effectId.toLowerCase()))
+                .filter(e -> e.getKey().identifier().getPath().equals(effectId.toLowerCase()))
                 .map(java.util.Map.Entry::getValue).findFirst().orElse(null);
         }
         if (effectHolder == null) {

@@ -166,7 +166,7 @@ public class TeleportUtil {
         TeleportLocation teleportTo = finalLocation;
         if (delayTicks > 0) {
             // Schedule delayed teleport
-            player.getServer().execute(() -> {
+            player.level().getServer().execute(() -> {
                 scheduleDelayedTeleport(player, teleportTo, delayTicks, future);
             });
         } else {
@@ -354,7 +354,7 @@ public class TeleportUtil {
         ChunkPos center = new ChunkPos(pos);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                ChunkPos cp = new ChunkPos(center.x + dx, center.z + dz);
+                ChunkPos cp = new ChunkPos(center.x() + dx, center.z() + dz);
                 // Always add a fresh ticket to reset the 300-tick expiry counter.
                 // NOTE: addRegionTicket's erased signature has proven fragile across
                 // Minecraft versions (same class of issue as MinecraftServer#tell and
@@ -375,9 +375,9 @@ public class TeleportUtil {
                 }
                 if (!level.isLoaded(cp.getWorldPosition())) {
                     LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
-                        cp.x, cp.z, level.dimension().location());
+                        cp.x(), cp.z(), level.dimension().identifier());
                     // getChunk() with FULL status loads the chunk synchronously.
-                    level.getChunk(cp.x, cp.z);
+                    level.getChunk(cp.x(), cp.z());
                 }
             }
         }
