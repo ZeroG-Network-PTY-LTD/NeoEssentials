@@ -114,9 +114,31 @@ public class ShopInteractHandler {
                 return;
             }
 
+            // ── Owner sneak+right-click with an item in hand → (re)assign the item ──
+            // The itemPending "?" flow above is the ONLY other place that captures item
+            // components — a shop created by typing an item name directly on the sign
+            // (rather than "?") never goes through it, so there was previously no way to
+            // attach/update NBT-bearing item data on an already-configured shop at all.
+            boolean isOwner = shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
+            if (isOwner && player.isShiftKeyDown()) {
+                net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
+                if (held.isEmpty()) {
+                    player.sendSystemMessage(Component.literal(
+                        "§eHold the item you want this shop to trade, then shift+right-click the sign."));
+                } else {
+                    shop.itemId  = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
+                    shop.itemNbt = com.zerog.neoessentials.shop.ShopParser.captureComponents(held);
+                    ShopManager.getInstance().registerShop(shop);
+                    ShopSignHandler.writeSignLines(level, pos, com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
+                    player.sendSystemMessage(Component.literal(
+                        "§aItem updated to §f" + com.zerog.neoessentials.shop.ShopParser.buildFullItemDisplayName(shop) + "§a!"));
+                }
+                return;
+            }
+
             // ── Normal right-click = BUY ──────────────────────────────────────────
             // Owner right-clicks their own active sign → show info instead of buying
-            if (shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID())) {
+            if (isOwner) {
                 sendShopInfo(player, shop);
                 return;
             }
