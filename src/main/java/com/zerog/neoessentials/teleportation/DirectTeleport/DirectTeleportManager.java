@@ -260,7 +260,7 @@ public class DirectTeleportManager {
             net.minecraft.server.MinecraftServer server = executor.level().getServer();
             
             // Try to get UUID from cache (offline players)
-            com.mojang.authlib.GameProfile profile = server.getProfileCache().get(playerName).orElse(null);
+            net.minecraft.server.players.NameAndId profile = server.services().nameToIdCache().get(playerName).orElse(null);
             if (profile == null) {
                 executor.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.admin.offline_player_not_found", playerName));
                 return false;

@@ -20,7 +20,7 @@ public class EconomyPlayerUtil {
         Optional<ServerPlayer> online = getOnlinePlayer(server, name);
         if (online.isPresent()) return Optional.of(online.get().getUUID());
         // Try offline (GameProfile cache)
-        GameProfile profile = server.getProfileCache().get(name).orElse(null);
+        net.minecraft.server.players.NameAndId profile = server.services().nameToIdCache().get(name).orElse(null);
         if (profile != null) return Optional.of(profile.id());
         return Optional.empty();
     }

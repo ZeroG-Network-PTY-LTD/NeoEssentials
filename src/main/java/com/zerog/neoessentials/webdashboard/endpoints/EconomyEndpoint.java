@@ -6,7 +6,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,10 +142,10 @@ public class EconomyEndpoint implements HttpHandler {
         var online = server.getPlayerList().getPlayerByName(usernameOrUuid);
         if (online != null) return online.getUUID();
 
-        GameProfileCache cache = server.getProfileCache();
+        var cache = server.services().nameToIdCache();
         if (cache == null) return null;
-        Optional<com.mojang.authlib.GameProfile> profile = cache.get(usernameOrUuid);
-        return profile.map(com.mojang.authlib.GameProfile::getId).orElse(null);
+        Optional<NameAndId> profile = cache.get(usernameOrUuid);
+        return profile.map(NameAndId::id).orElse(null);
     }
 
     private boolean isAdmin(HttpExchange exchange) {

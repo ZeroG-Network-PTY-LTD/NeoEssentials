@@ -261,17 +261,16 @@ public class ItemCustomisationCommands {
         String ownerName = targetName != null ? targetName : self.getName().getString();
 
         ItemStack skull = new ItemStack(Items.PLAYER_HEAD);
-        // Try to set owner via profile cache (gives correct texture)
-        var cache = src.getServer().getProfileCache();
-        if (cache != null) {
-            cache.get(ownerName).ifPresent(profile ->
-                skull.set(DataComponents.PROFILE,
-                    new net.minecraft.world.item.component.ResolvableProfile(profile)));
-        }
-        // If not in cache, at minimum set the name so it resolves on hover
+        // 26.1 port: GameProfileCache was replaced by Services.profileResolver(), which
+        // resolves the full GameProfile (including textures) by name in one call; and
+        // ResolvableProfile is now abstract/sealed, constructed via createResolved(...).
+        src.getServer().services().profileResolver().fetchByName(ownerName)
+            .ifPresent(profile -> skull.set(DataComponents.PROFILE,
+                net.minecraft.world.item.component.ResolvableProfile.createResolved(profile)));
+        // If not resolvable, at minimum set the name so it resolves on hover
         if (!skull.has(DataComponents.PROFILE)) {
             skull.set(DataComponents.PROFILE,
-                new net.minecraft.world.item.component.ResolvableProfile(
+                net.minecraft.world.item.component.ResolvableProfile.createResolved(
                     new com.mojang.authlib.GameProfile(UUID.randomUUID(), ownerName)));
         }
 

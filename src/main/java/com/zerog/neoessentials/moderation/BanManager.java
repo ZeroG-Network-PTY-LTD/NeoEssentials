@@ -438,7 +438,7 @@ public class BanManager {
         try {
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server == null) return;
-            com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, playerName);
+            net.minecraft.server.players.NameAndId profile = resolveProfile(server, playerId, playerName);
             if (profile == null) return;
             net.minecraft.server.players.UserBanList vanillaBans = server.getPlayerList().getBans();
             if (!vanillaBans.isBanned(profile)) {
@@ -462,7 +462,7 @@ public class BanManager {
             // Try to resolve profile for removal
             BanEntry ourBan = playerBans.get(playerId);
             String name = ourBan != null ? ourBan.playerName : null;
-            com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, name);
+            net.minecraft.server.players.NameAndId profile = resolveProfile(server, playerId, name);
             if (profile != null && vanillaBans.isBanned(profile)) {
                 vanillaBans.remove(profile);
                 LOGGER.debug("Removed {} from vanilla ban list", playerId);
@@ -474,19 +474,24 @@ public class BanManager {
         return false;
     }
 
-    /** Resolve a GameProfile from UUID + optional name using profile cache. */
-    private com.mojang.authlib.GameProfile resolveProfile(MinecraftServer server, UUID uuid, String name) {
+    /**
+     * Resolve a {@link net.minecraft.server.players.NameAndId} from UUID + optional name.
+     * 26.1 port: {@code UserBanList}/{@code UserBanListEntry} now key off {@code NameAndId}
+     * instead of the full authlib {@code GameProfile} (which the vanilla ban list never
+     * actually needed the {@code PropertyMap}/textures of anyway).
+     */
+    private net.minecraft.server.players.NameAndId resolveProfile(MinecraftServer server, UUID uuid, String name) {
         // Try online player first
         ServerPlayer online = server.getPlayerList().getPlayer(uuid);
-        if (online != null) return online.getGameProfile();
-        // Try profile cache
+        if (online != null) return online.nameAndId();
+        // Try the name/uuid resolver cache
         try {
-            var cache = server.getProfileCache();
+            var cache = server.services().nameToIdCache();
             if (cache != null) return cache.get(uuid).orElse(null);
         } catch (Exception ignored) {}
         // Fallback: construct a minimal profile
         if (name != null && !name.isBlank()) {
-            return new com.mojang.authlib.GameProfile(uuid, name);
+            return new net.minecraft.server.players.NameAndId(uuid, name);
         }
         return null;
     }
@@ -525,7 +530,7 @@ public class BanManager {
         try {
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null) {
-                com.mojang.authlib.GameProfile profile = resolveProfile(server, playerId, null);
+                net.minecraft.server.players.NameAndId profile = resolveProfile(server, playerId, null);
                 if (profile != null) {
                     net.minecraft.server.players.UserBanList vanillaBans = server.getPlayerList().getBans();
                     if (vanillaBans.isBanned(profile)) {

@@ -274,10 +274,10 @@ public class JailCommand {
 
             // If not online, try to get from player cache
             if (playerId == null) {
-                var profile = server.getProfileCache().get(playerName);
+                var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
-                    playerId = profile.get().getId();
-                    resolvedName = profile.get().getName();
+                    playerId = profile.get().id();
+                    resolvedName = profile.get().name();
                 }
             }
 
@@ -329,10 +329,10 @@ public class JailCommand {
                 resolvedName = onlinePlayer.getName().getString();
             } else {
                 // Try player cache
-                var profile = server.getProfileCache().get(playerName);
+                var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
-                    playerId = profile.get().getId();
-                    resolvedName = profile.get().getName();
+                    playerId = profile.get().id();
+                    resolvedName = profile.get().name();
                 }
             }
 

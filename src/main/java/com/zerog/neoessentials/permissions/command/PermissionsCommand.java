@@ -1113,9 +1113,9 @@ public class PermissionsCommand {
                 displayName = onlinePlayer.get().getGameProfile().name();
             } else {
                 // Try to get from profile cache
-                var profile = server.getProfileCache().get(uuid);
+                var profile = server.services().nameToIdCache().get(uuid);
                 if (profile.isPresent()) {
-                    displayName = profile.get().getName();
+                    displayName = profile.get().name();
                 }
             }
             
@@ -1966,7 +1966,7 @@ public class PermissionsCommand {
             if (onlinePlayer != null) {
                 isOp = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(onlinePlayer, 2);
             } else {
-                var profileCache = server.getProfileCache();
+                var profileCache = server.services().nameToIdCache();
                 if (profileCache != null) {
                     var profile = profileCache.get(uuid).orElse(null);
                     if (profile != null) isOp = server.getPlayerList().isOp(profile);

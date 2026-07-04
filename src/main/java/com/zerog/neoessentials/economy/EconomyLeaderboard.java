@@ -55,9 +55,9 @@ public class EconomyLeaderboard {
             String displayName = entry.getKey().toString(); // UUID fallback
             try {
                 if (server != null) {
-                    var profile = server.getProfileCache().get(entry.getKey());
-                    if (profile.isPresent() && profile.get().getName() != null) {
-                        displayName = profile.get().getName();
+                    var profile = server.services().nameToIdCache().get(entry.getKey());
+                    if (profile.isPresent() && profile.get().name() != null) {
+                        displayName = profile.get().name();
                     }
                 }
             } catch (Exception ignored) {}

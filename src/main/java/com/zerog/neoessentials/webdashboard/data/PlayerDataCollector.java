@@ -72,9 +72,9 @@ public class PlayerDataCollector {
             String username = null;
 
             // Try to get username from cache first
-            net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
+            net.minecraft.server.players.UserNameToIdResolver cache = server.services().nameToIdCache();
             if (cache != null) {
-                java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(playerUuid);
+                java.util.Optional<net.minecraft.server.players.NameAndId> profileOpt = cache.get(playerUuid);
                 if (profileOpt.isPresent() && profileOpt.get().name() != null) {
                     username = profileOpt.get().name();
                 }
@@ -749,7 +749,7 @@ public class PlayerDataCollector {
             LOGGER.info("Looking for offline players in: {}", playerDataDir);
             
             if (java.nio.file.Files.exists(playerDataDir)) {
-                net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
+                net.minecraft.server.players.UserNameToIdResolver cache = server.services().nameToIdCache();
                 
                 LOGGER.info("Player data directory exists, cache available: {}", (cache != null));
                 
@@ -771,7 +771,7 @@ public class PlayerDataCollector {
 
                                 // Try to get profile from cache first
                                 if (cache != null) {
-                                    java.util.Optional<com.mojang.authlib.GameProfile> profileOpt = cache.get(uuid);
+                                    java.util.Optional<net.minecraft.server.players.NameAndId> profileOpt = cache.get(uuid);
                                     if (profileOpt.isPresent() && profileOpt.get().name() != null) {
                                         username = profileOpt.get().name();
                                     }

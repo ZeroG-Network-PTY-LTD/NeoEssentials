@@ -161,10 +161,10 @@ public class BanCommand {
             
             // If not online, try to get from player cache
             if (playerId == null) {
-                var profile = server.getProfileCache().get(playerName);
+                var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
-                    playerId = profile.get().getId();
-                    resolvedName = profile.get().getName();
+                    playerId = profile.get().id();
+                    resolvedName = profile.get().name();
                 }
             }
             
@@ -230,10 +230,10 @@ public class BanCommand {
             
             // If not online, try to get from player cache
             if (playerId == null) {
-                var profile = server.getProfileCache().get(playerName);
+                var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
-                    playerId = profile.get().getId();
-                    resolvedName = profile.get().getName();
+                    playerId = profile.get().id();
+                    resolvedName = profile.get().name();
                 }
             }
             
@@ -377,10 +377,10 @@ public class BanCommand {
             // If not found in bans, try player cache
             if (playerId == null) {
                 LOGGER.info("Player '{}' not found in ban list, checking player cache", playerName);
-                var profile = server.getProfileCache().get(playerName);
+                var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
-                    playerId = profile.get().getId();
-                    resolvedName = profile.get().getName();
+                    playerId = profile.get().id();
+                    resolvedName = profile.get().name();
                     LOGGER.info("Found player in cache: {} with UUID {}", resolvedName, playerId);
                 }
             }

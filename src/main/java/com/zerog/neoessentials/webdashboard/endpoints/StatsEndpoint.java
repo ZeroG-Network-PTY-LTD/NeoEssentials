@@ -11,7 +11,7 @@ import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.webdashboard.analytics.PlayerSessionTracker;
 import com.zerog.neoessentials.webdashboard.analytics.WebSocketEventBroadcaster;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.UserNameToIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,7 +161,7 @@ public class StatsEndpoint implements HttpHandler {
             }
 
             // Top 10 by balance
-            GameProfileCache cache = server.getProfileCache();
+            UserNameToIdResolver cache = server.services().nameToIdCache();
             List<Map.Entry<UUID, BigDecimal>> top = all.entrySet().stream()
                 .sorted(Map.Entry.<UUID, BigDecimal>comparingByValue().reversed())
                 .limit(10)
@@ -331,11 +331,11 @@ public class StatsEndpoint implements HttpHandler {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private String resolveUsername(UUID uuid, GameProfileCache cache) {
+    private String resolveUsername(UUID uuid, UserNameToIdResolver cache) {
         if (cache != null) {
             try {
                 var opt = cache.get(uuid);
-                if (opt.isPresent() && opt.get().getName() != null) return opt.get().getName();
+                if (opt.isPresent() && opt.get().name() != null) return opt.get().name();
             } catch (Exception ignored) {}
         }
         var player = server.getPlayerList().getPlayer(uuid);

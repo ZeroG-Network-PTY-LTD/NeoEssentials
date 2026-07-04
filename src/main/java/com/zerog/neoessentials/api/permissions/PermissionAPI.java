@@ -340,9 +340,9 @@ public class PermissionAPI {
                 }
                 
                 // If player is offline, check the ops file
-                var profileCache = server.getProfileCache();
+                var profileCache = server.services().nameToIdCache();
                 if (profileCache != null) {
-                    com.mojang.authlib.GameProfile profile = profileCache.get(uuid).orElse(null);
+                    net.minecraft.server.players.NameAndId profile = profileCache.get(uuid).orElse(null);
                     if (profile != null) {
                         return server.getPlayerList().isOp(profile);
                     }

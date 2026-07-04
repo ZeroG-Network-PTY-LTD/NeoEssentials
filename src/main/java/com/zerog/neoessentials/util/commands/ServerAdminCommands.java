@@ -428,8 +428,8 @@ public class ServerAdminCommands {
                     }
 
                     // Try to find by UUID from usercache
-                    var userCache = src.getServer().getProfileCache();
-                    Optional<GameProfile> profile = userCache != null ? userCache.get(name) : Optional.empty();
+                    var userCache = src.getServer().services().nameToIdCache();
+                    Optional<net.minecraft.server.players.NameAndId> profile = userCache != null ? userCache.get(name) : Optional.empty();
                     if (profile.isEmpty()) {
                         src.sendFailure(MessageUtil.error("commands.neoessentials.teleport.tpoffline.not_found", name));
                         return 0;

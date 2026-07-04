@@ -671,7 +671,7 @@ public class MailCommand {
         ServerPlayer online = server.getPlayerList().getPlayerByName(name);
         if (online != null) return online.getUUID();
         try {
-            com.mojang.authlib.GameProfile p = server.getProfileCache().get(name).orElse(null);
+            net.minecraft.server.players.NameAndId p = server.services().nameToIdCache().get(name).orElse(null);
             if (p != null) return p.id();
         } catch (Exception ignored) {}
         return null;

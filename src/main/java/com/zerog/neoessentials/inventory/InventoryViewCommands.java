@@ -159,9 +159,9 @@ public class InventoryViewCommands {
                 net.minecraft.server.level.ServerPlayer p = server.getPlayerList().getPlayer(uuid);
                 if (p != null) return p.getName().getString();
                 // Fall back to profile cache for recently-seen players
-                net.minecraft.server.players.GameProfileCache cache = server.getProfileCache();
+                net.minecraft.server.players.UserNameToIdResolver cache = server.services().nameToIdCache();
                 if (cache != null) {
-                    java.util.Optional<com.mojang.authlib.GameProfile> profile = cache.get(uuid);
+                    java.util.Optional<net.minecraft.server.players.NameAndId> profile = cache.get(uuid);
                     if (profile.isPresent()) return profile.get().name();
                 }
             }

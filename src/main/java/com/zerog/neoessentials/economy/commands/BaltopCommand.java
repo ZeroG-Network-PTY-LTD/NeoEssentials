@@ -125,9 +125,9 @@ public class BaltopCommand {
                     // Resolve display name
                     String displayName = e.getKey().toString(); // fallback
                     try {
-                        var profile = server.getProfileCache().get(e.getKey());
-                        if (profile.isPresent() && profile.get().getName() != null) {
-                            displayName = profile.get().getName();
+                        var profile = server.services().nameToIdCache().get(e.getKey());
+                        if (profile.isPresent() && profile.get().name() != null) {
+                            displayName = profile.get().name();
                         }
                     } catch (Exception ignored) {}
 

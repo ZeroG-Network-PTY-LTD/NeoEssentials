@@ -166,16 +166,16 @@ public class FakePlayerManager {
             String slotId = fe.slotId();
             java.util.concurrent.CompletableFuture.runAsync(() -> {
                 try {
-                    var cache = server.getProfileCache();
-                    if (cache == null) return;
-                    var cached = cache.get(owner);
-                    if (cached.isEmpty()) {
+                    // 26.1 port: GameProfileCache/MinecraftSessionService#fetchProfile were
+                    // replaced by Services.profileResolver(), which resolves a full GameProfile
+                    // (including the PropertyMap we need for the "textures" property) by name
+                    // in one call instead of the old two-step cache-then-fetchProfile dance.
+                    var profile = server.services().profileResolver().fetchByName(owner);
+                    if (profile.isEmpty()) {
                         LOGGER.warn("FakePlayerManager: could not resolve skinOwner '{}' for slot '{}' (unknown player name)", owner, slotId);
                         return;
                     }
-                    var result = server.getSessionService().fetchProfile(cached.get().getId(), false);
-                    if (result == null) return;
-                    var textures = result.profile().getProperties().get("textures");
+                    var textures = profile.get().properties().get("textures");
                     if (textures.isEmpty()) return;
                     resolvedSkins.put(slotId, textures.iterator().next());
                     refreshAll(server);

@@ -105,8 +105,8 @@ public class DiscordAuthProvider {
             if (player == null) {
                 LOGGER.debug("Player not online: {}", minecraftUsername);
                 // Try to get UUID from offline player data
-                UUID playerUuid = server.getProfileCache().get(minecraftUsername)
-                    .map(profile -> profile.getId())
+                UUID playerUuid = server.services().nameToIdCache().get(minecraftUsername)
+                    .map(profile -> profile.id())
                     .orElse(null);
                 
                 if (playerUuid == null) {

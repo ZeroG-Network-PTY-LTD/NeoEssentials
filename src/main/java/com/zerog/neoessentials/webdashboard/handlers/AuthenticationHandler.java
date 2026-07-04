@@ -320,7 +320,7 @@ public class AuthenticationHandler implements HttpHandler {
 
             // Try to get player UUID from various sources
             // 1. Try server's profile cache (for players who have logged in)
-            com.mojang.authlib.GameProfile profile = server.getProfileCache().get(minecraftUsername).orElse(null);
+            net.minecraft.server.players.NameAndId profile = server.services().nameToIdCache().get(minecraftUsername).orElse(null);
             if (profile != null) {
                 playerUuid = profile.id();
                 LOGGER.debug("Found player UUID from server profile cache: {}", playerUuid);
@@ -335,8 +335,8 @@ public class AuthenticationHandler implements HttpHandler {
                     // Check if we have a user with this username in our system
                     for (com.zerog.neoessentials.permissions.PermissionUser permUser : permManager.getUsers()) {
                         // Try to get username from cache
-                        var cachedProfile = server.getProfileCache().get(permUser.getUuid()).orElse(null);
-                        if (cachedProfile != null && cachedProfile.getName().equalsIgnoreCase(minecraftUsername)) {
+                        var cachedProfile = server.services().nameToIdCache().get(permUser.getUuid()).orElse(null);
+                        if (cachedProfile != null && cachedProfile.name().equalsIgnoreCase(minecraftUsername)) {
                             playerUuid = permUser.getUuid();
                             LOGGER.debug("Found player UUID from permission system: {}", playerUuid);
                             break;
