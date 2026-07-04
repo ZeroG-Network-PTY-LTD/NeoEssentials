@@ -334,7 +334,7 @@ public class FunCommands {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.itemdb.unknown", itemArg));
                 return 0;
             }
-            var item = BuiltInRegistries.ITEM.get(loc);
+            var item = BuiltInRegistries.ITEM.getValue(loc);
             if (item == Items.AIR && !itemArg.equalsIgnoreCase("air")) {
                 // Try path-only search
                 item = BuiltInRegistries.ITEM.entrySet().stream()

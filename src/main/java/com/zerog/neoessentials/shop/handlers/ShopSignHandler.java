@@ -16,6 +16,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <h3>Removal flow</h3>
  * <ul>
- *   <li>{@link BlockEvent.BreakEvent} — when a sign block is broken, any shop registered at
+ *   <li>{@link BreakBlockEvent} — when a sign block is broken, any shop registered at
  *       that position is removed (including its hologram) via {@link ShopManager#removeShop}.</li>
  * </ul>
  *
@@ -86,7 +87,7 @@ public class ShopSignHandler {
      * is still accessible (though we only need the position and dimension here).
      */
     @SubscribeEvent
-    public static void onSignBroken(BlockEvent.BreakEvent event) {
+    public static void onSignBroken(BreakBlockEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
         BlockPos pos = event.getPos();
         // Only care about sign blocks

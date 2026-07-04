@@ -85,7 +85,7 @@ public class AuctionItem {
         if (cachedStack != null) return cachedStack;
         try {
             Identifier rl   = Identifier.parse(itemKey);
-            var              item = BuiltInRegistries.ITEM.get(rl);
+            var              item = BuiltInRegistries.ITEM.getValue(rl);
             cachedStack = new ItemStack(item, count);
 
             if (nbt != null && !nbt.isBlank()) {

@@ -740,8 +740,9 @@ public class ChatFormatter {
     private static void playMentionSound(ServerPlayer player) {
         try {
             float volume = getMentionSoundVolume();
-            player.playNotifySound(
-                getMentionSoundEvent(),
+            com.zerog.neoessentials.util.SoundCompat.playNotifySound(
+                player,
+                net.minecraft.core.Holder.direct(getMentionSoundEvent()),
                 net.minecraft.sounds.SoundSource.PLAYERS,
                 volume,
                 1.0f

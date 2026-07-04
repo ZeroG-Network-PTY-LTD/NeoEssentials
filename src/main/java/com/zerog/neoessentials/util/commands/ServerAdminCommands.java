@@ -671,7 +671,7 @@ public class ServerAdminCommands {
         } else {
             String id = itemName.contains(":") ? itemName : "minecraft:" + itemName;
             Identifier loc = Identifier.tryParse(id);
-            if (loc != null) item = BuiltInRegistries.ITEM.get(loc);
+            if (loc != null) item = BuiltInRegistries.ITEM.getValue(loc);
             if (item == null || item == net.minecraft.world.item.Items.AIR) {
                 src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.unknown_item", itemName)); return 0;
             }

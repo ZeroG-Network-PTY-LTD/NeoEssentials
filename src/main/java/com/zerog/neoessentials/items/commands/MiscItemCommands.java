@@ -132,8 +132,8 @@ public class MiscItemCommands {
             Identifier outputLoc = Identifier.tryParse(recipe.outputItemId());
             if (inputLoc == null || outputLoc == null) continue;
 
-            var inputItem = BuiltInRegistries.ITEM.get(inputLoc);
-            var outputItem = BuiltInRegistries.ITEM.get(outputLoc);
+            var inputItem = BuiltInRegistries.ITEM.getValue(inputLoc);
+            var outputItem = BuiltInRegistries.ITEM.getValue(outputLoc);
             if (inputItem == null || outputItem == null) continue;
 
             // Count how many of this input item the player has
@@ -503,7 +503,7 @@ public class MiscItemCommands {
             src.sendFailure(MessageUtil.error("commands.neoessentials.item.unknown", itemId));
             return 0;
         }
-        var item = BuiltInRegistries.ITEM.get(loc);
+        var item = BuiltInRegistries.ITEM.getValue(loc);
         if (item == net.minecraft.world.item.Items.AIR && !itemId.equalsIgnoreCase("air")) {
             // Try path-only search
             item = BuiltInRegistries.ITEM.entrySet().stream()

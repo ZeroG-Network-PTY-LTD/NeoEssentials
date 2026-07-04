@@ -440,7 +440,7 @@ public class UtilityCommands {
         // Resolve item ID
         String id = itemId.contains(":") ? itemId : "minecraft:" + itemId;
         Identifier loc = Identifier.tryParse(id);
-        if (loc == null || BuiltInRegistries.ITEM.get(loc) == net.minecraft.world.item.Items.AIR) {
+        if (loc == null || BuiltInRegistries.ITEM.getValue(loc) == net.minecraft.world.item.Items.AIR) {
             // Try hand
             if (itemId.equalsIgnoreCase("hand") && src.getPlayer() != null) {
                 id = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(src.getPlayer().getMainHandItem());
@@ -550,7 +550,7 @@ public class UtilityCommands {
             // Add outputs
             Identifier outLoc = Identifier.tryParse(rule.outputId);
             if (outLoc != null) {
-                net.minecraft.world.item.Item outItem = BuiltInRegistries.ITEM.get(outLoc);
+                net.minecraft.world.item.Item outItem = BuiltInRegistries.ITEM.getValue(outLoc);
                 if (outItem != net.minecraft.world.item.Items.AIR) {
                     int totalOut = times * rule.outputCount;
                     int maxStack = new ItemStack(outItem).getMaxStackSize();

@@ -16,6 +16,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,7 +234,7 @@ public class ModerationEventHandler {
 
     // ── Block Break / Place ───────────────────────────────────────────────────
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+    public static void onBlockBreak(BreakBlockEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer player)) return;
         try {
             UUID playerId = player.getUUID();

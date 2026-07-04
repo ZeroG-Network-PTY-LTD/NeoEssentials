@@ -243,7 +243,7 @@ public class WorthManager {
         if (trimmed.contains(":")) {
             Identifier loc = Identifier.tryParse(trimmed);
             if (loc != null) {
-                Item item = BuiltInRegistries.ITEM.get(loc);
+                Item item = BuiltInRegistries.ITEM.getValue(loc);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
             }
             // Namespace given but not found — don't fall through to vanilla assumption
@@ -253,14 +253,14 @@ public class WorthManager {
         // 2. Try minecraft: prefix for unqualified vanilla names
         Identifier vanillaLoc = Identifier.tryParse("minecraft:" + trimmed);
         if (vanillaLoc != null) {
-            Item item = BuiltInRegistries.ITEM.get(vanillaLoc);
+            Item item = BuiltInRegistries.ITEM.getValue(vanillaLoc);
             if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
         }
 
         // 3. Fuzzy: exact path match across ALL namespaces (catches modded items by short name)
         for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
             if (key.getPath().equals(trimmed)) {
-                Item item = BuiltInRegistries.ITEM.get(key);
+                Item item = BuiltInRegistries.ITEM.getValue(key);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
             }
         }
@@ -268,7 +268,7 @@ public class WorthManager {
         // 4. Fuzzy: path contains the search string (last resort)
         for (Identifier key : BuiltInRegistries.ITEM.keySet()) {
             if (key.getPath().contains(trimmed)) {
-                Item item = BuiltInRegistries.ITEM.get(key);
+                Item item = BuiltInRegistries.ITEM.getValue(key);
                 if (item != net.minecraft.world.item.Items.AIR) return new ItemStack(item);
             }
         }

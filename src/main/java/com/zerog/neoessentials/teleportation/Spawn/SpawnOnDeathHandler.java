@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Handles teleporting players to spawn on death if enabled in config.
  */
-@EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = "neoessentials")
 public class SpawnOnDeathHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpawnOnDeathHandler.class);
 

@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manager for miscellaneous teleportation utilities (/back, death locations, etc.)
  */
-@EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = "neoessentials")
 public class MiscTeleportManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MiscTeleportManager.class);
     

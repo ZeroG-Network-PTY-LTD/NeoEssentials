@@ -20,7 +20,7 @@ import java.nio.file.Paths;
  * NOTE: Resource pack auto-send is currently disabled pending full implementation.
  * The pack generation works, but auto-sending requires additional setup.
  */
-@EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = "neoessentials")
 public class ResourcePackManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourcePackManager.class);
     private static volatile ResourcePackManager instance;

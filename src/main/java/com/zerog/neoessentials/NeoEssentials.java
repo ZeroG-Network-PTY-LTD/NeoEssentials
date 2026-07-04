@@ -179,7 +179,7 @@ public class NeoEssentials {
         LOGGER.debug("Manager registration complete - {} managers registered", registry.getManagerCount());
     }
     
-    @EventBusSubscriber(modid = "neoessentials", bus = EventBusSubscriber.Bus.GAME)
+    @EventBusSubscriber(modid = "neoessentials")
     public static class GameEvents {
 
         /**

@@ -68,7 +68,7 @@ public class GUIPersonalAuctionHouse extends AbstractContainerMenu {
         if (slotId < 0 || slotId >= DISPLAY_SLOTS) { super.clicked(slotId, button, clickType, player); return; }
         if (clickType == ContainerInput.THROW) return;
         ServerPlayer sp = (ServerPlayer) player;
-        sp.playNotifySound(SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.MASTER, 1f, 1f);
+        com.zerog.neoessentials.util.SoundCompat.playNotifySound(sp, SoundEvents.UI_BUTTON_CLICK, SoundSource.MASTER, 1f, 1f);
         if (slotId < PAGE_SIZE) {
             List<AuctionItem> items = AuctionHouseManager.getInstance().getActiveForPlayer(sp.getStringUUID());
             int idx = page * PAGE_SIZE + slotId;
