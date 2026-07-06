@@ -7,6 +7,7 @@ import com.zerog.neoessentials.shop.ShopTransaction;
 import com.zerog.neoessentials.shop.ShopTransaction.TransactionResult;
 import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -338,12 +339,12 @@ public class ShopHologramManager {
                 shop.itemNbt     = ShopParser.captureComponents(held);
                 shop.itemPending = false;
                 ShopManager.getInstance().registerShop(shop);
-                player.sendSystemMessage(Component.literal(
-                    "§aItem set to §f" + ShopParser.buildFullItemDisplayName(shop) + "§a!"));
+                player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.item_set", ShopParser.buildFullItemDisplayName(shop)));
             } else if (canAssign) {
-                player.sendSystemMessage(Component.literal("§eHold the item you want to trade, then right-click the hologram."));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.hold_item_hint_hologram"));
             } else {
-                player.sendSystemMessage(Component.literal("§cThis shop is not yet ready."));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.not_ready"));
             }
             return;
         }
@@ -354,14 +355,14 @@ public class ShopHologramManager {
         if (isOwner && player.isShiftKeyDown()) {
             net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
             if (held.isEmpty()) {
-                player.sendSystemMessage(Component.literal(
-                    "§eHold the item you want this shop to trade, then shift+right-click the hologram."));
+                player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.hold_item_hint", "shift+right-click", "hologram"));
             } else {
                 shop.itemId  = com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held);
                 shop.itemNbt = ShopParser.captureComponents(held);
                 ShopManager.getInstance().registerShop(shop);
-                player.sendSystemMessage(Component.literal(
-                    "§aItem updated to §f" + ShopParser.buildFullItemDisplayName(shop) + "§a!"));
+                player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.item_updated", ShopParser.buildFullItemDisplayName(shop)));
             }
             return;
         }
@@ -373,11 +374,11 @@ public class ShopHologramManager {
         }
 
         if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_permission_use"));
             return;
         }
         if (!shop.canBuy()) {
-            player.sendSystemMessage(Component.literal("§cThis shop does not sell items."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_sell_price"));
             return;
         }
         TransactionResult result = ShopTransaction.executeBuy(player, shop, com.zerog.neoessentials.util.LevelCompat.of(player));
@@ -411,11 +412,11 @@ public class ShopHologramManager {
         }
 
         if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.use")) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_permission_use"));
             return;
         }
         if (!shop.canSell()) {
-            player.sendSystemMessage(Component.literal("§cThis shop does not buy items."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_buy_price"));
             return;
         }
         TransactionResult result = ShopTransaction.executeSell(player, shop, com.zerog.neoessentials.util.LevelCompat.of(player));
@@ -475,11 +476,11 @@ public class ShopHologramManager {
     private static void sendShopInfo(ServerPlayer player, ShopData shop) {
         String currency = EconomyManager.getInstance().getCurrencySymbol();
         String itemDisplay = ShopParser.buildFullItemDisplayName(shop);
-        player.sendSystemMessage(Component.literal("§6§l--- Shop Info ---"));
-        player.sendSystemMessage(Component.literal("§eOwner: §f" + shop.ownerName));
-        player.sendSystemMessage(Component.literal("§eItem:  §f" + shop.quantity + "x " + itemDisplay));
-        if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal("§eBuy:   §f" + currency + shop.buyPrice.toPlainString()));
-        if (shop.sellPrice != null) player.sendSystemMessage(Component.literal("§eSell:  §f" + currency + shop.sellPrice.toPlainString()));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.info_header"));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.info_owner", shop.ownerName));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.info_item", shop.quantity + "x " + itemDisplay));
+        if (shop.buyPrice  != null) player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.info_buy", currency, shop.buyPrice.toPlainString()));
+        if (shop.sellPrice != null) player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.info_sell", currency, shop.sellPrice.toPlainString()));
     }
 
     private static void sendTransactionResult(ServerPlayer player, TransactionResult result,
@@ -489,29 +490,29 @@ public class ShopHologramManager {
         switch (result.type) {
             case SUCCESS -> {
                 if (buying) {
-                    player.sendSystemMessage(Component.literal(String.format(
-                        "§aYou bought §f%dx %s §afor §f%s%s§a from §f%s§a.",
-                        result.quantity, itemDisplay, currency, result.price.toPlainString(), shop.ownerName)));
+                    player.sendSystemMessage(MessageUtil.component(
+                        "commands.neoessentials.shop.buy_success",
+                        result.quantity, itemDisplay, currency, result.price.toPlainString(), shop.ownerName));
                 } else {
-                    player.sendSystemMessage(Component.literal(String.format(
-                        "§aYou sold §f%dx %s §afor §f%s%s§a.",
-                        result.quantity, itemDisplay, currency, result.price.toPlainString())));
+                    player.sendSystemMessage(MessageUtil.component(
+                        "commands.neoessentials.shop.sell_success_simple",
+                        result.quantity, itemDisplay, currency, result.price.toPlainString()));
                 }
             }
-            case NOT_ENOUGH_MONEY -> player.sendSystemMessage(Component.literal(buying
-                ? "§cYou don't have enough money to buy that."
-                : "§cThe shop owner can't afford to buy that."));
-            case NOT_ENOUGH_STOCK -> player.sendSystemMessage(Component.literal(buying
-                ? "§cThis shop is out of stock."
-                : "§cYou don't have enough of that item."));
-            case NO_SPACE -> player.sendSystemMessage(Component.literal(buying
-                ? "§cYour inventory is full."
-                : "§cThe shop's chest is full."));
-            case NO_CHEST -> player.sendSystemMessage(Component.literal("§cShop has no linked chest."));
-            case SHOP_DISABLED -> player.sendSystemMessage(Component.literal(buying
-                ? "§cThis shop doesn't sell items."
-                : "§cThis shop doesn't buy items."));
-            default -> player.sendSystemMessage(Component.literal("§cTransaction failed (internal error)."));
+            case NOT_ENOUGH_MONEY -> player.sendSystemMessage(MessageUtil.component(buying
+                ? "commands.neoessentials.shop.buy_fail_no_money"
+                : "commands.neoessentials.shop.sell_fail_funds"));
+            case NOT_ENOUGH_STOCK -> player.sendSystemMessage(MessageUtil.component(buying
+                ? "commands.neoessentials.shop.buy_fail_stock"
+                : "commands.neoessentials.shop.sell_fail_items"));
+            case NO_SPACE -> player.sendSystemMessage(MessageUtil.component(buying
+                ? "commands.neoessentials.shop.inventory_full"
+                : "commands.neoessentials.shop.sell_fail_space"));
+            case NO_CHEST -> player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_linked_chest"));
+            case SHOP_DISABLED -> player.sendSystemMessage(MessageUtil.component(buying
+                ? "commands.neoessentials.shop.no_sell_price"
+                : "commands.neoessentials.shop.no_buy_price"));
+            default -> player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.transaction_failed"));
         }
     }
 

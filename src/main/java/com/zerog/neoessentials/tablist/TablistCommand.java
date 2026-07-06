@@ -104,7 +104,7 @@ public class TablistCommand {
                     }
                     var server = player.level().getServer();
                     if (server != null) TablistManager.getInstance().updatePlayer(player, server);
-                    ctx.getSource().sendSuccess(() -> Component.literal("§aPreviewing your tablist header/footer."), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.preview_active"), false);
                     return 1;
                 })
             )
@@ -118,24 +118,17 @@ public class TablistCommand {
                     boolean enabled = mgr.isEnabled();
                     String groups = mgr.getGroupsWithOverrides().isEmpty()
                         ? "§7(none)" : "§e" + String.join(", ", mgr.getGroupsWithOverrides());
-                    ctx.getSource().sendSuccess(() -> Component.literal(
-                        "§6§lNeoEssentials Tablist (BTLP-style) §8—\n" +
-                        "§7Status: §" + (enabled ? "aEnabled" : "cDisabled") +
-                        "  §7Mode: §e" + (mgr.isIndependentMode() ? "Independent" : "Proxy-managed") + "\n" +
-                        "§7Header frames: §e" + mgr.getHeaderFrameCount() +
-                        " §7| Footer frames: §e" + mgr.getFooterFrameCount() + "\n" +
-                        "§7Refresh: §e" + mgr.getRefreshIntervalTicks() + "§7t " +
-                        "§8| §7Sort by group: §e" + layout.isSortByGroupWeight() + "\n" +
-                        "§7Columns: §e" + layout.getColumns() +
-                        " §8| §7PlayersByServer: §e" + layout.isPlayersByServer() + "\n" +
-                        "§7Fake entries: §e" + FakePlayerManager.getInstance().getCount() +
-                        "  §7Hide vanished: §e" + mgr.isHideVanished() + "\n" +
-                        "§7Proxy: §" + (proxy.isProxyEnabled() ? "a" : "7") +
-                        (proxy.isProxyEnabled()
-                            ? "enabled (detected=" + proxy.isProxyDetected() + ", network=" + proxy.getNetworkOnline() + ")"
-                            : "disabled") + "\n" +
-                        "§7Group overrides: " + groups + "\n" +
-                        "§7Config: §fconfig/neoessentials/tablist.json"
+                    final String fStatus = (enabled ? "aEnabled" : "cDisabled");
+                    final String fMode = (mgr.isIndependentMode() ? "Independent" : "Proxy-managed");
+                    final String fProxyColor = (proxy.isProxyEnabled() ? "a" : "7");
+                    final String fProxyState = proxy.isProxyEnabled()
+                        ? "enabled (detected=" + proxy.isProxyDetected() + ", network=" + proxy.getNetworkOnline() + ")"
+                        : "disabled";
+                    ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.info",
+                        fStatus, fMode, mgr.getHeaderFrameCount(), mgr.getFooterFrameCount(),
+                        mgr.getRefreshIntervalTicks(), layout.isSortByGroupWeight(), layout.getColumns(),
+                        layout.isPlayersByServer(), FakePlayerManager.getInstance().getCount(), mgr.isHideVanished(),
+                        fProxyColor, fProxyState, groups
                     ), false);
                     return 1;
                 })
@@ -183,8 +176,8 @@ public class TablistCommand {
                                 tablist.setPlayerHeaderOverride(target.getUUID(), text);
                                 var server = ServerLifecycleHooks.getCurrentServer();
                                 if (server != null) tablist.updatePlayer(target, server);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aSet custom tablist header for §e" + target.getName().getString() + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.player_header_set", target.getName().getString()
                                 ), false);
                                 return 1;
                             })
@@ -199,8 +192,8 @@ public class TablistCommand {
                                 tablist.setPlayerFooterOverride(target.getUUID(), text);
                                 var server = ServerLifecycleHooks.getCurrentServer();
                                 if (server != null) tablist.updatePlayer(target, server);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aSet custom tablist footer for §e" + target.getName().getString() + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.player_footer_set", target.getName().getString()
                                 ), false);
                                 return 1;
                             })
@@ -213,8 +206,8 @@ public class TablistCommand {
                             tablist.clearPlayerOverrides(target.getUUID());
                             var server = ServerLifecycleHooks.getCurrentServer();
                             if (server != null) tablist.updatePlayer(target, server);
-                            ctx.getSource().sendSuccess(() -> Component.literal(
-                                "§aCleared tablist overrides for §e" + target.getName().getString() + "§a."
+                            ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                "commands.neoessentials.tablist.player_reset", target.getName().getString()
                             ), false);
                             return 1;
                         })
@@ -234,8 +227,8 @@ public class TablistCommand {
                                 tablist.setGroupHeaderOverride(group, text);
                                 var server = ServerLifecycleHooks.getCurrentServer();
                                 if (server != null) tablist.updateAll(server);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aSet tablist header for group §e" + group + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.group_header_set", group
                                 ), false);
                                 return 1;
                             })
@@ -250,8 +243,8 @@ public class TablistCommand {
                                 tablist.setGroupFooterOverride(group, text);
                                 var server = ServerLifecycleHooks.getCurrentServer();
                                 if (server != null) tablist.updateAll(server);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aSet tablist footer for group §e" + group + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.group_footer_set", group
                                 ), false);
                                 return 1;
                             })
@@ -264,8 +257,8 @@ public class TablistCommand {
                             tablist.clearGroupOverrides(group);
                             var server = ServerLifecycleHooks.getCurrentServer();
                             if (server != null) tablist.updateAll(server);
-                            ctx.getSource().sendSuccess(() -> Component.literal(
-                                "§aCleared tablist overrides for group §e" + group + "§a."
+                            ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                "commands.neoessentials.tablist.group_reset", group
                             ), false);
                             return 1;
                         })
@@ -284,14 +277,11 @@ public class TablistCommand {
                         proxy.getServerPlayerCounts().forEach((s, c) ->
                             serverCounts.append("  §7").append(s).append("§8: §e").append(c).append("\n")
                         );
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§6§lProxy Integration Status:\n" +
-                            "§7Proxy enabled: §" + (proxy.isProxyEnabled() ? "a" : "c") + proxy.isProxyEnabled() + "\n" +
-                            "§7Proxy detected: §" + (proxy.isProxyDetected() ? "a" : "7") + proxy.isProxyDetected() + "\n" +
-                            "§7Server label: §e" + proxy.getServerLabel() + "\n" +
-                            "§7Network online: §e" + proxy.getNetworkOnline() + "\n" +
-                            "§7Known servers: " + servers + "\n" +
-                            "§7Per-server counts:\n" + serverCounts
+                        final String fEnabledLine = (proxy.isProxyEnabled() ? "a" : "c") + proxy.isProxyEnabled();
+                        final String fDetectedLine = (proxy.isProxyDetected() ? "a" : "7") + proxy.isProxyDetected();
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.proxy_status",
+                            fEnabledLine, fDetectedLine, proxy.getServerLabel(), proxy.getNetworkOnline(),
+                            servers, serverCounts.toString()
                         ), false);
                         return 1;
                     })
@@ -303,8 +293,8 @@ public class TablistCommand {
                                 String srvName = StringArgumentType.getString(ctx, "server");
                                 int count = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "count");
                                 ProxyIntegration.getInstance().setServerOnline(srvName, count);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aSet §e" + srvName + " §aplayer count to §e" + count + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.proxy_setserver", srvName, count
                                 ), false);
                                 return 1;
                             })
@@ -319,10 +309,10 @@ public class TablistCommand {
                     .executes(ctx -> {
                         var entries = FakePlayerManager.getInstance().getEntries();
                         if (entries.isEmpty()) {
-                            ctx.getSource().sendSuccess(() -> Component.literal("§7No fake player entries configured."), false);
+                            ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.fakeplayer_list_empty"), false);
                             return 1;
                         }
-                        StringBuilder sb = new StringBuilder("§6§lFake Player Entries (").append(entries.size()).append("):\n");
+                        StringBuilder sb = new StringBuilder(MessageUtil.localize("commands.neoessentials.tablist.fakeplayer_list_header", entries.size())).append("\n");
                         for (var e : entries) {
                             sb.append("  §e").append(e.slotId())
                               .append(" §8→ §f").append(e.display())
@@ -344,8 +334,8 @@ public class TablistCommand {
                                 );
                                 var server = ServerLifecycleHooks.getCurrentServer();
                                 if (server != null) FakePlayerManager.getInstance().refreshAll(server);
-                                ctx.getSource().sendSuccess(() -> Component.literal(
-                                    "§aAdded fake player §e" + id + " §adisplaying §f" + display + "§a."
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                    "commands.neoessentials.tablist.fakeplayer_added", id, display
                                 ), false);
                                 return 1;
                             })
@@ -358,9 +348,9 @@ public class TablistCommand {
                             String id = StringArgumentType.getString(ctx, "id");
                             boolean removed = FakePlayerManager.getInstance().removeEntry(id);
                             if (removed) {
-                                ctx.getSource().sendSuccess(() -> Component.literal("§aRemoved fake player §e" + id + "§a."), false);
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.fakeplayer_removed", id), false);
                             } else {
-                                ctx.getSource().sendFailure(Component.literal("§cNo fake player entry found with id §e" + id + "§c."));
+                                ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.tablist.fakeplayer_not_found", id));
                             }
                             return removed ? 1 : 0;
                         })
@@ -370,8 +360,8 @@ public class TablistCommand {
                     .executes(ctx -> {
                         var server = ServerLifecycleHooks.getCurrentServer();
                         if (server != null) FakePlayerManager.getInstance().refreshAll(server);
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§aRefreshed §e" + FakePlayerManager.getInstance().getCount() + " §afake player entries for all online players."
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.fakeplayer_refreshed", FakePlayerManager.getInstance().getCount()
                         ), false);
                         return 1;
                     })
@@ -383,14 +373,10 @@ public class TablistCommand {
                 .then(Commands.literal("info")
                     .executes(ctx -> {
                         TablistLayout layout = TablistLayout.getInstance();
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§6§lTablist Layout Configuration:\n" +
-                            "§7Columns: §e" + layout.getColumns() + " §8(max " + layout.getTotalSlots() + " slots)\n" +
-                            "§7Sort by group weight: §e" + layout.isSortByGroupWeight() + "\n" +
-                            "§7Group sections: §e" + layout.isGroupSections() + "\n" +
-                            "§7Players by server: §e" + layout.isPlayersByServer() + "\n" +
-                            "§7Exclude servers: §e" + layout.getExcludeServers() + "\n" +
-                            "§7Hidden servers: §e" + layout.getHiddenServers()
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.layout_info",
+                            layout.getColumns(), layout.getTotalSlots(), layout.isSortByGroupWeight(),
+                            layout.isGroupSections(), layout.isPlayersByServer(), layout.getExcludeServers(),
+                            layout.getHiddenServers()
                         ), false);
                         return 1;
                     })
@@ -398,8 +384,8 @@ public class TablistCommand {
                 .then(Commands.literal("sort")
                     .executes(ctx -> {
                         // Toggle sort without reload
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§7Sort state is config-driven. Use §e/tablist reload §7after editing tablist.json."
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.layout_sort_info"
                         ), false);
                         return 1;
                     })
@@ -410,17 +396,17 @@ public class TablistCommand {
             .then(Commands.literal("independent")
                 .executes(ctx -> {
                     boolean current = TablistManager.getInstance().isIndependentMode();
-                    ctx.getSource().sendSuccess(() -> Component.literal(
-                        "§7Independent mode is §" + (current ? "a" : "c") + (current ? "ON" : "OFF") +
-                        "§7. Use §e/tablist independent on §7or §e/tablist independent off §7to change."
+                    final String fState = (current ? "a" : "c") + (current ? "ON" : "OFF");
+                    ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                        "commands.neoessentials.tablist.independent_status", fState
                     ), false);
                     return 1;
                 })
                 .then(Commands.literal("on")
                     .executes(ctx -> {
                         TablistManager.getInstance().setIndependentMode(true);
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§aIndependent mode §2enabled§a. NeoEssentials now fully manages the tablist."
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.independent_on"
                         ), false);
                         return 1;
                     })
@@ -428,8 +414,8 @@ public class TablistCommand {
                 .then(Commands.literal("off")
                     .executes(ctx -> {
                         TablistManager.getInstance().setIndependentMode(false);
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§cIndependent mode §4disabled§c. Tab formatting may be shared with proxy plugins."
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.independent_off"
                         ), false);
                         return 1;
                     })
@@ -441,15 +427,15 @@ public class TablistCommand {
                 .then(Commands.literal("list")
                     .executes(ctx -> {
                         AnimationManager am = AnimationManager.getInstance();
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§6§lLoaded Animations (" + am.getAnimationCount() + "):"
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.animations_list_header", am.getAnimationCount()
                         ), false);
                         for (String line : am.getSummaryLines()) {
                             String colored = line.replace("&", "§");
                             ctx.getSource().sendSuccess(() -> Component.literal(colored), false);
                         }
-                        ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§7Use §e{animation:NAME}§7 in tablist header/footer or MOTD."
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                            "commands.neoessentials.tablist.animations_list_footer"
                         ), false);
                         return 1;
                     })
@@ -459,39 +445,7 @@ public class TablistCommand {
     }
 
     private static void showHelp(CommandSourceStack src) {
-        src.sendSuccess(() -> Component.literal(
-            "§6§lTablist Commands (BungeeTabListPlus-style):\n" +
-            "§e/tablist reload §7— reload tablist.json + animations.json\n" +
-            "§e/tablist enable/disable §7— toggle tablist system\n" +
-            "§e/tablist preview §7— preview your header/footer\n" +
-            "§e/tablist info §7— full status, proxy, layout, fake players\n" +
-            "§e/tablist set header/footer <text> §7— runtime override\n" +
-            "§6Per-player:\n" +
-            "§e/tablist player <name> header/footer/reset\n" +
-            "§6Per-group:\n" +
-            "§e/tablist group <group> header/footer/reset\n" +
-            "§6Proxy (BTLP-style):\n" +
-            "§e/tablist proxy status §7— proxy integration status\n" +
-            "§e/tablist proxy setserver <name> <count> §7— manual count\n" +
-            "§6Fake Players (BTLP-style):\n" +
-            "§e/tablist fakeplayer list §7— show configured fake entries\n" +
-            "§e/tablist fakeplayer add <id> <display> §7— add runtime entry\n" +
-            "§e/tablist fakeplayer remove <id> §7— remove entry\n" +
-            "§e/tablist fakeplayer refresh §7— re-inject all fake entries\n" +
-            "§6Layout (BTLP-style):\n" +
-            "§e/tablist layout info §7— show column/sorting config\n" +
-            "§6Independent mode:\n" +
-            "§e/tablist independent §7— show mode\n" +
-            "§e/tablist independent on/off §7— toggle\n" +
-            "§6Animations:\n" +
-            "§e/tablist animations list §7— list loaded animations\n" +
-            "§7Use §e{animation:NAME}§7 in headers, footers, MOTD, etc.\n" +
-            "§7Config: §fconfig/neoessentials/tablist.json\n" +
-            "§7Animations: §fconfig/neoessentials/animations.json\n" +
-            "§7Placeholders: §f{network_online} {server_online:NAME} {current_server}\n" +
-            "§7             {rank_weight} {session_minutes} {level} {health} {afk}\n" +
-            "§7             §e{animation:NAME}"
-        ), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.tablist.help"), false);
     }
 }
 

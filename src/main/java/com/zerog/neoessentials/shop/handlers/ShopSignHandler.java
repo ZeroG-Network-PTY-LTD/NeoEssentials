@@ -4,6 +4,7 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.shop.ShopManager;
 import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -208,11 +209,11 @@ public class ShopSignHandler {
         boolean wantsAdmin = ShopData.ADMIN_SHOP_NAME.equalsIgnoreCase(ownerLine);
 
         if (wantsAdmin && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to create admin shops."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_permission_admin"));
             return;
         }
         if (!wantsAdmin && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create")) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to create shops."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_permission"));
             return;
         }
 
@@ -221,8 +222,8 @@ public class ShopSignHandler {
             int used = ShopManager.getInstance().getShopsByOwner(player.getUUID()).size();
             int max  = getMaxShopsPerPlayer();
             if (max > 0 && used >= max) {
-                player.sendSystemMessage(Component.literal(
-                    "§cShop limit reached! You have §f" + used + "§c/§f" + max + " §cshops. Remove one to create another."));
+                player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.limit_reached", used, max));
                 return;
             }
         }
@@ -230,7 +231,7 @@ public class ShopSignHandler {
         // Check for duplicate sign position before parsing
         ShopData existing = ShopManager.getInstance().getShopBySign(dimension, pos);
         if (existing != null) {
-            player.sendSystemMessage(Component.literal("§cA shop already exists at this sign."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.sign_occupied"));
             return;
         }
 
@@ -239,11 +240,9 @@ public class ShopSignHandler {
 
         if (parsed.isEmpty()) {
             if (!wantsAdmin && ShopParser.findAdjacentChest(pos, level) == null) {
-                player.sendSystemMessage(Component.literal(
-                    "§cNo chest found next to this sign. Place a chest first."));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_chest"));
             } else {
-                player.sendSystemMessage(Component.literal(
-                    "§cInvalid shop sign format.  Lines: [name or blank] / [qty] / [B x:S y] / [item or ?]"));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.invalid_format"));
             }
             return;
         }
@@ -256,18 +255,17 @@ public class ShopSignHandler {
 
         if (shop.itemPending) {
             // Shop is registered but non-functional — item still needed
-            player.sendSystemMessage(Component.literal(
-                "§aShop frame created! §eRight-click this sign while holding the item you want to sell/buy."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.frame_created"));
         } else {
-            player.sendSystemMessage(Component.literal("§aShop created successfully!"));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.created"));
             String currency = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().getCurrencySymbol();
             if (!shop.isAdminShop()) {
-                if (shop.buyPrice  != null) player.sendSystemMessage(Component.literal(
-                    "§eBuy price:  §f" + currency + shop.buyPrice.toPlainString()));
-                if (shop.sellPrice != null) player.sendSystemMessage(Component.literal(
-                    "§eSell price: §f" + currency + shop.sellPrice.toPlainString()));
+                if (shop.buyPrice  != null) player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.buy_price_announce", currency, shop.buyPrice.toPlainString()));
+                if (shop.sellPrice != null) player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.sell_price_announce", currency, shop.sellPrice.toPlainString()));
             } else {
-                player.sendSystemMessage(Component.literal("§2[Admin Shop] Unlimited stock."));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.admin_unlimited_stock"));
             }
         }
 
@@ -276,14 +274,16 @@ public class ShopSignHandler {
         if (!shop.hologramEnabled) {
             String enableCmd = "/chestshop hologram enablepos "
                 + shop.signX + " " + shop.signY + " " + shop.signZ;
-            Component holoPrompt = Component.literal("§eWant a hologram above your shop? ")
-                .append(Component.literal("§a§l[Click to Enable]")
+            Component holoPrompt = MessageUtil.component("commands.neoessentials.shop.hologram_prompt_text")
+                .copy()
+                .append(MessageUtil.component("commands.neoessentials.shop.hologram_prompt_button")
+                    .copy()
                     .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, enableCmd)))
                     .withStyle(s -> s.withHoverEvent(
                         com.zerog.neoessentials.util.HoverEventCompat.create(
                             net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
-                            Component.literal("§7Enables a floating text display above\nyour sign shop. You can move it later with\n§e/chestshop hologram move <x> <y> <z>")))));
+                            MessageUtil.component("commands.neoessentials.shop.hologram_prompt_hover")))));
             player.sendSystemMessage(holoPrompt);
         }
     }

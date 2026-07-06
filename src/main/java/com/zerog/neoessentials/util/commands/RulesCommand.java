@@ -202,28 +202,30 @@ public class RulesCommand {
             String rule = serverRules.get(i);
             String formattedRule = rule.replace("&", "§");
             
-            MutableComponent ruleComponent = Component.literal(String.format("§6%d. §f%s", i + 1, formattedRule));
+            MutableComponent ruleComponent = (MutableComponent) MessageUtil.component(
+                "commands.neoessentials.rules.entry", i + 1, formattedRule);
             source.sendSuccess(() -> ruleComponent, false);
         }
-        
+
         // Footer with navigation
         if (totalPages > 1) {
-            MutableComponent footer = Component.literal("§7Page " + page + "/" + totalPages + " ");
-            
+            MutableComponent footer = (MutableComponent) MessageUtil.component(
+                "commands.neoessentials.rules.page_indicator", page, totalPages);
+
             if (page > 1) {
-                footer.append(Component.literal("§7[§a◀ Prev§7]")
+                footer.append(((MutableComponent) MessageUtil.component("commands.neoessentials.rules.prev_button"))
                     .withStyle(style -> style
                         .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/rules " + (page - 1)))
-                        .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("§7Click to view previous page")))
+                        .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, MessageUtil.component("commands.neoessentials.rules.prev_hover")))
                     ));
                 footer.append(Component.literal(" "));
             }
-            
+
             if (page < totalPages) {
-                footer.append(Component.literal("§7[§aNext ▶§7]")
+                footer.append(((MutableComponent) MessageUtil.component("commands.neoessentials.rules.next_button"))
                     .withStyle(style -> style
                         .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, "/rules " + (page + 1)))
-                        .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("§7Click to view next page")))
+                        .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, MessageUtil.component("commands.neoessentials.rules.next_hover")))
                     ));
             }
             

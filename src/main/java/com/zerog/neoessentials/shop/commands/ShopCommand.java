@@ -12,11 +12,11 @@ import com.zerog.neoessentials.shop.csv.ShopCsvImporter;
 import com.zerog.neoessentials.shop.csv.ShopCsvSerializer;
 import com.zerog.neoessentials.shop.handlers.ShopSignHandler;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.ResourceUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -126,14 +126,14 @@ public class ShopCommand {
                     (src.getEntity() != null &&
                      PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.list.others"));
                 if (!canListOthers) {
-                    src.sendFailure(Component.literal("§cYou don't have permission to list others' shops."));
+                    src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission_list_others"));
                     return 0;
                 }
                 // Resolve UUID by online player name
                 var server = src.getServer();
                 ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                 if (target == null) {
-                    src.sendFailure(Component.literal("§cPlayer not found: " + targetName));
+                    src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.player_not_found", targetName));
                     return 0;
                 }
                 uuid = target.getUUID();
@@ -141,27 +141,27 @@ public class ShopCommand {
             }
 
             List<ShopData> shops = ShopManager.getInstance().getShopsByOwner(uuid);
-            src.sendSuccess(() -> Component.literal("§6§l=== Shops owned by " + displayName +
-                " (" + shops.size() + ") ==="), false);
+            String finalDisplayName = displayName;
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.list_header",
+                finalDisplayName, shops.size()), false);
             if (shops.isEmpty()) {
-                src.sendSuccess(() -> Component.literal("§7No shops found."), false);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.list_empty"), false);
             } else {
                 String currency = EconomyManager.getInstance().getCurrencySymbol();
                 for (ShopData s : shops) {
-                    src.sendSuccess(() -> Component.literal(String.format(
-                        "§e%s §f@ §7(%d,%d,%d) §e| §f%dx %s §e| Buy:§f%s §e| Sell:§f%s",
+                    src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.list_entry",
                         s.signDimension.replace("minecraft:", ""),
                         s.signX, s.signY, s.signZ,
                         s.quantity,
                         s.itemId.replace("minecraft:", ""),
                         s.buyPrice  != null ? currency + s.buyPrice.toPlainString()  : "§7—",
                         s.sellPrice != null ? currency + s.sellPrice.toPlainString() : "§7—"
-                    )), false);
+                    ), false);
                 }
             }
             return shops.size();
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -174,7 +174,7 @@ public class ShopCommand {
             ServerPlayer player = src.getPlayerOrException();
             HitResult hit = player.pick(5.0, 0.0f, false);
             if (hit.getType() != HitResult.Type.BLOCK) {
-                src.sendFailure(Component.literal("§cLook at a shop sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign"));
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
@@ -183,25 +183,25 @@ public class ShopCommand {
 
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
             if (shop == null) {
-                src.sendFailure(Component.literal("§cNo shop at that sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_shop_at_sign"));
                 return 0;
             }
 
             String currency = EconomyManager.getInstance().getCurrencySymbol();
-            src.sendSuccess(() -> Component.literal("§6§l--- Shop Info ---"), false);
-            src.sendSuccess(() -> Component.literal("§eOwner: §f" + shop.ownerName +
-                (shop.isAdminShop() ? " §2[Admin]" : "")), false);
-            src.sendSuccess(() -> Component.literal("§eItem:  §f" + shop.quantity + "x " +
-                shop.itemId.replace("minecraft:", "")), false);
-            if (shop.buyPrice  != null) src.sendSuccess(() -> Component.literal(
-                "§eBuy:   §f" + currency + shop.buyPrice.toPlainString()), false);
-            if (shop.sellPrice != null) src.sendSuccess(() -> Component.literal(
-                "§eSell:  §f" + currency + shop.sellPrice.toPlainString()), false);
-            src.sendSuccess(() -> Component.literal("§eSign:  §7" +
-                shop.signX + ", " + shop.signY + ", " + shop.signZ), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_header"), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_owner",
+                shop.ownerName, shop.isAdminShop() ? " §2[Admin]" : ""), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_item",
+                shop.quantity, shop.itemId.replace("minecraft:", "")), false);
+            if (shop.buyPrice  != null) src.sendSuccess(() -> MessageUtil.component(
+                "commands.neoessentials.chestshop.info_buy", currency, shop.buyPrice.toPlainString()), false);
+            if (shop.sellPrice != null) src.sendSuccess(() -> MessageUtil.component(
+                "commands.neoessentials.chestshop.info_sell", currency, shop.sellPrice.toPlainString()), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_sign",
+                shop.signX, shop.signY, shop.signZ), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -212,19 +212,19 @@ public class ShopCommand {
         try {
             ServerPlayer player = src.getPlayerOrException();
             if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create")) {
-                src.sendFailure(Component.literal("§cNo permission."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission"));
                 return 0;
             }
             HitResult hit = player.pick(5.0, 0.0f, false);
             if (hit.getType() != HitResult.Type.BLOCK) {
-                src.sendFailure(Component.literal("§cLook at a sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_generic_sign"));
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
             ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
             BlockEntity be = level.getBlockEntity(pos);
             if (!(be instanceof SignBlockEntity sign)) {
-                src.sendFailure(Component.literal("§cNot a sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.not_a_sign"));
                 return 0;
             }
             String dimension = level.dimension().identifier().toString();
@@ -232,7 +232,7 @@ public class ShopCommand {
             ShopSignHandler.tryRegisterShop(player, lines, pos, dimension, level);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -252,7 +252,7 @@ public class ShopCommand {
         try {
             player = src.getPlayerOrException();
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cThis command must be run by a player, or use §f/chestshop remove <x> <y> <z>§c."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.remove_player_only"));
             return 0;
         }
 
@@ -266,22 +266,22 @@ public class ShopCommand {
             }
         }
         if (shop == null) {
-            src.sendFailure(Component.literal("§cYou must be looking at a shop sign or its linked chest."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.remove_look_required"));
             return 0;
         }
         if (!isShopOwnerOrAdmin(player, shop)) {
-            src.sendFailure(Component.literal("§cYou don't own this shop and don't have permission to remove it."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.remove_no_permission"));
             return 0;
         }
 
         BlockPos signPos = shop.getSignPos();
         ShopData removed = ShopManager.getInstance().removeShop(dimension, signPos);
         if (removed == null) {
-            src.sendFailure(Component.literal("§cFailed to remove shop (already removed?)."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.remove_failed"));
             return 0;
         }
-        src.sendSuccess(() -> Component.literal("§aRemoved shop owned by §f" + removed.ownerName +
-            " §aat §7" + signPos.getX() + ", " + signPos.getY() + ", " + signPos.getZ()), true);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.remove_success",
+            removed.ownerName, signPos.getX(), signPos.getY(), signPos.getZ()), true);
         return 1;
     }
 
@@ -291,7 +291,7 @@ public class ShopCommand {
             (src.getEntity() != null &&
              PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.remove"));
         if (!isAdmin) {
-            src.sendFailure(Component.literal("§cNo permission."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission"));
             return 0;
         }
         try {
@@ -300,14 +300,14 @@ public class ShopCommand {
             BlockPos pos = new BlockPos(x, y, z);
             ShopData removed = ShopManager.getInstance().removeShop(dimension, pos);
             if (removed == null) {
-                src.sendFailure(Component.literal("§cNo shop found at " + x + ", " + y + ", " + z));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.remove_not_found_at", x, y, z));
                 return 0;
             }
-            src.sendSuccess(() -> Component.literal("§aRemoved shop owned by §f" +
-                removed.ownerName + " §aat §7" + x + ", " + y + ", " + z), true);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.remove_success",
+                removed.ownerName, x, y, z), true);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -317,8 +317,8 @@ public class ShopCommand {
     private static int executeReload(CommandSourceStack src) {
         ShopManager.getInstance().reload();
         com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().loadConfig();
-        src.sendSuccess(() -> Component.literal("§aChestShop data reloaded. §f" +
-            ShopManager.getInstance().getShopCount() + " §ashop(s) loaded. Pricing engine updated."), true);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.reload_success",
+            ShopManager.getInstance().getShopCount()), true);
         return 1;
     }
 
@@ -331,12 +331,12 @@ public class ShopCommand {
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.setprice") ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
             if (!canSetPrice) {
-                src.sendFailure(Component.literal("§cNo permission."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission"));
                 return 0;
             }
             HitResult hit = player.pick(5.0, 0.0f, false);
             if (hit.getType() != HitResult.Type.BLOCK) {
-                src.sendFailure(Component.literal("§cLook at a shop sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign"));
                 return 0;
             }
             BlockPos pos = ((BlockHitResult) hit).getBlockPos();
@@ -344,14 +344,14 @@ public class ShopCommand {
             String dimension = level.dimension().identifier().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, pos);
             if (shop == null) {
-                src.sendFailure(Component.literal("§cNo shop at that sign."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_shop_at_sign"));
                 return 0;
             }
             // Owner or admin can set price
             boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.admin.setprice");
             if (!isAdmin && (shop.ownerUUID == null || !shop.ownerUUID.equals(player.getUUID()))) {
-                src.sendFailure(Component.literal("§cYou can only set prices on your own shops."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.setprice_not_owner"));
                 return 0;
             }
             BigDecimal bd = BigDecimal.valueOf(price);
@@ -360,18 +360,18 @@ public class ShopCommand {
                 case "sell" -> shop.sellPrice = bd;
                 case "both" -> { shop.buyPrice = bd; shop.sellPrice = bd; }
                 default -> {
-                    src.sendFailure(Component.literal("§cType must be: buy | sell | both"));
+                    src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.setprice_invalid_type"));
                     return 0;
                 }
             }
             ShopManager.getInstance().registerShop(shop);
             com.zerog.neoessentials.shop.handlers.ShopSignHandler.writeSignLines(level, pos,
                     com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
-            src.sendSuccess(() -> Component.literal("§aPrice updated — " + type + ": " +
-                    EconomyManager.getInstance().getCurrencySymbol() + bd.toPlainString()), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.setprice_success",
+                    type, EconomyManager.getInstance().getCurrencySymbol(), bd.toPlainString()), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -385,18 +385,19 @@ public class ShopCommand {
             long totalSales = myShops.stream().mapToLong(s -> s.totalSalesCount).sum();
             int adminCount  = (int) myShops.stream().filter(ShopData::isAdminShop).count();
             int playerCount = myShops.size() - adminCount;
-            src.sendSuccess(() -> Component.literal("§6§l--- Shop Stats ---"), false);
-            src.sendSuccess(() -> Component.literal("§eTotal shops:  §f" + myShops.size() + " §7(player: " + playerCount + ", admin: " + adminCount + ")"), false);
-            src.sendSuccess(() -> Component.literal("§eTotal sales:  §f" + totalSales), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.stats_header"), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.stats_total",
+                    myShops.size(), playerCount, adminCount), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.stats_sales", totalSales), false);
             if (!myShops.isEmpty()) {
                 myShops.stream().max(Comparator.comparingLong(s -> s.totalSalesCount))
-                        .ifPresent(top -> src.sendSuccess(() -> Component.literal("§eTop seller:   §f" +
-                                top.itemId.replace("minecraft:", "") +
-                                " §7(" + top.totalSalesCount + " sales)"), false));
+                        .ifPresent(top -> src.sendSuccess(() -> MessageUtil.component(
+                                "commands.neoessentials.chestshop.stats_top_seller",
+                                top.itemId.replace("minecraft:", ""), top.totalSalesCount), false));
             }
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -408,11 +409,11 @@ public class ShopCommand {
             ServerPlayer player = src.getPlayerOrException();
             int used  = ShopManager.getInstance().getShopsByOwner(player.getUUID()).size();
             int max   = getMaxShopsPerPlayer();
-            src.sendSuccess(() -> Component.literal("§eShops used: §f" + used + " §7/ §f" +
-                    (max < 0 ? "unlimited" : String.valueOf(max))), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.limit_status",
+                    used, max < 0 ? "unlimited" : String.valueOf(max)), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -423,17 +424,17 @@ public class ShopCommand {
         boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 (src.getEntity() != null &&
                  PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.export"));
-        if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
+        if (!isAdmin) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission")); return 0; }
         try {
             String csv = ShopCsvSerializer.export(ShopManager.getInstance().getAllShops());
             Path file  = getCsvPath();
             Files.createDirectories(file.getParent());
             Files.writeString(file, csv);
-            src.sendSuccess(() -> Component.literal("§aExported §f" +
-                    ShopManager.getInstance().getShopCount() + " §ashop(s) to §7" + file.getFileName()), true);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.export_success",
+                    ShopManager.getInstance().getShopCount(), file.getFileName()), true);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cExport failed: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.export_failed", e.getMessage()));
             return 0;
         }
     }
@@ -444,20 +445,20 @@ public class ShopCommand {
         boolean isAdmin = com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 (src.getEntity() != null &&
                  PermissionAPI.hasPermission(src.getEntity().getUUID(), "neoessentials.shop.admin.csv.import"));
-        if (!isAdmin) { src.sendFailure(Component.literal("§cNo permission.")); return 0; }
+        if (!isAdmin) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission")); return 0; }
         try {
             Path file = getCsvPath();
             if (!Files.exists(file)) {
-                src.sendFailure(Component.literal("§cCSV file not found: " + file + ". Run /chestshop export first."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.import_file_not_found", file));
                 return 0;
             }
             String csv = Files.readString(file);
             var rows   = ShopCsvSerializer.importRows(csv);
             var result = ShopCsvImporter.apply(rows, createNew);
-            src.sendSuccess(() -> Component.literal("§aCSV import complete: §f" + result.details()), true);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.import_success", result.details()), true);
             return result.updated() + result.created();
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cImport failed: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.import_failed", e.getMessage()));
             return 0;
         }
     }
@@ -469,21 +470,20 @@ public class ShopCommand {
         try {
             ServerPlayer player = src.getPlayerOrException();
             ShopData shop = getShopFromLookAt(player);
-            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign")); return 0; }
             if (!isShopOwner(player, shop)) {
-                src.sendFailure(Component.literal("§cOnly the shop owner can enable its hologram."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_enable"));
                 return 0;
             }
             if (shop.hologramEnabled) {
-                src.sendSuccess(() -> Component.literal("§eHologram is already enabled for this shop."), false);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_already_enabled"), false);
                 return 1;
             }
             ShopHologramManager.enableShopHologram(shop);
-            src.sendSuccess(() -> Component.literal(
-                "§aHologram enabled! Right/left-click it to buy/sell. Move it with §e/chestshop hologram move <x> <y> <z>§a."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_enabled"), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -494,21 +494,20 @@ public class ShopCommand {
             ServerPlayer player = src.getPlayerOrException();
             String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
-            if (shop == null) { src.sendFailure(Component.literal("§cNo shop found at that position.")); return 0; }
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_no_shop_at_pos")); return 0; }
             if (!isShopOwner(player, shop)) {
-                src.sendFailure(Component.literal("§cOnly the shop owner can enable its hologram."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_enable"));
                 return 0;
             }
             if (shop.hologramEnabled) {
-                src.sendSuccess(() -> Component.literal("§eHologram is already enabled for this shop."), false);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_already_enabled"), false);
                 return 1;
             }
             ShopHologramManager.enableShopHologram(shop);
-            src.sendSuccess(() -> Component.literal(
-                "§aHologram enabled! Right/left-click it to buy/sell. Move it with §e/chestshop hologram move <x> <y> <z>§a."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_enabled"), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -519,20 +518,20 @@ public class ShopCommand {
         try {
             ServerPlayer player = src.getPlayerOrException();
             ShopData shop = getShopFromLookAt(player);
-            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign")); return 0; }
             if (!isShopOwner(player, shop)) {
-                src.sendFailure(Component.literal("§cOnly the shop owner can disable its hologram."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_disable"));
                 return 0;
             }
             if (!shop.hologramEnabled) {
-                src.sendSuccess(() -> Component.literal("§eHologram is already disabled for this shop."), false);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_already_disabled"), false);
                 return 1;
             }
             ShopHologramManager.disableShopHologram(shop);
-            src.sendSuccess(() -> Component.literal("§aHologram removed."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_removed"), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -548,27 +547,26 @@ public class ShopCommand {
         try {
             ServerPlayer player = src.getPlayerOrException();
             ShopData shop = getShopFromLookAt(player);
-            if (shop == null) { src.sendFailure(Component.literal("§cLook at a shop sign.")); return 0; }
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign")); return 0; }
             if (!isShopOwner(player, shop)) {
-                src.sendFailure(Component.literal("§cOnly the shop owner can move the hologram."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_move"));
                 return 0;
             }
             if (!shop.hologramEnabled) {
-                src.sendFailure(Component.literal(
-                    "§cHologram is not enabled. Enable it first with §e/chestshop hologram enable§c."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_not_enabled"));
                 return 0;
             }
             boolean moved = ShopHologramManager.moveShopHologram(shop, ox, oy, oz);
             if (!moved) {
-                src.sendFailure(Component.literal("§cCould not move hologram."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_move_failed"));
                 return 0;
             }
             double cx = shop.hologramOffsetX, cy = shop.hologramOffsetY, cz = shop.hologramOffsetZ;
-            src.sendSuccess(() -> Component.literal(String.format(
-                "§aHologram moved to offset §f%.2f, %.2f, %.2f §a(relative to sign).", cx, cy, cz)), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_moved",
+                String.format("%.2f", cx), String.format("%.2f", cy), String.format("%.2f", cz)), false);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -644,13 +642,11 @@ public class ShopCommand {
 
     private static int executePricingStatus(CommandSourceStack src) {
         var engine = com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance();
-        src.sendSuccess(() -> Component.literal("§6§l--- Shop Pricing Engine ---"), false);
-        src.sendSuccess(() -> Component.literal("§eEnabled:  §f" + engine.isEnabled()), false);
-        src.sendSuccess(() -> Component.literal("§eRules:    §f" + engine.getRuleCount()), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.pricing_header"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.pricing_enabled", engine.isEnabled()), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.pricing_rules", engine.getRuleCount()), false);
         if (!engine.isEnabled()) {
-            src.sendSuccess(() -> Component.literal(
-                "§7Dynamic pricing is OFF. To enable, set §eshop.pricing.enabled=true §7in config.json " +
-                "and run §e/chestshop reload§7."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.pricing_off_hint"), false);
         }
         return 1;
     }
@@ -658,23 +654,23 @@ public class ShopCommand {
     // ── /chestshop (help) ─────────────────────────────────────────────────────
 
     private static int executeHelp(CommandSourceStack src) {
-        src.sendSuccess(() -> Component.literal("§6§l=== ChestShop Commands ==="), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop list §7- List your shops"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop info §7- Info on looked-at shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop setprice <buy|sell|both> <price> §7- Set price on looked-at shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop stats §7- Your shop statistics"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop limit §7- Show your shop limit"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop pricing §7- Show dynamic pricing engine status"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop hologram enable §7- Enable hologram on looked-at shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop hologram disable §7- Remove hologram from looked-at shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop hologram move <x> <y> <z> §7- Move hologram (offset from sign, max ±4.5 blocks)"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop export §7- Admin: export shops to CSV"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop import [create] §7- Admin: import from CSV"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop convert §7- Register looked-at sign as shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop remove §7- Remove the shop you're looking at (owner or admin)"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop remove <x> <y> <z> §7- Admin: remove shop at coordinates"), false);
-        src.sendSuccess(() -> Component.literal("§e/chestshop reload §7- Admin: reload shop data"), false);
-        src.sendSuccess(() -> Component.literal("§7Signs: [Name] / [Qty] / [B buy:S sell] / [item or ?]"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_header"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_list"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_info"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_setprice"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_stats"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_limit"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_pricing"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_enable"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_disable"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_move"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_export"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_import"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_convert"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_remove"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_remove_coords"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_reload"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_signs_hint"), false);
         return 1;
     }
 }

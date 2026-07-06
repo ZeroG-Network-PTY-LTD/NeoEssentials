@@ -3,6 +3,7 @@ package com.zerog.neoessentials.webdashboard.endpoints;
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.motd.MotdManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -245,7 +246,7 @@ public class MotdEndpoint implements HttpHandler {
 
         int sent = 0;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[MOTD]"));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.motd.tag"));
             player.sendSystemMessage(motdComp);
             sent++;
         }

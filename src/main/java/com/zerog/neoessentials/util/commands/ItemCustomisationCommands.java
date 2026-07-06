@@ -468,7 +468,7 @@ public class ItemCustomisationCommands {
                 var player = src.getPlayer();
                 if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
                 player.openMenu(new MenuProvider() {
-                    @Override @Nonnull public Component getDisplayName() { return Component.literal("Loom"); }
+                    @Override @Nonnull public Component getDisplayName() { return MessageUtil.component("commands.neoessentials.loom.menu_title"); }
                     @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory inv, @Nonnull Player p) {
                         return new LoomMenu(id, inv, ContainerLevelAccess.create(p.level(), p.blockPosition()));
                     }
@@ -496,7 +496,7 @@ public class ItemCustomisationCommands {
         var player = src.getPlayer();
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
         player.openMenu(new MenuProvider() {
-            @Override @Nonnull public Component getDisplayName() { return Component.literal("Cartography Table"); }
+            @Override @Nonnull public Component getDisplayName() { return MessageUtil.component("commands.neoessentials.cartography.menu_title"); }
             @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory inv, @Nonnull Player p) {
                 return new CartographyTableMenu(id, inv, ContainerLevelAccess.create(p.level(), p.blockPosition()));
             }

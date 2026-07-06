@@ -68,7 +68,8 @@ public class WhoisCommand {
         boolean canSeeDetailed = detailedResult.hasPermission();
         
         // Header
-        MutableComponent header = Component.literal("§6§l┌─ Player Information: " + targetPlayer.getName().getString() + " ─┐");
+        MutableComponent header = (MutableComponent) MessageUtil.component(
+            "commands.neoessentials.whois.header_box", targetPlayer.getName().getString());
         source.sendSuccess(() -> header, false);
         
         // Basic Information
@@ -78,7 +79,8 @@ public class WhoisCommand {
         String displayName = targetPlayer.getDisplayName().getString();
         String realName = targetPlayer.getName().getString();
         if (!displayName.equals(realName)) {
-            MutableComponent nickInfo = Component.literal("§aNickname: §f" + displayName + " §7(Real: " + realName + ")");
+            MutableComponent nickInfo = (MutableComponent) MessageUtil.component(
+                "commands.neoessentials.whois.nickname_with_real", displayName, realName);
             source.sendSuccess(() -> nickInfo, false);
         } else {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.whois.username", realName), false);
@@ -86,10 +88,11 @@ public class WhoisCommand {
         
         // UUID (for admins)
         if (canSeeDetailed) {
-            MutableComponent uuidComponent = Component.literal("§bUUID: §7" + targetPlayer.getUUID().toString())
+            MutableComponent uuidComponent = ((MutableComponent) MessageUtil.component(
+                    "commands.neoessentials.whois.uuid_display", targetPlayer.getUUID().toString()))
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, targetPlayer.getUUID().toString()))
-                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy UUID")))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, MessageUtil.component("commands.neoessentials.whois.uuid_copy_hover")))
                 );
             source.sendSuccess(() -> uuidComponent, false);
         }
@@ -141,13 +144,13 @@ public class WhoisCommand {
             double z = targetPlayer.getZ();
             String dimension = targetPlayer.level().dimension().identifier().toString();
             
-            MutableComponent locationComponent = Component.literal("§dLocation: §f" + 
-                DECIMAL_FORMAT.format(x) + ", " + DECIMAL_FORMAT.format(y) + ", " + DECIMAL_FORMAT.format(z) + 
-                " §7in §f" + dimension)
+            MutableComponent locationComponent = ((MutableComponent) MessageUtil.component(
+                    "commands.neoessentials.whois.location_with_dim",
+                    DECIMAL_FORMAT.format(x), DECIMAL_FORMAT.format(y), DECIMAL_FORMAT.format(z), dimension))
                 .withStyle(style -> style
-                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, 
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                         "/tp " + DECIMAL_FORMAT.format(x) + " " + DECIMAL_FORMAT.format(y) + " " + DECIMAL_FORMAT.format(z)))
-                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to get teleport command")))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, MessageUtil.component("commands.neoessentials.whois.location_hover")))
                 );
             source.sendSuccess(() -> locationComponent, false);
         }

@@ -496,21 +496,21 @@ public class NeoEssentials {
                             // Marshal message sending back onto the server thread
                             server.execute(() -> {
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e§l  CONFIG SPLITTING AVAILABLE"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_title"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your config.json file is large and could be easier to manage!"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7NeoEssentials can split it into smaller, focused files."));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_large_config"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Easier to edit §7- Each system in its own file"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Safer §7- Automatic backup before splitting"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Organized §7- Find settings faster"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Reversible §7- Keep backup to restore anytime"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_easy"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_safe"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_organized"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_backup"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eRun: §b/neoessentials config split §eto enable"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_run_command"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§l══════════════════════"));
+                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
                                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
                             });
                         }, "NeoEssentials-AdminNotify");

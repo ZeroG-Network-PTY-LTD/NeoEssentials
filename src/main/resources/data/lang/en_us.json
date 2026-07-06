@@ -1,5 +1,5 @@
 ﻿{
-    "_langVersion":  "17",
+    "_langVersion":  "19",
     "_comment_general":  "=== General ===",
     "_comment_economy":  "=== Economy System ===",
     "commands.neoessentials.balance":  "Balance: {0}{1}",
@@ -160,6 +160,7 @@
     "commands.neoessentials.chat.command_muted":  "§cYou cannot use commands while muted.",
     "commands.neoessentials.chat.muted":  "You are currently muted and cannot send chat messages.",
     "commands.neoessentials.freeze.cannot_use_commands":  "You are frozen and cannot use commands.",
+    "commands.neoessentials.freeze.cannot_chat":  "You are frozen and cannot send chat messages.",
     "commands.neoessentials.jail.prevent_escape":  "§cYou cannot do that while jailed!",
     "commands.neoessentials.jail.message":  "§cYou are jailed and cannot leave.",
     "commands.neoessentials.jail.escape_prevented":  "§cYou cannot escape jail.",
@@ -935,6 +936,7 @@
     "commands.neoessentials.helpop.message":  "§eMessage: ",
     "commands.neoessentials.helpop.actions":  "§eActions: ",
     "commands.neoessentials.helpop.player_only":  "§cOnly players can use this command.",
+    "commands.neoessentials.helpop.muted":  "§cYou are muted and cannot use /helpop.",
     "_comment_list":  "=== List Command ===",
     "commands.neoessentials.list.separator":  "§8§m                                        ",
     "commands.neoessentials.list.header_with_visible":  "§6=== Online Players ({0} visible / {1} total / {2} max) ===",

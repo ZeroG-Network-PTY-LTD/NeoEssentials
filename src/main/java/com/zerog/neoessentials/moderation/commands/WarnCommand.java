@@ -10,7 +10,6 @@ import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,9 +101,10 @@ public class WarnCommand {
         int total = WarnManager.getInstance().getWarnCount(targetId);
 
         // Feedback to command sender
-        String confirm = "§aWarned §e" + playerName + " §a— Reason: §f" + reason
-            + " §7(Total warns: " + total + ", ID: " + entry.getId().substring(0, 8) + "…)";
-        source.sendSuccess(() -> Component.literal(confirm), true);
+        final String fShortId = entry.getId().substring(0, 8);
+        final int fTotal = total;
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.issued",
+            playerName, reason, fTotal, fShortId), true);
 
         // Always log to console so warns are always visible in server logs
         LOGGER.info("[Warn] {} warned {} for: {} (warn #{}, ID: {})",
@@ -113,9 +113,8 @@ public class WarnCommand {
         // Notify target if online
         ServerPlayer target = ctx.getSource().getServer().getPlayerList().getPlayerByName(playerName);
         if (target != null) {
-            target.sendSystemMessage(Component.literal(
-                "§c§l⚠ Warning from " + warnedBy + "§r§c: §f" + reason
-                + " §7(Warning #" + total + ")"));
+            target.sendSystemMessage(MessageUtil.component("commands.neoessentials.warn.notify_target",
+                warnedBy, reason, fTotal));
         }
 
         return 1;
@@ -135,24 +134,23 @@ public class WarnCommand {
         List<WarnEntry> warns = WarnManager.getInstance().getWarnings(targetId);
 
         if (warns.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("§7Player §e" + playerName + " §7has no warnings."), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.none_found", playerName), false);
             return 1;
         }
 
-        source.sendSuccess(() -> Component.literal(
-            "§6════ §eWarnings for " + playerName + " §7(" + warns.size() + " total) §6════"), false);
+        final int fWarnCount = warns.size();
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.list_header", playerName, fWarnCount), false);
 
         int display = Math.min(warns.size(), WARNS_PER_PAGE);
         for (int i = 0; i < display; i++) {
             WarnEntry w = warns.get(i);
             String shortId = w.getId().substring(0, 8);
-            source.sendSuccess(() -> Component.literal(
-                "  §7[" + shortId + "…] §c" + w.getFormattedTime()
-                + " §7by §e" + w.getWarnedBy() + "§7: §f" + w.getReason()), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.list_entry",
+                shortId, w.getFormattedTime(), w.getWarnedBy(), w.getReason()), false);
         }
         if (warns.size() > WARNS_PER_PAGE) {
-            int more = warns.size() - WARNS_PER_PAGE;
-            source.sendSuccess(() -> Component.literal("§7… and §e" + more + " §7more."), false);
+            final int more = warns.size() - WARNS_PER_PAGE;
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.list_more", more), false);
         }
         return 1;
     }
@@ -170,12 +168,12 @@ public class WarnCommand {
 
         int count = WarnManager.getInstance().clearWarnings(targetId);
         if (count == 0) {
-            source.sendSuccess(() -> Component.literal("§7Player §e" + playerName + " §7had no warnings."), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.clear_none", playerName), false);
         } else {
             String sender = getCommandSender(source);
             LOGGER.info("[Warn] {} cleared all {} warn(s) for {}", sender, count, playerName);
-            source.sendSuccess(() -> Component.literal(
-                "§aCleared §e" + count + " §awarning(s) for §e" + playerName + "§a."), true);
+            final int fCount = count;
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.cleared", fCount, playerName), true);
         }
         return 1;
     }
@@ -201,7 +199,7 @@ public class WarnCommand {
             .orElse(null);
 
         if (fullId == null) {
-            source.sendFailure(Component.literal("§cWarn ID §e" + warnId + " §cnot found for §e" + playerName + "§c."));
+            source.sendFailure(MessageUtil.component("commands.neoessentials.warn.remove_id_not_found", warnId, playerName));
             return 0;
         }
 
@@ -209,10 +207,9 @@ public class WarnCommand {
         if (removed) {
             String sender = getCommandSender(source);
             LOGGER.info("[Warn] {} removed warn {} from {}", sender, warnId, playerName);
-            source.sendSuccess(() -> Component.literal(
-                "§aRemoved warn §e" + warnId + "§a from §e" + playerName + "§a."), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.removed", warnId, playerName), false);
         } else {
-            source.sendFailure(Component.literal("§cFailed to remove warn from §e" + playerName + "§c."));
+            source.sendFailure(MessageUtil.component("commands.neoessentials.warn.remove_failed", playerName));
         }
         return removed ? 1 : 0;
     }

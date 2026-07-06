@@ -2,6 +2,7 @@ package com.zerog.neoessentials.auctionhouse.gui;
 import com.zerog.neoessentials.auctionhouse.AuctionConfig;
 import com.zerog.neoessentials.auctionhouse.AuctionHouseManager;
 import com.zerog.neoessentials.auctionhouse.AuctionItem;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -39,7 +40,7 @@ public class GUIPersonalAuctionHouse extends AbstractContainerMenu {
     }
     public static void open(ServerPlayer player) {
         player.openMenu(new MenuProvider() {
-            @Override public Component getDisplayName() { return Component.literal("My Listings"); }
+            @Override public Component getDisplayName() { return Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.my_listings")); }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {
                 return new GUIPersonalAuctionHouse(id, inv);
             }
@@ -55,7 +56,7 @@ public class GUIPersonalAuctionHouse extends AbstractContainerMenu {
             if (idx < items.size()) display.setItem(i, AuctionGuiHelper.buildPersonalListingStack(items.get(idx)));
         }
         for (int i = 45; i < 54; i++) display.setItem(i, ItemStack.EMPTY);
-        display.setItem(45, AuctionGuiHelper.backItem("Back to Auction House"));
+        display.setItem(45, AuctionGuiHelper.backItem(MessageUtil.localize("commands.neoessentials.ah.gui.back_to_auction_house")));
         display.setItem(48, page > 0             ? AuctionGuiHelper.prevPageItem()         : AuctionGuiHelper.prevPageBlockedItem());
         display.setItem(49, AuctionGuiHelper.closeItem());
         display.setItem(50, page + 1 < pageCount ? AuctionGuiHelper.nextPageItem()         : AuctionGuiHelper.nextPageBlockedItem());

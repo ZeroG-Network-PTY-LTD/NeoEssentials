@@ -36,7 +36,8 @@ public class RealnameCommand {
             if (nickname != null) {
                 String cleanNickname = nickname.replaceAll("&[0-9a-fk-or#]", "").replaceAll("&#[0-9a-fA-F]{6}", "");
                 if (cleanNickname.toLowerCase().startsWith(input)) {
-                    builder.suggest(cleanNickname, net.minecraft.network.chat.Component.literal("Nickname of " + realName));
+                    builder.suggest(cleanNickname, com.zerog.neoessentials.util.MessageUtil.component(
+                        "commands.neoessentials.realname.nickname_of_hover", realName));
                 }
             }
         }

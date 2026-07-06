@@ -4,6 +4,7 @@ import com.zerog.neoessentials.shop.ShopTransaction;
 import com.zerog.neoessentials.shop.api.ShopEconomyAdapter;
 import com.zerog.neoessentials.shop.api.ShopEconomyRegistry;
 import com.zerog.neoessentials.shop.events.ShopTransactionEvent;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -124,42 +125,42 @@ public class NpcShopMenu extends AbstractContainerMenu {
         ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
 
         if (!listing.canBuy()) {
-            player.sendSystemMessage(Component.literal("§cThis item is not for sale."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_not_for_sale"));
             return;
         }
 
         BigDecimal price = listing.buyPrice().setScale(2, RoundingMode.HALF_UP);
 
         if (!eco.hasBalance(player.getUUID(), price)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have enough money. Need " +
-                    eco.format(price) + "."));
+            player.sendSystemMessage(MessageUtil.component(
+                    "commands.neoessentials.shop.npc_not_enough_money", eco.format(price)));
             return;
         }
 
         ItemStack template = ShopTransaction.resolveItem(listing.itemId());
         if (template.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§cThis item could not be resolved."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_unresolved"));
             return;
         }
 
         ItemStack give = template.copyWithCount(listing.quantity());
         if (!ShopTransaction.hasSpaceInContainer(player.getInventory(), give, listing.quantity())) {
-            player.sendSystemMessage(Component.literal("§cYour inventory is full."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.inventory_full"));
             return;
         }
 
         if (!eco.debit(player.getUUID(), price)) {
-            player.sendSystemMessage(Component.literal("§cPayment failed."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.payment_failed"));
             return;
         }
 
         ShopTransaction.giveItems(player, give);
 
-        player.sendSystemMessage(Component.literal(String.format(
-                "§aBought §f%dx %s §afor §f%s§a.",
+        player.sendSystemMessage(MessageUtil.component(
+                "commands.neoessentials.shop.npc_bought",
                 listing.quantity(),
                 listing.itemId().replace("minecraft:", ""),
-                eco.format(price))));
+                eco.format(price)));
 
         // Fire event using a synthetic ShopData stub so listeners can process it
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
@@ -226,14 +227,14 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 ItemStack display = template.copyWithCount(listing.quantity());
                 // Encode buy/sell price info as item lore
                 List<Component> lore = new java.util.ArrayList<>();
-                if (listing.canBuy())  lore.add(Component.literal("§aBuy:  " + listing.buyPrice().toPlainString()));
-                if (listing.canSell()) lore.add(Component.literal("§6Sell: " + listing.sellPrice().toPlainString()));
+                if (listing.canBuy())  lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_buy", listing.buyPrice().toPlainString()));
+                if (listing.canSell()) lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_sell", listing.sellPrice().toPlainString()));
                 if (listing.canBuy() && listing.canSell()) {
-                    lore.add(Component.literal("§7Right-click to buy, left-click to sell"));
+                    lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_click_both"));
                 } else if (listing.canBuy()) {
-                    lore.add(Component.literal("§7Right-click to buy"));
+                    lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_click"));
                 } else if (listing.canSell()) {
-                    lore.add(Component.literal("§7Left-click to sell"));
+                    lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_click_sell"));
                 }
                 display.set(net.minecraft.core.component.DataComponents.LORE,
                         new net.minecraft.world.item.component.ItemLore(lore));

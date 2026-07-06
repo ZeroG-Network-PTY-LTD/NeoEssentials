@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.auctionhouse.gui;
 import com.zerog.neoessentials.auctionhouse.AuctionItem;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -13,11 +14,11 @@ public final class AuctionGuiHelper {
         ItemStack base = ai.getItemStack().copy();
         if (base.isEmpty()) return ItemStack.EMPTY;
         base.set(net.minecraft.core.component.DataComponents.LORE, new ItemLore(List.of(
-            Component.literal("Seller: " + ai.getOwner()).withStyle(ChatFormatting.GRAY),
-            Component.literal("Price:  " + String.format("%.2f", ai.getPrice())).withStyle(ChatFormatting.GOLD),
-            Component.literal("Time:   " + ai.getTimeLeft()).withStyle(ChatFormatting.DARK_PURPLE),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.seller", ai.getOwner())).withStyle(ChatFormatting.GRAY),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.price", String.format("%.2f", ai.getPrice()))).withStyle(ChatFormatting.GOLD),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.time", ai.getTimeLeft())).withStyle(ChatFormatting.DARK_PURPLE),
             Component.empty(),
-            Component.literal("Click to buy").withStyle(ChatFormatting.YELLOW)
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.click_to_buy")).withStyle(ChatFormatting.YELLOW)
         )));
         return base;
     }
@@ -25,10 +26,10 @@ public final class AuctionGuiHelper {
         ItemStack base = ai.getItemStack().copy();
         if (base.isEmpty()) return ItemStack.EMPTY;
         base.set(net.minecraft.core.component.DataComponents.LORE, new ItemLore(List.of(
-            Component.literal("Price:  " + String.format("%.2f", ai.getPrice())).withStyle(ChatFormatting.GOLD),
-            Component.literal("Time:   " + ai.getTimeLeft()).withStyle(ChatFormatting.DARK_PURPLE),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.price", String.format("%.2f", ai.getPrice()))).withStyle(ChatFormatting.GOLD),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.time", ai.getTimeLeft())).withStyle(ChatFormatting.DARK_PURPLE),
             Component.empty(),
-            Component.literal("Click to manage").withStyle(ChatFormatting.YELLOW)
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.click_to_manage")).withStyle(ChatFormatting.YELLOW)
         )));
         return base;
     }
@@ -36,9 +37,9 @@ public final class AuctionGuiHelper {
         ItemStack base = ai.getItemStack().copy();
         if (base.isEmpty()) return ItemStack.EMPTY;
         base.set(net.minecraft.core.component.DataComponents.LORE, new ItemLore(List.of(
-            Component.literal("Original price: " + String.format("%.2f", ai.getPrice())).withStyle(ChatFormatting.GOLD),
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.original_price", String.format("%.2f", ai.getPrice()))).withStyle(ChatFormatting.GOLD),
             Component.empty(),
-            Component.literal("Click to collect!").withStyle(ChatFormatting.GREEN)
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.click_to_collect")).withStyle(ChatFormatting.GREEN)
         )));
         return base;
     }
@@ -69,10 +70,10 @@ public final class AuctionGuiHelper {
         return named(new ItemStack(Items.RED_CONCRETE), Component.literal(label).withStyle(ChatFormatting.RED));
     }
     public static ItemStack myListingsItem() {
-        return named(new ItemStack(Items.CHEST), Component.literal("My Listings").withStyle(ChatFormatting.GREEN));
+        return named(new ItemStack(Items.CHEST), Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.my_listings")).withStyle(ChatFormatting.GREEN));
     }
     public static ItemStack expiredItemsButton() {
-        return named(new ItemStack(Items.HOPPER), Component.literal("Expired / Uncollected Items").withStyle(ChatFormatting.RED));
+        return named(new ItemStack(Items.HOPPER), Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.expired_items_button")).withStyle(ChatFormatting.RED));
     }
     public static ItemStack named(ItemStack stack, Component name) {
         stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, name);

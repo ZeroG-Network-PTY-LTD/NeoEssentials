@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.shop.entity.*;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -106,12 +107,11 @@ public class NpcShopCommand {
             com.zerog.neoessentials.util.LevelCompat.of(player).addFreshEntity(npc);
             ShopEntityManager.getInstance().register(shopData);
 
-            src.sendSuccess(() -> Component.literal("§aNPC shop §f\"" + name + "\"§a created. " +
-                    "§7ID: " + shopData.shopId + "\n§eUse /npcshop additem " +
-                    shopData.shopId.toString().substring(0, 8) + "... to add items."), true);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.created",
+                    name, shopData.shopId, shopData.shopId.toString().substring(0, 8)), true);
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -130,7 +130,7 @@ public class NpcShopCommand {
                     ShopNpcEntity::isShopNpc);
 
             if (nearby.isEmpty()) {
-                src.sendFailure(Component.literal("§cNo NPC shop within 5 blocks."));
+                src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.remove_none_nearby"));
                 return 0;
             }
 
@@ -140,13 +140,13 @@ public class NpcShopCommand {
 
             if (shopId != null) {
                 ShopEntityManager.getInstance().remove(shopId);
-                src.sendSuccess(() -> Component.literal("§aNPC shop removed."), true);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.removed"), true);
             } else {
-                src.sendSuccess(() -> Component.literal("§aEntity removed (no linked shop data)."), true);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.entity_removed_unlinked"), true);
             }
             return 1;
         } catch (Exception e) {
-            src.sendFailure(Component.literal("§cError: " + e.getMessage()));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.error", e.getMessage()));
             return 0;
         }
     }
@@ -162,14 +162,14 @@ public class NpcShopCommand {
         BigDecimal sell = sellPrice >= 0 ? BigDecimal.valueOf(sellPrice) : null;
 
         if (buy == null && sell == null) {
-            src.sendFailure(Component.literal("§cBoth buyPrice and sellPrice are -1 (disabled). Set at least one."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.additem_both_disabled"));
             return 0;
         }
 
         shop.addListing(new ShopListing("minecraft:" + itemId.replace("minecraft:", ""), buy, sell, qty));
         ShopEntityManager.getInstance().register(shop);
-        src.sendSuccess(() -> Component.literal("§aAdded §f" + itemId + " §ato shop §f\"" +
-                shop.shopName + "\"§a. Slot " + (shop.listings.size() - 1) + "."), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.additem_success",
+                itemId, shop.shopName, shop.listings.size() - 1), false);
         return 1;
     }
 
@@ -179,11 +179,12 @@ public class NpcShopCommand {
         ShopEntityData shop = resolve(src, shopIdStr);
         if (shop == null) return 0;
         if (!shop.removeListing(index)) {
-            src.sendFailure(Component.literal("§cInvalid index " + index + ". Shop has " + shop.listings.size() + " item(s)."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.removeitem_invalid_index",
+                    index, shop.listings.size()));
             return 0;
         }
         ShopEntityManager.getInstance().register(shop);
-        src.sendSuccess(() -> Component.literal("§aRemoved listing at index " + index + "."), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.removeitem_success", index), false);
         return 1;
     }
 
@@ -191,19 +192,18 @@ public class NpcShopCommand {
 
     private static int executeList(CommandSourceStack src) {
         var all = ShopEntityManager.getInstance().getAll();
-        src.sendSuccess(() -> Component.literal("§6§l=== NPC Shops (" + all.size() + ") ==="), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.list_header", all.size()), false);
         if (all.isEmpty()) {
-            src.sendSuccess(() -> Component.literal("§7No NPC shops exist."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.list_empty"), false);
         } else {
             for (ShopEntityData d : all) {
-                src.sendSuccess(() -> Component.literal(String.format(
-                        "§e%s §7[%s] §f— %d item(s) — §7%.0f,%.0f,%.0f %s",
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.list_entry",
                         d.shopName,
                         d.shopId.toString().substring(0, 8),
                         d.listings.size(),
-                        d.spawnX, d.spawnY, d.spawnZ,
+                        String.format("%.0f", d.spawnX), String.format("%.0f", d.spawnY), String.format("%.0f", d.spawnZ),
                         d.dimension.replace("minecraft:", "")
-                )), false);
+                ), false);
             }
         }
         return all.size();
@@ -214,20 +214,20 @@ public class NpcShopCommand {
     private static int executeInfo(CommandSourceStack src, String shopIdStr) {
         ShopEntityData shop = resolve(src, shopIdStr);
         if (shop == null) return 0;
-        src.sendSuccess(() -> Component.literal("§6§l--- NPC Shop Info ---"), false);
-        src.sendSuccess(() -> Component.literal("§eName: §f"  + shop.shopName), false);
-        src.sendSuccess(() -> Component.literal("§eID:   §7"  + shop.shopId), false);
-        src.sendSuccess(() -> Component.literal("§ePos:  §f"  + (int)shop.spawnX + "," + (int)shop.spawnY + "," + (int)shop.spawnZ), false);
-        src.sendSuccess(() -> Component.literal("§eItems: §f" + shop.listings.size()), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_header"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_name", shop.shopName), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_id", shop.shopId), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_pos",
+                (int) shop.spawnX, (int) shop.spawnY, (int) shop.spawnZ), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_items", shop.listings.size()), false);
         for (int i = 0; i < shop.listings.size(); i++) {
             ShopListing l = shop.listings.get(i);
             final int idx = i;
-            src.sendSuccess(() -> Component.literal(String.format(
-                    "§7  [%d] §f%dx %s §e| Buy:§f%s §e| Sell:§f%s",
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_listing",
                     idx, l.quantity(), l.itemId().replace("minecraft:", ""),
                     l.canBuy()  ? l.buyPrice().toPlainString()  : "§7—",
                     l.canSell() ? l.sellPrice().toPlainString() : "§7—"
-            )), false);
+            ), false);
         }
         return 1;
     }
@@ -236,8 +236,8 @@ public class NpcShopCommand {
 
     private static int executeReload(CommandSourceStack src) {
         ShopEntityManager.getInstance().reload();
-        src.sendSuccess(() -> Component.literal("§aNPC shops reloaded (" +
-                ShopEntityManager.getInstance().getShopCount() + " shop(s))."), true);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.reload_success",
+                ShopEntityManager.getInstance().getShopCount()), true);
         return 1;
     }
 
@@ -281,16 +281,16 @@ public class NpcShopCommand {
     // ── /npcshop help ─────────────────────────────────────────────────────────
 
     private static int executeHelp(CommandSourceStack src) {
-        src.sendSuccess(() -> Component.literal("§6§l=== NPC Shop Commands ==="), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop create <name>                     §7— Spawn NPC at your position"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop remove                            §7— Remove closest NPC shop"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop additem <id> <item> <buy> <sell> <qty>"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop removeitem <id> <index>"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop list                              §7— List all NPC shops"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop info <id>                         §7— Detailed info"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop reload                            §7— Reload from disk"), false);
-        src.sendSuccess(() -> Component.literal("§e/npcshop respawn <id>                      §7— Re-summon a lost NPC entity"), false);
-        src.sendSuccess(() -> Component.literal("§7Pass -1 for buy/sell price to disable that side."), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_header"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_create"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_remove"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_additem"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_removeitem"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_list"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_info"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_reload"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_respawn"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_price_hint"), false);
         return 1;
     }
 
@@ -305,7 +305,7 @@ public class NpcShopCommand {
             }
         }
         if (shop == null) {
-            src.sendFailure(Component.literal("§cNo NPC shop found with ID starting with '" + shopIdStr + "'."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.not_found", shopIdStr));
         }
         return shop;
     }

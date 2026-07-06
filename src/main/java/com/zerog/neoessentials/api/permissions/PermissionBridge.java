@@ -667,37 +667,37 @@ public class PermissionBridge {
      */
     private static void showPermissionsEXHelp(CommandSourceStack source) {
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.help.pex.title"), false);
-        source.sendSuccess(() -> Component.literal("§eThe issue you're experiencing is that PermissionsEX only shows"), false);
-        source.sendSuccess(() -> Component.literal("§ewildcard permissions (*.teleport.*) in tab completion, not"), false);
-        source.sendSuccess(() -> Component.literal("§eindividual permissions. Here's how to fix it:"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.intro1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.intro2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.intro3"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§a1. Export permissions for PEX:"), false);
-        source.sendSuccess(() -> Component.literal("§f   /neoessentials-permissions export pex"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step1_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step1_cmd"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§a2. List all individual permissions:"), false);
-        source.sendSuccess(() -> Component.literal("§f   /neoessentials-permissions list-all"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step2_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step2_cmd"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§a3. Use the exported file or copy permissions manually"), false);
-        source.sendSuccess(() -> Component.literal("§f   Check: neoessentials-permissions.pex"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step3_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step3_cmd"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§a4. PermissionsEX Group Commands:"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex group admin add neoessentials.*"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex group moderator add neoessentials.teleport.*"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex group player add neoessentials.teleport.home.home"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex group player add neoessentials.economy.balance"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step4_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step4_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step4_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step4_cmd3"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step4_cmd4"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§a5. PermissionsEX User Commands:"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex user [username] add neoessentials.teleport.admin.tp"), false);
-        source.sendSuccess(() -> Component.literal("§f   /pex user [username] add neoessentials.kits.starter"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step5_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step5_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step5_cmd2"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§c6. Typical issue: PermissionsEX tab completion only shows"), false);
-        source.sendSuccess(() -> Component.literal("§c   permissions it knows about. Individual permissions need"), false);
-        source.sendSuccess(() -> Component.literal("§c   to be registered with the permission system first."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step6_line1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step6_line2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step6_line3"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§b7. Recommended Permission Groups:"), false);
-        source.sendSuccess(() -> Component.literal("§f   - Admin: neoessentials.*"), false);
-        source.sendSuccess(() -> Component.literal("§f   - Moderator: neoessentials.teleport.*, neoessentials.chat.*"), false);
-        source.sendSuccess(() -> Component.literal("§f   - Player: neoessentials.teleport.home.*, neoessentials.economy.*"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step7_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step7_admin"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step7_mod"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.pex.step7_player"), false);
     }
     
     /**
@@ -714,135 +714,135 @@ public class PermissionBridge {
         Set<String> allPermissions = new HashSet<>(registry.getAllPermissions());
         allPermissions.addAll(scanner.getDiscoveredPermissions());
         
-        source.sendSuccess(() -> Component.literal("§6┌─ ALL NEOESSENTIALS PERMISSIONS ─┐"), false);
-        source.sendSuccess(() -> Component.literal("§eTotal: " + allPermissions.size() + " permissions"), false);
-        source.sendSuccess(() -> Component.literal("§eCopy these for PermissionsEX commands:"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.header"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.total", allPermissions.size()), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.copy_hint"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
+
         // Group by category for better organization
         Map<PermissionRegistry.PermissionCategory, List<String>> grouped = new HashMap<>();
-        
+
         for (String permission : allPermissions) {
             PermissionRegistry.PermissionCategory category = categorizePermission(permission);
             grouped.computeIfAbsent(category, k -> new java.util.ArrayList<>()).add(permission);
         }
-        
+
         for (PermissionRegistry.PermissionCategory category : PermissionRegistry.PermissionCategory.values()) {
             List<String> categoryPerms = grouped.get(category);
             if (categoryPerms == null || categoryPerms.isEmpty()) continue;
-            
+
             categoryPerms.sort(String::compareTo);
-            
-            source.sendSuccess(() -> Component.literal("§a" + category.getDescription() + ":"), false);
+
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.category_header", category.getDescription()), false);
             for (String permission : categoryPerms) {
-                source.sendSuccess(() -> Component.literal("§7  " + permission), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.permission_line", permission), false);
             }
             source.sendSuccess(() -> Component.literal(""), false);
         }
-        
-        source.sendSuccess(() -> Component.literal("§6=== WILDCARD PERMISSIONS ==="), false);
-        source.sendSuccess(() -> Component.literal("§7  neoessentials.*"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.wildcard_header"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.wildcard_all"), false);
         for (PermissionRegistry.PermissionCategory category : PermissionRegistry.PermissionCategory.values()) {
-            source.sendSuccess(() -> Component.literal("§7  neoessentials." + category.getKey() + ".*"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.wildcard_category", category.getKey()), false);
         }
-        
+
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§eUse: §f/pex group <group> add <permission>"), false);
-        source.sendSuccess(() -> Component.literal("§eExport: §f/neoessentials-permissions export pex"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.use_hint"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.list_all.export_hint"), false);
     }
     
     /**
      * Show PermissionsEX group command examples
      */
     private static void showGroupExamples(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("§6┌─ PermissionsEX Group Examples ─┐"), false);
-        source.sendSuccess(() -> Component.literal("§eUse these commands to set up permission groups:"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.header"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.subheader"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Admin Group (Full Access):"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group admin create"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group admin add neoessentials.*"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.admin_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.admin_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.admin_cmd2"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Moderator Group:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group moderator create"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group moderator add neoessentials.teleport.*"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group moderator add neoessentials.chat.*"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group moderator add neoessentials.admin.permissions"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.mod_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.mod_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.mod_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.mod_cmd3"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.mod_cmd4"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Player Group (Basic):"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player create"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.teleport.home.home"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.teleport.home.set"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.teleport.spawn.spawn"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.economy.balance"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.economy.pay"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.chat.msg"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group player add neoessentials.chat.reply"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd3"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd4"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd5"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd6"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd7"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.player_cmd8"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ VIP Group:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group vip create"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group vip add neoessentials.teleport.*"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group vip add neoessentials.economy.*"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group vip add neoessentials.kits.*"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group vip add neoessentials.utility.*"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_cmd3"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_cmd4"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.vip_cmd5"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§b▶ Tab completion should work for:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group <groupname> add neoessentials.<TAB>"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex group <groupname> remove neoessentials.<TAB>"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.tab_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.tab_add"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.tab_remove"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§c▶ If tab completion doesn't work:"), false);
-        source.sendSuccess(() -> Component.literal("§f1. Run: /neoessentials-permissions export pex"), false);
-        source.sendSuccess(() -> Component.literal("§f2. Add at least one permission to any group"), false);
-        source.sendSuccess(() -> Component.literal("§f3. Run: /pex reload"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.troubleshoot_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.troubleshoot_step1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.troubleshoot_step2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.group_examples.troubleshoot_step3"), false);
     }
     
     /**
      * Show PermissionsEX user command examples
      */
     private static void showUserExamples(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("§6┌─ PermissionsEX User Examples ─┐"), false);
-        source.sendSuccess(() -> Component.literal("§eUse these commands to grant permissions to specific users:"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.header"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.subheader"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Admin Permissions for Users:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.teleport.admin.tp"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.teleport.admin.tphere"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.teleport.admin.tpall"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.economy.eco.give"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.admin.reload"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_cmd3"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_cmd4"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.admin_cmd5"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Moderator Permissions for Users:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.teleport.admin.tpo"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.chat.socialspy"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.chat.mute"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.mod_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.mod_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.mod_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.mod_cmd3"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Special Permissions for Users:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.teleport.home.others"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.economy.balance.others"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.kits.starter.nocooldown"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.special_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.special_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.special_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.special_cmd3"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§a▶ Utility Permissions for Users:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.utility.repair"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.utility.afk"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName add neoessentials.utility.dispose"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.utility_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.utility_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.utility_cmd2"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.utility_cmd3"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§b▶ Tab completion should work for:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user <username> add neoessentials.<TAB>"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user <username> remove neoessentials.<TAB>"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.tab_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.tab_add"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.tab_remove"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        
-        source.sendSuccess(() -> Component.literal("§c▶ Remove permissions from users:"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName remove neoessentials.teleport.admin.tp"), false);
-        source.sendSuccess(() -> Component.literal("§f/pex user PlayerName remove neoessentials.*"), false);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.remove_title"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.remove_cmd1"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.help.user_examples.remove_cmd2"), false);
     }
     
     /**

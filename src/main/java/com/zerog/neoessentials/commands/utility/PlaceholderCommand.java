@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.api.PlaceholderManager;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -72,12 +73,12 @@ public class PlaceholderCommand {
 
     private static int showHelp(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack src = ctx.getSource();
-        src.sendSuccess(() -> Component.literal("§6§l═══ Placeholder Commands ═══"), false);
-        src.sendSuccess(() -> Component.literal("§e/placeholder list §7- List all registered placeholders"), false);
-        src.sendSuccess(() -> Component.literal("§e/placeholder info <id> §7- Check a specific placeholder"), false);
-        src.sendSuccess(() -> Component.literal("§e/placeholder test <text> §7- Resolve placeholders in text (uses your player context)"), false);
-        src.sendSuccess(() -> Component.literal("§e/placeholder stats §7- Show registry statistics"), false);
-        src.sendSuccess(() -> Component.literal("§6§l════════════════════════════"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_header"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_list_line"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_info_line"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_test_line"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_stats_line"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.help_footer"), false);
         return 1;
     }
 
@@ -87,9 +88,9 @@ public class PlaceholderCommand {
         PlaceholderManager pm = PlaceholderManager.getInstance();
         Set<String> all = new TreeSet<>(pm.getRegisteredPlaceholders());
 
-        src.sendSuccess(() -> Component.literal("§6§l═══ Registered Placeholders (" + all.size() + ") ═══"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.list_header", all.size()), false);
         if (all.isEmpty()) {
-            src.sendSuccess(() -> Component.literal("§7(none registered)"), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.list_none"), false);
         } else {
             // Group into rows of 4 for readability
             StringBuilder row = new StringBuilder("§7");
@@ -116,9 +117,9 @@ public class PlaceholderCommand {
         PlaceholderManager pm = PlaceholderManager.getInstance();
         Map<String, Object> stats = pm.getStatistics();
 
-        src.sendSuccess(() -> Component.literal("§6§l═══ Placeholder Registry Stats ═══"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.stats_header"), false);
         stats.forEach((k, v) ->
-            src.sendSuccess(() -> Component.literal("§e" + k + "§7: §f" + v), false));
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.stats_line", k, v), false));
         return 1;
     }
 
@@ -130,11 +131,9 @@ public class PlaceholderCommand {
         boolean registered = pm.isPlaceholderRegistered(identifier);
 
         if (registered) {
-            src.sendSuccess(() -> Component.literal(
-                "§a✔ §e{" + identifier + "} §7is §aregistered§7."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.info_registered", identifier), false);
         } else {
-            src.sendSuccess(() -> Component.literal(
-                "§c✘ §e{" + identifier + "} §7is §cnot registered§7."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.info_not_registered", identifier), false);
         }
         return 1;
     }
@@ -158,12 +157,12 @@ public class PlaceholderCommand {
             resolved = pm.setPlaceholders(resolvePlayer, text);
         } catch (Exception e) {
             LOGGER.warn("Error resolving test placeholder '{}': {}", text, e.getMessage());
-            resolved = "§cError: " + e.getMessage();
+            resolved = MessageUtil.localize("commands.neoessentials.placeholder.test_error", e.getMessage());
         }
 
         final String result = resolved;
-        src.sendSuccess(() -> Component.literal("§7Input: §f" + text), false);
-        src.sendSuccess(() -> Component.literal("§7Output: " + result), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.test_input_line", text), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.placeholder.test_output_line", result), false);
         return 1;
     }
 

@@ -2,6 +2,7 @@ package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.util.MessageUtil;
 import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -161,7 +162,7 @@ public class ChatFormatter {
             LOGGER.error("Failed to format chat message for player {}: {}",
                 player.getName().getString(), e.getMessage(), e);
             // Fallback
-            return Component.literal(player.getName().getString() + ": " + message);
+            return MessageUtil.component("commands.neoessentials.chat.fallback_format", player.getName().getString(), message);
         }
     }
 
@@ -712,7 +713,7 @@ public class ChatFormatter {
             .withStyle(style -> style
                 .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, "/msg " + playerName + " "))
                 .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
-                    Component.literal("Click to message " + playerName).withStyle(ChatFormatting.GRAY)))
+                    ((MutableComponent) MessageUtil.component("commands.neoessentials.chat.click_to_message", playerName)).withStyle(ChatFormatting.GRAY)))
             );
     }
 
@@ -728,7 +729,7 @@ public class ChatFormatter {
             .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND,
                 "/msg " + player.getName().getString() + " "))
             .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
-                Component.literal("✉ Click to message " + player.getName().getString())
+                ((MutableComponent) MessageUtil.component("commands.neoessentials.chat.click_to_message_icon", player.getName().getString()))
                     .withStyle(ChatFormatting.GRAY)))
         );
         return comp;
