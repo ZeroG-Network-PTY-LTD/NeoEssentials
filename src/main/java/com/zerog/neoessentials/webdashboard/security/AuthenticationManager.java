@@ -83,8 +83,7 @@ public class AuthenticationManager {
         }
         
         // Verify password
-        String passwordHash = hashPassword(password);
-        if (!passwordHash.equals(user.getPasswordHash())) {
+        if (!verifyPassword(password, user.getPasswordHash())) {
             // Increment failed attempts
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             
@@ -390,24 +389,93 @@ public class AuthenticationManager {
         return user.hasPermission(permission);
     }
     
+    // PBKDF2 parameters for password hashing — 120k iterations is a reasonable modern default
+    // (OWASP recommends 600k for PBKDF2-SHA256 as of 2023, but this runs on the same thread
+    // as game-server request handling, so a lower cost factor avoids adding a noticeable
+    // per-login stall; still ~1000x more expensive to brute-force than the old unsalted SHA-256).
+    private static final int PBKDF2_ITERATIONS = 120_000;
+    private static final int PBKDF2_KEY_LENGTH_BITS = 256;
+    private static final int SALT_LENGTH_BYTES = 16;
+
     /**
-     * Hash password with SHA-256
+     * Hash a password with a fresh random salt using PBKDF2WithHmacSHA256.
+     * Stored format: {@code <hex salt>:<hex hash>}.
+     *
+     * <p>Previously this was a single unsalted SHA-256 digest of the password — trivially
+     * crackable via rainbow tables/GPU brute force if {@code dashboard_users.json} ever leaked.
+     * See {@link #verifyPassword(String, String)} for the backward-compatible check against
+     * accounts hashed before this fix.</p>
      */
     public String hashPassword(String password) {
+        byte[] salt = new byte[SALT_LENGTH_BYTES];
+        new java.security.SecureRandom().nextBytes(salt);
+        byte[] hash = pbkdf2(password, salt);
+        return bytesToHex(salt) + ":" + bytesToHex(hash);
+    }
+
+    /**
+     * Verifies {@code password} against a stored hash, supporting both the current salted
+     * PBKDF2 format ({@code salt:hash}) and the legacy unsalted-SHA-256 format (a bare 64-char
+     * hex digest, from accounts created before this fix). Legacy accounts keep working but
+     * should be migrated by changing their password, which re-hashes with the new scheme.
+     */
+    public boolean verifyPassword(String password, String storedHash) {
+        if (storedHash == null) return false;
+        int sep = storedHash.indexOf(':');
+        if (sep < 0) {
+            // Legacy unsalted SHA-256 — constant-time compare to avoid a timing side-channel.
+            return java.security.MessageDigest.isEqual(
+                legacySha256(password).getBytes(StandardCharsets.UTF_8),
+                storedHash.getBytes(StandardCharsets.UTF_8));
+        }
+        try {
+            byte[] salt = hexToBytes(storedHash.substring(0, sep));
+            byte[] expected = hexToBytes(storedHash.substring(sep + 1));
+            byte[] actual = pbkdf2(password, salt);
+            return java.security.MessageDigest.isEqual(actual, expected);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to verify password hash: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private byte[] pbkdf2(String password, byte[] salt) {
+        try {
+            var spec = new javax.crypto.spec.PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LENGTH_BITS);
+            var factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            return factory.generateSecret(spec).getEncoded();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash password", e);
+        }
+    }
+
+    private String legacySha256(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
+            return bytesToHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 algorithm not found", e);
         }
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    private static byte[] hexToBytes(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
     
     /**
@@ -415,10 +483,21 @@ public class AuthenticationManager {
      */
     private void loadUsers() {
         if (!Files.exists(USERS_FILE)) {
-            // Create default admin user with 8+ character password to meet validation requirements
-            LOGGER.info("Creating default admin user (username: admin, password: admin123)");
-            createUser("admin", "admin123", "admin@localhost", User.Role.ADMIN);
-            LOGGER.warn("SECURITY WARNING: Default admin account created with password 'admin123'. Please change it immediately!");
+            // A fixed default password ("admin123") would let anyone who can reach the
+            // dashboard HTTP port log in as admin immediately, before the operator ever gets
+            // a chance to change it. Generate a random one instead and require it be changed
+            // on first login (same requiresPasswordChange/isTempPassword mechanism already
+            // used for admin-issued password resets elsewhere in this class).
+            String tempPassword = generateRandomPassword(12);
+            User admin = createUser("admin", tempPassword, "admin@localhost", User.Role.ADMIN);
+            admin.setTempPassword(true);
+            admin.setRequiresPasswordChange(true);
+            saveUsers();
+            LOGGER.warn("=================================================================");
+            LOGGER.warn("Created default dashboard admin account — username: admin");
+            LOGGER.warn("Temporary password: {}", tempPassword);
+            LOGGER.warn("You will be required to set a new password on first login.");
+            LOGGER.warn("=================================================================");
             return;
         }
         

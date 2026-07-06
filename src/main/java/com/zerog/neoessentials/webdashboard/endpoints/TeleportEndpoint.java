@@ -38,6 +38,14 @@ public class TeleportEndpoint implements HttpHandler {
                 if ("GET".equals(method)) {
                     handleGetSettings(exchange);
                 } else if ("PUT".equals(method) || "POST".equals(method)) {
+                    // Mutates server-wide teleport config (cooldowns, safety checks, etc.) —
+                    // had no role check at all previously (only DashboardAPI.withAuth ran,
+                    // which merely verifies a valid session, not its role), so any
+                    // authenticated session could disable safety checks / cooldowns server-wide.
+                    if (!Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+                        sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
+                        return;
+                    }
                     handlePutSettings(exchange);
                 } else {
                     sendResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");

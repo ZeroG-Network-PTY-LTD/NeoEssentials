@@ -150,9 +150,10 @@ public class AuthenticationHandler implements HttpHandler {
         }
         String oldPassword = request.get("oldPassword").getAsString();
         String newPassword = request.get("newPassword").getAsString();
-        // Verify old password
-        String oldHash = authManager.hashPassword(oldPassword);
-        if (!oldHash.equals(user.getPasswordHash())) {
+        // Verify old password (via verifyPassword, not a raw hash comparison — hashPassword()
+        // salts with a fresh random salt every call, so comparing its output directly would
+        // never match the stored hash even for the correct password)
+        if (!authManager.verifyPassword(oldPassword, user.getPasswordHash())) {
             sendJsonResponse(exchange, 403, createErrorResponse("Old password is incorrect"));
             return;
         }
