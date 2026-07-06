@@ -151,12 +151,25 @@ public class Kit {
                     itemJson.addProperty("item", itemKey.toString());
                     itemJson.addProperty("count", item.getCount());
 
-                    if (item.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
-                        var customData = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
-                        if (customData != null) {
-                            // Use copyTag().toString() — CustomData.toString() is a Java record
-                            // representation, NOT a parseable NBT string.
-                            itemJson.addProperty("nbt", customData.copyTag().toString());
+                    // Full DataComponentMap (enchantments, custom name, dyed color, potion
+                    // contents, attribute modifiers, etc.) — not just CUSTOM_DATA. Since
+                    // 1.20.5 most of what admins actually put on a kit item (enchant it,
+                    // rename it in an anvil, dye leather armor) lives in typed components,
+                    // not raw NBT, so a CUSTOM_DATA-only round-trip silently dropped it on
+                    // every kit reload/restart. Reuses the same codec the Auction House
+                    // already uses to solve this exact problem.
+                    try {
+                        JsonElement components = com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer
+                            .serialize(item.getComponents());
+                        itemJson.add("components", components);
+                    } catch (Exception e) {
+                        // Fall back to the legacy CUSTOM_DATA-only field if the server registry
+                        // isn't available yet (e.g. AuctionComponentSerializer not initialized).
+                        if (item.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
+                            var customData = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+                            if (customData != null) {
+                                itemJson.addProperty("nbt", customData.copyTag().toString());
+                            }
                         }
                     }
 
@@ -217,18 +230,28 @@ public class Kit {
                     int count = itemJson.has("count") ? itemJson.get("count").getAsInt() : 1;
                     
                     ItemStack stack = new ItemStack(item, count);
-                    
-                    // Apply NBT if present
-                    if (itemJson.has("nbt")) {
+
+                    // Preferred: full DataComponentMap (see toJson() — covers enchantments,
+                    // custom name, dyed color, etc., not just raw NBT).
+                    if (itemJson.has("components")) {
+                        try {
+                            var components = com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer
+                                .deserialize(itemJson.get("components"));
+                            stack.applyComponents(components);
+                        } catch (Exception e) {
+                            // Skip invalid/unresolvable component data
+                        }
+                    } else if (itemJson.has("nbt")) {
+                        // Legacy format (kits saved before this fix) — CUSTOM_DATA only.
                         try {
                             CompoundTag nbt = TagParser.parseCompoundFully(itemJson.get("nbt").getAsString());
-                            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, 
+                            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
                                      net.minecraft.world.item.component.CustomData.of(nbt));
                         } catch (Exception e) {
                             // Skip invalid NBT
                         }
                     }
-                    
+
                     items.add(stack);
                 } catch (Throwable e) {
                     // Skip invalid items

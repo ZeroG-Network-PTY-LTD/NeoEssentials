@@ -3,6 +3,7 @@ package com.zerog.neoessentials.kits;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +42,12 @@ public class KitManager {
     private final Map<String, Kit> kits = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, Long>> playerCooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, Map<String, Integer>> playerUsages = new ConcurrentHashMap<>();
+    // Guards against a double /kit claim: canUseKit() (read cooldown/usage) and giveKit()'s
+    // actual item-giving + cooldown/usage update are a check-then-act sequence with no lock
+    // held across it, so two rapid /kit <name> invocations (double-tap, macro) could both pass
+    // canUseKit() before either write landed — same class of bug as the click-spam issue fixed
+    // in ShopInteractHandler and the stale-listing issue fixed in AuctionHouseManager.
+    private final Set<UUID> claimsInProgress = ConcurrentHashMap.newKeySet();
     private volatile boolean initialized = false;
 
     private KitManager() {
@@ -403,30 +410,30 @@ public class KitManager {
         // If allowKitOverride is enabled and player has override permission, skip all restrictions
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAllowKitOverrideEnabled() &&
             com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.override")) {
-            return new KitUsageResult(true, "Kit can be used (override)");
+            return new KitUsageResult(true, MessageUtil.localize("commands.neoessentials.kits.util.usable_override"));
         }
-        
+
         Kit kit = getKit(kitName);
         if (kit == null) {
-            return new KitUsageResult(false, "Kit not found");
+            return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.not_found"));
         }
-        
+
         if (!kit.isEnabled()) {
-            return new KitUsageResult(false, "Kit is currently disabled");
+            return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.disabled"));
         }
-        
+
         // Check permission
         if (kit.getPermission() != null) {
             if (!PermissionAPI.hasPermission(player.getUUID(), kit.getPermission())) {
-                return new KitUsageResult(false, "You don't have permission to use this kit");
+                return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.no_permission"));
             }
         }
-        
+
         // Check cooldown (unless player has exemption)
         if (!isCooldownExempt(player, kitName)) {
             long remainingCooldown = getRemainingCooldown(player.getUUID(), kitName);
             if (remainingCooldown > 0) {
-                return new KitUsageResult(false, "Kit is still on cooldown for " + formatTime(remainingCooldown));
+                return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.on_cooldown", formatTime(remainingCooldown)));
             }
         }
 
@@ -434,7 +441,7 @@ public class KitManager {
         if (kit.getMaxUses() > 0) {
             int usageCount = getUsageCount(player.getUUID(), kitName);
             if (usageCount >= kit.getMaxUses()) {
-                return new KitUsageResult(false, "You have reached the maximum uses for this kit");
+                return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.max_uses_reached"));
             }
         }
 
@@ -461,17 +468,28 @@ public class KitManager {
                 }
             }
             if (!alreadyOnCooldown && activeCooldowns >= maxKits) {
-                return new KitUsageResult(false, "You have reached the maximum number of kits on cooldown (" + maxKits + ")");
+                return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.max_kits_on_cooldown", maxKits));
             }
         }
 
-        return new KitUsageResult(true, "Kit can be used");
+        return new KitUsageResult(true, MessageUtil.localize("commands.neoessentials.kits.util.usable"));
     }
     
     /**
      * Gives a kit to a player.
      */
     public KitUsageResult giveKit(ServerPlayer player, String kitName) {
+        if (!claimsInProgress.add(player.getUUID())) {
+            return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.claim_in_progress"));
+        }
+        try {
+            return doGiveKit(player, kitName);
+        } finally {
+            claimsInProgress.remove(player.getUUID());
+        }
+    }
+
+    private KitUsageResult doGiveKit(ServerPlayer player, String kitName) {
         KitUsageResult canUse = canUseKit(player, kitName);
         if (!canUse.isAllowed()) {
             return canUse;
@@ -500,14 +518,14 @@ public class KitManager {
                     }
                 }
                 if (!alreadyOnCooldown && activeCooldowns >= maxKits) {
-                    return new KitUsageResult(false, "You have reached the maximum number of kits on cooldown (" + maxKits + ")");
+                    return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.max_kits_on_cooldown", maxKits));
                 }
             }
         }
 
         Kit kit = getKit(kitName);
         if (kit == null) {
-            return new KitUsageResult(false, "Kit not found");
+            return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.not_found"));
         }
 
         try {
@@ -607,12 +625,12 @@ public class KitManager {
             saveCooldowns(player.getUUID());
             saveUsages(player.getUUID());
 
-            String result = String.format("Given kit '%s' (%d items)", kit.getDisplayName(), itemsGiven.size());
+            String result = MessageUtil.localize("commands.neoessentials.kits.util.given", kit.getDisplayName(), itemsGiven.size());
             if (!itemsDropped.isEmpty()) {
-                result += String.format(" (%d items dropped)", itemsDropped.size());
+                result += MessageUtil.localize("commands.neoessentials.kits.util.items_dropped_suffix", itemsDropped.size());
             }
             if (!deniedItems.isEmpty()) {
-                result += String.format(" (%d items denied: %s)", deniedItems.size(), String.join(", ", deniedItems));
+                result += MessageUtil.localize("commands.neoessentials.kits.util.items_denied_suffix", deniedItems.size(), String.join(", ", deniedItems));
             }
 
             if (com.zerog.neoessentials.config.ConfigManager.isLogKitUsageEnabled()) {
@@ -621,9 +639,9 @@ public class KitManager {
             return new KitUsageResult(true, result);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to give kit '{}' to player {}: {}", 
+            LOGGER.error("Failed to give kit '{}' to player {}: {}",
                         kitName, player.getName().getString(), e.getMessage(), e);
-            return new KitUsageResult(false, "An error occurred while giving the kit");
+            return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.give_error"));
         }
     }
     
