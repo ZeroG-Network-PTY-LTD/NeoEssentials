@@ -37,6 +37,18 @@ public class PermissionEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath().replace("/api/permissions", "");
 
         try {
+            // POST/PUT/DELETE here create/modify/remove permission groups and users — e.g. a
+            // player could grant themselves any permission node, including admin-equivalent
+            // ones, or the dashboard-admin role check itself. This had NO role check at all
+            // (only DashboardAPI.withAuth ran, which merely verifies a valid session exists,
+            // not its role), so any authenticated session — including a self-registered
+            // default VIEWER via /dashboardregister — could self-escalate. GET (read-only
+            // overview) is left open to any authenticated session.
+            if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+                sendResponse(exchange, 403, createErrorResponse("Admin access required"));
+                return;
+            }
+
             JsonObject response;
 
             switch (method) {

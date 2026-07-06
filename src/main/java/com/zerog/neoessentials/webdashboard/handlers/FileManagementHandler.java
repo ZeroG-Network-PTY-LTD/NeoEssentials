@@ -59,8 +59,19 @@ public class FileManagementHandler implements HttpHandler {
         
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
-        
+
         try {
+            // Every action here reads or mutates real files on disk (server config, world
+            // data, logs) — there's no "safe to expose to any viewer" subset (unlike e.g.
+            // BackupEndpoint's /status /list, which only report metadata). Previously NONE of
+            // these had a role check at all (only DashboardAPI.withAuth ran, which merely
+            // verifies a valid session, not its role) — any authenticated session, including a
+            // self-registered default VIEWER via /dashboardregister, could read config secrets
+            // or overwrite/delete arbitrary files under the allowed roots.
+            if (!Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+                sendJsonResponse(exchange, 403, createErrorResponse("Admin access required"));
+                return;
+            }
             switch (method) {
                 case "GET":
                     if (path.endsWith("/browse")) {
