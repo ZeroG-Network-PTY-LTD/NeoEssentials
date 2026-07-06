@@ -379,16 +379,11 @@ public class TablistLayout {
 
     // ── Helpers ────────────────────────────────────────────────────────────────
     private int getGroupWeight(ServerPlayer player) {
+        // Goes through PermissionAPI (checks the external adapter, e.g. LuckPerms, first) —
+        // this used to go straight to the internal PermissionManager, which silently returned
+        // 0 for every player whenever LuckPerms was configured as the backing provider.
         try {
-            var mgr = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return 0;
-            var user = mgr.getUser(player.getUUID());
-            String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : mgr.getDefaultGroup();
-            var grp = mgr.getGroup(groupName);
-            if (grp != null) {
-                // Use priority (NeoEssentials PermissionGroup uses priority, not weight)
-                try { return grp.getPriority(); } catch (Exception ignored) {}
-            }
+            return com.zerog.neoessentials.api.permissions.PermissionAPI.getGroupWeight(player.getUUID());
         } catch (Exception ignored) {}
         return 0;
     }

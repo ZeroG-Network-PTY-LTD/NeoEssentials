@@ -399,6 +399,32 @@ public class PermissionAPI {
         return prefix != null ? prefix : "";
     }
 
+    /**
+     * Returns the group weight/priority used for rank comparisons (tablist sort order,
+     * vanish see-priority, etc). Checks the external adapter (LuckPerms) first, exactly like
+     * {@link #getPrefix}/{@link #getSuffix} — callers that went straight to the internal
+     * {@link PermissionManager} instead (as TablistManager/TablistLayout/ChatFormatter
+     * previously did) would silently get 0 for every player whenever an external adapter is
+     * configured, since the internal group registry is typically unpopulated for the
+     * external system's actual groups.
+     */
+    public static int getGroupWeight(UUID uuid) {
+        if (uuid == null) return 0;
+
+        if (externalAdapter != null) {
+            int weight = externalAdapter.getGroupWeight(uuid);
+            if (weight != Integer.MIN_VALUE) return weight;
+            // Adapter had no opinion (e.g. player not cached) — fall through to internal.
+        }
+
+        if (manager == null) return 0;
+        PermissionUser user = manager.getUser(uuid);
+        String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
+        if (groupName == null) return 0;
+        PermissionGroup group = manager.getGroup(groupName);
+        return group != null ? group.getPriority() : 0;
+    }
+
     public static String getSuffix(UUID uuid) {
         // Validate input parameters
         if (uuid == null) {

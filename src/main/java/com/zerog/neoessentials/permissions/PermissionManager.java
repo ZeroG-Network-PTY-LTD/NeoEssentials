@@ -89,17 +89,18 @@ public class PermissionManager {
     }
 
     public PermissionUser getUser(UUID uuid) {
-        PermissionUser user = users.get(uuid);
-        if (user == null) {
-            // Auto-create user with default group
-            user = new PermissionUser(uuid, defaultGroup);
-            addUser(user);
-            LOGGER.info("Auto-created user {} with default group '{}'", uuid, defaultGroup);
-            
+        // computeIfAbsent, not get-then-put: two near-simultaneous permission checks for a
+        // brand-new player (realistic on join, when several systems query permissions in the
+        // same tick) previously could both see null and each construct their own
+        // PermissionUser, with the second addUser() silently discarding the first object and
+        // any state (group changes, temp perms) applied to it in between.
+        return users.computeIfAbsent(uuid, id -> {
+            PermissionUser user = new PermissionUser(id, defaultGroup);
+            LOGGER.info("Auto-created user {} with default group '{}'", id, defaultGroup);
             // Schedule async save to avoid blocking (don't save synchronously on every getUser call)
             // The save will happen on server shutdown or manual /pex reload
-        }
-        return user;
+            return user;
+        });
     }
 
     public Collection<PermissionUser> getUsers() {
@@ -164,21 +165,9 @@ public class PermissionManager {
             }
         }
 
-        // ── 2. Contextual denies (group, with inheritance) ───────────────────
-        if (hasCtx && hasGroupContextualDeny(groupName, permission, context, new HashSet<>())) {
-            LOGGER.debug("  -> Denied by group contextual permission");
-            return false;
-        }
-
         // ── 3. Regular negative permissions (user) ───────────────────────────
         if (user != null && hasNegativePermission(user.getPermissions(), permission)) {
             LOGGER.debug("  -> Denied by user negative permission");
-            return false;
-        }
-
-        // ── 4. Regular negative permissions (group, with inheritance) ─────────
-        if (hasGroupNegativePermission(groupName, permission, new HashSet<>())) {
-            LOGGER.debug("  -> Denied by group negative permission");
             return false;
         }
 
@@ -211,10 +200,77 @@ public class PermissionManager {
             return applyCondition(uuid, permission, context, user.getCondition(permission));
         }
 
-        // ── 8. Group permissions (context + regular, with inheritance) ────────
-        boolean result = hasGroupPermission(groupName, permission, context, new HashSet<>());
+        // ── 8. Group permissions (context + regular grants/denies, with inheritance) ──
+        // Walked one level at a time (see resolveGroupPermissionLevel) so a more specific
+        // group's own explicit grant is not defeated by an ancestor's deny — previously
+        // group denies were checked as one global pass over the ENTIRE inheritance tree
+        // (steps 2/4, now removed) before any group grant was even considered, so e.g. a
+        // child group explicitly granting a permission that a parent group denied would
+        // always lose to the parent's deny. That is backwards from "closest group wins",
+        // the precedence essentially every other permission system (LuckPerms included) uses.
+        Boolean result = resolveGroupPermissionLevel(groupName, permission, context, new HashSet<>());
         LOGGER.debug("  -> Group permission check result: {}", result);
-        return result;
+        return Boolean.TRUE.equals(result);
+    }
+
+    /**
+     * Resolves a permission by checking ONE group level (contextual/regular denies, then
+     * contextual/temp/regular grants) and only consulting parent groups if this level had no
+     * opinion at all. Denies still beat grants WITHIN the same level (unchanged, already-correct
+     * same-level precedence) — this only fixes the ACROSS-level precedence so a child group's
+     * explicit answer wins over any ancestor's.
+     *
+     * @return {@code TRUE}/{@code FALSE} for an explicit answer, or {@code null} if neither this
+     *         group nor any of its ancestors expressed an opinion.
+     */
+    private Boolean resolveGroupPermissionLevel(String groupName, String permission, PermissionContext context, Set<String> visited) {
+        if (groupName == null || visited.contains(groupName.toLowerCase())) return null;
+        visited.add(groupName.toLowerCase());
+        PermissionGroup group = getGroup(groupName);
+        if (group == null) return null;
+
+        boolean hasCtx = (context != null && context != PermissionContext.EMPTY);
+
+        // Denies at THIS level (contextual, then regular)
+        if (hasCtx) {
+            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                    group.getContextualPermissions().entrySet()) {
+                if (context.matches(entry.getKey())) {
+                    Boolean ctxVal = entry.getValue().get(permission);
+                    if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
+                    if (Boolean.FALSE.equals(ctxVal)) return false;
+                }
+            }
+        }
+        if (hasNegativePermission(group.getPermissions(), permission)) return false;
+
+        // Grants at THIS level (contextual, then temp, then regular)
+        if (hasCtx) {
+            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
+                    group.getContextualPermissions().entrySet()) {
+                if (context.matches(entry.getKey())) {
+                    Boolean ctxVal = entry.getValue().get(permission);
+                    if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
+                    if (Boolean.TRUE.equals(ctxVal)) {
+                        return applyCondition(null, permission, context, group.getCondition(permission));
+                    }
+                }
+            }
+        }
+        if (hasTempPermissionWithWildcards(group.getTempPermissions(), permission)) {
+            return applyCondition(null, permission, context, group.getCondition(permission));
+        }
+        if (hasPermissionWithWildcards(group.getPermissions(), permission)) {
+            return applyCondition(null, permission, context, group.getCondition(permission));
+        }
+
+        // Nothing decided at this level — defer to parents (highest priority first),
+        // stopping at the first ancestor that has an opinion.
+        for (String parent : sortedInherits(group)) {
+            Boolean parentResult = resolveGroupPermissionLevel(parent, permission, context, visited);
+            if (parentResult != null) return parentResult;
+        }
+        return null;
     }
 
     /**
@@ -353,20 +409,6 @@ public class PermissionManager {
         return false;
     }
 
-    private boolean hasGroupNegativePermission(String groupName, String permission, Set<String> visited) {
-        if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
-        visited.add(groupName.toLowerCase());
-        PermissionGroup group = getGroup(groupName);
-        if (group == null) return false;
-        if (hasNegativePermission(group.getPermissions(), permission)) return true;
-        // Check inherited groups sorted by priority (highest first)
-        java.util.List<String> sorted = sortedInherits(group);
-        for (String parent : sorted) {
-            if (hasGroupNegativePermission(parent, permission, visited)) return true;
-        }
-        return false;
-    }
-
     private boolean hasPermissionWithWildcards(Set<String> perms, String permission) {
         for (String perm : perms) {
             LOGGER.debug("Checking perm '{}' against permission '{}'", perm, permission);
@@ -387,75 +429,6 @@ public class PermissionManager {
         return false;
     }
 
-
-    private boolean hasGroupPermission(String groupName, String permission, PermissionContext context, Set<String> visited) {
-        if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
-        visited.add(groupName.toLowerCase());
-        PermissionGroup group = getGroup(groupName);
-        if (group == null) {
-            LOGGER.debug("  Group '{}' not found", groupName);
-            return false;
-        }
-        LOGGER.debug("  Checking group '{}' with {} permissions", groupName, group.getPermissions().size());
-
-        // ── Contextual grants (this group) ────────────────────────────────────
-        boolean hasCtx = (context != null && context != PermissionContext.EMPTY);
-        if (hasCtx) {
-            for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
-                    group.getContextualPermissions().entrySet()) {
-                if (context.matches(entry.getKey())) {
-                    Boolean ctxVal = entry.getValue().get(permission);
-                    if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
-                    if (Boolean.TRUE.equals(ctxVal)) return true;
-                }
-            }
-        }
-
-        // ── Group temp permissions ─────────────────────────────────────────────
-        if (hasTempPermissionWithWildcards(group.getTempPermissions(), permission)) {
-            String cond = group.getCondition(permission);
-            // conditions for groups are currently always evaluated against EMPTY UUID;
-            // group UUIDs don't exist — conditions are a user-side feature for groups
-            return applyCondition(null, permission, context, cond);
-        }
-
-        // ── Regular group permissions ──────────────────────────────────────────
-        if (hasPermissionWithWildcards(group.getPermissions(), permission)) {
-            return applyCondition(null, permission, context, group.getCondition(permission));
-        }
-
-        // ── Inherited groups ───────────────────────────────────────────────────
-        java.util.List<String> sorted = sortedInherits(group);
-        for (String parent : sorted) {
-            LOGGER.debug("  Checking inherited group '{}'", parent);
-            if (hasGroupPermission(parent, permission, context, visited)) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns {@code true} if any group in the hierarchy has a contextual
-     * {@code false} override for the given permission + context.
-     */
-    private boolean hasGroupContextualDeny(String groupName, String permission,
-                                           PermissionContext context, Set<String> visited) {
-        if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
-        visited.add(groupName.toLowerCase());
-        PermissionGroup group = getGroup(groupName);
-        if (group == null) return false;
-        for (Map.Entry<String, java.util.Map<String, Boolean>> entry :
-                group.getContextualPermissions().entrySet()) {
-            if (context.matches(entry.getKey())) {
-                Boolean ctxVal = entry.getValue().get(permission);
-                if (ctxVal == null) ctxVal = wildcardLookup(entry.getValue(), permission);
-                if (Boolean.FALSE.equals(ctxVal)) return true;
-            }
-        }
-        for (String parent : sortedInherits(group)) {
-            if (hasGroupContextualDeny(parent, permission, context, visited)) return true;
-        }
-        return false;
-    }
 
     /**
      * Returns the inherited group names of the given group, sorted by their priority
