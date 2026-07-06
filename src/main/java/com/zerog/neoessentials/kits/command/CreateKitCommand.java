@@ -218,28 +218,12 @@ public class CreateKitCommand {
         }
     }
 
-    // Helper to serialize kit to JSON string (minimal, for Pastebin)
+    // Helper to serialize kit to JSON string, for Pastebin export.
+    // Delegates to Kit.toJson() (rather than hand-rolling item serialization here) so this
+    // export path gets full item DataComponents — enchantments, custom names, etc. — instead
+    // of just item id + count, which used to drop all item data on export.
     private static String kitToJsonString(String kitName, String displayName, String description, List<ItemStack> items, long cooldownMillis, String permission) {
-        com.google.gson.JsonObject json = new com.google.gson.JsonObject();
-        json.addProperty("name", kitName);
-        json.addProperty("displayName", displayName);
-        json.addProperty("description", description);
-        json.addProperty("cooldownMillis", cooldownMillis);
-        json.addProperty("permission", permission);
-        com.google.gson.JsonArray itemsArray = new com.google.gson.JsonArray();
-        for (ItemStack item : items) {
-            if (item.isEmpty()) continue;
-            net.minecraft.resources.ResourceLocation itemKey =
-                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem());
-            //noinspection ConstantConditions (defensive guard for modded environments)
-            if (itemKey == null) continue; // Skip unregistered items
-            com.google.gson.JsonObject itemJson = new com.google.gson.JsonObject();
-            itemJson.addProperty("item", itemKey.toString());
-            itemJson.addProperty("count", item.getCount());
-            itemsArray.add(itemJson);
-        }
-        json.add("items", itemsArray);
-        return json.toString();
+        return new Kit(kitName, displayName, description, items, cooldownMillis, permission, -1, true).toJson().toString();
     }
 
     // Simulate Pastebin upload (replace with real API call if needed)
