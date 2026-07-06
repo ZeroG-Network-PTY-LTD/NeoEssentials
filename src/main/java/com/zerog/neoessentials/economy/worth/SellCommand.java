@@ -176,29 +176,50 @@ public class SellCommand {
         if (player == null) { source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
         ItemStack template = WorthManager.resolveItem(itemId);
         if (template == null) { source.sendFailure(MessageUtil.error("commands.neoessentials.worth.unknown_item", itemId)); return 0; }
-        int available = countInInventory(player, template);
-        if (available == 0) { source.sendFailure(MessageUtil.error("commands.neoessentials.sell.not_in_inventory", WorthManager.getItemId(template))); return 0; }
+        // NOTE: `template` here is a bare ItemStack freshly built from the resolved item type
+        // (see WorthManager.resolveItem) — it never carries the real components of whatever's
+        // actually in the player's inventory. doSell()'s counting/removal is component-aware
+        // per-slot, so it's safe to pass this bare template through; it's only ever used to
+        // identify the item TYPE being sold, not compared directly for named-item protection.
+        WorthManager wm = WorthManager.getInstance();
+        int available = countInInventory(player, template, wm.isAllowSellNamedItems());
+        if (available == 0) {
+            // Distinguish "you don't have any" from "you only have named ones we won't sell"
+            int rawAvailable = countInInventory(player, template, true);
+            if (rawAvailable > 0) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.sell.cannot_sell_named"));
+            } else {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.sell.not_in_inventory", WorthManager.getItemId(template)));
+            }
+            return 0;
+        }
         int qty = amount > 0 ? Math.min(amount, available) : available;
         return doSell(source, player, template, qty);
     }
 
     // ── core sell ─────────────────────────────────────────────────────────────
+    // `template` identifies the item TYPE to sell/price — its own component state (e.g. if it's
+    // a bare stack from WorthManager.resolveItem) is NOT trusted for named-item protection;
+    // countInInventory/removeFromInventory inspect the REAL per-slot stacks for that instead,
+    // so an enchanted/custom-named item sitting in inventory can't be silently swept up and
+    // sold at the plain-item price via /sell <item> (it used to be, since the old bare-template
+    // check could never see a name that only exists on the real inventory stack).
     private static int doSell(CommandSourceStack source, ServerPlayer player, ItemStack template, int qty) {
         WorthManager wm = WorthManager.getInstance();
-        if (!wm.isAllowSellNamedItems() && template.has(DataComponents.CUSTOM_NAME)) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.sell.cannot_sell_named"));
-            return 0;
-        }
+        boolean allowNamed = wm.isAllowSellNamedItems();
         BigDecimal price = wm.getPrice(template);
         if (price == null) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.sell.no_price",
                 WorthManager.getItemId(template)));
             return 0;
         }
-        int available = countInInventory(player, template);
+        int available = countInInventory(player, template, allowNamed);
         int toSell = Math.min(qty, available);
         if (toSell <= 0) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.sell.not_enough_items"));
+            boolean anyNamedBlocked = !allowNamed && countInInventory(player, template, true) > available;
+            source.sendFailure(MessageUtil.error(anyNamedBlocked
+                ? "commands.neoessentials.sell.cannot_sell_named"
+                : "commands.neoessentials.sell.not_enough_items"));
             return 0;
         }
 
@@ -207,7 +228,7 @@ public class SellCommand {
             .getInstance().getSellMultiplier(player.getUUID());
         BigDecimal multiplier = (modMult > 0) ? BigDecimal.valueOf(modMult) : wm.getSellMultiplier();
 
-        removeFromInventory(player, template, toSell);
+        removeFromInventory(player, template, toSell, allowNamed);
         BigDecimal earned = price.multiply(multiplier).multiply(BigDecimal.valueOf(toSell));
         EconomyManager.getInstance().addBalance(player.getUUID(), earned);
         LOGGER.info("Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
@@ -263,22 +284,32 @@ public class SellCommand {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
-    private static int countInInventory(ServerPlayer player, ItemStack template) {
+    // Worth is intentionally keyed by item TYPE, not exact components (matches EssentialsX's
+    // Worth semantics) — but named-item protection has to inspect each REAL inventory stack's
+    // own components, not the (possibly bare/synthetic) `template` passed in, since the caller
+    // may be selling "by name" via a freshly-constructed template that never carries whatever
+    // enchantments/custom name the actual inventory stack has.
+    private static boolean isSellableSlot(ItemStack slot, ItemStack template, boolean allowNamed) {
+        if (slot.isEmpty() || slot.getItem() != template.getItem()) return false;
+        return allowNamed || !slot.has(DataComponents.CUSTOM_NAME);
+    }
+
+    private static int countInInventory(ServerPlayer player, ItemStack template, boolean allowNamed) {
         int count = 0;
         Inventory inv = player.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
-            if (!s.isEmpty() && s.getItem() == template.getItem()) count += s.getCount();
+            if (isSellableSlot(s, template, allowNamed)) count += s.getCount();
         }
         return count;
     }
 
-    private static void removeFromInventory(ServerPlayer player, ItemStack template, int amount) {
+    private static void removeFromInventory(ServerPlayer player, ItemStack template, int amount, boolean allowNamed) {
         Inventory inv = player.getInventory();
         int remaining = amount;
         for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
             ItemStack s = inv.getItem(i);
-            if (!s.isEmpty() && s.getItem() == template.getItem()) {
+            if (isSellableSlot(s, template, allowNamed)) {
                 int toRemove = Math.min(s.getCount(), remaining);
                 s.shrink(toRemove);
                 remaining -= toRemove;

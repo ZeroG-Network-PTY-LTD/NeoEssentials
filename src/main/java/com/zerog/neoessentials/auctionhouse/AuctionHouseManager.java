@@ -165,7 +165,11 @@ public final class AuctionHouseManager {
      */
     public boolean cancelListing(AuctionItem item, ServerPlayer seller) {
         if (!item.getUuid().equals(seller.getStringUUID())) return false;
-        activeListings.remove(item);
+        // Remove-and-check FIRST, before handing back the item: a seller with two GUI sessions
+        // open on the same listing (e.g. browsed from both the main AH and "My Listings") could
+        // otherwise click Cancel twice and receive two copies of the item back, since neither
+        // click re-validated the listing was still active before unconditionally returning it.
+        if (!activeListings.remove(item)) return false;
         AuctionDB.getInstance().removeActive(item.getId());
         // Return item to seller
         giveOrDrop(seller, item.getItemStack().copy());
@@ -178,13 +182,29 @@ public final class AuctionHouseManager {
      * @return {@code true} if the purchase succeeded.
      */
     public boolean buyItem(AuctionItem item, ServerPlayer buyer) {
+        // Remove-and-check FIRST, before any money/item changes hands: two buyers who both
+        // opened GUIAuctionItem for the same listing (e.g. one from the main AH browse screen,
+        // one from a search/refresh that hadn't caught up yet) previously could both complete
+        // a purchase against the same stale AuctionItem reference, since nothing re-validated
+        // the listing was still active — duplicating the item and paying the seller twice.
+        if (!activeListings.remove(item)) return false;
+
         // Economy check — use EconomyAPI
         java.math.BigDecimal price = java.math.BigDecimal.valueOf(item.getPrice());
         java.math.BigDecimal balance = com.zerog.neoessentials.api.EconomyAPI.getBalance(buyer.getUUID());
-        if (balance.compareTo(price) < 0) return false;
+        if (balance.compareTo(price) < 0) {
+            // Not yet committed to a purchase — restore the listing so it isn't silently lost.
+            activeListings.add(item);
+            return false;
+        }
 
         boolean withdrawn = com.zerog.neoessentials.api.EconomyAPI.withdraw(buyer.getUUID(), price);
-        if (!withdrawn) return false;
+        if (!withdrawn) {
+            activeListings.add(item);
+            return false;
+        }
+
+        AuctionDB.getInstance().removeActive(item.getId());
 
         // Pay seller
         try {
@@ -196,10 +216,6 @@ public final class AuctionHouseManager {
 
         // Give item to buyer
         giveOrDrop(buyer, item.getItemStack().copy());
-
-        // Remove listing
-        activeListings.remove(item);
-        AuctionDB.getInstance().removeActive(item.getId());
 
         return true;
     }
