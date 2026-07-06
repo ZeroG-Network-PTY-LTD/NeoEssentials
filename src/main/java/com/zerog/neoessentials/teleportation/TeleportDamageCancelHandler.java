@@ -35,6 +35,19 @@ public class TeleportDamageCancelHandler {
         pendingTeleports.remove(player.getUUID());
     }
 
+    /**
+     * Whether {@code player} already has a warmup-teleport pending. This map holds only one
+     * cancel-action per player — registering a second pending teleport (e.g. starting a new
+     * /warp while a /home warmup is still counting down) silently overwrites the first one's
+     * entry, so the first teleport's damage-cancel stops working and the second's `unregister`
+     * call (firing when the FIRST teleport's timer elapses) removes an entry that now belongs
+     * to the second. Callers should check this before starting a new warmup and reject/queue
+     * instead of starting a second one.
+     */
+    public static boolean isPending(ServerPlayer player) {
+        return pendingTeleports.containsKey(player.getUUID());
+    }
+
     @SubscribeEvent
     public static void onPlayerHurt(LivingDamageEvent.Pre event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;

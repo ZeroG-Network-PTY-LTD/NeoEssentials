@@ -70,7 +70,28 @@ public class TeleportUtil {
         boolean allowTeleportInCombat = configManager.isAllowTeleportInCombatEnabled();
         if (!allowTeleportInCombat && com.zerog.neoessentials.teleportation.CombatTracker.isInCombat(player)) {
             int remainingTime = com.zerog.neoessentials.teleportation.CombatTracker.getRemainingCombatTime(player);
-            future.complete(TeleportResult.failure("You cannot teleport while in combat! Please wait " + remainingTime + " second(s)."));
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.combat_cooldown", remainingTime)));
+            return future;
+        }
+
+        // FreezeManager blocks movement/attack/interact/block-break/place, but nothing stopped
+        // a frozen player from simply teleporting away via /home, /warp, /tpa, etc. — this is
+        // the single chokepoint essentially all of those commands route through, so checking
+        // here closes that escape route everywhere at once.
+        if (!com.zerog.neoessentials.moderation.FreezeManager.getInstance().canPlayerMove(player)) {
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.frozen")));
+            return future;
+        }
+
+        // Same gap as freeze: block break/place/attack/interact/respawn are all correctly
+        // redirected for jailed players (see ModerationEventHandler), but /tpa, /tpahere,
+        // /tpaccept, /back and /tp had no jail check at all — a jailed player could simply
+        // teleport request/accept their way out of the cell, including into another dimension.
+        // /home, /warp, /pwarp, /spawn already check JailManager individually; this closes the
+        // gap for every OTHER path through this same chokepoint at once.
+        if (com.zerog.neoessentials.moderation.JailManager.isJailSystemEnabled()
+                && com.zerog.neoessentials.moderation.JailManager.getInstance().isPlayerJailed(player.getUUID())) {
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.jail.prevent_escape")));
             return future;
         }
 
@@ -89,7 +110,7 @@ public class TeleportUtil {
                     for (Object region : regions) {
                         String regionName = (String) region.getClass().getMethod("getName").invoke(region);
                         if (protectedAreas.contains(regionName)) {
-                            future.complete(TeleportResult.failure("Teleportation is blocked: target location is in a protected area (" + regionName + ")!"));
+                            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.protected_area", regionName)));
                             return future;
                         }
                     }
@@ -109,14 +130,14 @@ public class TeleportUtil {
             if (fromLoc.getWorldName().equals(location.getWorldName())) {
                 double dist = fromLoc.distanceTo(location);
                 if (dist > maxDistance) {
-                    future.complete(TeleportResult.failure("Teleport distance exceeds the maximum allowed by config (" + maxDistance + ")!"));
+                    future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.max_distance_exceeded", maxDistance)));
                     return future;
                 }
             }
         }
 
         if (location == null) {
-            future.complete(TeleportResult.failure("Invalid teleport location"));
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.invalid_location")));
             return future;
         }
 
@@ -124,9 +145,8 @@ public class TeleportUtil {
         if (targetLevel == null) {
             String worldName = location.getWorldName();
             LOGGER.warn("Teleport failed — world '{}' is not loaded or does not exist", worldName);
-            future.complete(TeleportResult.failure(
-                "Target world '" + worldName + "' is not loaded or has been removed. "
-                + "The world may need to be loaded before teleporting there."));
+            future.complete(TeleportResult.failure(MessageUtil.localize(
+                "commands.neoessentials.teleport.util.world_not_loaded", worldName)));
             return future;
         }
 
@@ -147,10 +167,8 @@ public class TeleportUtil {
                 int bx = (int) location.getX(), by = (int) location.getY(), bz = (int) location.getZ();
                 LOGGER.warn("No safe teleport location found at ({},{},{}) in '{}' — area may be solid, flooded, or over the void",
                     bx, by, bz, worldName);
-                future.complete(TeleportResult.failure(
-                    "No safe landing spot found near " + bx + "," + by + "," + bz
-                    + " in '" + worldName + "'. The area may be solid, flooded, or above the void. "
-                    + "Try moving to a safer area first, or disable safety checks in config."));
+                future.complete(TeleportResult.failure(MessageUtil.localize(
+                    "commands.neoessentials.teleport.util.no_safe_landing", bx, by, bz, worldName)));
                 return future;
             }
             // Ensure the safe-landing chunk is also loaded (it is covered by the 3×3
@@ -188,9 +206,18 @@ public class TeleportUtil {
         boolean cancelOnMovement = com.zerog.neoessentials.config.ConfigManager.isCancelOnMovementEnabled();
         boolean cancelOnDamage = configManager.isCancelOnDamageEnabled();
 
+        // Reject a second overlapping warmup instead of silently clobbering the first one's
+        // damage-cancel registration (TeleportDamageCancelHandler holds only one pending
+        // cancel-action per player) — e.g. starting /warp while a /home warmup is still
+        // counting down previously left the first teleport un-cancelable by damage.
+        if (cancelOnDamage && com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.isPending(player)) {
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.already_in_progress")));
+            return;
+        }
+
         // Define cancel action
         Runnable cancelAction = () -> {
-            future.complete(TeleportResult.failure("Teleport cancelled - you moved/took damage!"));
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.cancelled_moved_or_damaged")));
         };
         // Register for damage cancel if enabled
         if (cancelOnDamage) {
@@ -203,18 +230,26 @@ public class TeleportUtil {
             if (cancelOnDamage) {
                 com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.unregisterPendingTeleport(player);
             }
+            // DelayedTaskScheduler has no cancellation mechanism — this scheduled runnable
+            // always fires at its due tick regardless of what happened during the warmup.
+            // cancelAction (registered above) completes `future` early on damage, but without
+            // this check the teleport would still execute afterward anyway: the player would
+            // see "Teleport cancelled - you took damage!" and then get teleported a moment
+            // later regardless, completely defeating cancelOnDamage's purpose of stopping
+            // players from escaping combat via /home, /warp, /tpa, etc.
+            if (future.isDone()) return;
             // Check if player moved (cancel if they did), only if enabled in config
             // Use 1.5 block threshold to avoid false positives from network lag or small position shifts
             if (cancelOnMovement && player.position().distanceTo(originalPos) > 1.5) {
                 double distance = player.position().distanceTo(originalPos);
                 LOGGER.debug("Teleport cancelled for {} - moved {} blocks (threshold: 1.5)",
                     player.getName().getString(), String.format("%.2f", distance));
-                future.complete(TeleportResult.failure("Teleport cancelled - you moved!"));
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.cancelled_moved")));
                 return;
             }
             // Check if player is still online
             if (player.hasDisconnected()) {
-                future.complete(TeleportResult.failure("Player disconnected"));
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.player_disconnected")));
                 return;
             }
             // Re-ensure the target chunk is still loaded at execution time.
@@ -237,7 +272,7 @@ public class TeleportUtil {
         try {
             ServerLevel targetLevel = location.getLevel();
             if (targetLevel == null) {
-                future.complete(TeleportResult.failure("Target world no longer available"));
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.world_no_longer_available")));
                 return;
             }
 
@@ -335,11 +370,11 @@ public class TeleportUtil {
             }
 
             LOGGER.debug("Teleported {} to {}", player.getName().getString(), location.getLocationString());
-            future.complete(TeleportResult.success("Teleported to " + location.getLocationString()));
+            future.complete(TeleportResult.success(MessageUtil.localize("commands.neoessentials.teleport.util.teleported_to", location.getLocationString())));
 
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {}: {}", player.getName().getString(), e.getMessage(), e);
-            future.complete(TeleportResult.failure("Teleport failed: " + e.getMessage()));
+            future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.teleport_failed", e.getMessage())));
         }
     }
     

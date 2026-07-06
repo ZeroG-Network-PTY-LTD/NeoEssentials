@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.core.BlockPos;
@@ -50,7 +51,14 @@ public class HelpopCommand {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
-                        
+
+                        // Unlike main chat/mail/msg/reply, /helpop had no mute check at all — a
+                        // muted player could still broadcast messages to every online staff member.
+                        if (com.zerog.neoessentials.chat.MuteManager.isMuted(player)) {
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.helpop.muted"));
+                            return 0;
+                        }
+
                         String message = StringArgumentType.getString(ctx, "message");
                         
                         return sendHelpRequest(player, message);
@@ -127,8 +135,8 @@ public class HelpopCommand {
             locationComponent = Component.literal("§e" + location)
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
-                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, 
-                        Component.literal("§7Click to teleport to " + playerName)))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
+                        MessageUtil.component("commands.neoessentials.helpop.tp_hover", playerName)))
                 );
         } else {
             locationComponent = Component.literal("§e" + location);
@@ -139,11 +147,11 @@ public class HelpopCommand {
 
         // Create reply component with click-to-reply
         String replyCommand = "/msg " + playerName + " ";
-        Component replyComponent = Component.literal("§a[Reply]")
+        Component replyComponent = ((MutableComponent) MessageUtil.component("commands.neoessentials.helpop.reply_button"))
             .withStyle(style -> style
                 .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.SUGGEST_COMMAND, replyCommand))
                 .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
-                    Component.literal("§7Click to reply to " + playerName)))
+                    MessageUtil.component("commands.neoessentials.helpop.reply_hover", playerName)))
             );
 
         // Build the actions line: [Reply] plus optional teleport shortcuts, gated by
@@ -153,22 +161,22 @@ public class HelpopCommand {
 
         if (PermissionValidator.validatePermission(staff.createCommandSourceStack(), "neoessentials.teleport.admin.tp").hasPermission()) {
             String tpToThemCommand = "/tp " + playerName;
-            Component tpToThemComponent = Component.literal(" §b[TP to them]")
+            Component tpToThemComponent = ((MutableComponent) MessageUtil.component("commands.neoessentials.helpop.tp_them_button"))
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, tpToThemCommand))
                     .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
-                        Component.literal("§7Click to teleport to " + playerName)))
+                        MessageUtil.component("commands.neoessentials.helpop.tp_hover", playerName)))
                 );
             actionsLine.append(tpToThemComponent);
         }
 
         if (PermissionValidator.validatePermission(staff.createCommandSourceStack(), "neoessentials.teleport.admin.tphere").hasPermission()) {
             String tpToMeCommand = "/tphere " + playerName;
-            Component tpToMeComponent = Component.literal(" §d[TP to me]")
+            Component tpToMeComponent = ((MutableComponent) MessageUtil.component("commands.neoessentials.helpop.tp_me_button"))
                 .withStyle(style -> style
                     .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, tpToMeCommand))
                     .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
-                        Component.literal("§7Click to bring " + playerName + " to you")))
+                        MessageUtil.component("commands.neoessentials.helpop.tp_me_hover", playerName)))
                 );
             actionsLine.append(tpToMeComponent);
         }
