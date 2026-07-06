@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.auctionhouse.gui;
 import com.zerog.neoessentials.auctionhouse.AuctionHouseManager;
 import com.zerog.neoessentials.auctionhouse.AuctionItem;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,7 +48,7 @@ public class GUIAuctionItem extends AbstractContainerMenu {
     }
     public static void open(ServerPlayer player, AuctionItem item, boolean fromPersonal) {
         player.openMenu(new MenuProvider() {
-            @Override public Component getDisplayName() { return Component.literal(fromPersonal ? "My Listing" : "Buy Item"); }
+            @Override public Component getDisplayName() { return Component.literal(fromPersonal ? MessageUtil.localize("commands.neoessentials.ah.gui.title_my_listing") : MessageUtil.localize("commands.neoessentials.ah.gui.title_buy_item")); }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {
                 return new GUIAuctionItem(id, inv, item, fromPersonal);
             }
@@ -59,28 +60,28 @@ public class GUIAuctionItem extends AbstractContainerMenu {
         ItemStack preview = item.getItemStack().copy();
         if (!preview.isEmpty()) {
             preview.set(net.minecraft.core.component.DataComponents.LORE, new ItemLore(List.of(
-                Component.literal("Seller: " + item.getOwner()).withStyle(ChatFormatting.GRAY),
-                Component.literal("Price:  " + String.format("%.2f", item.getPrice())).withStyle(ChatFormatting.GOLD),
-                Component.literal("Time:   " + item.getTimeLeft()).withStyle(ChatFormatting.DARK_PURPLE)
+                Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.seller", item.getOwner())).withStyle(ChatFormatting.GRAY),
+                Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.price", String.format("%.2f", item.getPrice()))).withStyle(ChatFormatting.GOLD),
+                Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.time", item.getTimeLeft())).withStyle(ChatFormatting.DARK_PURPLE)
             )));
         }
         display.setItem(0, preview);
         display.setItem(4, buildActionButton(isSeller));
-        display.setItem(8, AuctionGuiHelper.backItem("Back"));
+        display.setItem(8, AuctionGuiHelper.backItem(MessageUtil.localize("commands.neoessentials.ah.gui.back")));
         for (int i : new int[]{1,2,3,5,6,7}) display.setItem(i, AuctionGuiHelper.fillerItem());
         broadcastChanges();
     }
     private ItemStack buildActionButton(boolean isSeller) {
         if (isSeller)
             return AuctionGuiHelper.named(new ItemStack(Items.RED_CONCRETE),
-                    Component.literal("Cancel Listing").withStyle(ChatFormatting.RED));
+                    Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.cancel_listing")).withStyle(ChatFormatting.RED));
         double bal = com.zerog.neoessentials.api.EconomyAPI.getBalance(viewer.getUUID()).doubleValue();
         boolean canAfford = bal >= item.getPrice();
         ItemStack btn = new ItemStack(canAfford ? Items.EMERALD : Items.BARRIER);
         btn.set(net.minecraft.core.component.DataComponents.LORE, new ItemLore(List.of(
-            Component.literal(String.format("Your balance: %.2f", bal)).withStyle(ChatFormatting.GRAY)
+            Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.your_balance", String.format("%.2f", bal))).withStyle(ChatFormatting.GRAY)
         )));
-        return AuctionGuiHelper.named(btn, Component.literal(canAfford ? "Buy" : "Not enough money")
+        return AuctionGuiHelper.named(btn, Component.literal(canAfford ? MessageUtil.localize("commands.neoessentials.ah.gui.buy") : MessageUtil.localize("commands.neoessentials.ah.gui.not_enough_money"))
                 .withStyle(canAfford ? ChatFormatting.GREEN : ChatFormatting.RED));
     }
     @Override
@@ -94,15 +95,15 @@ public class GUIAuctionItem extends AbstractContainerMenu {
             case 4 -> {
                 if (isSeller) {
                     boolean ok = AuctionHouseManager.getInstance().cancelListing(item, sp);
-                    sp.sendSystemMessage(ok ? Component.literal("\u00a7aListing cancelled.") : Component.literal("\u00a7cFailed to cancel."));
+                    sp.sendSystemMessage(ok ? MessageUtil.component("commands.neoessentials.ah.gui.listing_cancelled") : MessageUtil.component("commands.neoessentials.ah.gui.cancel_failed"));
                     sp.closeContainer(); GUIPersonalAuctionHouse.open(sp);
                 } else {
                     double bal = com.zerog.neoessentials.api.EconomyAPI.getBalance(sp.getUUID()).doubleValue();
                     if (bal >= item.getPrice()) {
                         boolean ok = AuctionHouseManager.getInstance().buyItem(item, sp);
                         sp.sendSystemMessage(ok
-                            ? Component.literal("\u00a7aPurchased \u00a7e" + item.getItemKey() + " \u00a7afor \u00a76" + String.format("%.2f", item.getPrice()))
-                            : Component.literal("\u00a7cPurchase failed."));
+                            ? MessageUtil.component("commands.neoessentials.ah.gui.purchased", item.getItemKey(), String.format("%.2f", item.getPrice()))
+                            : MessageUtil.component("commands.neoessentials.ah.gui.purchase_failed"));
                     }
                     sp.closeContainer();
                     if (fromPersonal) GUIPersonalAuctionHouse.open(sp); else GUIAuctionHouse.open(sp);

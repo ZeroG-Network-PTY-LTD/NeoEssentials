@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.shop.entity;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
@@ -46,7 +45,8 @@ public final class ShopNpcEntity {
         stand.setSilent(true);
         stand.setNoGravity(true);
         // ArmorStand extends LivingEntity (not Mob) — no setNoAi(); stands are stationary by default
-        stand.setCustomName(Component.literal("§6[Shop] §f" + shopName));
+        stand.setCustomName(com.zerog.neoessentials.util.MessageUtil.component(
+            "commands.neoessentials.npcshop.entity_display_name", shopName));
         stand.setCustomNameVisible(true);
         stand.getPersistentData().putUUID(NBT_SHOP_ID, shopId);
         return stand;

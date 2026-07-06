@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.auctionhouse.gui;
 import com.zerog.neoessentials.auctionhouse.AuctionHouseManager;
 import com.zerog.neoessentials.auctionhouse.AuctionItem;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -38,7 +39,7 @@ public class GUIExpiredItems extends AbstractContainerMenu {
     }
     public static void open(ServerPlayer player) {
         player.openMenu(new MenuProvider() {
-            @Override public Component getDisplayName() { return Component.literal("Expired Items"); }
+            @Override public Component getDisplayName() { return Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.title_expired_items")); }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {
                 return new GUIExpiredItems(id, inv);
             }
@@ -54,7 +55,7 @@ public class GUIExpiredItems extends AbstractContainerMenu {
             if (idx < items.size()) display.setItem(i, AuctionGuiHelper.buildExpiredStack(items.get(idx)));
         }
         for (int i = 45; i < 54; i++) display.setItem(i, ItemStack.EMPTY);
-        display.setItem(45, AuctionGuiHelper.backItem("Back"));
+        display.setItem(45, AuctionGuiHelper.backItem(MessageUtil.localize("commands.neoessentials.ah.gui.back")));
         display.setItem(48, page > 0             ? AuctionGuiHelper.prevPageItem()         : AuctionGuiHelper.prevPageBlockedItem());
         display.setItem(49, AuctionGuiHelper.closeItem());
         display.setItem(50, page + 1 < pageCount ? AuctionGuiHelper.nextPageItem()         : AuctionGuiHelper.nextPageBlockedItem());
@@ -72,7 +73,7 @@ public class GUIExpiredItems extends AbstractContainerMenu {
             int idx = page * PAGE_SIZE + slotId;
             if (idx < items.size()) {
                 boolean ok = AuctionHouseManager.getInstance().collectExpired(items.get(idx), sp);
-                sp.sendSystemMessage(ok ? Component.literal("\u00a7aItem collected!") : Component.literal("\u00a7cFailed to collect item."));
+                sp.sendSystemMessage(ok ? MessageUtil.component("commands.neoessentials.ah.gui.item_collected") : MessageUtil.component("commands.neoessentials.ah.gui.collect_failed"));
                 populateDisplay();
             }
         } else {

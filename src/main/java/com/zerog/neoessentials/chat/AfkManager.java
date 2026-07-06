@@ -2,6 +2,7 @@ package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +241,7 @@ public class AfkManager {
 
             // Send personal confirmation only for auto-AFK (manual toggle sends its own feedback via the command)
             if ("Inactive".equals(reason)) {
-                player.sendSystemMessage(Component.literal("§eYou are now AFK due to inactivity."));
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.afk.auto_afk_notice"));
             }
 
             LOGGER.info("Player {} went AFK{}", player.getName().getString(), 
@@ -334,8 +335,8 @@ public class AfkManager {
                 if (afkDuration > (afkKickTimeoutMs - 60000) && afkDuration < afkKickTimeoutMs) {
                     long secondsUntilKick = (afkKickTimeoutMs - afkDuration) / 1000;
                     if (secondsUntilKick > 0 && secondsUntilKick <= 60) {
-                        player.sendSystemMessage(Component.literal(
-                            String.format("§c§lWARNING: §eYou will be kicked for AFK in %d seconds! Move to stay connected.", secondsUntilKick)
+                        player.sendSystemMessage(MessageUtil.component(
+                            "commands.neoessentials.afk.kick_warning", secondsUntilKick
                         ));
                         LOGGER.warn("Player {} will be kicked for AFK in {} seconds", player.getName().getString(), secondsUntilKick);
                     }
@@ -346,7 +347,7 @@ public class AfkManager {
                     try {
                         String kickMsg = this.afkKickMessage != null && !this.afkKickMessage.isEmpty()
                             ? this.afkKickMessage
-                            : "§cKicked for being AFK too long.\n§7You were inactive for " + (afkDuration / 60000) + " minutes.";
+                            : MessageUtil.localize("commands.neoessentials.afk.kick_message", afkDuration / 60000);
                         player.connection.disconnect(Component.literal(kickMsg));
                         LOGGER.info("Kicked player {} for being AFK too long (AFK for {} minutes)",
                             player.getName().getString(), afkDuration / 60000);

@@ -262,8 +262,9 @@ public class MotdCommand {
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.list_header"), false);
         for (String name : mgr.getProfiles().keySet()) {
             boolean isActive = name.equals(active);
-            source.sendSuccess(() -> Component.literal(
-                    (isActive ? "§a▶ " : "§7• ") + name + (isActive ? " §e(active)" : "")), false);
+            source.sendSuccess(() -> isActive
+                    ? MessageUtil.component("commands.neoessentials.motd.profile.entry_active", name)
+                    : MessageUtil.component("commands.neoessentials.motd.profile.entry_inactive", name), false);
         }
         return 1;
     }
@@ -310,9 +311,10 @@ public class MotdCommand {
         }
         MotdManager.MotdProfile p = mgr.getProfiles().get(target);
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.profile.info_header", target), false);
-        source.sendSuccess(() -> Component.literal("§7MOTD:   §f" + (p.motd.isEmpty() ? "(not set)" : p.motd)), false);
-        source.sendSuccess(() -> Component.literal("§7Author: §f" + p.author), false);
-        source.sendSuccess(() -> Component.literal("§7Saved:  §f" + p.timestamp), false);
+        String motdDisplay = p.motd.isEmpty() ? MessageUtil.localize("commands.neoessentials.motd.profile.not_set") : p.motd;
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.motd.profile.info_motd", motdDisplay), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.motd.profile.info_author", p.author), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.motd.profile.info_saved", p.timestamp), false);
         return 1;
     }
 

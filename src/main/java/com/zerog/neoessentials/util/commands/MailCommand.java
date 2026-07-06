@@ -335,8 +335,7 @@ public class MailCommand {
         long unread = msgs.stream().filter(m -> !m.read && !m.isExpired()).count();
         player.sendSystemMessage(MessageUtil.info("commands.neoessentials.mail.status",
             msgs.size(), unread));
-        player.sendSystemMessage(Component.literal(
-            "§7Use §f/mail read §7to read, §f/mail send <player> <msg> §7to send"));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.mail.status_hint"));
         return 1;
     }
 
@@ -362,8 +361,7 @@ public class MailCommand {
         int start = (page - 1) * ITEMS_PER_PAGE;
         int end   = Math.min(start + ITEMS_PER_PAGE, msgs.size());
 
-        player.sendSystemMessage(Component.literal(
-            "§6══════ §eMail §7(§f" + page + "§7/§f" + totalPages + "§7) §6══════"));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.mail.header", page, totalPages));
 
         for (int i = start; i < end; i++) {
             MailMessage mail = msgs.get(i);
@@ -373,20 +371,18 @@ public class MailCommand {
             boolean wasUnread = !mail.read;
             mail.read = true;
 
-            String unreadMarker = wasUnread ? "§e● " : "";
+            String unreadMarker = wasUnread ? MessageUtil.localize("commands.neoessentials.mail.unread_marker") : "";
             String expireInfo   = mail.timeExpire > 0
-                ? " §7[expires: §f" + mail.formattedExpiry() + "§7]" : "";
+                ? MessageUtil.localize("commands.neoessentials.mail.expire_info", mail.formattedExpiry()) : "";
 
-            MutableComponent line = Component.literal(String.format(
-                "§7[§f%d§7] %s§f%s§7: %s%s",
-                displayIndex, unreadMarker, mail.senderName, mail.message, expireInfo
-            ));
+            MutableComponent line = (MutableComponent) MessageUtil.component("commands.neoessentials.mail.entry",
+                displayIndex, unreadMarker, mail.senderName, mail.message, expireInfo);
 
             // Hover: full details; click: suggest delete
-            MutableComponent hover = Component.literal("§6Sent: §f" + mail.formattedTime() + "\n")
-                .append(Component.literal("§6ID: §f" + mail.id + "\n"))
-                .append(Component.literal("§6From: §f" + mail.senderName + "\n"))
-                .append(Component.literal("§7Click to delete this message"));
+            MutableComponent hover = ((MutableComponent) MessageUtil.component("commands.neoessentials.mail.hover_sent", mail.formattedTime())).append("\n")
+                .append(MessageUtil.component("commands.neoessentials.mail.hover_id", mail.id)).append("\n")
+                .append(MessageUtil.component("commands.neoessentials.mail.hover_from", mail.senderName)).append("\n")
+                .append(MessageUtil.component("commands.neoessentials.mail.hover_click_delete"));
 
             line = line.withStyle(s -> s
                 .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, hover))
@@ -400,21 +396,20 @@ public class MailCommand {
         if (totalPages > 1) {
             MutableComponent footer = Component.literal("§7");
             if (page > 1) {
-                footer.append(Component.literal("§7[§a◀ Prev§7] ")
+                footer.append(((MutableComponent) MessageUtil.component("commands.neoessentials.mail.prev_button"))
                     .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, "/mail read " + (page - 1)))));
             }
-            footer.append(Component.literal("§7Page §f" + page + "§7/§f" + totalPages));
+            footer.append(MessageUtil.component("commands.neoessentials.mail.page_footer", page, totalPages));
             if (page < totalPages) {
-                footer.append(Component.literal(" §7[§aNext ▶§7]")
+                footer.append(((MutableComponent) MessageUtil.component("commands.neoessentials.mail.next_button"))
                     .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, "/mail read " + (page + 1)))));
             }
             player.sendSystemMessage(footer);
         }
 
-        player.sendSystemMessage(Component.literal(
-            "§7Use §f/mail clear §7to clear all mail."));
+        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.mail.clear_hint"));
 
         if (removed) saveMailData();
         else saveMailData(); // always persist read flags

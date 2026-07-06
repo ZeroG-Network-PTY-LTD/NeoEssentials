@@ -4,6 +4,7 @@ import com.zerog.neoessentials.api.ChatAPI;
 import com.zerog.neoessentials.api.PlaceholderAPI;
 import com.zerog.neoessentials.chat.ChatManager;
 import com.zerog.neoessentials.integrations.ChatIntegrationManager;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -96,7 +97,7 @@ public class PlayerJoinQuitHandler {
                             w.write(arr.toString());
                         } catch (Exception ignore) {}
                         // Optionally, send a message to the player
-                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("You have received a starter kit!"));
+                        player.sendSystemMessage(MessageUtil.component("commands.neoessentials.kits.starter_kit_received"));
                     }
                     // --- spawnOnJoin logic: Teleport to spawn on first join if enabled ---
                     try {

@@ -64,9 +64,9 @@ public class AfkCommand {
                     AfkManager.getInstance().toggleAfk(player, message);
                     // Personal feedback (broadcast is handled inside AfkManager)
                     if (!wasAfk) {
-                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are now AFK."), false);
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.afk.now_afk"), false);
                     } else {
-                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are no longer AFK."), false);
+                        ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.afk.no_longer_afk"), false);
                     }
                     return 1;
                 })
@@ -107,9 +107,9 @@ public class AfkCommand {
                 AfkManager.getInstance().toggleAfk(player, null);
                 // Personal feedback
                 if (!wasAfk) {
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are now AFK."), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.afk.now_afk"), false);
                 } else {
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§eYou are no longer AFK."), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.afk.no_longer_afk"), false);
                 }
                 return 1;
             })

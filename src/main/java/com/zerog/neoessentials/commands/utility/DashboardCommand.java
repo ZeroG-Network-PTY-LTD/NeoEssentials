@@ -61,36 +61,37 @@ public class DashboardCommand {
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.separator"), false);
         source.sendSuccess(() -> Component.literal(""), false);
 
-        String runningStatus = status.running ? "§a§lONLINE" : "§c§lOFFLINE";
-        source.sendSuccess(() -> Component.literal("§7Status: " + runningStatus), false);
+        String runningStatus = MessageUtil.localize(status.running ? "commands.neoessentials.dashboard.status_running" : "commands.neoessentials.dashboard.status_offline");
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.status_line", runningStatus), false);
 
-        String configStatus = status.configEnabled ? "§aEnabled" : "§cDisabled";
-        source.sendSuccess(() -> Component.literal("§7Config: " + configStatus), false);
+        String configStatus = MessageUtil.localize(status.configEnabled ? "commands.neoessentials.dashboard.config_enabled" : "commands.neoessentials.dashboard.config_disabled");
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.config_line", configStatus), false);
 
         if (status.manuallyDisabled) {
-            source.sendSuccess(() -> Component.literal("§7Override: §eManually disabled"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.override_manually_disabled"), false);
         }
 
         if (status.running) {
-            source.sendSuccess(() -> Component.literal("§7URL: §b§n" + status.url), false);
-            source.sendSuccess(() -> Component.literal("§7API: §b§n" + status.url + "/api/"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
         }
 
         // Show installed file version
         String installedVer = DashboardFileManager.getInstalledDashboardVersion();
         String currentVer   = DashboardFileManager.getCurrentModVersion();
         String verColour    = installedVer.equals(currentVer) ? "§a" : "§e";
-        source.sendSuccess(() -> Component.literal(
-            "§7Files: " + verColour + "build." + installedVer
-            + (installedVer.equals(currentVer) ? " §8(up-to-date)" : " §e→ build." + currentVer + " available")), false);
+        String filesSuffix  = installedVer.equals(currentVer)
+            ? MessageUtil.localize("commands.neoessentials.dashboard.files_uptodate_suffix")
+            : MessageUtil.localize("commands.neoessentials.dashboard.files_update_available_suffix", currentVer);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.files_line", verColour, installedVer, filesSuffix), false);
 
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.footer_separator"), false);
 
         if (!status.running) {
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboard start §7to start the server"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.hint_start"), false);
         } else {
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboard stop §7to stop the server"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.hint_stop"), false);
         }
 
         return 1;
@@ -100,29 +101,29 @@ public class DashboardCommand {
         CommandSourceStack source = context.getSource();
 
         if (!ConfigManager.isWebDashboardEnabled()) {
-            source.sendSuccess(() -> Component.literal("§c§lERROR: §cDashboard is disabled in configuration!"), false);
-            source.sendSuccess(() -> Component.literal("§7Enable it in §econfig/neoessentials.toml"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.disabled_in_config"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.enable_in_config_hint"), false);
             return 0;
         }
 
         if (DashboardAPI.getInstance().isRunning()) {
-            source.sendSuccess(() -> Component.literal("§e§lWARNING: §eDashboard is already running!"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.already_running"), false);
             return 0;
         }
 
-        source.sendSuccess(() -> Component.literal("§6Starting dashboard server..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.starting"), false);
 
         boolean success = DashboardLifecycleManager.startDashboard(source.getServer());
 
         if (success) {
             DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
-            source.sendSuccess(() -> Component.literal("§a§l✓ §aDashboard started successfully!"), false);
-            source.sendSuccess(() -> Component.literal("§7URL: §b§n" + status.url), false);
-            source.sendSuccess(() -> Component.literal("§7API: §b§n" + status.url + "/api/"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.started_success"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
             return 1;
         } else {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cFailed to start dashboard!"), false);
-            source.sendSuccess(() -> Component.literal("§7Check server logs for details"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.failed_start"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.check_logs"), false);
             return 0;
         }
     }
@@ -131,21 +132,21 @@ public class DashboardCommand {
         CommandSourceStack source = context.getSource();
 
         if (!DashboardAPI.getInstance().isRunning()) {
-            source.sendSuccess(() -> Component.literal("§e§lWARNING: §eDashboard is not running!"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.not_running"), false);
             return 0;
         }
 
-        source.sendSuccess(() -> Component.literal("§6Stopping dashboard server..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.stopping"), false);
 
         boolean success = DashboardLifecycleManager.stopDashboard();
 
         if (success) {
-            source.sendSuccess(() -> Component.literal("§a§l✓ §aDashboard stopped successfully!"), false);
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboard start §7to restart it"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.stopped_success"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.hint_restart"), false);
             return 1;
         } else {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cFailed to stop dashboard!"), false);
-            source.sendSuccess(() -> Component.literal("§7Check server logs for details"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.failed_stop"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.check_logs"), false);
             return 0;
         }
     }
@@ -154,16 +155,16 @@ public class DashboardCommand {
         CommandSourceStack source = context.getSource();
 
         if (!DashboardAPI.getInstance().isRunning()) {
-            source.sendSuccess(() -> Component.literal("§e§lWARNING: §eDashboard is not running!"), false);
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboard start §7instead"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.not_running"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.hint_start_instead"), false);
             return 0;
         }
 
-        source.sendSuccess(() -> Component.literal("§6Restarting dashboard server..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restarting"), false);
 
         boolean stopSuccess = DashboardLifecycleManager.stopDashboard();
         if (!stopSuccess) {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cFailed to stop dashboard!"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.failed_stop"), false);
             return 0;
         }
 
@@ -173,12 +174,12 @@ public class DashboardCommand {
 
         if (startSuccess) {
             DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
-            source.sendSuccess(() -> Component.literal("§a§l✓ §aDashboard restarted successfully!"), false);
-            source.sendSuccess(() -> Component.literal("§7URL: §b§n" + status.url), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restarted_success"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
             return 1;
         } else {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cFailed to restart dashboard!"), false);
-            source.sendSuccess(() -> Component.literal("§7Check server logs for details"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.failed_restart"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.check_logs"), false);
             return 0;
         }
     }
@@ -187,15 +188,15 @@ public class DashboardCommand {
         CommandSourceStack source = context.getSource();
 
         if (!DashboardAPI.getInstance().isRunning()) {
-            source.sendSuccess(() -> Component.literal("§c§lERROR: §cDashboard is not running!"), false);
-            source.sendSuccess(() -> Component.literal("§7Use §e/dashboard start §7to start it"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.error_not_running"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.hint_start_it"), false);
             return 0;
         }
 
         DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
-        source.sendSuccess(() -> Component.literal("§6§lDashboard URLs:"), false);
-        source.sendSuccess(() -> Component.literal("§7Frontend: §b§n" + status.url), false);
-        source.sendSuccess(() -> Component.literal("§7API: §b§n" + status.url + "/api/"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.urls_header"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.frontend_line", status.url), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
         return 1;
     }
 
@@ -208,13 +209,13 @@ public class DashboardCommand {
     private static int updateDashboardFiles(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
 
-        source.sendSuccess(() -> Component.literal("§6Checking dashboard files for updates..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.checking_updates"), false);
 
         try {
             DashboardFileManager.UpdateSummary summary = DashboardFileManager.smartUpdateDashboardFiles(false);
             return sendUpdateSummary(source, summary, false);
         } catch (Exception e) {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cUpdate failed: " + e.getMessage()), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.update_failed", e.getMessage()), false);
             return 0;
         }
     }
@@ -225,13 +226,13 @@ public class DashboardCommand {
     private static int checkDashboardFiles(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
 
-        source.sendSuccess(() -> Component.literal("§6Checking dashboard files (dry-run — no files will be changed)..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.checking_dry_run"), false);
 
         try {
             DashboardFileManager.UpdateSummary summary = DashboardFileManager.smartUpdateDashboardFiles(true);
             return sendUpdateSummary(source, summary, true);
         } catch (Exception e) {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cCheck failed: " + e.getMessage()), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.check_failed", e.getMessage()), false);
             return 0;
         }
     }
@@ -242,18 +243,18 @@ public class DashboardCommand {
     private static int forceUpdateDashboardFiles(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
 
-        source.sendSuccess(() -> Component.literal("§6Force-updating ALL dashboard files from JAR..."), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_updating"), false);
 
         try {
             DashboardFileManager.forceUpdateDashboardFiles();
-            source.sendSuccess(() -> Component.literal("§a§l✓ §aAll dashboard files replaced from JAR."), false);
-            source.sendSuccess(() -> Component.literal("§7Path: §eneoessentials/webdashboard/"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_done"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_path"), false);
             if (DashboardAPI.getInstance().isRunning()) {
-                source.sendSuccess(() -> Component.literal("§e⚠ §eRestart to apply: §b/dashboard restart"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restart_to_apply"), false);
             }
             return 1;
         } catch (Exception e) {
-            source.sendSuccess(() -> Component.literal("§c§l✗ §cForce update failed: " + e.getMessage()), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_failed", e.getMessage()), false);
             return 0;
         }
     }
@@ -263,57 +264,53 @@ public class DashboardCommand {
     private static int sendUpdateSummary(CommandSourceStack source,
                                           DashboardFileManager.UpdateSummary summary,
                                           boolean dryRun) {
-        String label = dryRun ? "§8[dry-run] " : "";
+        String label = dryRun ? MessageUtil.localize("commands.neoessentials.dashboard.summary_dryrun_label") : "";
 
-        source.sendSuccess(() -> Component.literal("§6§l─────────────────────────────"), false);
-        source.sendSuccess(() -> Component.literal(
-            "§7Checked §f" + summary.total() + " §7file(s) " + label), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_separator"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_checked", summary.total(), label), false);
 
         if (!summary.added.isEmpty()) {
-            source.sendSuccess(() -> Component.literal(
-                (dryRun ? "§b⊕ " : "§a✚ ") + (dryRun ? "Would add" : "Added") +
-                " §f" + summary.added.size() + "§7 new file(s):"), false);
+            source.sendSuccess(() -> MessageUtil.component(dryRun
+                ? "commands.neoessentials.dashboard.summary_added_dryrun"
+                : "commands.neoessentials.dashboard.summary_added_normal", summary.added.size()), false);
             for (String f : summary.added)
-                source.sendSuccess(() -> Component.literal("  §8» §f" + f), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item", f), false);
         }
 
         if (!summary.updated.isEmpty()) {
-            source.sendSuccess(() -> Component.literal(
-                (dryRun ? "§e⟳ " : "§a✔ ") + (dryRun ? "Would update" : "Updated") +
-                " §f" + summary.updated.size() + "§7 changed file(s):"), false);
+            source.sendSuccess(() -> MessageUtil.component(dryRun
+                ? "commands.neoessentials.dashboard.summary_updated_dryrun"
+                : "commands.neoessentials.dashboard.summary_updated_normal", summary.updated.size()), false);
             for (String f : summary.updated)
-                source.sendSuccess(() -> Component.literal("  §8» §e" + f), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item_updated", f), false);
         }
 
         if (!summary.unchanged.isEmpty()) {
-            source.sendSuccess(() -> Component.literal(
-                "§8= Unchanged: §f" + summary.unchanged.size() + "§8 file(s) already up-to-date"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_unchanged", summary.unchanged.size()), false);
         }
 
         if (!summary.failed.isEmpty()) {
-            source.sendSuccess(() -> Component.literal(
-                "§c✗ Failed: §f" + summary.failed.size() + "§c file(s):"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_failed", summary.failed.size()), false);
             for (String f : summary.failed)
-                source.sendSuccess(() -> Component.literal("  §8» §c" + f), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item_failed", f), false);
         }
 
-        source.sendSuccess(() -> Component.literal("§6§l─────────────────────────────"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_separator"), false);
 
         if (dryRun) {
             if (summary.hasChanges()) {
-                source.sendSuccess(() -> Component.literal(
-                    "§7Run §e/dashboard update §7to apply these changes."), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_dryrun_hint"), false);
             } else {
-                source.sendSuccess(() -> Component.literal("§a✓ All files are already up-to-date."), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_dryrun_uptodate"), false);
             }
         } else {
             if (summary.hasChanges()) {
-                source.sendSuccess(() -> Component.literal("§a§l✓ §aDashboard files updated successfully!"), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_update_success"), false);
                 if (DashboardAPI.getInstance().isRunning()) {
-                    source.sendSuccess(() -> Component.literal("§e⚠ §eRestart to apply: §b/dashboard restart"), false);
+                    source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restart_to_apply"), false);
                 }
             } else {
-                source.sendSuccess(() -> Component.literal("§a✓ All files were already up-to-date. Nothing changed."), false);
+                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_update_nochange"), false);
             }
         }
 

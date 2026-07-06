@@ -212,17 +212,19 @@ public class MiscItemCommands {
 
             src.sendSuccess(() -> MessageUtil.info("commands.neoessentials.showkit.header", kit.getDisplayName()), false);
             if (!kit.getDescription().isEmpty()) {
-                src.sendSuccess(() -> Component.literal("§7" + kit.getDescription()), false);
+                final String desc = kit.getDescription();
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.showkit.description", desc), false);
             }
             // Cooldown line
             long cdMs = kit.getCooldownMillis();
             String cdStr = cdMs <= 0 ? "No cooldown" : formatDuration(cdMs);
-            src.sendSuccess(() -> Component.literal("§7Cooldown: §e" + cdStr), false);
+            final String fCdStr = cdStr;
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.showkit.cooldown", fCdStr), false);
             // Items
             for (ItemStack stack : kit.getItems()) {
                 String itemName = stack.getItem().getDescription().getString();
                 int count = stack.getCount();
-                src.sendSuccess(() -> Component.literal("  §a- §f" + count + "x §e" + itemName), false);
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.showkit.item_line", count, itemName), false);
             }
             shown++;
         }
@@ -264,7 +266,7 @@ public class MiscItemCommands {
         for (Map.Entry<String, String> entry : powers.entrySet()) {
             String itemName = entry.getKey().contains(":") ? entry.getKey().substring(entry.getKey().indexOf(':') + 1) : entry.getKey();
             String cmd = entry.getValue();
-            src.sendSuccess(() -> Component.literal("  §e" + itemName + " §8→ §7" + cmd), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.powertoollist.entry", itemName, cmd), false);
         }
         return 1;
     }
@@ -360,15 +362,14 @@ public class MiscItemCommands {
         int start = (p - 1) * LINES_PER_PAGE;
         int end = Math.min(start + LINES_PER_PAGE, formatted.size());
 
-        final String header = "§6══ §e" + safeChapter + " §7(Page " + p + "/" + totalPages + ") §6══";
-        src.sendSuccess(() -> Component.literal(header), false);
+        final int fp = p, fTotalPages = totalPages;
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.customtext.page_header", safeChapter, fp, fTotalPages), false);
         for (int i = start; i < end; i++) {
             String line = formatted.get(i);
             src.sendSuccess(() -> Component.literal(line), false);
         }
         if (totalPages > 1) {
-            src.sendSuccess(() -> Component.literal(
-                "§7Use §e/customtext " + safeChapter + " <page>§7 to view other pages."), false);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.customtext.page_footer", safeChapter), false);
         }
         return 1;
     }

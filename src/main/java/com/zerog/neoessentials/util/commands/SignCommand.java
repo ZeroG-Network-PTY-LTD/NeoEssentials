@@ -65,10 +65,11 @@ public class SignCommand {
             Component lineText = signBlockEntity.getFrontText().getMessage(i, false);
             String textContent = lineText.getString();
             if (textContent.isEmpty()) {
-                textContent = "§7(empty)";
+                textContent = MessageUtil.localize("commands.neoessentials.sign.empty_line");
             }
-            
-            MutableComponent lineComponent = Component.literal("§6Line " + (i + 1) + ": §f" + textContent);
+
+            MutableComponent lineComponent = (MutableComponent) MessageUtil.component(
+                "commands.neoessentials.sign.line_display", i + 1, textContent);
             context.getSource().sendSuccess(() -> lineComponent, false);
         }
         
@@ -115,8 +116,8 @@ public class SignCommand {
         LOGGER.info("Player {} edited sign at {} line {} to: {}", 
             player.getName().getString(), pos, line + 1, finalText);
         
-        context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.updated", 
-            line + 1, finalText.isEmpty() ? "§7(empty)" : finalText), false);
+        context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.updated",
+            line + 1, finalText.isEmpty() ? MessageUtil.localize("commands.neoessentials.sign.empty_line") : finalText), false);
         return 1;
     }
 

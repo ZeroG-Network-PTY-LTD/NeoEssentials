@@ -2,6 +2,7 @@ package com.zerog.neoessentials.auctionhouse.gui;
 import com.zerog.neoessentials.auctionhouse.AuctionConfig;
 import com.zerog.neoessentials.auctionhouse.AuctionHouseManager;
 import com.zerog.neoessentials.auctionhouse.AuctionItem;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -41,7 +42,7 @@ public class GUIAuctionHouse extends AbstractContainerMenu {
     }
     public static void open(ServerPlayer player) {
         player.openMenu(new MenuProvider() {
-            @Override public Component getDisplayName() { return Component.literal("Auction House"); }
+            @Override public Component getDisplayName() { return Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.title_auction_house")); }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {
                 return new GUIAuctionHouse(id, inv);
             }

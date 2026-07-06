@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 18;
+    private static final int CURRENT_LANG_VERSION = 19;
 
     /**
      * Returns the configured server language code, e.g. "fr_fr".
@@ -891,18 +891,18 @@ public class MessageUtil {
      * Create a clickable confirmation message for home actions
      */
     public static MutableComponent homeConfirmComponent(String homeName, String action, String commandConfirm, String commandDeny) {
-        MutableComponent confirm = Component.literal("[Confirm]")
+        MutableComponent confirm = Component.literal(localize("commands.neoessentials.util.confirm_button"))
             .withStyle(style -> style.withColor(TextColor.fromRgb(0x4CAF50)))
             .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandConfirm)))
-            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to confirm " + action + " of home '" + homeName + "'"))));
-        MutableComponent deny = Component.literal("[Deny]")
+            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(localize("commands.neoessentials.util.home_action_confirm_hover", action, homeName)))));
+        MutableComponent deny = Component.literal(localize("commands.neoessentials.util.deny_button"))
             .withStyle(style -> style.withColor(TextColor.fromRgb(0xF44336)))
             .withStyle(style -> style.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.RUN_COMMAND, commandDeny)))
-            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to cancel " + action + " of home '" + homeName + "'"))));
+            .withStyle(style -> style.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(localize("commands.neoessentials.util.home_action_deny_hover", action, homeName)))));
         return Component.literal("")
-            .append(Component.literal("Are you sure you want to "+action+" home '").withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD600))))
+            .append(Component.literal(localize("commands.neoessentials.util.home_action_confirm_prefix", action)).withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD600))))
             .append(Component.literal(homeName).withStyle(style -> style.withColor(TextColor.fromRgb(0xFF9800))))
-            .append(Component.literal("'? "))
+            .append(Component.literal(localize("commands.neoessentials.util.home_action_confirm_suffix")))
             .append(confirm)
             .append(Component.literal(" "))
             .append(deny);

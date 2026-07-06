@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.scheduler;
 
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -215,7 +216,7 @@ public class TaskScheduler {
         LOGGER.warn("Executing server restart task: {}", task.getName());
         
         // Send warning to all players
-        Component message = Component.literal("§cServer restart scheduled by task: " + task.getName());
+        Component message = MessageUtil.component("commands.neoessentials.scheduler.restart_warning", task.getName());
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.sendSystemMessage(message);
         }
