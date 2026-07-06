@@ -747,17 +747,13 @@ public class TablistManager {
 
     /** Public so other systems (e.g. chat's short-form placeholder support) can reuse it. */
     public int getGroupWeight(ServerPlayer player) {
+        // Goes through PermissionAPI (checks the external adapter, e.g. LuckPerms, first) —
+        // this used to go straight to the internal PermissionManager, which silently returned
+        // 0 for every player whenever LuckPerms was configured as the backing provider (the
+        // internal group registry is typically unpopulated for LP's actual groups), flattening
+        // tablist sort order.
         try {
-            com.zerog.neoessentials.permissions.PermissionManager mgr =
-                com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return 0;
-            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
-            String groupName = (user != null && user.getGroup() != null)
-                ? user.getGroup() : mgr.getDefaultGroup();
-            com.zerog.neoessentials.permissions.PermissionGroup grp = mgr.getGroup(groupName);
-            if (grp != null) {
-                try { return grp.getPriority(); } catch (Exception ignored) {}
-            }
+            return com.zerog.neoessentials.api.permissions.PermissionAPI.getGroupWeight(player.getUUID());
         } catch (Exception ignored) {}
         return 0;
     }
