@@ -349,7 +349,19 @@ public class JailManager {
         if (jailLoc == null) {
             return true; // Jail doesn't exist anymore
         }
-        
+
+        // Dimension check: the old distSqr-only check compared raw block coordinates with no
+        // regard for which dimension the player is actually in. A jailed player who reached a
+        // different dimension (e.g. via an unblocked teleport command) but happened to be near
+        // the jail's raw XYZ in THAT dimension was incorrectly treated as "in bounds" and never
+        // redirected back — the cell only really exists in jailLoc.dimension.
+        if (jailLoc.dimension != null && !jailLoc.dimension.isEmpty()) {
+            String currentDimension = player.level().dimension().location().toString();
+            if (!jailLoc.dimension.equals(currentDimension)) {
+                return false;
+            }
+        }
+
         // Check if within jail bounds (simple distance check)
         double distance = newPos.distSqr(jailLoc.position);
         return distance <= 100; // 10 block radius squared
