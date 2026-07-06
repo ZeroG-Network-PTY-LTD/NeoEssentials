@@ -42,6 +42,15 @@ public class AdminEndpoint implements HttpHandler {
         LOGGER.info("AdminEndpoint handling request: {} {}", method, path);
 
         try {
+            // Every action here can halt/restart the server, reload config, or broadcast as
+            // the server — all of it is admin-only. This endpoint previously had NO role
+            // check at all (only DashboardAPI.withAuth ran, which merely verifies a valid
+            // session exists, not its role), so any authenticated dashboard account —
+            // including a self-registered default VIEWER via /dashboardregister — could stop
+            // or restart the server. /status is read-only and left open to any session.
+            if (!path.equals("/api/admin/status")) {
+                requireAdmin(exchange);
+            }
             if (path.equals("/api/admin/status") && "GET".equals(method)) {
                 handleGetStatus(exchange);
             } else if (path.equals("/api/admin/restart") && "POST".equals(method)) {
@@ -57,6 +66,12 @@ public class AdminEndpoint implements HttpHandler {
             } else {
                 sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
             }
+        } catch (SecurityException e) {
+            try {
+                sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
+            } catch (IOException ex) {
+                LOGGER.error("Failed to send error response", ex);
+            }
         } catch (Exception e) {
             LOGGER.error("Error handling admin request: {} {}", method, path, e);
             try {
@@ -66,6 +81,12 @@ public class AdminEndpoint implements HttpHandler {
             } catch (IOException ex) {
                 LOGGER.error("Failed to send error response", ex);
             }
+        }
+    }
+
+    private void requireAdmin(HttpExchange exchange) {
+        if (!Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            throw new SecurityException("Admin required");
         }
     }
 
