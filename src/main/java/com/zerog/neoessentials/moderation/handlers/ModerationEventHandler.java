@@ -216,13 +216,48 @@ public class ModerationEventHandler {
     public static void onLivingAttack(LivingDamageEvent.Pre event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) return;
         try {
-            if (!JailManager.isJailSystemEnabled()) return;
-            if (JailManager.getInstance().isPlayerJailed(attacker.getUUID())
+            if (JailManager.isJailSystemEnabled()
+                    && JailManager.getInstance().isPlayerJailed(attacker.getUUID())
                     && !PermissionAPI.hasPermission(attacker.getUUID(), "neoessentials.jail.allow-attack")) {
+                event.setNewDamage(0f);
+                return;
+            }
+            // FreezeManager.canPlayerAttack() existed but was never actually called anywhere —
+            // a frozen player could still attack and damage other players.
+            if (!FreezeManager.getInstance().canPlayerAttack(attacker)) {
                 event.setNewDamage(0f);
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling attack for jailed player", e);
+            LOGGER.error("Error handling attack for jailed/frozen player", e);
+        }
+    }
+
+    // ── Item Pickup / Drop ────────────────────────────────────────────────────
+    /**
+     * FreezeManager.canPlayerPickupItems()/canPlayerDropItems() existed but were never
+     * actually called anywhere — a frozen player could still pick up and drop items freely.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onItemPickup(net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent.Pre event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
+        try {
+            if (!FreezeManager.getInstance().canPlayerPickupItems(player)) {
+                event.setCanPickup(net.neoforged.neoforge.common.util.TriState.FALSE);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling item pickup for frozen player", e);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onItemToss(net.neoforged.neoforge.event.entity.item.ItemTossEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
+        try {
+            if (!FreezeManager.getInstance().canPlayerDropItems(player)) {
+                event.setCanceled(true);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling item drop for frozen player", e);
         }
     }
 

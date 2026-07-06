@@ -266,10 +266,33 @@ public class VanishManager {
     }
     
     /**
-     * Check if a player can see vanished players
+     * Check if a player can see vanished players (in general — ignores rank).
+     * Prefer {@link #canViewerSeeVanishedPlayer(UUID, UUID)} when checking visibility of a
+     * SPECIFIC vanished player, since that also enforces the priority-rank rule this method
+     * ignores (see {@link #hidePlayerFromOthers} — a viewer must be both registered as a
+     * see-vanished viewer AND have sufficient rank relative to the vanished player).
      */
     public boolean canPlayerSeeVanished(UUID playerId) {
     return viewerPriorities.containsKey(playerId);
+    }
+
+    /**
+     * Whether {@code viewerId} can actually see {@code vanishedId} specifically, applying the
+     * same priority-rank rule {@link #hidePlayerFromOthers} uses for the real entity
+     * visibility. This is the single source of truth for "can this viewer see this vanished
+     * player" — commands like {@code /list}/{@code /near} previously each had their own,
+     * mutually inconsistent notion of this (one checked only the permission node, ignoring
+     * whether the viewer had actually toggled see-vanished on; another checked map membership
+     * but ignored the rank comparison), which could disagree with what the viewer's client is
+     * actually rendering.
+     */
+    public boolean canViewerSeeVanishedPlayer(UUID viewerId, UUID vanishedId) {
+        if (!isPlayerVanished(vanishedId)) return true;
+        if (viewerId.equals(vanishedId)) return true;
+        Integer viewerPriority = viewerPriorities.get(viewerId);
+        if (viewerPriority == null) return false;
+        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
+        return viewerPriority <= vanishedPriority;
     }
     
     /**

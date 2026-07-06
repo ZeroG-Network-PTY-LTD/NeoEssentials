@@ -72,6 +72,14 @@ public class ChatHandler {
                 return;
             }
 
+            // FreezeManager blocks attack/interact/block-break/place, but chat was never
+            // actually checked anywhere — a frozen player could chat freely.
+            if (com.zerog.neoessentials.moderation.FreezeManager.getInstance().isPlayerFrozen(player.getUUID())) {
+                event.setCanceled(true);
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.freeze.cannot_chat"));
+                return;
+            }
+
             // Phase 3: Apply anti-spam filters
             AntiSpamManager.FilterResult filterResult = AntiSpamManager.getInstance().filterMessage(player, rawMessage);
             if (!filterResult.allowed) {
