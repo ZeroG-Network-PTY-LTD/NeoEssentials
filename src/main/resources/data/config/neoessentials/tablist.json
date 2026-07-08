@@ -73,6 +73,21 @@
     // Suffix appended to AFK players' names. Supports all color syntax.
     "afkSuffix": " &7[AFK]",
 
+    /* Above-head nametag prefix/suffix (also shown in the tablist row — Minecraft ties both
+     * to the same scoreboard-team property, so they can't be set independently).
+     * By default this is exactly the same prefix/suffix chat already uses (from the
+     * permission system / LuckPerms if configured) — no setup needed to get a matching
+     * nametag. Override it per-group or per-player below under "groups"/"players" using the
+     * "nametagPrefix"/"nametagSuffix" keys, independently of chat, if you want the nametag to
+     * say something different. These support the same {placeholder} tokens as header/footer
+     * (e.g. {balance}, {group}, {online}, {ping}) and all color syntax.
+     * Set "enabled": false to make NeoEssentials skip managing nametag text entirely (the
+     * tablist sorting/columns still work) — use this if another mod/plugin should own it instead.
+     */
+    "nametagSettings": {
+      "enabled": true
+    },
+
     /* Quick per-group color override for {displayname} in header/footer.
      * Value is a color prefix prepended to the player's display name.
      * Supports &#RRGGBB hex. Use '' (empty string) to disable for a group.
@@ -85,10 +100,12 @@
       "default": "&f"
     },
 
-    /* Per-group header/footer overrides.
+    /* Per-group header/footer AND nametag prefix/suffix overrides.
      * Players in matching groups see these frames instead of the global ones.
-     * Priority: per-player > per-group > global.
-     * Supports animated arrays and all color syntax.
+     * Priority: per-player > per-group > global (same rule for nametagPrefix/nametagSuffix,
+     * which fall back to the permission system's prefix/suffix — same as chat — when omitted).
+     * header/footer support animated arrays and all color syntax; nametagPrefix/nametagSuffix
+     * are single strings (a scoreboard team prefix/suffix has no concept of animation frames).
      */
     "groups": {
       "admin": {
@@ -97,6 +114,9 @@
           "<gradient:AA0000-FF0000>&l⚑ ADMIN PANEL ⚑&r {newline}&8Coords &e{x}&8, &e{y}&8, &e{z}"
         ],
         "footer": "&cAdmin tools: &f/vanish /kick /ban /mute &8| &7{world}"
+        // Example (commented out — uncomment to use):
+        // "nametagPrefix": "&c[Admin] ",
+        // "nametagSuffix": ""
       },
       "mod": {
         "header": "<gradient:FFA500-FFD700>&l✪ Moderator ✪&r &8| &e{online}&8/&e{max} &7online",
@@ -111,10 +131,10 @@
       }
     },
 
-    /* Per-player header/footer overrides, keyed by player UUID.
+    /* Per-player header/footer AND nametag prefix/suffix overrides, keyed by player UUID.
      * These take the highest priority over group and global settings.
-     * Runtime overrides via /tablist player <name> are NOT persisted here —
-     * add them manually if you want them to survive /tablist reload.
+     * Runtime overrides via /tablist player <name> header|footer|nametag are NOT persisted
+     * here — add them manually if you want them to survive /tablist reload.
      */
     "players": {
     },

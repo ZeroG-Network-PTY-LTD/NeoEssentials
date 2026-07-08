@@ -261,8 +261,9 @@ Any `{neoessentials_*}` token registered with the PlaceholderAPI system is also 
 | `showAfkIndicator` | boolean | `true` | Append `afkSuffix` to AFK players |
 | `afkSuffix` | string | `" &7[AFK]"` | AFK display suffix |
 | `groupColors` | object | — | Quick `{displayname}` colour prefix per group |
-| `groups` | object | — | Per-group `header`/`footer` frame overrides |
-| `players` | object | — | Per-player UUID `header`/`footer` frame overrides |
+| `groups` | object | — | Per-group `header`/`footer`/`nametagPrefix`/`nametagSuffix` overrides |
+| `players` | object | — | Per-player UUID `header`/`footer`/`nametagPrefix`/`nametagSuffix` overrides |
+| `nametagSettings.enabled` | boolean | `true` | Whether NeoEssentials manages the above-head nametag prefix/suffix at all |
 
 ---
 
@@ -276,6 +277,64 @@ per-player override  >  per-group override  >  global default
 
 A player in the `vip` group with a per-player override will always see their personal
 header, not the VIP group header.
+
+Nametag prefix/suffix (below) use the same priority order.
+
+---
+
+## Above-Head Nametag
+
+The text shown above a player's head (and, since Minecraft ties both to the same scoreboard
+team property, their tab-list row) is a prefix/suffix pair. **By default this is exactly the
+same prefix/suffix chat already uses** — whatever your permission system (internal groups, or
+an external adapter like LuckPerms) has set — so there's nothing to configure to get a nametag
+that matches chat.
+
+To make the nametag say something *different* from chat, set an override in `tablist.json`:
+
+```jsonc
+"groups": {
+  "admin": {
+    "nametagPrefix": "&c[Admin] ",
+    "nametagSuffix": ""
+  }
+}
+```
+
+Or per-player, under `players` (keyed by UUID), with the same two keys. Priority is
+per-player > per-group > the permission-system default, same as header/footer.
+
+`nametagPrefix`/`nametagSuffix` (and a permission-system default value, if it contains any)
+are resolved through the **same placeholder pipeline as header/footer** — every token listed
+under [Placeholders](#placeholders) works here too, e.g.:
+
+```jsonc
+"groups": {
+  "vip": {
+    "nametagPrefix": "&#00CFFF[VIP] ",
+    "nametagSuffix": " &7({balance})"
+  }
+}
+```
+
+The only tokens that don't make sense here are `{prefix}`/`{suffix}` themselves (a nametag
+override referencing its own value) — if one somehow does, it's returned unresolved rather
+than looping forever.
+
+In-game (runtime, not persisted — add to `tablist.json` manually to survive `/tablist reload`):
+
+```
+/tablist player <name> nametag prefix <text>
+/tablist player <name> nametag suffix <text>
+/tablist group <group> nametag prefix <text>
+/tablist group <group> nametag suffix <text>
+/tablist player <name> reset   # also clears nametag overrides
+/tablist group <group> reset   # also clears nametag overrides
+```
+
+If you'd rather have a different mod/plugin manage nametags entirely, set
+`nametagSettings.enabled` to `false` — NeoEssentials will still use the scoreboard team for
+tablist sorting/columns, it just won't set any prefix/suffix on it.
 
 ---
 
