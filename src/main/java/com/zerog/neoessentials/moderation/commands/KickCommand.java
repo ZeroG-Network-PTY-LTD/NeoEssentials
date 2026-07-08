@@ -98,7 +98,7 @@ public class KickCommand {
                 .recordKick(playerDisplayName, targetPlayer.getUUID(), reason, kickedBy);
 
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kick_success", playerDisplayName, reason);
-            source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+            source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
 
 
 
@@ -107,12 +107,12 @@ public class KickCommand {
                 playerDisplayName, kickedBy, reason);
             if (com.zerog.neoessentials.config.ConfigManager.isBroadcastKicksEnabled()) {
                 for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                    player.sendSystemMessage(MessageUtil.info(broadcastMsg));
+                    player.sendSystemMessage(MessageUtil.coloredText(broadcastMsg));
                 }
             }
             // Notify staff if enabled (independent of broadcastKicks)
             if (com.zerog.neoessentials.config.ConfigManager.isNotifyStaffOnKickEnabled()) {
-                broadcastToStaff(server, broadcastMsg);
+                broadcastToStaff(server, broadcastMsg, senderId(source));
             }
 
             if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
@@ -141,7 +141,10 @@ public class KickCommand {
             
             if (playersToKick.isEmpty()) {
                 String message = MessageUtil.localize("neoessentials.moderation.kickall_no_players");
-                source.sendSuccess(() -> MessageUtil.info(message), false);
+                // No paired broadcastToStaff() call here, so no duplicate to avoid — left as
+                // `true` (unlike the other confirmations in this file that were changed to
+                // `false` to fix a real double-message bug).
+                source.sendSuccess(() -> MessageUtil.coloredText(message), true);
                 return 1;
             }
             
@@ -158,7 +161,8 @@ public class KickCommand {
             }
 
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kickall_success", playersToKick.size(), reason);
-            source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+            // No paired broadcastToStaff() call here either — left as `true`, see comment above.
+            source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), true);
             
             if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
                 LOGGER.info("Kicked {} players by {} for: {}", playersToKick.size(), kickedBy, reason);
@@ -172,11 +176,26 @@ public class KickCommand {
         }
     }
     
+    /** The command sender's player UUID, or {@code null} if run from console/command block. */
+    private static java.util.UUID senderId(CommandSourceStack source) {
+        return source.getEntity() instanceof ServerPlayer player ? player.getUUID() : null;
+    }
+
     private static void broadcastToStaff(MinecraftServer server, String message) {
+        broadcastToStaff(server, message, null);
+    }
+
+    /**
+     * @param excludeId skipped if non-null — used so the command sender, who already got
+     *                  their own personal confirmation message, does not also get this
+     *                  near-duplicate staff-wide broadcast just because they also qualify.
+     */
+    private static void broadcastToStaff(MinecraftServer server, String message, java.util.UUID excludeId) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (excludeId != null && player.getUUID().equals(excludeId)) continue;
             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                     player.getUUID(), "neoessentials.moderation.notifications")) {
-                player.sendSystemMessage(MessageUtil.info(message));
+                player.sendSystemMessage(MessageUtil.coloredText(message));
             }
         }
     }

@@ -115,17 +115,17 @@ public class VanishCommand {
                     if (targetPlayerName == null) {
                         // Self-unvanish
                         String message = MessageUtil.localize("neoessentials.moderation.vanish_disabled_self");
-                        source.sendSuccess(() -> MessageUtil.success(message), false);
+                        source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                     } else {
                         // Unvanish other player
                         String confirmMessage = MessageUtil.localize("neoessentials.moderation.vanish_disabled_other", targetName);
-                        source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+                        source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
                         String targetMessage = MessageUtil.localize("neoessentials.moderation.vanish_disabled_by", vanishedBy);
-                        targetPlayer.sendSystemMessage(MessageUtil.info(targetMessage));
+                        targetPlayer.sendSystemMessage(MessageUtil.coloredText(targetMessage));
                     }
                     // Broadcast to staff if enabled
                     if (ConfigManager.isBroadcastToStaffVanishEnabled()) {
-                        broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.vanish_disabled_broadcast", targetName, vanishedBy));
+                        broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.vanish_disabled_broadcast", targetName, vanishedBy), senderId(source));
                     }
                     // Broadcast to all if enabled
                     if (ConfigManager.isBroadcastToAllVanishEnabled()) {
@@ -146,17 +146,17 @@ public class VanishCommand {
                     if (targetPlayerName == null) {
                         // Self-vanish
                         String message = MessageUtil.localize("neoessentials.moderation.vanish_enabled_self");
-                        source.sendSuccess(() -> MessageUtil.success(message), false);
+                        source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                     } else {
                         // Vanish other player
                         String confirmMessage = MessageUtil.localize("neoessentials.moderation.vanish_enabled_other", targetName);
-                        source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+                        source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
                         String targetMessage = MessageUtil.localize("neoessentials.moderation.vanish_enabled_by", vanishedBy);
-                        targetPlayer.sendSystemMessage(MessageUtil.info(targetMessage));
+                        targetPlayer.sendSystemMessage(MessageUtil.coloredText(targetMessage));
                     }
                     // Broadcast to staff if enabled
                     if (ConfigManager.isBroadcastToStaffVanishEnabled()) {
-                        broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.vanish_enabled_broadcast", targetName, vanishedBy));
+                        broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.vanish_enabled_broadcast", targetName, vanishedBy), senderId(source));
                     }
                     // Broadcast to all if enabled
                     if (ConfigManager.isBroadcastToAllVanishEnabled()) {
@@ -210,7 +210,7 @@ public class VanishCommand {
             // Check if actually vanished
             if (!vanishManager.isPlayerVanished(targetId)) {
                 String message = MessageUtil.localize("neoessentials.moderation.player_not_vanished", targetName);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -221,20 +221,20 @@ public class VanishCommand {
                 if (targetPlayerName == null) {
                     // Self-unvanish
                     String message = MessageUtil.localize("neoessentials.moderation.vanish_disabled_self");
-                    source.sendSuccess(() -> MessageUtil.success(message), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 } else {
                     // Unvanish other player
                     String confirmMessage = MessageUtil.localize("neoessentials.moderation.vanish_disabled_other", targetName);
-                    source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+                    source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
                     
                     String targetMessage = MessageUtil.localize("neoessentials.moderation.vanish_disabled_by", vanishedBy);
-                    targetPlayer.sendSystemMessage(MessageUtil.info(targetMessage));
+                    targetPlayer.sendSystemMessage(MessageUtil.coloredText(targetMessage));
                 }
                 
                 // Broadcast to staff
                 if (ConfigManager.isBroadcastToStaffVanishEnabled()) {
                     broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.vanish_disabled_broadcast", 
-                        targetName, vanishedBy));
+                        targetName, vanishedBy), senderId(source));
                 }
                 
                 if (ConfigManager.isLogVanishActionsEnabled()) {
@@ -264,23 +264,23 @@ public class VanishCommand {
             
             if (vanishedPlayers.isEmpty()) {
                 String message = MessageUtil.localize("neoessentials.moderation.vanishlist_empty");
-                source.sendSuccess(() -> MessageUtil.info(message), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 return 1;
             }
             
             String header = MessageUtil.localize("neoessentials.moderation.vanishlist_header", vanishedPlayers.size());
-            source.sendSuccess(() -> MessageUtil.info(header), false);
+            source.sendSuccess(() -> MessageUtil.coloredText(header), false);
             
             for (UUID playerId : vanishedPlayers) {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player != null) {
                     String playerName = player.getName().getString();
                     String vanishInfo = MessageUtil.localize("neoessentials.moderation.vanishlist_entry", playerName);
-                    source.sendSuccess(() -> MessageUtil.info(vanishInfo), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(vanishInfo), false);
                 } else {
                     // Player offline but still in vanish list
                     String offlineInfo = MessageUtil.localize("neoessentials.moderation.vanishlist_offline", playerId.toString());
-                    source.sendSuccess(() -> MessageUtil.warning(offlineInfo), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(offlineInfo), false);
                 }
             }
             
@@ -293,18 +293,33 @@ public class VanishCommand {
         }
     }
     
+    /** The command sender's player UUID, or {@code null} if run from console/command block. */
+    private static java.util.UUID senderId(CommandSourceStack source) {
+        return source.getEntity() instanceof ServerPlayer player ? player.getUUID() : null;
+    }
+
     private static void broadcastToStaff(MinecraftServer server, String message) {
+        broadcastToStaff(server, message, null);
+    }
+
+    /**
+     * @param excludeId skipped if non-null — used so the command sender, who already got
+     *                  their own personal confirmation message, does not also get this
+     *                  near-duplicate staff-wide broadcast just because they also qualify.
+     */
+    private static void broadcastToStaff(MinecraftServer server, String message, java.util.UUID excludeId) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (excludeId != null && player.getUUID().equals(excludeId)) continue;
             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                     player.getUUID(), "neoessentials.moderation.notifications")) {
-                player.sendSystemMessage(MessageUtil.info(message));
+                player.sendSystemMessage(MessageUtil.coloredText(message));
             }
         }
     }
     
     private static void broadcastToAll(MinecraftServer server, String message) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.sendSystemMessage(MessageUtil.info(message));
+            player.sendSystemMessage(MessageUtil.coloredText(message));
         }
     }
     

@@ -260,9 +260,13 @@ public class EnchantCommand {
                     targetPlayer.getDisplayName().getString()
                 ), false);
                 
-                // Notify target player
+                // Notify target player. Template is "Your {0} has been enchanted with {1} {2}
+                // by {3}." — needs the ITEM name as {0}, which was missing entirely, shifting
+                // enchantId into {0}, level into {1}, executor name into {2}, and leaving the
+                // real {3} (executor) unresolved as a literal "{3}".
                 targetPlayer.sendSystemMessage(MessageUtil.info(
                     "commands.neoessentials.enchant.target.notified",
+                    stack.getDisplayName().getString(),
                     enchantId.toString(),
                     level,
                     executor.getDisplayName().getString()

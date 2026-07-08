@@ -597,7 +597,7 @@ public class PermissionsCommand {
         // Check for group existence
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
             return 0;
         }
 
@@ -648,7 +648,7 @@ public class PermissionsCommand {
         // Check for group existence
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
             return 0;
         }
 

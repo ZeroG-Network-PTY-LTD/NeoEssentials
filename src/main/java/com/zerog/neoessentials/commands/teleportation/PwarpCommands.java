@@ -102,12 +102,21 @@ public class PwarpCommands {
         WarpManager warpManager = WarpManager.getInstance();
         var names = warpManager.getPlayerWarpNames(player);
         if (names.isEmpty()) {
-            player.sendSystemMessage(MessageUtil.component(MessageUtil.localize("commands.neoessentials.teleport.warp.playerwarps_list_empty")));
+            // coloredText(), not component(localize(...)) — localize() already returns fully
+            // resolved text; component() would treat that resolved text as a translation KEY
+            // and re-run it through localize() again, corrupting it via the humanizeKey()
+            // fallback (same anti-pattern found and fixed across the moderation commands).
+            player.sendSystemMessage(MessageUtil.coloredText(MessageUtil.localize("commands.neoessentials.teleport.warp.playerwarps_list_empty")));
         } else {
             StringBuilder builder = new StringBuilder();
-            builder.append(MessageUtil.localize("commands.neoessentials.teleport.warp.playerwarps_list_header", names.size(), warpManager.getMaxPlayerWarps()));
+            // Template is "{0}'s Player Warps ({1}/{2})" — needs the player's OWN name as {0},
+            // not just count/max — previously only 2 args were passed for 3 placeholders, so
+            // {0} showed the warp COUNT (not the player's name), {1} showed MAX (not count),
+            // and {2} was left as a literal unresolved "{2}".
+            builder.append(MessageUtil.localize("commands.neoessentials.teleport.warp.playerwarps_list_header",
+                player.getName().getString(), names.size(), warpManager.getMaxPlayerWarps()));
             names.stream().sorted().forEach(name -> builder.append("\n").append(name));
-            player.sendSystemMessage(MessageUtil.component(builder.toString()));
+            player.sendSystemMessage(MessageUtil.coloredText(builder.toString()));
         }
         return 1;
     }
