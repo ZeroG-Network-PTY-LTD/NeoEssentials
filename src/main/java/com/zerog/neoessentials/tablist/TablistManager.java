@@ -94,6 +94,23 @@ public class TablistManager {
     private final Map<String, List<String>> groupHeaderFrames = new LinkedHashMap<>();
     private final Map<String, List<String>> groupFooterFrames = new LinkedHashMap<>();
 
+    // ── Nametag (above-head) prefix/suffix ──────────────────────────────────────
+    /**
+     * Whether NeoEssentials manages the scoreboard-team prefix/suffix that drives the
+     * above-head nametag at all. Vanilla ties nametag and tab-list-row prefix/suffix to the
+     * SAME team property — there's no separate "nametag text" independent of the team's
+     * prefix/suffix — so disabling this means the team is still used for tablist sorting, but
+     * NeoEssentials sets no prefix/suffix on it at all, leaving that to another mod/plugin.
+     */
+    private boolean nametagEnabled = true;
+    // Per-group / per-player nametag prefix+suffix overrides, layered over the default (same
+    // value chat uses, via PermissionAPI.getPrefix/getSuffix) in priority order: player > group
+    // > permission-based default. Empty map entries are treated the same as "no override".
+    private final Map<String, String> groupNametagPrefix = new ConcurrentHashMap<>();
+    private final Map<String, String> groupNametagSuffix = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerNametagPrefix = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerNametagSuffix = new ConcurrentHashMap<>();
+
     // ── Runtime state ─────────────────────────────────────────────────────────
     private int headerFrame = 0;
     private int footerFrame = 0;
@@ -161,6 +178,13 @@ public class TablistManager {
             playerFormat         = tab.has("playerFormat")        ? tab.get("playerFormat").getAsString() : playerFormat;
             parsePlayerFormat();
 
+            // Nametag (above-head) master toggle
+            nametagEnabled = true;
+            if (tab.has("nametagSettings") && tab.get("nametagSettings").isJsonObject()) {
+                JsonObject nametagCfg = tab.getAsJsonObject("nametagSettings");
+                if (nametagCfg.has("enabled")) nametagEnabled = nametagCfg.get("enabled").getAsBoolean();
+            }
+
             // Per-group colour overrides
             groupColors.clear();
             if (tab.has("groupColors") && tab.get("groupColors").isJsonObject()) {
@@ -178,9 +202,11 @@ public class TablistManager {
             if (headerFrames.isEmpty()) headerFrames.add("&6&l{server_name}");
             if (footerFrames.isEmpty()) footerFrames.add("&7{online}&8/&7{max} online");
 
-            // Per-group header/footer overrides
+            // Per-group header/footer overrides (+ nametag prefix/suffix overrides)
             groupHeaderFrames.clear();
             groupFooterFrames.clear();
+            groupNametagPrefix.clear();
+            groupNametagSuffix.clear();
             if (tab.has("groups") && tab.get("groups").isJsonObject()) {
                 for (var entry : tab.getAsJsonObject("groups").entrySet()) {
                     String grp = entry.getKey();
@@ -188,12 +214,16 @@ public class TablistManager {
                     JsonObject grpCfg = entry.getValue().getAsJsonObject();
                     if (grpCfg.has("header")) groupHeaderFrames.put(grp, loadFrames(grpCfg.get("header")));
                     if (grpCfg.has("footer")) groupFooterFrames.put(grp, loadFrames(grpCfg.get("footer")));
+                    if (grpCfg.has("nametagPrefix")) groupNametagPrefix.put(grp, grpCfg.get("nametagPrefix").getAsString());
+                    if (grpCfg.has("nametagSuffix")) groupNametagSuffix.put(grp, grpCfg.get("nametagSuffix").getAsString());
                 }
             }
 
-            // Per-player header/footer overrides (UUIDs as keys)
+            // Per-player header/footer overrides (+ nametag prefix/suffix overrides) (UUIDs as keys)
             playerHeaderFrames.clear();
             playerFooterFrames.clear();
+            playerNametagPrefix.clear();
+            playerNametagSuffix.clear();
             if (tab.has("players") && tab.get("players").isJsonObject()) {
                 for (var entry : tab.getAsJsonObject("players").entrySet()) {
                     try {
@@ -202,6 +232,8 @@ public class TablistManager {
                         JsonObject pCfg = entry.getValue().getAsJsonObject();
                         if (pCfg.has("header")) playerHeaderFrames.put(uuid, loadFrames(pCfg.get("header")));
                         if (pCfg.has("footer")) playerFooterFrames.put(uuid, loadFrames(pCfg.get("footer")));
+                        if (pCfg.has("nametagPrefix")) playerNametagPrefix.put(uuid, pCfg.get("nametagPrefix").getAsString());
+                        if (pCfg.has("nametagSuffix")) playerNametagSuffix.put(uuid, pCfg.get("nametagSuffix").getAsString());
                     } catch (IllegalArgumentException ignored) {
                         LOGGER.warn("TablistManager: invalid UUID in 'players' section: {}", entry.getKey());
                     }
@@ -275,10 +307,22 @@ public class TablistManager {
     // ── Update ────────────────────────────────────────────────────────────────
     public void updateAll(MinecraftServer server) {
         if (!enabled || server == null) return;
-        // Apply BTLP-style group weight sorting teams
-        TablistLayout.getInstance().applySortingTeams(server);
-        // Recompute the BTLP-style column grid (section headers + fillers) once per cycle —
-        // scoreboard teams are global state, so this must not run per-viewer.
+        // NOTE: this used to also call TablistLayout.applySortingTeams(server) here, which
+        // independently moved every player onto its own "neL_<weight>_<group>" sorting team
+        // (no prefix/suffix) right before the loop below moves them again onto
+        // updatePlayerTeam's "ne_<weight>_<group>"/column-key team (which DOES carry
+        // prefix/suffix). A player can only be on one scoreboard team, so that second move
+        // undid the first every single cycle — except updatePlayerTeam's dirty-check cache
+        // only compares against ITS OWN last-applied team/prefix/suffix, so once a cycle
+        // completed and the cache recorded "already on ne_..., nothing to do", it had no way
+        // to notice applySortingTeams silently stealing the player onto neL_... at the START
+        // of the NEXT cycle — updatePlayerTeam would then see its own target team/prefix
+        // unchanged from its cache and skip re-applying it, leaving the player stuck on the
+        // blank-prefix neL_ team until something (e.g. /tablist reload) cleared the cache.
+        // updatePlayerTeam's own team-naming logic already covers every case
+        // applySortingTeams did (plain group, weight-sorted, and BTLP column-key), so the
+        // call was fully redundant as well as actively breaking nametag/prefix display —
+        // removing it rather than trying to reconcile the two competing team assignments.
         TablistLayout.getInstance().recomputeColumnLayout(server);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             updatePlayer(player, server);
@@ -365,8 +409,8 @@ public class TablistManager {
     public void updatePlayerTeam(ServerPlayer player, MinecraftServer server) {
         if (!enabled || server == null) return;
         try {
-            String prefix = getPermissionPrefix(player);
-            String suffix = getPermissionSuffix(player);
+            String prefix = getPermissionPrefix(player, server);
+            String suffix = getPermissionSuffix(player, server);
             String group  = getPermissionGroup(player);
 
             // Append AFK suffix to the team suffix when AFK
@@ -541,8 +585,14 @@ public class TablistManager {
         } catch (Exception ignored) {}
 
         // ── Permission / group ────────────────────────────────────────────────
-        String prefix = getPermissionPrefix(player);
-        String suffix = getPermissionSuffix(player);
+        // Computed lazily (only when actually referenced) — getPermissionPrefix/Suffix now run
+        // their OWN result through this same applyPlaceholders() pipeline (so nametag overrides
+        // can use {group}/{balance}/etc. too), so eagerly calling them here unconditionally
+        // would reenter applyPlaceholders on every single header/footer build even when {prefix}
+        // /{suffix} aren't used, and — worse — reenter unconditionally every time a nametag
+        // override itself gets resolved, which is exactly the recursion this guards against.
+        String prefix = text.contains("{prefix}") ? getPermissionPrefix(player, server) : "";
+        String suffix = text.contains("{suffix}") ? getPermissionSuffix(player, server) : "";
         String group  = getPermissionGroup(player);
         int rankWeight = getGroupWeight(player);
 
@@ -701,36 +751,75 @@ public class TablistManager {
         }
     }
 
-    private String getPermissionPrefix(ServerPlayer player) {
+    /**
+     * Resolves the nametag (above-head + tab-list-row) prefix for {@code player}, in priority
+     * order: per-player nametag override > per-group nametag override > the SAME prefix chat
+     * uses ({@link com.zerog.neoessentials.api.permissions.PermissionAPI#getPrefix}). The old
+     * version of this method bypassed PermissionAPI entirely and read straight from the
+     * internal PermissionManager, so when an external adapter (e.g. LuckPerms) was configured,
+     * the nametag/tablist prefix could silently disagree with what chat showed for the exact
+     * same player — this keeps them in sync by default while still allowing an independent
+     * override for admins who want the nametag to say something different from chat.
+     */
+    // Guards against infinite recursion: applyPlaceholders() calls getPermissionPrefix/Suffix
+    // to resolve {prefix}/{suffix} tokens, and (below) getPermissionPrefix/Suffix call back into
+    // applyPlaceholders() to resolve tokens *within* a configured nametag override — a nametag
+    // override that itself contained a literal "{prefix}"/"{suffix}" token would otherwise
+    // recurse forever. One level of reentrancy is allowed (the normal case is 0), a second
+    // triggers a warning and returns the raw, unresolved override text as its bottom-out value.
+    private final ThreadLocal<Integer> nametagResolveDepth = ThreadLocal.withInitial(() -> 0);
+
+    private String getPermissionPrefix(ServerPlayer player, MinecraftServer server) {
         try {
-            com.zerog.neoessentials.permissions.PermissionManager mgr =
-                com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return "";
-            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
-            String groupName = (user != null && user.getGroup() != null)
-                               ? user.getGroup() : mgr.getDefaultGroup();
-            com.zerog.neoessentials.permissions.PermissionGroup grp = mgr.getGroup(groupName);
-            if (grp != null && grp.getPrefix() != null && !grp.getPrefix().isEmpty()) {
-                return grp.getPrefix(); // Leave & codes intact; processTablistText converts them
-            }
+            if (!nametagEnabled) return "";
+            UUID uuid = player.getUUID();
+            String playerOverride = playerNametagPrefix.get(uuid);
+            if (playerOverride != null) return resolveNametagText(playerOverride, player, server);
+
+            String groupName = getPermissionGroup(player);
+            String groupOverride = groupNametagPrefix.get(groupName);
+            if (groupOverride != null) return resolveNametagText(groupOverride, player, server);
+
+            String prefix = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(uuid);
+            return prefix != null ? resolveNametagText(prefix, player, server) : "";
         } catch (Exception ignored) {}
         return "";
     }
 
-    private String getPermissionSuffix(ServerPlayer player) {
+    /** See {@link #getPermissionPrefix(ServerPlayer, MinecraftServer)} — same priority order for the suffix. */
+    private String getPermissionSuffix(ServerPlayer player, MinecraftServer server) {
         try {
-            com.zerog.neoessentials.permissions.PermissionManager mgr =
-                com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return "";
-            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
-            String groupName = (user != null && user.getGroup() != null)
-                               ? user.getGroup() : mgr.getDefaultGroup();
-            com.zerog.neoessentials.permissions.PermissionGroup grp = mgr.getGroup(groupName);
-            if (grp != null && grp.getSuffix() != null && !grp.getSuffix().isEmpty()) {
-                return grp.getSuffix(); // Leave & codes intact
-            }
+            if (!nametagEnabled) return "";
+            UUID uuid = player.getUUID();
+            String playerOverride = playerNametagSuffix.get(uuid);
+            if (playerOverride != null) return resolveNametagText(playerOverride, player, server);
+
+            String groupName = getPermissionGroup(player);
+            String groupOverride = groupNametagSuffix.get(groupName);
+            if (groupOverride != null) return resolveNametagText(groupOverride, player, server);
+
+            String suffix = com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(uuid);
+            return suffix != null ? resolveNametagText(suffix, player, server) : "";
         } catch (Exception ignored) {}
         return "";
+    }
+
+    /** Runs nametag prefix/suffix text through the same {placeholder} pipeline header/footer use. */
+    private String resolveNametagText(String text, ServerPlayer player, MinecraftServer server) {
+        if (text.isEmpty() || server == null) return text;
+        int depth = nametagResolveDepth.get();
+        if (depth > 0) {
+            LOGGER.warn("TablistManager: nametag override for {} references {{prefix}}/{{suffix}} " +
+                "(directly or via a group/player chain) — returning it unresolved to avoid infinite recursion.",
+                player.getName().getString());
+            return text;
+        }
+        try {
+            nametagResolveDepth.set(depth + 1);
+            return applyPlaceholders(text, player, server);
+        } finally {
+            nametagResolveDepth.set(depth);
+        }
     }
 
     private String getPermissionGroup(ServerPlayer player) {
@@ -826,10 +915,28 @@ public class TablistManager {
         else playerFooterFrames.put(uuid, new ArrayList<>(frames));
     }
 
-    /** Clear all per-player tablist overrides (header + footer). */
+    /** Set a per-player nametag prefix override (runtime). Pass null/empty to clear it. */
+    public void setPlayerNametagPrefixOverride(UUID uuid, String text) {
+        if (text == null || text.isEmpty()) playerNametagPrefix.remove(uuid);
+        else playerNametagPrefix.put(uuid, text);
+        lastTeamPrefix.remove(uuid); // force a team-packet refresh next tick
+    }
+
+    /** Set a per-player nametag suffix override (runtime). Pass null/empty to clear it. */
+    public void setPlayerNametagSuffixOverride(UUID uuid, String text) {
+        if (text == null || text.isEmpty()) playerNametagSuffix.remove(uuid);
+        else playerNametagSuffix.put(uuid, text);
+        lastTeamSuffix.remove(uuid);
+    }
+
+    /** Clear all per-player tablist overrides (header + footer + nametag prefix/suffix). */
     public void clearPlayerOverrides(UUID uuid) {
         playerHeaderFrames.remove(uuid);
         playerFooterFrames.remove(uuid);
+        playerNametagPrefix.remove(uuid);
+        playerNametagSuffix.remove(uuid);
+        lastTeamPrefix.remove(uuid);
+        lastTeamSuffix.remove(uuid);
     }
 
     // ── Per-group overrides ───────────────────────────────────────────────────
@@ -843,9 +950,27 @@ public class TablistManager {
         else groupFooterFrames.put(group, Collections.singletonList(text));
     }
 
+    /** Set a per-group nametag prefix override (runtime). Pass null/empty to clear it. */
+    public void setGroupNametagPrefixOverride(String group, String text) {
+        if (text == null || text.isEmpty()) groupNametagPrefix.remove(group);
+        else groupNametagPrefix.put(group, text);
+        lastTeamPrefix.clear(); // group-wide change — cheapest correct option is a full refresh
+    }
+
+    /** Set a per-group nametag suffix override (runtime). Pass null/empty to clear it. */
+    public void setGroupNametagSuffixOverride(String group, String text) {
+        if (text == null || text.isEmpty()) groupNametagSuffix.remove(group);
+        else groupNametagSuffix.put(group, text);
+        lastTeamSuffix.clear();
+    }
+
     public void clearGroupOverrides(String group) {
         groupHeaderFrames.remove(group);
         groupFooterFrames.remove(group);
+        groupNametagPrefix.remove(group);
+        groupNametagSuffix.remove(group);
+        lastTeamPrefix.clear();
+        lastTeamSuffix.clear();
     }
 
     public Set<String> getGroupsWithOverrides() {

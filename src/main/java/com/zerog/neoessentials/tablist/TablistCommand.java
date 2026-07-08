@@ -199,6 +199,40 @@ public class TablistCommand {
                             })
                         )
                     )
+                    .then(Commands.literal("nametag")
+                        .then(Commands.literal("prefix")
+                            .then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+                                    String text = StringArgumentType.getString(ctx, "text");
+                                    TablistManager tablist = TablistManager.getInstance();
+                                    tablist.setPlayerNametagPrefixOverride(target.getUUID(), text);
+                                    var server = ServerLifecycleHooks.getCurrentServer();
+                                    if (server != null) tablist.updatePlayerTeam(target, server);
+                                    ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                        "commands.neoessentials.tablist.player_nametag_prefix_set", target.getName().getString()
+                                    ), false);
+                                    return 1;
+                                })
+                            )
+                        )
+                        .then(Commands.literal("suffix")
+                            .then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
+                                    String text = StringArgumentType.getString(ctx, "text");
+                                    TablistManager tablist = TablistManager.getInstance();
+                                    tablist.setPlayerNametagSuffixOverride(target.getUUID(), text);
+                                    var server = ServerLifecycleHooks.getCurrentServer();
+                                    if (server != null) tablist.updatePlayerTeam(target, server);
+                                    ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                        "commands.neoessentials.tablist.player_nametag_suffix_set", target.getName().getString()
+                                    ), false);
+                                    return 1;
+                                })
+                            )
+                        )
+                    )
                     .then(Commands.literal("reset")
                         .executes(ctx -> {
                             ServerPlayer target = EntityArgument.getPlayer(ctx, "target");
@@ -248,6 +282,40 @@ public class TablistCommand {
                                 ), false);
                                 return 1;
                             })
+                        )
+                    )
+                    .then(Commands.literal("nametag")
+                        .then(Commands.literal("prefix")
+                            .then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    String group = StringArgumentType.getString(ctx, "group");
+                                    String text  = StringArgumentType.getString(ctx, "text");
+                                    TablistManager tablist = TablistManager.getInstance();
+                                    tablist.setGroupNametagPrefixOverride(group, text);
+                                    var server = ServerLifecycleHooks.getCurrentServer();
+                                    if (server != null) tablist.updateAll(server);
+                                    ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                        "commands.neoessentials.tablist.group_nametag_prefix_set", group
+                                    ), false);
+                                    return 1;
+                                })
+                            )
+                        )
+                        .then(Commands.literal("suffix")
+                            .then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    String group = StringArgumentType.getString(ctx, "group");
+                                    String text  = StringArgumentType.getString(ctx, "text");
+                                    TablistManager tablist = TablistManager.getInstance();
+                                    tablist.setGroupNametagSuffixOverride(group, text);
+                                    var server = ServerLifecycleHooks.getCurrentServer();
+                                    if (server != null) tablist.updateAll(server);
+                                    ctx.getSource().sendSuccess(() -> MessageUtil.component(
+                                        "commands.neoessentials.tablist.group_nametag_suffix_set", group
+                                    ), false);
+                                    return 1;
+                                })
+                            )
                         )
                     )
                     .then(Commands.literal("reset")

@@ -212,51 +212,16 @@ public class TablistLayout {
         return excludeServers.contains(serverName);
     }
 
-    /**
-     * Apply scoreboard-team ordering to reflect the sorted player list.
-     * Teams are named {@code neL_<padded_weight>_<group>} so the client sorts them
-     * in the correct visual order without NeoEssentials needing to intercept packets.
-     *
-     * <p>Weight padding: 10000 minus actual weight ensures lower-indexed teams appear first.
-     * This mirrors the BTLP approach of using a prefix sort key.
-     */
-    public void applySortingTeams(MinecraftServer server) {
-        if (!sortByGroupWeight) return;
-        net.minecraft.server.ServerScoreboard scoreboard;
-        try {
-            scoreboard = server.getScoreboard();
-        } catch (Throwable e) {
-            LOGGER.debug("TablistLayout: applySortingTeams error: {}", e.getMessage());
-            return;
-        }
-        // Re-sort all online players into weight-ordered teams. Each player is wrapped in
-        // its own try/catch (catching Errors too, e.g. a version-drifted Scoreboard/PlayerTeam
-        // API) so one player's failure can't abort sorting for everyone else this tick.
-        for (ServerPlayer player : sortedPlayers(server)) {
-            try {
-                int weight = getGroupWeight(player);
-                String group = getGroup(player);
-                // Team name encodes sort key: "neL_" + zero-padded inverse weight + "_" + group (max 16 chars)
-                int sortKey = 9999 - Math.min(weight, 9999); // lower key = shown first
-                String rawTeamName = String.format("neL_%04d_%s", sortKey, group);
-                String teamName = rawTeamName.length() > 16 ? rawTeamName.substring(0, 16) : rawTeamName;
-
-                net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(teamName);
-                if (team == null) team = scoreboard.addPlayerTeam(teamName);
-
-                String playerName = player.getName().getString();
-                net.minecraft.world.scores.PlayerTeam current = scoreboard.getPlayersTeam(playerName);
-                // Only move if not already in the correct team
-                if (current == null || !current.getName().equals(teamName)) {
-                    if (current != null) scoreboard.removePlayerFromTeam(playerName, current);
-                    scoreboard.addPlayerToTeam(playerName, team);
-                }
-            } catch (Throwable e) {
-                LOGGER.debug("TablistLayout: applySortingTeams error for {}: {}",
-                    player.getName().getString(), e.getMessage());
-            }
-        }
-    }
+    // applySortingTeams(MinecraftServer) used to live here — it independently moved players
+    // onto a "neL_<weight>_<group>" team for sort order only (no prefix/suffix), which
+    // TablistManager.updateAll() called right before moving the same players onto
+    // updatePlayerTeam's "ne_<weight>_<group>"/column-key team (which does carry
+    // prefix/suffix). Since a player can only be on one scoreboard team, that second move
+    // undid the first every cycle, and updatePlayerTeam's dirty-check cache couldn't detect
+    // being overridden externally — the net effect was prefix/suffix silently reverting to
+    // blank after the first refresh cycle following any reload. Removed rather than patched:
+    // updatePlayerTeam's own team-naming logic already covers every case this did (plain
+    // group, weight-sorted, and BTLP column-key), so it was fully redundant.
 
     /**
      * Computes the BTLP-style column grid: each permission group (in weight-descending order)
