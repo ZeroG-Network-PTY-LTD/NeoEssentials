@@ -12,6 +12,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.ChestMenu;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Config: commands.invsee / invseeedit / enderchest / enderchestedit control enable/disable.
  * Audit: every view/edit action is written to neoessentials/inventory_audit.log.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class InventoryViewCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(InventoryViewCommands.class);
 
@@ -118,8 +122,21 @@ public class InventoryViewCommands {
     // ── Edit-lock management ────────────────────────────────────────────────
 
     /**
+     * A player can only have one menu open at a time, so any container close
+     * means an edit session (if one was open) has ended — release its lock.
+     * Without this, closing the GUI (rather than disconnecting) left the
+     * target permanently locked out for every other editor.
+     */
+    @SubscribeEvent
+    public static void onContainerClose(PlayerContainerEvent.Close event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            releaseEditLocks(player.getUUID());
+        }
+    }
+
+    /**
      * Release all edit locks held by the given viewer UUID and log closures.
-     * Called when a viewer disconnects so the target is accessible again.
+     * Called when a viewer disconnects or closes their menu, so the target is accessible again.
      */
     public static void releaseEditLocks(UUID viewerId) {
         String viewerName = resolveNameFromServer(viewerId);

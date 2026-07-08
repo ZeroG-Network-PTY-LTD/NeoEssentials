@@ -190,6 +190,8 @@ public class PlayerJoinQuitHandler {
             return;
         }
 
+        com.zerog.neoessentials.inventory.InventoryViewCommands.releaseEditLocks(player.getUUID());
+
         try {
             // Get the ChatManager instance
             ChatManager chatManager = ChatAPI.getChatManager();
