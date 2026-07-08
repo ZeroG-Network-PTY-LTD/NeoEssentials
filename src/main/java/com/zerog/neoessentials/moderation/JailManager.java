@@ -87,21 +87,91 @@ public class JailManager {
         }
     }
     
+    /** Shape a jail cell's boundary is defined by. */
+    public enum JailShape {
+        SPHERE,
+        CUBOID
+    }
+
     public static class JailLocation {
         public String name;
+        /** Representative point — sphere center, or cuboid midpoint. Used for teleport-to-jail
+         *  and for anything (older code, external integrations) that only needs one point. */
         public BlockPos position;
         public String dimension;
         public String createdBy;
         public long createdTime;
-        
+
+        public JailShape shape = JailShape.SPHERE;
+        /** SPHERE only. */
+        public double radius = 10.0;
+        /** CUBOID only — min/max corners are normalized (min <= max on every axis) at
+         *  construction time so containment checks never need to re-sort them. */
+        public BlockPos corner1;
+        public BlockPos corner2;
+
+        /** Legacy constructor — always creates a SPHERE jail, preserving old behavior for
+         *  existing callers/save files that predate the shape system. */
         public JailLocation(String name, BlockPos position, String dimension, String createdBy) {
             this.name = name;
             this.position = position;
             this.dimension = dimension;
             this.createdBy = createdBy;
             this.createdTime = System.currentTimeMillis();
+            this.shape = JailShape.SPHERE;
+            this.radius = com.zerog.neoessentials.config.ConfigManager.getDefaultJailSphereRadius();
         }
-        
+
+        /** Explicit sphere constructor. */
+        public static JailLocation sphere(String name, BlockPos center, double radius, String dimension, String createdBy) {
+            JailLocation loc = new JailLocation(name, center, dimension, createdBy);
+            loc.shape = JailShape.SPHERE;
+            loc.radius = radius;
+            return loc;
+        }
+
+        /** Explicit cuboid constructor — corners are normalized so corner1 is always the min
+         *  and corner2 is always the max on every axis. */
+        public static JailLocation cuboid(String name, BlockPos posA, BlockPos posB, String dimension, String createdBy) {
+            BlockPos min = new BlockPos(
+                Math.min(posA.getX(), posB.getX()),
+                Math.min(posA.getY(), posB.getY()),
+                Math.min(posA.getZ(), posB.getZ()));
+            BlockPos max = new BlockPos(
+                Math.max(posA.getX(), posB.getX()),
+                Math.max(posA.getY(), posB.getY()),
+                Math.max(posA.getZ(), posB.getZ()));
+            BlockPos center = new BlockPos(
+                (min.getX() + max.getX()) / 2,
+                (min.getY() + max.getY()) / 2,
+                (min.getZ() + max.getZ()) / 2);
+            JailLocation loc = new JailLocation(name, center, dimension, createdBy);
+            loc.shape = JailShape.CUBOID;
+            loc.corner1 = min;
+            loc.corner2 = max;
+            return loc;
+        }
+
+        /**
+         * Whether {@code pos} in {@code posDimension} falls within this jail cell's bounds.
+         * Used both for jailed-player containment (redirect-back enforcement) and for the
+         * region-wide block break/place protection that applies to EVERYONE, not just the
+         * jailed player.
+         */
+        public boolean contains(BlockPos pos, String posDimension) {
+            if (dimension != null && !dimension.isEmpty()
+                    && posDimension != null && !dimension.equals(posDimension)) {
+                return false;
+            }
+            if (shape == JailShape.CUBOID && corner1 != null && corner2 != null) {
+                return pos.getX() >= corner1.getX() && pos.getX() <= corner2.getX()
+                    && pos.getY() >= corner1.getY() && pos.getY() <= corner2.getY()
+                    && pos.getZ() >= corner1.getZ() && pos.getZ() <= corner2.getZ();
+            }
+            // SPHERE (also the fallback if a CUBOID jail is somehow missing its corners)
+            return pos.distSqr(position) <= radius * radius;
+        }
+
         public String getFormattedCreatedTime() {
             return formatTime(createdTime);
         }
@@ -155,15 +225,26 @@ public class JailManager {
             LOGGER.warn("Jail reason too long ({} > {}). Cannot jail player {}.", reason.length(), maxReason, playerName);
             return false;
         }
+        // Build the real entry up front — ConcurrentHashMap disallows null VALUES (not just
+        // keys), so the previous "reserve the slot with putIfAbsent(playerId, null) then
+        // replace it later" pattern threw an NPE on every single call, before ever reaching
+        // the rest of this method. Constructing the real entry first and using it as the one
+        // atomic putIfAbsent value is both NPE-safe and more genuinely atomic than the old
+        // two-step reserve/replace dance.
+        JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
+        if (durationMillis > 0) {
+            jail.expireAt = System.currentTimeMillis() + durationMillis;
+        }
+
         // Check if already jailed atomically using putIfAbsent
-        if (jailedPlayers.putIfAbsent(playerId, null) != null) {
+        if (jailedPlayers.putIfAbsent(playerId, jail) != null) {
             // Already jailed
             return false;
         }
 
         JailLocation jailLoc = jailLocations.get(jailName);
         if (jailLoc == null) {
-            jailedPlayers.remove(playerId, null); // Clean up
+            jailedPlayers.remove(playerId, jail); // Clean up
             return false; // Jail doesn't exist
         }
 
@@ -179,7 +260,7 @@ public class JailManager {
 
         if (jailCount >= permBanThreshold) {
             // Issue permanent ban
-            jailedPlayers.remove(playerId, null); // Clean up
+            jailedPlayers.remove(playerId, jail); // Clean up
             BanManager banManager = BanManager.getInstance();
             banManager.banPlayer(playerName, playerId, "Exceeded maximum jailings (permanent ban)", "System");
             jailCounts.put(playerId, 0); // Reset count
@@ -189,19 +270,13 @@ public class JailManager {
             return false;
         } else if (jailCount >= tempBanThreshold) {
             // Issue temp ban
-            jailedPlayers.remove(playerId, null); // Clean up
+            jailedPlayers.remove(playerId, jail); // Clean up
             BanManager banManager = BanManager.getInstance();
             banManager.tempBanPlayer(playerName, playerId, "Exceeded maximum jailings (temporary ban)", "System", tempBanDuration * 60 * 1000L);
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
                 LOGGER.info("Player {} ({}) temp-banned for {} minutes after {} jailings.", playerName, playerId, tempBanDuration, jailCount);
             }
             return false;
-        }
-
-        // Create jail entry
-        JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
-        if (durationMillis > 0) {
-            jail.expireAt = System.currentTimeMillis() + durationMillis;
         }
 
         // Store original location
@@ -212,15 +287,19 @@ public class JailManager {
                 jail.originalLocation = player.blockPosition();
                 jail.originalDimension = player.level().dimension().location().toString();
 
-                // Replace the null placeholder with actual jail entry
-                jailedPlayers.put(playerId, jail);
                 saveJailedPlayers();
 
                 // Teleport to jail
                 teleportToJail(player, jailLoc);
 
+                // coloredText(), not warning(message) — `message` is already the fully
+                // resolved, localized text (with its own §-codes from the template), not a
+                // translation KEY. Passing it back into warning()/success()/etc re-runs it
+                // through localize(), which fails the key lookup and falls back to
+                // humanizeKey() — silently mangling the already-correct text (e.g. stripping
+                // periods) instead of just applying styling to it.
                 String message = MessageUtil.localize("neoessentials.moderation.jailed_message", reason, jailedBy);
-                player.sendSystemMessage(MessageUtil.warning(message));
+                player.sendSystemMessage(MessageUtil.coloredText(message));
 
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
             LOGGER.info("Player {} ({}) jailed by {} in {} for: {}", 
@@ -259,7 +338,7 @@ public class JailManager {
                     }
                     
                     String message = MessageUtil.localize("neoessentials.moderation.unjailed_message");
-                    player.sendSystemMessage(MessageUtil.success(message));
+                    player.sendSystemMessage(MessageUtil.coloredText(message));
                 }
             }
             
@@ -272,17 +351,56 @@ public class JailManager {
     }
     
     /**
-     * Set a jail location
+     * Set a jail location as a sphere (legacy point-only behavior, kept for backward
+     * compatibility with existing callers — uses the configured default radius).
      */
     public boolean setJailLocation(String jailName, BlockPos position, String dimension, String createdBy) {
         JailLocation jail = new JailLocation(jailName, position, dimension, createdBy);
         jailLocations.put(jailName, jail);
         saveJailLocations();
-        
+
         LOGGER.info("Jail location '{}' set at {} in {} by {}", jailName, position, dimension, createdBy);
         return true;
     }
-    
+
+    /**
+     * Set a jail location as a sphere with an explicit radius.
+     */
+    public boolean setJailLocationSphere(String jailName, BlockPos center, double radius, String dimension, String createdBy) {
+        JailLocation jail = JailLocation.sphere(jailName, center, radius, dimension, createdBy);
+        jailLocations.put(jailName, jail);
+        saveJailLocations();
+
+        LOGGER.info("Jail location '{}' set as sphere at {} (radius {}) in {} by {}", jailName, center, radius, dimension, createdBy);
+        return true;
+    }
+
+    /**
+     * Set a jail location as a cuboid between two corners.
+     */
+    public boolean setJailLocationCuboid(String jailName, BlockPos corner1, BlockPos corner2, String dimension, String createdBy) {
+        JailLocation jail = JailLocation.cuboid(jailName, corner1, corner2, dimension, createdBy);
+        jailLocations.put(jailName, jail);
+        saveJailLocations();
+
+        LOGGER.info("Jail location '{}' set as cuboid {} to {} in {} by {}", jailName, jail.corner1, jail.corner2, dimension, createdBy);
+        return true;
+    }
+
+    /**
+     * Returns whether {@code pos} in {@code dimension} falls within ANY jail cell's bounds —
+     * used by the region-wide block break/place protection that applies to everyone, not just
+     * the jailed player occupying that specific cell.
+     */
+    public boolean isInsideAnyJail(BlockPos pos, String dimension) {
+        for (JailLocation loc : jailLocations.values()) {
+            if (loc.contains(pos, dimension)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Remove a jail location
      */
@@ -350,21 +468,11 @@ public class JailManager {
             return true; // Jail doesn't exist anymore
         }
 
-        // Dimension check: the old distSqr-only check compared raw block coordinates with no
-        // regard for which dimension the player is actually in. A jailed player who reached a
-        // different dimension (e.g. via an unblocked teleport command) but happened to be near
-        // the jail's raw XYZ in THAT dimension was incorrectly treated as "in bounds" and never
-        // redirected back — the cell only really exists in jailLoc.dimension.
-        if (jailLoc.dimension != null && !jailLoc.dimension.isEmpty()) {
-            String currentDimension = player.level().dimension().location().toString();
-            if (!jailLoc.dimension.equals(currentDimension)) {
-                return false;
-            }
-        }
-
-        // Check if within jail bounds (simple distance check)
-        double distance = newPos.distSqr(jailLoc.position);
-        return distance <= 100; // 10 block radius squared
+        // JailLocation.contains() handles both the dimension check and the shape-specific
+        // (sphere/cuboid) bounds check in one place, shared with the region-wide block
+        // break/place protection so both enforce the exact same cell boundary.
+        String currentDimension = player.level().dimension().location().toString();
+        return jailLoc.contains(newPos, currentDimension);
     }
     
     /**
@@ -392,7 +500,7 @@ public class JailManager {
         if (teleportOnLogin) {
             teleportToJail(player, jailLoc);
             String message = MessageUtil.localize("neoessentials.moderation.jail_reminder", jail.reason);
-            player.sendSystemMessage(MessageUtil.warning(message));
+            player.sendSystemMessage(MessageUtil.coloredText(message));
         }
     }
     
@@ -572,15 +680,30 @@ public class JailManager {
                         posObj.get("y").getAsInt(),
                         posObj.get("z").getAsInt()
                     );
-                    
-                    JailLocation jail = new JailLocation(
-                        jailObj.get("name").getAsString(),
-                        position,
-                        jailObj.get("dimension").getAsString(),
-                        jailObj.get("createdBy").getAsString()
-                    );
+
+                    String name = jailObj.get("name").getAsString();
+                    String dimension = jailObj.get("dimension").getAsString();
+                    String createdBy = jailObj.get("createdBy").getAsString();
+
+                    // "shape" is absent on jail files saved before the shape system existed —
+                    // those always default to SPHERE at the config's default radius, preserving
+                    // the exact old point+fixed-radius behavior for jails set up before this.
+                    JailLocation jail;
+                    String shapeStr = jailObj.has("shape") ? jailObj.get("shape").getAsString() : "SPHERE";
+                    if ("CUBOID".equals(shapeStr) && jailObj.has("corner1") && jailObj.has("corner2")) {
+                        JsonObject c1 = jailObj.getAsJsonObject("corner1");
+                        JsonObject c2 = jailObj.getAsJsonObject("corner2");
+                        BlockPos corner1 = new BlockPos(c1.get("x").getAsInt(), c1.get("y").getAsInt(), c1.get("z").getAsInt());
+                        BlockPos corner2 = new BlockPos(c2.get("x").getAsInt(), c2.get("y").getAsInt(), c2.get("z").getAsInt());
+                        jail = JailLocation.cuboid(name, corner1, corner2, dimension, createdBy);
+                    } else {
+                        double radius = jailObj.has("radius")
+                            ? jailObj.get("radius").getAsDouble()
+                            : com.zerog.neoessentials.config.ConfigManager.getDefaultJailSphereRadius();
+                        jail = JailLocation.sphere(name, position, radius, dimension, createdBy);
+                    }
                     jail.createdTime = jailObj.get("createdTime").getAsLong();
-                    
+
                     jailLocations.put(jail.name, jail);
                 }
             }
@@ -649,7 +772,23 @@ public class JailManager {
                 posObj.addProperty("y", jail.position.getY());
                 posObj.addProperty("z", jail.position.getZ());
                 jailObj.add("position", posObj);
-                
+
+                jailObj.addProperty("shape", jail.shape.name());
+                if (jail.shape == JailShape.CUBOID && jail.corner1 != null && jail.corner2 != null) {
+                    JsonObject c1 = new JsonObject();
+                    c1.addProperty("x", jail.corner1.getX());
+                    c1.addProperty("y", jail.corner1.getY());
+                    c1.addProperty("z", jail.corner1.getZ());
+                    jailObj.add("corner1", c1);
+                    JsonObject c2 = new JsonObject();
+                    c2.addProperty("x", jail.corner2.getX());
+                    c2.addProperty("y", jail.corner2.getY());
+                    c2.addProperty("z", jail.corner2.getZ());
+                    jailObj.add("corner2", c2);
+                } else {
+                    jailObj.addProperty("radius", jail.radius);
+                }
+
                 jailsArray.add(jailObj);
             }
             

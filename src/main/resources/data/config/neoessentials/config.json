@@ -554,7 +554,12 @@
       // Prevent jailed players from using teleportation commands
       "preventJailEscape": true,
       // Log all jail / unjail actions
-      "logJailActions": true
+      "logJailActions": true,
+      // Item used as the jail-region selection wand (/jailwand) — right-click sets corner 1,
+      // left-click sets corner 2. Any valid item id works.
+      "wandItem": "minecraft:stick",
+      // Default radius (blocks) for sphere-shaped jails when no explicit radius is given
+      "defaultSphereRadius": 10.0
     },
 
     "vanishSettings": {

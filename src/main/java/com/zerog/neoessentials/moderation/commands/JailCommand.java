@@ -139,11 +139,30 @@ public class JailCommand {
                 .executes(ctx -> executeUnjail(ctx, StringArgumentType.getString(ctx, "player"))))
         );
         
-        // /setjail <name>
+        // /setjail <name>                    — auto-detect: wand cuboid selection, else
+        //                                       WorldEdit selection, else sphere at current
+        //                                       position with the configured default radius
+        // /setjail <name> sphere <radius>     — sphere at current position, explicit radius
+        // /setjail <name> cuboid              — cuboid from the wand/WorldEdit selection
         dispatcher.register(Commands.literal("setjail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.setjail").hasPermission())
             .then(Commands.argument("name", StringArgumentType.word())
-                .executes(ctx -> executeSetJail(ctx, StringArgumentType.getString(ctx, "name"))))
+                .executes(ctx -> executeSetJailAuto(ctx, StringArgumentType.getString(ctx, "name")))
+                .then(Commands.literal("sphere")
+                    .then(Commands.argument("radius", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(1.0))
+                        .executes(ctx -> executeSetJailSphere(ctx,
+                            StringArgumentType.getString(ctx, "name"),
+                            com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx, "radius")))))
+                .then(Commands.literal("cuboid")
+                    .executes(ctx -> executeSetJailCuboid(ctx, StringArgumentType.getString(ctx, "name"))))
+            )
+        );
+
+        // /jailwand — give the jail-region selection wand (item configurable via
+        // moderation.jailSettings.wandItem). Right-click = corner 1, left-click = corner 2.
+        dispatcher.register(Commands.literal("jailwand")
+            .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.jail.wand").hasPermission())
+            .executes(JailCommand::executeJailWand)
         );
         
         // /jaillist
@@ -290,12 +309,28 @@ public class JailCommand {
             boolean success = jailManager.jailPlayer(resolvedName, playerId, reason, jailedBy, jailName, durationMillis);
 
             if (success) {
-                String confirmMessage = MessageUtil.localize("neoessentials.moderation.jail_success", resolvedName, jailName, reason);
-                source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+                // "neoessentials.moderation.jail_success" only has one placeholder ({0} = player
+                // name) — jailName/reason were being passed as extra unused args here, which is
+                // harmless on its own, but combined with the coloredText() fix below (see that
+                // comment) this is now the single, correct localize+display call.
+                String confirmMessage = MessageUtil.localize("neoessentials.moderation.jail_success", resolvedName);
+                // `false` here — NOT broadcasting this personal confirmation to ops, since
+                // broadcastToStaff() right below already sends every staff member (including
+                // the sender, if they qualify) a near-identical message via a separate
+                // permission node. With both set to broadcast, anyone who is both an op AND has
+                // neoessentials.moderation.notifications saw the same thing twice.
+                source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
 
-                // Broadcast jail to all online staff
-                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.jail_broadcast", 
-                    resolvedName, jailName, jailedBy, reason));
+                // "jail_broadcast" is "{0} has been jailed by {1} for: {2}" — exactly 3
+                // placeholders (player, jailedBy, reason). The old call inserted jailName as an
+                // extra 2nd argument, which template substitution doesn't validate against —
+                // it silently shifted jailedBy into the {1} slot (showing the JAIL NAME instead
+                // of who jailed them) and reason into {2} was then never reached correctly.
+                // Also switched broadcastToStaff's re-display to coloredText (see its own fix).
+                // Excludes the sender (they already got confirmMessage above) to avoid a second,
+                // slightly-differently-worded copy of the same notification.
+                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.jail_broadcast",
+                    resolvedName, jailedBy, reason), senderId(source));
 
                 LOGGER.info("Player {} jailed by {} in {} for: {}", resolvedName, jailedBy, jailName, reason);
                 return 1;
@@ -352,11 +387,13 @@ public class JailCommand {
 
             if (success) {
                 String confirmMessage = MessageUtil.localize("neoessentials.moderation.unjail_success", resolvedName, unjailedBy);
-                source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+                // See the matching comment in executeJail — `false` avoids double-showing this
+                // to anyone who is both an op and has neoessentials.moderation.notifications.
+                source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
 
-                // Broadcast unjail to all online staff
-                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unjail_broadcast", 
-                    resolvedName, unjailedBy));
+                // Broadcast unjail to all online staff (excluding the sender, already notified above)
+                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unjail_broadcast",
+                    resolvedName, unjailedBy), senderId(source));
 
                 LOGGER.info("Player {} unjailed by {}", resolvedName, unjailedBy);
                 return 1;
@@ -371,39 +408,144 @@ public class JailCommand {
         }
     }
     
-    private static int executeSetJail(CommandContext<CommandSourceStack> ctx, String jailName) {
+    /**
+     * {@code /setjail <name>} — auto-detects the source: a completed NeoEssentials wand
+     * selection takes priority, then a WorldEdit cuboid selection (best-effort — see
+     * {@link com.zerog.neoessentials.moderation.WorldEditIntegration}), and only falls back to
+     * a sphere at the player's current position (configured default radius) if neither is
+     * present, preserving the exact old point-only behavior for anyone not using the wand.
+     */
+    private static int executeSetJailAuto(CommandContext<CommandSourceStack> ctx, String jailName) {
         CommandSourceStack source = ctx.getSource();
-        
         try {
-            // Must be executed by a player
             if (!(source.getEntity() instanceof ServerPlayer player)) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_only_command"));
                 return 0;
             }
-            
+
             JailManager jailManager = JailManager.getInstance();
-            
+            String createdBy = player.getName().getString();
+            var selectionManager = com.zerog.neoessentials.moderation.JailSelectionManager.getInstance();
+
+            if (selectionManager.hasFullSelection(player.getUUID())) {
+                BlockPos pos1 = selectionManager.getPos1(player.getUUID());
+                BlockPos pos2 = selectionManager.getPos2(player.getUUID());
+                String dimension = selectionManager.getDimension(player.getUUID());
+                boolean success = jailManager.setJailLocationCuboid(jailName, pos1, pos2, dimension, createdBy);
+                selectionManager.clear(player.getUUID());
+                return reportSetJailResult(source, jailName, success);
+            }
+
+            var weSelection = com.zerog.neoessentials.moderation.WorldEditIntegration.getSelection(player);
+            if (weSelection != null) {
+                String dimension = player.level().dimension().location().toString();
+                boolean success = jailManager.setJailLocationCuboid(jailName, weSelection.min(), weSelection.max(), dimension, createdBy);
+                return reportSetJailResult(source, jailName, success);
+            }
+
             BlockPos position = player.blockPosition();
             String dimension = player.level().dimension().location().toString();
-            String createdBy = player.getName().getString();
-            
-            boolean success = jailManager.setJailLocation(jailName, position, dimension, createdBy);
-            
-            if (success) {
-                String message = MessageUtil.localize("neoessentials.moderation.setjail_success", jailName, 
-                    position.getX(), position.getY(), position.getZ());
-                source.sendSuccess(() -> MessageUtil.success(message), true);
-                
-                LOGGER.info("Jail '{}' set at {} by {}", jailName, position, createdBy);
-                return 1;
-            } else {
-                source.sendFailure(MessageUtil.error("neoessentials.moderation.setjail_failed", jailName));
-                return 0;
-            }
-            
+            double defaultRadius = com.zerog.neoessentials.config.ConfigManager.getDefaultJailSphereRadius();
+            boolean success = jailManager.setJailLocationSphere(jailName, position, defaultRadius, dimension, createdBy);
+            return reportSetJailResult(source, jailName, success);
         } catch (Exception e) {
             LOGGER.error("Error executing setjail command", e);
             source.sendFailure(MessageUtil.error("An error occurred while executing the setjail command."));
+            return 0;
+        }
+    }
+
+    /** {@code /setjail <name> sphere <radius>} — sphere at the player's current position. */
+    private static int executeSetJailSphere(CommandContext<CommandSourceStack> ctx, String jailName, double radius) {
+        CommandSourceStack source = ctx.getSource();
+        try {
+            if (!(source.getEntity() instanceof ServerPlayer player)) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_only_command"));
+                return 0;
+            }
+            BlockPos position = player.blockPosition();
+            String dimension = player.level().dimension().location().toString();
+            boolean success = JailManager.getInstance().setJailLocationSphere(
+                jailName, position, radius, dimension, player.getName().getString());
+            return reportSetJailResult(source, jailName, success);
+        } catch (Exception e) {
+            LOGGER.error("Error executing setjail sphere command", e);
+            source.sendFailure(MessageUtil.error("An error occurred while executing the setjail command."));
+            return 0;
+        }
+    }
+
+    /** {@code /setjail <name> cuboid} — cuboid from the NeoEssentials wand or WorldEdit selection. */
+    private static int executeSetJailCuboid(CommandContext<CommandSourceStack> ctx, String jailName) {
+        CommandSourceStack source = ctx.getSource();
+        try {
+            if (!(source.getEntity() instanceof ServerPlayer player)) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_only_command"));
+                return 0;
+            }
+
+            var selectionManager = com.zerog.neoessentials.moderation.JailSelectionManager.getInstance();
+            if (selectionManager.hasFullSelection(player.getUUID())) {
+                BlockPos pos1 = selectionManager.getPos1(player.getUUID());
+                BlockPos pos2 = selectionManager.getPos2(player.getUUID());
+                String dimension = selectionManager.getDimension(player.getUUID());
+                boolean success = JailManager.getInstance().setJailLocationCuboid(
+                    jailName, pos1, pos2, dimension, player.getName().getString());
+                selectionManager.clear(player.getUUID());
+                return reportSetJailResult(source, jailName, success);
+            }
+
+            var weSelection = com.zerog.neoessentials.moderation.WorldEditIntegration.getSelection(player);
+            if (weSelection != null) {
+                String dimension = player.level().dimension().location().toString();
+                boolean success = JailManager.getInstance().setJailLocationCuboid(
+                    jailName, weSelection.min(), weSelection.max(), dimension, player.getName().getString());
+                return reportSetJailResult(source, jailName, success);
+            }
+
+            source.sendFailure(MessageUtil.error("commands.neoessentials.jail.wand.no_selection"));
+            return 0;
+        } catch (Exception e) {
+            LOGGER.error("Error executing setjail cuboid command", e);
+            source.sendFailure(MessageUtil.error("An error occurred while executing the setjail command."));
+            return 0;
+        }
+    }
+
+    private static int reportSetJailResult(CommandSourceStack source, String jailName, boolean success) {
+        if (success) {
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.jail.setjail_created", jailName), true);
+            return 1;
+        } else {
+            source.sendFailure(MessageUtil.error("neoessentials.moderation.setjail_failed", jailName));
+            return 0;
+        }
+    }
+
+    /** {@code /jailwand} — gives the player the configured jail-region selection wand item. */
+    private static int executeJailWand(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        try {
+            if (!(source.getEntity() instanceof ServerPlayer player)) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_only_command"));
+                return 0;
+            }
+            String wandItemId = com.zerog.neoessentials.config.ConfigManager.getJailWandItem();
+            var itemId = com.zerog.neoessentials.util.ResourceLocationHelper.parse(wandItemId);
+            var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(itemId).orElse(null);
+            if (item == null) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.jail.wand.invalid_item", wandItemId));
+                return 0;
+            }
+            net.minecraft.world.item.ItemStack wandStack = new net.minecraft.world.item.ItemStack(item);
+            if (!player.getInventory().add(wandStack)) {
+                player.drop(wandStack, false);
+            }
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.jail.wand.given"), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Error executing jailwand command", e);
+            source.sendFailure(MessageUtil.error("An error occurred while executing the jailwand command."));
             return 0;
         }
     }
@@ -417,17 +559,19 @@ public class JailCommand {
             
             if (jailedPlayers.isEmpty()) {
                 String message = MessageUtil.localize("neoessentials.moderation.jaillist_empty");
-                source.sendSuccess(() -> MessageUtil.info(message), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 return 1;
             }
             
             String header = MessageUtil.localize("neoessentials.moderation.jaillist_header", jailedPlayers.size());
-            source.sendSuccess(() -> MessageUtil.info(header), false);
+            source.sendSuccess(() -> MessageUtil.coloredText(header), false);
             
             for (JailManager.JailEntry jail : jailedPlayers) {
+                // reason/jailedBy were swapped relative to the template ("jailed by {2}") —
+                // staff saw the jail REASON where the jailing staff member's name belonged.
                 String jailInfo = MessageUtil.localize("neoessentials.moderation.jaillist_entry",
-                    jail.playerName, jail.jailName, jail.reason, jail.jailedBy, jail.getFormattedJailTime());
-                source.sendSuccess(() -> MessageUtil.info(jailInfo), false);
+                    jail.playerName, jail.jailName, jail.jailedBy, jail.reason, jail.getFormattedJailTime());
+                source.sendSuccess(() -> MessageUtil.coloredText(jailInfo), false);
             }
             
             return 1;
@@ -451,22 +595,22 @@ public class JailCommand {
                 
                 if (jailLocations.isEmpty()) {
                     String message = MessageUtil.localize("neoessentials.moderation.jailinfo_no_jails");
-                    source.sendSuccess(() -> MessageUtil.warning(message), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                     return 1;
                 }
                 
                 String message = MessageUtil.localize("neoessentials.moderation.jailinfo_all_header");
-                source.sendSuccess(() -> MessageUtil.warning(message), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 for (JailManager.JailLocation jail : jailLocations) {
                     String locationInfo = MessageUtil.localize("neoessentials.moderation.jailinfo_location",
                         jail.name, jail.position.getX(), jail.position.getY(), jail.position.getZ(), 
                         jail.dimension, jail.createdBy, jail.getFormattedCreatedTime());
-                    source.sendSuccess(() -> MessageUtil.info(locationInfo), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(locationInfo), false);
                 }
                 
                 String countInfo = MessageUtil.localize("neoessentials.moderation.jailinfo_count", jailLocations.size());
-                source.sendSuccess(() -> MessageUtil.info(countInfo), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(countInfo), false);
                 
             } else {
                 // Show specific jail info
@@ -480,7 +624,7 @@ public class JailCommand {
                 String locationInfo = MessageUtil.localize("neoessentials.moderation.jailinfo_specific",
                     jail.name, jail.position.getX(), jail.position.getY(), jail.position.getZ(), 
                     jail.dimension, jail.createdBy, jail.getFormattedCreatedTime());
-                source.sendSuccess(() -> MessageUtil.info(locationInfo), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(locationInfo), false);
                 
                 // Show how many players are in this jail
                 long playersInJail = jailManager.getAllJailedPlayers().stream()
@@ -489,7 +633,7 @@ public class JailCommand {
                 
                 if (playersInJail > 0) {
                     String playerInfo = MessageUtil.localize("neoessentials.moderation.jailinfo_players", playersInJail);
-                    source.sendSuccess(() -> MessageUtil.info(playerInfo), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(playerInfo), false);
                 }
             }
             
@@ -503,12 +647,30 @@ public class JailCommand {
     }
     
     private static void broadcastToStaff(MinecraftServer server, String message) {
+        broadcastToStaff(server, message, null);
+    }
+
+    /**
+     * @param excludeId skipped if non-null — used so the command sender, who already got their
+     *                  own personal confirmation message, doesn't also get this near-duplicate
+     *                  staff-wide broadcast just because they also qualify for it.
+     */
+    private static void broadcastToStaff(MinecraftServer server, String message, UUID excludeId) {
+        // `message` here is already fully-localized, resolved text (callers pass the result of
+        // MessageUtil.localize(key, args...)) — coloredText() applies its embedded §-codes
+        // without re-running it through localize() as if it were a translation key itself.
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (excludeId != null && player.getUUID().equals(excludeId)) continue;
             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                     player.getUUID(), "neoessentials.moderation.notifications")) {
-                player.sendSystemMessage(MessageUtil.info(message));
+                player.sendSystemMessage(MessageUtil.coloredText(message));
             }
         }
+    }
+
+    /** The command sender's player UUID, or {@code null} if run from console/command block. */
+    private static UUID senderId(CommandSourceStack source) {
+        return source.getEntity() instanceof ServerPlayer player ? player.getUUID() : null;
     }
     
     private static int executeDelJail(CommandContext<CommandSourceStack> ctx, String jailName) {
@@ -524,10 +686,10 @@ public class JailCommand {
                 .filter(j -> j.jailName.equals(jailName)).count();
             jailManager.removeJailLocation(jailName);
             String msg = MessageUtil.localize("commands.neoessentials.jail.deljail_success", jailName);
-            source.sendSuccess(() -> MessageUtil.success(msg), true);
+            source.sendSuccess(() -> MessageUtil.coloredText(msg), true);
             if (inmates > 0) {
                 String warn = MessageUtil.localize("commands.neoessentials.jail.deljail_had_inmates", inmates);
-                source.sendSuccess(() -> MessageUtil.warning(warn), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(warn), false);
             }
             LOGGER.info("Jail location '{}' deleted by {}", jailName, getCommandSender(source));
             return 1;
