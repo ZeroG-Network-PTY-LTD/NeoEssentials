@@ -194,15 +194,19 @@ public class PayCommand {
         }
 
         String currency = EconomyManager.getInstance().getCurrencySymbol();
+        // amount keeps whatever scale the parsed input had (e.g. "1000.0"), while fee/netAmount
+        // always come out at scale 2 from the BigDecimal arithmetic above — normalize here so
+        // all three display consistently.
+        java.math.BigDecimal displayAmount = amount.setScale(2, java.math.RoundingMode.HALF_UP);
         ctx.getSource().sendSuccess(() -> MessageUtil.success(
             "commands.neoessentials.pay.success_fee",
-            finalRecipientName, amount, fee, netAmount, currency), false);
+            displayAmount, finalRecipientName, fee, netAmount, currency), false);
 
         // Notify recipient if online
         if (onlineRecipient != null) {
             onlineRecipient.sendSystemMessage(MessageUtil.info(
                 "commands.neoessentials.pay.received_fee",
-                sender.getGameProfile().name(), netAmount, fee, currency));
+                netAmount, sender.getGameProfile().name(), fee, currency));
         }
 
         com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance()
