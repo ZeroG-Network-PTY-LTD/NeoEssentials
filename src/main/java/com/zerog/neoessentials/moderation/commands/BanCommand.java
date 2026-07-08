@@ -178,17 +178,17 @@ public class BanCommand {
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.ban_success", resolvedName, reason);
-                source.sendSuccess(() -> MessageUtil.success(message), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 // Broadcast ban to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.ban_broadcast", 
-                    resolvedName, bannedBy, reason));
+                    resolvedName, bannedBy, reason), senderId(source));
                 
                 LOGGER.info("Player {} banned by {} for: {}", resolvedName, bannedBy, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.ban_failed", resolvedName);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -247,17 +247,17 @@ public class BanCommand {
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.tempban_success", resolvedName, durationStr, reason);
-                source.sendSuccess(() -> MessageUtil.success(message), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 // Broadcast ban to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.tempban_broadcast", 
-                    resolvedName, durationStr, bannedBy, reason));
+                    resolvedName, durationStr, bannedBy, reason), senderId(source));
                 
                 LOGGER.info("Player {} temp banned by {} for {} - Reason: {}", resolvedName, bannedBy, durationStr, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.ban_failed", resolvedName);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -292,9 +292,9 @@ public class BanCommand {
             if (success) {
                 String formattedDur = BanManager.formatDuration(durationMillis);
                 String msg = MessageUtil.localize("neoessentials.moderation.tempbanip_success", ipAddress, formattedDur, reason);
-                source.sendSuccess(() -> MessageUtil.success(msg), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(msg), false);
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.tempbanip_broadcast",
-                    ipAddress, formattedDur, bannedBy, reason));
+                    ipAddress, formattedDur, bannedBy, reason), senderId(source));
                 LOGGER.info("IP {} temp-banned by {} for {} - Reason: {}", ipAddress, bannedBy, formattedDur, reason);
                 return 1;
             } else {
@@ -327,17 +327,17 @@ public class BanCommand {
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.banip_success", ipAddress, reason);
-                source.sendSuccess(() -> MessageUtil.success(message), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 // Broadcast ban to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.banip_broadcast", 
-                    ipAddress, bannedBy, reason));
+                    ipAddress, bannedBy, reason), senderId(source));
                 
                 LOGGER.info("IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.banip_failed", ipAddress);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -403,18 +403,18 @@ public class BanCommand {
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.unban_success", resolvedName);
-                source.sendSuccess(() -> MessageUtil.success(message), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 // Broadcast unban to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unban_broadcast", 
-                    resolvedName, unbannedBy));
+                    resolvedName, unbannedBy), senderId(source));
                 
                 LOGGER.info("Player {} unbanned by {}", resolvedName, unbannedBy);
                 return 1;
             } else {
                 LOGGER.error("Failed to unban player {} ({}): unbanPlayer returned false", resolvedName, playerId);
                 String message = MessageUtil.localize("neoessentials.moderation.unban_failed", resolvedName);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -438,17 +438,17 @@ public class BanCommand {
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.unbanip_success", ipAddress);
-                source.sendSuccess(() -> MessageUtil.success(message), true);
+                source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                 
                 // Broadcast unban to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unbanip_broadcast", 
-                    ipAddress, unbannedBy));
+                    ipAddress, unbannedBy), senderId(source));
                 
                 LOGGER.info("IP {} unbanned by {}", ipAddress, unbannedBy);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.unbanip_failed", ipAddress);
-                source.sendFailure(MessageUtil.error(message));
+                source.sendFailure(MessageUtil.coloredText(message));
                 return 0;
             }
             
@@ -470,21 +470,24 @@ public class BanCommand {
                 
                 if (bannedPlayers.isEmpty()) {
                     String message = MessageUtil.localize("neoessentials.moderation.banlist_empty_players");
-                    source.sendSuccess(() -> MessageUtil.info(message), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                     return 1;
                 }
                 
                 String header = MessageUtil.localize("neoessentials.moderation.banlist_header_players", bannedPlayers.size());
-                source.sendSuccess(() -> MessageUtil.info(header), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(header), false);
                 
                 for (BanManager.BanEntry ban : bannedPlayers) {
                     String expireInfo = ban.expireTime > 0 ? 
                         MessageUtil.localize("neoessentials.moderation.banlist_expires", ban.getFormattedExpireTime()) :
                         MessageUtil.localize("neoessentials.moderation.banlist_permanent");
                     
+                    // Args were previously (playerName, reason, bannedBy, ...) but the template
+                    // is "{0} (by {1}, reason: {2}, ...)" — reason and bannedBy were swapped,
+                    // so staff saw the ban REASON where "by <staff>" was expected and vice versa.
                     String banInfo = MessageUtil.localize("neoessentials.moderation.banlist_entry_player",
-                        ban.playerName, ban.reason, ban.bannedBy, ban.getFormattedBanTime(), expireInfo);
-                    source.sendSuccess(() -> MessageUtil.info(banInfo), false);
+                        ban.playerName, ban.bannedBy, ban.reason, ban.getFormattedBanTime(), expireInfo);
+                    source.sendSuccess(() -> MessageUtil.coloredText(banInfo), false);
                 }
                 
             } else { // "ips"
@@ -492,17 +495,18 @@ public class BanCommand {
                 
                 if (bannedIPs.isEmpty()) {
                     String message = MessageUtil.localize("neoessentials.moderation.banlist_empty_ips");
-                    source.sendSuccess(() -> MessageUtil.info(message), false);
+                    source.sendSuccess(() -> MessageUtil.coloredText(message), false);
                     return 1;
                 }
                 
                 String header = MessageUtil.localize("neoessentials.moderation.banlist_header_ips", bannedIPs.size());
-                source.sendSuccess(() -> MessageUtil.info(header), false);
+                source.sendSuccess(() -> MessageUtil.coloredText(header), false);
                 
                 for (BanManager.IPBanEntry ban : bannedIPs) {
+                    // Same reason/bannedBy swap as banlist_entry_player above — fixed.
                     String banInfo = MessageUtil.localize("neoessentials.moderation.banlist_entry_ip",
-                        ban.ipAddress, ban.reason, ban.bannedBy, ban.getFormattedBanTime());
-                    source.sendSuccess(() -> MessageUtil.info(banInfo), false);
+                        ban.ipAddress, ban.bannedBy, ban.reason, ban.getFormattedBanTime());
+                    source.sendSuccess(() -> MessageUtil.coloredText(banInfo), false);
                 }
             }
             
@@ -532,11 +536,26 @@ public class BanCommand {
         }
     }
     
+    /** The command sender's player UUID, or {@code null} if run from console/command block. */
+    private static java.util.UUID senderId(CommandSourceStack source) {
+        return source.getEntity() instanceof ServerPlayer player ? player.getUUID() : null;
+    }
+
     private static void broadcastToStaff(MinecraftServer server, String message) {
+        broadcastToStaff(server, message, null);
+    }
+
+    /**
+     * @param excludeId skipped if non-null — used so the command sender, who already got
+     *                  their own personal confirmation message, does not also get this
+     *                  near-duplicate staff-wide broadcast just because they also qualify.
+     */
+    private static void broadcastToStaff(MinecraftServer server, String message, java.util.UUID excludeId) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (excludeId != null && player.getUUID().equals(excludeId)) continue;
             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                     player.getUUID(), "neoessentials.moderation.notifications")) {
-                player.sendSystemMessage(MessageUtil.info(message));
+                player.sendSystemMessage(MessageUtil.coloredText(message));
             }
         }
     }

@@ -146,7 +146,7 @@ public class RealnameCommand {
             // Multiple partial matches
             source.sendFailure(MessageUtil.error("commands.neoessentials.realname.multiple_matches", query));
             
-            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.partial_matches_header"), false);
+            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.partial_matches_header", query), false);
             for (ServerPlayer player : partialMatches.subList(0, Math.min(10, partialMatches.size()))) {
                 String nickname = NickCommand.getNickname(player.getUUID());
                 if (nickname != null) {

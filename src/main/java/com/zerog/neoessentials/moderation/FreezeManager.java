@@ -140,7 +140,7 @@ public class FreezeManager {
                         // Try to get the unfreezer's name if possible (not always available here)
                         message = template.replace("{unfreezer}", "Staff");
                     }
-                    player.sendSystemMessage(MessageUtil.success(message));
+                    player.sendSystemMessage(MessageUtil.coloredText(message));
                 }
             }
             
@@ -181,7 +181,7 @@ public class FreezeManager {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player != null) {
                     String message = MessageUtil.localize("neoessentials.moderation.unfrozen_message");
-                    player.sendSystemMessage(MessageUtil.success(message));
+                    player.sendSystemMessage(MessageUtil.coloredText(message));
                 }
             }
         }
@@ -286,7 +286,7 @@ public class FreezeManager {
             );
             
             String message = MessageUtil.localize("neoessentials.moderation.freeze_movement_blocked");
-            player.sendSystemMessage(MessageUtil.warning(message));
+            player.sendSystemMessage(MessageUtil.coloredText(message));
         }
     }
     
@@ -311,7 +311,7 @@ public class FreezeManager {
             } else {
                 message = template.replace("{reason}", freeze.reason != null ? freeze.reason : "");
             }
-            player.sendSystemMessage(MessageUtil.warning(message));
+            player.sendSystemMessage(MessageUtil.coloredText(message));
         }
     }
     

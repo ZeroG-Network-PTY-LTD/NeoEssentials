@@ -109,8 +109,12 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }
         
         // Check if requester already has a sent request (ConcurrentHashMap doesn't allow null values)
-        if (sentRequests.containsKey(requesterId)) {
-            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent"));
+        TeleportRequest existingSent = sentRequests.get(requesterId);
+        if (existingSent != null) {
+            // Template needs the EXISTING pending target's name — was missing entirely,
+            // leaving a literal unresolved "{0}" in the message.
+            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent",
+                existingSent.getTargetName()));
             return false;
         }
 

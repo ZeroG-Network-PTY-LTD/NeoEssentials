@@ -163,7 +163,7 @@ public class EcoCommand {
             case "give" -> {
                 boolean ok = manager.addBalance(uuid, finalAmount);
                 if (!ok) {
-                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.give_failed", validPlayerName));
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.give_failed", finalAmount, validPlayerName));
                     return 0;
                 }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
@@ -180,7 +180,7 @@ public class EcoCommand {
             case "take" -> {
                 boolean ok = manager.subtractBalance(uuid, finalAmount);
                 if (!ok) {
-                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.take_failed", validPlayerName));
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.take_failed", finalAmount, validPlayerName));
                     return 0;
                 }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
