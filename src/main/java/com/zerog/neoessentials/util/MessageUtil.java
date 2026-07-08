@@ -46,7 +46,60 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 19;
+    private static final int CURRENT_LANG_VERSION = 22;
+
+    /**
+     * Keys with a confirmed VALUE bug (wrong/missing {n} argument, argument-order swap, etc.)
+     * fixed at v20 — force-refreshed on an already-deployed server's custom lang file even
+     * though the key already exists there, bypassing the normal additive-only merge. Add to
+     * this set only when a key's shipped TEXT was actually broken, never for wording/style
+     * preferences (those must stay additive-only so real user customizations aren't clobbered).
+     *
+     * <p>Public (not private) so {@link com.zerog.neoessentials.i18n.CustomLanguageManager} —
+     * a completely separate lang-file manager (backing {@code /language reload}/{@code
+     * regenerate}) that independently reads/writes the SAME on-disk custom lang file — can
+     * apply the identical override. That manager's own {@code regenerate()} otherwise always
+     * prefers the existing on-disk value over the JAR's for any key that's already present
+     * ("user wins" merge, by design, to protect real customizations), which meant it would
+     * silently keep re-saving a known-broken value forever, completely undoing this fix.</p>
+     */
+    public static final java.util.Set<String> FORCE_REFRESH_KEYS = java.util.Set.of(
+        "neoessentials.moderation.jail_success",
+        "neoessentials.moderation.jail_broadcast",
+        "neoessentials.moderation.jail_failed",
+        "neoessentials.moderation.unjail_success",
+        "neoessentials.moderation.unjail_broadcast",
+        "neoessentials.moderation.jailed_message",
+        "neoessentials.moderation.unjailed_message",
+        "neoessentials.moderation.jail_reminder",
+        "neoessentials.moderation.ban_failed",
+        "neoessentials.moderation.banip_failed",
+        "neoessentials.moderation.unbanip_failed",
+        "neoessentials.moderation.freeze_failed",
+        "neoessentials.moderation.unfreeze_failed",
+        "neoessentials.moderation.ban_success",
+        "neoessentials.moderation.banip_success",
+        "neoessentials.moderation.freeze_success",
+        "neoessentials.moderation.kick_success",
+        "neoessentials.moderation.banlist_entry_player",
+        "neoessentials.moderation.banlist_entry_ip",
+        "neoessentials.moderation.freezelist_entry",
+        "neoessentials.moderation.freezeall_broadcast",
+        "neoessentials.moderation.unfreezeall_broadcast",
+        "neoessentials.moderation.jaillist_entry",
+        "commands.neoessentials.permissions.export_help",
+        "commands.neoessentials.permissions.export_success",
+        "commands.neoessentials.teleport.warp.playerwarps_list_header",
+        "commands.neoessentials.eco.give_failed",
+        "commands.neoessentials.eco.take_failed",
+        "commands.neoessentials.enchant.target.notified",
+        "commands.neoessentials.teleport.admin.tpall.teleported",
+        "commands.neoessentials.teleport.admin.tpall.completed",
+        "commands.neoessentials.teleport.request.already_sent",
+        "commands.neoessentials.realname.partial_matches_header",
+        "commands.neoessentials.whois.session_time",
+        "commands.neoessentials.seen.current_location"
+    );
 
     /**
      * Returns the configured server language code, e.g. "fr_fr".
@@ -179,6 +232,39 @@ public class MessageUtil {
                             .disableHtmlEscaping().create().toJson(finalTranslations, fw);
                     } catch (Exception ex) {
                         LOGGER.warn("NeoEssentials: could not save repaired lang file: {}", ex.getMessage());
+                    }
+                }
+                // Force-refresh known-buggy keys UNCONDITIONALLY, independent of the version
+                // number stored in the server's custom lang file. This used to be nested
+                // inside the "deployedVersion < CURRENT_LANG_VERSION" branch above, but that
+                // makes correctness depend on the deployed file's version counter being in
+                // exactly the state this code expects — if a server's file was already bumped
+                // to the current version by an earlier partial fix, the whole merge block
+                // (including the force-refresh) would be skipped entirely and a broken value
+                // would never get corrected. Running this every single boot, regardless of
+                // version, guarantees these specific keys converge no matter what state the
+                // deployed file is in.
+                if (!preserveCustom) {
+                    Map<String, String> jarTranslations = loadJarTranslations(langCode);
+                    if (jarTranslations != null) {
+                        boolean forceChanged = false;
+                        for (String key : FORCE_REFRESH_KEYS) {
+                            String jarVal = jarTranslations.get(key);
+                            if (jarVal != null && !jarVal.equals(finalTranslations.get(key))) {
+                                finalTranslations.put(key, jarVal);
+                                forceChanged = true;
+                            }
+                        }
+                        if (forceChanged) {
+                            LOGGER.info("NeoEssentials: force-refreshed known-buggy translation key value(s) in '{}'.",
+                                serverLangFile.getName());
+                            try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
+                                new com.google.gson.GsonBuilder().setPrettyPrinting()
+                                    .disableHtmlEscaping().create().toJson(finalTranslations, fw);
+                            } catch (Exception ex) {
+                                LOGGER.warn("NeoEssentials: could not save force-refreshed lang file: {}", ex.getMessage());
+                            }
+                        }
                     }
                 }
                 translations.putAll(finalTranslations);
@@ -579,9 +665,26 @@ public class MessageUtil {
      * Get a localized string with an explicit English fallback text.
      * Use this when you know what the English text should be in case the key is missing.
      *
+     * <p><b>Deliberately NOT an overload of {@link #localize(String, Object...)}.</b> It used
+     * to be named {@code localize(String, String, Object...)}, but that created a silent,
+     * near-impossible-to-spot bug: any ordinary call like {@code localize(key, someName)} where
+     * {@code someName} is a plain {@code String} — which describes the overwhelming majority of
+     * call sites, since player names/reasons/jail names are all Strings — is MORE SPECIFIC as a
+     * match for {@code (String key, String fallback, Object... args)} than for
+     * {@code (String key, Object... args)}, per Java's overload-resolution rules (a fixed
+     * {@code String} parameter beats a variable-arity {@code Object} parameter). The compiler
+     * would silently bind such calls to THIS method instead, swallowing the caller's intended
+     * first substitution argument as an unused fallback and shifting every argument after it
+     * down by one position — with no compile error, since both overloads are valid Java. This
+     * single ambiguity was responsible for jail/ban/freeze/etc. messages showing missing or
+     * shifted {@code {n}} placeholders in production despite the lang file and every call site's
+     * arguments individually looking correct in isolation. Renaming this method removes the
+     * ambiguity permanently — {@code localize(key, args...)} can now only ever match the
+     * varargs-only overload.</p>
+     *
      * <p>Named placeholders are preserved verbatim (see {@link #localize(String, Object...)}).</p>
      */
-    public static String localize(String key, String fallback, Object... args) {
+    public static String localizeOrDefault(String key, String fallback, Object... args) {
         loadTranslations();
         String template = translations.getOrDefault(key, fallback);
 

@@ -152,6 +152,14 @@ public class LanguageCommand {
 
         try {
             CustomLanguageManager.getInstance().reload();
+            // CustomLanguageManager.reload() only refreshes ITS OWN in-memory maps and the
+            // on-disk file — it never touches MessageUtil's separate in-memory translations
+            // cache, which is what every MessageUtil.localize()/.success()/etc. call actually
+            // reads from (that's the vast majority of the mod's messages, including all of
+            // jail/ban/freeze/etc.). Without this, /language reload could fix the file on disk
+            // but the running server would keep serving stale, already-loaded values for the
+            // rest of its uptime — exactly what was happening here.
+            MessageUtil.reloadTranslations();
             int count = CustomLanguageManager.getInstance().getCustomLanguages().size();
 
             source.sendSuccess(() -> MessageUtil.success("Successfully reloaded custom languages ({0} loaded).", count), true);
@@ -364,6 +372,11 @@ public class LanguageCommand {
 
         try {
             int newKeys = CustomLanguageManager.getInstance().regenerate(languageCode);
+            // See the matching comment in reloadLanguages() — regenerate() only rewrites the
+            // on-disk file and CustomLanguageManager's own cache; without this, MessageUtil's
+            // separate in-memory translations cache (what jail/ban/freeze/etc. actually read)
+            // would keep serving whatever it loaded at server boot for the rest of the session.
+            MessageUtil.reloadTranslations();
             source.sendSuccess(() -> MessageUtil.success("Regenerated {0}.json from JAR. {1} new key(s) added.", languageCode, newKeys), true);
             source.sendSuccess(() -> MessageUtil.info("Your previous file was backed up to §e{0}.json.bak§7.", languageCode), false);
             if (newKeys == 0) {
