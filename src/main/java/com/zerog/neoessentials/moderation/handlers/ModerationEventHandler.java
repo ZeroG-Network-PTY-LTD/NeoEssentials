@@ -287,6 +287,18 @@ public class ModerationEventHandler {
                 return;
             }
 
+            // Region-wide protection: a jail cell's blocks can't be broken by ANYONE, jailed or
+            // not — the check above only stops the JAILED occupant, so someone standing outside
+            // the cell (or a jailed player targeting the cell from a neighboring one) could
+            // still dig into it. neoessentials.jail.bypass exempts staff doing maintenance.
+            if (JailManager.isJailSystemEnabled()
+                    && !PermissionAPI.hasPermission(playerId, "neoessentials.jail.bypass")
+                    && JailManager.getInstance().isInsideAnyJail(event.getPos(),
+                        player.level().dimension().location().toString())) {
+                event.setCanceled(true);
+                return;
+            }
+
             if (ConfigManager.getInstance().isVanishSystemEnabled()
                     && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
@@ -317,6 +329,15 @@ public class ModerationEventHandler {
             if (JailManager.isJailSystemEnabled()
                     && JailManager.getInstance().isPlayerJailed(playerId)
                     && !PermissionAPI.hasPermission(playerId, "neoessentials.jail.allow-place")) {
+                event.setCanceled(true);
+                return;
+            }
+
+            // Region-wide protection — see matching comment in onBlockBreak above.
+            if (JailManager.isJailSystemEnabled()
+                    && !PermissionAPI.hasPermission(playerId, "neoessentials.jail.bypass")
+                    && JailManager.getInstance().isInsideAnyJail(event.getPos(),
+                        player.level().dimension().location().toString())) {
                 event.setCanceled(true);
                 return;
             }

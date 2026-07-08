@@ -604,6 +604,8 @@ public class PermissionRegistry {
         register("neoessentials.jail.allow-place", "Place blocks while jailed", PermissionCategory.MODERATION, false);
         register("neoessentials.jail.allow-interact", "Interact with blocks/items while jailed", PermissionCategory.MODERATION, false);
         register("neoessentials.jail.allow-attack", "Attack entities while jailed", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.wand", "Use the jail-region selection wand", PermissionCategory.MODERATION, false);
+        register("neoessentials.jail.bypass", "Build/break inside jail cells (maintenance)", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.vanish", "Vanish self", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.vanish.others", "Vanish other players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.seevanished", "See vanished players", PermissionCategory.MODERATION, false);
