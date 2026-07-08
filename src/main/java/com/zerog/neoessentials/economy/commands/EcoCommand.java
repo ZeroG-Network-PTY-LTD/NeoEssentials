@@ -119,7 +119,8 @@ public class EcoCommand {
             EconomyManager.getInstance().setBalance(uuid, startBal);
             String adminName = ctx.getSource().getTextName();
             ctx.getSource().sendSuccess(() -> MessageUtil.success(
-                "commands.neoessentials.eco.reset", validPlayerName, startBal), false);
+                "commands.neoessentials.eco.reset", validPlayerName, startBal,
+                EconomyManager.getInstance().getCurrencySymbol()), false);
             EconomyTransactionLogger.log("ADMIN_RESET", adminName, validPlayerName,
                 startBal.toPlainString(), "Reset to starting balance");
             TransactionHistoryManager.getInstance().addTransaction(uuid,
@@ -167,7 +168,8 @@ public class EcoCommand {
                     return 0;
                 }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
-                    "commands.neoessentials.eco.give", finalAmount, validPlayerName), false);
+                    "commands.neoessentials.eco.give", finalAmount, validPlayerName,
+                    manager.getCurrencySymbol()), false);
                 EconomyTransactionLogger.log("ADMIN_GIVE", adminName, validPlayerName,
                     finalAmount.toPlainString(), "Admin give");
                 TransactionHistoryManager.getInstance().addTransaction(uuid,
@@ -184,16 +186,22 @@ public class EcoCommand {
                     return 0;
                 }
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
-                    "commands.neoessentials.eco.take", finalAmount, validPlayerName), false);
+                    "commands.neoessentials.eco.take", finalAmount, validPlayerName,
+                    manager.getCurrencySymbol()), false);
                 EconomyTransactionLogger.log("ADMIN_TAKE", adminName, validPlayerName,
                     finalAmount.toPlainString(), "Admin take");
                 TransactionHistoryManager.getInstance().addTransaction(uuid,
                     MessageUtil.localize("commands.neoessentials.transaction.admin_took", finalAmount));
+                var t3 = server.getPlayerList().getPlayer(uuid);
+                if (t3 != null) t3.sendSystemMessage(MessageUtil.info(
+                    "commands.neoessentials.eco.take_notify", finalAmount,
+                    manager.getCurrencySymbol()));
             }
             case "set" -> {
                 manager.setBalance(uuid, finalAmount);
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(
-                    "commands.neoessentials.eco.set", validPlayerName, finalAmount), false);
+                    "commands.neoessentials.eco.set", validPlayerName, finalAmount,
+                    manager.getCurrencySymbol()), false);
                 EconomyTransactionLogger.log("ADMIN_SET", adminName, validPlayerName,
                     finalAmount.toPlainString(), "Admin set");
                 TransactionHistoryManager.getInstance().addTransaction(uuid,
