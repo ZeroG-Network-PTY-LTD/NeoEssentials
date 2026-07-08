@@ -103,7 +103,11 @@ public class CustomLanguageManager {
                     LOGGER.error("Exception while copying language file from JAR: {}", e.getMessage(), e);
                 }
             } else {
-                // Merge missing keys from JAR version
+                // Merge missing keys from JAR version, and force-refresh any key with a
+                // confirmed content bug (see MessageUtil.FORCE_REFRESH_KEYS) regardless of
+                // whether it's already present — this runs on every server boot (unlike
+                // regenerate(), which is manually triggered), so it's the main path that needs
+                // to actually converge a stale on-disk value automatically.
                 Map<String, String> jarLang = loadBaseTranslations();
                 Map<String, String> fileLang;
                 try (Reader reader = Files.newBufferedReader(langFile, StandardCharsets.UTF_8)) {
@@ -116,12 +120,16 @@ public class CustomLanguageManager {
                         if (!fileLang.containsKey(entry.getKey())) {
                             fileLang.put(entry.getKey(), entry.getValue());
                             updated = true;
+                        } else if (MessageUtil.FORCE_REFRESH_KEYS.contains(entry.getKey())
+                                && !entry.getValue().equals(fileLang.get(entry.getKey()))) {
+                            fileLang.put(entry.getKey(), entry.getValue());
+                            updated = true;
                         }
                     }
                     if (updated) {
                         try (Writer writer = Files.newBufferedWriter(langFile, StandardCharsets.UTF_8)) {
                             gson.toJson(fileLang, writer);
-                            LOGGER.info("Merged missing keys from JAR into language file: {}", langFile.toAbsolutePath());
+                            LOGGER.info("Merged missing/force-refreshed keys from JAR into language file: {}", langFile.toAbsolutePath());
                         }
                     }
                 }
@@ -704,12 +712,24 @@ public class CustomLanguageManager {
         }
         if (jarVersion == null) throw new IOException("Empty/invalid JAR language file for: " + languageCode);
 
-        // Merge: JAR keys + existing user values (user wins on conflict)
+        // Merge: JAR keys + existing user values (user wins on conflict) — EXCEPT for
+        // MessageUtil.FORCE_REFRESH_KEYS, which always take the JAR value regardless. Those
+        // are keys with a confirmed content bug (wrong/missing {n} argument, swapped argument
+        // order); without this override, "user wins" meant regenerating from the JAR could
+        // never actually fix a broken key already on disk — it would just keep re-saving the
+        // same broken value back, forever, since a "regenerate" always finds the key already
+        // present and defers to it.
         Map<String, String> merged = new LinkedHashMap<>(jarVersion);
         int newKeys = 0;
+        int forceRefreshed = 0;
         for (Map.Entry<String, String> e : jarVersion.entrySet()) {
             if (!existing.containsKey(e.getKey())) {
                 newKeys++;
+            } else if (MessageUtil.FORCE_REFRESH_KEYS.contains(e.getKey())) {
+                if (!e.getValue().equals(existing.get(e.getKey()))) {
+                    forceRefreshed++;
+                }
+                // merged already holds the JAR value from the initial copy above — leave it.
             } else {
                 merged.put(e.getKey(), existing.get(e.getKey())); // keep user value
             }
@@ -719,7 +739,8 @@ public class CustomLanguageManager {
         try (Writer writer = Files.newBufferedWriter(target, StandardCharsets.UTF_8)) {
             gson.toJson(merged, writer);
         }
-        LOGGER.info("Regenerated {}: {} total keys, {} new from JAR, backup at {}", fileName, merged.size(), newKeys, backup);
+        LOGGER.info("Regenerated {}: {} total keys, {} new from JAR, {} force-refreshed, backup at {}",
+            fileName, merged.size(), newKeys, forceRefreshed, backup);
 
         // Reload translations for this language
         loadCustomLanguageFile(target);
