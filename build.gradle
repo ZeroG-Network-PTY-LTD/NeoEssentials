@@ -26,8 +26,9 @@ if (buildNumberFile.exists()) {
 buildNumber++
 buildNumberFile.text = buildNumber.toString()
 
-// Set version with build number
-version = "${mod_version}+build.${buildNumber}"
+// Set version with build number, tagged with the target Minecraft version so
+// jars built from this 26.x port branch are never confused with 1.21.1 jars.
+version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
 group = mod_group_id
 
 // Log build information
