@@ -26,7 +26,7 @@ public class EnchantmentUtils {
         var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
         ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
-        return registry.getHolderOrThrow(key);
+        return registry.getOrThrow(key);
     }
     
     /**
@@ -41,7 +41,7 @@ public class EnchantmentUtils {
             var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
             Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
-            return registry.getHolder(key).map(holder -> holder);
+            return registry.get(key).map(holder -> holder);
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -57,7 +57,7 @@ public class EnchantmentUtils {
         try {
             var registry = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, location);
-            return registry.getHolder(key).map(holder -> holder);
+            return registry.get(key).map(holder -> holder);
         } catch (Exception e) {
             return Optional.empty();
         }

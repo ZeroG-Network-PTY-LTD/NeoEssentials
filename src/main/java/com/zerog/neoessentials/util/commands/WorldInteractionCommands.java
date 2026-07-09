@@ -14,7 +14,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.projectile.*;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.entity.projectile.hurtingprojectile.DragonFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.LargeFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.SmallFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -99,54 +106,54 @@ public class WorldInteractionCommands {
         net.minecraft.world.entity.Entity projectile = switch (type.toLowerCase()) {
             case "small"      -> {
                 var fb = new SmallFireball(level, player, dir);
-                fb.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                fb.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 yield fb;
             }
             case "large"      -> {
                 var fb = new LargeFireball(level, player, dir, 1);
-                fb.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                fb.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 yield fb;
             }
             case "skull"      -> {
                 var sk = new WitherSkull(level, player, dir);
-                sk.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                sk.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 yield sk;
             }
             case "arrow"      -> {
                 var ar = new Arrow(net.minecraft.world.entity.EntityType.ARROW, level);
                 ar.setOwner(player);
-                ar.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                ar.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 ar.setDeltaMovement(dir);
                 yield ar;
             }
             case "egg"        -> {
-                var eg = new ThrownEgg(level, player);
-                eg.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                var eg = new ThrownEgg(level, player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EGG));
+                eg.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 eg.setDeltaMovement(dir);
                 yield eg;
             }
             case "snowball"   -> {
-                var sb = new Snowball(level, player);
-                sb.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                var sb = new Snowball(level, player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SNOWBALL));
+                sb.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 sb.setDeltaMovement(dir);
                 yield sb;
             }
             case "expbottle"  -> {
-                var eb = new ThrownExperienceBottle(level, player);
-                eb.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                var eb = new ThrownExperienceBottle(level, player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EXPERIENCE_BOTTLE));
+                eb.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 eb.setDeltaMovement(dir);
                 yield eb;
             }
             case "dragon"     -> {
                 var df = new DragonFireball(level, player, dir);
-                df.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                df.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 yield df;
             }
             case "windcharge" -> {
                 var wc = com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.WIND_CHARGE, level);
                 if (wc != null) {
                     wc.setOwner(player);
-                    wc.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                    wc.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                     wc.setDeltaMovement(dir);
                 }
                 yield wc != null ? wc : new LargeFireball(level, player, dir, 1);
@@ -154,7 +161,7 @@ public class WorldInteractionCommands {
             default           -> {
                 // "fireball" and fallback
                 var fb = new LargeFireball(level, player, dir, 1);
-                fb.moveTo(spawnPos.x, spawnPos.y, spawnPos.z);
+                fb.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 yield fb;
             }
         };
@@ -162,7 +169,7 @@ public class WorldInteractionCommands {
         level.addFreshEntity(projectile);
 
         if (ride) {
-            player.startRiding(projectile, true);
+            player.startRiding(projectile, true, true);
         }
 
         final String ft = type;
@@ -244,11 +251,11 @@ public class WorldInteractionCommands {
 
     private static boolean tryPlaceTree(ServerLevel level, BlockPos pos, net.minecraft.resources.Identifier featureKey) {
         try {
-            var registry = level.registryAccess().registry(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
+            var registry = level.registryAccess().lookup(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
             if (registry.isEmpty()) return false;
             var holder = registry.get().get(featureKey);
-            if (holder == null) return false;
-            return holder.place(level, level.getChunkSource().getGenerator(), level.getRandom(), pos);
+            if (holder.isEmpty()) return false;
+            return holder.get().value().place(level, level.getChunkSource().getGenerator(), level.getRandom(), pos);
         } catch (Exception e) {
             LOGGER.warn("Failed to place tree '{}': {}", featureKey, e.getMessage());
             return false;

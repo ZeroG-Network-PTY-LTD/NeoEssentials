@@ -217,7 +217,7 @@ public class EnchantCommand {
             return 0;
         }
         
-        Enchantment enchantment = enchantRegistry.get(enchantId);
+        Enchantment enchantment = enchantRegistry.getValue(enchantId);
         if (enchantment == null) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.unknown", enchantId.toString()));
             return 0;
@@ -285,36 +285,20 @@ public class EnchantCommand {
     /**
      * Check if an enchantment is compatible with an item stack
      */
-    private static volatile boolean loggedEnchantableFallback = false;
-
     private static boolean isEnchantmentCompatible(Enchantment enchantment, ItemStack stack) {
-        try {
-            // Check if the item is enchantable at all
-            if (!stack.getItem().isEnchantable(stack)) {
-                return false;
-            }
+        // Check if the item is enchantable at all
+        if (!stack.isEnchantable()) {
+            return false;
+        }
 
-            // For books, allow all enchantments
-            if (stack.getItem().toString().contains("book")) {
-                return true;
-            }
-
-            // Try to check enchantment category compatibility
-            // This is a basic implementation - in practice you'd need more sophisticated checking
-            return stack.getItem().isEnchantable(stack);
-
-        } catch (Throwable e) {
-            // Item.isEnchantable(ItemStack) was reworked into a DataComponents-based check on
-            // newer Minecraft versions and can throw NoSuchMethodError here (an Error, not an
-            // Exception — must be caught explicitly). Fallback: if we can't determine
-            // compatibility, allow it.
-            if (e instanceof NoSuchMethodError && !loggedEnchantableFallback) {
-                loggedEnchantableFallback = true;
-                LOGGER.warn("Item.isEnchantable(ItemStack) is unavailable on this Minecraft version — " +
-                    "skipping item-compatibility checks for /enchant. ({})", e.getMessage());
-            }
+        // For books, allow all enchantments
+        if (stack.getItem().toString().contains("book")) {
             return true;
         }
+
+        // Try to check enchantment category compatibility
+        // This is a basic implementation - in practice you'd need more sophisticated checking
+        return stack.isEnchantable();
     }
 
     /**
@@ -348,7 +332,7 @@ public class EnchantCommand {
                 
             // Find the holder for this enchantment
             Holder<Enchantment> holder = null;
-            for (var entry : registry.holders().toList()) {
+            for (var entry : registry.listElements().toList()) {
                 if (entry.value().equals(enchantment)) {
                     holder = entry;
                     break;

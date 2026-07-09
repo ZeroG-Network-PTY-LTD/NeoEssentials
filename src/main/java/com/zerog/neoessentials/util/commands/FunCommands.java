@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Cat;
+import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.item.FireworkRocketItem;
 import net.minecraft.world.item.ItemStack;
@@ -280,7 +280,7 @@ public class FunCommands {
                 for (int z = -10; z <= 10; z += 5) {
                     PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
                     if (tnt != null) {
-                        tnt.moveTo(bx + x, topY, bz + z);
+                        tnt.snapTo(bx + x, topY, bz + z);
                         tnt.setFuse(80); // 4 seconds
                         level.addFreshEntity(tnt);
                     }
@@ -352,7 +352,7 @@ public class FunCommands {
         // Get registry ID
         var itemKey = BuiltInRegistries.ITEM.getKey(stack.getItem());
         String registryId = itemKey != null ? itemKey.toString() : "unknown";
-        String displayName = stack.getItem().getDescription().getString();
+        String displayName = stack.getItem().getName(stack).getString();
         int maxStack = stack.getMaxStackSize();
         Integer maxDamageComp = stack.get(DataComponents.MAX_DAMAGE);
         int maxDamage = maxDamageComp != null ? maxDamageComp : 0;
@@ -441,11 +441,13 @@ public class FunCommands {
         // Resolve effect
         String id = effectId.contains(":") ? effectId : "minecraft:" + effectId;
         Identifier loc = Identifier.tryParse(id);
-        var effectHolder = loc != null ? BuiltInRegistries.MOB_EFFECT.get(loc) : null;
+        net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effectHolder =
+            loc != null ? BuiltInRegistries.MOB_EFFECT.get(loc).map(h -> (net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>) h).orElse(null) : null;
         if (effectHolder == null) {
             effectHolder = BuiltInRegistries.MOB_EFFECT.entrySet().stream()
                 .filter(e -> e.getKey().identifier().getPath().equals(effectId.toLowerCase()))
-                .map(java.util.Map.Entry::getValue).findFirst().orElse(null);
+                .map(e -> BuiltInRegistries.MOB_EFFECT.wrapAsHolder(e.getValue()))
+                .findFirst().orElse(null);
         }
         if (effectHolder == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.effect.unknown", effectId));
@@ -453,8 +455,7 @@ public class FunCommands {
         }
 
         var instance = new net.minecraft.world.effect.MobEffectInstance(
-            net.minecraft.core.Holder.direct(effectHolder),
-            durationSecs * 20, amplifier, false, true);
+            effectHolder, durationSecs * 20, amplifier, false, true);
 
         // Get or create PotionContents
         var existing = held.get(DataComponents.POTION_CONTENTS);
@@ -467,9 +468,9 @@ public class FunCommands {
         custom.add(instance);
 
         net.minecraft.world.item.alchemy.PotionContents newContents = existing != null
-            ? new net.minecraft.world.item.alchemy.PotionContents(existing.potion(), existing.customColor(), custom)
+            ? new net.minecraft.world.item.alchemy.PotionContents(existing.potion(), existing.customColor(), custom, existing.customName())
             : new net.minecraft.world.item.alchemy.PotionContents(java.util.Optional.empty(),
-                java.util.Optional.empty(), custom);
+                java.util.Optional.empty(), custom, java.util.Optional.empty());
 
         held.set(DataComponents.POTION_CONTENTS, newContents);
         final String fid = effectId; final int fa = amplifier; final int fd = durationSecs;
@@ -555,7 +556,7 @@ public class FunCommands {
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
         if (tnt != null) {
-            tnt.moveTo(pos.x, pos.y, pos.z);
+            tnt.snapTo(pos.x, pos.y, pos.z);
             tnt.setFuse(80);
             level.addFreshEntity(tnt);
         }
@@ -590,12 +591,15 @@ public class FunCommands {
         }
 
         // Pick a random cat variant from the registry
-        var variants = net.minecraft.core.registries.BuiltInRegistries.CAT_VARIANT.holders().toList();
+        var variants = level.registryAccess()
+            .lookupOrThrow(net.minecraft.core.registries.Registries.CAT_VARIANT)
+            .listElements().toList();
         if (!variants.isEmpty()) {
-            cat.setVariant(variants.get(RANDOM.nextInt(variants.size())));
+            cat.setComponent(net.minecraft.core.component.DataComponents.CAT_VARIANT,
+                variants.get(RANDOM.nextInt(variants.size())));
         }
         cat.setAge(-24000); // negative age = baby in vanilla AgeableMob
-        cat.moveTo(player.getX(), player.getEyeY(), player.getZ());
+        cat.snapTo(player.getX(), player.getEyeY(), player.getZ());
         var look = player.getLookAngle().normalize().scale(2.0);
         cat.setDeltaMovement(look.x, look.y, look.z);
         level.addFreshEntity(cat);
@@ -640,10 +644,10 @@ public class FunCommands {
         for (int i = 0; i < amount; i++) {
             var bee = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.BEE, level);
             if (bee != null) {
-                bee.moveTo(player.getX(), player.getEyeY(), player.getZ());
+                bee.snapTo(player.getX(), player.getEyeY(), player.getZ());
                 var look = player.getLookAngle().normalize().scale(1.5 + RANDOM.nextDouble() * 0.5);
                 bee.setDeltaMovement(look.x, look.y + 0.1, look.z);
-                bee.setRemainingPersistentAngerTime(400 + RANDOM.nextInt(400)); // angry for 20–40s
+                bee.setPersistentAngerEndTime(level.getGameTime() + 400 + RANDOM.nextInt(400)); // angry for 20–40s
                 bee.setTarget(null); // will auto-target nearby enemies
                 level.addFreshEntity(bee);
                 spawned++;

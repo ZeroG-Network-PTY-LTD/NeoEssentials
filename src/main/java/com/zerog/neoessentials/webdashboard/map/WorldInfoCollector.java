@@ -114,8 +114,8 @@ public class WorldInfoCollector {
         // Dimension type info
         dimObj.addProperty("hasSkyLight", level.dimensionType().hasSkyLight());
         dimObj.addProperty("hasCeiling", level.dimensionType().hasCeiling());
-        dimObj.addProperty("ultraWarm", level.dimensionType().ultraWarm());
-        dimObj.addProperty("natural", level.dimensionType().natural());
+        dimObj.addProperty("ultraWarm", level.dimension() == net.minecraft.world.level.Level.NETHER);
+        dimObj.addProperty("natural", level.dimension() == net.minecraft.world.level.Level.OVERWORLD);
         dimObj.addProperty("minY", level.dimensionType().minY());
         dimObj.addProperty("maxY", level.dimensionType().minY() + level.dimensionType().height());
         dimObj.addProperty("height", level.dimensionType().height());

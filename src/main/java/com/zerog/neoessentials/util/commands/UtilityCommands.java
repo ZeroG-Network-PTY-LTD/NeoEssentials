@@ -13,9 +13,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,8 +117,12 @@ public class UtilityCommands {
 
     @SuppressWarnings("resource") // ServerLevel does not implement AutoCloseable — IDE false positive
     private static void sendTimePacket(ServerPlayer player, long ticks, boolean lock) {
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTimePacket(
-            com.zerog.neoessentials.util.LevelCompat.of(player).getGameTime(), ticks, !lock));
+        var level = com.zerog.neoessentials.util.LevelCompat.of(player);
+        level.dimensionType().defaultClock().ifPresent(clock -> {
+            var state = new net.minecraft.world.clock.ClockNetworkState(ticks, 0f, lock ? 0f : 1f);
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTimePacket(
+                level.getGameTime(), java.util.Map.of(clock, state)));
+        });
     }
 
     // ── /pweather [reset|sun|storm] [player] ─────────────────────────────────
@@ -268,12 +272,13 @@ public class UtilityCommands {
             src.sendFailure(MessageUtil.error("commands.neoessentials.effect.unknown", effectId));
             return 0;
         }
-        var effectHolder = BuiltInRegistries.MOB_EFFECT.get(loc);
+        net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effectHolder =
+            BuiltInRegistries.MOB_EFFECT.get(loc).map(h -> (net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect>) h).orElse(null);
         if (effectHolder == null) {
             // Try by path only across all namespaces
             effectHolder = BuiltInRegistries.MOB_EFFECT.entrySet().stream()
                 .filter(e -> e.getKey().identifier().getPath().equals(effectId.toLowerCase()))
-                .map(Map.Entry::getValue)
+                .map(e -> BuiltInRegistries.MOB_EFFECT.wrapAsHolder(e.getValue()))
                 .findFirst().orElse(null);
         }
         if (effectHolder == null) {
@@ -283,7 +288,7 @@ public class UtilityCommands {
 
         int durationTicks = durationSeconds * 20;
         target.addEffect(new MobEffectInstance(
-            net.minecraft.core.Holder.direct(effectHolder), durationTicks, amplifier, false, true));
+            effectHolder, durationTicks, amplifier, false, true));
         final String eid = effectId; final int fa = amplifier; final int fd = durationSeconds;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.effect.applied",
             targetName, eid, fa, fd), true);
@@ -363,10 +368,10 @@ public class UtilityCommands {
         for (int i = 0; i < amount; i++) {
             var entity = com.zerog.neoessentials.util.EntityTypeCompat.create(entityType, level);
             if (entity == null) break;
-            entity.moveTo(spawnAt.getX(), spawnAt.getY(), spawnAt.getZ(), spawnAt.getYRot(), 0f);
+            entity.snapTo(spawnAt.getX(), spawnAt.getY(), spawnAt.getZ(), spawnAt.getYRot(), 0f);
             if (entity instanceof Mob mob) {
                 mob.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnAt.blockPosition()),
-                    MobSpawnType.COMMAND, null);
+                    EntitySpawnReason.COMMAND, null);
             }
             level.addFreshEntity(entity);
             spawned++;

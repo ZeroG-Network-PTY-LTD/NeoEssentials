@@ -258,7 +258,7 @@ public class CommandExecutionHandler implements HttpHandler {
             Vec3.ZERO,
             Vec2.ZERO,
             overworld,
-            4, // Permission level (admin)
+            net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS, // Permission level (admin)
             "Dashboard",
             Component.literal("Dashboard"),
             server,

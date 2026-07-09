@@ -205,7 +205,7 @@ public class RandomTeleportManager {
             int chunkZ = (int) z >> 4;
             LevelChunk chunk = level.getChunk(chunkX, chunkZ);
 
-            boolean isNether = level.dimensionType().ultraWarm(); // ultrawarm == nether-like
+            boolean isNether = level.dimension() == net.minecraft.world.level.Level.NETHER;
 
             int ix = (int) Math.floor(x);
             int iz = (int) Math.floor(z);

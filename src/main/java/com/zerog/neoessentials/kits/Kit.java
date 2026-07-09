@@ -221,7 +221,7 @@ public class Kit {
                     // Apply NBT if present
                     if (itemJson.has("nbt")) {
                         try {
-                            CompoundTag nbt = TagParser.parseTag(itemJson.get("nbt").getAsString());
+                            CompoundTag nbt = TagParser.parseCompoundFully(itemJson.get("nbt").getAsString());
                             stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, 
                                      net.minecraft.world.item.component.CustomData.of(nbt));
                         } catch (Exception e) {

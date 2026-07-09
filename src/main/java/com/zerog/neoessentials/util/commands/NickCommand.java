@@ -357,6 +357,8 @@ public class NickCommand {
                 subject.connection.latency(),
                 subject.gameMode.getGameModeForPlayer(),
                 displayName,   // null → client falls back to the profile name
+                true,          // showHat
+                0,             // listOrder
                 null           // no chat session
             );
 

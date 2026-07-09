@@ -518,7 +518,6 @@ public class PlayerDataCollector {
             health.addProperty("healthPercent", (player.getHealth() / player.getMaxHealth()) * 100);
             health.addProperty("foodLevel", player.getFoodData().getFoodLevel());
             health.addProperty("saturation", player.getFoodData().getSaturationLevel());
-            health.addProperty("exhaustion", player.getFoodData().getExhaustionLevel());
             health.addProperty("armor", player.getArmorValue());
             health.addProperty("absorptionAmount", player.getAbsorptionAmount());
             health.addProperty("air", player.getAirSupply());
@@ -928,15 +927,17 @@ public class PlayerDataCollector {
     @SuppressWarnings("IfCanBeSwitch") // instanceof checks are clearer
     private String determineItemType(net.minecraft.world.item.ItemStack itemStack) {
         net.minecraft.world.item.Item item = itemStack.getItem();
-        
+
         // Check item categories
-        if (item instanceof net.minecraft.world.item.SwordItem) return "sword";
-        if (item instanceof net.minecraft.world.item.PickaxeItem) return "pickaxe";
+        if (itemStack.is(net.minecraft.tags.ItemTags.SWORDS)) return "sword";
+        if (itemStack.is(net.minecraft.tags.ItemTags.PICKAXES)) return "pickaxe";
         if (item instanceof net.minecraft.world.item.AxeItem) return "axe";
         if (item instanceof net.minecraft.world.item.ShovelItem) return "shovel";
         if (item instanceof net.minecraft.world.item.HoeItem) return "hoe";
-        if (item instanceof net.minecraft.world.item.ArmorItem armorItem) {
-            return "armor_" + armorItem.getType().getName();
+        net.minecraft.world.item.equipment.Equippable equippable =
+            itemStack.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
+        if (equippable != null && equippable.slot().getType() == net.minecraft.world.entity.EquipmentSlot.Type.HUMANOID_ARMOR) {
+            return "armor_" + equippable.slot().getName();
         }
         if (item instanceof net.minecraft.world.item.BowItem) return "bow";
         if (item instanceof net.minecraft.world.item.CrossbowItem) return "crossbow";
@@ -945,8 +946,8 @@ public class PlayerDataCollector {
         if (item instanceof net.minecraft.world.item.BlockItem) return "block";
         if (item.components().has(net.minecraft.core.component.DataComponents.FOOD)) return "food";
         if (item instanceof net.minecraft.world.item.PotionItem) return "potion";
-        if (item instanceof net.minecraft.world.item.EnchantedBookItem) return "enchanted_book";
-        
+        if (item == net.minecraft.world.item.Items.ENCHANTED_BOOK) return "enchanted_book";
+
         return "item"; // Default
     }
     

@@ -254,15 +254,12 @@ public class ServerAdminCommands {
 
     private static int executeWeather(CommandContext<CommandSourceStack> ctx, String type, int durationSeconds) {
         var src = ctx.getSource();
-        // Apply to all overworld-type levels
-        for (ServerLevel level : src.getServer().getAllLevels()) {
-            if (!level.dimensionType().hasSkyLight()) continue; // skip nether/end
-            int ticks = durationSeconds > 0 ? durationSeconds * 20 : 6000;
-            switch (type) {
-                case "sun" -> level.setWeatherParameters(ticks, 0, false, false);
-                case "storm" -> level.setWeatherParameters(0, ticks, true, false);
-                case "thunder" -> level.setWeatherParameters(0, ticks, true, true);
-            }
+        // Weather is server-global as of 26.1 (no longer per-ServerLevel).
+        int ticks = durationSeconds > 0 ? durationSeconds * 20 : 6000;
+        switch (type) {
+            case "sun" -> src.getServer().setWeatherParameters(ticks, 0, false, false);
+            case "storm" -> src.getServer().setWeatherParameters(0, ticks, true, false);
+            case "thunder" -> src.getServer().setWeatherParameters(0, ticks, true, true);
         }
         String label = durationSeconds > 0
             ? type + " for " + durationSeconds + "s"
@@ -470,11 +467,11 @@ public class ServerAdminCommands {
                         return 0;
                     }
 
-                    var pos = tag.getList("Pos", net.minecraft.nbt.Tag.TAG_DOUBLE);
-                    double x = pos.getDouble(0), y = pos.getDouble(1), z = pos.getDouble(2);
-                    var rot = tag.getList("Rotation", net.minecraft.nbt.Tag.TAG_FLOAT);
-                    float yaw = !rot.isEmpty() ? rot.getFloat(0) : 0f;
-                    float pitch = rot.size() > 1 ? rot.getFloat(1) : 0f;
+                    var pos = tag.getListOrEmpty("Pos");
+                    double x = pos.getDoubleOr(0, 0), y = pos.getDoubleOr(1, 0), z = pos.getDoubleOr(2, 0);
+                    var rot = tag.getListOrEmpty("Rotation");
+                    float yaw = !rot.isEmpty() ? rot.getFloatOr(0, 0f) : 0f;
+                    float pitch = rot.size() > 1 ? rot.getFloatOr(1, 0f) : 0f;
 
                     // Dimension
                     var dimKey = tag.contains("Dimension")
@@ -677,11 +674,14 @@ public class ServerAdminCommands {
             }
         }
         final net.minecraft.world.item.Item finalItem = item;
+        var slotDisplayContext = net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(player.level());
         List<net.minecraft.world.item.crafting.RecipeHolder<?>> matching = new ArrayList<>();
         for (var holder : src.getServer().getRecipeManager().getRecipes()) {
             try {
-                if (holder.value().getResultItem(src.getServer().registryAccess()).getItem() == finalItem)
-                    matching.add(holder);
+                boolean produces = holder.value().display().stream()
+                    .flatMap(display -> display.result().resolveForStacks(slotDisplayContext).stream())
+                    .anyMatch(stack -> stack.getItem() == finalItem);
+                if (produces) matching.add(holder);
             } catch (Exception ignored) {}
         }
         if (matching.isEmpty()) {

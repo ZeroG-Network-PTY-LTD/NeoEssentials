@@ -212,10 +212,10 @@ public class NeoEssentials {
             boolean ftbRanksPresent  = net.neoforged.fml.ModList.get().isLoaded("ftbranks");
             if (!luckPermsPresent && !ftbRanksPresent) {
                 try {
-                    String current = net.neoforged.neoforge.common.NeoForgeConfig.SERVER.permissionHandler.get();
+                    String current = net.neoforged.neoforge.common.config.NeoForgeServerConfig.INSTANCE.permissionHandler.get();
                     // Only switch if the server is still on the default NeoForge handler
                     if ("neoforge:default_handler".equals(current)) {
-                        net.neoforged.neoforge.common.NeoForgeConfig.SERVER.permissionHandler.set(
+                        net.neoforged.neoforge.common.config.NeoForgeServerConfig.INSTANCE.permissionHandler.set(
                                 NeoEssentialsPermissionHandler.IDENTIFIER.toString());
                         LOGGER.info("[Permissions] Auto-activated NeoEssentials permission handler " +
                                 "(neoessentials:handler).  External mod permissions in permissions.json " +

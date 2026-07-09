@@ -281,7 +281,7 @@ public class ShopSignHandler {
                     .withStyle(s -> s.withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(
                         ClickEvent.Action.RUN_COMMAND, enableCmd)))
                     .withStyle(s -> s.withHoverEvent(
-                        new net.minecraft.network.chat.HoverEvent(
+                        com.zerog.neoessentials.util.HoverEventCompat.create(
                             net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
                             Component.literal("§7Enables a floating text display above\nyour sign shop. You can move it later with\n§e/chestshop hologram move <x> <y> <z>")))));
             player.sendSystemMessage(holoPrompt);

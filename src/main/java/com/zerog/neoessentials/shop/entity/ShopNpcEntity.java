@@ -48,7 +48,7 @@ public final class ShopNpcEntity {
         // ArmorStand extends LivingEntity (not Mob) — no setNoAi(); stands are stationary by default
         stand.setCustomName(Component.literal("§6[Shop] §f" + shopName));
         stand.setCustomNameVisible(true);
-        stand.getPersistentData().putUUID(NBT_SHOP_ID, shopId);
+        stand.getPersistentData().putIntArray(NBT_SHOP_ID, net.minecraft.core.UUIDUtil.uuidToIntArray(shopId));
         return stand;
     }
 
@@ -57,12 +57,12 @@ public final class ShopNpcEntity {
     /** Returns the shopId embedded in the ArmorStand's persistent data, or {@code null}. */
     public static UUID getShopId(ArmorStand stand) {
         var data = stand.getPersistentData();
-        return data.hasUUID(NBT_SHOP_ID) ? data.getUUID(NBT_SHOP_ID) : null;
+        return data.getIntArray(NBT_SHOP_ID).map(net.minecraft.core.UUIDUtil::uuidFromIntArray).orElse(null);
     }
 
     /** Returns {@code true} if this ArmorStand is a NeoEssentials shop NPC. */
     public static boolean isShopNpc(ArmorStand stand) {
-        return stand.getPersistentData().hasUUID(NBT_SHOP_ID);
+        return stand.getPersistentData().contains(NBT_SHOP_ID);
     }
 }
 

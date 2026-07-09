@@ -217,7 +217,7 @@ public class PlayerDataHandler implements HttpHandler {
     // Converts CompoundTag to a JsonObject (simple implementation)
     private JsonObject nbtToJson(CompoundTag tag) {
         JsonObject obj = new JsonObject();
-        for (String key : tag.getAllKeys()) {
+        for (String key : tag.keySet()) {
             if (tag.contains(key)) {
                 net.minecraft.nbt.Tag nbtValue = tag.get(key);
                 if (nbtValue == null) {

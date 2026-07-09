@@ -63,13 +63,14 @@ public class ServerDataCollector {
             profile.addProperty("modVersion", neoforgeVersion);
             profile.addProperty("neoforgeVersion", neoforgeVersion);
             
-            profile.addProperty("gameVersion", "1.21.1");
-            profile.addProperty("difficulty", server.getWorldData().getDifficulty().getKey());
+            profile.addProperty("gameVersion", "26.1.2");
+            profile.addProperty("difficulty", server.getWorldData().getDifficulty().getSerializedName());
             profile.addProperty("hardcore", server.getWorldData().isHardcore());
             profile.addProperty("maxPlayers", server.getMaxPlayers());
-            profile.addProperty("pvpEnabled", server.isPvpAllowed());
+            profile.addProperty("pvpEnabled", server.overworld().isPvpAllowed());
             profile.addProperty("onlineMode", server.usesAuthentication());
-            profile.addProperty("commandBlocksEnabled", server.isCommandBlockEnabled());
+            profile.addProperty("commandBlocksEnabled",
+                server.overworld().getGameRules().get(net.minecraft.world.level.gamerules.GameRules.COMMAND_BLOCKS_WORK));
             
             // Installed mods
             JsonArray mods = new JsonArray();
@@ -326,7 +327,7 @@ public class ServerDataCollector {
             
             world.addProperty("dimension", dimensionKey);
             world.addProperty("name", getDimensionDisplayName(dimensionKey));
-            world.addProperty("difficulty", level.getDifficulty().getKey());
+            world.addProperty("difficulty", level.getDifficulty().getSerializedName());
             
             // Count players IN this specific dimension
             int playersInDimension = 0;
@@ -409,16 +410,9 @@ public class ServerDataCollector {
         var overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
         if (overworld != null) {
             JsonObject gameRules = new JsonObject();
-            net.minecraft.world.level.GameRules.visitGameRuleTypes(new net.minecraft.world.level.GameRules.GameRuleTypeVisitor() {
-                @Override
-                @SuppressWarnings("NullableProblems")
-                public <T extends net.minecraft.world.level.GameRules.Value<T>> void visit(
-                    net.minecraft.world.level.GameRules.Key<T> key, 
-                    net.minecraft.world.level.GameRules.Type<T> type
-                ) {
-                    gameRules.addProperty(key.getId(), overworld.getGameRules().getRule(key).toString());
-                }
-            });
+            var rules = overworld.getGameRules();
+            rules.availableRules().forEach(rule ->
+                gameRules.addProperty(rule.getIdentifier().getPath(), String.valueOf(rules.get(rule))));
             config.add("gameRules", gameRules);
         }
         

@@ -147,7 +147,8 @@ public final class HologramRenderer {
             net.minecraft.nbt.CompoundTag dims = new net.minecraft.nbt.CompoundTag();
             dims.putFloat("width", width);
             dims.putFloat("height", height);
-            entity.load(dims);
+            entity.load(net.minecraft.world.level.storage.TagValueInput.create(
+                net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), dims));
 
             entity.setPos(data.x, bottomY - 0.2, data.z);
             entity.setInvulnerable(true);
@@ -218,7 +219,7 @@ public final class HologramRenderer {
         try {
             net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(data.x, data.y, data.z);
             if (!level.isLoaded(pos)) {
-                net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
+                net.minecraft.world.level.ChunkPos cp = net.minecraft.world.level.ChunkPos.containing(pos);
                 level.getChunk(cp.x(), cp.z());
             }
         } catch (Exception ignored) {}
@@ -274,7 +275,7 @@ public final class HologramRenderer {
             try {
                 net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(d.x, d.y, d.z);
                 if (!level.isLoaded(pos)) {
-                    net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(pos);
+                    net.minecraft.world.level.ChunkPos cp = net.minecraft.world.level.ChunkPos.containing(pos);
                     level.getChunk(cp.x(), cp.z());
                 }
             } catch (Exception e) {

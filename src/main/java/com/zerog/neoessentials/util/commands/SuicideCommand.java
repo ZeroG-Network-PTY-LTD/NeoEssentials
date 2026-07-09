@@ -137,7 +137,7 @@ public class SuicideCommand {
         try {
             DamageSource suicideDamage = new DamageSource(
                 player.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
-                    .getHolderOrThrow(DamageTypes.GENERIC_KILL)
+                    .getOrThrow(DamageTypes.GENERIC_KILL)
             );
             
             // Deal massive damage to ensure death

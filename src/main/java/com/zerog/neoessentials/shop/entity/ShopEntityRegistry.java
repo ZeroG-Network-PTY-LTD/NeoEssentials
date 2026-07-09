@@ -42,12 +42,13 @@ public class ShopEntityRegistry {
         if (!(event.getTarget() instanceof ArmorStand stand)) return;
 
         CompoundTag persistentData = stand.getPersistentData();
-        if (!persistentData.hasUUID(ShopNpcEntity.NBT_SHOP_ID)) return;
+        if (!persistentData.contains(ShopNpcEntity.NBT_SHOP_ID)) return;
 
         // It's a NeoEssentials NPC shop — cancel vanilla interaction
         event.setCanceled(true);
 
-        UUID shopId = persistentData.getUUID(ShopNpcEntity.NBT_SHOP_ID);
+        UUID shopId = persistentData.getIntArray(ShopNpcEntity.NBT_SHOP_ID)
+            .map(net.minecraft.core.UUIDUtil::uuidFromIntArray).orElse(null);
         ShopEntityData shopData = ShopEntityManager.getInstance().getByShopId(shopId);
 
         if (shopData == null) {

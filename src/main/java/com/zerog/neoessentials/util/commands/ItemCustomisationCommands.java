@@ -236,7 +236,7 @@ public class ItemCustomisationCommands {
     private static void strikeLightning(net.minecraft.server.level.ServerLevel level, double x, double y, double z) {
         LightningBolt bolt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.LIGHTNING_BOLT, level);
         if (bolt != null) {
-            bolt.moveTo(x, y, z);
+            bolt.snapTo(x, y, z);
             level.addFreshEntity(bolt);
         }
     }
@@ -433,12 +433,12 @@ public class ItemCustomisationCommands {
                 case "mobs" -> entity instanceof net.minecraft.world.entity.Mob;
                 case "animals" -> entity instanceof net.minecraft.world.entity.animal.Animal;
                 case "monsters" -> entity instanceof net.minecraft.world.entity.monster.Monster;
-                case "arrows" -> entity instanceof net.minecraft.world.entity.projectile.Arrow;
+                case "arrows" -> entity instanceof net.minecraft.world.entity.projectile.arrow.Arrow;
                 case "xp" -> entity instanceof net.minecraft.world.entity.ExperienceOrb;
-                case "boats" -> entity instanceof net.minecraft.world.entity.vehicle.Boat;
-                case "minecarts" -> entity instanceof net.minecraft.world.entity.vehicle.AbstractMinecart;
+                case "boats" -> entity instanceof net.minecraft.world.entity.vehicle.boat.Boat;
+                case "minecarts" -> entity instanceof net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
                 case "tnt" -> entity instanceof net.minecraft.world.entity.item.PrimedTnt;
-                case "paintings" -> entity instanceof net.minecraft.world.entity.decoration.Painting;
+                case "paintings" -> entity instanceof net.minecraft.world.entity.decoration.painting.Painting;
                 default -> false;
             };
             if (match) { entity.discard(); removed++; }

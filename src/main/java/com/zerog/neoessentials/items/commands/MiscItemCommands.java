@@ -220,7 +220,7 @@ public class MiscItemCommands {
             src.sendSuccess(() -> Component.literal("§7Cooldown: §e" + cdStr), false);
             // Items
             for (ItemStack stack : kit.getItems()) {
-                String itemName = stack.getItem().getDescription().getString();
+                String itemName = stack.getItem().getName(stack).getString();
                 int count = stack.getCount();
                 src.sendSuccess(() -> Component.literal("  §a- §f" + count + "x §e" + itemName), false);
             }
@@ -521,7 +521,7 @@ public class MiscItemCommands {
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
-        final String fname = item.getDescription().getString();
+        final String fname = item.getName(stack).getString();
         final int fqty = qty;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.item.given", fqty, fname), false);
         return 1;

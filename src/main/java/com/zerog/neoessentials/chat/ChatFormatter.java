@@ -693,7 +693,7 @@ public class ChatFormatter {
         if (!mainHandItem.isEmpty()) {
             component.setStyle(component.getStyle()
                 .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_ITEM,
-                    new HoverEvent.ItemStackInfo(mainHandItem)))
+                    mainHandItem))
             );
         }
 
@@ -865,7 +865,7 @@ public class ChatFormatter {
                     ? net.minecraft.resources.Identifier.parse(soundName)
                     : net.minecraft.resources.Identifier.withDefaultNamespace(soundName);
                 var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(id);
-                if (sound != null) return sound;
+                if (sound.isPresent()) return sound.get().value();
             }
         } catch (Exception e) {
             // Ignore

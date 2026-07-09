@@ -84,7 +84,7 @@ public class AuthHandler implements HttpHandler {
             }
             
             // Check if player is OP (super admin)
-            boolean isOp = server.getPlayerList().isOp(player.getGameProfile());
+            boolean isOp = server.getPlayerList().isOp(player.nameAndId());
             
             // Check permissions
             boolean hasViewPermission = isOp || PermissionAPI.hasPermission(player.getUUID(), DASHBOARD_VIEW_PERMISSION);

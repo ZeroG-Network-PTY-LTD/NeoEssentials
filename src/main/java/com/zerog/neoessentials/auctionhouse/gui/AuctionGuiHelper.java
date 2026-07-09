@@ -80,11 +80,13 @@ public final class AuctionGuiHelper {
     }
     private static ItemStack headWithTexture(String texture) {
         ItemStack head = new ItemStack(Items.PLAYER_HEAD);
-        com.mojang.authlib.properties.PropertyMap map = new com.mojang.authlib.properties.PropertyMap();
-        map.put("textures", new com.mojang.authlib.properties.Property("textures", texture));
+        com.mojang.authlib.properties.PropertyMap properties = new com.mojang.authlib.properties.PropertyMap(
+            com.google.common.collect.ImmutableMultimap.of("textures",
+                new com.mojang.authlib.properties.Property("textures", texture)));
+        com.mojang.authlib.GameProfile profile =
+            new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "", properties);
         head.set(net.minecraft.core.component.DataComponents.PROFILE,
-                new net.minecraft.world.item.component.ResolvableProfile(
-                        java.util.Optional.empty(), java.util.Optional.empty(), map));
+                net.minecraft.world.item.component.ResolvableProfile.createResolved(profile));
         return head;
     }
 }
