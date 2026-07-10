@@ -99,7 +99,7 @@ public class ShopEntityManager {
     private void load() throws IOException {
         Path file = getDataFile();
         if (!Files.exists(file)) return;
-        try (Reader r = Files.newBufferedReader(file)) {
+        try (Reader r = Files.newBufferedReader(file, java.nio.charset.StandardCharsets.UTF_8)) {
             Type listType = new TypeToken<List<ShopEntityData>>(){}.getType();
             List<ShopEntityData> shops = GSON.fromJson(r, listType);
             if (shops != null) {
@@ -116,7 +116,7 @@ public class ShopEntityManager {
         Path file = getDataFile();
         Files.createDirectories(file.getParent());
         Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
-        try (Writer w = Files.newBufferedWriter(tmp)) {
+        try (Writer w = Files.newBufferedWriter(tmp, java.nio.charset.StandardCharsets.UTF_8)) {
             GSON.toJson(new ArrayList<>(byShopId.values()), w);
         }
         Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);

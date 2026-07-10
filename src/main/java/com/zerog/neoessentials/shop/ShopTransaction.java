@@ -278,7 +278,7 @@ public final class ShopTransaction {
         return HopperBlockEntity.getContainerAt(level, pos);
     }
 
-    static int countItems(Container container, ItemStack target) {
+    public static int countItems(Container container, ItemStack target) {
         int count = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
@@ -287,7 +287,7 @@ public final class ShopTransaction {
         return count;
     }
 
-    static boolean removeItems(Container container, ItemStack target, int amount) {
+    public static boolean removeItems(Container container, ItemStack target, int amount) {
         int toRemove = amount;
         for (int i = 0; i < container.getContainerSize() && toRemove > 0; i++) {
             ItemStack slot = container.getItem(i);

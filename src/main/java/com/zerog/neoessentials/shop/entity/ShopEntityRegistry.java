@@ -51,13 +51,19 @@ public class ShopEntityRegistry {
         ShopEntityData shopData = ShopEntityManager.getInstance().getByShopId(shopId);
 
         if (shopData == null) {
-            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cThis NPC is not linked to a shop. Ask an admin."));
+            sp.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component(
+                    "commands.neoessentials.npcshop.entity_unlinked"));
             return;
         }
         if (shopData.listings.isEmpty()) {
-            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cThis NPC shop has no items configured yet."));
+            sp.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component(
+                    "commands.neoessentials.npcshop.no_items"));
+            return;
+        }
+        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                sp.getUUID(), "neoessentials.shop.use")) {
+            sp.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.component(
+                    "commands.neoessentials.shop.no_permission_use"));
             return;
         }
 
