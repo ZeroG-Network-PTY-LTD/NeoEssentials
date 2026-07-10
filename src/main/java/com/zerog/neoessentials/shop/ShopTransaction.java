@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +80,7 @@ public final class ShopTransaction {
         if (!eco.hasBalance(buyer.getUUID(), price)) return fail(ResultType.NOT_ENOUGH_MONEY);
 
         if (!shop.isAdminShop()) {
-            ChestBlockEntity chest = getChest(shop, level);
+            Container chest = getChest(shop, level);
             if (chest == null) return fail(ResultType.NO_CHEST);
             if (countItems(chest, template) < shop.quantity) return fail(ResultType.NOT_ENOUGH_STOCK);
         }
@@ -90,7 +90,7 @@ public final class ShopTransaction {
         if (!eco.debit(buyer.getUUID(), price)) return fail(ResultType.NOT_ENOUGH_MONEY);
 
         if (!shop.isAdminShop()) {
-            ChestBlockEntity chest = getChest(shop, level);
+            Container chest = getChest(shop, level);
             if (chest == null) { eco.credit(buyer.getUUID(), price); return fail(ResultType.NO_CHEST); }
             if (!removeItems(chest, template, shop.quantity)) {
                 eco.credit(buyer.getUUID(), price);
@@ -141,7 +141,7 @@ public final class ShopTransaction {
         }
 
         if (!shop.isAdminShop()) {
-            ChestBlockEntity chest = getChest(shop, level);
+            Container chest = getChest(shop, level);
             if (chest == null) return fail(ResultType.NO_CHEST);
             if (!hasSpaceInContainer(chest, template, shop.quantity)) return fail(ResultType.NO_SPACE);
         }
@@ -156,7 +156,7 @@ public final class ShopTransaction {
         }
 
         if (!shop.isAdminShop()) {
-            ChestBlockEntity chest = getChest(shop, level);
+            Container chest = getChest(shop, level);
             if (chest != null) addItems(chest, template, shop.quantity);
         }
 
@@ -178,7 +178,7 @@ public final class ShopTransaction {
 
     private static void checkAndNotifyLowStock(ShopData shop, ServerLevel level, ItemStack template) {
         try {
-            ChestBlockEntity chest = getChest(shop, level);
+            Container chest = getChest(shop, level);
             if (chest == null) return;
             int remaining = countItems(chest, template);
             int threshold = shop.stockLowThreshold > 0 ? shop.stockLowThreshold : getDefaultThreshold();
@@ -264,11 +264,18 @@ public final class ShopTransaction {
             : ItemStack.isSameItem(slot, target);
     }
 
-    private static ChestBlockEntity getChest(ShopData shop, ServerLevel level) {
+    /**
+     * Resolves the shop's linked chest container — for a double chest, this returns the
+     * combined 54-slot {@code CompoundContainer} covering both halves, not just the single
+     * {@code ChestBlockEntity} at {@code shop.getChestPos()}. Using
+     * {@link HopperBlockEntity#getContainerAt} (the same helper vanilla hoppers use to pull
+     * from chests) instead of casting the BlockEntity directly means both signs on a double
+     * chest correctly read/write the shared inventory instead of each only seeing its own half.
+     */
+    private static Container getChest(ShopData shop, ServerLevel level) {
         if (!shop.hasChest) return null;
         BlockPos pos = shop.getChestPos();
-        BlockEntity be = level.getBlockEntity(pos);
-        return be instanceof ChestBlockEntity c ? c : null;
+        return HopperBlockEntity.getContainerAt(level, pos);
     }
 
     static int countItems(Container container, ItemStack target) {
