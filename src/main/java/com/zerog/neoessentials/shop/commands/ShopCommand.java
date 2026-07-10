@@ -590,12 +590,23 @@ public class ShopCommand {
     }
 
     /**
-     * Returns {@code true} only if {@code player} is the recorded owner of {@code shop}.
-     * Admin flags are intentionally NOT checked — hologram management is owner-exclusive
-     * so that server staff cannot enable or reposition holograms on behalf of players.
-     * (Admins can still use {@code /hologram remove <id>} for moderation if needed.)
+     * Returns {@code true} if {@code player} may manage (enable/disable/move) {@code shop}'s
+     * hologram. For player shops this is owner-exclusive — general admin flags are NOT
+     * checked, so server staff cannot enable or reposition holograms on behalf of players
+     * (admins can still use {@code /hologram remove <id>} for moderation if needed).
+     *
+     * <p>Admin shops have no {@code ownerUUID} at all (it's {@code null} by design), so an
+     * owner-only check would reject every player unconditionally — including whoever has
+     * permission to create/manage admin shops in the first place. That meant an admin shop's
+     * hologram could be offered (the creation-time opt-in prompt doesn't check shop type) but
+     * never actually enabled: every click of the prompt failed with "owner only". Admin shops
+     * are authorized via the same {@code neoessentials.shop.create.admin} permission used
+     * elsewhere for admin-shop item assignment (see {@link com.zerog.neoessentials.shop.handlers.ShopInteractHandler}).
      */
     private static boolean isShopOwner(ServerPlayer player, ShopData shop) {
+        if (shop.isAdminShop()) {
+            return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin");
+        }
         return shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
     }
 

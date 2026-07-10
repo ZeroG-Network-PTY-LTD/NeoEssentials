@@ -5,8 +5,8 @@ import com.zerog.neoessentials.shop.events.ShopTransactionEvent;
 import com.zerog.neoessentials.shop.pricing.PriceContext;
 import com.zerog.neoessentials.shop.pricing.PriceRule;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.Container;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -69,8 +69,11 @@ public class SupplyDemandRule implements PriceRule {
         if (ctx.level() == null) return -1;
         BlockPos chestPos = ctx.shop().getChestPos();
         if (chestPos == null) return -1;
-        BlockEntity be = ctx.level().getBlockEntity(chestPos);
-        if (!(be instanceof ChestBlockEntity chest)) return -1;
+        // For a double chest, getContainerAt returns the combined 54-slot container covering
+        // both halves (same fix as ShopTransaction.getChest) — reading only chestPos's own
+        // ChestBlockEntity would price a shop as if half its actual stock didn't exist.
+        Container chest = HopperBlockEntity.getContainerAt(ctx.level(), chestPos);
+        if (chest == null) return -1;
 
         String itemId = ctx.shop().itemId;
         if (itemId == null) return -1;
