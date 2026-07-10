@@ -9,7 +9,6 @@ import com.zerog.neoessentials.shop.entity.*;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -260,12 +259,13 @@ public class NpcShopCommand {
             if (l.dimension().identifier().toString().equals(shop.dimension)) { level = l; break; }
         }
         if (level == null) {
-            src.sendFailure(Component.literal("§cCannot respawn: dimension '" + shop.dimension + "' is not loaded."));
+            src.sendFailure(MessageUtil.component(
+                    "commands.neoessentials.npcshop.respawn_dimension_missing", shop.dimension));
             return 0;
         }
 
         if (shop.entityUUID != null && level.getEntity(shop.entityUUID) != null) {
-            src.sendFailure(Component.literal("§cThis shop's NPC entity already exists and is alive."));
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.respawn_already_exists"));
             return 0;
         }
 
@@ -274,7 +274,7 @@ public class NpcShopCommand {
         level.addFreshEntity(npc);
         ShopEntityManager.getInstance().updateEntityUUID(shop.shopId, npc.getUUID());
 
-        src.sendSuccess(() -> Component.literal("§aRespawned NPC for shop §f\"" + shop.shopName + "\"§a."), true);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.respawn_success", shop.shopName), true);
         return 1;
     }
 

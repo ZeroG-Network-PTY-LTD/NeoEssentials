@@ -46,7 +46,7 @@ public class MessageUtil {
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
-    private static final int CURRENT_LANG_VERSION = 22;
+    private static final int CURRENT_LANG_VERSION = 23;
 
     /**
      * Keys with a confirmed VALUE bug (wrong/missing {n} argument, argument-order swap, etc.)

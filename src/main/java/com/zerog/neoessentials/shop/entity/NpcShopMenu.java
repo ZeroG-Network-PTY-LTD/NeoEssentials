@@ -176,40 +176,40 @@ public class NpcShopMenu extends AbstractContainerMenu {
         ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
 
         if (!listing.canSell()) {
-            player.sendSystemMessage(Component.literal("§cThis item is not for sale."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_not_for_sale"));
             return;
         }
 
         ItemStack template = ShopTransaction.resolveItem(listing.itemId());
         if (template.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§cThis item could not be resolved."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_unresolved"));
             return;
         }
 
         if (ShopTransaction.countItems(player.getInventory(), template) < listing.quantity()) {
-            player.sendSystemMessage(Component.literal("§cYou don't have enough of that item to sell."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.npc_not_enough_items"));
             return;
         }
 
         BigDecimal price = listing.sellPrice().setScale(2, RoundingMode.HALF_UP);
 
         if (!eco.credit(player.getUUID(), price)) {
-            player.sendSystemMessage(Component.literal("§cPayment failed."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.payment_failed"));
             return;
         }
 
         if (!ShopTransaction.removeItems(player.getInventory(), template, listing.quantity())) {
             // Shouldn't happen since we just counted, but don't leave the player paid-but-not-charged.
             eco.debit(player.getUUID(), price);
-            player.sendSystemMessage(Component.literal("§cYou don't have enough of that item to sell."));
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.npc_not_enough_items"));
             return;
         }
 
-        player.sendSystemMessage(Component.literal(String.format(
-                "§aSold §f%dx %s §afor §f%s§a.",
+        player.sendSystemMessage(MessageUtil.component(
+                "commands.neoessentials.shop.npc_sold",
                 listing.quantity(),
                 listing.itemId().replace("minecraft:", ""),
-                eco.format(price))));
+                eco.format(price)));
 
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
                 null, player.getUUID(), ShopTransactionEvent.Type.SELL, price, listing.quantity()));
