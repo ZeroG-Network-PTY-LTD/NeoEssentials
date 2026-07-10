@@ -6,7 +6,7 @@
 
 ## Overview
 
-NeoEssentials provides a full server economy with player balances, payments, admin tools, an async leaderboard, a sign-based ChestShop, and Vault API integration.
+NeoEssentials provides a full server economy with player balances, payments, admin tools, an async leaderboard, a sign-based ChestShop, entity-based NPC shops, and Vault API integration.
 
 ---
 
@@ -83,7 +83,10 @@ Sign-based shops that connect a chest to a sign for automated buy/sell.
 
 ### Setup
 
-1. Place a chest
+1. Place a chest (double chests are supported — both sign-facing halves share the
+   combined inventory, so two signs on the same double chest correctly draw from
+   and restock into the full 54-slot inventory rather than each only seeing its
+   own half)
 2. Place a sign on the chest (or adjacent block)
 3. Write the sign in this format:
 
@@ -133,9 +136,9 @@ Left-click (attack) a shop sign to sell, same as always — but a single left-cl
 | `/chestshop stats` | none | Show your total shops, sales count, and top seller |
 | `/chestshop limit` | none | Show how many shops you've placed vs. your `shop.maxShopsPerPlayer` limit |
 | `/chestshop pricing` | none | Show whether the dynamic pricing engine is enabled and its rule count |
-| `/chestshop hologram enable` | shop owner only | Enable a floating price hologram on the looked-at shop |
-| `/chestshop hologram disable` | shop owner only | Remove the hologram from the looked-at shop |
-| `/chestshop hologram move <x> <y> <z>` | shop owner only | Reposition the hologram (offset from the sign, ±4.5 blocks per axis) |
+| `/chestshop hologram enable` | shop owner (player shops), or `neoessentials.shop.create.admin` (admin shops) | Enable a floating price hologram on the looked-at shop |
+| `/chestshop hologram disable` | shop owner (player shops), or `neoessentials.shop.create.admin` (admin shops) | Remove the hologram from the looked-at shop |
+| `/chestshop hologram move <x> <y> <z>` | shop owner (player shops), or `neoessentials.shop.create.admin` (admin shops) | Reposition the hologram (offset from the sign, ±4.5 blocks per axis) |
 | `/chestshop export` | `neoessentials.shop.admin.csv.export` | Export all shops to a CSV file |
 | `/chestshop import [create]` | `neoessentials.shop.admin.csv.import` | Import shops from CSV (`create` also creates new signs) |
 | `/chestshop remove` | shop owner, or `neoessentials.shop.admin.remove` / OP 3 | Remove the shop you're currently looking at (sign or its linked chest) |
@@ -160,6 +163,60 @@ Shops support optional per-shop **holograms** (floating buy/sell display, clicka
 | `neoessentials.shop.admin.reload` | Reload shop data |
 | `neoessentials.shop.admin.csv.export` | Export shops to CSV |
 | `neoessentials.shop.admin.csv.import` | Import shops from CSV |
+
+---
+
+## NPC Shops
+
+Entity-based shops — an invulnerable `ArmorStand` NPC that opens a virtual chest-style
+GUI listing configurable buy/sell offers, instead of a sign+chest pair. Unlike ChestShop,
+NPC shops have no linked chest: items are minted/sunk directly (like an admin ChestShop
+with unlimited stock), so there's no stock to run out of on the shop's side.
+
+### Setup
+
+1. Stand where you want the NPC and run `/npcshop create <name>` — spawns the NPC at
+   your current position.
+2. Add item listings with `/npcshop additem <shopId> <item> <buyPrice> <sellPrice> <qty>`
+   (pass `-1` for either price to disable that side of the trade — e.g. buy-only or
+   sell-only listings).
+3. Right-click the NPC to open the shop GUI.
+
+### Buying and Selling
+
+Inside the shop GUI, each listing is shown as an item stack with buy/sell prices and a
+click hint in its lore:
+
+- **Right-click** a listing → buy (pay money, receive the item).
+- **Left-click** a listing → sell (give up the item, receive money) — only works if the
+  listing has a sell price configured and you're carrying enough of the item.
+
+Requires `neoessentials.shop.use`, same permission as ChestShop.
+
+### Commands
+
+`/npcshop` with no arguments prints an in-game help listing. All sub-commands require
+`neoessentials.shop.npc.manage` (or OP level 3).
+
+| Command | Description |
+|---|---|
+| `/npcshop create <name>` | Spawn a new NPC shop at your current position |
+| `/npcshop remove` | Remove the nearest NPC shop (within 5 blocks) |
+| `/npcshop additem <shopId> <item> <buyPrice> <sellPrice> <qty>` | Add a listing (`-1` disables that side) |
+| `/npcshop removeitem <shopId> <index>` | Remove a listing by its index (see `/npcshop info`) |
+| `/npcshop list` | List all NPC shops |
+| `/npcshop info <shopId>` | Show a shop's name, ID, position, and listings |
+| `/npcshop reload` | Reload `npc_shops.json` from disk |
+| `/npcshop respawn <shopId>` | Re-summon a shop's NPC entity if it was ever lost (e.g. killed by void damage, or removed by an unrelated `/kill`) without losing its listings — the listings are keyed by `shopId`, independent of the in-world entity |
+
+`shopId` accepts either the full UUID or an unambiguous prefix (as shown by `/npcshop list`/`create`).
+
+### Permissions
+
+| Node | Description |
+|---|---|
+| `neoessentials.shop.npc.manage` | Create/remove/configure NPC shops |
+| `neoessentials.shop.use` | Buy/sell at NPC shops (shared with ChestShop) |
 
 ---
 
