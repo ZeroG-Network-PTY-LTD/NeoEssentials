@@ -77,14 +77,20 @@ public class NpcShopMenu extends AbstractContainerMenu {
 
     // ── Click handling ────────────────────────────────────────────────────────
 
+    /**
+     * Right-click (button 1) a shop slot → BUY. Left-click (button 0) → SELL.
+     * Matches the ChestShop sign convention (right-click sign = buy, left-click = sell).
+     */
     @Override
     public void clicked(int slotId, int button, @Nonnull ContainerInput clickType, @Nonnull Player player) {
         if (slotId >= 0 && slotId < SHOP_SLOTS) {
-            // Shop slot clicked — execute a BUY transaction for this listing
-            if (slotId < shopData.listings.size()) {
+            if (slotId < shopData.listings.size() && clickType == ContainerInput.PICKUP
+                    && player instanceof ServerPlayer sp) {
                 ShopListing listing = shopData.listings.get(slotId);
-                if (listing.canBuy() && player instanceof ServerPlayer sp) {
-                    executeListing(sp, listing);
+                if (button == 1) {
+                    executeBuyListing(sp, listing);
+                } else if (button == 0) {
+                    executeSellListing(sp, listing);
                 }
             }
             // never move items out of the display
@@ -114,7 +120,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
 
     // ── Transaction logic ─────────────────────────────────────────────────────
 
-    private void executeListing(ServerPlayer player, ShopListing listing) {
+    private void executeBuyListing(ServerPlayer player, ShopListing listing) {
         ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
 
         if (!listing.canBuy()) {
@@ -160,6 +166,54 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, listing.quantity()));
     }
 
+    /**
+     * Sell path — the NPC shop has no linked chest (items are sunk, not stored, same as an
+     * admin ChestShop with unlimited stock), so this only needs to check the player actually
+     * holds enough of the item, then swap it for money.
+     */
+    private void executeSellListing(ServerPlayer player, ShopListing listing) {
+        ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
+
+        if (!listing.canSell()) {
+            player.sendSystemMessage(Component.literal("§cThis item is not for sale."));
+            return;
+        }
+
+        ItemStack template = ShopTransaction.resolveItem(listing.itemId());
+        if (template.isEmpty()) {
+            player.sendSystemMessage(Component.literal("§cThis item could not be resolved."));
+            return;
+        }
+
+        if (ShopTransaction.countItems(player.getInventory(), template) < listing.quantity()) {
+            player.sendSystemMessage(Component.literal("§cYou don't have enough of that item to sell."));
+            return;
+        }
+
+        BigDecimal price = listing.sellPrice().setScale(2, RoundingMode.HALF_UP);
+
+        if (!eco.credit(player.getUUID(), price)) {
+            player.sendSystemMessage(Component.literal("§cPayment failed."));
+            return;
+        }
+
+        if (!ShopTransaction.removeItems(player.getInventory(), template, listing.quantity())) {
+            // Shouldn't happen since we just counted, but don't leave the player paid-but-not-charged.
+            eco.debit(player.getUUID(), price);
+            player.sendSystemMessage(Component.literal("§cYou don't have enough of that item to sell."));
+            return;
+        }
+
+        player.sendSystemMessage(Component.literal(String.format(
+                "§aSold §f%dx %s §afor §f%s§a.",
+                listing.quantity(),
+                listing.itemId().replace("minecraft:", ""),
+                eco.format(price))));
+
+        NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
+                null, player.getUUID(), ShopTransactionEvent.Type.SELL, price, listing.quantity()));
+    }
+
     // ── Virtual container builder ─────────────────────────────────────────────
 
     private static Container buildShopContainer(List<ShopListing> listings) {
@@ -174,7 +228,13 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 List<Component> lore = new java.util.ArrayList<>();
                 if (listing.canBuy())  lore.add(Component.literal("§aBuy:  " + listing.buyPrice().toPlainString()));
                 if (listing.canSell()) lore.add(Component.literal("§6Sell: " + listing.sellPrice().toPlainString()));
-                lore.add(Component.literal("§7Click to buy"));
+                if (listing.canBuy() && listing.canSell()) {
+                    lore.add(Component.literal("§7Right-click to buy, left-click to sell"));
+                } else if (listing.canBuy()) {
+                    lore.add(Component.literal("§7Right-click to buy"));
+                } else if (listing.canSell()) {
+                    lore.add(Component.literal("§7Left-click to sell"));
+                }
                 display.set(net.minecraft.core.component.DataComponents.LORE,
                         new net.minecraft.world.item.component.ItemLore(lore));
                 container.setItem(i, display);

@@ -61,6 +61,12 @@ public class ShopEntityRegistry {
                     "§cThis NPC shop has no items configured yet."));
             return;
         }
+        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                sp.getUUID(), "neoessentials.shop.use")) {
+            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§cYou do not have permission to use shops."));
+            return;
+        }
 
         sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData),
                 buf -> buf.writeUtf(shopId.toString()));

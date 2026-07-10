@@ -9,6 +9,7 @@ import com.zerog.neoessentials.shop.entity.*;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.phys.AABB;
@@ -28,6 +29,7 @@ import java.util.UUID;
  *   /npcshop list                                — list all NPC shops
  *   /npcshop info <shopId>                       — info about one shop
  *   /npcshop reload                              — reload npc_shops.json
+ *   /npcshop respawn <shopId>                    — re-summon a lost NPC entity
  * </pre>
  *
  * All sub-commands require {@code neoessentials.shop.npc.manage}.
@@ -72,6 +74,10 @@ public class NpcShopCommand {
                                         StringArgumentType.getString(ctx, "shopId")))))
                 .then(Commands.literal("reload")
                         .executes(ctx -> executeReload(ctx.getSource())))
+                .then(Commands.literal("respawn")
+                        .then(Commands.argument("shopId", StringArgumentType.word())
+                                .executes(ctx -> executeRespawn(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "shopId")))))
                 .executes(ctx -> executeHelp(ctx.getSource()));
 
         dispatcher.register(node);
@@ -235,6 +241,43 @@ public class NpcShopCommand {
         return 1;
     }
 
+    // ── /npcshop respawn <shopId> ─────────────────────────────────────────────
+
+    /**
+     * Re-summon the NPC entity for an existing shop whose ArmorStand was lost
+     * (e.g. killed by void damage, which bypasses {@code setInvulnerable}, or removed
+     * by an unrelated admin/anticheat command) without losing its listings — the
+     * listings live in {@link ShopEntityData}, keyed by {@code shopId}, independent
+     * of the in-world entity.
+     */
+    private static int executeRespawn(CommandSourceStack src, String shopIdStr) {
+        ShopEntityData shop = resolve(src, shopIdStr);
+        if (shop == null) return 0;
+
+        var server = src.getServer();
+        ServerLevel level = null;
+        for (ServerLevel l : server.getAllLevels()) {
+            if (l.dimension().identifier().toString().equals(shop.dimension)) { level = l; break; }
+        }
+        if (level == null) {
+            src.sendFailure(Component.literal("§cCannot respawn: dimension '" + shop.dimension + "' is not loaded."));
+            return 0;
+        }
+
+        if (shop.entityUUID != null && level.getEntity(shop.entityUUID) != null) {
+            src.sendFailure(Component.literal("§cThis shop's NPC entity already exists and is alive."));
+            return 0;
+        }
+
+        ArmorStand npc = ShopNpcEntity.create(level, shop.shopId, shop.shopName);
+        npc.setPos(shop.spawnX, shop.spawnY, shop.spawnZ);
+        level.addFreshEntity(npc);
+        ShopEntityManager.getInstance().updateEntityUUID(shop.shopId, npc.getUUID());
+
+        src.sendSuccess(() -> Component.literal("§aRespawned NPC for shop §f\"" + shop.shopName + "\"§a."), true);
+        return 1;
+    }
+
     // ── /npcshop help ─────────────────────────────────────────────────────────
 
     private static int executeHelp(CommandSourceStack src) {
@@ -246,6 +289,7 @@ public class NpcShopCommand {
         src.sendSuccess(() -> Component.literal("§e/npcshop list                              §7— List all NPC shops"), false);
         src.sendSuccess(() -> Component.literal("§e/npcshop info <id>                         §7— Detailed info"), false);
         src.sendSuccess(() -> Component.literal("§e/npcshop reload                            §7— Reload from disk"), false);
+        src.sendSuccess(() -> Component.literal("§e/npcshop respawn <id>                      §7— Re-summon a lost NPC entity"), false);
         src.sendSuccess(() -> Component.literal("§7Pass -1 for buy/sell price to disable that side."), false);
         return 1;
     }
