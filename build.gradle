@@ -27,7 +27,7 @@ buildNumber++
 buildNumberFile.text = buildNumber.toString()
 
 // Set version with build number
-version = "${mod_version}+build.${buildNumber}"
+version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
 group = mod_group_id
 
 // Log build information
