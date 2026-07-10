@@ -620,6 +620,15 @@ public class MessageUtil {
     }
 
     /**
+     * Short branded tag prefixed onto every success/error/warning/info command-feedback
+     * message so players can tell at a glance which mod a message came from, especially on
+     * servers running several plugins/mods with similarly-colored chat output. Plain "§"
+     * codes (not routed through coloredText()) — same convention as every localized template,
+     * which the client's text renderer already honors for raw literal Component text.
+     */
+    private static final String TAG_PREFIX = "§8[§bNE§8] §r";
+
+    /**
      * Create a Component from a localized message (standard approach)
      */
     public static Component component(String key, Object... args) {
@@ -631,31 +640,35 @@ public class MessageUtil {
     }
 
     /**
-     * Create a success message component (green text)
+     * Create a success message component (soft green, vanilla-matching — same RGB as §a).
      */
     public static Component success(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00FF00)));
+        return Component.literal(TAG_PREFIX + localize(key, args))
+            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
     }
 
     /**
-     * Create an error message component (red text)
+     * Create an error message component (soft red, vanilla-matching — same RGB as §c).
      */
     public static Component error(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF0000)));
+        return Component.literal(TAG_PREFIX + localize(key, args))
+            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
     }
 
     /**
-     * Create a warning message component (yellow text)
+     * Create a warning message component (soft yellow, vanilla-matching — same RGB as §e).
      */
     public static Component warning(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF00)));
+        return Component.literal(TAG_PREFIX + localize(key, args))
+            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
     }
 
     /**
-     * Create an info message component (aqua text)
+     * Create an info message component (soft aqua, vanilla-matching — same RGB as §b).
      */
     public static Component info(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00FFFF)));
+        return Component.literal(TAG_PREFIX + localize(key, args))
+            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
     }
 
     /**
