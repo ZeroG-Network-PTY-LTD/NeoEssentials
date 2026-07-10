@@ -4,6 +4,144 @@
 
 ---
 
+## 1.0.2.6+build.480 — 2026-07-10
+
+### 🐛 Bug Fixes
+
+- **ChestShop double chests:** Buy/sell, stock checks, and dynamic pricing only read
+  one half of a double chest, so filling/emptying one side could block transactions
+  even with space/stock free on the other side. Now reads the full combined 54-slot
+  inventory.
+- **ChestShop admin shop holograms:** `/chestshop hologram enable|disable|move`
+  could never be used on admin shops (the ownership check required a player-owner
+  UUID that admin shops don't have). Now authorized via
+  `neoessentials.shop.create.admin`.
+
+### ✨ Improvements
+
+- **Command feedback messages** now show a small `[NE]` tag and use softer,
+  vanilla-matching colors instead of harsh neon ones, so they're both more
+  recognizable and easier on the eyes.
+- **NPC Shops:** Selling now actually works (previously configuring a sell price did
+  nothing — only buying was implemented). Added a permission check
+  (`neoessentials.shop.use`) before opening the shop menu. Added
+  `/npcshop respawn <shopId>` to re-summon a shop's NPC if it's ever lost (e.g. void
+  damage) without losing its configured listings.
+
+### 🔧 Maintenance
+- Build version string now includes the target Minecraft version
+  (`1.0.2.6-mc1.21.1+build.N`), matching the 26.1.x port branch.
+
+---
+
+> The entries below (build.~225 – build.~460) reconstruct work done between
+> build.214 and build.480 that was never logged at the time. Build numbers are
+> **approximate** — dates and content are accurate to the commit history.
+
+## 1.0.2.6+build.~460 — 2026-07-08
+
+### 🐛 Bug Fixes
+
+- **`/invseeedit`, `/ecedit`:** Fixed the edit lock never releasing — the first use
+  against any target permanently locked it out for every future editor (including
+  yourself) until a server restart. Now releases on GUI close or disconnect.
+- **`/pay`:** Fixed the amount and player name showing in swapped positions (e.g.
+  "Paid `<player>$` to `1000.0`" instead of "Paid `1000.00$` to `<player>`"), plus a
+  decimal-formatting mismatch between the amount and fee/net values in the same
+  message.
+- **`/eco give|take|set|reset`:** The admin's own confirmation message was missing
+  the currency symbol. `/eco take` also never notified the target player that money
+  was taken — now it does, matching `give`/`set`/`reset`.
+- **Localization:** fixed a `localize()` overload ambiguity that silently shifted
+  `{n}` message placeholders across jail/ban/freeze/etc. messages. Also fixed
+  swapped/missing arguments in several moderation messages, and a duplicate-broadcast
+  bug where staff saw every moderation action twice.
+- **`/jail` was completely broken** — every attempt threw an internal error before
+  jailing the player, due to a `null` being passed where it wasn't allowed. Fixed.
+- **Tablist:** fixed prefix/suffix silently reverting to blank after the first
+  refresh cycle following a reload.
+
+### ✨ Features
+- Added cuboid/sphere jail regions via a configurable jail wand or WorldEdit
+  soft-integration, with region-wide block protection.
+- Added an above-head nametag prefix/suffix system for the tablist.
+
+### 🧪 Attempted (Reverted)
+- Briefly tried widening Minecraft version compatibility to include 26.1.x, but
+  reverted after confirming it crashes on load — a real port needs more work and is
+  tracked separately on its own branch.
+
+---
+
+## 1.0.2.6+build.~400 — 2026-07-06
+
+### 🐛 Bug Fixes
+- Fixed group permission precedence and a permission-lookup race condition.
+- Closed freeze/jail/vanish/mute enforcement gaps across chat, teleportation, and
+  combat.
+- Fixed a kit permanent-lockout bug, a double-claim race condition, and item data
+  loss on reload.
+- Fixed an Auction House item-duplication exploit and a named-item price bypass on
+  `/sell`.
+- Fixed jail bounds checking ignoring dimension.
+
+### 🔒 Security
+- Required an admin role on web dashboard endpoints that were previously reachable
+  by any non-admin account.
+- Replaced unsalted password hashing with salted PBKDF2 (120k iterations); the
+  default admin account now gets a random temporary password instead of a hardcoded
+  one.
+
+---
+
+## 1.0.2.6+build.~330 — 2026-07-04
+
+### ✨ Features
+- Added tablist short-tokens/animations usable directly in chat, and `#`-prefixed
+  hex gradient stops.
+- ChestShop items now preserve full item data (enchantments, custom names, modded
+  NBT) instead of just a bare item ID.
+- Permission group prefix/suffix now render as rich text instead of raw color codes.
+
+### 🐛 Bug Fixes
+- Fixed `/flyspeed` not actually applying to player flight.
+- Fixed a pending-shop autofill ordering bug.
+
+---
+
+## 1.0.2.6+build.~300 — 2026-07-03
+
+### 🐛 Bug Fixes
+- Fixed unclosed `<gradient>` chat tags corrupting trailing legacy color codes.
+- Fixed ChestShop click-spam and NBT-sensitive item stock matching.
+
+### ✨ Features
+- Added custom skins for fake tablist entries, plus a BTLP-style column-grid
+  tablist layout.
+
+---
+
+## 1.0.2.6+build.~260 — 2026-07-02
+
+### ✨ Features
+- Added a configurable movement-distance threshold for AFK detection.
+- Landed the initial web dashboard implementation.
+
+### 🐛 Bug Fixes
+- Hardened enchantment-compatibility checks to tolerate cross-version differences
+  instead of crashing.
+
+---
+
+## 1.0.2.6+build.~225 — 2026-07-01
+
+### ✨ Features
+- Added `localization.preserveCustomTranslations` config option to protect
+  hand-edited translations from the automatic merge system.
+- Added web dashboard configuration groundwork.
+
+---
+
 ## 1.0.2.6+build.214 — 2026-07-01
 
 ### 🐛 Bug Fixes

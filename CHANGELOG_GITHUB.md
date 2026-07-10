@@ -6,6 +6,293 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.2.6+build.480] — 2026-07-10
+
+### 🐛 Bug Fixes
+
+#### ChestShop Double Chests Only Reading One Half
+**Commands:** `/chestshop` (buy/sell, stock checks, dynamic pricing)
+
+- **Root cause:** `ShopTransaction.getChest()` and `SupplyDemandRule.getStock()` cast
+  the block entity at the shop's chest position directly to `ChestBlockEntity`, which
+  only exposes that one 27-slot half of a double chest. Buy/sell stock checks, item
+  add/remove, low-stock notifications, and supply/demand pricing all only saw one
+  sign's own chest half instead of the shared 54-slot inventory — filling/emptying
+  one side blocked transactions on the other sign even though the double chest still
+  had space/stock.
+- **Fix:** Both now use `HopperBlockEntity.getContainerAt(level, pos)` — the same
+  helper vanilla hoppers use to pull from chests — which returns the properly
+  combined container for double chests (single chests are unaffected).
+
+#### Admin Shops Could Never Use `/chestshop hologram enable|disable|move`
+- **Root cause:** `ShopCommand.isShopOwner()` only checked
+  `shop.ownerUUID.equals(player)`, but admin shops have `ownerUUID == null` by
+  design, so the check failed unconditionally for every player — including whoever
+  holds `neoessentials.shop.create.admin`. The hologram opt-in prompt still appeared
+  at admin shop creation (it doesn't check shop type), but clicking it always failed
+  with an "owner only" error.
+- **Fix:** Admin shops are now authorized via `neoessentials.shop.create.admin`,
+  matching the pattern already used for admin-shop item assignment.
+
+### ✨ Improvements
+
+#### Command Feedback Messages: Branded Tag + Softened Colors
+- `MessageUtil.success()`/`error()`/`warning()`/`info()` now prepend a short
+  `[NE]` tag (`§8[§bNE§8] `) so players can tell at a glance which mod a message
+  came from — useful on servers running several mods with similarly-colored chat
+  output.
+- Replaced the harsh neon primary colors (`0x00FF00`/`0xFF0000`/`0xFFFF00`/`0x00FFFF`)
+  with vanilla-matching soft colors (same RGB as `§a`/`§c`/`§e`/`§b`), consistent
+  with the inline `§` colors most lang templates already use.
+- Scoped to the four command-feedback wrapper methods only — `localize()` itself is
+  untouched, so logs/audit trails/transaction history that read the raw translated
+  string are unaffected.
+
+#### NPC Shops: Sell Support, Permission Checks, and Entity Recovery
+- **Sell was completely non-functional.** `ShopListing` carries a `sellPrice`,
+  `/npcshop additem` lets you configure one, and the GUI lore even advertised
+  "Sell: $X" — but the shop menu only ever handled buying (right-click a slot).
+  There was no left-click/sell path at all. Added sell handling (left-click a
+  listing), mirroring the buy flow: verify the player holds enough of the item,
+  credit their balance, then remove the items (rolling back the credit if removal
+  unexpectedly fails).
+- **No permission check on NPC shop transactions at all.** ChestShop enforces
+  `neoessentials.shop.use` before every buy/sell; NPC shops didn't check any
+  permission. Added the same check before the shop menu opens.
+- **No way to recover a shop whose NPC entity was lost** (void damage bypasses
+  `setInvulnerable`, a stray `/kill`, etc.) without losing its listings — the
+  relevant recovery methods existed but were never called from anywhere. Added
+  `/npcshop respawn <shopId>`, which re-summons the NPC at its stored spawn
+  position and re-links it to the existing shop data.
+
+### 🔧 Maintenance
+- Build version string now includes the target Minecraft version
+  (`1.0.2.6-mc1.21.1+build.N`), matching the format already used on the 26.1.x port
+  branch so builds from either branch are distinguishable at a glance.
+- `_langVersion` bumped to 23 for the new/changed lang keys in this release.
+
+---
+
+> The entries below (build.~225 – build.~460) reconstruct work done between
+> build.214 and build.480 that was never logged at the time. Build numbers are
+> **approximate** — the real per-commit build counter isn't tracked in git — but
+> dates and content are accurate to the commit history.
+
+## [1.0.2.6+build.~460] — 2026-07-08
+
+### 🐛 Bug Fixes
+
+#### `/invseeedit` and `/enderchestedit` Permanently Locking Targets
+**Commands:** `/invseeedit`, `/ecedit`
+
+- **Root cause:** `InventoryViewCommands.releaseEditLocks()` existed but was never
+  called from anywhere — closing the edit GUI didn't release the single-editor lock
+  (no close handling existed at all), and disconnecting didn't either despite a doc
+  comment claiming so. The first `/invseeedit`/`/enderchestedit` against any target
+  permanently locked that target for every future editor — including the original
+  viewer — until a server restart cleared the in-memory maps.
+- **Fix:** Added a `PlayerContainerEvent.Close` listener in `InventoryViewCommands`
+  that releases the viewer's locks whenever their menu closes (a player can only
+  have one menu open at a time, so this reliably covers the normal close case), plus
+  a `releaseEditLocks()` call in `PlayerJoinQuitHandler.onPlayerQuit` as a disconnect
+  backstop.
+
+#### `/pay` Showing Swapped Amount/Player Placeholders and a Decimal Mismatch
+- **Root cause:** The `success_fee`/`received_fee` message templates expect
+  `{0}` = amount, `{1}` = player, but the call sites passed `(playerName, amount, …)`
+  — e.g. "Paid `<player>$` to `1000.0`." instead of "Paid `1000.00$` to `<player>`."
+  The raw `amount` `BigDecimal` also kept whatever scale the parsed input had (e.g.
+  `1000.0`), while `fee`/`netAmount` always came out at scale 2 from arithmetic,
+  causing a `1000.0` vs `1000.00` mismatch within the same message.
+- **Fix:** Swapped the argument order to match the templates, and added
+  `amount.setScale(2, RoundingMode.HALF_UP)` before display so all three amounts in
+  the message are consistently formatted.
+
+#### `/eco give|take|set|reset` Missing Currency Symbol; `/eco take` Never Notified the Target
+- **Root cause:** The admin-confirmation templates (`eco.give`/`take`/`set`/`reset`)
+  had no currency placeholder at all — unlike the target-facing `_notify` variants —
+  so the admin's own confirmation rendered a bare number with no currency symbol.
+  Separately, `/eco take` was the only one of the four admin actions with no
+  online-target notification at all — the player whose money was taken got no
+  indication anything happened.
+- **Fix:** Added a `{2}` currency placeholder to all four admin templates and pass
+  `getCurrencySymbol()` at each call site. Added a new `eco.take_notify` message and
+  the matching notify call, for parity with `give`/`set`/`reset`.
+
+#### `localize()` Overload Ambiguity Shifting `{n}` Placeholders
+- **Root cause:** `localize(String key, String fallback, Object... args)` was an
+  overload of `localize(String key, Object... args)`. Java's overload resolution
+  prefers a fixed `String` parameter over varargs, so any call passing a plain
+  `String` as the first substitution argument (the common case for names/reasons)
+  silently bound to the fallback overload instead, swallowing that argument and
+  shifting every later `{n}` placeholder down by one — with no compile error. This
+  was responsible for missing/shifted placeholders across jail/ban/freeze/etc.
+  messages in production.
+- **Fix:** Renamed the fallback overload to `localizeOrDefault()`, removing the
+  ambiguity permanently. Added `MessageUtil.FORCE_REFRESH_KEYS`, a set of keys with
+  confirmed broken shipped values, force-refreshed on boot regardless of
+  `_langVersion` so already-broken installs converge (bumped 19→22).
+- Also fixed several swapped/missing message arguments across moderation/misc
+  commands (most notably banlist entries showing the ban reason where "by
+  &lt;staff&gt;" was expected and vice versa), and a duplicate-broadcast bug where
+  staff with `neoessentials.moderation.notifications` saw every moderation action
+  twice — once as their own confirmation, once via the separate staff broadcast.
+
+#### `/jail` Completely Broken (NPE on Every Attempt)
+- **Root cause:** `JailManager.jailPlayer()` reserved the jailed-players map slot
+  with `jailedPlayers.putIfAbsent(playerId, null)`, but `ConcurrentHashMap` disallows
+  `null` values — every jail attempt threw a `NullPointerException` before reaching
+  the rest of the method.
+- **Fix:** Build the real `JailEntry` first and use it as the sole `putIfAbsent`
+  value — both NPE-safe and properly atomic.
+
+#### Tablist Prefix/Suffix Reverting to Blank After First Refresh
+- **Root cause:** `TablistLayout.applySortingTeams()` moved sorted players onto a
+  sort-only `neL_<weight>_<group>` scoreboard team right after
+  `TablistManager.updatePlayerTeam()` had already moved them onto its own
+  `ne_<weight>_<group>`/column-key team (which carries the actual prefix/suffix). A
+  player can only be on one team, so the second, redundant move undid the first
+  every cycle.
+- **Fix:** Removed `applySortingTeams()` entirely — `updatePlayerTeam()`'s own
+  naming already covers plain, weight-sorted, and BTLP column-key ordering.
+
+### ✨ Features
+
+- **Jail regions:** added cuboid/sphere jail shapes defined via a configurable jail
+  wand (right-click = pos1, left-click = pos2) or WorldEdit soft-integration
+  (reflection only, no compile-time dependency), with region-wide block break/place
+  protection.
+- **Tablist nametags:** added an above-head nametag prefix/suffix system with
+  per-group/per-player overrides, layered player > group > permission-based default.
+
+### 🧪 Attempted (Reverted)
+- Briefly widened `minecraft_version_range` to accept 26.1.x as a version-gate-only
+  change. Reverted after confirming the mod hard-crashes on load against the real
+  26.1.x API (`NoClassDefFoundError` on a relocated NeoForge event class) — a genuine
+  port requires bumping `neo_version` and fixing the resulting compile/runtime
+  errors, now tracked separately on the `mc-26.1-port` branch.
+
+---
+
+## [1.0.2.6+build.~400] — 2026-07-06
+
+### 🐛 Bug Fixes
+
+- **Permissions:** fixed group permission precedence, a `getUser()` race condition,
+  and LuckPerms group-weight lookup.
+- **Moderation enforcement gaps:** closed freeze/jail/vanish/mute enforcement gaps
+  across chat, teleportation, and combat — a frozen/jailed/muted player could still
+  chat, teleport, or take/deal damage in several code paths that didn't check their
+  status.
+- **Kits:** fixed a permanent-lockout bug, a double-claim race condition, and item
+  data loss on `/kit reload`.
+- **Auction House:** fixed an item-duplication exploit and a named-item price bypass
+  on `/sell`.
+- **Jail:** fixed the bounds check ignoring dimension — a jailed player standing at
+  the same X/Z in a different dimension wasn't detected as having escaped.
+
+### 🔒 Security
+- Required an admin role on web dashboard endpoints that were previously reachable
+  by any authenticated, non-admin account (including the standalone admin endpoint,
+  fixed in a follow-up commit the same day).
+- Replaced unsalted SHA-256 password hashing with salted PBKDF2WithHmacSHA256 (120k
+  iterations); the default admin account now gets a random temporary password
+  instead of the previous hardcoded `admin`/`admin123`.
+
+### 🧹 Code Quality
+- Replaced hardcoded `Component.literal` strings across ~40 files with
+  `MessageUtil`-backed localization keys.
+
+---
+
+## [1.0.2.6+build.~330] — 2026-07-04
+
+### ✨ Features
+- Added tablist short-tokens/animations (`{tps}`, `{online}`, etc.) usable directly
+  in chat, and `#`-prefixed hex gradient stops.
+- ChestShop shop items now preserve full item data components (enchantments, custom
+  names, modded NBT) instead of just a bare registry ID when assigned via `?`
+  right-click. Added a shift+right-click gesture to (re)assign item data on an
+  already-configured shop, and a look-at variant of `/chestshop remove`.
+- Permission group prefix/suffix now render as rich text (via `RichTextFormatter`)
+  instead of raw color codes.
+
+### 🐛 Bug Fixes
+- Fixed `/flyspeed` not actually applying to player flight (was setting a
+  non-existent attribute instead of `Abilities.flyingSpeed`).
+- Fixed a pending-shop (`?`) autofill ordering bug.
+
+### 📚 Documentation
+- Documented the new shop item-data/NBT assignment and shift-click gestures.
+
+---
+
+## [1.0.2.6+build.~300] — 2026-07-03
+
+### 🐛 Bug Fixes
+- Fixed unclosed `<gradient>` chat tags corrupting trailing legacy `&`-color codes.
+- Fixed ChestShop click-spam (rapid clicking a shop sign could fire multiple
+  transactions per swing) and NBT-sensitive item stock matching.
+
+### ✨ Features
+- Finished migrating `AuctionHouseCommand` to `MessageUtil`-based messages and
+  standardized its command handling (iterated over several commits).
+- Added custom skins for fake tablist entries, plus a BTLP-style column-grid
+  tablist layout.
+
+### 📚 Documentation
+- Corrected several wiki pages to match the actual implementation: economy config
+  keys, permission-node/split-config docs, missing `/chestshop` subcommands and
+  permission nodes, AFK/hologram/moderation docs, API/chat-channel docs,
+  command/permission node names, and kit-management/dashboard docs.
+
+---
+
+## [1.0.2.6+build.~260] — 2026-07-02
+
+### ✨ Features
+- Added a configurable movement-distance threshold for AFK detection (previously
+  any movement, however small, reset AFK status).
+- Landed the initial web dashboard implementation: player management, economy
+  adjustment endpoints, and server status reporting.
+
+### 🐛 Bug Fixes
+- Hardened enchantment-compatibility checks to tolerate cross-version enchantment
+  ID differences instead of crashing.
+
+### 🧹 Code Quality
+- Migrated hover-event construction to `HoverEventCompat` for cross-version
+  compatibility.
+- Refactored `MessageUtil`'s mojibake character-run repair logic.
+- Reset `_langVersion` to 0 and reformatted language files.
+- Began migrating `AuctionHouseCommand` to `MessageUtil`-based messages (finished
+  07-03).
+
+---
+
+## [1.0.2.6+build.~225] — 2026-07-01
+
+### ✨ Features
+- Added `localization.preserveCustomTranslations` config option — lets admins opt a
+  server's custom lang file out of the automatic merge/auto-fix logic entirely,
+  protecting hand-edited translations from ever being touched by the merge system.
+- Added web dashboard configuration schema/getters in `ConfigManager` (groundwork
+  for the dashboard work landing over the following days), and
+  `WarpManager.createWarpByAdmin()` so the dashboard can create warps without a
+  `ServerPlayer` context.
+
+### 🧹 Code Quality
+- Overhauled `en_us.json`/`ru_ru.json` formatting and bumped `_langVersion`;
+  expanded `/help`'s localization coverage.
+- Replaced raw `server.tell(new TickTask(...))` calls with a shared
+  `DelayedTaskScheduler.schedule()` helper across vanish, jail-respawn,
+  misc-teleport, and warp/tpa delay logic.
+- Migrated remaining raw click-event construction to `ClickEventCompat` for
+  cross-version compatibility.
+- Reworked ban message formatting (`BanManager`) for consistency.
+
+---
+
 ## [1.0.2.6+build.214] — 2026-07-01
 
 ### 🐛 Bug Fixes
