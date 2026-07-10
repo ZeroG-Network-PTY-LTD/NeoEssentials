@@ -1,6 +1,105 @@
-# NeoEssentials — Changelog
+# NeoEssentials — Changelog (mc-26.1-port branch)
 
-**Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
+**Minecraft 26.1.2 · NeoForge 26.1.2.76+** (from build.~460 onward — entries
+before that predate the port; this branch forked from the shared 1.21.1
+codebase, compatibility Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+).
+
+---
+
+> Build numbers below are approximate except build.482 (the real build counter
+> isn't tracked in git for historical commits).
+>
+> **Known gap:** this branch hasn't yet merged several `Dev-Builds` fixes from
+> 07-06/07-08 — including a `/jail`-breaking NPE, permission precedence, kit and
+> Auction House duplication fixes, dashboard security hardening, and
+> `/invseeedit`/`/pay`/`/eco` fixes. These need porting over separately.
+
+## 1.0.2.6-mc26.1.2+build.482 — 2026-07-10
+
+### 🐛 Bug Fixes
+
+- **ChestShop double chests:** Buy/sell, stock checks, and dynamic pricing only
+  read one half of a double chest. Now reads the full combined 54-slot
+  inventory.
+- **ChestShop admin shop holograms:** `/chestshop hologram enable|disable|move`
+  could never be used on admin shops. Now authorized via
+  `neoessentials.shop.create.admin`.
+
+### ✨ Improvements
+
+- **Command feedback messages** now show a small `[NE]` tag and use softer,
+  vanilla-matching colors.
+- **NPC Shops:** Selling now actually works (previously only buying was
+  implemented). Added a permission check before opening the shop menu. Added
+  `/npcshop respawn <shopId>` to re-summon a lost shop NPC without losing its
+  listings.
+
+### 🔧 Maintenance
+- Build version string now tags the target Minecraft version
+  (`1.0.2.6-mc26.1.2+build.N`).
+
+---
+
+## 1.0.2.6-mc26.1.2+build.~460 — 2026-07-09
+
+### 🚀 Milestone
+The full Minecraft/NeoForge 26.1 API migration is complete — the mod compiles
+and boots to "Done" with no exceptions on Minecraft 26.1.2 / NeoForge
+26.1.2.76.
+
+---
+
+## 1.0.2.6+build.~330 — 2026-07-04
+
+### 🔀 26.1 Port: Initial API Migration
+Five commits mechanically migrating the codebase toward NeoForge 26.1.2.76 /
+Minecraft 26.1.2 compatibility (reduced compile errors from 645 to 103):
+`ResourceLocation`→`Identifier` renames, permission-level API changes,
+`GameProfileCache` replacement, `teleportTo` signature changes, `ClickType`→
+`ContainerInput`, the new `WorldClock` time API, inventory
+armor/offhand restructuring, registry/`CompoundTag` `Optional`-wrapping
+changes, and several other mechanical renames.
+
+### ✨ Features (shared with the 1.21.1 branch as of this date)
+- Added tablist short-tokens/animations usable directly in chat, and
+  `#`-prefixed hex gradient stops.
+- ChestShop items now preserve full item data (enchantments, custom names,
+  modded NBT) instead of just a bare item ID.
+- Permission group prefix/suffix now render as rich text instead of raw color
+  codes.
+
+---
+
+## 1.0.2.6+build.~300 — 2026-07-03
+
+### 🐛 Bug Fixes
+- Fixed unclosed `<gradient>` chat tags corrupting trailing legacy color codes.
+- Fixed ChestShop click-spam and NBT-sensitive item stock matching.
+
+### ✨ Features
+- Added custom skins for fake tablist entries, plus a BTLP-style column-grid
+  tablist layout.
+
+---
+
+## 1.0.2.6+build.~260 — 2026-07-02
+
+### ✨ Features
+- Added a configurable movement-distance threshold for AFK detection.
+- Landed the initial web dashboard implementation.
+
+### 🐛 Bug Fixes
+- Hardened enchantment-compatibility checks to tolerate cross-version
+  differences instead of crashing.
+
+---
+
+## 1.0.2.6+build.~225 — 2026-07-01
+
+### ✨ Features
+- Added `localization.preserveCustomTranslations` config option to protect
+  hand-edited translations from the automatic merge system.
+- Added web dashboard configuration groundwork.
 
 ---
 
