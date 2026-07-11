@@ -111,7 +111,7 @@ public class BackupEndpoint implements HttpHandler {
 
     private void handleCreate(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject req = JsonParser.parseString(body.isBlank() ? "{}" : body).getAsJsonObject();
+        JsonObject req = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
 
         String name = req.has("name") ? req.get("name").getAsString().trim() : "backup-" + System.currentTimeMillis();
 
@@ -130,7 +130,7 @@ public class BackupEndpoint implements HttpHandler {
 
     private void handleRestore(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject req = JsonParser.parseString(body.isBlank() ? "{}" : body).getAsJsonObject();
+        JsonObject req = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
 
         String name = req.has("name") ? req.get("name").getAsString().trim() : null;
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Missing 'name' field");

@@ -22,6 +22,27 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.3+build.7] — 2026-07-11
+
+### 🐛 Bug Fixes
+
+#### Parameterless Dashboard API POST Routes 500'd for Non-PHP Clients
+**Files:** `PermissionEndpoint`, `BackupEndpoint`, `CloudStorageEndpoint`, `UserManagementEndpoint`
+
+- **Root cause:** Several dashboard API POST routes that take no parameters (e.g.
+  `/api/permissions/reload`, backup create/restore, cloud-storage config) parsed
+  the request body as `body.isBlank() ? new JsonObject() : JsonParser.parseString(body)
+  .getAsJsonObject()`. PHP has no distinct empty-array/empty-object literal, so a
+  client like Laravel's HTTP client (used by the standalone NeoEssentials dashboard
+  app) serialises an empty parameter list as the JSON array `[]` rather than `{}` —
+  a non-blank string that `JsonParser` correctly parses as a `JsonArray`, which then
+  throws `IllegalStateException: Not a JSON Object: []` on the `.getAsJsonObject()`
+  cast. Every one of these routes 500'd whenever called with an empty payload.
+- **Fix:** New shared `RequestBodyUtil.parseJsonObject()`/`readJsonObject()`
+  (`webdashboard.util` package) treats blank bodies **and** non-object JSON (arrays)
+  as "no parameters", returning an empty `JsonObject` instead of throwing. Applied
+  across every endpoint using the old blank-guard pattern.
+
 ## [1.0.3+build.6] — 2026-07-11
 
 ### 🐛 Bug Fixes

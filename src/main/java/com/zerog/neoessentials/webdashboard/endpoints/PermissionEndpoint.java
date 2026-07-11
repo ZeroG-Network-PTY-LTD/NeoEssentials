@@ -116,7 +116,7 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject handlePost(String path, HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
+        JsonObject data = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
 
         if (path.equals("/reload")) {
             return reloadPermissions();
@@ -155,7 +155,7 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject handlePut(String path, HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        JsonObject data = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject data = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
 
         if (path.startsWith("/group/") && path.endsWith("/update")) {
             String groupName = extractGroupName(path, "/update");
@@ -173,7 +173,7 @@ public class PermissionEndpoint implements HttpHandler {
         if (path.startsWith("/group/") && path.endsWith("/context")) {
             String groupName = extractGroupName(path, "/context");
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
+            JsonObject data = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
             return removeGroupContextPerm(groupName, data);
         }
         // /group/{name}/temp/{node}
@@ -187,7 +187,7 @@ public class PermissionEndpoint implements HttpHandler {
         if (path.startsWith("/user/") && path.endsWith("/context")) {
             String username = extractUsername(path, "/context");
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            JsonObject data = body.isBlank() ? new JsonObject() : JsonParser.parseString(body).getAsJsonObject();
+            JsonObject data = com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.parseJsonObject(body);
             return removeUserContextPerm(username, data);
         }
         // /user/{name}/temp/{node}
