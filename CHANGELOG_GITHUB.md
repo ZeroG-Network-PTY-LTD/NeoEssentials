@@ -16,6 +16,39 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 > fixes, `/invseeedit`/`/pay`/`/eco` fixes, and the tablist nametag feature.
 > These need porting over separately.
 
+> The build counter was reset alongside the v1.0.3 bump, so build numbers here are
+> not monotonically increasing relative to now-removed v1.0.2.x entries — always
+> go by date/version, not build number, when comparing across the reset.
+
+---
+
+## [1.0.3+build.6] — 2026-07-11
+
+### 🐛 Bug Fixes
+
+#### Tablist `playerFormat` Spacing Had No Effect
+**Config:** `tablist.json` → `playerFormat`
+
+- **Root cause:** `playerFormat` was loaded from config but never actually applied
+  anywhere — `TablistManager.updatePlayerTeam()` sent the raw permission-system
+  prefix/suffix straight to `team.setPlayerPrefix()`/`setPlayerSuffix()`, completely
+  ignoring the template. Editing `playerFormat` (including inserting spaces between
+  `{prefix}`/`{player}`/`{suffix}`, even Unicode non-breaking spaces) had no effect
+  on rendering at all — it was a config no-op, not a case of Minecraft stripping
+  whitespace.
+- **Fix:** Vanilla's scoreboard-team prefix/suffix mechanism always renders as a
+  fixed `prefix + <player name> + suffix` — `{player}` can't be reordered relative
+  to `{prefix}`/`{suffix}`. `TablistManager.parsePlayerFormat()` now splits
+  `playerFormat` around its three tokens and folds the literal text surrounding them
+  into the prefix/suffix strings actually sent to the client (e.g. the space
+  between `{prefix}` and `{player}` in `"{prefix} {player} {suffix}"` is appended to
+  the prefix, and the space before `{suffix}` is prepended to the suffix) —
+  recomputed once per config load/reload, not per-tick.
+- **Note:** this also means the *default* `playerFormat` value
+  (`"&f{prefix}&r{player}{suffix}"`) now actually applies its `&f`/`&r` color codes,
+  which it never did before — a visible (and evidently originally intended) change
+  for servers that never touched this setting.
+
 ---
 
 ## [1.0.3-mc26.1.2+build.10] — 2026-07-12
