@@ -67,6 +67,23 @@ public class TablistManager {
     private final List<String> headerFrames = new ArrayList<>();
     private final List<String> footerFrames = new ArrayList<>();
     private String playerFormat = "&f{prefix}&r{player}{suffix}";
+    /**
+     * Text segments derived from {@link #playerFormat}, split around its three tokens.
+     * Vanilla's scoreboard-team prefix/suffix mechanism always renders as a fixed
+     * {@code prefix + <actual player name> + suffix} — there's no way to reorder
+     * {player} relative to {prefix}/{suffix}, or to insert text between the player's
+     * name and the surrounding prefix/suffix except by putting it INSIDE the prefix
+     * (trailing) or suffix (leading) string sent to the client. These four segments
+     * are exactly that: whatever text sits before {prefix}, between {prefix} and
+     * {player}, between {player} and {suffix}, and after {suffix} in the template —
+     * e.g. a plain space in "{prefix} {player} {suffix}" ends up appended to the
+     * prefix and prepended to the suffix, which is the only way to actually separate
+     * them visually. Recomputed once whenever playerFormat is (re)loaded, not per-tick.
+     */
+    private String formatLead = "";
+    private String formatBetweenPrefixPlayer = "";
+    private String formatBetweenPlayerSuffix = "";
+    private String formatTrail = "";
     private boolean hideVanished = true;
     private boolean showAfkIndicator = true;
     private String afkSuffix = " &7[AFK]";
@@ -100,6 +117,7 @@ public class TablistManager {
     private TablistManager() {
         headerFrames.add("<gradient:FFD700-FF8C00>&l{server_name}&r &8| &e{online}&8/&e{max} &7players");
         footerFrames.add("&7TPS: {tps} &8| &7Ping: &a{ping}ms &8| &7{world}");
+        parsePlayerFormat();
     }
 
     // ── Initialisation ────────────────────────────────────────────────────────
@@ -141,6 +159,7 @@ public class TablistManager {
             showAfkIndicator     = !tab.has("showAfkIndicator")   || tab.get("showAfkIndicator").getAsBoolean();
             afkSuffix            = tab.has("afkSuffix")           ? tab.get("afkSuffix").getAsString() : " &7[AFK]";
             playerFormat         = tab.has("playerFormat")        ? tab.get("playerFormat").getAsString() : playerFormat;
+            parsePlayerFormat();
 
             // Per-group colour overrides
             groupColors.clear();
@@ -305,6 +324,43 @@ public class TablistManager {
         }
     }
 
+    /**
+     * Splits {@link #playerFormat} around its {@code {prefix}}/{@code {player}}/
+     * {@code {suffix}} tokens into the four literal segments that surround them,
+     * for use by {@link #updatePlayerTeam}. See {@link #formatLead} for why this
+     * is the only way {@code playerFormat} can actually affect rendering.
+     */
+    private void parsePlayerFormat() {
+        String fmt = playerFormat;
+        final String tokPrefix = "{prefix}", tokPlayer = "{player}", tokSuffix = "{suffix}";
+        int playerIdx = fmt.indexOf(tokPlayer);
+        if (playerIdx < 0) {
+            // No {player} token — nothing sane to derive; leave every segment empty
+            // rather than guess, matching the previous (template-ignored) behavior.
+            formatLead = formatBetweenPrefixPlayer = formatBetweenPlayerSuffix = formatTrail = "";
+            return;
+        }
+        int prefixIdx = fmt.indexOf(tokPrefix);
+        int suffixIdx = fmt.indexOf(tokSuffix);
+
+        formatLead = (prefixIdx > 0) ? fmt.substring(0, prefixIdx) : "";
+
+        if (prefixIdx >= 0 && prefixIdx + tokPrefix.length() <= playerIdx) {
+            formatBetweenPrefixPlayer = fmt.substring(prefixIdx + tokPrefix.length(), playerIdx);
+        } else {
+            formatBetweenPrefixPlayer = "";
+        }
+
+        int afterPlayer = playerIdx + tokPlayer.length();
+        if (suffixIdx >= 0 && afterPlayer <= suffixIdx) {
+            formatBetweenPlayerSuffix = fmt.substring(afterPlayer, suffixIdx);
+            formatTrail = fmt.substring(suffixIdx + tokSuffix.length());
+        } else {
+            formatBetweenPlayerSuffix = (afterPlayer <= fmt.length()) ? fmt.substring(afterPlayer) : "";
+            formatTrail = "";
+        }
+    }
+
     // ── Scoreboard Team Prefix (player name row) ──────────────────────────────
     public void updatePlayerTeam(ServerPlayer player, MinecraftServer server) {
         if (!enabled || server == null) return;
@@ -370,12 +426,14 @@ public class TablistManager {
             PlayerTeam team = scoreboard.getPlayerTeam(teamName);
             if (team == null) team = scoreboard.addPlayerTeam(teamName);
 
-            // Only push prefix/suffix packets when they have actually changed
+            // Only push prefix/suffix packets when they have actually changed.
+            // playerFormat's literal text around {prefix}/{player}/{suffix} is folded
+            // into the prefix/suffix strings themselves here — see parsePlayerFormat().
             if (prefixChanged || teamChanged) {
-                team.setPlayerPrefix(RichTextFormatter.processTablistText(prefix));
+                team.setPlayerPrefix(RichTextFormatter.processTablistText(formatLead + prefix + formatBetweenPrefixPlayer));
             }
             if (suffixChanged || teamChanged) {
-                team.setPlayerSuffix(RichTextFormatter.processTablistText(effectiveSuffix));
+                team.setPlayerSuffix(RichTextFormatter.processTablistText(formatBetweenPlayerSuffix + effectiveSuffix + formatTrail));
             }
 
             // Only re-add to team when the team itself changed (avoid redundant add packets)
