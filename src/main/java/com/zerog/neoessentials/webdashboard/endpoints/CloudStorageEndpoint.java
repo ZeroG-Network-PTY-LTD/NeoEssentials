@@ -295,11 +295,7 @@ public class CloudStorageEndpoint implements HttpHandler {
     }
 
     private JsonObject readBody(HttpExchange exchange) throws IOException {
-        try (InputStream is = exchange.getRequestBody()) {
-            String body = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
-            if (body.isEmpty()) return new JsonObject();
-            return com.google.gson.JsonParser.parseString(body).getAsJsonObject();
-        }
+        return com.zerog.neoessentials.webdashboard.util.RequestBodyUtil.readJsonObject(exchange);
     }
 
     private void sendJson(HttpExchange exchange, int code, String json) throws IOException {

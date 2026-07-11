@@ -6,6 +6,19 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.7 — 2026-07-11
+
+### 🐛 Bug Fixes
+
+- **Dashboard API 500'd on empty POST bodies from non-PHP clients:** routes like
+  reload permissions, backup create/restore, and cloud-storage config crashed
+  whenever the caller sent an empty JSON array `[]` instead of an empty object
+  `{}` for a parameterless action (which is how PHP/Laravel serializes an empty
+  parameter list) — a real issue for the standalone dashboard app. These now
+  treat an empty array the same as no parameters at all instead of erroring.
+
+---
+
 ## 1.0.3+build.6 — 2026-07-11
 
 ### 🐛 Bug Fixes
