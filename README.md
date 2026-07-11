@@ -5,6 +5,24 @@
 
 > NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 1.21.1 - 1.21.11 servers. It provides 50+ commands, GUI tools, advanced administration, and a real-time web dashboard—all managed by modular JSON config files and standardized documentation.
 
+## 📦 This Branch
+
+`Released` holds documentation, changelogs, and release notes only — there is
+no buildable source code here. Development happens on two separate branches,
+split by target Minecraft version:
+
+| Branch | Target | Purpose |
+|---|---|---|
+| [`Dev-Builds`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/Dev-Builds) | Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+ | Primary development branch |
+| [`Dev-Build-26.x.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/Dev-Build-26.x.x) | Minecraft 26.1.2 · NeoForge 26.1.2.76+ | 26.1.x port branch |
+
+### Download
+
+Grab the built jar for your Minecraft version from:
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials)
+- [Modrinth](https://modrinth.com/mod/neoessentials)
+- [GitHub Releases](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases)
+
 ## 🌟 Overview
 
 NeoEssentials brings essential server management, player utilities, and advanced admin features to NeoForge servers. All features are strictly documented and driven by config files for reliability and transparency.
@@ -50,7 +68,7 @@ See [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APIS
 ## 🚀 Quick Start
 
 ### Installation
-1. Download the latest release [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases)
+1. Download the latest release for your Minecraft version (see [Download](#-download) above)
 2. Place the JAR file in your server's `mods` folder
 3. Start your server to generate configuration files in `config/neoessentials/`
 4. Configure permissions and features as needed
@@ -98,33 +116,9 @@ See [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APIS
 
 ## 🛠️ Development
 
-### IDE Setup
-This project uses **IntelliJ IDEA Community Edition** with Gradle.
-
-**Setup Instructions:**
-1. Clone the repository
-2. Open the project in IntelliJ IDEA
-3. Import as a Gradle project
-4. Wait for Gradle to sync and download dependencies
-5. The IDE is configured to automatically download sources and javadocs
-
-**Running the Mod:**
-- Use Gradle run configurations provided by NeoForge ModDev
-- `runClient` - Test in client mode
-- `runServer` - Test in server mode
-- `runData` - Generate data resources
-
-**Building:**
-```bash
-./gradlew build
-```
-Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
-
-### Project Structure
-- **Java 21** - Target JDK version
-- **Gradle** - Build system with auto-incrementing build numbers
-- **NeoForge ModDev 2.0.107** - Modern mod development plugin
-- **Parchment Mappings** - Better parameter names and javadocs
+This branch has no source code — see [This Branch](#-this-branch) above for
+where to find it. `Dev-Builds` and `Dev-Build-26.x.x` each have their own
+IDE/Gradle setup and build instructions.
 
 ## 🤝 Support & Community
 
