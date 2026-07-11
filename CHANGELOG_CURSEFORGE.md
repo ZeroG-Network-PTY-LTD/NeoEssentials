@@ -6,6 +6,21 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.6 — 2026-07-11
+
+### 🐛 Bug Fixes
+
+- **Tablist `playerFormat` spacing had no effect:** editing `playerFormat` in
+  `tablist.json` — including adding spaces between `{prefix}`/`{player}`/`{suffix}` —
+  never actually changed anything, since the setting was loaded but never applied.
+  Now the literal text around each token is correctly folded into the prefix/suffix
+  sent to the client, so spacing (and other literal text in the template) actually
+  renders. Note: the default template's `&f`/`&r` color codes now also apply, which
+  they never did before — a visible change for servers that never touched this
+  setting.
+
+---
+
 ## 1.0.3+build.480 — 2026-07-10
 
 ### 🐛 Bug Fixes
