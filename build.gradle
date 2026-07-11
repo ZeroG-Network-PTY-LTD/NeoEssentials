@@ -15,27 +15,41 @@ tasks.named('wrapper', Wrapper).configure {
 }
 
 // Build number management
+//
+// build_number.txt is a single on-disk counter shared by every branch checked out in
+// this working directory (it's gitignored, not branch-specific). Previously it was
+// incremented unconditionally at configuration time, i.e. on every single Gradle
+// invocation — including a bare `compileJava` sanity-check with no intent to actually
+// package anything. That meant running N verification compiles on one branch before
+// switching to the other threw the two branches' "build.N" numbers out of sync with
+// each other for what's conceptually the same paired release, purely as a side effect
+// of how many times each branch happened to be compile-checked during development.
+//
+// Fixed: the counter now only increments (and is only persisted to disk) when a real
+// packaging task — `jar`, `assemble`, or `build` — is actually part of this invocation's
+// task graph. A plain `compileJava`/`test`/IDE-sync invocation reads the current value
+// without bumping it, so those no longer perturb the shared counter at all.
 def buildNumberFile = file('build_number.txt')
-def buildNumber = 0
+def buildNumber = buildNumberFile.exists() ? buildNumberFile.text.trim().toInteger() : 0
 
-if (buildNumberFile.exists()) {
-    buildNumber = buildNumberFile.text.trim().toInteger()
+gradle.taskGraph.whenReady { graph ->
+    boolean isPackagingBuild = graph.allTasks.any { t -> t.name in ['jar', 'assemble', 'build'] }
+    if (isPackagingBuild) {
+        buildNumber++
+        buildNumberFile.text = buildNumber.toString()
+        project.version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
+        println "=========================================="
+        println "Building ${mod_name} v${project.version}"
+        println "Build #${buildNumber}"
+        println "=========================================="
+    }
 }
 
-// Increment build number for each build
-buildNumber++
-buildNumberFile.text = buildNumber.toString()
-
-// Set version with build number, tagged with the target Minecraft version so
-// jars built from this 26.x port branch are never confused with 1.21.1 jars.
+// Set version with build number (current value; only bumped above for real packaging builds).
+// Tagged with the target Minecraft version so jars built from this 26.x port branch are
+// never confused with 1.21.1 jars.
 version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
 group = mod_group_id
-
-// Log build information
-println "=========================================="
-println "Building ${mod_name} v${version}"
-println "Build #${buildNumber}"
-println "=========================================="
 
 repositories {
     // For local mod jars
