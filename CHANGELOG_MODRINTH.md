@@ -49,7 +49,7 @@ and boots to "Done" with no exceptions on Minecraft 26.1.2 / NeoForge
 
 ---
 
-## 1.0.2.6-mc26.1.2+build.482 — 2026-07-10
+## 1.0.3-mc26.1.2+build.482 — 2026-07-10
 
 ### 🐛 Bug Fixes
 
