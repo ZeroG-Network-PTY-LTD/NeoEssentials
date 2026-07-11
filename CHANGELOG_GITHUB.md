@@ -6,7 +6,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.2.6+build.480] — 2026-07-10
+## [1.0.3+build.480] — 2026-07-10
 
 ### 🐛 Bug Fixes
 
