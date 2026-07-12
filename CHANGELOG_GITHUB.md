@@ -15,6 +15,36 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ### 🐛 Bug Fixes
 
+#### Dashboard Account Login History and Lockout State Reset on Every Restart
+**File:** `AuthenticationManager` (`dashboard_users.json` persistence)
+
+- **Root cause:** `saveUsers()`/`loadUsers()` only serialized a subset of `User`'s
+  fields (id, username, passwordHash, email, role, enabled, createdAt,
+  requiresPasswordChange, isTempPassword) — `lastLoginAt`, `lastLoginIp`,
+  `failedLoginAttempts`, and `lockoutUntil` were never written to
+  `dashboard_users.json` at all, so every server restart silently reset every
+  account's login history to "never logged in" and cleared any active
+  brute-force lockout, even though `toJson()` (used for live API responses)
+  correctly included these fields — the bug only affected disk persistence.
+- **Fix:** `saveUsers()` now writes all four fields; `loadUsers()` restores them
+  (defensively, since existing `dashboard_users.json` files from before this fix
+  won't have them yet).
+
+#### Locale-Dependent Number Formatting Corrupted Dashboard API JSON Fields
+**Files:** `BackupManager`, `ServerDataCollector`
+
+- **Root cause:** `String.format("%.2f", ...)` and `new DecimalFormat("#.##")`
+  both use the JVM's default locale unless told otherwise. On a server running
+  with a comma-decimal locale (this repo's own dev environment runs `ru_ru`),
+  these produced strings like `"19,5"` instead of `"19.5"` for `tps`,
+  `averageTickTime`, memory/CPU percentages, and backup `sizeMb`/`totalSizeMb` —
+  every one of these fields is documented and consumed as a parseable number by
+  dashboard clients. PHP's `(float)` cast (and most other JSON number parsers)
+  silently truncates at the comma instead of erroring, so e.g. a `19,5` TPS
+  reading would silently read as `19.0` on the standalone dashboard with no
+  visible failure.
+- **Fix:** Both now format with `Locale.ROOT` explicitly.
+
 #### Parameterless Dashboard API POST Routes 500'd for Non-PHP Clients
 **Files:** `PermissionEndpoint`, `BackupEndpoint`, `CloudStorageEndpoint`, `UserManagementEndpoint`
 

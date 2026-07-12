@@ -259,7 +259,7 @@ public class BackupManager {
                 JsonObject meta = readManifest(zip);
                 long sizeBytes = Files.size(zip);
                 meta.addProperty("sizeBytes", sizeBytes);
-                meta.addProperty("sizeMb",    String.format("%.2f", sizeBytes / 1_048_576.0));
+                meta.addProperty("sizeMb",    String.format(Locale.ROOT, "%.2f", sizeBytes / 1_048_576.0));
                 String fn = zip.getFileName().toString();
                 meta.addProperty("filename",  fn);
                 meta.addProperty("name",      fn.replaceAll("\\.zip$", ""));
@@ -302,7 +302,7 @@ public class BackupManager {
         }
 
         status.addProperty("count",       zips.size());
-        status.addProperty("totalSizeMb", String.format("%.2f", totalSize / 1_048_576.0));
+        status.addProperty("totalSizeMb", String.format(Locale.ROOT, "%.2f", totalSize / 1_048_576.0));
         status.addProperty("totalSizeBytes", totalSize);
         status.addProperty("lastBackup",  latestMs > 0 ? TS_FMT.format(Instant.ofEpochMilli(latestMs)) : null);
         status.addProperty("maxSnapshots", MAX_SNAPSHOTS);

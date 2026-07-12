@@ -10,6 +10,16 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ### 🐛 Bug Fixes
 
+- **Dashboard account login history reset on every restart:** last-login time,
+  last-login IP, failed-attempt count, and lockout state were tracked correctly
+  in memory but never actually saved to `dashboard_users.json` — a server
+  restart silently wiped all of it. Now persisted and restored correctly.
+- **Locale-dependent number formatting corrupted dashboard API data:** TPS,
+  tick time, memory/CPU percentages, and backup size fields used the server's
+  default locale for decimal formatting, producing `"19,5"` instead of `"19.5"`
+  on comma-decimal locales — external dashboard clients parsing these as
+  numbers would silently get truncated/wrong values. Now always formatted with
+  a fixed locale regardless of server language settings.
 - **Dashboard API 500'd on empty POST bodies from non-PHP clients:** routes like
   reload permissions, backup create/restore, and cloud-storage config crashed
   whenever the caller sent an empty JSON array `[]` instead of an empty object

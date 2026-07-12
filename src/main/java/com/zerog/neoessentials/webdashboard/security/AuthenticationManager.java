@@ -531,7 +531,22 @@ public class AuthenticationManager {
                 if (userJson.has("isTempPassword")) {
                     user.setTempPassword(userJson.get("isTempPassword").getAsBoolean());
                 }
-                
+                // Login history / lockout state — previously never persisted, so it
+                // silently reset to "never logged in" / "not locked out" on every
+                // server restart instead of surviving across reboots.
+                if (userJson.has("lastLoginAt")) {
+                    user.setLastLoginAt(userJson.get("lastLoginAt").getAsLong());
+                }
+                if (userJson.has("lastLoginIp") && !userJson.get("lastLoginIp").isJsonNull()) {
+                    user.setLastLoginIp(userJson.get("lastLoginIp").getAsString());
+                }
+                if (userJson.has("failedLoginAttempts")) {
+                    user.setFailedLoginAttempts(userJson.get("failedLoginAttempts").getAsInt());
+                }
+                if (userJson.has("lockoutUntil")) {
+                    user.setLockoutUntil(userJson.get("lockoutUntil").getAsLong());
+                }
+
                 users.put(id, user);
                 userIdByUsername.put(username.toLowerCase(), id);
             }
@@ -566,7 +581,11 @@ public class AuthenticationManager {
                 userJson.addProperty("createdAt", user.getCreatedAt());
                 userJson.addProperty("requiresPasswordChange", user.requiresPasswordChange());
                 userJson.addProperty("isTempPassword", user.isTempPassword());
-                
+                userJson.addProperty("lastLoginAt", user.getLastLoginAt());
+                userJson.addProperty("lastLoginIp", user.getLastLoginIp());
+                userJson.addProperty("failedLoginAttempts", user.getFailedLoginAttempts());
+                userJson.addProperty("lockoutUntil", user.getLockoutUntil());
+
                 JsonArray permsArray = new JsonArray();
                 user.getPermissions().forEach(permsArray::add);
                 userJson.add("permissions", permsArray);

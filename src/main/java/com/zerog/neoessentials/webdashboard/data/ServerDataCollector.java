@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 /**
  * Server Data Collector
@@ -26,7 +28,12 @@ import java.text.DecimalFormat;
 public class ServerDataCollector {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerDataCollector.class);
     private final MinecraftServer server;
-    private final DecimalFormat df = new DecimalFormat("#.##");
+    // Locale.ROOT explicitly — this feeds numeric JSON API fields (tps, memory %,
+    // CPU load) that dashboard clients parse as floats. Under a comma-decimal
+    // server locale (e.g. ru_RU), the default DecimalFormat would emit "19,5"
+    // instead of "19.5", which PHP's (float) cast (and most other JSON number
+    // parsers) silently truncates at the comma to 19.0 instead of erroring.
+    private final DecimalFormat df = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
     
     public ServerDataCollector(MinecraftServer server) {
         this.server = server;
@@ -454,7 +461,7 @@ public class ServerDataCollector {
         if (bytes < 1024) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(1024));
         String pre = "KMGTPE".charAt(exp - 1) + "";
-        return String.format("%.2f %sB", bytes / Math.pow(1024, exp), pre);
+        return String.format(java.util.Locale.ROOT, "%.2f %sB", bytes / Math.pow(1024, exp), pre);
     }
     
     private String formatUptime(long uptimeMillis) {
