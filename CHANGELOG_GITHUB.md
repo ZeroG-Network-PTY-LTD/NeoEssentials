@@ -22,6 +22,37 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.3+build.10] — 2026-07-12
+
+### ✨ Storage Backends Now Cover the Whole Mod
+
+Extended the `DataStore` abstraction introduced in build.9 to every remaining manager
+that used to persist its own bespoke JSON files — `storage.type` (JSON/YAML/SQLite/MySQL)
+now applies mod-wide, not just to moderation.
+
+- **Migrated:** economy (balances, pay toggles, transaction history, item worth), kits
+  (definitions, cooldowns, usages), homes, `/back` locations, warps (global and
+  per-player), spawn, jail (active jail state and jail locations), freeze, vanish, AFK
+  data, ignore lists, per-player chat formats, holograms, chest shops, NPC shops,
+  permissions (groups with inheritance, users, aliases), the dashboard's own accounts
+  and registrations, custom-language admin overrides, resource-pack metadata, and the
+  Auction House.
+- **Auction House** no longer opens its own dedicated SQLite database
+  (`auctionhouse.db`) — it now shares the same backend as everything else, including
+  MySQL for cross-server auction listings. Existing `auctionhouse.db` data is imported
+  automatically on first boot.
+- All of these follow the same auto-migration behavior as the moderation system:
+  legacy JSON files are imported once, losslessly, the first time the relevant
+  collection is empty (with `storage.autoMigrate` enabled, the default) — old files
+  are left in place, never deleted automatically.
+- **Fixed in passing:** `/warp`'s per-player warps were being read/written from a
+  hard-coded `run/playerwarps.json` relative path instead of the configured data
+  directory — this no longer happens (existing data at that path is still imported
+  once during migration).
+- See the new "Storage Backend" wiki page for the full system-by-system collection list.
+
+---
+
 ## [1.0.3+build.9] — 2026-07-12
 
 ### ✨ New Feature — Pluggable Storage Backends (JSON / YAML / SQLite / MySQL)
