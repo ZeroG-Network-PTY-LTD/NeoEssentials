@@ -11,6 +11,69 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.3+build.8] — 2026-07-12
+
+### ✨ New Features — Moderation System Overhaul
+
+Rebuilt the moderation system to match ban-management plugins' feature set (bans,
+mutes, kicks, warnings, notes, reports — all with full history and staff attribution),
+and to fix a serious pre-existing correctness bug along the way.
+
+#### Consolidated the Ban System — Dashboard Bans Now Actually Work
+**Files:** `BanManager`, `ModerationManager` (deprecated)
+
+- **The bug:** two entirely separate, disconnected ban stores existed. `/ban`
+  (the command staff actually run) only ever talked to `BanManager`. The
+  dashboard's `POST /api/moderation/ban` only ever talked to a second,
+  parallel store (`ModerationManager`/`BanEntry`). **A ban created through the
+  dashboard did not block that player from joining** — the two systems never
+  reconciled. `ModerationManager`'s ban-tracking half is now marked deprecated
+  and no longer used by the dashboard; `ModerationEndpoint` talks directly to
+  `BanManager`, the same store `/ban` enforces.
+- `BanManager` (player + IP bans) now has: ban IDs, an `active` flag, an
+  `evidence` field, and — most importantly — **archives every ban instead of
+  hard-deleting it on unban/expiry**, so a player's/IP's full ban history
+  (including who unbanned them and when) is preserved and queryable via
+  `getBanHistory()`/`getIPBanHistory()`, matching ban-management plugins'
+  "view a player's entire record, including unbans and by whom."
+
+#### Mutes Are No Longer Bare-Bones
+**File:** `MuteManager`
+
+- Previously just a name→expiry map with no reason, no staff attribution, and
+  no history — the reason typed on `/mute <player> <reason>` was discarded
+  after the initial chat broadcast. Now tracks reason, muted-by, full
+  per-player history, and an unmute audit trail, plus new IP-mute support
+  (`muteIP`/`unmuteIP`/`isIPMuted`) that didn't exist at all before. Old
+  `mutes.json` files (the flat legacy format) are transparently migrated on load.
+
+#### Kicks Are Now Recorded
+**File:** new `KickManager`
+
+- Kicks were previously fire-and-forget with, at most, an optional unstructured
+  log line — no persisted, queryable history existed. `/kick`, `/kickall`, and
+  the dashboard's kick action now all record through `KickManager`.
+
+#### New: Staff Notes and Player Reports
+**Files:** new `NoteManager`/`NoteEntry`, `ReportManager`/`ReportEntry`
+
+- `/note`, `/notes`, `/removenote` — freeform staff notes on a player's record,
+  matching "staff can write notes and view a player's entire record."
+- `/report`, `/reports`, `/reviewreport` — players can report other players
+  even while staff are offline; staff review a persistent queue later,
+  matching "players can report wrongful behaviour even when staff are offline."
+
+#### Dashboard API Rewired Onto the Canonical Model
+**File:** `ModerationEndpoint`
+
+- Every route now backed by the real, enforced managers above instead of the
+  disconnected `ModerationManager` store. Added IP-ban, IP-mute, kick, note,
+  and report routes that didn't exist at all before (see the file's own
+  route-table Javadoc for the full list). `/api/moderation/overview` now
+  reports counts across every punishment type instead of just bans/warns/mutes.
+
+---
+
 ## [1.0.3+build.7] — 2026-07-11
 
 ### 🐛 Bug Fixes

@@ -50,19 +50,34 @@ public class BanManager {
     private final File banFile;
     private final File ipBanFile;
     
-    // In-memory cache for quick lookups
+    // In-memory cache for quick lookups (active bans only)
     private final Map<UUID, BanEntry> playerBans = new ConcurrentHashMap<>();
     private final Map<String, IPBanEntry> ipBans = new ConcurrentHashMap<>();
-    
+    // Archive of reversed/expired bans — every ban ever issued lives here once it's no
+    // longer active, so getBanHistory()/getIPBanHistory() can show a player's/IP's full
+    // punishment record (matching the "view a player's entire record, including unbans
+    // and by whom" feature of ban-management plugins like BanManager), rather than the
+    // previous behavior of a hard delete that erased all trace of a past ban on unban.
+    private final List<BanEntry> banHistory = new ArrayList<>();
+    private final List<IPBanEntry> ipBanHistory = new ArrayList<>();
+    private final File banHistoryFile;
+    private final File ipBanHistoryFile;
+
     public static class BanEntry {
+        public String id;
         public String playerName;
         public UUID playerId;
         public String reason;
         public String bannedBy;
         public long banTime;
         public long expireTime; // 0 for permanent ban
-        
+        public String evidence; // optional — e.g. screenshot/log URL
+        public boolean active = true;
+        public String unbannedBy;
+        public long unbannedAt; // 0 = not (yet) unbanned
+
         public BanEntry(String playerName, UUID playerId, String reason, String bannedBy) {
+            this.id = UUID.randomUUID().toString();
             this.playerName = playerName;
             this.playerId = playerId;
             this.reason = reason;
@@ -70,28 +85,34 @@ public class BanManager {
             this.banTime = System.currentTimeMillis();
             this.expireTime = 0; // Default to permanent
         }
-        
+
         public boolean isExpired() {
             return expireTime > 0 && System.currentTimeMillis() > expireTime;
         }
-        
+
         public String getFormattedBanTime() {
             return formatTime(banTime);
         }
-        
+
         public String getFormattedExpireTime() {
             return expireTime > 0 ? formatTime(expireTime) : "Never";
         }
     }
-    
+
     public static class IPBanEntry {
+        public String id;
         public String ipAddress;
         public String reason;
         public String bannedBy;
         public long banTime;
         public long expireTime; // 0 = permanent
+        public String evidence;
+        public boolean active = true;
+        public String unbannedBy;
+        public long unbannedAt;
 
         public IPBanEntry(String ipAddress, String reason, String bannedBy) {
+            this.id = UUID.randomUUID().toString();
             this.ipAddress = ipAddress;
             this.reason = reason;
             this.bannedBy = bannedBy;
@@ -119,6 +140,8 @@ public class BanManager {
         
         this.banFile = new File(moderationDir, "player_bans.json");
         this.ipBanFile = new File(moderationDir, "ip_bans.json");
+        this.banHistoryFile = new File(moderationDir, "player_ban_history.json");
+        this.ipBanHistoryFile = new File(moderationDir, "ip_ban_history.json");
         loadBans();
 
         // Start periodic expired-ban cleanup if enabled (but not if shutting down)
@@ -145,6 +168,23 @@ public class BanManager {
         return instance;
     }
 
+    /** Archives a naturally-expired ban into history so it still shows up in getBanHistory(). */
+    private void archiveExpiredBan(BanEntry ban) {
+        ban.active = false;
+        ban.unbannedBy = null; // expired naturally, not reversed by staff
+        ban.unbannedAt = ban.expireTime;
+        banHistory.add(ban);
+        saveBanHistory();
+    }
+
+    private void archiveExpiredIPBan(IPBanEntry ban) {
+        ban.active = false;
+        ban.unbannedBy = null;
+        ban.unbannedAt = ban.expireTime;
+        ipBanHistory.add(ban);
+        saveIPBanHistory();
+    }
+
     /**
      * Periodically called to remove expired temp bans if autoExpireTempBans is enabled.
      * This uses the same logic as getAllPlayerBans() but is safe for background use.
@@ -158,6 +198,7 @@ public class BanManager {
         while (playerIterator.hasNext()) {
             Map.Entry<UUID, BanEntry> entry = playerIterator.next();
             if (entry.getValue().isExpired() && autoExpire) {
+                archiveExpiredBan(entry.getValue());
                 playerIterator.remove();
                 removedPlayerBans = true;
             }
@@ -173,6 +214,7 @@ public class BanManager {
         while (ipIterator.hasNext()) {
             Map.Entry<String, IPBanEntry> entry = ipIterator.next();
             if (entry.getValue().isExpired() && autoExpire) {
+                archiveExpiredIPBan(entry.getValue());
                 ipIterator.remove();
                 removedIPBans = true;
             }
@@ -393,12 +435,32 @@ public class BanManager {
 
     /**
      * Unban a player from NeoEssentials ban list AND vanilla ban list.
+     * @deprecated use {@link #unbanPlayer(UUID, String)} so the reversal is attributed —
+     *             this overload archives the ban with an unknown ({@code null}) unbanner.
      */
+    @Deprecated
     public boolean unbanPlayer(UUID playerId) {
+        return unbanPlayer(playerId, null);
+    }
+
+    /**
+     * Unban a player from NeoEssentials ban list AND vanilla ban list. The reversed ban is
+     * archived (not deleted) with who performed the unban and when, so it still shows up in
+     * {@link #getBanHistory(UUID)} — matching ban-management plugins' "view a player's
+     * entire record, including unbans and by whom" behavior instead of erasing all trace.
+     */
+    public boolean unbanPlayer(UUID playerId, String unbannedBy) {
         BanEntry removed = playerBans.remove(playerId);
         boolean removedFromVanilla = removeFromVanillaBanList(playerId);
         if (removed != null || removedFromVanilla) {
-            if (removed != null) saveBans();
+            if (removed != null) {
+                removed.active = false;
+                removed.unbannedBy = unbannedBy;
+                removed.unbannedAt = System.currentTimeMillis();
+                banHistory.add(removed);
+                saveBanHistory();
+                saveBans();
+            }
             // Broadcast to staff if enabled
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null && com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
@@ -492,14 +554,29 @@ public class BanManager {
     }
     
     /**
-     * Unban an IP address
+     * Unban an IP address.
+     * @deprecated use {@link #unbanIP(String, String)} so the reversal is attributed.
      */
+    @Deprecated
     public boolean unbanIP(String ipAddress) {
+        return unbanIP(ipAddress, null);
+    }
+
+    /**
+     * Unban an IP address. The reversed ban is archived (not deleted) with who performed
+     * the unban and when — see {@link #unbanPlayer(UUID, String)} for why.
+     */
+    public boolean unbanIP(String ipAddress, String unbannedBy) {
         IPBanEntry removed = ipBans.remove(ipAddress);
         if (removed != null) {
+            removed.active = false;
+            removed.unbannedBy = unbannedBy;
+            removed.unbannedAt = System.currentTimeMillis();
+            ipBanHistory.add(removed);
+            saveIPBanHistory();
             saveIPBans();
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-                LOGGER.info("IP {} unbanned", ipAddress);
+                LOGGER.info("IP {} unbanned by {}", ipAddress, unbannedBy != null ? unbannedBy : "unknown");
             }
             return true;
         }
@@ -514,6 +591,7 @@ public class BanManager {
         if (ban != null) {
             if (ban.isExpired()) {
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                    archiveExpiredBan(ban);
                     playerBans.remove(playerId);
                     saveBans();
                 }
@@ -560,6 +638,7 @@ public class BanManager {
         if (ban == null) return false;
         if (ban.isExpired()) {
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                archiveExpiredIPBan(ban);
                 ipBans.remove(ipAddress);
                 saveIPBans();
             }
@@ -585,6 +664,7 @@ public class BanManager {
         if (ban != null && ban.isExpired()) {
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                 // Auto-remove expired ban
+                archiveExpiredBan(ban);
                 playerBans.remove(playerId);
                 saveBans();
             }
@@ -615,6 +695,7 @@ public class BanManager {
             if (ban.isExpired()) {
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                     // Remove expired ban
+                    archiveExpiredBan(ban);
                     iterator.remove();
                     removedAny = true;
                 }
@@ -634,7 +715,45 @@ public class BanManager {
     public List<IPBanEntry> getAllIPBans() {
         return new ArrayList<>(ipBans.values());
     }
-    
+
+    /**
+     * Full ban history for a player — any currently-active ban plus every archived
+     * (expired or reversed) past ban, newest first. Matches ban-management plugins'
+     * per-player punishment record view.
+     */
+    public List<BanEntry> getBanHistory(UUID playerId) {
+        List<BanEntry> history = new ArrayList<>();
+        BanEntry active = playerBans.get(playerId);
+        if (active != null) history.add(active);
+        for (BanEntry archived : banHistory) {
+            if (archived.playerId.equals(playerId)) history.add(archived);
+        }
+        history.sort((a, b) -> Long.compare(b.banTime, a.banTime));
+        return history;
+    }
+
+    /** Full ban history for an IP address — see {@link #getBanHistory(UUID)}. */
+    public List<IPBanEntry> getIPBanHistory(String ipAddress) {
+        List<IPBanEntry> history = new ArrayList<>();
+        IPBanEntry active = ipBans.get(ipAddress);
+        if (active != null) history.add(active);
+        for (IPBanEntry archived : ipBanHistory) {
+            if (archived.ipAddress.equals(ipAddress)) history.add(archived);
+        }
+        history.sort((a, b) -> Long.compare(b.banTime, a.banTime));
+        return history;
+    }
+
+    /** Every archived (no-longer-active) ban across all players — for dashboard history views. */
+    public List<BanEntry> getAllBanHistory() {
+        return new ArrayList<>(banHistory);
+    }
+
+    /** Every archived (no-longer-active) IP ban — for dashboard history views. */
+    public List<IPBanEntry> getAllIPBanHistory() {
+        return new ArrayList<>(ipBanHistory);
+    }
+
     /**
      * Parse duration string (1d, 2h, 30m, 60s) to milliseconds
      */
@@ -773,11 +892,31 @@ public class BanManager {
     private void loadBans() {
         loadPlayerBans();
         loadIPBans();
+        loadBanHistory();
+        loadIPBanHistory();
     }
-    
+
+    /** Populates id/active/evidence/unbannedBy/unbannedAt from JSON, defaulting sensibly for
+     * files written before these fields existed (id gets freshly generated, active=true). */
+    private void readBanFields(BanEntry ban, JsonObject banObj) {
+        ban.id = banObj.has("id") ? banObj.get("id").getAsString() : UUID.randomUUID().toString();
+        ban.evidence = banObj.has("evidence") && !banObj.get("evidence").isJsonNull() ? banObj.get("evidence").getAsString() : null;
+        ban.active = !banObj.has("active") || banObj.get("active").getAsBoolean();
+        ban.unbannedBy = banObj.has("unbannedBy") && !banObj.get("unbannedBy").isJsonNull() ? banObj.get("unbannedBy").getAsString() : null;
+        ban.unbannedAt = banObj.has("unbannedAt") ? banObj.get("unbannedAt").getAsLong() : 0;
+    }
+
+    private void readIPBanFields(IPBanEntry ban, JsonObject banObj) {
+        ban.id = banObj.has("id") ? banObj.get("id").getAsString() : UUID.randomUUID().toString();
+        ban.evidence = banObj.has("evidence") && !banObj.get("evidence").isJsonNull() ? banObj.get("evidence").getAsString() : null;
+        ban.active = !banObj.has("active") || banObj.get("active").getAsBoolean();
+        ban.unbannedBy = banObj.has("unbannedBy") && !banObj.get("unbannedBy").isJsonNull() ? banObj.get("unbannedBy").getAsString() : null;
+        ban.unbannedAt = banObj.has("unbannedAt") ? banObj.get("unbannedAt").getAsLong() : 0;
+    }
+
     private void loadPlayerBans() {
         if (!banFile.exists()) return;
-        
+
         try (FileReader reader = new FileReader(banFile)) {
             JsonObject root = gson.fromJson(reader, JsonObject.class);
             if (root != null && root.has("bans")) {
@@ -792,7 +931,8 @@ public class BanManager {
                     );
                     ban.banTime = banObj.get("banTime").getAsLong();
                     ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
-                    
+                    readBanFields(ban, banObj);
+
                     if (!ban.isExpired()) {
                         playerBans.put(ban.playerId, ban);
                     }
@@ -802,10 +942,10 @@ public class BanManager {
             LOGGER.error("Failed to load player bans", e);
         }
     }
-    
+
     private void loadIPBans() {
         if (!ipBanFile.exists()) return;
-        
+
         try (FileReader reader = new FileReader(ipBanFile)) {
             JsonObject root = gson.fromJson(reader, JsonObject.class);
             if (root != null && root.has("bans")) {
@@ -819,6 +959,7 @@ public class BanManager {
                     );
                     ban.banTime = banObj.get("banTime").getAsLong();
                     ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
+                    readIPBanFields(ban, banObj);
                     // Only load non-expired bans
                     if (!ban.isExpired()) {
                         ipBans.put(ban.ipAddress, ban);
@@ -829,52 +970,145 @@ public class BanManager {
             LOGGER.error("Failed to load IP bans", e);
         }
     }
-    
+
+    private void loadBanHistory() {
+        if (!banHistoryFile.exists()) return;
+        try (FileReader reader = new FileReader(banHistoryFile)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root != null && root.has("bans")) {
+                for (JsonElement element : root.getAsJsonArray("bans")) {
+                    JsonObject banObj = element.getAsJsonObject();
+                    BanEntry ban = new BanEntry(
+                        banObj.get("playerName").getAsString(),
+                        UUID.fromString(banObj.get("playerId").getAsString()),
+                        banObj.get("reason").getAsString(),
+                        banObj.get("bannedBy").getAsString()
+                    );
+                    ban.banTime = banObj.get("banTime").getAsLong();
+                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
+                    readBanFields(ban, banObj);
+                    banHistory.add(ban);
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to load player ban history", e);
+        }
+    }
+
+    private void loadIPBanHistory() {
+        if (!ipBanHistoryFile.exists()) return;
+        try (FileReader reader = new FileReader(ipBanHistoryFile)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root != null && root.has("bans")) {
+                for (JsonElement element : root.getAsJsonArray("bans")) {
+                    JsonObject banObj = element.getAsJsonObject();
+                    IPBanEntry ban = new IPBanEntry(
+                        banObj.get("ipAddress").getAsString(),
+                        banObj.get("reason").getAsString(),
+                        banObj.get("bannedBy").getAsString()
+                    );
+                    ban.banTime = banObj.get("banTime").getAsLong();
+                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
+                    readIPBanFields(ban, banObj);
+                    ipBanHistory.add(ban);
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to load IP ban history", e);
+        }
+    }
+
+    private JsonObject banToJson(BanEntry ban) {
+        JsonObject banObj = new JsonObject();
+        banObj.addProperty("id", ban.id);
+        banObj.addProperty("playerName", ban.playerName);
+        banObj.addProperty("playerId", ban.playerId.toString());
+        banObj.addProperty("reason", ban.reason);
+        banObj.addProperty("bannedBy", ban.bannedBy);
+        banObj.addProperty("banTime", ban.banTime);
+        banObj.addProperty("expireTime", ban.expireTime);
+        banObj.addProperty("evidence", ban.evidence);
+        banObj.addProperty("active", ban.active);
+        banObj.addProperty("unbannedBy", ban.unbannedBy);
+        banObj.addProperty("unbannedAt", ban.unbannedAt);
+        return banObj;
+    }
+
+    private JsonObject ipBanToJson(IPBanEntry ban) {
+        JsonObject banObj = new JsonObject();
+        banObj.addProperty("id", ban.id);
+        banObj.addProperty("ipAddress", ban.ipAddress);
+        banObj.addProperty("reason", ban.reason);
+        banObj.addProperty("bannedBy", ban.bannedBy);
+        banObj.addProperty("banTime", ban.banTime);
+        banObj.addProperty("expireTime", ban.expireTime);
+        banObj.addProperty("evidence", ban.evidence);
+        banObj.addProperty("active", ban.active);
+        banObj.addProperty("unbannedBy", ban.unbannedBy);
+        banObj.addProperty("unbannedAt", ban.unbannedAt);
+        return banObj;
+    }
+
     /**
      * Save bans to file
      */
     private void saveBans() {
         savePlayerBans();
     }
-    
+
     private void savePlayerBans() {
         try (FileWriter writer = new FileWriter(banFile)) {
             JsonObject root = new JsonObject();
             JsonArray bansArray = new JsonArray();
-            
+
             for (BanEntry ban : playerBans.values()) {
-                JsonObject banObj = new JsonObject();
-                banObj.addProperty("playerName", ban.playerName);
-                banObj.addProperty("playerId", ban.playerId.toString());
-                banObj.addProperty("reason", ban.reason);
-                banObj.addProperty("bannedBy", ban.bannedBy);
-                banObj.addProperty("banTime", ban.banTime);
-                banObj.addProperty("expireTime", ban.expireTime);
-                bansArray.add(banObj);
+                bansArray.add(banToJson(ban));
             }
-            
+
             root.add("bans", bansArray);
             gson.toJson(root, writer);
         } catch (IOException e) {
             LOGGER.error("Failed to save player bans", e);
         }
     }
-    
+
     private void saveIPBans() {
         try (FileWriter writer = new FileWriter(ipBanFile)) {
             JsonObject root = new JsonObject();
             JsonArray bansArray = new JsonArray();
-            
+
             for (IPBanEntry ban : ipBans.values()) {
-                JsonObject banObj = new JsonObject();
-                banObj.addProperty("ipAddress", ban.ipAddress);
-                banObj.addProperty("reason", ban.reason);
-                banObj.addProperty("bannedBy", ban.bannedBy);
-                banObj.addProperty("banTime", ban.banTime);
-                banObj.addProperty("expireTime", ban.expireTime);
-                bansArray.add(banObj);
+                bansArray.add(ipBanToJson(ban));
             }
-            
+
+            root.add("bans", bansArray);
+            gson.toJson(root, writer);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save IP bans", e);
+        }
+    }
+
+    private void saveBanHistory() {
+        try (FileWriter writer = new FileWriter(banHistoryFile)) {
+            JsonObject root = new JsonObject();
+            JsonArray bansArray = new JsonArray();
+            for (BanEntry ban : banHistory) {
+                bansArray.add(banToJson(ban));
+            }
+            root.add("bans", bansArray);
+            gson.toJson(root, writer);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save player ban history", e);
+        }
+    }
+
+    private void saveIPBanHistory() {
+        try (FileWriter writer = new FileWriter(ipBanHistoryFile)) {
+            JsonObject root = new JsonObject();
+            JsonArray bansArray = new JsonArray();
+            for (IPBanEntry ban : ipBanHistory) {
+                bansArray.add(ipBanToJson(ban));
+            }
             root.add("bans", bansArray);
             gson.toJson(root, writer);
         } catch (IOException e) {

@@ -17,6 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages server bans and whitelist entries.
+ *
+ * <p><b>Note on the ban half of this class:</b> its bans map / {@code BanEntry} (everything
+ * {@link com.zerog.neoessentials.webdashboard.endpoints.ModerationEndpoint} currently
+ * reads/writes) is a second, disconnected ban store that is never consulted by the actual
+ * join/kick enforcement path — that lives in {@link BanManager}, which is UUID+IP-aware,
+ * vanilla-ban-list-synced, and (as of the ban-system consolidation) has ban IDs, an
+ * active/inactive flag, full per-player history, and an unban audit trail. A ban created
+ * here does not block anyone from joining. Slated for removal once
+ * {@code ModerationEndpoint} is rewired onto {@link BanManager} directly — do not add new
+ * callers of the ban-related methods on this class. The whitelist half is unrelated and
+ * unaffected by this note.
  */
 public class ModerationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModerationManager.class);

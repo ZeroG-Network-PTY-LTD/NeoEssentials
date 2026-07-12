@@ -94,6 +94,9 @@ public class KickCommand {
                 .replace("{kicker}", kickedBy);
             targetPlayer.connection.disconnect(Component.literal(kickMessage));
 
+            com.zerog.neoessentials.moderation.KickManager.getInstance()
+                .recordKick(playerDisplayName, targetPlayer.getUUID(), reason, kickedBy);
+
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kick_success", playerDisplayName, reason);
             source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), false);
 
@@ -151,10 +154,12 @@ public class KickCommand {
             String kickAllMessage = kickAllMessageTemplate
                 .replace("{reason}", reason)
                 .replace("{kicker}", kickedBy);
+            com.zerog.neoessentials.moderation.KickManager kickManager = com.zerog.neoessentials.moderation.KickManager.getInstance();
             for (ServerPlayer player : playersToKick) {
                 player.connection.disconnect(Component.literal(kickAllMessage));
+                kickManager.recordKick(player.getName().getString(), player.getUUID(), reason, kickedBy);
             }
-            
+
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kickall_success", playersToKick.size(), reason);
             // No paired broadcastToStaff() call here either — left as `true`, see comment above.
             source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), true);
