@@ -259,7 +259,7 @@ public class BackupManager {
                 JsonObject meta = readManifest(zip);
                 long sizeBytes = Files.size(zip);
                 meta.addProperty("sizeBytes", sizeBytes);
-                meta.addProperty("sizeMb",    String.format("%.2f", sizeBytes / 1_048_576.0));
+                meta.addProperty("sizeMb",    String.format(Locale.ROOT, "%.2f", sizeBytes / 1_048_576.0));
                 String fn = zip.getFileName().toString();
                 meta.addProperty("filename",  fn);
                 meta.addProperty("name",      fn.replaceAll("\\.zip$", ""));
