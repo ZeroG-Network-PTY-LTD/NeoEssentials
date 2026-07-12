@@ -1356,7 +1356,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 25);          // v25 — localization.preserveCustomTranslations setting
+        put(MAIN_CONFIG, 26);          // v26 — storage backend section (json/yaml/sqlite/mysql)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -1498,6 +1498,85 @@ public class ConfigManager {
      */
     public String getWebDashboardUrl() {
         return "http://localhost:" + getWebDashboardPort();
+    }
+
+    // ── Storage backend (storage.*) ──────────────────────────────────────────
+
+    /** Returns storage.type — "json" (default), "yaml", "sqlite", or "mysql". */
+    public String getStorageType() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("storage")) {
+            JsonObject storage = config.getAsJsonObject("storage");
+            if (storage.has("type")) return storage.get("type").getAsString().toLowerCase().trim();
+        }
+        return "json";
+    }
+
+    /** Whether existing JSON data should be imported automatically on first switch to a new backend. */
+    public boolean isStorageAutoMigrateEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("storage")) {
+            JsonObject storage = config.getAsJsonObject("storage");
+            if (storage.has("autoMigrate")) return storage.get("autoMigrate").getAsBoolean();
+        }
+        return true;
+    }
+
+    /** storage.sqlite.file — relative to neoessentials/store/. Defaults to "data.db". */
+    public String getSqliteFile() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("storage")) {
+            JsonObject storage = config.getAsJsonObject("storage");
+            if (storage.has("sqlite")) {
+                JsonObject sqlite = storage.getAsJsonObject("sqlite");
+                if (sqlite.has("file")) return sqlite.get("file").getAsString();
+            }
+        }
+        return "data.db";
+    }
+
+    private JsonObject getMysqlConfig() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("storage")) {
+            JsonObject storage = config.getAsJsonObject("storage");
+            if (storage.has("mysql")) return storage.getAsJsonObject("mysql");
+        }
+        return new JsonObject();
+    }
+
+    public String getMysqlHost() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("host") ? mysql.get("host").getAsString() : "localhost";
+    }
+
+    public int getMysqlPort() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("port") ? mysql.get("port").getAsInt() : 3306;
+    }
+
+    public String getMysqlDatabase() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("database") ? mysql.get("database").getAsString() : "neoessentials";
+    }
+
+    public String getMysqlUsername() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("username") ? mysql.get("username").getAsString() : "neoessentials";
+    }
+
+    public String getMysqlPassword() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("password") ? mysql.get("password").getAsString() : "";
+    }
+
+    public boolean isMysqlUseSSL() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("useSSL") && mysql.get("useSSL").getAsBoolean();
+    }
+
+    public int getMysqlPoolSize() {
+        JsonObject mysql = getMysqlConfig();
+        return mysql.has("poolSize") ? mysql.get("poolSize").getAsInt() : 10;
     }
 
     /**

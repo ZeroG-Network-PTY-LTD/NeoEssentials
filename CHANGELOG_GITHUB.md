@@ -11,6 +11,37 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.3+build.9] — 2026-07-12
+
+### ✨ New Feature — Pluggable Storage Backends (JSON / YAML / SQLite / MySQL)
+
+Added a generic `DataStore` abstraction (`com.zerog.neoessentials.storage`) so managers
+can persist to JSON (default), YAML, an embedded SQLite database, or a shared MySQL/MariaDB
+database, selected via the new `storage` section in `config.json` — restart required
+after changing `storage.type`.
+
+- **`storage.type`**: `"json"` (default), `"yaml"`, `"sqlite"`, or `"mysql"`. MySQL is
+  the one that actually enables multi-server shared data — point every server in a
+  network at the same database and they see the same bans/mutes/etc. in real time,
+  matching how ban-management plugins like BanManager use MySQL for network-wide
+  moderation. If MySQL is configured but unreachable at boot, falls back to JSON
+  automatically rather than failing the whole server start.
+- Every backend stores the same schema-less JSON-document shape (one record per
+  `id` per "collection"), so no bespoke relational schema is needed per data type.
+- **This release migrates the moderation system onto it** (bans, IP bans, mutes, IP
+  mutes, kicks, warns, notes, reports) as the first, fully-verified rollout —
+  existing legacy JSON files are imported automatically and losslessly the first
+  time the server boots with `storage.autoMigrate` enabled (the default), including
+  ban/mute active-vs-history state and the full unban/unmute audit trail. Verified
+  live: created data, restarted the server, confirmed everything survived correctly
+  through the new backend.
+- **Not yet migrated:** economy, homes, warps, kits, permissions, and the rest of the
+  mod's managers still read/write their own JSON files directly. They're unaffected
+  by `storage.type` for now and would need the same treatment in a future update to
+  benefit from YAML/SQLite/MySQL.
+
+---
+
 ## [1.0.3+build.8] — 2026-07-12
 
 ### ✨ New Features — Moderation System Overhaul

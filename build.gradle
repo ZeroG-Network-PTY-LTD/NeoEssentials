@@ -182,9 +182,29 @@ dependencies {
     jarJar(group: 'org.java-websocket', name: 'Java-WebSocket', version: '[1.5.7,1.6.0)')
 
 
-    // SQLite JDBC driver — bundled for AuctionHouse persistence
+    // SQLite JDBC driver — bundled for AuctionHouse persistence, also backs the
+    // generic DataStore's SQLite backend (see storage.DataStore)
     implementation 'org.xerial:sqlite-jdbc:3.45.2.0'
     jarJar(group: 'org.xerial', name: 'sqlite-jdbc', version: '[3.42.0.0,4.0.0)')
+
+    // MySQL JDBC driver — backs the generic DataStore's MySQL backend, for
+    // multi-server shared data (bans/mutes/economy/etc. synced across a network
+    // of servers pointed at the same database, matching how ban-management
+    // plugins like BanManager use MySQL).
+    implementation 'com.mysql:mysql-connector-j:8.4.0'
+    jarJar(group: 'com.mysql', name: 'mysql-connector-j', version: '[8.0.0,9.0.0)')
+
+    // HikariCP — connection pooling for the MySQL backend. A single unpooled
+    // JDBC connection per request would serialize every database-backed
+    // manager's reads/writes through one socket; a small pool avoids that
+    // becoming a bottleneck under normal server load.
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    jarJar(group: 'com.zaxxer', name: 'HikariCP', version: '[5.0.0,6.0.0)')
+
+    // SnakeYAML — backs the generic DataStore's YAML backend. NeoForge/Minecraft
+    // itself doesn't ship a YAML library (unlike Gson, which is already provided).
+    implementation 'org.yaml:snakeyaml:2.2'
+    jarJar(group: 'org.yaml', name: 'snakeyaml', version: '[2.0,3.0)')
 
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'

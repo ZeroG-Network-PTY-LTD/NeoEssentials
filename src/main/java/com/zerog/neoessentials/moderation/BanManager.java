@@ -46,10 +46,11 @@ public class BanManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BanManager.class);
     private static BanManager instance;
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private final File banFile;
-    private final File ipBanFile;
-    
+    private final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+    private static final String PLAYER_COLLECTION = "player_bans";
+    private static final String IP_COLLECTION = "ip_bans";
+    private final com.zerog.neoessentials.storage.DataStore store;
+
     // In-memory cache for quick lookups (active bans only)
     private final Map<UUID, BanEntry> playerBans = new ConcurrentHashMap<>();
     private final Map<String, IPBanEntry> ipBans = new ConcurrentHashMap<>();
@@ -58,10 +59,11 @@ public class BanManager {
     // punishment record (matching the "view a player's entire record, including unbans
     // and by whom" feature of ban-management plugins like BanManager), rather than the
     // previous behavior of a hard delete that erased all trace of a past ban on unban.
+    // Both the active map and this archive persist to the SAME storage collection
+    // (see PLAYER_COLLECTION/IP_COLLECTION), distinguished by BanEntry.active — one
+    // record's worth of writes per mutation instead of rewriting a whole file.
     private final List<BanEntry> banHistory = new ArrayList<>();
     private final List<IPBanEntry> ipBanHistory = new ArrayList<>();
-    private final File banHistoryFile;
-    private final File ipBanHistoryFile;
 
     public static class BanEntry {
         public String id;
@@ -130,18 +132,8 @@ public class BanManager {
     }
     
     private BanManager() {
-        // Create moderation directory if it doesn't exist
-        File moderationDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation");
-        if (!moderationDir.exists()) {
-            if (!moderationDir.mkdirs()) {
-                LOGGER.error("Failed to create moderation directory: {}", moderationDir.getAbsolutePath());
-            }
-        }
-        
-        this.banFile = new File(moderationDir, "player_bans.json");
-        this.ipBanFile = new File(moderationDir, "ip_bans.json");
-        this.banHistoryFile = new File(moderationDir, "player_ban_history.json");
-        this.ipBanHistoryFile = new File(moderationDir, "ip_ban_history.json");
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFilesIfNeeded();
         loadBans();
 
         // Start periodic expired-ban cleanup if enabled (but not if shutting down)
@@ -174,7 +166,7 @@ public class BanManager {
         ban.unbannedBy = null; // expired naturally, not reversed by staff
         ban.unbannedAt = ban.expireTime;
         banHistory.add(ban);
-        saveBanHistory();
+        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
     }
 
     private void archiveExpiredIPBan(IPBanEntry ban) {
@@ -182,7 +174,7 @@ public class BanManager {
         ban.unbannedBy = null;
         ban.unbannedAt = ban.expireTime;
         ipBanHistory.add(ban);
-        saveIPBanHistory();
+        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
     }
 
     /**
@@ -204,7 +196,6 @@ public class BanManager {
             }
         }
         if (removedPlayerBans) {
-            saveBans();
             LOGGER.info("Expired temp player bans cleaned up by scheduler.");
         }
 
@@ -220,7 +211,6 @@ public class BanManager {
             }
         }
         if (removedIPBans) {
-            saveIPBans();
             LOGGER.info("Expired temp IP bans cleaned up by scheduler.");
         }
     }
@@ -261,7 +251,7 @@ public class BanManager {
         }
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
-        saveBans();
+        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
         // Build the fully-localized/formatted ban message once, and store THAT (not the
         // raw reason) as the vanilla ban-list entry's reason. Vanilla's own login-time ban
         // check (used when this player reconnects later) wraps whatever we put there in its
@@ -321,7 +311,7 @@ public class BanManager {
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
-        saveBans();
+        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
         // Build the fully-localized/formatted ban message once (see banPlayer() for why this,
         // rather than the raw reason, is what gets stored as the vanilla ban entry's reason).
         String format = com.zerog.neoessentials.config.ConfigManager.getTempBanMessageFormat();
@@ -377,7 +367,7 @@ public class BanManager {
 
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ipBans.put(ipAddress, ban);
-        saveIPBans();
+        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
 
         // Kick all players with this IP
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -414,7 +404,7 @@ public class BanManager {
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         ipBans.put(ipAddress, ban);
-        saveIPBans();
+        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
 
         // Kick all players with this IP
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -458,8 +448,7 @@ public class BanManager {
                 removed.unbannedBy = unbannedBy;
                 removed.unbannedAt = System.currentTimeMillis();
                 banHistory.add(removed);
-                saveBanHistory();
-                saveBans();
+                store.put(PLAYER_COLLECTION, removed.id, banToJson(removed));
             }
             // Broadcast to staff if enabled
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -573,8 +562,7 @@ public class BanManager {
             removed.unbannedBy = unbannedBy;
             removed.unbannedAt = System.currentTimeMillis();
             ipBanHistory.add(removed);
-            saveIPBanHistory();
-            saveIPBans();
+            store.put(IP_COLLECTION, removed.id, ipBanToJson(removed));
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
                 LOGGER.info("IP {} unbanned by {}", ipAddress, unbannedBy != null ? unbannedBy : "unknown");
             }
@@ -593,7 +581,6 @@ public class BanManager {
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                     archiveExpiredBan(ban);
                     playerBans.remove(playerId);
-                    saveBans();
                 }
                 return false;
             }
@@ -617,7 +604,7 @@ public class BanManager {
                                 imported.expireTime = entry.getExpires().getTime();
                             }
                             playerBans.put(playerId, imported);
-                            saveBans();
+                            store.put(PLAYER_COLLECTION, imported.id, banToJson(imported));
                             LOGGER.info("Imported vanilla ban for {} into NeoEssentials ban list", profile.getName());
                         }
                         return true;
@@ -640,13 +627,12 @@ public class BanManager {
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                 archiveExpiredIPBan(ban);
                 ipBans.remove(ipAddress);
-                saveIPBans();
             }
             return false;
         }
         return true;
     }
-    
+
     /**
      * Check if a player can join the server (not banned)
      */
@@ -666,7 +652,6 @@ public class BanManager {
                 // Auto-remove expired ban
                 archiveExpiredBan(ban);
                 playerBans.remove(playerId);
-                saveBans();
             }
             return null;
         }
@@ -687,24 +672,19 @@ public class BanManager {
     public List<BanEntry> getAllPlayerBans() {
         List<BanEntry> activeBans = new ArrayList<>();
         Iterator<Map.Entry<UUID, BanEntry>> iterator = playerBans.entrySet().iterator();
-        
-        boolean removedAny = false;
+
         while (iterator.hasNext()) {
             Map.Entry<UUID, BanEntry> entry = iterator.next();
             BanEntry ban = entry.getValue();
             if (ban.isExpired()) {
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
-                    // Remove expired ban
+                    // Remove expired ban (archiveExpiredBan() persists the change itself)
                     archiveExpiredBan(ban);
                     iterator.remove();
-                    removedAny = true;
                 }
             } else {
                 activeBans.add(ban);
             }
-        }
-        if (removedAny) {
-            saveBans(); // Save if we removed expired bans
         }
         return activeBans;
     }
@@ -887,135 +867,60 @@ public class BanManager {
     }
     
     /**
-     * Load bans from file
+     * Load bans from the active {@link com.zerog.neoessentials.storage.DataStore}. Both
+     * active and archived (history) entries live in the same collection, split by
+     * BanEntry.active — see PLAYER_COLLECTION/IP_COLLECTION.
      */
     private void loadBans() {
-        loadPlayerBans();
-        loadIPBans();
-        loadBanHistory();
-        loadIPBanHistory();
+        for (JsonObject obj : store.getAll(PLAYER_COLLECTION).values()) {
+            BanEntry ban = banFromJson(obj);
+            if (ban.active && !ban.isExpired()) {
+                playerBans.put(ban.playerId, ban);
+            } else {
+                banHistory.add(ban);
+            }
+        }
+        for (JsonObject obj : store.getAll(IP_COLLECTION).values()) {
+            IPBanEntry ban = ipBanFromJson(obj);
+            if (ban.active && !ban.isExpired()) {
+                ipBans.put(ban.ipAddress, ban);
+            } else {
+                ipBanHistory.add(ban);
+            }
+        }
     }
 
-    /** Populates id/active/evidence/unbannedBy/unbannedAt from JSON, defaulting sensibly for
-     * files written before these fields existed (id gets freshly generated, active=true). */
-    private void readBanFields(BanEntry ban, JsonObject banObj) {
+    private BanEntry banFromJson(JsonObject banObj) {
+        BanEntry ban = new BanEntry(
+            banObj.get("playerName").getAsString(),
+            UUID.fromString(banObj.get("playerId").getAsString()),
+            banObj.get("reason").getAsString(),
+            banObj.get("bannedBy").getAsString()
+        );
+        ban.banTime = banObj.get("banTime").getAsLong();
+        ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
         ban.id = banObj.has("id") ? banObj.get("id").getAsString() : UUID.randomUUID().toString();
         ban.evidence = banObj.has("evidence") && !banObj.get("evidence").isJsonNull() ? banObj.get("evidence").getAsString() : null;
         ban.active = !banObj.has("active") || banObj.get("active").getAsBoolean();
         ban.unbannedBy = banObj.has("unbannedBy") && !banObj.get("unbannedBy").isJsonNull() ? banObj.get("unbannedBy").getAsString() : null;
         ban.unbannedAt = banObj.has("unbannedAt") ? banObj.get("unbannedAt").getAsLong() : 0;
+        return ban;
     }
 
-    private void readIPBanFields(IPBanEntry ban, JsonObject banObj) {
+    private IPBanEntry ipBanFromJson(JsonObject banObj) {
+        IPBanEntry ban = new IPBanEntry(
+            banObj.get("ipAddress").getAsString(),
+            banObj.get("reason").getAsString(),
+            banObj.get("bannedBy").getAsString()
+        );
+        ban.banTime = banObj.get("banTime").getAsLong();
+        ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
         ban.id = banObj.has("id") ? banObj.get("id").getAsString() : UUID.randomUUID().toString();
         ban.evidence = banObj.has("evidence") && !banObj.get("evidence").isJsonNull() ? banObj.get("evidence").getAsString() : null;
         ban.active = !banObj.has("active") || banObj.get("active").getAsBoolean();
         ban.unbannedBy = banObj.has("unbannedBy") && !banObj.get("unbannedBy").isJsonNull() ? banObj.get("unbannedBy").getAsString() : null;
         ban.unbannedAt = banObj.has("unbannedAt") ? banObj.get("unbannedAt").getAsLong() : 0;
-    }
-
-    private void loadPlayerBans() {
-        if (!banFile.exists()) return;
-
-        try (FileReader reader = new FileReader(banFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("bans")) {
-                JsonArray bansArray = root.getAsJsonArray("bans");
-                for (JsonElement element : bansArray) {
-                    JsonObject banObj = element.getAsJsonObject();
-                    BanEntry ban = new BanEntry(
-                        banObj.get("playerName").getAsString(),
-                        UUID.fromString(banObj.get("playerId").getAsString()),
-                        banObj.get("reason").getAsString(),
-                        banObj.get("bannedBy").getAsString()
-                    );
-                    ban.banTime = banObj.get("banTime").getAsLong();
-                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
-                    readBanFields(ban, banObj);
-
-                    if (!ban.isExpired()) {
-                        playerBans.put(ban.playerId, ban);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load player bans", e);
-        }
-    }
-
-    private void loadIPBans() {
-        if (!ipBanFile.exists()) return;
-
-        try (FileReader reader = new FileReader(ipBanFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("bans")) {
-                JsonArray bansArray = root.getAsJsonArray("bans");
-                for (JsonElement element : bansArray) {
-                    JsonObject banObj = element.getAsJsonObject();
-                    IPBanEntry ban = new IPBanEntry(
-                        banObj.get("ipAddress").getAsString(),
-                        banObj.get("reason").getAsString(),
-                        banObj.get("bannedBy").getAsString()
-                    );
-                    ban.banTime = banObj.get("banTime").getAsLong();
-                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
-                    readIPBanFields(ban, banObj);
-                    // Only load non-expired bans
-                    if (!ban.isExpired()) {
-                        ipBans.put(ban.ipAddress, ban);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load IP bans", e);
-        }
-    }
-
-    private void loadBanHistory() {
-        if (!banHistoryFile.exists()) return;
-        try (FileReader reader = new FileReader(banHistoryFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("bans")) {
-                for (JsonElement element : root.getAsJsonArray("bans")) {
-                    JsonObject banObj = element.getAsJsonObject();
-                    BanEntry ban = new BanEntry(
-                        banObj.get("playerName").getAsString(),
-                        UUID.fromString(banObj.get("playerId").getAsString()),
-                        banObj.get("reason").getAsString(),
-                        banObj.get("bannedBy").getAsString()
-                    );
-                    ban.banTime = banObj.get("banTime").getAsLong();
-                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
-                    readBanFields(ban, banObj);
-                    banHistory.add(ban);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load player ban history", e);
-        }
-    }
-
-    private void loadIPBanHistory() {
-        if (!ipBanHistoryFile.exists()) return;
-        try (FileReader reader = new FileReader(ipBanHistoryFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("bans")) {
-                for (JsonElement element : root.getAsJsonArray("bans")) {
-                    JsonObject banObj = element.getAsJsonObject();
-                    IPBanEntry ban = new IPBanEntry(
-                        banObj.get("ipAddress").getAsString(),
-                        banObj.get("reason").getAsString(),
-                        banObj.get("bannedBy").getAsString()
-                    );
-                    ban.banTime = banObj.get("banTime").getAsLong();
-                    ban.expireTime = banObj.has("expireTime") ? banObj.get("expireTime").getAsLong() : 0;
-                    readIPBanFields(ban, banObj);
-                    ipBanHistory.add(ban);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load IP ban history", e);
-        }
+        return ban;
     }
 
     private JsonObject banToJson(BanEntry ban) {
@@ -1050,69 +955,52 @@ public class BanManager {
     }
 
     /**
-     * Save bans to file
+     * One-time import of the four legacy files (player_bans.json, ip_bans.json,
+     * player_ban_history.json, ip_ban_history.json) into the active DataStore, if it's
+     * still empty and storage.autoMigrate is enabled. Both the "active" and "history"
+     * legacy files fold into the same collection now (PLAYER_COLLECTION/IP_COLLECTION),
+     * distinguished by each record's own "active" field.
      */
-    private void saveBans() {
-        savePlayerBans();
-    }
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(PLAYER_COLLECTION) || store.hasAnyData(IP_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
 
-    private void savePlayerBans() {
-        try (FileWriter writer = new FileWriter(banFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray bansArray = new JsonArray();
+        int migrated = 0;
+        migrated += migrateLegacyBanFile("player_bans.json", PLAYER_COLLECTION, true);
+        migrated += migrateLegacyBanFile("player_ban_history.json", PLAYER_COLLECTION, false);
+        migrated += migrateLegacyIPBanFile("ip_bans.json", IP_COLLECTION, true);
+        migrated += migrateLegacyIPBanFile("ip_ban_history.json", IP_COLLECTION, false);
 
-            for (BanEntry ban : playerBans.values()) {
-                bansArray.add(banToJson(ban));
-            }
-
-            root.add("bans", bansArray);
-            gson.toJson(root, writer);
-        } catch (IOException e) {
-            LOGGER.error("Failed to save player bans", e);
+        if (migrated > 0) {
+            LOGGER.info("BanManager: migrated {} ban record(s) from legacy files into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
 
-    private void saveIPBans() {
-        try (FileWriter writer = new FileWriter(ipBanFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray bansArray = new JsonArray();
+    private int migrateLegacyBanFile(String filename, String collection, boolean defaultActive) {
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation", filename);
+        if (!file.exists()) return 0;
 
-            for (IPBanEntry ban : ipBans.values()) {
-                bansArray.add(ipBanToJson(ban));
+        int count = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root == null || !root.has("bans")) return 0;
+            for (JsonElement element : root.getAsJsonArray("bans")) {
+                JsonObject obj = element.getAsJsonObject().deepCopy();
+                if (!obj.has("active")) obj.addProperty("active", defaultActive);
+                String id = obj.has("id") ? obj.get("id").getAsString() : UUID.randomUUID().toString();
+                store.put(collection, id, obj);
+                count++;
             }
-
-            root.add("bans", bansArray);
-            gson.toJson(root, writer);
         } catch (IOException e) {
-            LOGGER.error("Failed to save IP bans", e);
+            LOGGER.error("Failed to migrate legacy {}: {}", filename, e.getMessage());
         }
+        return count;
     }
 
-    private void saveBanHistory() {
-        try (FileWriter writer = new FileWriter(banHistoryFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray bansArray = new JsonArray();
-            for (BanEntry ban : banHistory) {
-                bansArray.add(banToJson(ban));
-            }
-            root.add("bans", bansArray);
-            gson.toJson(root, writer);
-        } catch (IOException e) {
-            LOGGER.error("Failed to save player ban history", e);
-        }
-    }
-
-    private void saveIPBanHistory() {
-        try (FileWriter writer = new FileWriter(ipBanHistoryFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray bansArray = new JsonArray();
-            for (IPBanEntry ban : ipBanHistory) {
-                bansArray.add(ipBanToJson(ban));
-            }
-            root.add("bans", bansArray);
-            gson.toJson(root, writer);
-        } catch (IOException e) {
-            LOGGER.error("Failed to save IP bans", e);
-        }
+    private int migrateLegacyIPBanFile(String filename, String collection, boolean defaultActive) {
+        // Same shape as migrateLegacyBanFile — kept as a separate method name for clarity
+        // at call sites even though the body is identical (both are just JSON pass-through).
+        return migrateLegacyBanFile(filename, collection, defaultActive);
     }
 }
