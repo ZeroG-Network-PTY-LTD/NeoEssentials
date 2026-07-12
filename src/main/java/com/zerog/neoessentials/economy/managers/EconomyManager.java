@@ -6,21 +6,23 @@ import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.api.event.EconomyDepositEvent;
 import com.zerog.neoessentials.api.event.EconomyWithdrawEvent;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
 import net.neoforged.neoforge.common.NeoForge;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.nio.file.Files;
 
-import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,16 +33,14 @@ import org.slf4j.LoggerFactory;
 
 public class EconomyManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(EconomyManager.class);
-    
-    // Data version tracking - increment when JSON structure changes
-    private static final String DATA_VERSION_KEY = "_dataVersion";
-    private static final int CURRENT_DATA_VERSION = 1;
-    
+
+    private static final String COLLECTION = "economy_balances";
+
     // Thread-safe singleton using Bill Pugh Singleton Pattern
     private static class SingletonHolder {
         private static final EconomyManager INSTANCE = new EconomyManager();
     }
-    
+
     public static EconomyManager getInstance() {
         return SingletonHolder.INSTANCE;
     }
@@ -48,8 +48,11 @@ public class EconomyManager {
     // Use ConcurrentHashMap for balances — initialized at declaration so it is NEVER null,
     // even when the economy module is disabled and the constructor returns early.
     private ConcurrentHashMap<UUID, BigDecimal> balancesCache = new ConcurrentHashMap<>();
-    // Store balances in root/neoessentials/balances.json
-    private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
+    private final DataStore store = StorageManager.getInstance().getStore();
+    // Legacy files — kept only so migrateLegacyFilesIfNeeded() can import pre-DataStore data.
+    // No longer written to.
+    private final File legacyBalancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
+    private final File legacyActivityFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances_activity.json");
     private final Gson gson = new Gson();
     // Use daemon thread to prevent blocking JVM shutdown
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -57,7 +60,6 @@ public class EconomyManager {
         t.setDaemon(true);
         return t;
     });
-    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
     /**
      * True only after the constructor has completed a full initialization
@@ -68,182 +70,6 @@ public class EconomyManager {
 
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
-    private final File lastActivityFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances_activity.json");
-    
-    // Track current file versions to avoid unnecessary backups
-    private volatile int currentBalancesVersion = CURRENT_DATA_VERSION;
-    private volatile int currentActivityVersion = CURRENT_DATA_VERSION;
-
-    private void loadBalances() {
-        if (!balancesFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            balancesFile.getParentFile().mkdirs();
-        }
-        if (!balancesFile.exists()) return;
-        try (FileReader reader = new FileReader(balancesFile)) {
-            Type type = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> data = gson.fromJson(reader, type);
-            if (data != null) {
-                // Read version if present
-                if (data.containsKey(DATA_VERSION_KEY)) {
-                    Object versionObj = data.get(DATA_VERSION_KEY);
-                    if (versionObj instanceof Number) {
-                        currentBalancesVersion = ((Number) versionObj).intValue();
-                    }
-                    data.remove(DATA_VERSION_KEY); // Don't process version as balance
-                }
-                
-                // Load balances
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    if (!entry.getKey().startsWith("_")) { // Skip metadata fields
-                        balancesCache.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue().toString()));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to load balances from file", e);
-        }
-    }
-
-    private void saveBalancesAtomic() {
-        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
-        if (!balancesFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            balancesFile.getParentFile().mkdirs();
-        }
-        try {
-            // Check if version has changed - if so, create backup before overwriting
-            if (balancesFile.exists() && shouldCreateBackup(balancesFile, currentBalancesVersion)) {
-                LOGGER.info("Economy data version mismatch detected, creating backup...");
-                createBackupFile(balancesFile);
-            }
-            
-            // Write to temp file first
-            File tempFile = new File(balancesFile.getAbsolutePath() + ".tmp");
-            try (FileWriter writer = new FileWriter(tempFile)) {
-                Map<String, Object> data = new ConcurrentHashMap<>();
-                
-                // Add version marker
-                data.put(DATA_VERSION_KEY, CURRENT_DATA_VERSION);
-                
-                // Add balances
-                for (Map.Entry<UUID, BigDecimal> entry : balancesCache.entrySet()) {
-                    data.put(entry.getKey().toString(), entry.getValue().toPlainString());
-                }
-                gson.toJson(data, writer);
-            }
-            
-            // Atomically move temp file to balancesFile
-            Files.move(tempFile.toPath(), balancesFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            
-            // Update current version tracker
-            currentBalancesVersion = CURRENT_DATA_VERSION;
-        } catch (IOException e) {
-            LOGGER.error("Failed to save balances to file", e);
-        }
-    }
-
-    private void queueAsyncSave() {
-        if (shuttingDown.get()) return; // Don't queue new saves during shutdown
-        if (saveQueued.compareAndSet(false, true)) {
-            saveExecutor.execute(() -> {
-                try {
-                    saveBalancesAtomic();
-                } finally {
-                    saveQueued.set(false);
-                }
-            });
-        }
-    }
-
-    private void cleanupInactiveAccounts() {
-        if (!ConfigManager.isCleanupInactiveAccountsEnabled()) return;
-        long now = System.currentTimeMillis();
-        long thresholdMillis = ConfigManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
-        for (UUID uuid : balancesCache.keySet()) {
-            Long lastActive = lastActivityMap.get(uuid);
-            // BUG FIX: Only remove if we know when the account was last active AND it exceeds
-            // the inactive threshold. Previously the condition was (null || expired) which
-            // would wipe ALL accounts the first time the activity file is missing/empty.
-            if (lastActive != null && (now - lastActive) >= thresholdMillis) {
-                balancesCache.remove(uuid);
-                lastActivityMap.remove(uuid);
-            }
-        }
-        queueAsyncSave();
-        queueAsyncSaveActivity();
-    }
-
-    private void loadLastActivity() {
-        if (!lastActivityFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            lastActivityFile.getParentFile().mkdirs();
-        }
-        if (!lastActivityFile.exists()) return;
-        try (FileReader reader = new FileReader(lastActivityFile)) {
-            Type type = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> data = gson.fromJson(reader, type);
-            if (data != null) {
-                // Read version if present
-                if (data.containsKey(DATA_VERSION_KEY)) {
-                    Object versionObj = data.get(DATA_VERSION_KEY);
-                    if (versionObj instanceof Number) {
-                        currentActivityVersion = ((Number) versionObj).intValue();
-                    }
-                    data.remove(DATA_VERSION_KEY); // Don't process version as activity
-                }
-                
-                // Load activity data
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    if (!entry.getKey().startsWith("_")) { // Skip metadata fields
-                        lastActivityMap.put(UUID.fromString(entry.getKey()), ((Number) entry.getValue()).longValue());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to load last activity data", e);
-        }
-    }
-
-    private void saveLastActivityAtomic() {
-        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
-        if (!lastActivityFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            lastActivityFile.getParentFile().mkdirs();
-        }
-        try {
-            // Check if version has changed - if so, create backup before overwriting
-            if (lastActivityFile.exists() && shouldCreateBackup(lastActivityFile, currentActivityVersion)) {
-                LOGGER.info("Activity data version mismatch detected, creating backup...");
-                createBackupFile(lastActivityFile);
-            }
-            
-            File tempFile = new File(lastActivityFile.getAbsolutePath() + ".tmp");
-            try (FileWriter writer = new FileWriter(tempFile)) {
-                Map<String, Object> data = new ConcurrentHashMap<>();
-                
-                // Add version marker
-                data.put(DATA_VERSION_KEY, CURRENT_DATA_VERSION);
-                
-                // Add activity data
-                for (Map.Entry<UUID, Long> entry : lastActivityMap.entrySet()) {
-                    data.put(entry.getKey().toString(), entry.getValue());
-                }
-                gson.toJson(data, writer);
-            }
-            
-            Files.move(tempFile.toPath(), lastActivityFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            
-            // Update current version tracker
-            currentActivityVersion = CURRENT_DATA_VERSION;
-        } catch (IOException e) {
-            LOGGER.error("Failed to save last activity data", e);
-        }
-    }
-
-    private void queueAsyncSaveActivity() {
-        saveExecutor.execute(this::saveLastActivityAtomic);
-    }
 
     private EconomyManager() {
         // Check global config for module enable
@@ -254,14 +80,10 @@ public class EconomyManager {
             return;
         }
         // Configuration is loaded automatically by ConfigManager
-        // Initialize ConcurrentHashMap for balances
         balancesCache = new ConcurrentHashMap<>();
+        migrateLegacyFilesIfNeeded();
         loadBalances();
-        loadLastActivity();
-        // Schedule periodic batch save every 5 minutes
-        saveExecutor.scheduleAtFixedRate(this::saveBalancesAtomic, 5, 5, TimeUnit.MINUTES);
-        saveExecutor.scheduleAtFixedRate(this::saveLastActivityAtomic, 5, 5, TimeUnit.MINUTES);
-        
+
         // Schedule periodic cache statistics logging every 30 minutes
         saveExecutor.scheduleAtFixedRate(this::logCacheMetrics, 30, 30, TimeUnit.MINUTES);
         // Schedule inactive account cleanup every hour (no time window)
@@ -269,8 +91,63 @@ public class EconomyManager {
         initialized = true;
     }
 
+    // ── Load / persist ───────────────────────────────────────────────────────
+
+    private void loadBalances() {
+        for (Map.Entry<String, JsonObject> e : store.getAll(COLLECTION).entrySet()) {
+            try {
+                UUID uuid = UUID.fromString(e.getKey());
+                JsonObject obj = e.getValue();
+                if (obj.has("balance")) {
+                    balancesCache.put(uuid, new BigDecimal(obj.get("balance").getAsString()));
+                }
+                if (obj.has("lastActivity")) {
+                    lastActivityMap.put(uuid, obj.get("lastActivity").getAsLong());
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Failed to load economy record {}: {}", e.getKey(), ex.getMessage());
+            }
+        }
+    }
+
+    /** Persist a single player's balance + last-activity record. */
+    private void persistPlayer(UUID player) {
+        JsonObject obj = new JsonObject();
+        BigDecimal bal = balancesCache.get(player);
+        obj.addProperty("balance", bal != null ? bal.toPlainString() : BigDecimal.ZERO.toPlainString());
+        Long activity = lastActivityMap.get(player);
+        obj.addProperty("lastActivity", activity != null ? activity : System.currentTimeMillis());
+        store.put(COLLECTION, player.toString(), obj);
+    }
+
+    private void queueAsyncSave(UUID player) {
+        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
+        saveExecutor.execute(() -> persistPlayer(player));
+    }
+
+    private void cleanupInactiveAccounts() {
+        if (!ConfigManager.isCleanupInactiveAccountsEnabled()) return;
+        long now = System.currentTimeMillis();
+        long thresholdMillis = ConfigManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
+        Set<UUID> toRemove = new HashSet<>();
+        for (UUID uuid : balancesCache.keySet()) {
+            Long lastActive = lastActivityMap.get(uuid);
+            // BUG FIX: Only remove if we know when the account was last active AND it exceeds
+            // the inactive threshold. Previously the condition was (null || expired) which
+            // would wipe ALL accounts the first time the activity data is missing/empty.
+            if (lastActive != null && (now - lastActive) >= thresholdMillis) {
+                toRemove.add(uuid);
+            }
+        }
+        for (UUID uuid : toRemove) {
+            balancesCache.remove(uuid);
+            lastActivityMap.remove(uuid);
+            store.delete(COLLECTION, uuid.toString());
+        }
+    }
+
     public BigDecimal getBalance(UUID player) {
-        return balancesCache.computeIfAbsent(player, 
+        return balancesCache.computeIfAbsent(player,
             uuid -> BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance()));
     }
 
@@ -286,11 +163,10 @@ public class EconomyManager {
         BigDecimal finalAmount = amount;
         BigDecimal oldAmount = balancesCache.put(player, finalAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
-        queueAsyncSave();
-        queueAsyncSaveActivity();
-        
+        queueAsyncSave(player);
+
         // Log transaction
-        EconomyTransactionLogger.log("SET", player.toString(), "SERVER", finalAmount.toPlainString(), 
+        EconomyTransactionLogger.log("SET", player.toString(), "SERVER", finalAmount.toPlainString(),
             "Set balance (was: " + (oldAmount != null ? oldAmount.toPlainString() : "new account") + ")");
     }
 
@@ -307,41 +183,40 @@ public class EconomyManager {
             LOGGER.debug("EconomyDepositEvent cancelled for player {}", player);
             return false;
         }
-        
+
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         boolean allowNegative = ConfigManager.allowNegativeBalances();
-        
+
         // Atomic read-modify-write using compute()
         BigDecimal[] result = new BigDecimal[1];
         balancesCache.compute(player, (uuid, current) -> {
             if (current == null) {
                 current = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
             }
-            
+
             BigDecimal newAmount = current.add(amount);
-            
+
             // Validate constraints
             if (!allowNegative && newAmount.compareTo(BigDecimal.ZERO) < 0) {
                 result[0] = null; // Signal failure
                 return current; // Don't modify
             }
-            
+
             if (newAmount.compareTo(maxBalance) > 0) {
                 newAmount = maxBalance;
             }
-            
+
             result[0] = newAmount; // Signal success
             return newAmount;
         });
-        
+
         if (result[0] == null) {
             return false; // Operation failed validation
         }
-        
+
         lastActivityMap.put(player, System.currentTimeMillis());
-        queueAsyncSave();
-        queueAsyncSaveActivity();
-        
+        queueAsyncSave(player);
+
         // Log transaction
         EconomyTransactionLogger.log("ADD", "SERVER", player.toString(), amount.toPlainString(), "Add to balance");
         return true;
@@ -352,7 +227,7 @@ public class EconomyManager {
             LOGGER.warn("Attempted to modify balance during shutdown for player {}", player);
             return false;
         }
-        
+
         // Fire cancellable withdraw event BEFORE modifying balance
         EconomyWithdrawEvent withdrawEvent = new EconomyWithdrawEvent(player, amount);
         NeoForge.EVENT_BUS.post(withdrawEvent);
@@ -360,36 +235,35 @@ public class EconomyManager {
             LOGGER.debug("EconomyWithdrawEvent cancelled for player {}", player);
             return false;
         }
-        
+
         boolean allowNegative = ConfigManager.allowNegativeBalances();
-        
+
         // Atomic read-modify-write using compute()
         BigDecimal[] result = new BigDecimal[1];
         balancesCache.compute(player, (uuid, current) -> {
             if (current == null) {
                 current = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
             }
-            
+
             BigDecimal newAmount = current.subtract(amount);
-            
+
             // Validate constraints
             if (!allowNegative && newAmount.compareTo(BigDecimal.ZERO) < 0) {
                 result[0] = null; // Signal failure
                 return current; // Don't modify
             }
-            
+
             result[0] = newAmount; // Signal success
             return newAmount;
         });
-        
+
         if (result[0] == null) {
             return false; // Insufficient funds
         }
-        
+
         lastActivityMap.put(player, System.currentTimeMillis());
-        queueAsyncSave();
-        queueAsyncSaveActivity();
-        
+        queueAsyncSave(player);
+
         // Log transaction
         EconomyTransactionLogger.log("SUBTRACT", player.toString(), "SERVER", amount.toPlainString(), "Subtract from balance");
         return true;
@@ -407,8 +281,7 @@ public class EconomyManager {
         BigDecimal removed = balancesCache.remove(player);
         lastActivityMap.remove(player);
         if (removed != null) {
-            queueAsyncSave();
-            queueAsyncSaveActivity();
+            store.delete(COLLECTION, player.toString());
             EconomyTransactionLogger.log("DELETE", player.toString(), "SERVER", "0", "Account deleted");
             return true;
         }
@@ -450,7 +323,7 @@ public class EconomyManager {
     public String getCacheStats() {
         return "EconomyManager Cache Size: " + balancesCache.size();
     }
-    
+
     /**
      * Logs cache metrics for monitoring and debugging.
      */
@@ -458,7 +331,7 @@ public class EconomyManager {
         if (!initialized) return;
         LOGGER.info("EconomyManager Cache Metrics - Size: {}", balancesCache.size());
     }
-    
+
     /**
      * Shuts down the economy manager and its executor services properly.
      */
@@ -475,18 +348,9 @@ public class EconomyManager {
             return;
         }
 
-        // Wait a moment for any in-flight operations to complete
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        // Save any pending data (this will block)
-        saveBalancesAtomic();
-        saveLastActivityAtomic();
-
-        // Shutdown executor service
+        // Shutdown executor service — lets any already-queued persistPlayer() writes finish
+        // (each mutation persists its own record immediately/async, so there's no bulk
+        // save-everything step needed here anymore).
         saveExecutor.shutdown();
         try {
             if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
@@ -501,70 +365,75 @@ public class EconomyManager {
 
         LOGGER.info("EconomyManager shutdown complete.");
     }
-    
+
+    // ── Legacy migration ────────────────────────────────────────────────────
+
     /**
-     * Check if a backup should be created by comparing file version with current version.
-     * Only creates backup if file exists and version differs (similar to ConfigManager behavior).
+     * One-time import of the legacy balances.json/balances_activity.json files into the
+     * active DataStore, if it's still empty and storage.autoMigrate is enabled. Both files
+     * are merged into a single record per player in COLLECTION (balance + lastActivity).
      */
-    @SuppressWarnings("unused") // currentVersion parameter reserved for future versioning logic
-    private boolean shouldCreateBackup(File file, int currentVersion) {
-        if (!file.exists()) {
-            return false; // No file to backup
-        }
-        
-        try (FileReader reader = new FileReader(file)) {
-            Type type = new TypeToken<Map<String, Object>>(){}.getType();
-            Map<String, Object> data = gson.fromJson(reader, type);
-            
-            if (data != null && data.containsKey(DATA_VERSION_KEY)) {
-                Object versionObj = data.get(DATA_VERSION_KEY);
-                if (versionObj instanceof Number) {
-                    int fileVersion = ((Number) versionObj).intValue();
-                    // Only backup if version differs
-                    return fileVersion != CURRENT_DATA_VERSION;
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        Map<UUID, BigDecimal> legacyBalances = new HashMap<>();
+        Map<UUID, Long> legacyActivity = new HashMap<>();
+
+        if (legacyBalancesFile.exists()) {
+            try (FileReader reader = new FileReader(legacyBalancesFile)) {
+                Type type = new TypeToken<Map<String, Object>>(){}.getType();
+                Map<String, Object> data = gson.fromJson(reader, type);
+                if (data != null) {
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        if (entry.getKey().startsWith("_")) continue; // skip metadata fields
+                        try {
+                            legacyBalances.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue().toString()));
+                        } catch (Exception ignored) {}
+                    }
                 }
+            } catch (Exception e) {
+                LOGGER.error("Failed to migrate legacy balances.json: {}", e.getMessage());
             }
-            
-            // No version field means old format - create backup
-            return true;
-            
-        } catch (Exception e) {
-            LOGGER.warn("Error checking version for {}: {}", file.getName(), e.getMessage());
-            return false; // Don't backup on error
         }
-    }
-    
-    /**
-     * Create backup file with incremental numbering (.bak1, .bak2, etc.)
-     * Same behavior as ConfigManager for consistency.
-     */
-    private void createBackupFile(File originalFile) {
-        try {
-            File parent = originalFile.getParentFile();
-            String baseName = originalFile.getName();
-            
-            // Find next available backup number
-            File backupFile = null;
-            for (int i = 1; i <= 999; i++) {
-                File candidate = new File(parent, baseName + ".bak" + i);
-                if (!candidate.exists()) {
-                    backupFile = candidate;
-                    break;
+
+        if (legacyActivityFile.exists()) {
+            try (FileReader reader = new FileReader(legacyActivityFile)) {
+                Type type = new TypeToken<Map<String, Object>>(){}.getType();
+                Map<String, Object> data = gson.fromJson(reader, type);
+                if (data != null) {
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        if (entry.getKey().startsWith("_")) continue; // skip metadata fields
+                        try {
+                            legacyActivity.put(UUID.fromString(entry.getKey()), ((Number) entry.getValue()).longValue());
+                        } catch (Exception ignored) {}
+                    }
                 }
+            } catch (Exception e) {
+                LOGGER.error("Failed to migrate legacy balances_activity.json: {}", e.getMessage());
             }
-            
-            // Fallback if we somehow have 999 backups
-            if (backupFile == null) {
-                backupFile = new File(parent, baseName + ".bak999");
-            }
-            
-            // Copy existing file to backup
-            Files.copy(originalFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("✓ Created backup: {} -> {} (version mismatch detected)", 
-                originalFile.getName(), backupFile.getName());
-            
-        } catch (IOException e) {
-            LOGGER.error("Failed to create backup for {}: {}", originalFile.getName(), e.getMessage());
+        }
+
+        if (legacyBalances.isEmpty() && legacyActivity.isEmpty()) return;
+
+        Set<UUID> allIds = new HashSet<>();
+        allIds.addAll(legacyBalances.keySet());
+        allIds.addAll(legacyActivity.keySet());
+
+        int migrated = 0;
+        for (UUID uuid : allIds) {
+            JsonObject obj = new JsonObject();
+            BigDecimal bal = legacyBalances.get(uuid);
+            obj.addProperty("balance", bal != null ? bal.toPlainString() : BigDecimal.ZERO.toPlainString());
+            Long act = legacyActivity.get(uuid);
+            obj.addProperty("lastActivity", act != null ? act : System.currentTimeMillis());
+            store.put(COLLECTION, uuid.toString(), obj);
+            migrated++;
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("EconomyManager: migrated {} balance record(s) from legacy files into the '{}' storage backend.",
+                migrated, StorageManager.getInstance().getActiveType());
         }
     }
 }

@@ -3,13 +3,11 @@ package com.zerog.neoessentials.teleportation.Warp;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zerog.neoessentials.config.ConfigManager;
@@ -59,8 +57,16 @@ public class WarpManager {
     }
     
     private final Map<String, TeleportLocation> warps = new ConcurrentHashMap<>();
-    private final Gson gson = new Gson();
-    
+
+    private static final String WARPS_COLLECTION = "warps";
+    private static final String PLAYER_WARPS_COLLECTION = "player_warps";
+    // Reserved record id (not a valid warp name — isValidWarpName() only allows
+    // [a-zA-Z0-9_-]) used to persist the warp settings blob that used to live under
+    // warps.json's "config" key.
+    private static final String CONFIG_RECORD_ID = "!!config!!";
+    private final com.zerog.neoessentials.storage.DataStore store =
+        com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+
     // Configuration
     private int teleportDelay = 0; // Instant for warps by default
     private boolean requireSafeLocations = true;
@@ -71,6 +77,7 @@ public class WarpManager {
 
     private WarpManager() {
         loadConfig();
+        migrateLegacyFilesIfNeeded();
         loadWarps();
         loadPlayerWarps();
     }
@@ -333,34 +340,122 @@ public class WarpManager {
     }
 
     // --- Persistence for player warps ---
-    private static final String PLAYER_WARPS_FILE = "run/playerwarps.json";
+    // NOTE: this used to be hard-coded to the literal relative path "run/playerwarps.json"
+    // (a pre-existing bug — it was never using ResourceUtil's data dir like every other
+    // manager). It now persists through the DataStore under PLAYER_WARPS_COLLECTION; the
+    // old "run/playerwarps.json" path is only ever read once more, during legacy migration.
 
     private void savePlayerWarps() {
-        try {
-            Map<String, Map<String, TeleportLocation>> serializable = new HashMap<>();
-            for (Map.Entry<UUID, Map<String, TeleportLocation>> entry : playerWarps.entrySet()) {
-                serializable.put(entry.getKey().toString(), entry.getValue());
-            }
-            String json = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(serializable);
-            java.nio.file.Files.writeString(java.nio.file.Path.of(PLAYER_WARPS_FILE), json);
-        } catch (Exception e) {
-            System.err.println("[WarpManager] Failed to save player warps: " + e);
+        for (Map.Entry<UUID, Map<String, TeleportLocation>> entry : playerWarps.entrySet()) {
+            store.put(PLAYER_WARPS_COLLECTION, entry.getKey().toString(), playerWarpsToJson(entry.getValue()));
         }
     }
 
     private void loadPlayerWarps() {
+        playerWarps.clear();
+        for (Map.Entry<String, JsonObject> entry : store.getAll(PLAYER_WARPS_COLLECTION).entrySet()) {
+            try {
+                UUID playerId = UUID.fromString(entry.getKey());
+                playerWarps.put(playerId, playerWarpsFromJson(entry.getValue()));
+            } catch (Exception e) {
+                LOGGER.warn("Failed to load player warps for '{}': {}", entry.getKey(), e.getMessage());
+            }
+        }
+    }
+
+    /** Serializes one player's named warps into {@code {"warps": {name -> location}}}. */
+    private JsonObject playerWarpsToJson(Map<String, TeleportLocation> warpsForPlayer) {
+        JsonObject root = new JsonObject();
+        JsonObject warpsJson = new JsonObject();
+        for (Map.Entry<String, TeleportLocation> entry : warpsForPlayer.entrySet()) {
+            warpsJson.add(entry.getKey(), entry.getValue().toJson());
+        }
+        root.add("warps", warpsJson);
+        return root;
+    }
+
+    private Map<String, TeleportLocation> playerWarpsFromJson(JsonObject root) {
+        Map<String, TeleportLocation> result = new ConcurrentHashMap<>();
+        if (root != null && root.has("warps")) {
+            JsonObject warpsJson = root.getAsJsonObject("warps");
+            for (String warpName : warpsJson.keySet()) {
+                try {
+                    TeleportLocation location = TeleportLocation.fromJson(warpsJson.getAsJsonObject(warpName));
+                    if (location != null) {
+                        result.put(warpName, location);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to load player warp '{}': {}", warpName, e.getMessage());
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * One-time import of the legacy warps.json / playerwarps.json files into the active
+     * DataStore, if it's still empty and storage.autoMigrate is enabled. The legacy
+     * per-player file was (buggily) written to the hard-coded relative path
+     * "run/playerwarps.json" instead of ResourceUtil's data dir — that path is only
+     * consulted here, once, to import any pre-existing data.
+     */
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(WARPS_COLLECTION) || store.hasAnyData(PLAYER_WARPS_COLLECTION)) return;
+        if (!ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        int migratedWarps = migrateLegacyWarpsFile();
+        int migratedPlayerWarps = migrateLegacyPlayerWarpsFile();
+
+        if (migratedWarps > 0 || migratedPlayerWarps > 0) {
+            LOGGER.info("WarpManager: migrated {} warp(s) and {} player warp owner(s) from legacy files into the '{}' storage backend.",
+                migratedWarps, migratedPlayerWarps, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
+        }
+    }
+
+    private int migrateLegacyWarpsFile() {
         try {
-            java.nio.file.Path path = java.nio.file.Path.of(PLAYER_WARPS_FILE);
-            if (!java.nio.file.Files.exists(path)) return;
+            File file = ResourceUtil.getDataFile(WARPS_FILE);
+            if (!file.exists()) return 0;
+            String content = java.nio.file.Files.readString(file.toPath());
+            if (content.trim().isEmpty()) return 0;
+            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
+            int count = 0;
+            if (root.has("warps")) {
+                JsonObject warpsJson = root.getAsJsonObject("warps");
+                for (String warpName : warpsJson.keySet()) {
+                    store.put(WARPS_COLLECTION, warpName, warpsJson.getAsJsonObject(warpName));
+                    count++;
+                }
+            }
+            if (root.has("config")) {
+                store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, root.getAsJsonObject("config"));
+            }
+            return count;
+        } catch (Exception e) {
+            LOGGER.error("Failed to migrate legacy warps.json: {}", e.getMessage());
+            return 0;
+        }
+    }
+
+    private int migrateLegacyPlayerWarpsFile() {
+        // Legacy hard-coded path (bug being fixed): a File relative to the working
+        // directory, NOT ResourceUtil's data dir. Consulted only here for one-time import.
+        try {
+            java.nio.file.Path path = java.nio.file.Path.of("run/playerwarps.json");
+            if (!java.nio.file.Files.exists(path)) return 0;
             String json = java.nio.file.Files.readString(path);
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<Map<String, Map<String, TeleportLocation>>>(){}.getType();
             Map<String, Map<String, TeleportLocation>> loaded = new com.google.gson.Gson().fromJson(json, type);
-            playerWarps.clear();
+            if (loaded == null) return 0;
+            int count = 0;
             for (Map.Entry<String, Map<String, TeleportLocation>> entry : loaded.entrySet()) {
-                playerWarps.put(UUID.fromString(entry.getKey()), entry.getValue());
+                store.put(PLAYER_WARPS_COLLECTION, entry.getKey(), playerWarpsToJson(entry.getValue()));
+                count++;
             }
+            return count;
         } catch (Exception e) {
-            System.err.println("[WarpManager] Failed to load player warps: " + e);
+            LOGGER.error("Failed to migrate legacy run/playerwarps.json: {}", e.getMessage());
+            return 0;
         }
     }
     
@@ -761,97 +856,73 @@ public class WarpManager {
     }
     
     /**
-     * Load warps from file
+     * Load warps from the active {@link com.zerog.neoessentials.storage.DataStore}.
      */
     private void loadWarps() {
         try {
-            File file = ResourceUtil.getDataFile(WARPS_FILE);
-            if (!file.exists()) {
-                LOGGER.info("No warps file found, starting with empty warps");
-                return;
-            }
-            
-            String content = java.nio.file.Files.readString(file.toPath());
-            if (content.trim().isEmpty()) {
-                return;
-            }
-            
-            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
-            
-            // Load warps
-            if (root.has("warps")) {
-                JsonObject warpsJson = root.getAsJsonObject("warps");
-                
-                for (String warpName : warpsJson.keySet()) {
-                    try {
-                        JsonObject warpJson = warpsJson.getAsJsonObject(warpName);
-                        TeleportLocation location = TeleportLocation.fromJson(warpJson);
-                        if (location != null) {
-                            warps.put(warpName, location);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.warn("Failed to load warp '{}': {}", warpName, e.getMessage());
+            for (Map.Entry<String, JsonObject> entry : store.getAll(WARPS_COLLECTION).entrySet()) {
+                if (entry.getKey().equals(CONFIG_RECORD_ID)) {
+                    JsonObject config = entry.getValue();
+                    if (config.has("teleportDelay")) {
+                        teleportDelay = config.get("teleportDelay").getAsInt();
                     }
+                    if (config.has("requireSafeLocations")) {
+                        requireSafeLocations = config.get("requireSafeLocations").getAsBoolean();
+                    }
+                    if (config.has("allowOverworldOnly")) {
+                        allowOverworldOnly = config.get("allowOverworldOnly").getAsBoolean();
+                    }
+                    if (config.has("maxWarps")) {
+                        maxWarps = config.get("maxWarps").getAsInt();
+                    }
+                    if (config.has("caseSensitiveNames")) {
+                        caseSensitiveNames = config.get("caseSensitiveNames").getAsBoolean();
+                    }
+                    continue;
+                }
+                try {
+                    TeleportLocation location = TeleportLocation.fromJson(entry.getValue());
+                    if (location != null) {
+                        warps.put(entry.getKey(), location);
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to load warp '{}': {}", entry.getKey(), e.getMessage());
                 }
             }
-            
-            // Load configuration
-            if (root.has("config")) {
-                JsonObject config = root.getAsJsonObject("config");
-                
-                if (config.has("teleportDelay")) {
-                    teleportDelay = config.get("teleportDelay").getAsInt();
-                }
-                if (config.has("requireSafeLocations")) {
-                    requireSafeLocations = config.get("requireSafeLocations").getAsBoolean();
-                }
-                if (config.has("allowOverworldOnly")) {
-                    allowOverworldOnly = config.get("allowOverworldOnly").getAsBoolean();
-                }
-                if (config.has("maxWarps")) {
-                    maxWarps = config.get("maxWarps").getAsInt();
-                }
-                if (config.has("caseSensitiveNames")) {
-                    caseSensitiveNames = config.get("caseSensitiveNames").getAsBoolean();
-                }
-            }
-            
+
             LOGGER.info("Loaded {} warps", warps.size());
-            
+
         } catch (Exception e) {
-            LOGGER.error("Failed to load warps from file", e);
+            LOGGER.error("Failed to load warps from storage", e);
         }
     }
-    
+
     /**
-     * Save warps to file
+     * Save warps (and the warp settings blob, under {@link #CONFIG_RECORD_ID}) to the
+     * active DataStore. Also prunes any store records for warps that no longer exist in
+     * memory (e.g. after a delete), matching the old full-file-rewrite semantics.
      */
     private void saveWarps() {
         try {
-            JsonObject root = new JsonObject();
-            
-            // Save warps
-            JsonObject warpsJson = new JsonObject();
             for (Map.Entry<String, TeleportLocation> entry : warps.entrySet()) {
-                warpsJson.add(entry.getKey(), entry.getValue().toJson());
+                store.put(WARPS_COLLECTION, entry.getKey(), entry.getValue().toJson());
             }
-            root.add("warps", warpsJson);
-            
-            // Save configuration
+            for (String existingId : store.getAll(WARPS_COLLECTION).keySet()) {
+                if (!existingId.equals(CONFIG_RECORD_ID) && !warps.containsKey(existingId)) {
+                    store.delete(WARPS_COLLECTION, existingId);
+                }
+            }
+
             JsonObject config = new JsonObject();
             config.addProperty("teleportDelay", teleportDelay);
             config.addProperty("requireSafeLocations", requireSafeLocations);
             config.addProperty("allowOverworldOnly", allowOverworldOnly);
             config.addProperty("maxWarps", maxWarps);
             config.addProperty("caseSensitiveNames", caseSensitiveNames);
-            root.add("config", config);
-            
-            ResourceUtil.ensureDataDirectory();
-            File file = ResourceUtil.getDataFile(WARPS_FILE);
-            java.nio.file.Files.writeString(file.toPath(), gson.toJson(root));
-            
+            store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, config);
+
         } catch (Exception e) {
-            LOGGER.error("Failed to save warps to file", e);
+            LOGGER.error("Failed to save warps to storage", e);
         }
     }
     

@@ -6,6 +6,24 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.10 — 2026-07-12
+
+### ✨ Storage Backends Now Cover the Whole Mod
+
+- Extended the pluggable JSON/YAML/SQLite/MySQL storage system to every remaining
+  manager: economy, kits, homes, `/back`, warps, spawn, jail, freeze, vanish, AFK,
+  ignore lists, chat formats, holograms, chest/NPC shops, permissions (groups,
+  users, aliases), dashboard accounts, custom-language overrides, resource-pack
+  metadata, and the Auction House.
+- The Auction House no longer uses its own separate SQLite database — it now shares
+  the same backend as everything else, including MySQL for cross-server listings.
+- All existing data imports automatically and losslessly the first time you switch
+  backends, same as the moderation system did in the previous release.
+- Fixed a bug where `/warp`'s per-player warps were read/written from a hard-coded
+  path instead of the configured data directory.
+
+---
+
 ## 1.0.3+build.9 — 2026-07-12
 
 ### ✨ Pluggable Storage Backends (JSON / YAML / SQLite / MySQL)

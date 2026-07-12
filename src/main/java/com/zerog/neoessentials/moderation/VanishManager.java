@@ -27,7 +27,6 @@ import java.util.Map;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -77,12 +76,15 @@ public class VanishManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(VanishManager.class);
     private static VanishManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private final File vanishFile;
-    
+    private static final String COLLECTION = "vanishes";
+    private final com.zerog.neoessentials.storage.DataStore store;
+
     // In-memory cache for quick lookups
-    // Vanished players and their priority
+    // Vanished players and their priority (persisted to DataStore — see COLLECTION)
     private final Map<UUID, Integer> vanishedPlayers = new ConcurrentHashMap<>();
-    // Players who can see vanished and their priority
+    // Players who can see vanished and their priority. Purely in-memory/session-scoped —
+    // this is a runtime toggle (like vanilla /vanish's "see vanished" mode), not a durable
+    // record, so it does not persist across restarts.
     private final Map<UUID, Integer> viewerPriorities = new ConcurrentHashMap<>();
     
     public static class VanishEntry {
@@ -106,15 +108,8 @@ public class VanishManager {
     }
     
     private VanishManager() {
-        // Create moderation directory if it doesn't exist
-        File moderationDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation");
-        if (!moderationDir.exists()) {
-            if (!moderationDir.mkdirs()) {
-                LOGGER.error("Failed to create moderation directory: {}", moderationDir.getAbsolutePath());
-            }
-        }
-        
-        this.vanishFile = new File(moderationDir, "vanished_players.json");
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFilesIfNeeded();
         loadData();
     }
     
@@ -135,8 +130,8 @@ public class VanishManager {
         // Default priority for vanished player (can be customized)
         int vanishPriority = getPlayerPriority(playerId);
         vanishedPlayers.put(playerId, vanishPriority);
-        saveData();
-        
+        store.put(COLLECTION, playerId.toString(), toJson(playerId, vanishPriority));
+
         // Hide player from others
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -162,8 +157,8 @@ public class VanishManager {
         if (vanishedPlayers.remove(playerId) == null) {
             return false; // Not vanished
         }
-        saveData();
-        
+        store.delete(COLLECTION, playerId.toString());
+
         // Show player to others
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -524,63 +519,56 @@ public class VanishManager {
     }
     
     /**
-     * Load data from file
+     * Load vanished-player state from the active {@link com.zerog.neoessentials.storage.DataStore}.
+     * viewerPriorities (who currently has see-vanished toggled on) is intentionally NOT
+     * persisted — it is a purely in-memory/session-scoped runtime toggle.
      */
     private void loadData() {
-        if (!vanishFile.exists()) return;
-        
-        try (FileReader reader = new FileReader(vanishFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null) {
-                if (root.has("vanished")) {
-                    JsonArray vanishedArray = root.getAsJsonArray("vanished");
-                    for (JsonElement element : vanishedArray) {
-                        JsonObject obj = element.getAsJsonObject();
-                        UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
-                        int priority = obj.has("priority") ? obj.get("priority").getAsInt() : 10;
-                        vanishedPlayers.put(uuid, priority);
-                    }
-                }
-                if (root.has("viewerPriorities")) {
-                    JsonArray viewerArray = root.getAsJsonArray("viewerPriorities");
-                    for (JsonElement element : viewerArray) {
-                        JsonObject obj = element.getAsJsonObject();
-                        UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
-                        int priority = obj.has("priority") ? obj.get("priority").getAsInt() : 10;
-                        viewerPriorities.put(uuid, priority);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load vanish data", e);
+        for (JsonObject obj : store.getAll(COLLECTION).values()) {
+            UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
+            int priority = obj.has("priority") ? obj.get("priority").getAsInt() : 10;
+            vanishedPlayers.put(uuid, priority);
         }
     }
-    
+
+    private JsonObject toJson(UUID uuid, int priority) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("uuid", uuid.toString());
+        obj.addProperty("priority", priority);
+        return obj;
+    }
+
     /**
-     * Save data to file
+     * One-time import of the legacy vanished_players.json file into the active DataStore, if
+     * it's still empty and storage.autoMigrate is enabled. Only the "vanished" array is
+     * migrated — the legacy file's "viewerPriorities" array is intentionally dropped, since
+     * that state is now purely in-memory/session-scoped (see viewerPriorities field comment).
      */
-    private void saveData() {
-        try (FileWriter writer = new FileWriter(vanishFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray vanishedArray = new JsonArray();
-            for (Map.Entry<UUID, Integer> entry : vanishedPlayers.entrySet()) {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("uuid", entry.getKey().toString());
-                obj.addProperty("priority", entry.getValue());
-                vanishedArray.add(obj);
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation", "vanished_players.json");
+        if (!file.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root != null && root.has("vanished")) {
+                for (JsonElement element : root.getAsJsonArray("vanished")) {
+                    JsonObject obj = element.getAsJsonObject();
+                    String id = obj.get("uuid").getAsString();
+                    store.put(COLLECTION, id, obj.deepCopy());
+                    migrated++;
+                }
             }
-            root.add("vanished", vanishedArray);
-            JsonArray viewerArray = new JsonArray();
-            for (Map.Entry<UUID, Integer> entry : viewerPriorities.entrySet()) {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("uuid", entry.getKey().toString());
-                obj.addProperty("priority", entry.getValue());
-                viewerArray.add(obj);
-            }
-            root.add("viewerPriorities", viewerArray);
-            gson.toJson(root, writer);
         } catch (IOException e) {
-            LOGGER.error("Failed to save vanish data", e);
+            LOGGER.error("Failed to migrate legacy vanished_players.json: {}", e.getMessage());
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("VanishManager: migrated {} vanish record(s) from legacy file into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
 }

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +30,10 @@ public class IgnoreManager {
     private static final File IGNORE_FILE =
         com.zerog.neoessentials.util.ResourceUtil.getDataFile("chat/ignore_lists.json");
 
+    private static final String COLLECTION = "ignore_lists";
+    private static final com.zerog.neoessentials.storage.DataStore store =
+        com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+
     static {
         load();
     }
@@ -38,44 +41,67 @@ public class IgnoreManager {
     // ── Persistence ──────────────────────────────────────────────────────────
 
     private static void load() {
-        if (!IGNORE_FILE.exists()) return;
-        try (FileReader fr = new FileReader(IGNORE_FILE)) {
-            JsonObject root = GSON.fromJson(fr, JsonObject.class);
-            if (root == null) return;
-            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+        migrateLegacyFileIfNeeded();
+        for (Map.Entry<String, JsonObject> entry : store.getAll(COLLECTION).entrySet()) {
+            try {
+                JsonObject obj = entry.getValue();
                 Set<String> ignored = ConcurrentHashMap.newKeySet();
-                for (JsonElement el : entry.getValue().getAsJsonArray()) {
-                    ignored.add(el.getAsString());
+                if (obj.has("ignored")) {
+                    for (JsonElement el : obj.getAsJsonArray("ignored")) {
+                        ignored.add(el.getAsString());
+                    }
                 }
                 if (!ignored.isEmpty()) {
                     ignoreMap.put(entry.getKey(), ignored);
                 }
+            } catch (Exception e) {
+                LOGGER.warn("Failed to load ignore data for {}: {}", entry.getKey(), e.getMessage());
             }
-            LOGGER.debug("IgnoreManager: loaded ignore data for {} player(s).", ignoreMap.size());
-        } catch (Exception e) {
-            LOGGER.error("Failed to load ignore_lists.json: {}", e.getMessage());
         }
+        LOGGER.debug("IgnoreManager: loaded ignore data for {} player(s).", ignoreMap.size());
     }
 
-    private static void save() {
-        try {
-            File parent = IGNORE_FILE.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                LOGGER.warn("IgnoreManager: failed to create parent directory: {}", parent.getAbsolutePath());
-            }
-            try (FileWriter fw = new FileWriter(IGNORE_FILE)) {
-                JsonObject root = new JsonObject();
-                for (Map.Entry<String, Set<String>> entry : ignoreMap.entrySet()) {
-                    if (!entry.getValue().isEmpty()) {
-                        JsonArray arr = new JsonArray();
-                        entry.getValue().forEach(arr::add);
-                        root.add(entry.getKey(), arr);
-                    }
+    /** Persists a single player's ignore set as one record — {@code id} = player name (lowercase). */
+    private static void persist(String playerName, Set<String> ignored) {
+        JsonObject obj = new JsonObject();
+        JsonArray arr = new JsonArray();
+        ignored.forEach(arr::add);
+        obj.add("ignored", arr);
+        store.put(COLLECTION, playerName, obj);
+    }
+
+    /**
+     * One-time import of the legacy {@code chat/ignore_lists.json} file into the active
+     * DataStore, if it's still empty and storage.autoMigrate is enabled.
+     */
+    private static void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        if (!IGNORE_FILE.exists()) return;
+
+        int migrated = 0;
+        try (FileReader fr = new FileReader(IGNORE_FILE)) {
+            JsonObject root = GSON.fromJson(fr, JsonObject.class);
+            if (root == null) return;
+            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+                try {
+                    JsonArray arr = entry.getValue().getAsJsonArray();
+                    if (arr.isEmpty()) continue;
+                    JsonObject record = new JsonObject();
+                    record.add("ignored", arr.deepCopy());
+                    store.put(COLLECTION, entry.getKey(), record);
+                    migrated++;
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to migrate legacy ignore entry {}: {}", entry.getKey(), e.getMessage());
                 }
-                GSON.toJson(root, fw);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to save ignore_lists.json: {}", e.getMessage());
+            LOGGER.error("Failed to migrate legacy ignore_lists.json: {}", e.getMessage());
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("IgnoreManager: migrated {} ignore-list record(s) from legacy ignore_lists.json into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
 
@@ -83,8 +109,9 @@ public class IgnoreManager {
 
     public static void ignore(ServerPlayer player, String targetName) {
         String playerName = player.getName().getString().toLowerCase();
-        ignoreMap.computeIfAbsent(playerName, k -> ConcurrentHashMap.newKeySet()).add(targetName.toLowerCase());
-        save();
+        Set<String> ignored = ignoreMap.computeIfAbsent(playerName, k -> ConcurrentHashMap.newKeySet());
+        ignored.add(targetName.toLowerCase());
+        persist(playerName, ignored);
     }
 
     public static void unignore(ServerPlayer player, String targetName) {
@@ -94,8 +121,10 @@ public class IgnoreManager {
             ignored.remove(targetName.toLowerCase());
             if (ignored.isEmpty()) {
                 ignoreMap.remove(playerName);
+                store.delete(COLLECTION, playerName);
+            } else {
+                persist(playerName, ignored);
             }
-            save();
         }
     }
 

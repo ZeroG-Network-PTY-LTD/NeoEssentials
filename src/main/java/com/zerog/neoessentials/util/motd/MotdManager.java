@@ -1,11 +1,13 @@
 package com.zerog.neoessentials.util.motd;
 
 import com.google.gson.*;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
@@ -16,23 +18,28 @@ import java.util.concurrent.*;
 /**
  * Manages MOTD profiles, rotation, persistence, and in-game feedback.
  *
- * <p>Data file layout (config/neoessentials/motd_data.json):
- * <pre>
- * {
- *   "activeProfile": "default",
- *   "rotation": { "enabled": false, "intervalMinutes": 60, "currentIndex": 0 },
- *   "profiles": {
- *     "default": { "motd": "...", "author": "Server", "timestamp": "..." },
- *     "event":   { "motd": "...", "author": "Admin",  "timestamp": "..." }
- *   }
- * }
- * </pre>
+ * <p>Persisted via the active {@link DataStore}:
+ * <ul>
+ *   <li>{@code motd_profiles} collection — one record per profile, keyed by profile
+ *       name, holding {@code motd}/{@code author}/{@code timestamp}.</li>
+ *   <li>{@code motd_meta} collection — a single record (id {@code "settings"}) holding
+ *       {@code activeProfile} and the rotation settings ({@code rotationEnabled},
+ *       {@code rotationIntervalMinutes}, {@code rotationCurrentIndex}).</li>
+ * </ul>
+ *
+ * <p>Legacy installs are migrated in from {@code config/neoessentials/motd_data.json}
+ * (both the multi-profile layout and the older single-motd-at-root layout) the first
+ * time the profile collection is empty — see {@link #migrateLegacyFileIfNeeded()}.
  */
 public class MotdManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MotdManager.class);
-    private static final File DATA_FILE = ResourceUtil.getConfigFile("motd_data.json");
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
+
+    private static final String PROFILE_COLLECTION = "motd_profiles";
+    private static final String META_COLLECTION = "motd_meta";
+    private static final String META_ID = "settings";
+
+    private final DataStore store;
 
     // ── Singleton ──────────────────────────────────────────────────────────────
     private static MotdManager INSTANCE;
@@ -56,6 +63,8 @@ public class MotdManager {
     private ScheduledExecutorService rotationScheduler;
 
     private MotdManager() {
+        this.store = StorageManager.getInstance().getStore();
+        migrateLegacyFileIfNeeded();
         load();
     }
 
@@ -77,59 +86,45 @@ public class MotdManager {
     // ── Load / Save ────────────────────────────────────────────────────────────
 
     /**
-     * Load profiles from disk.  Returns a human-readable error string on failure,
-     * or {@code null} on success.
+     * Load profiles from the active {@link DataStore}.  Returns a human-readable error
+     * string on failure, or {@code null} on success.
      */
     public String load() {
         try {
-            if (!DATA_FILE.exists()) {
-                ensureDir();
-                // Create default profile so the file gets written
-                if (profiles.isEmpty()) {
-                    profiles.put("default", new MotdProfile("default", "", "Server",
-                            LocalDateTime.now().format(TIME_FMT)));
-                }
+            Map<String, JsonObject> raw = store.getAll(PROFILE_COLLECTION);
+
+            profiles.clear();
+            if (raw.isEmpty()) {
+                // Nothing persisted yet — create default profile so the store gets written.
+                profiles.put("default", new MotdProfile("default", "", "Server",
+                        LocalDateTime.now().format(TIME_FMT)));
+                activeProfile = "default";
                 save();
                 return null;
             }
 
-            byte[] bytes = Files.readAllBytes(DATA_FILE.toPath());
-            JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8))
-                    .getAsJsonObject();
-
-            activeProfile = root.has("activeProfile") ? root.get("activeProfile").getAsString() : "default";
-
-            // Rotation settings
-            if (root.has("rotation")) {
-                JsonObject rot = root.getAsJsonObject("rotation");
-                rotationEnabled         = rot.has("enabled")         && rot.get("enabled").getAsBoolean();
-                rotationIntervalMinutes = rot.has("intervalMinutes") ? rot.get("intervalMinutes").getAsInt() : 60;
-                rotationCurrentIndex    = rot.has("currentIndex")    ? rot.get("currentIndex").getAsInt()    : 0;
+            // DataStore doesn't guarantee insertion order across every backend (e.g. SQL
+            // row order isn't the JSON-file field order the old format relied on for
+            // rotation), so iterate profile names in a deterministic (alphabetical) order
+            // instead of whatever order the backend happens to return.
+            for (String name : new TreeSet<>(raw.keySet())) {
+                JsonObject p = raw.get(name);
+                profiles.put(name, new MotdProfile(
+                        name,
+                        p.has("motd")      ? p.get("motd").getAsString()      : "",
+                        p.has("author")    ? p.get("author").getAsString()    : "Server",
+                        p.has("timestamp") ? p.get("timestamp").getAsString() : ""
+                ));
             }
 
-            // Profiles
-            profiles.clear();
-            if (root.has("profiles")) {
-                for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("profiles").entrySet()) {
-                    JsonObject p = entry.getValue().getAsJsonObject();
-                    profiles.put(entry.getKey(), new MotdProfile(
-                            entry.getKey(),
-                            p.has("motd")       ? p.get("motd").getAsString()       : "",
-                            p.has("author")     ? p.get("author").getAsString()     : "Server",
-                            p.has("timestamp")  ? p.get("timestamp").getAsString()  : ""
-                    ));
-                }
-            }
-
-            // Legacy migration: single-motd format (motd / author / timestamp at root)
-            if (profiles.isEmpty() && root.has("motd")) {
-                String legacyMotd = root.get("motd").getAsString();
-                String legacyAuthor = root.has("author") ? root.get("author").getAsString() : "Server";
-                String legacyTs    = root.has("timestamp") ? root.get("timestamp").getAsString() : "";
-                profiles.put("default", new MotdProfile("default", legacyMotd, legacyAuthor, legacyTs));
+            JsonObject meta = store.get(META_COLLECTION, META_ID);
+            if (meta != null) {
+                activeProfile           = meta.has("activeProfile")           ? meta.get("activeProfile").getAsString()           : "default";
+                rotationEnabled         = meta.has("rotationEnabled")         && meta.get("rotationEnabled").getAsBoolean();
+                rotationIntervalMinutes = meta.has("rotationIntervalMinutes") ? meta.get("rotationIntervalMinutes").getAsInt()    : 60;
+                rotationCurrentIndex    = meta.has("rotationCurrentIndex")    ? meta.get("rotationCurrentIndex").getAsInt()       : 0;
+            } else {
                 activeProfile = "default";
-                save(); // rewrite in new format
-                LOGGER.info("Migrated legacy motd_data.json to multi-profile format");
             }
 
             // Always ensure a default profile exists
@@ -140,19 +135,20 @@ public class MotdManager {
 
             // Validate active profile reference
             if (!profiles.containsKey(activeProfile)) {
-                activeProfile = profiles.keySet().iterator().next();
+                String fallback = profiles.keySet().iterator().next();
                 LOGGER.warn("Active MOTD profile '{}' not found; falling back to '{}'",
-                        activeProfile, activeProfile);
+                        activeProfile, fallback);
+                activeProfile = fallback;
             }
 
             // (Re)start rotation scheduler if needed
             applyRotationSchedule();
 
-            LOGGER.debug("MOTD data loaded from {}", DATA_FILE.getAbsolutePath());
+            LOGGER.debug("MOTD data loaded from storage backend '{}'", StorageManager.getInstance().getActiveType());
             return null;
 
         } catch (Exception e) {
-            String msg = "Failed to load MOTD data from " + DATA_FILE.getAbsolutePath() + ": " + e.getMessage();
+            String msg = "Failed to load MOTD data: " + e.getMessage();
             LOGGER.error(msg, e);
             // Reset to safe defaults
             profiles.clear();
@@ -163,41 +159,37 @@ public class MotdManager {
     }
 
     /**
-     * Save profiles to disk.  Returns a human-readable error string on failure,
-     * or {@code null} on success.
+     * Save profiles to the active {@link DataStore}.  Returns a human-readable error
+     * string on failure, or {@code null} on success.
      */
     public String save() {
         try {
-            ensureDir();
-            JsonObject root = new JsonObject();
-            root.addProperty("activeProfile", activeProfile);
+            JsonObject meta = new JsonObject();
+            meta.addProperty("activeProfile", activeProfile);
+            meta.addProperty("rotationEnabled", rotationEnabled);
+            meta.addProperty("rotationIntervalMinutes", rotationIntervalMinutes);
+            meta.addProperty("rotationCurrentIndex", rotationCurrentIndex);
+            store.put(META_COLLECTION, META_ID, meta);
 
-            JsonObject rot = new JsonObject();
-            rot.addProperty("enabled", rotationEnabled);
-            rot.addProperty("intervalMinutes", rotationIntervalMinutes);
-            rot.addProperty("currentIndex", rotationCurrentIndex);
-            root.add("rotation", rot);
-
-            JsonObject profilesObj = new JsonObject();
             for (Map.Entry<String, MotdProfile> e : profiles.entrySet()) {
-                JsonObject p = new JsonObject();
-                p.addProperty("motd",      e.getValue().motd);
-                p.addProperty("author",    e.getValue().author);
-                p.addProperty("timestamp", e.getValue().timestamp);
-                profilesObj.add(e.getKey(), p);
+                store.put(PROFILE_COLLECTION, e.getKey(), profileToJson(e.getValue()));
             }
-            root.add("profiles", profilesObj);
 
-            try (FileWriter w = new FileWriter(DATA_FILE, StandardCharsets.UTF_8)) {
-                GSON.toJson(root, w);
-            }
-            LOGGER.debug("MOTD data saved to {}", DATA_FILE.getAbsolutePath());
+            LOGGER.debug("MOTD data saved to storage backend '{}'", StorageManager.getInstance().getActiveType());
             return null;
         } catch (Exception e) {
-            String msg = "Failed to save MOTD data to " + DATA_FILE.getAbsolutePath() + ": " + e.getMessage();
+            String msg = "Failed to save MOTD data: " + e.getMessage();
             LOGGER.error(msg, e);
             return msg;
         }
+    }
+
+    private JsonObject profileToJson(MotdProfile profile) {
+        JsonObject p = new JsonObject();
+        p.addProperty("motd",      profile.motd);
+        p.addProperty("author",    profile.author);
+        p.addProperty("timestamp", profile.timestamp);
+        return p;
     }
 
     // ── Active profile helpers ─────────────────────────────────────────────────
@@ -251,6 +243,7 @@ public class MotdManager {
         if (profiles.size() == 1)
             return "Cannot delete the last MOTD profile";
         profiles.remove(name);
+        store.delete(PROFILE_COLLECTION, name);
         if (activeProfile.equals(name)) {
             activeProfile = profiles.keySet().iterator().next();
         }
@@ -322,11 +315,71 @@ public class MotdManager {
         }
     }
 
-    // ── Utils ──────────────────────────────────────────────────────────────────
+    // ── Legacy migration ─────────────────────────────────────────────────────────
 
-    private void ensureDir() {
-        File dir = DATA_FILE.getParentFile();
-        if (dir != null && !dir.exists()) dir.mkdirs();
+    /**
+     * One-time import of the legacy {@code motd_data.json} config file into the active
+     * DataStore, if it's still empty and storage.autoMigrate is enabled. Handles both the
+     * multi-profile layout ({@code profiles: {...}}) and the older single-motd-at-root
+     * layout ({@code motd}/{@code author}/{@code timestamp} directly on the root object).
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(PROFILE_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        File legacyFile = ResourceUtil.getConfigFile("motd_data.json");
+        if (!legacyFile.exists()) return;
+
+        int migrated = 0;
+        try {
+            byte[] bytes = Files.readAllBytes(legacyFile.toPath());
+            JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
+
+            String legacyActive = root.has("activeProfile") ? root.get("activeProfile").getAsString() : "default";
+            boolean legacyRotEnabled = false;
+            int legacyRotInterval = 60;
+            int legacyRotIndex = 0;
+            if (root.has("rotation")) {
+                JsonObject rot = root.getAsJsonObject("rotation");
+                legacyRotEnabled = rot.has("enabled") && rot.get("enabled").getAsBoolean();
+                legacyRotInterval = rot.has("intervalMinutes") ? rot.get("intervalMinutes").getAsInt() : 60;
+                legacyRotIndex = rot.has("currentIndex") ? rot.get("currentIndex").getAsInt() : 0;
+            }
+
+            if (root.has("profiles")) {
+                for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("profiles").entrySet()) {
+                    JsonObject p = entry.getValue().getAsJsonObject();
+                    JsonObject rec = new JsonObject();
+                    rec.addProperty("motd",      p.has("motd")      ? p.get("motd").getAsString()      : "");
+                    rec.addProperty("author",    p.has("author")    ? p.get("author").getAsString()    : "Server");
+                    rec.addProperty("timestamp", p.has("timestamp") ? p.get("timestamp").getAsString() : "");
+                    store.put(PROFILE_COLLECTION, entry.getKey(), rec);
+                    migrated++;
+                }
+            } else if (root.has("motd")) {
+                // Legacy single-motd format (motd / author / timestamp at root)
+                JsonObject rec = new JsonObject();
+                rec.addProperty("motd", root.get("motd").getAsString());
+                rec.addProperty("author", root.has("author") ? root.get("author").getAsString() : "Server");
+                rec.addProperty("timestamp", root.has("timestamp") ? root.get("timestamp").getAsString() : "");
+                store.put(PROFILE_COLLECTION, "default", rec);
+                legacyActive = "default";
+                migrated++;
+                LOGGER.info("Migrated legacy single-profile motd_data.json into multi-profile storage");
+            }
+
+            if (migrated > 0) {
+                JsonObject meta = new JsonObject();
+                meta.addProperty("activeProfile", legacyActive);
+                meta.addProperty("rotationEnabled", legacyRotEnabled);
+                meta.addProperty("rotationIntervalMinutes", legacyRotInterval);
+                meta.addProperty("rotationCurrentIndex", legacyRotIndex);
+                store.put(META_COLLECTION, META_ID, meta);
+                LOGGER.info("MotdManager: migrated {} MOTD profile(s) from legacy motd_data.json into the '{}' storage backend.",
+                    migrated, StorageManager.getInstance().getActiveType());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to migrate legacy motd_data.json: {}", e.getMessage(), e);
+        }
     }
 }
-

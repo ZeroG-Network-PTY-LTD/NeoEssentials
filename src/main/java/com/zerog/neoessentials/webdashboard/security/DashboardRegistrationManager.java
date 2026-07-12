@@ -2,16 +2,15 @@ package com.zerog.neoessentials.webdashboard.security;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -27,22 +26,27 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DashboardRegistrationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardRegistrationManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static DashboardRegistrationManager INSTANCE;
 
-    // Storage path for registered accounts
-    private static final Path REGISTRATIONS_FILE = Paths.get("neoessentials", "dashboard_registrations.json");
+    private static final String COLLECTION = "dashboard_registrations";
+    private final com.zerog.neoessentials.storage.DataStore store;
 
     // In-memory store of registered accounts
     // Key: Minecraft UUID, Value: Registration data
     private final Map<UUID, DashboardAccountRegistration> registrations = new ConcurrentHashMap<>();
 
-    // Temporary registration tokens (for in-game registration flow)
+    // Temporary registration tokens (for in-game registration flow). These are never
+    // persisted — they expire after 5 minutes (see startRegistration()), so surviving a
+    // restart would be pointless, and this matches the pre-DataStore behavior where they
+    // only ever lived in this in-memory map, never written to dashboard_registrations.json.
     // Key: Token, Value: MinecraftAccountData
     private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
 
     private DashboardRegistrationManager() {
         LOGGER.info("Initializing DashboardRegistrationManager...");
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFileIfNeeded();
         loadRegistrations();
         LOGGER.info("DashboardRegistrationManager initialized with {} existing registration(s)", registrations.size());
     }
@@ -149,7 +153,7 @@ public class DashboardRegistrationManager {
         registrations.put(pending.getMinecraftUuid(), registration);
         pendingRegistrations.remove(token);
 
-        saveRegistrations();
+        saveRegistration(registration);
 
         // Create user account in AuthenticationManager
         try {
@@ -165,7 +169,7 @@ public class DashboardRegistrationManager {
             LOGGER.error("Failed to create user account for registration: {}", e.getMessage(), e);
             // Rollback registration
             registrations.remove(pending.getMinecraftUuid());
-            saveRegistrations();
+            store.delete(COLLECTION, pending.getMinecraftUuid().toString());
             return null;
         }
     }
@@ -230,7 +234,7 @@ public class DashboardRegistrationManager {
         registration.setDiscordLinkedAt(System.currentTimeMillis());
 
         registrations.put(minecraftUuid, registration);
-        saveRegistrations();
+        saveRegistration(registration);
 
         // Create the user account in AuthenticationManager (with the random unusable password)
         try {
@@ -246,7 +250,7 @@ public class DashboardRegistrationManager {
             LOGGER.error("Failed to create user account for Discord registration: {}", e.getMessage(), e);
             // Rollback
             registrations.remove(minecraftUuid);
-            saveRegistrations();
+            store.delete(COLLECTION, minecraftUuid.toString());
             return null;
         }
     }
@@ -264,7 +268,7 @@ public class DashboardRegistrationManager {
         registration.setDiscordUsername(discordUsername);
         registration.setDiscordLinkedAt(System.currentTimeMillis());
 
-        saveRegistrations();
+        saveRegistration(registration);
 
         LOGGER.info("Linked Discord account {} to dashboard user {}",
             discordUsername, registration.getDashboardUsername());
@@ -285,7 +289,7 @@ public class DashboardRegistrationManager {
         registration.setDiscordUsername(null);
         registration.setDiscordLinkedAt(0);
 
-        saveRegistrations();
+        saveRegistration(registration);
 
         LOGGER.info("Unlinked Discord account from dashboard user {}",
             registration.getDashboardUsername());
@@ -344,57 +348,57 @@ public class DashboardRegistrationManager {
     }
 
     /**
-     * Load registrations from file
+     * Load registrations from the active {@link com.zerog.neoessentials.storage.DataStore}.
      */
     private void loadRegistrations() {
-        if (!Files.exists(REGISTRATIONS_FILE)) {
-            LOGGER.info("No existing dashboard registrations file found");
-            return;
-        }
-
-        try {
-            String content = Files.readString(REGISTRATIONS_FILE, StandardCharsets.UTF_8);
-            JsonObject data = GSON.fromJson(content, JsonObject.class);
-
-            if (data.has("registrations")) {
-                data.getAsJsonArray("registrations").forEach(element -> {
-                    JsonObject regObj = element.getAsJsonObject();
-                    DashboardAccountRegistration reg = DashboardAccountRegistration.fromJson(regObj);
-                    if (reg != null) {
-                        registrations.put(reg.getMinecraftUuid(), reg);
-                    }
-                });
+        for (JsonObject obj : store.getAll(COLLECTION).values()) {
+            DashboardAccountRegistration reg = DashboardAccountRegistration.fromJson(obj);
+            if (reg != null) {
+                registrations.put(reg.getMinecraftUuid(), reg);
             }
-
-            LOGGER.info("Loaded {} dashboard registrations", registrations.size());
-
-        } catch (IOException e) {
-            LOGGER.error("Failed to load dashboard registrations: {}", e.getMessage(), e);
         }
+        LOGGER.info("Loaded {} dashboard registrations", registrations.size());
     }
 
     /**
-     * Save registrations to file
+     * Persist a single registration record, keyed by Minecraft UUID.
      */
-    private void saveRegistrations() {
-        try {
-            // Ensure directory exists
-            Files.createDirectories(REGISTRATIONS_FILE.getParent());
+    private void saveRegistration(DashboardAccountRegistration registration) {
+        store.put(COLLECTION, registration.getMinecraftUuid().toString(), registration.toJson());
+    }
 
-            JsonObject data = new JsonObject();
-            data.addProperty("version", 1);
-            data.addProperty("lastUpdated", System.currentTimeMillis());
+    /**
+     * One-time import of the legacy dashboard_registrations.json into the active
+     * DataStore, if it's still empty and storage.autoMigrate is enabled. The old file's
+     * "registrations" array entries are already the same shape produced by
+     * {@link DashboardAccountRegistration#toJson()}, so each element is stored verbatim,
+     * keyed by minecraftUuid.
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
 
-            com.google.gson.JsonArray regsArray = new com.google.gson.JsonArray();
-            registrations.values().forEach(reg -> regsArray.add(reg.toJson()));
-            data.add("registrations", regsArray);
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR, "dashboard_registrations.json");
+        if (!file.exists()) return;
 
-            String json = GSON.toJson(data);
-            Files.writeString(REGISTRATIONS_FILE, json, StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
+        int migrated = 0;
+        try (FileReader reader = new FileReader(file, StandardCharsets.UTF_8)) {
+            JsonObject root = GSON.fromJson(reader, JsonObject.class);
+            if (root != null && root.has("registrations")) {
+                for (JsonElement element : root.getAsJsonArray("registrations")) {
+                    JsonObject regObj = element.getAsJsonObject().deepCopy();
+                    if (!regObj.has("minecraftUuid")) continue;
+                    store.put(COLLECTION, regObj.get("minecraftUuid").getAsString(), regObj);
+                    migrated++;
+                }
+            }
         } catch (IOException e) {
-            LOGGER.error("Failed to save dashboard registrations: {}", e.getMessage(), e);
+            LOGGER.error("Failed to migrate legacy dashboard_registrations.json: {}", e.getMessage(), e);
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("DashboardRegistrationManager: migrated {} registration(s) from legacy file into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
 

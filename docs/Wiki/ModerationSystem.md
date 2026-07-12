@@ -1,12 +1,14 @@
 # Moderation System
 
-> **Version:** 1.0.2.6 · **Config:** `config.json` → `moderation` section
+> **Version:** 1.0.3+build.9 · **Config:** `config.json` → `moderation` / `storage` sections
 
 ---
 
 ## Overview
 
-Comprehensive player moderation — ban, temp-ban, IP ban, kick, mute, jail (timed), freeze, and vanish — all with persistent storage, permission integration, and event enforcement.
+Comprehensive player moderation — ban, temp-ban, IP ban, kick, mute (with IP mutes), jail (timed), freeze, vanish, warnings, staff notes, and player reports — all with persistent storage, full history/audit trails, permission integration, and event enforcement.
+
+Bans, mutes, kicks, warnings, notes, and reports are backed by a single canonical store per feature (see [Storage Backend](#storage-backend) below) — there is exactly one code path that enforces each punishment, and the [Web Dashboard](WebDashboard)'s moderation API reads and writes through the same managers, so in-game commands and dashboard actions always agree.
 
 ---
 
@@ -26,6 +28,10 @@ Comprehensive player moderation — ban, temp-ban, IP ban, kick, mute, jail (tim
 
 **Duration format:** `30s` · `5m` · `2h` · `1d` · `1w`
 
+### History & Audit Trail
+
+Every ban (player and IP) is stored with a unique ID, an `active` flag, optional `evidence`, and — once lifted — who unbanned it and when (`unbannedBy` / `unbannedAt`). Expired temp-bans are archived the same way (auto-marked inactive, no "unbanned by" staff member). Unbanning and re-banning a player never destroys their prior ban records; they remain queryable as history via the dashboard's `/api/moderation/bans/{uuid}` and `/api/moderation/ipbans` routes (see [Web Dashboard](WebDashboard)).
+
 ---
 
 ## Kicks
@@ -34,6 +40,8 @@ Comprehensive player moderation — ban, temp-ban, IP ban, kick, mute, jail (tim
 |---|---|---|---|
 | `/kick` | `/kick <player> [reason]` | `neoessentials.moderation.kick` | Kick a player |
 | `/kickall` | `/kickall [reason]` | `neoessentials.moderation.kickall` | Kick all players |
+
+Every kick (including dashboard-initiated kicks) is recorded with a timestamp, reason, and issuing staff member, and is queryable as history via the dashboard's `/api/moderation/kicks` / `/api/moderation/kicks/{name}` routes — there is no in-game command to view kick history.
 
 ---
 
@@ -47,6 +55,8 @@ Comprehensive player moderation — ban, temp-ban, IP ban, kick, mute, jail (tim
 | `/mutelist` | `/mutelist` | `neoessentials.chat.mute` | List muted players |
 
 Muted players cannot chat, send private messages, or send mail. The mute system is implemented in the **chat** module (`com.zerog.neoessentials.chat`), not the moderation module — all three commands share the single `neoessentials.chat.mute` permission (there's no separate exempt/list/unmute node), plus `neoessentials.chat.mute.exempt` to make a player un-mutable.
+
+Like bans, every mute tracks reason, issuing staff member, an `active` flag, and — once lifted — `unmutedBy` / `unmutedAt`, with full history preserved. **IP mutes** are also supported (mute an IP directly rather than a player name) — currently exposed via the dashboard's `/api/moderation/ipmute` / `/api/moderation/ipmutes` routes rather than an in-game command.
 
 ---
 
@@ -119,16 +129,72 @@ Warnings persist for offline players and are shown with a truncated ID, timestam
 
 ---
 
-## Data Files
+## Staff Notes
 
-| File | Contents |
+Freeform notes staff can leave on a player's record — for context that isn't a punishment (e.g. "watch this player, borderline behavior last week").
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/note` | `/note <player> <text>` | `neoessentials.moderation.note` | Add a note to a player's record |
+| `/notes` | `/notes <player>` | `neoessentials.moderation.notes` | View a player's notes (paginated, 5 per page) |
+| `/removenote` | `/removenote <player> <noteId>` | `neoessentials.moderation.note` | Remove a note by ID (accepts the short 8-char prefix) |
+
+Notes persist for offline players and record author, timestamp, and text. Also available via the dashboard's `/api/moderation/notes/{name}` and `/api/moderation/note` routes.
+
+---
+
+## Player Reports
+
+Lets players flag misbehavior even while no staff are online — reports persist and show up in the review queue whenever staff next check.
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/report` | `/report <player> <reason>` | `neoessentials.moderation.report` | Report a player (default: **granted to everyone**) |
+| `/reports` | `/reports` | `neoessentials.moderation.reports` | Staff: view the pending review queue (8 per page) |
+| `/reviewreport` | `/reviewreport <id> <accept\|dismiss> [notes]` | `neoessentials.moderation.reports` | Staff: resolve a report, optionally with review notes |
+
+Submitting a report also immediately notifies any online staff with `neoessentials.moderation.reports`, in addition to persisting for later review. Reports track reporter, target, reason, timestamp, and status (`PENDING` / `REVIEWED` / `DISMISSED`) plus who reviewed it and when. Also available via the dashboard's `/api/moderation/reports`, `/api/moderation/reports/all`, `/api/moderation/reports/{id}`, and `/api/moderation/reports/{id}/review` routes.
+
+---
+
+## Data Files & Storage Backend
+
+Bans, mutes (including IP mutes), kicks, warnings, notes, and reports are persisted through a pluggable **DataStore** abstraction rather than bespoke JSON files — configured under `config.json` → `storage`:
+
+```json
+"storage": {
+  "type": "json",
+  "autoMigrate": true,
+  "sqlite": { "file": "data.db" },
+  "mysql": { "host": "localhost", "port": 3306, "database": "neoessentials", "username": "neoessentials", "password": "", "useSSL": false, "poolSize": 10 }
+}
+```
+
+| Key | Default | Description |
+|---|---|---|
+| `type` | `"json"` | Backend to use: `json`, `yaml`, `sqlite`, or `mysql` |
+| `autoMigrate` | `true` | On first boot with an empty store, import each manager's existing legacy JSON data automatically and losslessly |
+| `sqlite.file` | `"data.db"` | SQLite database filename (under `neoessentials/store/`) |
+| `mysql.*` | — | Connection details for a shared MySQL database — point every server in a network at the same database to share bans/mutes/etc. in real time |
+
+Each punishment type is one **collection** (a schema-less table of JSON documents keyed by ID):
+
+| Collection | Contents |
 |---|---|
-| `neoessentials/bans.json` | Active bans and IP bans |
-| `neoessentials/muted_players.json` | Active mutes |
-| `neoessentials/jailed_players.json` | Active jail entries (with expiry for timed jails) |
-| `neoessentials/jail_locations.json` | Named jail spawn points |
-| `neoessentials/frozen_players.json` | Frozen player state |
-| `neoessentials/vanished_players.json` | Persistent vanish state |
+| `player_bans` | Player bans — active and historical, with unban audit trail |
+| `ip_bans` | IP bans — active and historical, with unban audit trail |
+| `mutes` | Player mutes — active and historical, with unmute audit trail |
+| `ip_mutes` | IP mutes — active and historical |
+| `kicks` | Kick history |
+| `warns` | Warnings |
+| `notes` | Staff notes |
+| `reports` | Player reports |
+| `jails` / `jail_locations` | Active jail state / named jail locations |
+| `freezes` / `vanishes` | Frozen player state / vanish state |
+
+With the default `json` backend, collections live at `neoessentials/store/<collection>.json`. With `yaml`, `neoessentials/store/<collection>.yml`. With `sqlite`, all collections live as tables in `neoessentials/store/data.db`. With `mysql`, all collections live as tables in the configured database. If MySQL is unreachable at boot, the mod automatically falls back to the JSON backend rather than failing to start.
+
+> As of this release, `storage.type` covers the **entire mod**, not just moderation — economy, homes/warps/spawn, kits, chat (AFK/ignore/chat-format), holograms, shops, permissions (including group inheritance), the dashboard's own accounts, and the Auction House are all backed by the same DataStore system now. See [Storage Backend](Storage) for the complete collection list and per-system breakdown.
 
 ---
 
@@ -192,6 +258,17 @@ Settings are nested under per-feature sub-objects, not flat keys directly under 
 | Key | Description |
 |---|---|
 | `defaultJailReason` | Reason used for `/jail` when none is given |
+
+---
+
+## Notes & Reports Permissions
+
+| Node | Default | Description |
+|---|---|---|
+| `neoessentials.moderation.note` | 🔒 | Add/remove staff notes (`/note`, `/removenote`) |
+| `neoessentials.moderation.notes` | 🔒 | View a player's staff notes (`/notes`) |
+| `neoessentials.moderation.report` | ✅ granted | Submit a player report (`/report`) |
+| `neoessentials.moderation.reports` | 🔒 | View and review the report queue (`/reports`, `/reviewreport`) |
 
 ---
 

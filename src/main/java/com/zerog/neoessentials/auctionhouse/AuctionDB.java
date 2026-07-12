@@ -1,34 +1,55 @@
 package com.zerog.neoessentials.auctionhouse;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.ItemStack;
+import com.google.gson.JsonObject;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.io.File;
+import java.io.FileReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * SQLite persistence layer for the NeoEssentials Auction House.
+ * Persistence layer for the NeoEssentials Auction House, backed by the pluggable
+ * {@link DataStore} (JSON/YAML/SQLite/MySQL — see {@link StorageManager}) instead of its own
+ * bespoke SQLite connection, so the Auction House participates in {@code storage.type} the
+ * same as every other manager (including true multi-server MySQL sync).
  *
- * <p>Database file: {@code auctionhouse.db} in the server run directory.
- *
- * <p>Tables:
+ * <p>Collections:
  * <pre>
- *   auctionhouse  (id, playeruuid, owner, nbt, item, count, price, secondsLeft)
- *   expireditems  (id, playeruuid, owner, nbt, item, count, price)
+ *   auction_listings  (id = listing id, active auction-house listings)
+ *   auction_expired    (id = listing id, expired-and-uncollected listings)
  * </pre>
+ *
+ * <p>Listing ids are no longer SQLite {@code AUTOINCREMENT} values — they're assigned from an
+ * in-memory counter seeded from the highest id found across both collections at startup. A
+ * listing keeps the SAME id when it moves from {@code auction_listings} to
+ * {@code auction_expired} (matching the old schema's behavior of preserving the row id on
+ * expiry), so the counter only needs to consider new inserts.
  */
 public final class AuctionDB {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuctionDB.class);
 
-    /** JDBC URL — relative to the server's working / run directory. */
-    private static final String URL = "jdbc:sqlite:auctionhouse.db";
+    private static final String ACTIVE_COLLECTION = "auction_listings";
+    private static final String EXPIRED_COLLECTION = "auction_expired";
+
+    /** Legacy SQLite database this class used to own directly, only consulted for one-time import. */
+    private static final String LEGACY_URL = "jdbc:sqlite:auctionhouse.db";
 
     private static AuctionDB instance;
-    private Connection connection;
+    private DataStore store;
+    private final AtomicInteger nextId = new AtomicInteger(1);
 
     // ── Singleton ────────────────────────────────────────────────────────────
 
@@ -42,78 +63,34 @@ public final class AuctionDB {
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     public void initialize() {
-        try {
-            // Force the SQLite driver to register (bundled via JarJar)
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection(URL);
-            createTables();
-            LOGGER.info("[AuctionHouse] Database opened at {}", URL);
-        } catch (Exception e) {
-            LOGGER.error("[AuctionHouse] Failed to open database", e);
+        store = StorageManager.getInstance().getStore();
+        migrateLegacyDatabaseIfNeeded();
+
+        int maxId = 0;
+        for (String id : store.getAll(ACTIVE_COLLECTION).keySet()) {
+            maxId = Math.max(maxId, parseIdSafe(id));
         }
+        for (String id : store.getAll(EXPIRED_COLLECTION).keySet()) {
+            maxId = Math.max(maxId, parseIdSafe(id));
+        }
+        nextId.set(maxId + 1);
+
+        LOGGER.info("[AuctionHouse] Storage backend ready ('{}').", StorageManager.getInstance().getActiveType());
     }
 
     public void shutdown() {
-        if (connection != null) {
-            try {
-                connection.close();
-                LOGGER.info("[AuctionHouse] Database connection closed.");
-            } catch (SQLException e) {
-                LOGGER.error("[AuctionHouse] Error closing database", e);
-            }
-            connection = null;
-        }
-    }
-
-    /** Returns the raw JDBC connection (used only by {@code AuctionHouseManager} ticks). */
-    public Connection connection() { return connection; }
-
-    // ── Table creation ────────────────────────────────────────────────────────
-
-    private void createTables() throws SQLException {
-        try (Statement stmt = connection.createStatement()) {
-            stmt.execute("""
-                    CREATE TABLE IF NOT EXISTS auctionhouse (
-                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                        playeruuid  TEXT NOT NULL,
-                        owner       TEXT NOT NULL,
-                        nbt         TEXT,
-                        item        TEXT NOT NULL,
-                        count       INTEGER NOT NULL,
-                        price       REAL NOT NULL,
-                        secondsLeft INTEGER NOT NULL
-                    )
-                    """);
-            stmt.execute("""
-                    CREATE TABLE IF NOT EXISTS expireditems (
-                        id         INTEGER PRIMARY KEY,
-                        playeruuid TEXT NOT NULL,
-                        owner      TEXT NOT NULL,
-                        nbt        TEXT,
-                        item       TEXT NOT NULL,
-                        count      INTEGER NOT NULL,
-                        price      REAL NOT NULL
-                    )
-                    """);
-        }
+        // Nothing to release — every mutation already persists immediately through the shared
+        // DataStore, which is closed centrally by StorageManager.shutdown() on server stop.
     }
 
     // ── Active listings ───────────────────────────────────────────────────────
 
-    /** Load all active listings from the database. */
+    /** Load all active listings from storage. */
     public List<AuctionItem> loadAllActive() {
         List<AuctionItem> list = new ArrayList<>();
-        if (connection == null) {
-            LOGGER.warn("[AuctionHouse] Database not initialized — skipping load of active listings.");
-            return list;
-        }
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs   = stmt.executeQuery("SELECT * FROM auctionhouse")) {
-            while (rs.next()) {
-                list.add(fromActiveRow(rs));
-            }
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to load active listings", e);
+        for (Map.Entry<String, JsonObject> entry : store.getAll(ACTIVE_COLLECTION).entrySet()) {
+            list.add(fromJson(parseIdSafe(entry.getKey()), entry.getValue(), entry.getValue().has("secondsLeft")
+                ? entry.getValue().get("secondsLeft").getAsLong() : 0L));
         }
         return list;
     }
@@ -121,150 +98,154 @@ public final class AuctionDB {
     /**
      * Insert a new listing.
      *
-     * @return the auto-assigned database ID, or {@code -1} on failure.
+     * @return the assigned listing id, or {@code -1} on failure.
      */
-    public int addItem(String playerUuid, String owner, String nbt, String itemKey,
+    public synchronized int addItem(String playerUuid, String owner, String nbt, String itemKey,
                        int count, double price, long secondsLeft) {
-        if (connection == null) {
-            LOGGER.warn("[AuctionHouse] Database not initialized — cannot insert listing.");
+        try {
+            int id = nextId.getAndIncrement();
+            JsonObject obj = toJson(playerUuid, owner, nbt, itemKey, count, price, secondsLeft);
+            store.put(ACTIVE_COLLECTION, String.valueOf(id), obj);
+            return id;
+        } catch (Exception e) {
+            LOGGER.error("[AuctionHouse] Failed to insert listing", e);
             return -1;
         }
-        String sql = "INSERT INTO auctionhouse(playeruuid,owner,nbt,item,count,price,secondsLeft) VALUES(?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, playerUuid);
-            ps.setString(2, owner);
-            ps.setString(3, nbt);
-            ps.setString(4, itemKey);
-            ps.setInt   (5, count);
-            ps.setDouble(6, price);
-            ps.setLong  (7, secondsLeft);
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1);
-            }
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to insert listing", e);
-        }
-        return -1;
     }
 
     /** Permanently delete an active listing (e.g., item was sold or cancelled). */
     public void removeActive(int id) {
-        if (connection == null) return;
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM auctionhouse WHERE id=?")) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to remove active listing id={}", id, e);
-        }
+        store.delete(ACTIVE_COLLECTION, String.valueOf(id));
     }
 
     /** Update the remaining time for an active listing. */
     public void updateTime(int id, long secondsLeft) {
-        if (connection == null) return;
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE auctionhouse SET secondsLeft=? WHERE id=?")) {
-            ps.setLong(1, secondsLeft);
-            ps.setInt (2, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to update time for id={}", id, e);
-        }
+        JsonObject obj = store.get(ACTIVE_COLLECTION, String.valueOf(id));
+        if (obj == null) return;
+        obj.addProperty("secondsLeft", secondsLeft);
+        store.put(ACTIVE_COLLECTION, String.valueOf(id), obj);
     }
 
     /** Count how many active listings a player currently has. */
     public int countActiveForPlayer(String playerUuid) {
-        if (connection == null) return 0;
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT COUNT(*) FROM auctionhouse WHERE playeruuid=?")) {
-            ps.setString(1, playerUuid);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1);
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to count listings for {}", playerUuid, e);
+        int count = 0;
+        for (JsonObject obj : store.getAll(ACTIVE_COLLECTION).values()) {
+            if (playerUuid.equals(obj.get("playeruuid").getAsString())) count++;
         }
-        return 0;
+        return count;
     }
 
     // ── Expired items ─────────────────────────────────────────────────────────
 
-    /** Load all expired items from the database. */
+    /** Load all expired items from storage. */
     public List<AuctionItem> loadAllExpired() {
         List<AuctionItem> list = new ArrayList<>();
-        if (connection == null) {
-            LOGGER.warn("[AuctionHouse] Database not initialized — skipping load of expired items.");
-            return list;
-        }
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs   = stmt.executeQuery("SELECT * FROM expireditems")) {
-            while (rs.next()) {
-                list.add(fromExpiredRow(rs));
-            }
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to load expired items", e);
+        for (Map.Entry<String, JsonObject> entry : store.getAll(EXPIRED_COLLECTION).entrySet()) {
+            list.add(fromJson(parseIdSafe(entry.getKey()), entry.getValue(), 0L));
         }
         return list;
     }
 
     /**
-     * Move an active listing to the {@code expireditems} table.
-     * The original listing is deleted from {@code auctionhouse}.
+     * Move an active listing to the expired collection, preserving its id.
+     * The original listing is removed from {@code auction_listings}.
      */
     public void expireItem(AuctionItem item) {
-        if (connection == null) return;
-        // Remove from active table first
         removeActive(item.getId());
-        // Insert into expired table
-        String sql = "INSERT OR IGNORE INTO expireditems(id,playeruuid,owner,nbt,item,count,price) VALUES(?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt   (1, item.getId());
-            ps.setString(2, item.getUuid());
-            ps.setString(3, item.getOwner());
-            ps.setString(4, item.getNbt());
-            ps.setString(5, item.getItemKey());
-            ps.setInt   (6, item.getCount());
-            ps.setDouble(7, item.getPrice());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to expire item id={}", item.getId(), e);
-        }
+        JsonObject obj = toJson(item.getUuid(), item.getOwner(), item.getNbt(), item.getItemKey(),
+            item.getCount(), item.getPrice(), 0L);
+        store.put(EXPIRED_COLLECTION, String.valueOf(item.getId()), obj);
     }
 
     /** Delete an expired item once the player has collected it. */
     public void removeExpired(int id) {
-        if (connection == null) return;
-        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM expireditems WHERE id=?")) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            LOGGER.error("[AuctionHouse] Failed to remove expired item id={}", id, e);
-        }
+        store.delete(EXPIRED_COLLECTION, String.valueOf(id));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private static AuctionItem fromActiveRow(ResultSet rs) throws SQLException {
-        return new AuctionItem(
-                rs.getInt("id"),
-                rs.getString("playeruuid"),
-                rs.getString("owner"),
-                rs.getString("nbt"),
-                rs.getString("item"),
-                rs.getInt("count"),
-                rs.getDouble("price"),
-                rs.getLong("secondsLeft"));
+    private static int parseIdSafe(String id) {
+        try {
+            return Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
-    private static AuctionItem fromExpiredRow(ResultSet rs) throws SQLException {
+    private static JsonObject toJson(String playerUuid, String owner, String nbt, String itemKey,
+                                      int count, double price, long secondsLeft) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("playeruuid", playerUuid);
+        obj.addProperty("owner", owner);
+        obj.addProperty("nbt", nbt);
+        obj.addProperty("item", itemKey);
+        obj.addProperty("count", count);
+        obj.addProperty("price", price);
+        obj.addProperty("secondsLeft", secondsLeft);
+        return obj;
+    }
+
+    private static AuctionItem fromJson(int id, JsonObject obj, long secondsLeft) {
         return new AuctionItem(
-                rs.getInt("id"),
-                rs.getString("playeruuid"),
-                rs.getString("owner"),
-                rs.getString("nbt"),
-                rs.getString("item"),
-                rs.getInt("count"),
-                rs.getDouble("price"),
-                0L); // expired — no time remaining
+            id,
+            obj.get("playeruuid").getAsString(),
+            obj.get("owner").getAsString(),
+            obj.has("nbt") && !obj.get("nbt").isJsonNull() ? obj.get("nbt").getAsString() : null,
+            obj.get("item").getAsString(),
+            obj.get("count").getAsInt(),
+            obj.get("price").getAsDouble(),
+            secondsLeft);
+    }
+
+    /**
+     * One-time import of the legacy {@code auctionhouse.db} SQLite file (this class's old,
+     * bespoke database, opened directly rather than through {@link DataStore}) into the active
+     * storage backend, if both collections are still empty and {@code storage.autoMigrate} is
+     * enabled. The legacy database file is left in place, untouched.
+     */
+    private void migrateLegacyDatabaseIfNeeded() {
+        if (store.hasAnyData(ACTIVE_COLLECTION) || store.hasAnyData(EXPIRED_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        if (!new File("auctionhouse.db").exists()) return;
+
+        int migrated = 0;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection connection = DriverManager.getConnection(LEGACY_URL)) {
+                migrated += migrateLegacyTable(connection, "auctionhouse", ACTIVE_COLLECTION, true);
+                migrated += migrateLegacyTable(connection, "expireditems", EXPIRED_COLLECTION, false);
+            }
+        } catch (Exception e) {
+            LOGGER.error("[AuctionHouse] Failed to migrate legacy auctionhouse.db: {}", e.getMessage(), e);
+        }
+
+        if (migrated > 0) {
+            int maxId = 0;
+            for (String id : store.getAll(ACTIVE_COLLECTION).keySet()) maxId = Math.max(maxId, parseIdSafe(id));
+            for (String id : store.getAll(EXPIRED_COLLECTION).keySet()) maxId = Math.max(maxId, parseIdSafe(id));
+            nextId.set(maxId + 1);
+            LOGGER.info("[AuctionHouse] migrated {} listing(s) from legacy auctionhouse.db into the '{}' storage backend.",
+                migrated, StorageManager.getInstance().getActiveType());
+        }
+    }
+
+    private int migrateLegacyTable(Connection connection, String table, String collection, boolean hasSecondsLeft) throws SQLException {
+        int count = 0;
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM " + table)) {
+            while (rs.next()) {
+                JsonObject obj = toJson(
+                    rs.getString("playeruuid"),
+                    rs.getString("owner"),
+                    rs.getString("nbt"),
+                    rs.getString("item"),
+                    rs.getInt("count"),
+                    rs.getDouble("price"),
+                    hasSecondsLeft ? rs.getLong("secondsLeft") : 0L);
+                store.put(collection, String.valueOf(rs.getInt("id")), obj);
+                count++;
+            }
+        }
+        return count;
     }
 }
-

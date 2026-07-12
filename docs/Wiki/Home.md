@@ -25,6 +25,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
 | [Split Config System](SplitConfigs) | Split config files, validation, repair, migration guide |
 | [Tablist System](TablistSystem) | Animated header/footer, hex colors, gradients, per-group/per-player, PlaceholderAPI support |
 | [Localization System](LocalizationSystem) | Server language selection, custom translations, language override commands |
+| [Storage Backend](Storage) | Pluggable JSON/YAML/SQLite/MySQL storage covering the whole mod |
 
 ---
 
