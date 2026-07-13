@@ -14,6 +14,25 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.3-mc26.1.2+build.8 — 2026-07-12
+
+### ✨ Moderation System Overhaul
+
+- **Fixed: dashboard bans didn't actually ban anyone.** Two disconnected ban
+  stores existed — `/ban` enforced one, the dashboard wrote to the other, and
+  they never talked to each other. Consolidated onto one canonical, UUID+IP-aware
+  store with ban IDs, full history, and an unban audit trail (who/when).
+- **Mutes** now track reason, staff attribution, full history, and an unmute
+  audit trail (previously just a bare name→expiry map), plus new IP-mute support.
+- **Kicks** are now recorded with a queryable history (previously fire-and-forget).
+- **New:** staff notes (`/note`, `/notes`) and player reports (`/report`,
+  `/reports`, `/reviewreport`) — players can report others even while staff
+  are offline, and staff can leave freeform notes on a player's record.
+- The dashboard's moderation API now exposes all of the above, including new
+  IP-ban/IP-mute/kick/note/report routes that didn't exist before.
+
+---
+
 ## 1.0.3-mc26.1.2+build.7 — 2026-07-11
 
 ### 🐛 Bug Fixes

@@ -67,7 +67,7 @@ public class UnmuteCommand {
                         return 0;
                     }
                     
-                    com.zerog.neoessentials.chat.MuteManager.unmute(targetName);
+                    com.zerog.neoessentials.chat.MuteManager.unmute(targetName, sender.getName().getString());
                     // Notify Discord integrations
                     try {
                         com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, null, false);

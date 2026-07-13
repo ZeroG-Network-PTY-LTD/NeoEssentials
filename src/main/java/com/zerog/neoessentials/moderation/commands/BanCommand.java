@@ -399,7 +399,7 @@ public class BanCommand {
             }
             
             // Unban the player
-            boolean success = banManager.unbanPlayer(playerId);
+            boolean success = banManager.unbanPlayer(playerId, unbannedBy);
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.unban_success", resolvedName);
@@ -434,7 +434,7 @@ public class BanCommand {
             MinecraftServer server = source.getServer();
             
             // Unban the IP
-            boolean success = banManager.unbanIP(ipAddress);
+            boolean success = banManager.unbanIP(ipAddress, unbannedBy);
             
             if (success) {
                 String message = MessageUtil.localize("neoessentials.moderation.unbanip_success", ipAddress);

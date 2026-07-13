@@ -163,6 +163,7 @@ public class PlayerEndpoint implements HttpHandler {
             reason = "Kicked by dashboard admin";
         }
         final String finalReason = reason;
+        final String kickedBy = (String) exchange.getAttribute("auth-username");
 
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
             JsonObject resp = new JsonObject();
@@ -174,6 +175,10 @@ public class PlayerEndpoint implements HttpHandler {
                     return resp;
                 }
                 player.connection.disconnect(Component.literal(finalReason));
+                // Record via KickManager so dashboard-initiated kicks show up in kick
+                // history alongside /kick-command kicks, instead of leaving no trace.
+                com.zerog.neoessentials.moderation.KickManager.getInstance()
+                    .recordKick(username, player.getUUID(), finalReason, kickedBy != null ? kickedBy : "dashboard");
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " was kicked: " + finalReason);
             } catch (Exception e) {

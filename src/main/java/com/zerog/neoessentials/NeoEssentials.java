@@ -800,6 +800,14 @@ public class NeoEssentials {
         registry.registerCommand("clearwarnings", "Clear all warnings for a player");
         registry.registerCommand("removewarn", "Remove a specific warning by ID");
         com.zerog.neoessentials.moderation.commands.WarnCommand.register(dispatcher);
+        registry.registerCommand("note", "Add a staff note to a player's record");
+        registry.registerCommand("notes", "View staff notes for a player");
+        registry.registerCommand("removenote", "Remove a specific note by ID");
+        com.zerog.neoessentials.moderation.commands.NoteCommand.register(dispatcher);
+        registry.registerCommand("report", "Report a player for staff review");
+        registry.registerCommand("reports", "View the pending report queue");
+        registry.registerCommand("reviewreport", "Accept or dismiss a player report");
+        com.zerog.neoessentials.moderation.commands.ReportCommand.register(dispatcher);
 
         // ========== CHAT/MESSAGING COMMANDS ==========
         registry.registerCommand("msg", "Send a private message");

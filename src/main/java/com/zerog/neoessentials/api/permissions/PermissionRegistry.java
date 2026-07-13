@@ -614,6 +614,10 @@ public class PermissionRegistry {
         register("neoessentials.moderation.warn", "Issue warnings to players (/warn)", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.warnings", "View player warning history (/warnings)", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.clearwarnings", "Clear all warnings for a player", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.note", "Add/remove staff notes on a player (/note, /removenote)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.notes", "View a player's staff notes (/notes)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.report", "Report another player (/report)", PermissionCategory.MODERATION, true);
+        register("neoessentials.moderation.reports", "View and resolve the report queue (/reports, /reviewreport)", PermissionCategory.MODERATION, false);
 
         // ── Utility / misc commands ───────────────────────────────────────────
         // (near, motd base node already registered in Player Info section above)
