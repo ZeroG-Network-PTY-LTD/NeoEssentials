@@ -213,6 +213,22 @@
 | `/unvanish` | `/unvanish` | `neoessentials.moderation.vanish` | 🔒 | Disable vanish mode |
 | `/vanishlist` | `/vanishlist` | `neoessentials.moderation.vanish` | 🔒 | List all vanished players |
 
+### Warnings, Notes & Reports
+| Command | Syntax | Permission | Default | Description |
+|---|---|---|---|---|
+| `/warn` | `/warn <player> [reason]` | `neoessentials.moderation.warn` | 🔒 | Issue a warning to a player |
+| `/warnings` | `/warnings <player>` | `neoessentials.moderation.warnings` | 🔒 | View a player's warnings |
+| `/clearwarnings` | `/clearwarnings <player>` | `neoessentials.moderation.warn` | 🔒 | Clear all warnings for a player |
+| `/removewarn` | `/removewarn <player> <warnId>` | `neoessentials.moderation.warn` | 🔒 | Remove a single warning by ID |
+| `/note` | `/note <player> <text>` | `neoessentials.moderation.note` | 🔒 | Add a staff note to a player's record |
+| `/notes` | `/notes <player>` | `neoessentials.moderation.notes` | 🔒 | View a player's staff notes |
+| `/removenote` | `/removenote <player> <noteId>` | `neoessentials.moderation.note` | 🔒 | Remove a staff note by ID |
+| `/report` | `/report <player> <reason>` | `neoessentials.moderation.report` | ✅ | Report a player, even while staff are offline |
+| `/reports` | `/reports` | `neoessentials.moderation.reports` | 🔒 | View the pending report queue |
+| `/reviewreport` | `/reviewreport <id> <accept\|dismiss> [notes]` | `neoessentials.moderation.reports` | 🔒 | Accept or dismiss a report |
+
+See [Moderation System](ModerationSystem) for full details on history/audit trails and the pluggable storage backend (`config.json` → `storage`).
+
 ---
 
 ## Chat & Messaging

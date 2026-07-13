@@ -3,10 +3,13 @@ package com.zerog.neoessentials.webdashboard.security;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,22 +30,30 @@ public class AuthenticationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationManager.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static AuthenticationManager INSTANCE;
-    
+
     // Storage paths
-    private static final Path USERS_FILE = Paths.get("neoessentials", "dashboard_users.json");
+    // NOTE: only dashboard_audit.log still lives on disk as a bespoke file — the user
+    // account map (dashboard_users.json) now lives in the DataStore (see COLLECTION below).
     private static final Path AUDIT_LOG = Paths.get("neoessentials", "dashboard_audit.log");
-    
+
+    private static final String COLLECTION = "dashboard_users";
+    private final com.zerog.neoessentials.storage.DataStore store;
+
     // In-memory stores
     private final Map<String, User> users = new ConcurrentHashMap<>();
+    // Sessions are deliberately NOT persisted — they're short-lived and re-created on
+    // login, exactly as before this class was migrated onto DataStore.
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private final Map<String, String> userIdByUsername = new ConcurrentHashMap<>();
-    
+
     // Security settings
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
     private static final int MIN_PASSWORD_LENGTH = 8;
-    
+
     private AuthenticationManager() {
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFileIfNeeded();
         loadUsers();
         startSessionCleanupTask();
     }
@@ -411,97 +422,132 @@ public class AuthenticationManager {
     }
     
     /**
-     * Load users from file
+     * Load users from the active {@link com.zerog.neoessentials.storage.DataStore}.
      */
     private void loadUsers() {
-        if (!Files.exists(USERS_FILE)) {
+        if (!store.hasAnyData(COLLECTION)) {
             // Create default admin user with 8+ character password to meet validation requirements
             LOGGER.info("Creating default admin user (username: admin, password: admin123)");
             createUser("admin", "admin123", "admin@localhost", User.Role.ADMIN);
             LOGGER.warn("SECURITY WARNING: Default admin account created with password 'admin123'. Please change it immediately!");
             return;
         }
-        
-        try {
-            String json = Files.readString(USERS_FILE, StandardCharsets.UTF_8);
-            JsonObject root = GSON.fromJson(json, JsonObject.class);
-            JsonArray usersArray = root.getAsJsonArray("users");
-            
-            for (var element : usersArray) {
-                JsonObject userJson = element.getAsJsonObject();
-                String id = userJson.get("id").getAsString();
-                String username = userJson.get("username").getAsString();
-                String passwordHash = userJson.get("passwordHash").getAsString();
-                String email = userJson.has("email") ? userJson.get("email").getAsString() : null;
-                User.Role role = User.Role.valueOf(userJson.get("role").getAsString());
-                boolean enabled = userJson.get("enabled").getAsBoolean();
-                long createdAt = userJson.get("createdAt").getAsLong();
-                
-                Set<String> permissions = new HashSet<>();
-                if (userJson.has("permissions")) {
-                    JsonArray permsArray = userJson.getAsJsonArray("permissions");
-                    permsArray.forEach(p -> permissions.add(p.getAsString()));
-                }
-                
-                User user = new User(id, username, passwordHash, email, role, enabled, createdAt, permissions);
-                
-                // Load password change flags
-                if (userJson.has("requiresPasswordChange")) {
-                    user.setRequiresPasswordChange(userJson.get("requiresPasswordChange").getAsBoolean());
-                }
-                if (userJson.has("isTempPassword")) {
-                    user.setTempPassword(userJson.get("isTempPassword").getAsBoolean());
-                }
-                
-                users.put(id, user);
-                userIdByUsername.put(username.toLowerCase(), id);
+
+        for (JsonObject userJson : store.getAll(COLLECTION).values()) {
+            String id = userJson.get("id").getAsString();
+            String username = userJson.get("username").getAsString();
+            String passwordHash = userJson.get("passwordHash").getAsString();
+            String email = userJson.has("email") && !userJson.get("email").isJsonNull() ? userJson.get("email").getAsString() : null;
+            User.Role role = User.Role.valueOf(userJson.get("role").getAsString());
+            boolean enabled = userJson.get("enabled").getAsBoolean();
+            long createdAt = userJson.get("createdAt").getAsLong();
+
+            Set<String> permissions = new HashSet<>();
+            if (userJson.has("permissions")) {
+                JsonArray permsArray = userJson.getAsJsonArray("permissions");
+                permsArray.forEach(p -> permissions.add(p.getAsString()));
             }
-            
-            LOGGER.info("Loaded {} users from file", users.size());
-        } catch (IOException e) {
-            LOGGER.error("Failed to load users", e);
+
+            User user = new User(id, username, passwordHash, email, role, enabled, createdAt, permissions);
+
+            // Load password change flags
+            if (userJson.has("requiresPasswordChange")) {
+                user.setRequiresPasswordChange(userJson.get("requiresPasswordChange").getAsBoolean());
+            }
+            if (userJson.has("isTempPassword")) {
+                user.setTempPassword(userJson.get("isTempPassword").getAsBoolean());
+            }
+            // Login history / lockout state — previously never persisted, so it
+            // silently reset to "never logged in" / "not locked out" on every
+            // server restart instead of surviving across reboots.
+            if (userJson.has("lastLoginAt")) {
+                user.setLastLoginAt(userJson.get("lastLoginAt").getAsLong());
+            }
+            if (userJson.has("lastLoginIp") && !userJson.get("lastLoginIp").isJsonNull()) {
+                user.setLastLoginIp(userJson.get("lastLoginIp").getAsString());
+            }
+            if (userJson.has("failedLoginAttempts")) {
+                user.setFailedLoginAttempts(userJson.get("failedLoginAttempts").getAsInt());
+            }
+            if (userJson.has("lockoutUntil")) {
+                user.setLockoutUntil(userJson.get("lockoutUntil").getAsLong());
+            }
+
+            users.put(id, user);
+            userIdByUsername.put(username.toLowerCase(), id);
         }
+
+        LOGGER.info("Loaded {} users from storage", users.size());
     }
-    
+
     /**
-     * Save users to file
+     * Persist the full user-account map into the DataStore, one record per user (id ->
+     * JsonObject). Called after every mutation, same as the old bulk file rewrite — just
+     * routed through {@code store.put(...)} per user instead of one big JSON file write.
      */
     public void saveUsers() {
-        try {
-            Path parent = USERS_FILE.getParent();
-            if (parent != null && !Files.exists(parent)) {
-                Files.createDirectories(parent);
+        for (User user : users.values()) {
+            store.put(COLLECTION, user.getId(), userToJson(user));
+        }
+    }
+
+    /** Manual field-by-field JsonObject build — mirrors the pre-migration file format exactly. */
+    private JsonObject userToJson(User user) {
+        JsonObject userJson = new JsonObject();
+        userJson.addProperty("id", user.getId());
+        userJson.addProperty("username", user.getUsername());
+        userJson.addProperty("passwordHash", user.getPasswordHash());
+        userJson.addProperty("email", user.getEmail());
+        userJson.addProperty("role", user.getRole().name());
+        userJson.addProperty("enabled", user.isEnabled());
+        userJson.addProperty("createdAt", user.getCreatedAt());
+        userJson.addProperty("requiresPasswordChange", user.requiresPasswordChange());
+        userJson.addProperty("isTempPassword", user.isTempPassword());
+        userJson.addProperty("lastLoginAt", user.getLastLoginAt());
+        userJson.addProperty("lastLoginIp", user.getLastLoginIp());
+        userJson.addProperty("failedLoginAttempts", user.getFailedLoginAttempts());
+        userJson.addProperty("lockoutUntil", user.getLockoutUntil());
+
+        JsonArray permsArray = new JsonArray();
+        user.getPermissions().forEach(permsArray::add);
+        userJson.add("permissions", permsArray);
+
+        return userJson;
+    }
+
+    /**
+     * One-time import of the legacy dashboard_users.json into the active DataStore, if
+     * it's still empty and storage.autoMigrate is enabled. Every field — including
+     * passwordHash, the salt embedded within it ("salt:hash"), lockout state, and login
+     * history (lastLoginAt/lastLoginIp) — is copied verbatim; the legacy file is already
+     * the same shape produced by {@link #userToJson(User)}, so records pass through
+     * untouched rather than being re-parsed/re-serialized field by field.
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR, "dashboard_users.json");
+        if (!file.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(file, StandardCharsets.UTF_8)) {
+            JsonObject root = GSON.fromJson(reader, JsonObject.class);
+            if (root != null && root.has("users")) {
+                for (JsonElement element : root.getAsJsonArray("users")) {
+                    JsonObject userJson = element.getAsJsonObject().deepCopy();
+                    if (!userJson.has("id")) continue;
+                    store.put(COLLECTION, userJson.get("id").getAsString(), userJson);
+                    migrated++;
+                }
             }
-            
-            JsonObject root = new JsonObject();
-            JsonArray usersArray = new JsonArray();
-            
-            for (User user : users.values()) {
-                JsonObject userJson = new JsonObject();
-                userJson.addProperty("id", user.getId());
-                userJson.addProperty("username", user.getUsername());
-                userJson.addProperty("passwordHash", user.getPasswordHash());
-                userJson.addProperty("email", user.getEmail());
-                userJson.addProperty("role", user.getRole().name());
-                userJson.addProperty("enabled", user.isEnabled());
-                userJson.addProperty("createdAt", user.getCreatedAt());
-                userJson.addProperty("requiresPasswordChange", user.requiresPasswordChange());
-                userJson.addProperty("isTempPassword", user.isTempPassword());
-                
-                JsonArray permsArray = new JsonArray();
-                user.getPermissions().forEach(permsArray::add);
-                userJson.add("permissions", permsArray);
-                
-                usersArray.add(userJson);
-            }
-            
-            root.add("users", usersArray);
-            
-            Files.writeString(USERS_FILE, GSON.toJson(root), StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            
         } catch (IOException e) {
-            LOGGER.error("Failed to save users", e);
+            LOGGER.error("Failed to migrate legacy dashboard_users.json: {}", e.getMessage(), e);
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("AuthenticationManager: migrated {} user account(s) from legacy file into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
     

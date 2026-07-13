@@ -1,116 +1,82 @@
 package com.zerog.neoessentials.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Efficient player data storage system that stores each player's data in separate files.
+ * Per-player data storage, one record per player per data type (e.g. "homes", "back_locations"),
+ * backed by the pluggable {@link DataStore} (JSON/YAML/SQLite/MySQL — see {@link StorageManager}).
  *
- * <p>Instead of storing all player data in one massive file, this system uses:</p>
- * <pre>
- * neoessentials/playerdata/
- * ├── homes/
- * │   ├── {uuid1}.json  (Player 1's homes)
- * │   ├── {uuid2}.json  (Player 2's homes)
- * │   └── {uuid3}.json  (Player 3's homes)
- * ├── economy/
- * │   └── ...
- * └── other-data-types/
- * </pre>
+ * <p>Each {@code dataType} maps to its own DataStore collection ({@code "playerdata_" + dataType}),
+ * with the player's UUID as the record id. On first use, if that collection is empty and
+ * {@code storage.autoMigrate} is enabled, any legacy per-player files under
+ * {@code neoessentials/playerdata/<dataType>/<uuid>.json} (the pre-DataStore on-disk layout) are
+ * imported automatically.
  *
- * <p>Benefits:</p>
- * <ul>
- *   <li>Fast I/O - only load/save data for specific players</li>
- *   <li>Scalable - works with thousands of players</li>
- *   <li>Easy to find - one file per player</li>
- *   <li>Corruption resistant - one player's corrupt data doesn't affect others</li>
- *   <li>Memory efficient - can unload inactive player data</li>
- *   <li>Easy backup - all data in neoessentials/ folder in server root</li>
- * </ul>
- *
- * <p>Thread-safe with atomic file operations.</p>
- *
- * @author NeoEssentials
- * @version 1.0.0
+ * <p>Kept the same public API as before this migration (load/save/flush/delete/hasData/
+ * getAllPlayerIds/unload/clearAll/getStatistics) so callers like {@code HomeManager} and the
+ * {@code /back} teleport manager needed no changes.
  */
 public class PlayerDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerDataStore.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-    private final String dataType; // e.g., "homes", "warps", "economy"
-    private final File dataDirectory;
+    private final String dataType; // e.g., "homes", "back_locations"
+    private final String collection;
+    private final DataStore store;
 
     // In-memory cache: UUID -> JsonObject
     private final Map<UUID, JsonObject> cache = new ConcurrentHashMap<>();
 
-    // Track dirty (modified) entries that need saving
+    // Track dirty (modified) entries that still need persisting
     private final Set<UUID> dirtyEntries = ConcurrentHashMap.newKeySet();
 
     /**
      * Create a new PlayerDataStore for a specific data type.
      *
-     * @param dataType The type of data being stored (e.g., "homes", "economy")
+     * @param dataType The type of data being stored (e.g., "homes", "back_locations")
      */
     public PlayerDataStore(String dataType) {
         this.dataType = dataType;
-        this.dataDirectory = new File(ResourceUtil.DATA_DIR, "playerdata/" + dataType);
-
-        // Ensure directory exists
-        if (!dataDirectory.exists()) {
-            if (dataDirectory.mkdirs()) {
-                LOGGER.info("Created playerdata directory for {}: {}", dataType, dataDirectory.getPath());
-            }
-        }
+        this.collection = "playerdata_" + dataType;
+        this.store = StorageManager.getInstance().getStore();
+        migrateLegacyFilesIfNeeded();
     }
 
     /**
-     * Load player data from disk.
+     * Load player data.
      *
      * @param playerId Player UUID
      * @return Player data as JsonObject, or new empty JsonObject if not found
      */
     public JsonObject load(UUID playerId) {
-        // Check cache first
-        if (cache.containsKey(playerId)) {
-            return cache.get(playerId);
+        JsonObject cached = cache.get(playerId);
+        if (cached != null) {
+            return cached;
         }
 
-        // Load from disk
-        File playerFile = getPlayerFile(playerId);
-        JsonObject data;
-
-        if (playerFile.exists()) {
-            try (FileReader reader = new FileReader(playerFile)) {
-                data = JsonParser.parseReader(reader).getAsJsonObject();
-                LOGGER.debug("Loaded {} data for player {}", dataType, playerId);
-            } catch (Exception e) {
-                LOGGER.error("Failed to load {} data for player {}: {}", dataType, playerId, e.getMessage(), e);
-                data = new JsonObject();
-            }
-        } else {
+        JsonObject data = store.get(collection, playerId.toString());
+        if (data == null) {
             data = new JsonObject();
             LOGGER.debug("No {} data found for player {}, using empty data", dataType, playerId);
+        } else {
+            LOGGER.debug("Loaded {} data for player {}", dataType, playerId);
         }
 
-        // Cache it
         cache.put(playerId, data);
         return data;
     }
 
     /**
-     * Save player data to disk (atomic operation).
+     * Save player data (persists immediately via the active DataStore backend).
      *
      * @param playerId Player UUID
      * @param data Player data to save
@@ -118,13 +84,12 @@ public class PlayerDataStore {
     public void save(UUID playerId, JsonObject data) {
         cache.put(playerId, data);
         dirtyEntries.add(playerId);
-
-        // Immediate save
         flush(playerId);
     }
 
     /**
-     * Flush dirty (modified) data to disk for a specific player.
+     * Flush dirty (modified) data for a specific player. Since {@link #save} already persists
+     * immediately, this is mostly a no-op safety net for any dirty-but-unflushed entry.
      *
      * @param playerId Player UUID
      */
@@ -138,41 +103,17 @@ public class PlayerDataStore {
             return;
         }
 
-        File playerFile = getPlayerFile(playerId);
-        File tempFile = new File(playerFile.getAbsolutePath() + ".tmp");
-
         try {
-            // Ensure parent directory exists (may not exist on first write)
-            if (!dataDirectory.exists() && !dataDirectory.mkdirs()) {
-                LOGGER.error("Failed to create {} data directory: {}", dataType, dataDirectory.getAbsolutePath());
-                return;
-            }
-
-            // Write to temp file
-            try (FileWriter writer = new FileWriter(tempFile)) {
-                GSON.toJson(data, writer);
-            }
-
-            // Atomic move to actual file
-            Files.move(tempFile.toPath(), playerFile.toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-
+            store.put(collection, playerId.toString(), data);
             dirtyEntries.remove(playerId);
             LOGGER.debug("Saved {} data for player {}", dataType, playerId);
-
         } catch (Exception e) {
             LOGGER.error("Failed to save {} data for player {}: {}", dataType, playerId, e.getMessage(), e);
-
-            // Clean up temp file if it exists
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
         }
     }
 
     /**
-     * Flush all dirty data to disk.
+     * Flush all dirty data.
      */
     public void flushAll() {
         if (dirtyEntries.isEmpty()) {
@@ -181,9 +122,7 @@ public class PlayerDataStore {
 
         LOGGER.info("Flushing {} dirty {} entries...", dirtyEntries.size(), dataType);
 
-        // Create a copy to avoid ConcurrentModificationException
         Set<UUID> toFlush = new HashSet<>(dirtyEntries);
-
         for (UUID playerId : toFlush) {
             flush(playerId);
         }
@@ -192,7 +131,7 @@ public class PlayerDataStore {
     }
 
     /**
-     * Delete player data from disk and cache.
+     * Delete player data.
      *
      * @param playerId Player UUID
      * @return true if deleted successfully
@@ -200,16 +139,10 @@ public class PlayerDataStore {
     public boolean delete(UUID playerId) {
         cache.remove(playerId);
         dirtyEntries.remove(playerId);
-
-        File playerFile = getPlayerFile(playerId);
-        if (playerFile.exists()) {
-            boolean deleted = playerFile.delete();
-            if (deleted) {
-                LOGGER.info("Deleted {} data for player {}", dataType, playerId);
-            }
-            return deleted;
+        boolean existed = store.delete(collection, playerId.toString());
+        if (existed) {
+            LOGGER.info("Deleted {} data for player {}", dataType, playerId);
         }
-
         return true;
     }
 
@@ -217,10 +150,10 @@ public class PlayerDataStore {
      * Check if player has data.
      *
      * @param playerId Player UUID
-     * @return true if player has data file
+     * @return true if player has a stored record
      */
     public boolean hasData(UUID playerId) {
-        return getPlayerFile(playerId).exists() || cache.containsKey(playerId);
+        return cache.containsKey(playerId) || store.get(collection, playerId.toString()) != null;
     }
 
     /**
@@ -230,22 +163,13 @@ public class PlayerDataStore {
      */
     public Set<UUID> getAllPlayerIds() {
         Set<UUID> playerIds = new HashSet<>();
-
-        // Add from cache
         playerIds.addAll(cache.keySet());
 
-        // Add from disk
-        File[] files = dataDirectory.listFiles((dir, name) -> name.endsWith(".json"));
-        if (files != null) {
-            for (File file : files) {
-                try {
-                    String fileName = file.getName();
-                    String uuidStr = fileName.substring(0, fileName.length() - 5); // Remove .json
-                    UUID uuid = UUID.fromString(uuidStr);
-                    playerIds.add(uuid);
-                } catch (Exception e) {
-                    LOGGER.warn("Invalid player data file: {}", file.getName());
-                }
+        for (String id : store.getAll(collection).keySet()) {
+            try {
+                playerIds.add(UUID.fromString(id));
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Invalid player data id in collection {}: {}", collection, id);
             }
         }
 
@@ -253,25 +177,12 @@ public class PlayerDataStore {
     }
 
     /**
-     * Get player file path.
-     *
-     * @param playerId Player UUID
-     * @return Player data file
-     */
-    private File getPlayerFile(UUID playerId) {
-        return new File(dataDirectory, playerId.toString() + ".json");
-    }
-
-    /**
-     * Unload player data from cache (keeps on disk).
-     * Useful for memory management with many players.
+     * Unload player data from cache.
      *
      * @param playerId Player UUID
      */
     public void unload(UUID playerId) {
-        // Flush before unloading
         flush(playerId);
-
         cache.remove(playerId);
         LOGGER.debug("Unloaded {} data for player {} from cache", dataType, playerId);
     }
@@ -280,17 +191,11 @@ public class PlayerDataStore {
      * Clear all data (use with caution!).
      */
     public void clearAll() {
+        for (String id : store.getAll(collection).keySet()) {
+            store.delete(collection, id);
+        }
         cache.clear();
         dirtyEntries.clear();
-
-        // Delete all files
-        File[] files = dataDirectory.listFiles((dir, name) -> name.endsWith(".json"));
-        if (files != null) {
-            for (File file : files) {
-                file.delete();
-            }
-        }
-
         LOGGER.warn("Cleared all {} data", dataType);
     }
 
@@ -304,13 +209,12 @@ public class PlayerDataStore {
     }
 
     /**
-     * Get total number of players with data (on disk).
+     * Get total number of players with data.
      *
      * @return Total player count
      */
     public int getTotalPlayers() {
-        File[] files = dataDirectory.listFiles((dir, name) -> name.endsWith(".json"));
-        return files != null ? files.length : 0;
+        return store.getAll(collection).size();
     }
 
     /**
@@ -322,5 +226,39 @@ public class PlayerDataStore {
         return String.format("%s DataStore: %d players total, %d in cache, %d dirty",
             dataType, getTotalPlayers(), getCacheSize(), dirtyEntries.size());
     }
-}
 
+    /**
+     * One-time import of legacy per-player files (the pre-DataStore on-disk layout,
+     * {@code neoessentials/playerdata/<dataType>/<uuid>.json}) into the active DataStore, if
+     * this collection is still empty and {@code storage.autoMigrate} is enabled.
+     */
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(collection)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        File legacyDir = new File(ResourceUtil.DATA_DIR, "playerdata/" + dataType);
+        File[] files = legacyDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null || files.length == 0) return;
+
+        int migrated = 0;
+        for (File file : files) {
+            String fileName = file.getName();
+            String uuidStr = fileName.substring(0, fileName.length() - 5); // strip ".json"
+            try {
+                UUID playerId = UUID.fromString(uuidStr);
+                try (FileReader reader = new FileReader(file)) {
+                    JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
+                    store.put(collection, playerId.toString(), data);
+                    migrated++;
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Failed to migrate legacy {} file {}: {}", dataType, fileName, e.getMessage());
+            }
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("PlayerDataStore({}): migrated {} legacy player file(s) into the '{}' storage backend.",
+                dataType, migrated, StorageManager.getInstance().getActiveType());
+        }
+    }
+}

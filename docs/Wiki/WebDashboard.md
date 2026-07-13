@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.2.6 · **Config:** `config.json` → `webDashboard` section
+> **Version:** 1.0.3+build.9 · **Config:** `config.json` → `webDashboard` section
 
 ---
 
@@ -176,6 +176,38 @@ Set `requireLinkedAccount: false` in `discord_auth.json` to allow Discord-only a
 | Admin Controls | `/admin` | `neoessentials.dashboard.admin` | Server admin tools |
 | Permissions | `/permissions` | `neoessentials.dashboard.admin` | Manage permission groups and nodes |
 | Config | `/config` | `neoessentials.dashboard.admin` | Edit config files (file writes require the admin role — there is no separate config toggle to disable this) |
+
+---
+
+## Moderation API
+
+The dashboard's moderation endpoints are backed directly by the same manager classes that power the in-game `/ban`, `/mute`, `/kick`, `/warn`, `/note`, and `/report` commands (see [Moderation System](ModerationSystem)) — there is no separate dashboard-only ban store, so actions taken here actually enforce in-game and vice versa. The dashboard's own accounts (`dashboard_users`, `dashboard_registrations`) are themselves persisted through the same pluggable backend — see [Storage Backend](Storage).
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/moderation/overview` | GET | Summary counts across all moderation categories |
+| `/api/moderation/bans/active`, `/bans`, `/bans/{uuid}` | GET | Active bans / all bans / a player's ban history |
+| `/api/moderation/ban` | POST | Issue a ban |
+| `/api/moderation/ban/{uuid}` | DELETE | Unban a player |
+| `/api/moderation/ipbans/active`, `/ipbans` | GET | Active IP bans / all IP ban history |
+| `/api/moderation/ipban` | POST | Issue an IP ban |
+| `/api/moderation/ipban/{ip}` | DELETE | Unban an IP |
+| `/api/moderation/mutes/active`, `/mutes`, `/mutes/{name}` | GET | Active mutes / all mutes / a player's mute history |
+| `/api/moderation/mute` | POST | Issue a mute |
+| `/api/moderation/mute/{name}` | DELETE | Unmute a player |
+| `/api/moderation/ipmutes` | GET | All IP mutes |
+| `/api/moderation/ipmute` | POST | Issue an IP mute |
+| `/api/moderation/ipmute/{ip}` | DELETE | Remove an IP mute |
+| `/api/moderation/kicks`, `/kicks/{name}` | GET | Kick history (all / one player) |
+| `/api/moderation/warns`, `/warns/{name}` | GET | Warnings (all / one player) |
+| `/api/moderation/warn/{id}` | DELETE | Remove a warning |
+| `/api/moderation/notes/{name}` | GET | A player's staff notes |
+| `/api/moderation/note` | POST | Add a staff note |
+| `/api/moderation/note/{id}` | DELETE | Remove a staff note |
+| `/api/moderation/reports`, `/reports/all`, `/reports/{id}` | GET | Pending / all / one report |
+| `/api/moderation/reports/{id}/review` | POST | Accept or dismiss a report |
+
+All routes require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
 
 ---
 

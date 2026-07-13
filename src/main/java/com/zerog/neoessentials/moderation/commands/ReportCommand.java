@@ -93,14 +93,13 @@ public class ReportCommand {
             targetId = target.getUUID();
             resolvedName = target.getName().getString();
         } else {
-            var profile = source.getServer().getProfileCache() != null
-                ? source.getServer().getProfileCache().get(playerName) : java.util.Optional.<com.mojang.authlib.GameProfile>empty();
+            var profile = source.getServer().services().nameToIdCache().get(playerName);
             if (profile.isEmpty()) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
                 return 0;
             }
-            targetId = profile.get().getId();
-            resolvedName = profile.get().getName();
+            targetId = profile.get().id();
+            resolvedName = profile.get().name();
         }
 
         ReportEntry entry = ReportManager.getInstance().addReport(

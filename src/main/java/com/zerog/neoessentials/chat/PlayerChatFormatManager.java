@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,6 +31,10 @@ public class PlayerChatFormatManager {
     /** UUID → format string */
     private final ConcurrentHashMap<UUID, String> playerFormats = new ConcurrentHashMap<>();
     private File dataFile;
+
+    private static final String COLLECTION = "chat_formats";
+    private final com.zerog.neoessentials.storage.DataStore store =
+        com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
 
     private PlayerChatFormatManager() {}
 
@@ -57,46 +61,57 @@ public class PlayerChatFormatManager {
         return dataFile;
     }
 
-    /** Load from disk. Silent no-op when file doesn't exist yet. */
+    /** Load from the active {@link com.zerog.neoessentials.storage.DataStore}. */
     public void load() {
         try {
-            File file = getDataFile();
-            if (!file.exists()) return;
-            try (FileReader reader = new FileReader(file)) {
-                JsonObject data = GSON.fromJson(reader, JsonObject.class);
-                if (data != null) {
-                    playerFormats.clear();
-                    for (String key : data.keySet()) {
-                        try {
-                            UUID uuid = UUID.fromString(key);
-                            playerFormats.put(uuid, data.get(key).getAsString());
-                        } catch (IllegalArgumentException ignored) {
-                            LOGGER.warn("Skipping malformed UUID key '{}' in player_chat_formats.json", key);
-                        }
-                    }
+            migrateLegacyFileIfNeeded();
+            playerFormats.clear();
+            for (Map.Entry<String, JsonObject> entry : store.getAll(COLLECTION).entrySet()) {
+                try {
+                    UUID uuid = UUID.fromString(entry.getKey());
+                    playerFormats.put(uuid, entry.getValue().get("format").getAsString());
+                } catch (Exception e) {
+                    LOGGER.warn("Skipping malformed entry '{}' in chat_formats storage", entry.getKey());
                 }
             }
             LOGGER.info("Loaded {} per-player chat format override(s)", playerFormats.size());
         } catch (Exception e) {
-            LOGGER.error("Failed to load player_chat_formats.json: {}", e.getMessage(), e);
+            LOGGER.error("Failed to load chat format overrides: {}", e.getMessage(), e);
         }
     }
 
-    /** Persist current state to disk. */
-    public void save() {
-        try {
-            File file = getDataFile();
-            File parent = file.getParentFile();
-            if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                LOGGER.warn("PlayerChatFormatManager: failed to create parent directory: {}", parent.getAbsolutePath());
-            }
-            JsonObject data = new JsonObject();
-            playerFormats.forEach((uuid, fmt) -> data.addProperty(uuid.toString(), fmt));
-            try (FileWriter writer = new FileWriter(file)) {
-                GSON.toJson(data, writer);
+    /**
+     * One-time import of the legacy {@code chat/player_chat_formats.json} file into the
+     * active DataStore, if it's still empty and storage.autoMigrate is enabled.
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        File file = getDataFile();
+        if (!file.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject data = GSON.fromJson(reader, JsonObject.class);
+            if (data == null) return;
+            for (String key : data.keySet()) {
+                try {
+                    UUID uuid = UUID.fromString(key);
+                    JsonObject record = new JsonObject();
+                    record.addProperty("format", data.get(key).getAsString());
+                    store.put(COLLECTION, uuid.toString(), record);
+                    migrated++;
+                } catch (IllegalArgumentException ignored) {
+                    LOGGER.warn("Skipping malformed UUID key '{}' in legacy player_chat_formats.json", key);
+                }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to save player_chat_formats.json: {}", e.getMessage(), e);
+            LOGGER.error("Failed to migrate legacy player_chat_formats.json: {}", e.getMessage(), e);
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("PlayerChatFormatManager: migrated {} chat format override(s) from legacy player_chat_formats.json into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
 
@@ -117,7 +132,9 @@ public class PlayerChatFormatManager {
      */
     public void setFormat(UUID playerUUID, String format) {
         playerFormats.put(playerUUID, format);
-        save();
+        JsonObject record = new JsonObject();
+        record.addProperty("format", format);
+        store.put(COLLECTION, playerUUID.toString(), record);
     }
 
     /**
@@ -127,7 +144,7 @@ public class PlayerChatFormatManager {
      */
     public boolean clearFormat(UUID playerUUID) {
         boolean had = playerFormats.remove(playerUUID) != null;
-        if (had) save();
+        if (had) store.delete(COLLECTION, playerUUID.toString());
         return had;
     }
 

@@ -1,11 +1,13 @@
 
 package com.zerog.neoessentials.economy.managers;
 import com.zerog.neoessentials.util.DebugUtil;
+import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,14 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
@@ -31,75 +31,52 @@ public class TransactionHistoryManager {
         return instance;
     }
 
+    private static final String COLLECTION = "transaction_history";
+
     private static int historyLimit() {
-        return com.zerog.neoessentials.config.ConfigManager.getTransactionHistoryLimit();
+        return ConfigManager.getTransactionHistoryLimit();
     }
     private final Map<UUID, Deque<String>> historyMap = new ConcurrentHashMap<>();
-    private final File historyFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
+    private final DataStore store = StorageManager.getInstance().getStore();
+    // Legacy file — kept only so migrateLegacyFilesIfNeeded() can import pre-DataStore data.
+    private final File legacyHistoryFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
     private final Gson gson = new Gson();
     // Use daemon thread to prevent blocking JVM shutdown
-private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-    Thread t = new Thread(r, "TransactionHistory-Save");
-    t.setDaemon(true);
-    return t;
-});
-    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
+    private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "TransactionHistory-Save");
+        t.setDaemon(true);
+        return t;
+    });
 
     private TransactionHistoryManager() {
+        migrateLegacyFilesIfNeeded();
         loadHistory();
-        saveExecutor.scheduleAtFixedRate(this::saveHistoryAtomic, 5, 5, TimeUnit.MINUTES);
     }
 
     private void loadHistory() {
-        if (!historyFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            historyFile.getParentFile().mkdirs();
-        }
-        if (!historyFile.exists()) return;
-        try (FileReader reader = new FileReader(historyFile)) {
-            Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
-            Map<String, List<String>> data = gson.fromJson(reader, type);
-            if (data != null) {
-                for (Map.Entry<String, List<String>> entry : data.entrySet()) {
-                    Deque<String> deque = new ArrayDeque<>(entry.getValue());
-                    historyMap.put(UUID.fromString(entry.getKey()), deque);
+        for (Map.Entry<String, JsonObject> e : store.getAll(COLLECTION).entrySet()) {
+            try {
+                UUID uuid = UUID.fromString(e.getKey());
+                Deque<String> deque = new ArrayDeque<>();
+                if (e.getValue().has("entries")) {
+                    for (JsonElement el : e.getValue().getAsJsonArray("entries")) {
+                        deque.addLast(el.getAsString());
+                    }
                 }
+                historyMap.put(uuid, deque);
+            } catch (Exception ex) {
+                DebugUtil.debugStackTrace(ex);
             }
-        } catch (Exception e) {
-            DebugUtil.debugStackTrace(e);
         }
     }
 
-    private void saveHistoryAtomic() {
-        if (!historyFile.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            historyFile.getParentFile().mkdirs();
-        }
-        try {
-            File tempFile = new File(historyFile.getAbsolutePath() + ".tmp");
-            try (FileWriter writer = new FileWriter(tempFile)) {
-                Map<String, List<String>> data = new HashMap<>();
-                for (Map.Entry<UUID, Deque<String>> entry : historyMap.entrySet()) {
-                    data.put(entry.getKey().toString(), new ArrayList<>(entry.getValue()));
-                }
-                gson.toJson(data, writer);
-            }
-            Files.move(tempFile.toPath(), historyFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            DebugUtil.debugStackTrace(e);
-        }
-    }
-
-    private void queueAsyncSave() {
-        if (saveQueued.compareAndSet(false, true)) {
-            saveExecutor.execute(() -> {
-                try {
-                    saveHistoryAtomic();
-                } finally {
-                    saveQueued.set(false);
-                }
-            });
-        }
+    /** Persist a single player's capped transaction log. */
+    private void persistHistory(UUID player, Deque<String> deque) {
+        JsonObject obj = new JsonObject();
+        JsonArray arr = new JsonArray();
+        for (String entry : deque) arr.add(entry);
+        obj.add("entries", arr);
+        store.put(COLLECTION, player.toString(), obj);
     }
 
     public void addTransaction(UUID player, String entry) {
@@ -110,7 +87,8 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
             deque.addLast(entry);
             return deque;
         });
-        queueAsyncSave();
+        Deque<String> snapshot = new ArrayDeque<>(historyMap.get(player));
+        saveExecutor.execute(() -> persistHistory(player, snapshot));
     }
 
     public List<String> getHistory(UUID player) {
@@ -119,14 +97,11 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
 
     /**
      * Shutdown the TransactionHistoryManager and clean up resources.
-     * Saves any pending data and terminates the executor service.
+     * Each transaction is persisted immediately on add, so there's nothing to flush here
+     * beyond letting any in-flight async writes finish.
      */
     public void shutdown() {
         try {
-            // Save any pending data immediately
-            saveHistoryAtomic();
-            
-            // Shutdown executor service
             saveExecutor.shutdown();
             try {
                 if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
@@ -138,10 +113,47 @@ private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadS
                 saveExecutor.shutdownNow();
                 Thread.currentThread().interrupt();
             }
-            
+
             DebugUtil.debug("TransactionHistoryManager shutdown complete.");
         } catch (Exception e) {
             DebugUtil.debugStackTrace(e);
+        }
+    }
+
+    /**
+     * One-time import of the legacy transaction_history.json file into the active DataStore,
+     * if it's still empty and storage.autoMigrate is enabled. The cap (historyLimit()) is
+     * applied on load anyway via addTransaction()'s own logic, but legacy entries are already
+     * capped from when they were written, so they're copied as-is.
+     */
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        if (!legacyHistoryFile.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(legacyHistoryFile)) {
+            Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+            Map<String, List<String>> data = gson.fromJson(reader, type);
+            if (data != null) {
+                for (Map.Entry<String, List<String>> entry : data.entrySet()) {
+                    try {
+                        JsonObject obj = new JsonObject();
+                        JsonArray arr = new JsonArray();
+                        for (String s : entry.getValue()) arr.add(s);
+                        obj.add("entries", arr);
+                        store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj);
+                        migrated++;
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception e) {
+            DebugUtil.debugStackTrace(e);
+        }
+
+        if (migrated > 0) {
+            DebugUtil.debug("TransactionHistoryManager: migrated " + migrated
+                + " record(s) from legacy files into the '" + StorageManager.getInstance().getActiveType() + "' storage backend.");
         }
     }
 }

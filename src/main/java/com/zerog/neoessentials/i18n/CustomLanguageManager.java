@@ -2,6 +2,7 @@ package com.zerog.neoessentials.i18n;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.neoforged.fml.loading.FMLPaths;
@@ -27,10 +28,14 @@ public class CustomLanguageManager {
     @SuppressWarnings("unused") // kept for external tools that may reference this constant
     private static final String LANG_DIR = "neoessentials/languages/custom/";
     private static final String LANG_FILE = "en_us.json";
+    /** Collection/id for the admin translation-override document in the active DataStore. */
+    private static final String OVERRIDES_COLLECTION = "language_overrides";
+    private static final String OVERRIDES_ID = "global";
     private final Path customLangDir;
     private final Path templatesDir;
     private final Path overridesFile;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private final com.zerog.neoessentials.storage.DataStore store;
 
     // Track missing translation keys for template generation
     private final Set<String> missingKeys = ConcurrentHashMap.newKeySet();
@@ -44,6 +49,7 @@ public class CustomLanguageManager {
         this.customLangDir = resolveModDataPath("languages", "custom");
         this.templatesDir = resolveModDataPath("languages", "templates");
         this.overridesFile = resolveModDataPath("languages", "overrides.json");
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
         LOGGER.info("[LANG] Custom language directory set to: {}", this.customLangDir.toAbsolutePath());
         LOGGER.info("[LANG] Template directory set to: {}", this.templatesDir.toAbsolutePath());
         LOGGER.info("[LANG] Overrides file set to: {}", this.overridesFile.toAbsolutePath());
@@ -498,37 +504,69 @@ public class CustomLanguageManager {
     // =========================================================================
 
     /**
-     * Load admin overrides from overrides.json.
-     * Overrides take priority over all language files.
+     * Load admin overrides from the active {@link com.zerog.neoessentials.storage.DataStore}.
+     * Overrides take priority over all language files. Migrates the legacy overrides.json
+     * file into the store on first run (see {@link #migrateLegacyOverridesIfNeeded()}).
      */
     private void loadOverrides() {
-        if (!Files.exists(overridesFile)) {
+        migrateLegacyOverridesIfNeeded();
+        JsonObject doc = store.get(OVERRIDES_COLLECTION, OVERRIDES_ID);
+        if (doc == null) {
             return;
         }
-        try (Reader reader = Files.newBufferedReader(overridesFile, StandardCharsets.UTF_8)) {
-            Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> loaded = gson.fromJson(reader, type);
-            if (loaded != null) {
-                overrides.putAll(loaded);
-                LOGGER.info("Loaded {} admin translation override(s) from {}", loaded.size(), overridesFile);
+        int count = 0;
+        for (Map.Entry<String, com.google.gson.JsonElement> entry : doc.entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) {
+                overrides.put(entry.getKey(), entry.getValue().getAsString());
+                count++;
             }
+        }
+        LOGGER.info("Loaded {} admin translation override(s) from storage", count);
+    }
+
+    /**
+     * Save admin overrides to the active {@link com.zerog.neoessentials.storage.DataStore},
+     * as a single document keyed by {@link #OVERRIDES_ID} (overrides are global, not
+     * per-language).
+     */
+    private void saveOverrides() {
+        try {
+            JsonObject doc = new JsonObject();
+            for (Map.Entry<String, String> entry : overrides.entrySet()) {
+                doc.addProperty(entry.getKey(), entry.getValue());
+            }
+            store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
+            LOGGER.info("Saved {} admin translation override(s) to storage", overrides.size());
         } catch (Exception e) {
-            LOGGER.error("Failed to load translation overrides from {}: {}", overridesFile, e.getMessage(), e);
+            LOGGER.error("Failed to save translation overrides: {}", e.getMessage(), e);
         }
     }
 
     /**
-     * Save admin overrides to overrides.json.
+     * One-time import of the legacy languages/overrides.json file into the active
+     * DataStore, if it's still empty and storage.autoMigrate is enabled. The old file is
+     * a flat {@code Map<String,String>} of override key -> value; it becomes a single
+     * document ({@link #OVERRIDES_COLLECTION}/{@link #OVERRIDES_ID}) with the same fields.
      */
-    private void saveOverrides() {
-        try {
-            Files.createDirectories(overridesFile.getParent());
-            try (Writer writer = Files.newBufferedWriter(overridesFile, StandardCharsets.UTF_8)) {
-                gson.toJson(overrides, writer);
+    private void migrateLegacyOverridesIfNeeded() {
+        if (store.hasAnyData(OVERRIDES_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        if (!Files.exists(overridesFile)) return;
+
+        try (Reader reader = Files.newBufferedReader(overridesFile, StandardCharsets.UTF_8)) {
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            Map<String, String> loaded = gson.fromJson(reader, type);
+            if (loaded != null && !loaded.isEmpty()) {
+                JsonObject doc = new JsonObject();
+                for (Map.Entry<String, String> entry : loaded.entrySet()) {
+                    doc.addProperty(entry.getKey(), entry.getValue());
+                }
+                store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
+                LOGGER.info("CustomLanguageManager: migrated {} admin translation override(s) from legacy overrides.json into the '{}' storage backend.",
+                    loaded.size(), com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
             }
-            LOGGER.info("Saved {} admin translation override(s) to {}", overrides.size(), overridesFile);
         } catch (Exception e) {
-            LOGGER.error("Failed to save translation overrides: {}", e.getMessage(), e);
+            LOGGER.error("Failed to migrate legacy translation overrides from {}: {}", overridesFile, e.getMessage(), e);
         }
     }
 

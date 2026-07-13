@@ -1,17 +1,13 @@
 package com.zerog.neoessentials.permissions;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,16 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages permission node aliases, allowing short/legacy names to be mapped to
  * their canonical NeoEssentials equivalents.
  *
- * <p>Configuration file: {@code config/neoessentials/permission_aliases.json}
- *
- * <p>Example content:
- * <pre>
- * {
- *   "essentials.fly"          : "neoessentials.fly",
- *   "essentials.warp"         : "neoessentials.teleport.warp",
- *   "efly"                    : "neoessentials.fly"
- * }
- * </pre>
+ * <p>Persisted via the active {@link com.zerog.neoessentials.storage.DataStore} in the
+ * {@code permission_aliases} collection — one record per alias, keyed by the alias
+ * itself, with a {@code target} field holding the canonical node. Legacy installs are
+ * migrated in from {@code config/neoessentials/permission_aliases.json} the first time
+ * the collection is empty (see {@link #migrateLegacyFileIfNeeded()}).
  *
  * <p>Aliases are resolved <em>transparently</em> inside
  * {@link com.zerog.neoessentials.api.permissions.PermissionAPI#hasPermission} before
@@ -39,9 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PermissionAliasManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionAliasManager.class);
-    private static final Gson   GSON   = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private static final Path   FILE   =
-            com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permission_aliases.json");
+    private static final String COLLECTION = "permission_aliases";
+
+    private final com.zerog.neoessentials.storage.DataStore store;
 
     /** alias (lower-case) → canonical node (lower-case). */
     private final Map<String, String> aliases = new ConcurrentHashMap<>();
@@ -50,7 +41,11 @@ public class PermissionAliasManager {
 
     private static volatile PermissionAliasManager INSTANCE;
 
-    private PermissionAliasManager() {}
+    private PermissionAliasManager() {
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFileIfNeeded();
+        load();
+    }
 
     public static PermissionAliasManager getInstance() {
         if (INSTANCE == null) {
@@ -64,45 +59,38 @@ public class PermissionAliasManager {
     // ── Load / Save ──────────────────────────────────────────────────────────
 
     /**
-     * Load aliases from disk.  Missing file is silently ignored (no aliases active).
+     * Load aliases from the active {@link com.zerog.neoessentials.storage.DataStore}.
+     * An empty collection is silently ignored (no aliases active).
      */
     public void load() {
         aliases.clear();
-        if (!Files.exists(FILE)) {
-            LOGGER.debug("permission_aliases.json not found — no aliases active.");
-            return;
-        }
-        try (Reader r = Files.newBufferedReader(FILE)) {
-            JsonObject obj = JsonParser.parseReader(r).getAsJsonObject();
-            for (Map.Entry<String, com.google.gson.JsonElement> entry : obj.entrySet()) {
-                String alias     = entry.getKey().toLowerCase().trim();
-                String canonical = entry.getValue().getAsString().toLowerCase().trim();
-                if (!alias.isEmpty() && !canonical.isEmpty()) {
-                    aliases.put(alias, canonical);
-                }
+        for (JsonObject obj : store.getAll(COLLECTION).values()) {
+            if (!obj.has("target") || !obj.has("alias")) continue;
+            String alias     = obj.get("alias").getAsString().toLowerCase().trim();
+            String canonical = obj.get("target").getAsString().toLowerCase().trim();
+            if (!alias.isEmpty() && !canonical.isEmpty()) {
+                aliases.put(alias, canonical);
             }
-            LOGGER.info("Loaded {} permission alias(es) from permission_aliases.json", aliases.size());
-        } catch (Exception e) {
-            LOGGER.warn("Failed to load permission_aliases.json: {}", e.getMessage());
         }
+        LOGGER.info("Loaded {} permission alias(es) from storage.", aliases.size());
     }
 
     /**
-     * Persist the current alias map to disk atomically.
+     * Persist the current alias map to the active DataStore. One record per alias,
+     * so this rewrites every alias — cheap since the alias table is expected to stay
+     * small (short/legacy node mappings, not per-player data).
      */
     public void save() throws IOException {
-        JsonObject obj = new JsonObject();
-        aliases.entrySet().stream()
-               .sorted(Map.Entry.comparingByKey())
-               .forEach(e -> obj.addProperty(e.getKey(), e.getValue()));
-        Files.createDirectories(FILE.getParent());
-        Path tmp = FILE.resolveSibling(FILE.getFileName() + ".tmp");
-        try (Writer w = Files.newBufferedWriter(tmp)) {
-            GSON.toJson(obj, w);
+        for (Map.Entry<String, String> e : aliases.entrySet()) {
+            store.put(COLLECTION, e.getKey(), toJson(e.getKey(), e.getValue()));
         }
-        Files.move(tmp, FILE,
-            java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-            java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    private JsonObject toJson(String alias, String canonical) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("alias", alias);
+        obj.addProperty("target", canonical);
+        return obj;
     }
 
     // ── Alias resolution ─────────────────────────────────────────────────────
@@ -129,7 +117,10 @@ public class PermissionAliasManager {
      * @param canonical the canonical NeoEssentials node it maps to
      */
     public void addAlias(String alias, String canonical) {
-        aliases.put(alias.toLowerCase().trim(), canonical.toLowerCase().trim());
+        String key = alias.toLowerCase().trim();
+        String target = canonical.toLowerCase().trim();
+        aliases.put(key, target);
+        store.put(COLLECTION, key, toJson(key, target));
     }
 
     /**
@@ -139,7 +130,10 @@ public class PermissionAliasManager {
      * @return {@code true} if it existed
      */
     public boolean removeAlias(String alias) {
-        return aliases.remove(alias.toLowerCase().trim()) != null;
+        String key = alias.toLowerCase().trim();
+        boolean removed = aliases.remove(key) != null;
+        if (removed) store.delete(COLLECTION, key);
+        return removed;
     }
 
     /** Returns an unmodifiable snapshot of all current aliases (alias → canonical). */
@@ -151,5 +145,38 @@ public class PermissionAliasManager {
     public boolean hasAlias(String alias) {
         return aliases.containsKey(alias.toLowerCase().trim());
     }
-}
 
+    // ── Legacy migration ─────────────────────────────────────────────────────
+
+    /**
+     * One-time import of the legacy {@code permission_aliases.json} config file into the
+     * active DataStore, if it's still empty and storage.autoMigrate is enabled.
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        File file = com.zerog.neoessentials.util.ResourceUtil.getConfigFile("permission_aliases.json");
+        if (!file.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            for (Map.Entry<String, com.google.gson.JsonElement> entry : root.entrySet()) {
+                String alias     = entry.getKey().toLowerCase().trim();
+                String canonical = entry.getValue().getAsString().toLowerCase().trim();
+                if (alias.isEmpty() || canonical.isEmpty()) continue;
+                store.put(COLLECTION, alias, toJson(alias, canonical));
+                migrated++;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to migrate legacy permission_aliases.json: {}", e.getMessage());
+            return;
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("PermissionAliasManager: migrated {} permission alias(es) from legacy file into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
+        }
+    }
+}

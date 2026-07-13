@@ -25,7 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SpawnManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpawnManager.class);
     private static final String SPAWN_FILE = "spawn.json";
-    
+    private static final String SPAWN_COLLECTION = "spawn";
+    private static final String SPAWN_ID = "global";
+    private final com.zerog.neoessentials.storage.DataStore store =
+        com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+
     // Singleton pattern
     private static class SingletonHolder {
         private static final SpawnManager INSTANCE = new SpawnManager();
@@ -49,6 +53,7 @@ public class SpawnManager {
 
     private SpawnManager() {
         loadConfig();
+        migrateLegacyFilesIfNeeded();
         loadSpawn();
     }
 
@@ -362,42 +367,35 @@ public class SpawnManager {
     }
     
     /**
-     * Load spawn from file
+     * Load spawn from the active {@link com.zerog.neoessentials.storage.DataStore}.
      */
     private void loadSpawn() {
         try {
-            File file = ResourceUtil.getDataFile(SPAWN_FILE);
-            if (!file.exists()) {
-                LOGGER.info("No spawn file found, using world spawn");
+            JsonObject root = store.get(SPAWN_COLLECTION, SPAWN_ID);
+            if (root == null) {
+                LOGGER.info("No spawn record found, using world spawn");
                 return;
             }
-            
-            String content = java.nio.file.Files.readString(file.toPath());
-            if (content.trim().isEmpty()) {
-                return;
-            }
-            
-            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
-            
+
             if (root.has("spawn")) {
                 JsonObject spawnJson = root.getAsJsonObject("spawn");
                 spawnLocation = TeleportLocation.fromJson(spawnJson);
-                
+
                 if (spawnLocation != null) {
                     LOGGER.info("Loaded spawn location: {}", spawnLocation.getLocationString());
                 } else {
-                    LOGGER.warn("Failed to parse spawn location from file");
+                    LOGGER.warn("Failed to parse spawn location from storage");
                 }
             }
-            
-            // Load legacy configuration fields from spawn.json.
+
+            // Load legacy configuration fields from the spawn record.
             // NOTE: requireSafeLocation is intentionally NOT read here; it is read at
             // runtime from config.json by isSpawnSafetyEnabled(). Reading it from
-            // spawn.json would silently override any change made to enableSpawnSafety
-            // in config.json after the initial save.
+            // the spawn record would silently override any change made to
+            // enableSpawnSafety in config.json after the initial save.
             if (root.has("config")) {
                 JsonObject config = root.getAsJsonObject("config");
-                // teleportDelay is now read from config.json (generalSettings.teleportDelay), not spawn.json
+                // teleportDelay is now read from config.json (generalSettings.teleportDelay), not here
                 if (config.has("allowSetSpawnInNether")) {
                     allowSetSpawnInNether = config.get("allowSetSpawnInNether").getAsBoolean();
                 }
@@ -405,39 +403,59 @@ public class SpawnManager {
                     allowSetSpawnInEnd = config.get("allowSetSpawnInEnd").getAsBoolean();
                 }
             }
-            
+
         } catch (Exception e) {
-            LOGGER.error("Failed to load spawn from file", e);
+            LOGGER.error("Failed to load spawn from storage", e);
         }
     }
-    
+
     /**
-     * Save spawn to file
+     * Save spawn to the active DataStore as a single document (collection "spawn",
+     * id "global").
      */
     private void saveSpawn() {
         try {
             JsonObject root = new JsonObject();
-            
-            // Save spawn location
+
             if (spawnLocation != null) {
                 root.add("spawn", spawnLocation.toJson());
             }
-            
-            // Save configuration
+
             JsonObject config = new JsonObject();
             config.addProperty("teleportDelay", teleportDelay);
             config.addProperty("requireSafeLocation", requireSafeLocation);
             config.addProperty("allowSetSpawnInNether", allowSetSpawnInNether);
             config.addProperty("allowSetSpawnInEnd", allowSetSpawnInEnd);
             root.add("config", config);
-            
-            ResourceUtil.ensureDataDirectory();
-            File file = ResourceUtil.getDataFile(SPAWN_FILE);
-            java.nio.file.Files.writeString(file.toPath(),
-                new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(root));
-            
+
+            store.put(SPAWN_COLLECTION, SPAWN_ID, root);
+
         } catch (Exception e) {
-            LOGGER.error("Failed to save spawn to file", e);
+            LOGGER.error("Failed to save spawn to storage", e);
+        }
+    }
+
+    /**
+     * One-time import of the legacy spawn.json file into the active DataStore, if it's
+     * still empty and storage.autoMigrate is enabled.
+     */
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(SPAWN_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        try {
+            File file = ResourceUtil.getDataFile(SPAWN_FILE);
+            if (!file.exists()) return;
+
+            String content = java.nio.file.Files.readString(file.toPath());
+            if (content.trim().isEmpty()) return;
+
+            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
+            store.put(SPAWN_COLLECTION, SPAWN_ID, root);
+            LOGGER.info("SpawnManager: migrated legacy spawn.json into the '{}' storage backend.",
+                com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
+        } catch (Exception e) {
+            LOGGER.error("Failed to migrate legacy spawn.json: {}", e.getMessage());
         }
     }
     

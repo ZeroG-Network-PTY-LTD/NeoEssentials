@@ -2,13 +2,11 @@ package com.zerog.neoessentials.permissions;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,8 +14,24 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zerog.neoessentials.storage.DataStore;
+import com.zerog.neoessentials.storage.StorageManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Persists permission groups and users through the pluggable {@link DataStore}
+ * (JSON/YAML/SQLite/MySQL — see {@link StorageManager}), instead of the old bespoke
+ * {@code permissions.json} / {@code permissions/playerdata.json} files.
+ *
+ * <p>Unlike most managers, this isn't append-only per-record CRUD: {@link #save} is called
+ * with the FULL current state of the {@link PermissionManager} and must make the DataStore
+ * collections match exactly — including deleting any group/user record that no longer exists
+ * in-memory (e.g. a deleted group or a user reset to defaults), since {@link DataStore} has no
+ * "replace whole collection" primitive.
+ */
 public class PermissionStorage {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionStorage.class);
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
@@ -25,260 +39,285 @@ public class PermissionStorage {
     private static final Path FILE_PATH = com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permissions.json");
     private static final Path PLAYERDATA_PATH = com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permissions/playerdata.json");
 
+    private static final String GROUP_COLLECTION = "permission_groups";
+    private static final String USER_COLLECTION = "permission_users";
+    private static final String META_COLLECTION = "permission_meta";
+
+    private static DataStore store() {
+        return StorageManager.getInstance().getStore();
+    }
+
     public static void save(PermissionManager manager) throws IOException {
-        // If using external permissions, do not save or backup internal permissions.json
+        // If using external permissions, do not persist internal permission data at all.
         if (com.zerog.neoessentials.permissions.PermissionSystem.isUsingExternal()) {
             return;
         }
-        // Save groups to permissions.json (atomic operation)
-        Map<String, Object> groupData = new HashMap<>();
-        groupData.put("defaultGroup", manager.getDefaultGroup());
-        List<Object> groups = new ArrayList<>();
-        for (PermissionGroup group : manager.getGroups()) {
-            Map<String, Object> g = new HashMap<>();
-            g.put("name", group.getName());
-            g.put("prefix", group.getPrefix());
-            g.put("suffix", group.getSuffix());
-            g.put("priority", group.getPriority());
-            g.put("permissions", group.getPermissions());
-            g.put("inherits", group.getInherits());
-            // Persist only unexpired group temp permissions
-            Map<String, Long> activeTemps = new HashMap<>();
-            long nowG = System.currentTimeMillis();
-            group.getTempPermissions().forEach((node, expiry) -> {
-                if (expiry > nowG) activeTemps.put(node, expiry);
-            });
-            if (!activeTemps.isEmpty()) g.put("tempPermissions", activeTemps);
-            // Contextual permissions
-            Map<String, Map<String, Boolean>> ctxPerms = group.getContextualPermissions();
-            if (!ctxPerms.isEmpty()) g.put("contextualPermissions", ctxPerms);
-            // Per-node conditions
-            Map<String, String> conditions = group.getConditions();
-            if (!conditions.isEmpty()) g.put("conditions", conditions);
-            groups.add(g);
-        }
-        groupData.put("groups", groups);
-        Files.createDirectories(FILE_PATH.getParent());
-        
-        // Write to temporary file first, then atomic move
-        Path tempFile = FILE_PATH.resolveSibling(FILE_PATH.getFileName() + ".tmp");
-        try (Writer writer = Files.newBufferedWriter(tempFile)) {
-            GSON.toJson(groupData, writer);
-        }
-        Files.move(tempFile, FILE_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        DataStore store = store();
 
-        // Save users to playerdata.json (atomic operation)
-        List<Object> users = new ArrayList<>();
-        long now = System.currentTimeMillis();
+        // Meta (default group)
+        JsonObject meta = new JsonObject();
+        meta.addProperty("defaultGroup", manager.getDefaultGroup());
+        store.put(META_COLLECTION, "global", meta);
+
+        // Groups — write current groups, then delete any stored group no longer present.
+        Set<String> currentGroupNames = new HashSet<>();
+        for (PermissionGroup group : manager.getGroups()) {
+            currentGroupNames.add(group.getName());
+            store.put(GROUP_COLLECTION, group.getName(), groupToJson(group));
+        }
+        for (String existingId : store.getAll(GROUP_COLLECTION).keySet()) {
+            if (!currentGroupNames.contains(existingId)) {
+                store.delete(GROUP_COLLECTION, existingId);
+            }
+        }
+
+        // Users — same replace-by-diff approach.
+        Set<String> currentUserIds = new HashSet<>();
         for (PermissionUser user : manager.getUsers()) {
-            Map<String, Object> u = new HashMap<>();
-            u.put("uuid", user.getUuid().toString());
-            u.put("group", user.getGroup());
-            u.put("permissions", user.getPermissions());
-            if (!user.getPrefix().isEmpty()) u.put("prefix", user.getPrefix());
-            if (!user.getSuffix().isEmpty()) u.put("suffix", user.getSuffix());
-            // Persist only unexpired temp permissions
-            Map<String, Long> activeTemps = new HashMap<>();
-            user.getTempPermissions().forEach((node, expiry) -> {
-                if (expiry > now) activeTemps.put(node, expiry);
-            });
-            if (!activeTemps.isEmpty()) u.put("tempPermissions", activeTemps);
-            // Contextual permissions
-            Map<String, Map<String, Boolean>> ctxPerms = user.getContextualPermissions();
-            if (!ctxPerms.isEmpty()) u.put("contextualPermissions", ctxPerms);
-            // Per-node conditions
-            Map<String, String> conds = user.getConditions();
-            if (!conds.isEmpty()) u.put("conditions", conds);
-            users.add(u);
+            String id = user.getUuid().toString();
+            currentUserIds.add(id);
+            store.put(USER_COLLECTION, id, userToJson(user));
         }
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("users", users);
-        Files.createDirectories(PLAYERDATA_PATH.getParent());
-        
-        // Write to temporary file first, then atomic move
-        Path tempUserFile = PLAYERDATA_PATH.resolveSibling(PLAYERDATA_PATH.getFileName() + ".tmp");
-        try (Writer writer = Files.newBufferedWriter(tempUserFile)) {
-            GSON.toJson(userData, writer);
+        for (String existingId : store.getAll(USER_COLLECTION).keySet()) {
+            if (!currentUserIds.contains(existingId)) {
+                store.delete(USER_COLLECTION, existingId);
+            }
         }
-        Files.move(tempUserFile, PLAYERDATA_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static void load(PermissionManager manager) throws IOException {
-        // If using external permissions, do not load internal permissions.json
+        // If using external permissions, do not load internal permission data.
         if (com.zerog.neoessentials.permissions.PermissionSystem.isUsingExternal()) {
             return;
         }
-        // Load groups from permissions.json
-        if (Files.exists(FILE_PATH)) {
-            try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
-                Map<?, ?> groupData = GSON.fromJson(reader, Map.class);
-                if (groupData == null) return;
-                Object defaultGroup = groupData.get("defaultGroup");
-                if (defaultGroup != null) manager.setDefaultGroup(defaultGroup.toString());
-                Object groups = groupData.get("groups");
-                if (groups instanceof List<?>) {
-                    for (Object o : (List<?>) groups) {
-                        if (o instanceof Map<?, ?> g) {
-                            PermissionGroup group = new PermissionGroup(g.get("name").toString());
-                            group.setPrefix((String) g.get("prefix"));
-                            group.setSuffix((String) g.get("suffix"));
-                            // Priority (optional, defaults to 0)
-                            Object priorityObj = g.get("priority");
-                            if (priorityObj instanceof Number n) {
-                                group.setPriority(n.intValue());
-                            }
-                            // Permissions
-                            Object permsObj = g.get("permissions");
-                            if (permsObj instanceof List<?>) {
-                                for (Object perm : (List<?>) permsObj) {
-                                    if (perm != null) group.addPermission(perm.toString());
-                                }
-                            }
-                            // Inherits
-                            Object inheritsObj = g.get("inherits");
-                            if (inheritsObj instanceof List<?>) {
-                                for (Object inh : (List<?>) inheritsObj) {
-                                    if (inh != null) group.addInheritance(inh.toString());
-                                }
-                            }
-                            // Temp permissions (skip expired)
-                            Object tempPermsObj = g.get("tempPermissions");
-                            if (tempPermsObj instanceof Map<?, ?> tempMap) {
-                                long nowLoad = System.currentTimeMillis();
-                                for (Map.Entry<?, ?> entry : tempMap.entrySet()) {
-                                    if (entry.getKey() != null && entry.getValue() instanceof Number n) {
-                                        long expiry = n.longValue();
-                                        if (expiry > nowLoad) {
-                                            group.addTempPermission(entry.getKey().toString(), expiry);
-                                        }
-                                    }
-                                }
-                            }
-                            // Contextual permissions
-                            Object ctxObj = g.get("contextualPermissions");
-                            if (ctxObj instanceof Map<?, ?> ctxMap) {
-                                for (Map.Entry<?, ?> ctxEntry : ctxMap.entrySet()) {
-                                    if (ctxEntry.getValue() instanceof Map<?, ?> nodeMap) {
-                                        String ctxKey = ctxEntry.getKey().toString();
-                                        for (Map.Entry<?, ?> ne : nodeMap.entrySet()) {
-                                            if (ne.getKey() != null && ne.getValue() instanceof Boolean b) {
-                                                group.addContextPermission(ctxKey, ne.getKey().toString(), b);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            // Per-node conditions
-                            Object condObj = g.get("conditions");
-                            if (condObj instanceof Map<?, ?> condMap) {
-                                for (Map.Entry<?, ?> ce : condMap.entrySet()) {
-                                    if (ce.getKey() != null && ce.getValue() != null) {
-                                        group.setCondition(ce.getKey().toString(), ce.getValue().toString());
-                                    }
-                                }
-                            }
-                            manager.addGroup(group);
-                        }
+        DataStore store = store();
+        migrateLegacyFilesIfNeeded(store);
+
+        JsonObject meta = store.get(META_COLLECTION, "global");
+        if (meta != null && meta.has("defaultGroup") && !meta.get("defaultGroup").isJsonNull()) {
+            manager.setDefaultGroup(meta.get("defaultGroup").getAsString());
+        }
+
+        for (JsonObject g : store.getAll(GROUP_COLLECTION).values()) {
+            manager.addGroup(groupFromJson(g));
+        }
+
+        for (JsonObject u : store.getAll(USER_COLLECTION).values()) {
+            manager.addUser(userFromJson(u));
+        }
+    }
+
+    // ── JSON conversion ─────────────────────────────────────────────────────────
+
+    private static JsonObject groupToJson(PermissionGroup group) {
+        JsonObject g = new JsonObject();
+        g.addProperty("name", group.getName());
+        g.addProperty("prefix", group.getPrefix());
+        g.addProperty("suffix", group.getSuffix());
+        g.addProperty("priority", group.getPriority());
+
+        JsonArray perms = new JsonArray();
+        group.getPermissions().forEach(perms::add);
+        g.add("permissions", perms);
+
+        JsonArray inherits = new JsonArray();
+        group.getInherits().forEach(inherits::add);
+        g.add("inherits", inherits);
+
+        long now = System.currentTimeMillis();
+        JsonObject tempPerms = new JsonObject();
+        group.getTempPermissions().forEach((node, expiry) -> {
+            if (expiry > now) tempPerms.addProperty(node, expiry);
+        });
+        g.add("tempPermissions", tempPerms);
+
+        JsonObject ctxPerms = new JsonObject();
+        group.getContextualPermissions().forEach((ctxKey, nodeMap) -> {
+            JsonObject nodeObj = new JsonObject();
+            nodeMap.forEach(nodeObj::addProperty);
+            ctxPerms.add(ctxKey, nodeObj);
+        });
+        g.add("contextualPermissions", ctxPerms);
+
+        JsonObject conditions = new JsonObject();
+        group.getConditions().forEach(conditions::addProperty);
+        g.add("conditions", conditions);
+
+        return g;
+    }
+
+    private static PermissionGroup groupFromJson(JsonObject g) {
+        PermissionGroup group = new PermissionGroup(g.get("name").getAsString());
+        if (g.has("prefix") && !g.get("prefix").isJsonNull()) group.setPrefix(g.get("prefix").getAsString());
+        if (g.has("suffix") && !g.get("suffix").isJsonNull()) group.setSuffix(g.get("suffix").getAsString());
+        if (g.has("priority") && !g.get("priority").isJsonNull()) group.setPriority(g.get("priority").getAsInt());
+
+        if (g.has("permissions")) {
+            for (JsonElement p : g.getAsJsonArray("permissions")) {
+                if (!p.isJsonNull()) group.addPermission(p.getAsString());
+            }
+        }
+        if (g.has("inherits")) {
+            for (JsonElement inh : g.getAsJsonArray("inherits")) {
+                if (!inh.isJsonNull()) group.addInheritance(inh.getAsString());
+            }
+        }
+        if (g.has("tempPermissions") && g.get("tempPermissions").isJsonObject()) {
+            long now = System.currentTimeMillis();
+            for (Map.Entry<String, JsonElement> entry : g.getAsJsonObject("tempPermissions").entrySet()) {
+                long expiry = entry.getValue().getAsLong();
+                if (expiry > now) group.addTempPermission(entry.getKey(), expiry);
+            }
+        }
+        if (g.has("contextualPermissions") && g.get("contextualPermissions").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> ctxEntry : g.getAsJsonObject("contextualPermissions").entrySet()) {
+                if (ctxEntry.getValue().isJsonObject()) {
+                    for (Map.Entry<String, JsonElement> ne : ctxEntry.getValue().getAsJsonObject().entrySet()) {
+                        group.addContextPermission(ctxEntry.getKey(), ne.getKey(), ne.getValue().getAsBoolean());
                     }
                 }
             }
         }
+        if (g.has("conditions") && g.get("conditions").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> ce : g.getAsJsonObject("conditions").entrySet()) {
+                if (!ce.getValue().isJsonNull()) group.setCondition(ce.getKey(), ce.getValue().getAsString());
+            }
+        }
+        return group;
+    }
 
-        // Load users from playerdata.json
-        if (Files.exists(PLAYERDATA_PATH)) {
-            try (Reader reader = Files.newBufferedReader(PLAYERDATA_PATH)) {
-                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                JsonArray users = root.getAsJsonArray("users");
-                for (JsonElement ue : users) {
-                    JsonObject u = ue.getAsJsonObject();
-                    PermissionUser user = new PermissionUser(
-                        UUID.fromString(u.get("uuid").getAsString()),
-                        u.get("group").getAsString());
-                    for (JsonElement p : u.getAsJsonArray("permissions")) {
-                        user.addPermission(p.getAsString());
+    private static JsonObject userToJson(PermissionUser user) {
+        JsonObject u = new JsonObject();
+        u.addProperty("uuid", user.getUuid().toString());
+        u.addProperty("group", user.getGroup());
+
+        JsonArray perms = new JsonArray();
+        user.getPermissions().forEach(perms::add);
+        u.add("permissions", perms);
+
+        if (!user.getPrefix().isEmpty()) u.addProperty("prefix", user.getPrefix());
+        if (!user.getSuffix().isEmpty()) u.addProperty("suffix", user.getSuffix());
+
+        long now = System.currentTimeMillis();
+        JsonObject tempPerms = new JsonObject();
+        user.getTempPermissions().forEach((node, expiry) -> {
+            if (expiry > now) tempPerms.addProperty(node, expiry);
+        });
+        u.add("tempPermissions", tempPerms);
+
+        JsonObject ctxPerms = new JsonObject();
+        user.getContextualPermissions().forEach((ctxKey, nodeMap) -> {
+            JsonObject nodeObj = new JsonObject();
+            nodeMap.forEach(nodeObj::addProperty);
+            ctxPerms.add(ctxKey, nodeObj);
+        });
+        u.add("contextualPermissions", ctxPerms);
+
+        JsonObject conditions = new JsonObject();
+        user.getConditions().forEach(conditions::addProperty);
+        u.add("conditions", conditions);
+
+        return u;
+    }
+
+    private static PermissionUser userFromJson(JsonObject u) {
+        PermissionUser user = new PermissionUser(
+            UUID.fromString(u.get("uuid").getAsString()),
+            u.get("group").getAsString());
+
+        if (u.has("permissions")) {
+            for (JsonElement p : u.getAsJsonArray("permissions")) {
+                if (!p.isJsonNull()) user.addPermission(p.getAsString());
+            }
+        }
+        if (u.has("prefix") && !u.get("prefix").isJsonNull()) user.setPrefix(u.get("prefix").getAsString());
+        if (u.has("suffix") && !u.get("suffix").isJsonNull()) user.setSuffix(u.get("suffix").getAsString());
+
+        if (u.has("tempPermissions") && u.get("tempPermissions").isJsonObject()) {
+            long now = System.currentTimeMillis();
+            for (Map.Entry<String, JsonElement> entry : u.getAsJsonObject("tempPermissions").entrySet()) {
+                long expiry = entry.getValue().getAsLong();
+                if (expiry > now) user.addTempPermission(entry.getKey(), expiry);
+            }
+        }
+        if (u.has("contextualPermissions") && u.get("contextualPermissions").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> ctxEntry : u.getAsJsonObject("contextualPermissions").entrySet()) {
+                if (ctxEntry.getValue().isJsonObject()) {
+                    for (Map.Entry<String, JsonElement> ne : ctxEntry.getValue().getAsJsonObject().entrySet()) {
+                        user.addContextPermission(ctxEntry.getKey(), ne.getKey(), ne.getValue().getAsBoolean());
                     }
-                    if (u.has("prefix") && !u.get("prefix").isJsonNull())
-                        user.setPrefix(u.get("prefix").getAsString());
-                    if (u.has("suffix") && !u.get("suffix").isJsonNull())
-                        user.setSuffix(u.get("suffix").getAsString());
-                    // Load temp permissions (skip expired)
-                    if (u.has("tempPermissions") && u.get("tempPermissions").isJsonObject()) {
-                        long nowLoad = System.currentTimeMillis();
-                        for (Map.Entry<String, com.google.gson.JsonElement> entry :
-                                u.getAsJsonObject("tempPermissions").entrySet()) {
-                            long expiry = entry.getValue().getAsLong();
-                            if (expiry > nowLoad) {
-                                user.addTempPermission(entry.getKey(), expiry);
-                            }
-                        }
-                    }
-                    // Load contextual permissions
-                    if (u.has("contextualPermissions") && u.get("contextualPermissions").isJsonObject()) {
-                        for (Map.Entry<String, com.google.gson.JsonElement> ctxEntry :
-                                u.getAsJsonObject("contextualPermissions").entrySet()) {
-                            if (ctxEntry.getValue().isJsonObject()) {
-                                for (Map.Entry<String, com.google.gson.JsonElement> ne :
-                                        ctxEntry.getValue().getAsJsonObject().entrySet()) {
-                                    user.addContextPermission(ctxEntry.getKey(), ne.getKey(),
-                                        ne.getValue().getAsBoolean());
-                                }
-                            }
-                        }
-                    }
-                    // Load per-node conditions
-                    if (u.has("conditions") && u.get("conditions").isJsonObject()) {
-                        for (Map.Entry<String, com.google.gson.JsonElement> ce :
-                                u.getAsJsonObject("conditions").entrySet()) {
-                            user.setCondition(ce.getKey(), ce.getValue().getAsString());
-                        }
-                    }
-                    manager.addUser(user);
                 }
             }
-        } else {
-            // Migration: If playerdata.json does not exist but users are in permissions.json, migrate them
+        }
+        if (u.has("conditions") && u.get("conditions").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> ce : u.getAsJsonObject("conditions").entrySet()) {
+                if (!ce.getValue().isJsonNull()) user.setCondition(ce.getKey(), ce.getValue().getAsString());
+            }
+        }
+        return user;
+    }
+
+    /**
+     * One-time import of the legacy {@code permissions.json} (groups + a possible embedded
+     * {@code users} array from very old installs) and {@code permissions/playerdata.json}
+     * (users) into the active DataStore, if the group/user collections are still empty and
+     * {@code storage.autoMigrate} is enabled. Old files are left in place, untouched.
+     */
+    private static void migrateLegacyFilesIfNeeded(DataStore store) {
+        if (store.hasAnyData(GROUP_COLLECTION) || store.hasAnyData(USER_COLLECTION) || store.hasAnyData(META_COLLECTION)) {
+            return;
+        }
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        int migratedGroups = 0;
+        int migratedUsers = 0;
+
+        try {
             if (Files.exists(FILE_PATH)) {
                 try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
                     JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                    if (root.has("defaultGroup") && !root.get("defaultGroup").isJsonNull()) {
+                        JsonObject meta = new JsonObject();
+                        meta.addProperty("defaultGroup", root.get("defaultGroup").getAsString());
+                        store.put(META_COLLECTION, "global", meta);
+                    }
+                    if (root.has("groups")) {
+                        for (JsonElement ge : root.getAsJsonArray("groups")) {
+                            JsonObject g = ge.getAsJsonObject().deepCopy();
+                            String name = g.get("name").getAsString();
+                            store.put(GROUP_COLLECTION, name, g);
+                            migratedGroups++;
+                        }
+                    }
+                    // Very old installs embedded users directly in permissions.json.
                     if (root.has("users")) {
-                        JsonArray users = root.getAsJsonArray("users");
-                        List<Object> migratedUsers = new ArrayList<>();
-                        for (JsonElement ue : users) {
-                            JsonObject u = ue.getAsJsonObject();
-                            PermissionUser user = new PermissionUser(
-                                UUID.fromString(u.get("uuid").getAsString()),
-                                u.get("group").getAsString());
-                            for (JsonElement p : u.getAsJsonArray("permissions")) {
-                                user.addPermission(p.getAsString());
-                            }
-                            if (u.has("prefix") && !u.get("prefix").isJsonNull())
-                                user.setPrefix(u.get("prefix").getAsString());
-                            if (u.has("suffix") && !u.get("suffix").isJsonNull())
-                                user.setSuffix(u.get("suffix").getAsString());
-                            manager.addUser(user);
-                            Map<String, Object> userMap = new HashMap<>();
-                            userMap.put("uuid", user.getUuid().toString());
-                            userMap.put("group", user.getGroup());
-                            userMap.put("permissions", user.getPermissions());
-                            if (!user.getPrefix().isEmpty()) userMap.put("prefix", user.getPrefix());
-                            if (!user.getSuffix().isEmpty()) userMap.put("suffix", user.getSuffix());
-                            migratedUsers.add(userMap);
-                        }
-                        Map<String, Object> userData = new HashMap<>();
-                        userData.put("users", migratedUsers);
-                        Files.createDirectories(PLAYERDATA_PATH.getParent());
-                        try (Writer writer = Files.newBufferedWriter(PLAYERDATA_PATH)) {
-                            GSON.toJson(userData, writer);
-                        }
-                        // Remove users from permissions.json
-                        JsonObject newRoot = root.deepCopy();
-                        newRoot.remove("users");
-                        try (Writer writer = Files.newBufferedWriter(FILE_PATH)) {
-                            GSON.toJson(newRoot, writer);
+                        for (JsonElement ue : root.getAsJsonArray("users")) {
+                            JsonObject u = ue.getAsJsonObject().deepCopy();
+                            store.put(USER_COLLECTION, u.get("uuid").getAsString(), u);
+                            migratedUsers++;
                         }
                     }
                 }
             }
+            if (Files.exists(PLAYERDATA_PATH)) {
+                try (Reader reader = Files.newBufferedReader(PLAYERDATA_PATH)) {
+                    JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                    if (root.has("users")) {
+                        for (JsonElement ue : root.getAsJsonArray("users")) {
+                            JsonObject u = ue.getAsJsonObject().deepCopy();
+                            store.put(USER_COLLECTION, u.get("uuid").getAsString(), u);
+                            migratedUsers++;
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to migrate legacy permission files: {}", e.getMessage());
+        }
+
+        if (migratedGroups > 0 || migratedUsers > 0) {
+            LOGGER.info("PermissionStorage: migrated {} group(s) and {} user(s) from legacy files into the '{}' storage backend.",
+                migratedGroups, migratedUsers, StorageManager.getInstance().getActiveType());
         }
     }
 

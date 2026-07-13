@@ -13,9 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -58,6 +55,9 @@ public class AfkManager {
 
     // Data persistence
     private final File afkDataFile = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "afk_data.json");
+    private static final String COLLECTION = "afk_data";
+    private final com.zerog.neoessentials.storage.DataStore store =
+        com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
 
     // AFK configuration (will be loaded from config)
     private long afkTimeoutMs = 300000; // 5 minutes default
@@ -96,6 +96,7 @@ public class AfkManager {
     ));
     
     private AfkManager() {
+    migrateLegacyFileIfNeeded();
     loadAfkData();
     startAfkCheckTask();
     startAutoSaveTask();
@@ -538,39 +539,38 @@ public class AfkManager {
      */
     public void onPlayerLogout(UUID playerUuid) {
         playerData.remove(playerUuid);
-        queueSaveAfkData();
+        store.delete(COLLECTION, playerUuid.toString());
     }
-    
+
     /**
-     * Load AFK data from file
+     * Load AFK data from the active {@link com.zerog.neoessentials.storage.DataStore}.
+     * Only {@code lastActivity} is persisted — AFK status/reason/start-time are
+     * intentionally session-based and are never restored on server restart (matches the
+     * previous file-based behavior).
      */
     private void loadAfkData() {
-        if (!afkDataFile.exists()) return;
-        
-        try (FileReader reader = new FileReader(afkDataFile)) {
-            JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
-            
-            for (Map.Entry<String, com.google.gson.JsonElement> entry : data.entrySet()) {
+        try {
+            for (Map.Entry<String, JsonObject> entry : store.getAll(COLLECTION).entrySet()) {
                 try {
                     UUID uuid = UUID.fromString(entry.getKey());
-                    JsonObject playerJson = entry.getValue().getAsJsonObject();
-                    
+                    JsonObject playerJson = entry.getValue();
+
                     PlayerAfkData playerAfkData = new PlayerAfkData();
                     playerAfkData.setLastActivity(playerJson.get("lastActivity").getAsLong());
                     // Don't restore AFK status on server restart - all players start as active
-                    
+
                     playerData.put(uuid, playerAfkData);
                 } catch (Exception e) {
                     LOGGER.warn("Failed to load AFK data for entry: {}", entry.getKey());
                 }
             }
-            
+
             LOGGER.info("Loaded AFK data for {} players", playerData.size());
         } catch (Exception e) {
             LOGGER.error("Failed to load AFK data", e);
         }
     }
-    
+
     /**
      * Queue save of AFK data (async)
      */
@@ -587,41 +587,56 @@ public class AfkManager {
             LOGGER.debug("Cannot queue AFK data save - executor is shutting down");
         }
     }
-    
+
     /**
-     * Save AFK data to file
+     * Persist current AFK data (just {@code lastActivity} per player) to the active
+     * {@link com.zerog.neoessentials.storage.DataStore}, one record per tracked player.
      */
     private void saveAfkData() {
         try {
-            File parentDir = afkDataFile.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                if (!parentDir.mkdirs()) {
-                    LOGGER.error("Failed to create AFK data directory: {}", parentDir.getAbsolutePath());
-                    return;
-                }
-            }
-            
-            JsonObject data = new JsonObject();
             for (Map.Entry<UUID, PlayerAfkData> entry : playerData.entrySet()) {
                 JsonObject playerJson = new JsonObject();
-                PlayerAfkData playerData = entry.getValue();
-                
-                playerJson.addProperty("lastActivity", playerData.getLastActivity());
                 // Don't save AFK status - it's session-based
-                
-                data.add(entry.getKey().toString(), playerJson);
+                playerJson.addProperty("lastActivity", entry.getValue().getLastActivity());
+                store.put(COLLECTION, entry.getKey().toString(), playerJson);
             }
-            
-            File tempFile = new File(afkDataFile.getAbsolutePath() + ".tmp");
-            try (FileWriter writer = new FileWriter(tempFile)) {
-                GSON.toJson(data, writer);
-            }
-            
-            Files.move(tempFile.toPath(), afkDataFile.toPath(), 
-                StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                
         } catch (Exception e) {
             LOGGER.error("Failed to save AFK data", e);
+        }
+    }
+
+    /**
+     * One-time import of the legacy {@code afk_data.json} file into the active DataStore,
+     * if it's still empty and storage.autoMigrate is enabled.
+     */
+    private void migrateLegacyFileIfNeeded() {
+        if (store.hasAnyData(COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+        if (!afkDataFile.exists()) return;
+
+        int migrated = 0;
+        try (FileReader reader = new FileReader(afkDataFile)) {
+            JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
+            if (data == null) return;
+            for (Map.Entry<String, com.google.gson.JsonElement> entry : data.entrySet()) {
+                try {
+                    UUID uuid = UUID.fromString(entry.getKey());
+                    JsonObject playerJson = entry.getValue().getAsJsonObject();
+                    JsonObject record = new JsonObject();
+                    record.addProperty("lastActivity", playerJson.get("lastActivity").getAsLong());
+                    store.put(COLLECTION, uuid.toString(), record);
+                    migrated++;
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to migrate legacy AFK data for entry: {}", entry.getKey());
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to migrate legacy afk_data.json", e);
+        }
+
+        if (migrated > 0) {
+            LOGGER.info("AfkManager: migrated {} AFK record(s) from legacy afk_data.json into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
     

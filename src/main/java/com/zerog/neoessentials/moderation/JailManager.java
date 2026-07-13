@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -39,8 +38,9 @@ public class JailManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(JailManager.class);
     private static JailManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private final File jailFile;
-    private final File jailLocationFile;
+    private static final String JAIL_COLLECTION = "jails";
+    private static final String JAIL_LOCATION_COLLECTION = "jail_locations";
+    private final com.zerog.neoessentials.storage.DataStore store;
     // Track number of times each player has been jailed
     private final Map<UUID, Integer> jailCounts = new ConcurrentHashMap<>();
     
@@ -113,16 +113,9 @@ public class JailManager {
         if (!jailSystemEnabledCache) {
             LOGGER.info("Jail system is disabled via config. All jail features will be inactive.");
         }
-        // Create moderation directory if it doesn't exist
-        File moderationDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation");
-        if (!moderationDir.exists()) {
-            if (!moderationDir.mkdirs()) {
-                LOGGER.error("Failed to create moderation directory: {}", moderationDir.getAbsolutePath());
-            }
-        }
-        
-        this.jailFile = new File(moderationDir, "jailed_players.json");
-        this.jailLocationFile = new File(moderationDir, "jail_locations.json");
+
+        this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
+        migrateLegacyFilesIfNeeded();
         loadData();
     }
 
@@ -511,153 +504,192 @@ public class JailManager {
         loadJailedPlayers();
         loadJailLocations();
     }
-    
-    private void loadJailedPlayers() {
-        if (!jailFile.exists()) return;
-        
-        try (FileReader reader = new FileReader(jailFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("jailed")) {
-                JsonArray jailedArray = root.getAsJsonArray("jailed");
-                for (JsonElement element : jailedArray) {
-                    JsonObject jailObj = element.getAsJsonObject();
-                    JailEntry jail = new JailEntry(
-                        jailObj.get("playerName").getAsString(),
-                        UUID.fromString(jailObj.get("playerId").getAsString()),
-                        jailObj.get("reason").getAsString(),
-                        jailObj.get("jailedBy").getAsString(),
-                        jailObj.get("jailName").getAsString()
-                    );
-                    jail.jailTime = jailObj.get("jailTime").getAsLong();
-                    jail.expireAt = jailObj.has("expireAt") ? jailObj.get("expireAt").getAsLong() : 0L;
 
-                    if (jailObj.has("originalLocation")) {
-                        JsonObject locObj = jailObj.getAsJsonObject("originalLocation");
-                        jail.originalLocation = new BlockPos(
-                            locObj.get("x").getAsInt(),
-                            locObj.get("y").getAsInt(),
-                            locObj.get("z").getAsInt()
-                        );
-                    }
-                    
-                    if (jailObj.has("originalDimension")) {
-                        jail.originalDimension = jailObj.get("originalDimension").getAsString();
-                    }
-                    
-                    jailedPlayers.put(jail.playerId, jail);
-                }
+    private void loadJailedPlayers() {
+        for (JsonObject jailObj : store.getAll(JAIL_COLLECTION).values()) {
+            JailEntry jail = new JailEntry(
+                jailObj.get("playerName").getAsString(),
+                UUID.fromString(jailObj.get("playerId").getAsString()),
+                jailObj.get("reason").getAsString(),
+                jailObj.get("jailedBy").getAsString(),
+                jailObj.get("jailName").getAsString()
+            );
+            jail.jailTime = jailObj.get("jailTime").getAsLong();
+            jail.expireAt = jailObj.has("expireAt") ? jailObj.get("expireAt").getAsLong() : 0L;
+
+            if (jailObj.has("originalLocation")) {
+                JsonObject locObj = jailObj.getAsJsonObject("originalLocation");
+                jail.originalLocation = new BlockPos(
+                    locObj.get("x").getAsInt(),
+                    locObj.get("y").getAsInt(),
+                    locObj.get("z").getAsInt()
+                );
             }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load jailed players", e);
+
+            if (jailObj.has("originalDimension") && !jailObj.get("originalDimension").isJsonNull()) {
+                jail.originalDimension = jailObj.get("originalDimension").getAsString();
+            }
+
+            jailedPlayers.put(jail.playerId, jail);
         }
     }
-    
+
     private void loadJailLocations() {
-        if (!jailLocationFile.exists()) return;
-        
-        try (FileReader reader = new FileReader(jailLocationFile)) {
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            if (root != null && root.has("jails")) {
-                JsonArray jailsArray = root.getAsJsonArray("jails");
-                for (JsonElement element : jailsArray) {
-                    JsonObject jailObj = element.getAsJsonObject();
-                    
-                    JsonObject posObj = jailObj.getAsJsonObject("position");
-                    BlockPos position = new BlockPos(
-                        posObj.get("x").getAsInt(),
-                        posObj.get("y").getAsInt(),
-                        posObj.get("z").getAsInt()
-                    );
-                    
-                    JailLocation jail = new JailLocation(
-                        jailObj.get("name").getAsString(),
-                        position,
-                        jailObj.get("dimension").getAsString(),
-                        jailObj.get("createdBy").getAsString()
-                    );
-                    jail.createdTime = jailObj.get("createdTime").getAsLong();
-                    
-                    jailLocations.put(jail.name, jail);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load jail locations", e);
+        for (JsonObject jailObj : store.getAll(JAIL_LOCATION_COLLECTION).values()) {
+            JsonObject posObj = jailObj.getAsJsonObject("position");
+            BlockPos position = new BlockPos(
+                posObj.get("x").getAsInt(),
+                posObj.get("y").getAsInt(),
+                posObj.get("z").getAsInt()
+            );
+
+            JailLocation jail = new JailLocation(
+                jailObj.get("name").getAsString(),
+                position,
+                jailObj.get("dimension").getAsString(),
+                jailObj.get("createdBy").getAsString()
+            );
+            jail.createdTime = jailObj.get("createdTime").getAsLong();
+
+            jailLocations.put(jail.name, jail);
         }
     }
-    
+
+    private JsonObject jailedPlayerToJson(JailEntry jail) {
+        JsonObject jailObj = new JsonObject();
+        jailObj.addProperty("playerName", jail.playerName);
+        jailObj.addProperty("playerId", jail.playerId.toString());
+        jailObj.addProperty("reason", jail.reason);
+        jailObj.addProperty("jailedBy", jail.jailedBy);
+        jailObj.addProperty("jailName", jail.jailName);
+        jailObj.addProperty("jailTime", jail.jailTime);
+        jailObj.addProperty("expireAt", jail.expireAt);
+
+        if (jail.originalLocation != null) {
+            JsonObject locObj = new JsonObject();
+            locObj.addProperty("x", jail.originalLocation.getX());
+            locObj.addProperty("y", jail.originalLocation.getY());
+            locObj.addProperty("z", jail.originalLocation.getZ());
+            jailObj.add("originalLocation", locObj);
+        }
+
+        if (jail.originalDimension != null) {
+            jailObj.addProperty("originalDimension", jail.originalDimension);
+        }
+        return jailObj;
+    }
+
+    private JsonObject jailLocationToJson(JailLocation jail) {
+        JsonObject jailObj = new JsonObject();
+        jailObj.addProperty("name", jail.name);
+        jailObj.addProperty("dimension", jail.dimension);
+        jailObj.addProperty("createdBy", jail.createdBy);
+        jailObj.addProperty("createdTime", jail.createdTime);
+
+        JsonObject posObj = new JsonObject();
+        posObj.addProperty("x", jail.position.getX());
+        posObj.addProperty("y", jail.position.getY());
+        posObj.addProperty("z", jail.position.getZ());
+        jailObj.add("position", posObj);
+
+        return jailObj;
+    }
+
     /**
-     * Save jailed players to file
+     * Persist the full set of currently jailed players to the active DataStore
+     * (collection {@link #JAIL_COLLECTION}, id = player UUID string). Since jailed
+     * players are a small, bounded set, each call rewrites every active jail entry —
+     * simplest way to also implicitly delete entries for players removed from the
+     * in-memory map (e.g. via unjailPlayer()) since the last save.
      */
     private void saveJailedPlayers() {
-        try (FileWriter writer = new FileWriter(jailFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray jailedArray = new JsonArray();
-            
-            for (JailEntry jail : jailedPlayers.values()) {
-                JsonObject jailObj = new JsonObject();
-                jailObj.addProperty("playerName", jail.playerName);
-                jailObj.addProperty("playerId", jail.playerId.toString());
-                jailObj.addProperty("reason", jail.reason);
-                jailObj.addProperty("jailedBy", jail.jailedBy);
-                jailObj.addProperty("jailName", jail.jailName);
-                jailObj.addProperty("jailTime", jail.jailTime);
-                jailObj.addProperty("expireAt", jail.expireAt);
-
-                if (jail.originalLocation != null) {
-                    JsonObject locObj = new JsonObject();
-                    locObj.addProperty("x", jail.originalLocation.getX());
-                    locObj.addProperty("y", jail.originalLocation.getY());
-                    locObj.addProperty("z", jail.originalLocation.getZ());
-                    jailObj.add("originalLocation", locObj);
-                }
-                
-                if (jail.originalDimension != null) {
-                    jailObj.addProperty("originalDimension", jail.originalDimension);
-                }
-                
-                jailedArray.add(jailObj);
+        for (JailEntry jail : jailedPlayers.values()) {
+            store.put(JAIL_COLLECTION, jail.playerId.toString(), jailedPlayerToJson(jail));
+        }
+        for (JsonObject existing : store.getAll(JAIL_COLLECTION).values()) {
+            String id = existing.get("playerId").getAsString();
+            if (!jailedPlayers.containsKey(UUID.fromString(id))) {
+                store.delete(JAIL_COLLECTION, id);
             }
-            
-            root.add("jailed", jailedArray);
-            gson.toJson(root, writer);
-        } catch (IOException e) {
-            LOGGER.error("Failed to save jailed players", e);
         }
     }
-    
+
     /**
-     * Save jail locations to file
+     * Persist the full set of jail locations to the active DataStore
+     * (collection {@link #JAIL_LOCATION_COLLECTION}, id = jail name). See
+     * {@link #saveJailedPlayers()} for why this rewrites the whole set each call.
      */
     private void saveJailLocations() {
-        try (FileWriter writer = new FileWriter(jailLocationFile)) {
-            JsonObject root = new JsonObject();
-            JsonArray jailsArray = new JsonArray();
-            
-            for (JailLocation jail : jailLocations.values()) {
-                JsonObject jailObj = new JsonObject();
-                jailObj.addProperty("name", jail.name);
-                jailObj.addProperty("dimension", jail.dimension);
-                jailObj.addProperty("createdBy", jail.createdBy);
-                jailObj.addProperty("createdTime", jail.createdTime);
-                
-                JsonObject posObj = new JsonObject();
-                posObj.addProperty("x", jail.position.getX());
-                posObj.addProperty("y", jail.position.getY());
-                posObj.addProperty("z", jail.position.getZ());
-                jailObj.add("position", posObj);
-                
-                jailsArray.add(jailObj);
+        for (JailLocation jail : jailLocations.values()) {
+            store.put(JAIL_LOCATION_COLLECTION, jail.name, jailLocationToJson(jail));
+        }
+        for (String existingName : store.getAll(JAIL_LOCATION_COLLECTION).keySet()) {
+            if (!jailLocations.containsKey(existingName)) {
+                store.delete(JAIL_LOCATION_COLLECTION, existingName);
             }
-            
-            root.add("jails", jailsArray);
-            gson.toJson(root, writer);
-        } catch (IOException e) {
-            LOGGER.error("Failed to save jail locations", e);
         }
     }
 
     /**
-     * Reload jail data from disk
+     * One-time import of the legacy jailed_players.json / jail_locations.json files into
+     * the active DataStore, if it's still empty and storage.autoMigrate is enabled.
+     */
+    private void migrateLegacyFilesIfNeeded() {
+        if (store.hasAnyData(JAIL_COLLECTION) || store.hasAnyData(JAIL_LOCATION_COLLECTION)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
+
+        int migrated = 0;
+        migrated += migrateLegacyJailedPlayersFile();
+        migrated += migrateLegacyJailLocationsFile();
+
+        if (migrated > 0) {
+            LOGGER.info("JailManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
+                migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
+        }
+    }
+
+    private int migrateLegacyJailedPlayersFile() {
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation", "jailed_players.json");
+        if (!file.exists()) return 0;
+
+        int count = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root == null || !root.has("jailed")) return 0;
+            for (JsonElement element : root.getAsJsonArray("jailed")) {
+                JsonObject obj = element.getAsJsonObject().deepCopy();
+                String id = obj.get("playerId").getAsString();
+                store.put(JAIL_COLLECTION, id, obj);
+                count++;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to migrate legacy jailed_players.json: {}", e.getMessage());
+        }
+        return count;
+    }
+
+    private int migrateLegacyJailLocationsFile() {
+        File file = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "moderation", "jail_locations.json");
+        if (!file.exists()) return 0;
+
+        int count = 0;
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject root = gson.fromJson(reader, JsonObject.class);
+            if (root == null || !root.has("jails")) return 0;
+            for (JsonElement element : root.getAsJsonArray("jails")) {
+                JsonObject obj = element.getAsJsonObject().deepCopy();
+                String id = obj.get("name").getAsString();
+                store.put(JAIL_LOCATION_COLLECTION, id, obj);
+                count++;
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to migrate legacy jail_locations.json: {}", e.getMessage());
+        }
+        return count;
+    }
+
+    /**
+     * Reload jail data from the active DataStore.
      */
     public void reload() {
         LOGGER.info("Reloading jail system...");
