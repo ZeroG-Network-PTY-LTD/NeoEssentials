@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 23,
+  "_configVersion": 26,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -22,6 +22,35 @@
   "logging": {
     // Set true to enable verbose debug output in server logs
     "enableDebugLogging": false
+  },
+
+  /* ----------------------------------------------------------------
+     Storage  —  where per-manager data (bans, mutes, kicks, warns,
+     notes, reports, and future managers migrated onto this system)
+     is actually persisted. Restart required after changing "type".
+  ---------------------------------------------------------------- */
+  "storage": {
+    // "json" (default, one file per collection), "yaml" (same shape, human-editable),
+    // "sqlite" (single embedded database file), or "mysql" (shared network database —
+    // use this to sync moderation/economy/etc. data across multiple servers).
+    "type": "json",
+    // Existing JSON data is imported automatically the first time you switch away
+    // from "json" — set false only if you deliberately want a fresh, empty store.
+    "autoMigrate": true,
+    "sqlite": {
+      // Relative to the server's data directory (neoessentials/store/<this file>)
+      "file": "data.db"
+    },
+    "mysql": {
+      "host": "localhost",
+      "port": 3306,
+      "database": "neoessentials",
+      "username": "neoessentials",
+      "password": "",
+      "useSSL": false,
+      // Max concurrent connections in the pool
+      "poolSize": 10
+    }
   },
 
   /* ----------------------------------------------------------------

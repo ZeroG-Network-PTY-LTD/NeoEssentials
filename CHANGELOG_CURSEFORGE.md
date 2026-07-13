@@ -14,6 +14,23 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.3-mc26.1.2+build.9 — 2026-07-12
+
+### ✨ Pluggable Storage Backends (JSON / YAML / SQLite / MySQL)
+
+- New `storage` section in `config.json` lets you pick JSON (default), YAML,
+  SQLite, or MySQL as the backend for supported data. MySQL enables true
+  multi-server shared data — point every server in your network at the same
+  database and they share bans/mutes/etc. in real time.
+- This release migrates the moderation system (bans, mutes, kicks, warns,
+  notes, reports) onto the new system. Existing data is imported automatically
+  and losslessly the first time you switch backends.
+- Economy, homes, warps, kits, permissions, and the rest of the mod's data
+  are unaffected for now — still plain JSON, with the same treatment planned
+  for a future update.
+
+---
+
 ## 1.0.3-mc26.1.2+build.8 — 2026-07-12
 
 ### ✨ Moderation System Overhaul
