@@ -1356,7 +1356,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 29);          // v29 — tablist/resourcePacks/playerTags/discordIntegration module toggles
+        put(MAIN_CONFIG, 30);          // v30 — webDashboard.mode (internal/external/both)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -1441,6 +1441,23 @@ public class ConfigManager {
             JsonObject dashboard = config.getAsJsonObject("webDashboard");
             if (dashboard.has("enabled")) {
                 return dashboard.get("enabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the dashboard's own bundled static-file UI ("/") should be served
+     * (webDashboard.mode). "internal" (default) and "both" serve it; "external" does not —
+     * only the REST API under /api/* is registered, for setups where a separately-hosted
+     * dashboard app (e.g. the Laravel NeoEssentials-Dashboard) is the only UI ever used.
+     */
+    public static boolean isDashboardInternalUiEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("mode")) {
+                return !"external".equalsIgnoreCase(dashboard.get("mode").getAsString());
             }
         }
         return true;
