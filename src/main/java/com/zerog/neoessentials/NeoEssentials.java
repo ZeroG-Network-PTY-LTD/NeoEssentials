@@ -1104,6 +1104,15 @@ public class NeoEssentials {
         registry.registerCommand("placeholder", "Inspect and test the NeoEssentials placeholder system");
         com.zerog.neoessentials.commands.utility.PlaceholderCommand.register(dispatcher);
 
+        // ========== DASHBOARD COMMANDS ==========
+        // DashboardCommand/DashboardRegisterCommand existed but were never actually wired to
+        // the dispatcher (a real bug, not a doc gap) — /dashboard and /dashboardregister were
+        // unknown commands in-game despite the wiki documenting them as working.
+        registry.registerCommand("dashboard", "Start/stop/status/URL for the web dashboard");
+        com.zerog.neoessentials.commands.utility.DashboardCommand.register(dispatcher);
+        registry.registerCommand("dashboardregister", "Register a web dashboard account");
+        com.zerog.neoessentials.commands.utility.DashboardRegisterCommand.register(dispatcher);
+
         // ========== CHEST SHOP COMMANDS ==========
         registry.registerCommand("chestshop", "Sign-based chest shop system");
         registry.registerCommand("cshop", "Sign-based chest shop (alias)");

@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.3+build.13 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is now controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
+> **Version:** 1.0.3+build.14 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is now controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
@@ -15,32 +15,43 @@ NeoEssentials ships a built-in web dashboard for server monitoring and administr
 1. Set `webDashboard.enabled: true` **and** `modules.webDashboardEnabled: true` in `config.json` (both default to `true`)
 2. Configure `port` (default `8080`) and `websocketPort` (default `8081`)
 3. Start the server — the dashboard auto-starts
-4. Log in with the default admin account (`admin` / `admin123`, created automatically on first
-   boot — **change this password immediately**), or use one of the self-service paths below
+4. Register a dashboard account in-game: `/dashboardregister start` then
+   `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
+   Simple Discord Link is linked) — or use one of the other paths below
 5. Open `http://<server-ip>:8080` in a browser and log in
 
 ---
 
 ## Account Registration
 
-> **Known issue:** `/dashboardregister` (documented in earlier versions of this page as the
-> primary way to create an account) is currently **dead code** — the command class exists but
-> is never actually registered with the command dispatcher, so typing it in-game does nothing.
-> Until that's fixed, use one of the working paths below instead.
+Players register their dashboard account **in-game**, via the separate `/dashboardregister`
+command (not a subcommand of `/dashboard`) — they do not need to be online at login time after
+registering.
 
-**Working ways to get dashboard access today:**
+```
+/dashboardregister start
+/dashboardregister complete <username> <password>
+```
+
+Or, if Simple Discord Link is installed and the player has linked their Discord account:
+
+```
+/dashboardregister discord
+```
+
+Requires permission `neoessentials.dashboard.access`. Registration tokens from `start` expire
+after 5 minutes; passwords must be at least 8 characters. Run `/dashboardregister status` to
+check your current registration state.
+
+**Other ways to get dashboard access:**
 
 1. **Default admin account** — `admin` / `admin123` is created automatically the first time the
    dashboard starts with no accounts yet. Change the password immediately after logging in.
-2. **Minecraft-permission login (self-service, works offline)** — on the login page, authenticate
-   with just your Minecraft username (no password) instead of username+password. The server
-   checks whether that player has `neoessentials.dashboard.access` (via the permission system,
-   looked up by UUID — the player doesn't need to be online) and, if so, auto-creates a dashboard
-   account for them on the spot, with role assigned from
-   `neoessentials.dashboard.admin`/`.moderator`/`.access`. This path is marked deprecated in
-   server logs (it predates the registration-token flow `/dashboardregister` was meant to
-   replace) but is fully functional and, until that command is fixed, is the only true
-   self-service option that doesn't depend on Discord.
+2. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
+   authenticate with just your Minecraft username (no password). The server checks whether that
+   player has `neoessentials.dashboard.access` and auto-creates an account with role assigned
+   from `neoessentials.dashboard.admin`/`.moderator`/`.access`. Predates the `/dashboardregister`
+   flow above and is marked deprecated in server logs, but still functional.
 3. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
    (the default), logging in with Discord auto-creates an account on first use.
 4. **Admin-created accounts** — an existing admin can create accounts for other players via the
@@ -48,7 +59,7 @@ NeoEssentials ships a built-in web dashboard for server monitoring and administr
 
 ### Discord Auth (Optional)
 
-If **Simple Discord Link** is installed and configured, players can also authenticate via Discord. The mod is fully optional — the Minecraft-permission and admin-created paths above work without it.
+If **Simple Discord Link** is installed and configured, players can also authenticate via Discord. The mod is fully optional — standalone account registration works without it.
 
 ---
 
@@ -255,15 +266,6 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
 | `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (SDLink) or the OAuth2 web flow |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
-
-> **Every command in this table is currently dead code** — both `DashboardCommand` and
-> `DashboardRegisterCommand` exist and compile, but neither is actually registered with the
-> command dispatcher (`NeoEssentials.java`'s command-registration list has no call to either
-> class). Typing any of these in-game does nothing (Brigadier reports "unknown command"). The
-> dashboard itself still starts/stops fine via config (`autoStart`) — only the in-game
-> `/dashboard`/`/dashboardregister` *commands* for controlling it remotely are broken. See
-> [Account Registration](#account-registration) above for the account-creation paths that
-> actually work today.
 
 ---
 
