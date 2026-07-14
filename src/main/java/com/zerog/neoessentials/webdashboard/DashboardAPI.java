@@ -388,6 +388,25 @@ public class DashboardAPI {
         statsEndpoint = new StatsEndpoint(server);
         apiServer.createContext("/api/stats", withAuth(statsEndpoint));
         apiServer.createContext("/api/docs", new DocumentationHandler());
+        // Unauthenticated, no-op reachability check — lets an external dashboard app (or
+        // curl) confirm "can I even reach this port" independently of whether login/auth
+        // works, which is the single biggest cause of "the connection isn't establishing"
+        // confusion between a separately-hosted dashboard and this mod.
+        apiServer.createContext("/api/ping", exchange -> {
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+            String body = "{\"success\":true,\"mod\":\"neoessentials\",\"mode\":\""
+                + (ConfigManager.isDashboardInternalUiEnabled() ? "internal" : "external") + "\"}";
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+        });
 
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
@@ -414,6 +433,26 @@ public class DashboardAPI {
         LOGGER.info("  - /api/stats/* (overview, economy, activity, performance) [AUTH REQUIRED]");
         LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
+        if (!ConfigManager.isDashboardInternalUiEnabled()) {
+            // webDashboard.mode: "external" — only the REST API above is served. Register a
+            // minimal "/" so a browser hitting the bare host:port gets a helpful message
+            // instead of a raw connection reset, but skip the bundled-UI resource check and
+            // static-file catch-all entirely (no point warning about missing UI resources
+            // when this server intentionally never serves them).
+            LOGGER.info("webDashboard.mode is 'external' — REST API only, bundled dashboard UI not served at \"/\".");
+            apiServer.createContext("/", exchange -> {
+                String body = "{\"success\":true,\"mode\":\"external\",\"message\":"
+                    + "\"NeoEssentials dashboard API — this server does not serve a UI. "
+                    + "Point your external dashboard app's API URL here and use /api/*.\"}";
+                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+            });
+            return;
+        }
+
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {
             if (testStream != null) {
@@ -424,7 +463,7 @@ public class DashboardAPI {
         } catch (Exception e) {
             LOGGER.error("Error checking dashboard resources", e);
         }
-        
+
         // Serve static frontend files (catch-all, must be registered last)
         apiServer.createContext("/", exchange -> {
             String path = exchange.getRequestURI().getPath();

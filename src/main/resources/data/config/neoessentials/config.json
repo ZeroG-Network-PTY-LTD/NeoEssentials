@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 26,
+  "_configVersion": 27,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -262,6 +262,20 @@
     "websocketPort": 8081,
     // Bind address: '0.0.0.0' = all interfaces, '127.0.0.1' = localhost only (more secure)
     "bindAddress": "0.0.0.0",
+    // How the dashboard is served:
+    //  "internal" — serve the mod's own bundled dashboard UI at "/" AND the REST API
+    //               under "/api/*" (default; what you want if you only use the
+    //               built-in dashboard at http://<server>:<port>).
+    //  "external" — serve ONLY the REST API under "/api/*"; the "/" static-file
+    //               route is not registered at all. Use this if you run a separate
+    //               dashboard app (e.g. NeoEssentials-Dashboard, a Laravel app) that
+    //               talks to this API from outside — avoids the confusing
+    //               "Dashboard resources NOT found" log spam when you never intend
+    //               to load the bundled UI anyway.
+    //  "both"     — serve both (same as "internal", kept as an explicit alias for
+    //               clarity when you intentionally use the built-in UI AND point an
+    //               external app at the same API).
+    "mode": "internal",
 
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)
