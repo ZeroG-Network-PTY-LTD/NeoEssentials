@@ -35,6 +35,7 @@ public class TablistEventHandler {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isTablistModuleEnabled()) return;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         TablistManager.getInstance().onTick(server);
@@ -43,6 +44,7 @@ public class TablistEventHandler {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.isTablistModuleEnabled()) return;
         MinecraftServer server = player.level().getServer();
         if (server == null) return;
         TablistManager.getInstance().onPlayerJoin(player, server);
@@ -53,6 +55,7 @@ public class TablistEventHandler {
     @SubscribeEvent
     public static void onPlayerQuit(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.isTablistModuleEnabled()) return;
         MinecraftServer server = player.level().getServer();
         if (server == null) return;
         TablistManager.getInstance().clearCustomName(player.getUUID());

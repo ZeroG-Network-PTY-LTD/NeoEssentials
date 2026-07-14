@@ -48,6 +48,7 @@ public class TablistCommand {
     private static final String PERM_ADMIN = "neoessentials.tablist.admin";
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!ConfigManager.isTablistModuleEnabled()) return;
         if (!ConfigManager.getInstance().isCommandEnabled("tablist")) return;
 
         dispatcher.register(Commands.literal("tablist")

@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 28,
+  "_configVersion": 29,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -20,7 +20,11 @@
     "hologramsEnabled": true,
     "shopEnabled": true,
     "auctionHouseEnabled": true,
-    "vaultEnabled": true
+    "vaultEnabled": true,
+    "tablistEnabled": true,
+    "resourcePacksEnabled": true,
+    "playerTagsEnabled": true,
+    "discordIntegrationEnabled": true
   },
 
   "logging": {
