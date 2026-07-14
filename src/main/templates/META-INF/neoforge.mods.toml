@@ -83,24 +83,6 @@ description='''${mod_description}'''
     ordering="NONE"
     side="BOTH"
 
-# Soft/optional dependency on the "Minecraft SQLite JDBC" library mod
-# (https://modrinth.com/plugin/minecraft-sqlite-jdbc, source: github.com/Axionize/minecraft-sqlite-jdbc).
-# It's a pure library mod that puts org.sqlite.JDBC on the shared mod classloader — if it's
-# installed, our own JarJar-bundled sqlite-jdbc copy becomes redundant for that server, and
-# (more importantly for local dev) org.sqlite.JDBC becomes visible even under `gradlew runServer`,
-# where NeoForge's per-mod ModuleClassLoader normally can't see JarJar-shaded dependencies from
-# OUR jar until it's actually built+packaged. Purely optional — SqliteDataStore/AuctionDB fall
-# back to the bundled driver if this mod isn't present, exactly as before.
-# modId confirmed by downloading the mod's own published jar (v3.53.2.0+2026-06-06) and reading
-# its bundled META-INF/neoforge.mods.toml directly — it declares modId="sqlite_jdbc" (underscore).
-[[dependencies.${mod_id}]]
-    modId="sqlite_jdbc"
-    type="optional"
-    reason="Provides org.sqlite.JDBC on the shared classloader for the 'sqlite' storage backend; falls back to the bundled driver if absent"
-    versionRange="[3.42.0.0,)"
-    ordering="BEFORE"
-    side="SERVER"
-
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
 # stop your mod loading on the server for example.
