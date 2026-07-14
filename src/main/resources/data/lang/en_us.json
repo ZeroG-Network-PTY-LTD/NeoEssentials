@@ -1975,6 +1975,7 @@
     "commands.neoessentials.root.reload_error_rules": "Failed to reload rules: {0}",
     "commands.neoessentials.root.reload_complete_success": "NeoEssentials reload complete: {0}/{1} systems reloaded successfully",
     "commands.neoessentials.root.reload_complete_errors": "NeoEssentials reload complete: {0}/{1} systems reloaded successfully (check console for errors)",
+    "commands.neoessentials.root.reload_modules_notice": "§7Note: changes to 'modules' or 'commands' toggles in config.json require a full server restart to take effect — reload only refreshes data, it does not add/remove registered commands.",
     "commands.neoessentials.root.config_valid": "§a✔ All split config files are valid and complete.",
     "commands.neoessentials.root.config_validation_problems": "§e⚠ Split config validation found {0} problem(s):",
     "commands.neoessentials.root.config_problem_line": "  §c• {0}",

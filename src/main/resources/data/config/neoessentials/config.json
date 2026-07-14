@@ -8,7 +8,11 @@
      Reload in-game: /neoessentials reload
   ================================================================ */
 
-  // Enable or disable major mod subsystems (true = enabled, false = disabled)
+  // Enable or disable major mod subsystems (true = enabled, false = disabled).
+  // RESTART REQUIRED — whether a command is registered at all (and whether a subsystem's
+  // manager is initialized) is decided once at server start. "/neoe reload" only refreshes
+  // config VALUES, it can't add/remove already-registered commands, so toggling anything in
+  // this section (or in "commands" below) will NOT take effect until the server restarts.
   "modules": {
     "economyEnabled": true,
     "permissionsEnabled": true,
@@ -64,6 +68,7 @@
   /* ----------------------------------------------------------------
      Enable / disable individual commands.
      true = command registered, false = command not available.
+     RESTART REQUIRED — see the note on "modules" above; the same limitation applies here.
   ---------------------------------------------------------------- */
   "commands": {
     "balance": true,
