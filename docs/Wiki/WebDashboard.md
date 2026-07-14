@@ -168,6 +168,7 @@ Set `requireLinkedAccount: false` in `discord_auth.json` to allow Discord-only a
 | `port` | `8080` | HTTP port |
 | `websocketPort` | `8081` | WebSocket port for live updates |
 | `bindAddress` | `"0.0.0.0"` | IP to bind (use `127.0.0.1` for local-only) |
+| `mode` | `"internal"` | `"internal"`/`"both"` serve the bundled UI + API; `"external"` serves only `/api/*` for setups using a separately-hosted dashboard app. See [Dashboard Connectivity](DashboardConnectivity) |
 | `securitySettings.requireAuthentication` | `true` | Require a Bearer token on dashboard API endpoints |
 | `securitySettings.enableRateLimiting` | `true` | Enable per-IP rate limiting on the dashboard API |
 | `securitySettings.maxRequestsPerMinute` | `60` | Max API requests per IP per minute when rate limiting is enabled |
