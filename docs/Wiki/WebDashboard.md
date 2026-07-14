@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.3+build.9 · **Config:** `config.json` → `webDashboard` section
+> **Version:** 1.0.3+build.14 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is now controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
@@ -17,7 +17,7 @@ NeoEssentials ships a built-in web dashboard for server monitoring and administr
 3. Start the server — the dashboard auto-starts
 4. Register a dashboard account in-game: `/dashboardregister start` then
    `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
-   Simple Discord Link is linked)
+   Simple Discord Link is linked) — or use one of the other paths below
 5. Open `http://<server-ip>:8080` in a browser and log in
 
 ---
@@ -41,8 +41,22 @@ Or, if Simple Discord Link is installed and the player has linked their Discord 
 
 Requires permission `neoessentials.dashboard.access`. Registration tokens from `start` expire
 after 5 minutes; passwords must be at least 8 characters. Run `/dashboardregister status` to
-check your current registration state. After registering, the player can log in from the web
-browser at any time, even when offline.
+check your current registration state.
+
+**Other ways to get dashboard access:**
+
+1. **Default admin account** — a random 12-character temp password is generated and logged to the
+   server console the first time the dashboard starts with no accounts yet (search for "Created
+   default dashboard admin account"). You're required to set a new password on first login.
+2. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
+   authenticate with just your Minecraft username (no password). The server checks whether that
+   player has `neoessentials.dashboard.access` and auto-creates an account with role assigned
+   from `neoessentials.dashboard.admin`/`.moderator`/`.access`. Predates the `/dashboardregister`
+   flow above and is marked deprecated in server logs, but still functional.
+3. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
+   (the default), logging in with Discord auto-creates an account on first use.
+4. **Admin-created accounts** — an existing admin can create accounts for other players via the
+   dashboard's own Users management page, or `POST /api/users/create`.
 
 ### Discord Auth (Optional)
 
