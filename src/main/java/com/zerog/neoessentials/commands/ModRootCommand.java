@@ -376,6 +376,12 @@ public class ModRootCommand {
                 source.sendSuccess(() -> MessageUtil.warning("commands.neoessentials.root.reload_complete_errors", fSuccessCount, fTotalCount), true);
             }
 
+            // Command/module toggles are decided once at server start (whether a command is
+            // even registered with the dispatcher) — reload only refreshes data, it can't add
+            // or remove already-registered commands. Make that limitation visible instead of
+            // letting an admin assume a config toggle silently "didn't work".
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.root.reload_modules_notice"), false);
+
             // Re-send the Brigadier command tree to all online players so that any
             // permission-gated commands appear/disappear correctly in tab-completion
             // without requiring a relog.
