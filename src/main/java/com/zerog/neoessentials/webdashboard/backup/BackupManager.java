@@ -281,27 +281,27 @@ public class BackupManager {
     /** Returns overall backup storage statistics as JSON. */
     public JsonObject getStatus() throws IOException {
         JsonObject status = new JsonObject();
-        if (!Files.exists(BACKUP_DIR)) {
-            status.addProperty("count", 0);
-            status.addProperty("totalSizeMb", "0.00");
-            status.addProperty("lastBackup", (String) null);
-            return status;
-        }
-
-        List<Path> zips = new ArrayList<>();
-        try (var ds = Files.newDirectoryStream(BACKUP_DIR, "*.zip")) {
-            ds.forEach(zips::add);
-        }
 
         long totalSize = 0;
         long latestMs = 0;
-        for (Path z : zips) {
-            totalSize += Files.size(z);
-            long mt = Files.getLastModifiedTime(z).toMillis();
-            if (mt > latestMs) latestMs = mt;
+        int count = 0;
+        if (Files.exists(BACKUP_DIR)) {
+            List<Path> zips = new ArrayList<>();
+            try (var ds = Files.newDirectoryStream(BACKUP_DIR, "*.zip")) {
+                ds.forEach(zips::add);
+            }
+            count = zips.size();
+            for (Path z : zips) {
+                totalSize += Files.size(z);
+                long mt = Files.getLastModifiedTime(z).toMillis();
+                if (mt > latestMs) latestMs = mt;
+            }
         }
 
-        status.addProperty("count",       zips.size());
+        // Always return the full shape — even before BACKUP_DIR exists (e.g. no backup has
+        // ever been taken yet) — so dashboard clients don't have to special-case a truncated
+        // response missing availableTargets/maxSnapshots/backupDir.
+        status.addProperty("count",       count);
         status.addProperty("totalSizeMb", String.format(Locale.ROOT, "%.2f", totalSize / 1_048_576.0));
         status.addProperty("totalSizeBytes", totalSize);
         status.addProperty("lastBackup",  latestMs > 0 ? TS_FMT.format(Instant.ofEpochMilli(latestMs)) : null);

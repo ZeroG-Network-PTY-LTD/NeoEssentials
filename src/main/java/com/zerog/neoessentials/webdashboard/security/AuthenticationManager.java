@@ -55,7 +55,67 @@ public class AuthenticationManager {
         this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
         migrateLegacyFileIfNeeded();
         loadUsers();
+        syncServiceAccountFromConfig();
         startSessionCleanupTask();
+    }
+
+    /**
+     * Creates (or keeps in sync) a dashboard account from webDashboard.serviceAccount in
+     * config.json, for external apps (e.g. the Laravel NeoEssentials-Dashboard) that
+     * authenticate against this API server-to-server. Lets the operator set the account's
+     * credentials once in config.json instead of provisioning it by hand via the users API —
+     * every boot, the account's password/role are pushed to match config if they've drifted.
+     */
+    private void syncServiceAccountFromConfig() {
+        if (!com.zerog.neoessentials.config.ConfigManager.isDashboardServiceAccountEnabled()) {
+            return;
+        }
+        String username = com.zerog.neoessentials.config.ConfigManager.getDashboardServiceAccountUsername();
+        String password = com.zerog.neoessentials.config.ConfigManager.getDashboardServiceAccountPassword();
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            LOGGER.warn("webDashboard.serviceAccount is enabled but username/password is blank — skipping sync.");
+            return;
+        }
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            LOGGER.warn("webDashboard.serviceAccount password is shorter than {} characters — skipping sync.", MIN_PASSWORD_LENGTH);
+            return;
+        }
+        User.Role role;
+        try {
+            role = User.Role.valueOf(com.zerog.neoessentials.config.ConfigManager.getDashboardServiceAccountRole().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("webDashboard.serviceAccount.role '{}' is not a valid role (ADMIN/OPERATOR/MODERATOR/VIEWER) — defaulting to MODERATOR.",
+                com.zerog.neoessentials.config.ConfigManager.getDashboardServiceAccountRole());
+            role = User.Role.MODERATOR;
+        }
+
+        User existing = getUserByUsername(username);
+        if (existing == null) {
+            User created = createUser(username, password, username + "@service.local", role);
+            created.setRequiresPasswordChange(false);
+            created.setTempPassword(false);
+            saveUsers();
+            LOGGER.info("Created dashboard service account '{}' from config (role: {}).", username, role);
+            return;
+        }
+
+        boolean changed = false;
+        if (!verifyPassword(password, existing.getPasswordHash())) {
+            updatePassword(existing.getId(), password);
+            changed = true;
+        }
+        if (existing.getRole() != role) {
+            updateUserRole(existing.getId(), role);
+            changed = true;
+        }
+        if (!existing.isEnabled()) {
+            existing.setEnabled(true);
+            changed = true;
+        }
+        if (changed) {
+            saveUsers();
+            LOGGER.info("Synced dashboard service account '{}' to match config.json (role: {}).", username, role);
+        }
     }
     
     public static AuthenticationManager getInstance() {
