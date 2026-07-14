@@ -335,24 +335,32 @@ public class NeoEssentials {
                 LOGGER.error("✗ Custom language system failed to initialize!", e);
             }
 
-            // Initialize custom badge images (Phase 3)
-            try {
-                LOGGER.info("⚙ Loading custom badge images...");
-                com.zerog.neoessentials.chat.BadgeManager.getInstance().loadCustomBadgeImages();
-                LOGGER.info("✓ Badge images loaded successfully");
-            } catch (Exception e) {
-                LOGGER.warn("⚠ Failed to load badge images: {}", e.getMessage());
-                // Non-critical, continue
+            // Initialize custom badge images (Phase 3) — part of the player tags/badges module
+            if (com.zerog.neoessentials.config.ConfigManager.isPlayerTagsModuleEnabled()) {
+                try {
+                    LOGGER.info("⚙ Loading custom badge images...");
+                    com.zerog.neoessentials.chat.BadgeManager.getInstance().loadCustomBadgeImages();
+                    LOGGER.info("✓ Badge images loaded successfully");
+                } catch (Exception e) {
+                    LOGGER.warn("⚠ Failed to load badge images: {}", e.getMessage());
+                    // Non-critical, continue
+                }
+            } else {
+                LOGGER.info("Player tags/badges module is disabled via config, skipping badge image loading.");
             }
 
             // Initialize resource pack system (Phase 3)
-            try {
-                LOGGER.info("⚙ Initializing resource pack system...");
-                com.zerog.neoessentials.resourcepack.ResourcePackManager.getInstance().initialize();
-                LOGGER.info("✓ Resource pack system initialized");
-            } catch (Exception e) {
-                LOGGER.warn("⚠ Failed to initialize resource pack system: {}", e.getMessage());
-                // Non-critical, continue
+            if (com.zerog.neoessentials.config.ConfigManager.isResourcePacksModuleEnabled()) {
+                try {
+                    LOGGER.info("⚙ Initializing resource pack system...");
+                    com.zerog.neoessentials.resourcepack.ResourcePackManager.getInstance().initialize();
+                    LOGGER.info("✓ Resource pack system initialized");
+                } catch (Exception e) {
+                    LOGGER.warn("⚠ Failed to initialize resource pack system: {}", e.getMessage());
+                    // Non-critical, continue
+                }
+            } else {
+                LOGGER.info("Resource pack module is disabled via config, skipping resource pack system.");
             }
 
             // Display manager registry diagnostics
@@ -385,10 +393,14 @@ public class NeoEssentials {
             }
 
             // Initialize chat integration adapters (SDLink, DCIntegration, DiscordSRV, etc.)
-            try {
-                com.zerog.neoessentials.integrations.ChatIntegrationManager.initialize();
-            } catch (Exception e) {
-                LOGGER.error("Failed to initialize chat integration adapters", e);
+            if (com.zerog.neoessentials.config.ConfigManager.isDiscordIntegrationModuleEnabled()) {
+                try {
+                    com.zerog.neoessentials.integrations.ChatIntegrationManager.initialize();
+                } catch (Exception e) {
+                    LOGGER.error("Failed to initialize chat integration adapters", e);
+                }
+            } else {
+                LOGGER.info("Discord integration module is disabled via config, skipping chat integration adapters.");
             }
 
             // Initialize ChatManager

@@ -1356,7 +1356,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 28);          // v28 — hologram/shop/auctionHouse/vault module toggles + missing command entries
+        put(MAIN_CONFIG, 29);          // v29 — tablist/resourcePacks/playerTags/discordIntegration module toggles
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -2450,6 +2450,66 @@ public class ConfigManager {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("vaultEnabled")) {
                 return modules.get("vaultEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the tablist module is enabled (modules.tablistEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isTablistModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("tablistEnabled")) {
+                return modules.get("tablistEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the resource pack hosting module is enabled (modules.resourcePacksEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isResourcePacksModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("resourcePacksEnabled")) {
+                return modules.get("resourcePacksEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the player tags/badges module is enabled (modules.playerTagsEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isPlayerTagsModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("playerTagsEnabled")) {
+                return modules.get("playerTagsEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the Discord chat integration module is enabled
+     * (modules.discordIntegrationEnabled). Defaults to true if not set.
+     */
+    public static boolean isDiscordIntegrationModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("discordIntegrationEnabled")) {
+                return modules.get("discordIntegrationEnabled").getAsBoolean();
             }
         }
         return true;
