@@ -14,6 +14,16 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class UnignoreCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
+            return;
+        }
+
+        // Check if the unignore command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("unignore")) {
+            return;
+        }
+
         registerUnignoreCommand(dispatcher, "unignore");
         registerUnignoreCommand(dispatcher, "unblock");
     }

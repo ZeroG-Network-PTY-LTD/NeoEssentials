@@ -35,6 +35,10 @@ public class DelKitCommand {
             return; // Don't register kit commands if module is disabled
         }
         
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("delkit")) {
+            return;
+        }
+
         registerDelKitCommand(dispatcher, "delkit");
         registerDelKitCommand(dispatcher, "deletekit");
         registerDelKitCommand(dispatcher, "removekit");

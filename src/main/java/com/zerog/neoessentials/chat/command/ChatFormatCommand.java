@@ -31,6 +31,18 @@ public class ChatFormatCommand {
     private static final String PERM = "neoessentials.chat.format.set";
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
+            LOGGER.debug("Chat module is disabled, skipping chatformat command registration");
+            return;
+        }
+
+        // Check if the chatformat command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("chatformat")) {
+            LOGGER.debug("chatformat command is disabled, skipping registration");
+            return;
+        }
+
         dispatcher.register(Commands.literal("chatformat")
             .then(Commands.literal("set")
                 .then(Commands.argument("player", EntityArgument.player())

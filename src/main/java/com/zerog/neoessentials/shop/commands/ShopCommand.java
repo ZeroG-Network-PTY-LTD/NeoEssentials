@@ -37,6 +37,17 @@ import java.util.UUID;
 public class ShopCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isShopModuleEnabled()) {
+            return;
+        }
+
+        boolean chestshopEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("chestshop");
+        boolean cshopEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("cshop");
+
+        if (!chestshopEnabled && !cshopEnabled) {
+            return;
+        }
+
         var node = Commands.literal("chestshop")
             .then(Commands.literal("list")
                 .executes(ctx -> executeList(ctx.getSource(), null))
@@ -104,10 +115,14 @@ public class ShopCommand {
                                     DoubleArgumentType.getDouble(ctx, "z"))))))))
             .executes(ctx -> executeHelp(ctx.getSource()));
 
-        dispatcher.register(node);
+        if (chestshopEnabled) {
+            dispatcher.register(node);
+        }
 
         // Aliases
-        dispatcher.register(Commands.literal("cshop").redirect(dispatcher.getRoot().getChild("chestshop")));
+        if (cshopEnabled && chestshopEnabled) {
+            dispatcher.register(Commands.literal("cshop").redirect(dispatcher.getRoot().getChild("chestshop")));
+        }
     }
 
     // ── /chestshop list [player] ──────────────────────────────────────────────

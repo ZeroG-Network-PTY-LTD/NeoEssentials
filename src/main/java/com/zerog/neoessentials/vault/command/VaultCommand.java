@@ -24,6 +24,13 @@ import java.util.Optional;
 public class VaultCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isVaultModuleEnabled()) {
+            return;
+        }
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("vault")) {
+            return;
+        }
+
         dispatcher.register(Commands.literal("vault")
             .requires(src -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) ||
                 com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(

@@ -30,8 +30,15 @@ public class WarnCommand {
     private static final int WARNS_PER_PAGE = 5;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if moderation commands are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            LOGGER.debug("Moderation module is disabled, skipping warn command registration");
+            return;
+        }
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
 
         // /warn <player> [reason]
+        if (cfg.isCommandEnabled("warn")) {
         dispatcher.register(Commands.literal("warn")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.warn").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -45,8 +52,10 @@ public class WarnCommand {
                 )
             )
         );
+        }
 
         // /warnings <player>
+        if (cfg.isCommandEnabled("warnings")) {
         dispatcher.register(Commands.literal("warnings")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.warnings").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -55,8 +64,10 @@ public class WarnCommand {
                 .executes(ctx -> executeWarnings(ctx, StringArgumentType.getString(ctx, "player")))
             )
         );
+        }
 
         // /clearwarnings <player>
+        if (cfg.isCommandEnabled("clearwarnings")) {
         dispatcher.register(Commands.literal("clearwarnings")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.warn").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -65,8 +76,10 @@ public class WarnCommand {
                 .executes(ctx -> executeClearWarnings(ctx, StringArgumentType.getString(ctx, "player")))
             )
         );
+        }
 
         // /removewarn <player> <warnId>
+        if (cfg.isCommandEnabled("removewarn")) {
         dispatcher.register(Commands.literal("removewarn")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.warn").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -77,6 +90,7 @@ public class WarnCommand {
                 )
             )
         );
+        }
     }
 
     // ── /warn ────────────────────────────────────────────────────────────────

@@ -46,7 +46,9 @@ public class ClearInventoryCommand {
      * Register the /clearinventory, /ci, and /clearinv commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("clearinventory")) return;
+        ConfigManager cfg = ConfigManager.getInstance();
+
+        if (cfg.isCommandEnabled("clearinventory")) {
         dispatcher.register(
             Commands.literal("clearinventory")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -64,6 +66,8 @@ public class ClearInventoryCommand {
                     return 1;
                 })
         );
+        }
+        if (cfg.isCommandEnabled("ci")) {
         dispatcher.register(
             Commands.literal("ci")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -81,6 +85,8 @@ public class ClearInventoryCommand {
                     return 1;
                 })
         );
+        }
+        if (cfg.isCommandEnabled("clearinv")) {
         dispatcher.register(
             Commands.literal("clearinv")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -98,6 +104,7 @@ public class ClearInventoryCommand {
                     return 1;
                 })
         );
+        }
     }
 
     /**

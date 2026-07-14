@@ -52,6 +52,7 @@ public class BanCommand {
         }
         
         // /ban <player> [reason]
+        if (ConfigManager.getInstance().isCommandEnabled("ban")) {
         dispatcher.register(Commands.literal("ban")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.ban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -64,15 +65,17 @@ public class BanCommand {
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "reason")))))
         );
+        }
 
         // /tempban <player> <duration> [reason]
+        if (ConfigManager.getInstance().isCommandEnabled("tempban")) {
         dispatcher.register(Commands.literal("tempban")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.tempban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .then(Commands.argument("duration", StringArgumentType.word())
-                    .executes(ctx -> executeTempBan(ctx, 
+                    .executes(ctx -> executeTempBan(ctx,
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "duration"),
                         com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
@@ -82,36 +85,44 @@ public class BanCommand {
                             StringArgumentType.getString(ctx, "duration"),
                             StringArgumentType.getString(ctx, "reason"))))))
         );
+        }
 
         // /banip <ip> [reason]
+        if (ConfigManager.getInstance().isCommandEnabled("banip")) {
         dispatcher.register(Commands.literal("banip")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.banip").hasPermission())
             .then(Commands.argument("ip", StringArgumentType.word())
-                .executes(ctx -> executeBanIP(ctx, 
+                .executes(ctx -> executeBanIP(ctx,
                     StringArgumentType.getString(ctx, "ip"), com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(ctx -> executeBanIP(ctx,
                         StringArgumentType.getString(ctx, "ip"),
                         StringArgumentType.getString(ctx, "reason")))))
         );
-        
+        }
+
         // /unban <player>
+        if (ConfigManager.getInstance().isCommandEnabled("unban")) {
         dispatcher.register(Commands.literal("unban")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unban").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_BANNED_PLAYERS)
                 .executes(ctx -> executeUnban(ctx, StringArgumentType.getString(ctx, "player"))))
         );
-        
+        }
+
         // /unbanip <ip>
+        if (ConfigManager.getInstance().isCommandEnabled("unbanip")) {
         dispatcher.register(Commands.literal("unbanip")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unbanip").hasPermission())
             .then(Commands.argument("ip", StringArgumentType.word())
                 .suggests(SUGGEST_BANNED_IPS)
                 .executes(ctx -> executeUnbanIP(ctx, StringArgumentType.getString(ctx, "ip"))))
         );
-        
+        }
+
         // /banlist [players|ips]
+        if (ConfigManager.getInstance().isCommandEnabled("banlist")) {
         dispatcher.register(Commands.literal("banlist")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.banlist").hasPermission())
             .executes(ctx -> executeBanList(ctx, "players"))
@@ -120,8 +131,10 @@ public class BanCommand {
             .then(Commands.literal("ips")
                 .executes(ctx -> executeBanList(ctx, "ips")))
         );
+        }
 
         // /tempbanip <ip> <duration> [reason]  — Essentials: Commandtempbanip
+        if (ConfigManager.getInstance().isCommandEnabled("tempbanip")) {
         dispatcher.register(Commands.literal("tempbanip")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.tempbanip").hasPermission())
             .then(Commands.argument("ip", StringArgumentType.word())
@@ -136,6 +149,7 @@ public class BanCommand {
                             StringArgumentType.getString(ctx, "duration"),
                             StringArgumentType.getString(ctx, "reason"))))))
         );
+        }
     }
 
     private static int executeBan(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {

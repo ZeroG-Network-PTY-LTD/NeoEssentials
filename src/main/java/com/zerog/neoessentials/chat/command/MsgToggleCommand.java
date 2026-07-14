@@ -15,6 +15,16 @@ import com.zerog.neoessentials.util.MessageUtil;
  */
 public class MsgToggleCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
+            return;
+        }
+
+        // Check if the msgtoggle command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("msgtoggle")) {
+            return;
+        }
+
         registerMsgToggleCommand(dispatcher, "msgtoggle");
         registerMsgToggleCommand(dispatcher, "togglemsg");
         registerMsgToggleCommand(dispatcher, "mt");

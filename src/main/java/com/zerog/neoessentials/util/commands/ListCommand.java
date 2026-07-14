@@ -29,53 +29,59 @@ public class ListCommand {
      * Register the /list command
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        boolean enabled = ConfigManager.getInstance().isCommandEnabled("list");
-        if (!enabled) {
-            LOGGER.debug("Skipped registering 'list' and 'who' commands (disabled in config)");
-            return;
+        ConfigManager cfg = ConfigManager.getInstance();
+
+        if (cfg.isCommandEnabled("list")) {
+            dispatcher.register(
+                Commands.literal("list")
+                    .executes(ctx -> {
+                        PermissionValidator.PermissionResult permResult =
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+                        return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
+                    })
+            );
+        } else {
+            LOGGER.debug("Skipped registering 'list' command (disabled in config)");
         }
 
-        dispatcher.register(
-            Commands.literal("list")
-                .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult =
-                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
-                    if (!permResult.hasPermission()) {
-                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                        return 0;
-                    }
-                    return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
-                })
-        );
-
-        dispatcher.register(
-            Commands.literal("who")
-                .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult =
-                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
-                    if (!permResult.hasPermission()) {
-                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                        return 0;
-                    }
-                    return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
-                })
-        );
+        if (cfg.isCommandEnabled("who")) {
+            dispatcher.register(
+                Commands.literal("who")
+                    .executes(ctx -> {
+                        PermissionValidator.PermissionResult permResult =
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+                        return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
+                    })
+            );
+        } else {
+            LOGGER.debug("Skipped registering 'who' command (disabled in config)");
+        }
 
         // Register /online alias
-        dispatcher.register(
-            Commands.literal("online")
-                .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult =
-                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
-                    if (!permResult.hasPermission()) {
-                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-                        return 0;
-                    }
-                    return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
-                })
-        );
-
-        LOGGER.debug("Registered 'list', 'who', and 'online' commands");
+        if (cfg.isCommandEnabled("online")) {
+            dispatcher.register(
+                Commands.literal("online")
+                    .executes(ctx -> {
+                        PermissionValidator.PermissionResult permResult =
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.list");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+                        return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
+                    })
+            );
+        } else {
+            LOGGER.debug("Skipped registering 'online' command (disabled in config)");
+        }
     }
 
     /**

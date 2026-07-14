@@ -39,15 +39,22 @@ public class VanishCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Enforce moderationEnabled and vanish system config
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            LOGGER.debug("Moderation module is disabled, skipping vanish command registration");
+            return;
+        }
         var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
         if (!config.isVanishSystemEnabled()) {
             return;
         }
         // Register /vanish and /v alias
-        registerVanishCommand(dispatcher, "vanish");
-        registerVanishCommand(dispatcher, "v");
-        
+        if (config.isCommandEnabled("vanish")) {
+            registerVanishCommand(dispatcher, "vanish");
+            registerVanishCommand(dispatcher, "v");
+        }
+
         // /unvanish [player]
+        if (config.isCommandEnabled("unvanish")) {
         dispatcher.register(Commands.literal("unvanish")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanish").hasPermission())
             .executes(ctx -> executeUnvanish(ctx, null))
@@ -56,12 +63,15 @@ public class VanishCommand {
                 .suggests(SUGGEST_VANISHED_PLAYERS)
                 .executes(ctx -> executeUnvanish(ctx, StringArgumentType.getString(ctx, "player"))))
         );
-        
+        }
+
         // /vanishlist
+        if (config.isCommandEnabled("vanishlist")) {
         dispatcher.register(Commands.literal("vanishlist")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.vanishlist").hasPermission())
             .executes(ctx -> executeVanishList(ctx))
         );
+        }
     }
     
     private static void registerVanishCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {

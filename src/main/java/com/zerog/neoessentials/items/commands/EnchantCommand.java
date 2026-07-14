@@ -63,14 +63,31 @@ public class EnchantCommand {
      * Registers with higher priority to override vanilla command.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("enchant")) return;
-        
+        com.zerog.neoessentials.config.ConfigManager cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
+
         // Override vanilla enchant command with enhanced version and add aliases
-        registerEnchantCommand(dispatcher, "enchant");
-        registerEnchantCommand(dispatcher, "ench");
+        if (cfg.isCommandEnabled("enchant")) {
+            registerEnchantCommand(dispatcher, "enchant", false);
+            registerEnchantCommand(dispatcher, "ench", false);
+        }
+
+        // /enchanthand is gated independently of /enchant
+        if (cfg.isCommandEnabled("enchanthand")) {
+            registerEnchantCommand(dispatcher, "enchant", true);
+        }
     }
-    
-    private static void registerEnchantCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+
+    /**
+     * Registers the given command literal. When {@code onlyEnchanthandAlias} is true, only the
+     * /enchanthand alias is registered (used so /enchanthand can be gated independently of
+     * /enchant); otherwise the full command (plus its /enchanthand alias registration, kept for
+     * backward-compat call sites) is registered.
+     */
+    private static void registerEnchantCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName, boolean onlyEnchanthandAlias) {
+        if (onlyEnchanthandAlias) {
+            registerEnchanthandAlias(dispatcher);
+            return;
+        }
         dispatcher.register(
             Commands.literal(commandName)
                 .requires(cs -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(cs, 2) || // Allow ops
@@ -114,12 +131,17 @@ public class EnchantCommand {
                     return 0;
                 })
         );
-        
-        // Keep enchanthand as alias for hand-only enchanting
+    }
+
+    /**
+     * Registers /enchanthand as a standalone hand-only enchanting command.
+     * Gated independently of /enchant via its own "enchanthand" config toggle.
+     */
+    private static void registerEnchanthandAlias(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("enchanthand")
                 .requires(cs -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(cs, 2) ||
-                    (cs.getEntity() instanceof ServerPlayer player && 
+                    (cs.getEntity() instanceof ServerPlayer player &&
                      com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")))
                 .then(Commands.argument("enchantment", IdentifierArgument.id())
                     .suggests((ctx, builder) -> {
@@ -140,7 +162,7 @@ public class EnchantCommand {
                 })
         );
     }
-    
+
     /**
      * Enchantment modes for different command contexts
      */

@@ -42,6 +42,9 @@ public class PlaceholderCommand {
     // ─────────────────────────────────────────────────────────────────────────
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("placeholder")) {
+            return;
+        }
         dispatcher.register(Commands.literal("placeholder")
             .requires(src -> PermissionValidator.validateAdminPermission(src, "neoessentials.admin.placeholders").hasPermission())
             .executes(PlaceholderCommand::showHelp)

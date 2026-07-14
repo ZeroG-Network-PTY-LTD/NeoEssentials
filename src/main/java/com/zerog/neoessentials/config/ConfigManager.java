@@ -1356,7 +1356,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 28);          // v28 — webDashboard.serviceAccount (config-driven service account)
+        put(MAIN_CONFIG, 28);          // v28 — webDashboard.serviceAccount, hologram/shop/auctionHouse/vault module toggles + missing command entries
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -1419,11 +1419,24 @@ public class ConfigManager {
     }
 
     /**
-     * Returns true if the web dashboard is enabled (webDashboard.enabled).
-     * Defaults to true if not set.
+     * Returns true if the web dashboard is enabled — both {@code webDashboard.enabled}
+     * (the dashboard's own detailed setting) AND {@code modules.webDashboardEnabled} (the
+     * top-level module kill-switch) must be true. The two used to be entirely separate
+     * keys, with {@code modules.webDashboardEnabled} silently never consulted anywhere —
+     * checking both here means the module toggle actually does something without
+     * removing the more specific {@code webDashboard.enabled} setting.
+     * Defaults to true if neither is set.
      */
     public static boolean isWebDashboardEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("webDashboardEnabled") && !modules.get("webDashboardEnabled").getAsBoolean()) {
+                return false;
+            }
+        }
+
         if (config.has("webDashboard")) {
             JsonObject dashboard = config.getAsJsonObject("webDashboard");
             if (dashboard.has("enabled")) {
@@ -1684,6 +1697,26 @@ public class ConfigManager {
                 JsonObject security = dashboard.getAsJsonObject("securitySettings");
                 if (security.has("requireAuthentication")) {
                     return security.get("requireAuthentication").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the public (no-login) player moderation lookup API is enabled
+     * (webDashboard.securitySettings.publicModerationLookupEnabled). Defaults to true —
+     * matches ban-management plugins' "anyone can look up a punishment" transparency page.
+     * Never exposes IP bans/IP mutes regardless of this setting.
+     */
+    public boolean isPublicModerationLookupEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("securitySettings")) {
+                JsonObject security = dashboard.getAsJsonObject("securitySettings");
+                if (security.has("publicModerationLookupEnabled")) {
+                    return security.get("publicModerationLookupEnabled").getAsBoolean();
                 }
             }
         }
@@ -2414,6 +2447,66 @@ public class ConfigManager {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("kitsEnabled")) {
                 return modules.get("kitsEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the hologram module is enabled (modules.hologramsEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isHologramModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("hologramsEnabled")) {
+                return modules.get("hologramsEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the (chest/NPC) shop module is enabled (modules.shopEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isShopModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("shopEnabled")) {
+                return modules.get("shopEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the Auction House module is enabled (modules.auctionHouseEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isAuctionHouseModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("auctionHouseEnabled")) {
+                return modules.get("auctionHouseEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the Vault economy bridge module is enabled (modules.vaultEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isVaultModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("vaultEnabled")) {
+                return modules.get("vaultEnabled").getAsBoolean();
             }
         }
         return true;

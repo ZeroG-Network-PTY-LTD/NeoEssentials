@@ -31,8 +31,7 @@ public class NearCommand {
      * Register the /near command
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("near")) return;
-        
+        if (ConfigManager.getInstance().isCommandEnabled("near")) {
         dispatcher.register(
             Commands.literal("near")
                 // /near - Show nearby players with default radius (requires player)
@@ -67,8 +66,10 @@ public class NearCommand {
                     })
                 )
         );
-        
+        }
+
         // Also register /nearby alias
+        if (ConfigManager.getInstance().isCommandEnabled("nearby")) {
         dispatcher.register(
             Commands.literal("nearby")
                 .executes(ctx -> {
@@ -101,8 +102,9 @@ public class NearCommand {
                     })
                 )
         );
+        }
     }
-    
+
     /**
      * Show nearby players within the specified radius
      */

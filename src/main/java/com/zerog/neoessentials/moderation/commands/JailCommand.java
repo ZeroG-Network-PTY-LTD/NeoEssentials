@@ -53,6 +53,7 @@ public class JailCommand {
             return;
         }
         // /jail <player> <jail> [reason]
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jail")) {
         dispatcher.register(Commands.literal("jail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -87,8 +88,10 @@ public class JailCommand {
                 )
             )
         );
+        }
 
         // /jailfor <player> <jail> <duration> [reason]  — timed jail (Essentials: sendtemp pattern)
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jailfor")) {
         dispatcher.register(Commands.literal("jailfor")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -130,20 +133,24 @@ public class JailCommand {
                 )
             )
         );
-        
+        }
+
         // /unjail <player>
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("unjail")) {
         dispatcher.register(Commands.literal("unjail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unjail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_JAILED_PLAYERS)
                 .executes(ctx -> executeUnjail(ctx, StringArgumentType.getString(ctx, "player"))))
         );
-        
+        }
+
         // /setjail <name>                    — auto-detect: wand cuboid selection, else
         //                                       WorldEdit selection, else sphere at current
         //                                       position with the configured default radius
         // /setjail <name> sphere <radius>     — sphere at current position, explicit radius
         // /setjail <name> cuboid              — cuboid from the wand/WorldEdit selection
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("setjail")) {
         dispatcher.register(Commands.literal("setjail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.setjail").hasPermission())
             .then(Commands.argument("name", StringArgumentType.word())
@@ -157,21 +164,27 @@ public class JailCommand {
                     .executes(ctx -> executeSetJailCuboid(ctx, StringArgumentType.getString(ctx, "name"))))
             )
         );
+        }
 
         // /jailwand — give the jail-region selection wand (item configurable via
         // moderation.jailSettings.wandItem). Right-click = corner 1, left-click = corner 2.
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jailwand")) {
         dispatcher.register(Commands.literal("jailwand")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.jail.wand").hasPermission())
             .executes(JailCommand::executeJailWand)
         );
-        
+        }
+
         // /jaillist
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jaillist")) {
         dispatcher.register(Commands.literal("jaillist")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jaillist").hasPermission())
             .executes(ctx -> executeJailList(ctx))
         );
-        
+        }
+
         // /jailinfo [jail]
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jailinfo")) {
         dispatcher.register(Commands.literal("jailinfo")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jailinfo").hasPermission())
             .executes(ctx -> executeJailInfo(ctx, null))
@@ -179,22 +192,28 @@ public class JailCommand {
                 .suggests(SUGGEST_JAIL_NAMES)
                 .executes(ctx -> executeJailInfo(ctx, StringArgumentType.getString(ctx, "jail"))))
         );
+        }
 
         // /deljail <name>  — Essentials: Commanddeljail
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("deljail")) {
         dispatcher.register(Commands.literal("deljail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.setjail").hasPermission())
             .then(Commands.argument("name", StringArgumentType.word())
                 .suggests(SUGGEST_JAIL_NAMES)
                 .executes(ctx -> executeDelJail(ctx, StringArgumentType.getString(ctx, "name"))))
         );
+        }
 
         // /jails — alias for /jaillist (Essentials: Commandjails)
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("jails")) {
         dispatcher.register(Commands.literal("jails")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jaillist").hasPermission())
             .executes(ctx -> executeJailList(ctx))
         );
+        }
 
         // /togglejail <player> — toggle a player's jail state (Essentials: Commandtogglejail)
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("togglejail")) {
         dispatcher.register(Commands.literal("togglejail")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.jail").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -202,6 +221,7 @@ public class JailCommand {
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .executes(ctx -> executeToggleJail(ctx, StringArgumentType.getString(ctx, "player"))))
         );
+        }
     }
 
     private static int executeToggleJail(CommandContext<CommandSourceStack> ctx, String playerName) {

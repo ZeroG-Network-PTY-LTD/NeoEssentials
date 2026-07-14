@@ -29,8 +29,15 @@ public class NoteCommand {
     private static final int NOTES_PER_PAGE = 5;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if moderation commands are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            LOGGER.debug("Moderation module is disabled, skipping note command registration");
+            return;
+        }
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
 
         // /note <player> <text>
+        if (cfg.isCommandEnabled("note")) {
         dispatcher.register(Commands.literal("note")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.note").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -43,8 +50,10 @@ public class NoteCommand {
                 )
             )
         );
+        }
 
         // /notes <player>
+        if (cfg.isCommandEnabled("notes")) {
         dispatcher.register(Commands.literal("notes")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.notes").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -53,8 +62,10 @@ public class NoteCommand {
                 .executes(ctx -> executeNotes(ctx, StringArgumentType.getString(ctx, "player")))
             )
         );
+        }
 
         // /removenote <player> <noteId>
+        if (cfg.isCommandEnabled("removenote")) {
         dispatcher.register(Commands.literal("removenote")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.note").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -65,6 +76,7 @@ public class NoteCommand {
                 )
             )
         );
+        }
     }
 
     // ── /note ────────────────────────────────────────────────────────────────

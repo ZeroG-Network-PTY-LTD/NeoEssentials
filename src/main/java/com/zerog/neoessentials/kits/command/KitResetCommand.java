@@ -26,6 +26,7 @@ public class KitResetCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isKitSystemEnabled()) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("kitreset")) return;
 
         dispatcher.register(Commands.literal("kitreset")
             .requires(src -> {

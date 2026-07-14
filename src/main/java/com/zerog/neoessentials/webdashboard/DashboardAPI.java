@@ -240,6 +240,15 @@ public class DashboardAPI {
      */
     @SuppressWarnings("ConstantConditions")
     private HttpHandler withAuth(HttpHandler handler) {
+        return withAuth(handler, true);
+    }
+
+    /**
+     * @param requireAuth if false, still applies CORS/rate-limiting but skips the Bearer-token
+     *                    check entirely — for genuinely public routes (e.g. the public
+     *                    moderation lookup), not a bypass of the auth check itself.
+     */
+    private HttpHandler withAuth(HttpHandler handler, boolean requireAuth) {
         return exchange -> {
             try {
                 ConfigManager cfg = ConfigManager.getInstance();
@@ -283,7 +292,7 @@ public class DashboardAPI {
                 }
 
                 // ── Authentication ─────────────────────────────────────────────
-                if (cfg.isDashboardAuthRequired()) {
+                if (requireAuth && cfg.isDashboardAuthRequired()) {
                     String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
                     String token = null;
                     if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -380,6 +389,10 @@ public class DashboardAPI {
         apiServer.createContext("/api/cloud",       withAuth(new CloudStorageEndpoint()));
         apiServer.createContext("/api/users",       withAuth(new UserManagementEndpoint()));
         apiServer.createContext("/api/moderation",  withAuth(new ModerationEndpoint(server)));
+        // Public, no-login player lookup (bans/mutes/kicks/warns by name + recent activity feed) —
+        // still CORS/rate-limited via withAuth(handler, false), just skips the Bearer-token check.
+        apiServer.createContext("/api/public/moderation",
+            withAuth(new com.zerog.neoessentials.webdashboard.endpoints.PublicModerationEndpoint(server), false));
         apiServer.createContext("/api/kits",        withAuth(new KitsEndpoint()));
         apiServer.createContext("/api/holograms",   withAuth(new HologramEndpoint()));
         apiServer.createContext("/api/warps",       withAuth(new com.zerog.neoessentials.webdashboard.endpoints.WarpsEndpoint()));

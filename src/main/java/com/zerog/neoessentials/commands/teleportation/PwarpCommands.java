@@ -25,34 +25,50 @@ public class PwarpCommands {
     private static final String PERMISSION_PWARPS = "neoessentials.teleport.pwarp.list";
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if teleportation module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isTeleportationEnabled()) {
+            return;
+        }
+
         WarpManager warpManager = WarpManager.getInstance();
         if (!warpManager.isPlayerWarpsEnabled()) return;
+
+        com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+
         // /pwarp <name>
-        dispatcher.register(Commands.literal("pwarp")
-            .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_PWARP))
-            .then(Commands.argument("name", StringArgumentType.word())
-                .executes(PwarpCommands::executePwarp)
-            )
-        );
+        if (config.isCommandEnabled("pwarp")) {
+            dispatcher.register(Commands.literal("pwarp")
+                .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_PWARP))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(PwarpCommands::executePwarp)
+                )
+            );
+        }
         // /setpwarp <name>
-        dispatcher.register(Commands.literal("setpwarp")
-            .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETPWARP))
-            .then(Commands.argument("name", StringArgumentType.word())
-                .executes(PwarpCommands::executeSetPwarp)
-            )
-        );
+        if (config.isCommandEnabled("setpwarp")) {
+            dispatcher.register(Commands.literal("setpwarp")
+                .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_SETPWARP))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(PwarpCommands::executeSetPwarp)
+                )
+            );
+        }
         // /delpwarp <name>
-        dispatcher.register(Commands.literal("delpwarp")
-            .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELPWARP))
-            .then(Commands.argument("name", StringArgumentType.word())
-                .executes(PwarpCommands::executeDelPwarp)
-            )
-        );
+        if (config.isCommandEnabled("delpwarp")) {
+            dispatcher.register(Commands.literal("delpwarp")
+                .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_DELPWARP))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(PwarpCommands::executeDelPwarp)
+                )
+            );
+        }
         // /pwarps
-        dispatcher.register(Commands.literal("pwarps")
-            .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_PWARPS))
-            .executes(PwarpCommands::executePwarps)
-        );
+        if (config.isCommandEnabled("pwarps")) {
+            dispatcher.register(Commands.literal("pwarps")
+                .requires(source -> source.getEntity() instanceof ServerPlayer player && PermissionAPI.hasPermission(player.getUUID(), PERMISSION_PWARPS))
+                .executes(PwarpCommands::executePwarps)
+            );
+        }
     }
 
     private static int executePwarp(CommandContext<CommandSourceStack> context) {

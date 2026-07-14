@@ -24,8 +24,14 @@ public class KickCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(KickCommand.class);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        
+        // Check if moderation commands are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            LOGGER.debug("Moderation module is disabled, skipping kick command registration");
+            return;
+        }
+
         // /kick <player> [reason]
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("kick")) {
         dispatcher.register(Commands.literal("kick")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.kick").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -33,18 +39,21 @@ public class KickCommand {
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .executes(ctx -> executeKick(ctx, StringArgumentType.getString(ctx, "player"), "Kicked by an operator"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
-                    .executes(ctx -> executeKick(ctx, 
+                    .executes(ctx -> executeKick(ctx,
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "reason")))))
         );
-        
+        }
+
         // /kickall [reason]
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("kickall")) {
         dispatcher.register(Commands.literal("kickall")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.kickall").hasPermission())
             .executes(ctx -> executeKickAll(ctx, "Server maintenance"))
             .then(Commands.argument("reason", StringArgumentType.greedyString())
                 .executes(ctx -> executeKickAll(ctx, StringArgumentType.getString(ctx, "reason"))))
         );
+        }
     }
     
     private static int executeKick(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {
