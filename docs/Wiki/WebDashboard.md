@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.3+build.9 · **Config:** `config.json` → `webDashboard` section
+> **Version:** 1.0.3+build.13 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is now controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
@@ -12,41 +12,43 @@ NeoEssentials ships a built-in web dashboard for server monitoring and administr
 
 ## Setup
 
-1. Set `webDashboard.enabled: true` in `config.json` (default: `true`)
+1. Set `webDashboard.enabled: true` **and** `modules.webDashboardEnabled: true` in `config.json` (both default to `true`)
 2. Configure `port` (default `8080`) and `websocketPort` (default `8081`)
 3. Start the server — the dashboard auto-starts
-4. Register a dashboard account in-game: `/dashboardregister start` then
-   `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
-   Simple Discord Link is linked)
+4. Log in with the default admin account (`admin` / `admin123`, created automatically on first
+   boot — **change this password immediately**), or use one of the self-service paths below
 5. Open `http://<server-ip>:8080` in a browser and log in
 
 ---
 
 ## Account Registration
 
-Players register their dashboard account **in-game**, via the separate `/dashboardregister`
-command (not a subcommand of `/dashboard`) — they do not need to be online at login time after
-registering.
+> **Known issue:** `/dashboardregister` (documented in earlier versions of this page as the
+> primary way to create an account) is currently **dead code** — the command class exists but
+> is never actually registered with the command dispatcher, so typing it in-game does nothing.
+> Until that's fixed, use one of the working paths below instead.
 
-```
-/dashboardregister start
-/dashboardregister complete <username> <password>
-```
+**Working ways to get dashboard access today:**
 
-Or, if Simple Discord Link is installed and the player has linked their Discord account:
-
-```
-/dashboardregister discord
-```
-
-Requires permission `neoessentials.dashboard.access`. Registration tokens from `start` expire
-after 5 minutes; passwords must be at least 8 characters. Run `/dashboardregister status` to
-check your current registration state. After registering, the player can log in from the web
-browser at any time, even when offline.
+1. **Default admin account** — `admin` / `admin123` is created automatically the first time the
+   dashboard starts with no accounts yet. Change the password immediately after logging in.
+2. **Minecraft-permission login (self-service, works offline)** — on the login page, authenticate
+   with just your Minecraft username (no password) instead of username+password. The server
+   checks whether that player has `neoessentials.dashboard.access` (via the permission system,
+   looked up by UUID — the player doesn't need to be online) and, if so, auto-creates a dashboard
+   account for them on the spot, with role assigned from
+   `neoessentials.dashboard.admin`/`.moderator`/`.access`. This path is marked deprecated in
+   server logs (it predates the registration-token flow `/dashboardregister` was meant to
+   replace) but is fully functional and, until that command is fixed, is the only true
+   self-service option that doesn't depend on Discord.
+3. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
+   (the default), logging in with Discord auto-creates an account on first use.
+4. **Admin-created accounts** — an existing admin can create accounts for other players via the
+   dashboard's own Users management page, or `POST /api/users/create`.
 
 ### Discord Auth (Optional)
 
-If **Simple Discord Link** is installed and configured, players can also authenticate via Discord. The mod is fully optional — standalone account registration works without it.
+If **Simple Discord Link** is installed and configured, players can also authenticate via Discord. The mod is fully optional — the Minecraft-permission and admin-created paths above work without it.
 
 ---
 
@@ -158,6 +160,12 @@ Set `requireLinkedAccount: false` in `discord_auth.json` to allow Discord-only a
 | `securitySettings.requireAuthentication` | `true` | Require a Bearer token on dashboard API endpoints |
 | `securitySettings.enableRateLimiting` | `true` | Enable per-IP rate limiting on the dashboard API |
 | `securitySettings.maxRequestsPerMinute` | `60` | Max API requests per IP per minute when rate limiting is enabled |
+| `securitySettings.publicModerationLookupEnabled` | `true` | Enable the no-login `/api/public/moderation/*` routes (see below) |
+
+The dashboard's on/off switch is now split across two keys that both have to allow it:
+`webDashboard.enabled` (this section) **and** `modules.webDashboardEnabled` (the mod-wide
+`modules` block at the top of `config.json`, alongside `economyEnabled`/`chatEnabled`/etc.).
+Either one set to `false` disables the whole dashboard.
 
 > The `apiSettings`, `uiSettings`, `loggingSettings`, `enableCORS`, and `maxThreads` keys from
 > earlier documentation do not exist in the current codebase — the dashboard's security-related
@@ -207,7 +215,23 @@ The dashboard's moderation endpoints are backed directly by the same manager cla
 | `/api/moderation/reports`, `/reports/all`, `/reports/{id}` | GET | Pending / all / one report |
 | `/api/moderation/reports/{id}/review` | POST | Accept or dismiss a report |
 
-All routes require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
+All routes above require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
+
+### Public Moderation Lookup (no login required)
+
+A separate, unauthenticated set of routes — matching ban-management plugins' public
+transparency page, where anyone can look up a player's punishment history without an account:
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/public/moderation/lookup/{name}` | GET | Bans, mutes, kicks, and warns for one player, by name |
+| `/api/public/moderation/recent` | GET | Recent active bans + mutes across all players, newest first |
+
+These deliberately **never** expose IP bans, IP mutes, staff notes, or player reports (privacy —
+notes/reports contain staff commentary and a reporter's identity). Still CORS/rate-limited the
+same as every other dashboard route, just without the Bearer-token check. Gated by
+`webDashboard.securitySettings.publicModerationLookupEnabled` (default `true`) — set to `false`
+to disable public lookup entirely.
 
 ---
 
@@ -231,6 +255,15 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
 | `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (SDLink) or the OAuth2 web flow |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
+
+> **Every command in this table is currently dead code** — both `DashboardCommand` and
+> `DashboardRegisterCommand` exist and compile, but neither is actually registered with the
+> command dispatcher (`NeoEssentials.java`'s command-registration list has no call to either
+> class). Typing any of these in-game does nothing (Brigadier reports "unknown command"). The
+> dashboard itself still starts/stops fine via config (`autoStart`) — only the in-game
+> `/dashboard`/`/dashboardregister` *commands* for controlling it remotely are broken. See
+> [Account Registration](#account-registration) above for the account-creation paths that
+> actually work today.
 
 ---
 
