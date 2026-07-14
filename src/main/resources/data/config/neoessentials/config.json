@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 26,
+  "_configVersion": 28,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -16,7 +16,11 @@
     "teleportationEnabled": true,
     "moderationEnabled": true,
     "chatEnabled": true,
-    "webDashboardEnabled": true
+    "webDashboardEnabled": true,
+    "hologramsEnabled": true,
+    "shopEnabled": true,
+    "auctionHouseEnabled": true,
+    "vaultEnabled": true
   },
 
   "logging": {
@@ -230,7 +234,64 @@
     "tempbanip": true,
     "togglejail": true,
     "jails": true,
-    "jailinfo": true
+    "jailinfo": true,
+
+    // Previously missing entries (commands that existed in code but had no
+    // toggle — added so every registered command is actually controllable).
+    "banlist": true,
+    "clearwarnings": true,
+    "freezeall": true,
+    "unfreezeall": true,
+    "freezelist": true,
+    "jailfor": true,
+    "jaillist": true,
+    "jailwand": true,
+    "unvanish": true,
+    "vanishlist": true,
+    "warn": true,
+    "warnings": true,
+    "removewarn": true,
+    "note": true,
+    "notes": true,
+    "removenote": true,
+    "report": true,
+    "reports": true,
+    "reviewreport": true,
+    "chatformat": true,
+    "dashboardregister": true,
+    "language": true,
+    "neoe": true,
+    "neoessentials": true,
+    "placeholder": true,
+    "pex": true,
+    "mail": true,
+    "nearby": true,
+    "who": true,
+    "online": true,
+    "nickname": true,
+    "setnick": true,
+    "grindstone": true,
+    "ci": true,
+    "clearinv": true,
+    "fix": true,
+    "trash": true,
+    "inv": true,
+    "ec": true,
+    "ecedit": true,
+    "pt": true,
+    "ptt": true,
+    "pwarp": true,
+    "setpwarp": true,
+    "delpwarp": true,
+    "pwarps": true,
+    "holo": true,
+    "hologram": true,
+    "chestshop": true,
+    "cshop": true,
+    "npcshop": true,
+    "ah": true,
+    "auctionhouse": true,
+    "vault": true
   },
 
   /* ----------------------------------------------------------------
@@ -269,7 +330,11 @@
       // Enable per-IP rate limiting on dashboard API requests
       "enableRateLimiting": true,
       // Maximum API requests per IP per minute when rate limiting is enabled
-      "maxRequestsPerMinute": 60
+      "maxRequestsPerMinute": 60,
+      // Public, no-login player moderation lookup (bans/mutes/kicks/warns by player name,
+      // plus a recent-punishments feed) — matches ban-management plugins' public transparency
+      // page. Never exposes IP bans/IP mutes regardless of this setting.
+      "publicModerationLookupEnabled": true
     }
   },
 

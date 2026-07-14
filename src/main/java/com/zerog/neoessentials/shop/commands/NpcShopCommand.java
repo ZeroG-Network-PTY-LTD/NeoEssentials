@@ -39,6 +39,13 @@ public class NpcShopCommand {
     private static final String PERM = "neoessentials.shop.npc.manage";
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isShopModuleEnabled()) {
+            return;
+        }
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("npcshop")) {
+            return;
+        }
+
         var node = Commands.literal("npcshop")
                 .requires(src -> src.hasPermission(3) ||
                         (src.getEntity() != null && PermissionAPI.hasPermission(src.getEntity().getUUID(), PERM)))

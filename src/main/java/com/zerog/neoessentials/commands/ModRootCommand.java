@@ -58,6 +58,8 @@ public class ModRootCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LOGGER.info("Registering /neoe and /neoessentials root commands");
+        com.zerog.neoessentials.config.ConfigManager cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (cfg.isCommandEnabled("neoe")) {
         dispatcher.register(
             Commands.literal("neoe")
                 .requires(source -> {
@@ -98,6 +100,8 @@ public class ModRootCommand {
                 )
                 .executes(ModRootCommand::showAvailableCommands) // Show help when no args
         );
+        }
+        if (cfg.isCommandEnabled("neoessentials")) {
         dispatcher.register(
             Commands.literal("neoessentials")
                 .requires(source -> {
@@ -138,8 +142,9 @@ public class ModRootCommand {
                 )
                 .executes(ModRootCommand::showAvailableCommands) // Show help when no args
         );
+        }
     }
-    
+
     /**
      * Check if the command source has permission to use the base NeoEssentials commands.
      * @param source Command source to check

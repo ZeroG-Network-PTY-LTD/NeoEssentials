@@ -31,6 +31,10 @@ public class CreateKitCommand {
             return; // Don't register kit commands if module is disabled
         }
         
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("createkit")) {
+            return;
+        }
+
         registerCreateKitCommand(dispatcher, "createkit");
         registerCreateKitCommand(dispatcher, "makekit");
         registerCreateKitCommand(dispatcher, "addkit");

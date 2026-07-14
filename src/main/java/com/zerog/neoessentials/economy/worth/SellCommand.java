@@ -39,8 +39,10 @@ public class SellCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isEconomyEnabled()) return;
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
 
         // ── /sell ─────────────────────────────────────────────────────────────
+        if (cfg.isCommandEnabled("sell")) {
         dispatcher.register(Commands.literal("sell")
             .requires(src -> {
                 var p = src.getPlayer();
@@ -85,8 +87,10 @@ public class SellCommand {
                         IntegerArgumentType.getInteger(ctx, "amount"))))
             )
         );
+        }
 
         // ── /setworth ─────────────────────────────────────────────────────────
+        if (cfg.isCommandEnabled("setworth")) {
         dispatcher.register(Commands.literal("setworth")
             .requires(src -> {
                 var p = src.getPlayer();
@@ -101,6 +105,7 @@ public class SellCommand {
                         DoubleArgumentType.getDouble(ctx, "price"))))
             )
         );
+        }
     }
 
     // ── /sell hand ────────────────────────────────────────────────────────────

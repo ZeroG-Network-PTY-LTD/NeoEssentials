@@ -18,6 +18,17 @@ import net.minecraft.world.item.ItemStack;
 public final class AuctionHouseCommand {
     private AuctionHouseCommand() {}
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isAuctionHouseModuleEnabled()) {
+            return;
+        }
+
+        boolean ahEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("ah");
+        boolean auctionhouseEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("auctionhouse");
+
+        if (!ahEnabled && !auctionhouseEnabled) {
+            return;
+        }
+
         var root = Commands.literal("ah")
                 .executes(ctx -> executeOpen(ctx.getSource()))
                 .then(Commands.literal("sell")
@@ -35,8 +46,12 @@ public final class AuctionHouseCommand {
                         .executes(ctx -> executeReload(ctx.getSource())))
                 .then(Commands.literal("help")
                         .executes(ctx -> executeHelp(ctx.getSource())));
-        dispatcher.register(root);
-        dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("ah")));
+        if (ahEnabled) {
+            dispatcher.register(root);
+        }
+        if (auctionhouseEnabled && ahEnabled) {
+            dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("ah")));
+        }
     }
     private static int executeOpen(CommandSourceStack source) {
         if (!source.isPlayer()) { source.sendFailure(MessageUtil.error("commands.neoessentials.ah.players_only")); return 0; }

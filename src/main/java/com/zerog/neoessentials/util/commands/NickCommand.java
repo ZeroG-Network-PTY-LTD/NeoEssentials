@@ -44,11 +44,11 @@ public class NickCommand {
      * Register the /nick command
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("nick")) return;
-        
         // Load nickname data on registration
         loadNicknameData();
-        
+
+        boolean nickEnabled = ConfigManager.getInstance().isCommandEnabled("nick");
+        if (nickEnabled) {
         dispatcher.register(
             Commands.literal("nick")
                 // /nick <nickname> - Set nickname
@@ -115,8 +115,10 @@ public class NickCommand {
                     return showCurrentNickname(player);
                 })
         );
-        
+        }
+
         // Admin command to set other players' nicknames
+        if (ConfigManager.getInstance().isCommandEnabled("setnick")) {
         dispatcher.register(
             Commands.literal("setnick")
                 .then(Commands.argument("player", StringArgumentType.word())
@@ -149,9 +151,12 @@ public class NickCommand {
                     )
                 )
         );
+        }
 
-        // /nickname alias — mirrors /nick exactly
-        dispatcher.register(Commands.literal("nickname").redirect(dispatcher.getRoot().getChild("nick")));
+        // /nickname alias — mirrors /nick exactly (requires /nick itself to be registered)
+        if (nickEnabled && ConfigManager.getInstance().isCommandEnabled("nickname")) {
+            dispatcher.register(Commands.literal("nickname").redirect(dispatcher.getRoot().getChild("nick")));
+        }
     }
     
     /**

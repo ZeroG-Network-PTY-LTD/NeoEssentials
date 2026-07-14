@@ -34,6 +34,7 @@ public class KitCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isKitSystemEnabled()) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("kit")) return;
 
         dispatcher.register(Commands.literal("kit")
             .requires(src -> {

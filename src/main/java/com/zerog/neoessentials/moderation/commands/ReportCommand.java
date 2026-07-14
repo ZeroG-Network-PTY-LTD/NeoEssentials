@@ -30,8 +30,15 @@ public class ReportCommand {
     private static final int REPORTS_PER_PAGE = 8;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if moderation commands are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            LOGGER.debug("Moderation module is disabled, skipping report command registration");
+            return;
+        }
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
 
         // /report <player> <reason>
+        if (cfg.isCommandEnabled("report")) {
         dispatcher.register(Commands.literal("report")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.report").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
@@ -44,14 +51,18 @@ public class ReportCommand {
                 )
             )
         );
+        }
 
         // /reports
+        if (cfg.isCommandEnabled("reports")) {
         dispatcher.register(Commands.literal("reports")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.reports").hasPermission())
             .executes(ReportCommand::executeReports)
         );
+        }
 
         // /reviewreport <id> <accept|dismiss> [notes]
+        if (cfg.isCommandEnabled("reviewreport")) {
         dispatcher.register(Commands.literal("reviewreport")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.reports").hasPermission())
             .then(Commands.argument("id", StringArgumentType.word())
@@ -69,6 +80,7 @@ public class ReportCommand {
                 )
             )
         );
+        }
     }
 
     // ── /report ──────────────────────────────────────────────────────────────

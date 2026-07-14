@@ -81,7 +81,7 @@ public class DisposeCommand {
      * Register the /dispose and /trash commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("dispose")) return;
+        if (ConfigManager.getInstance().isCommandEnabled("dispose")) {
         dispatcher.register(
             Commands.literal("dispose")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -158,11 +158,13 @@ public class DisposeCommand {
                     return 1;
                 })
         );
+        }
+        if (ConfigManager.getInstance().isCommandEnabled("trash")) {
         dispatcher.register(
             Commands.literal("trash")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.dispose");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
@@ -173,6 +175,7 @@ public class DisposeCommand {
                     return 1;
                 })
         );
+        }
     }
 
     /**

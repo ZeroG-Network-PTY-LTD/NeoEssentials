@@ -22,6 +22,9 @@ public class LanguageCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(LanguageCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("language")) {
+            return;
+        }
         dispatcher.register(
             Commands.literal("language")
                 .requires(source -> source.hasPermission(4)) // Op level 4

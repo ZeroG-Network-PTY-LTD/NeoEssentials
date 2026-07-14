@@ -24,8 +24,12 @@ public class FakePermissionsEXCommand {
      * This will be overridden if the real PermissionsEX loads, but provides fallback functionality.
      */
     public static void registerFakePexCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("pex")) {
+            LOGGER.debug("Fake /pex command is disabled in config, skipping registration");
+            return;
+        }
         LOGGER.info("Registering fake /pex command for NeoEssentials permission tab completion...");
-        
+
         try {
             // Get all permissions for suggestions
             SuggestionProvider<CommandSourceStack> permissionSuggestions = (context, builder) -> {

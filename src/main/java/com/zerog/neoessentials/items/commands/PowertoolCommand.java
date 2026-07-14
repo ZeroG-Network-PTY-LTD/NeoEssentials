@@ -77,14 +77,22 @@ public class PowertoolCommand {
      * Register the /powertool and /pt commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("powertool")) return;
-        registerPowertoolCommand(dispatcher, "powertool");
-        registerPowertoolCommand(dispatcher, "ptool");
+        ConfigManager cfg = ConfigManager.getInstance();
+        if (cfg.isCommandEnabled("powertool")) {
+            registerPowertoolCommand(dispatcher, "powertool");
+        }
+        if (cfg.isCommandEnabled("ptool")) {
+            registerPowertoolCommand(dispatcher, "ptool");
+        }
+        if (cfg.isCommandEnabled("pt")) {
+            registerPtAlias(dispatcher);
+        }
         registerPowertoolToggle(dispatcher);
     }
 
-    /** /powertooltoggle — globally enable/disable all powertools for this player. */
+    /** /powertooltoggle and /ptt — globally enable/disable all powertools for this player. Gated independently. */
     private static void registerPowertoolToggle(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (ConfigManager.getInstance().isCommandEnabled("powertooltoggle")) {
         dispatcher.register(Commands.literal("powertooltoggle")
             .requires(cs -> cs.getEntity() instanceof ServerPlayer)
             .executes(ctx -> {
@@ -112,7 +120,9 @@ public class PowertoolCommand {
                 return 1;
             })
         );
+        }
         // /ptt alias
+        if (ConfigManager.getInstance().isCommandEnabled("ptt")) {
         dispatcher.register(Commands.literal("ptt")
             .requires(cs -> cs.getEntity() instanceof ServerPlayer)
             .executes(ctx -> {
@@ -131,8 +141,9 @@ public class PowertoolCommand {
                 return 1;
             })
         );
+        }
     }
-    
+
     private static void registerPowertoolCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
@@ -221,6 +232,10 @@ public class PowertoolCommand {
                     })
                 )
         );
+    }
+
+    /** /pt — standalone alias, gated independently via its own "pt" config toggle. */
+    private static void registerPtAlias(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("pt")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

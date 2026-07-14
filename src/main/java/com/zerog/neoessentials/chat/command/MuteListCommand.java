@@ -12,6 +12,16 @@ import net.minecraft.commands.Commands;
  */
 public class MuteListCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
+            return;
+        }
+
+        // Check if the mutelist command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("mutelist")) {
+            return;
+        }
+
         dispatcher.register(Commands.literal("mutelist")
             .executes(ctx -> {
                 CommandSourceStack source = ctx.getSource();

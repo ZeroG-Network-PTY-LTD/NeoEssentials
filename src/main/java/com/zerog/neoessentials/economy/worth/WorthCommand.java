@@ -24,6 +24,7 @@ public class WorthCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isEconomyEnabled()) return;
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("worth")) return;
 
         dispatcher.register(Commands.literal("worth")
             .requires(src -> {

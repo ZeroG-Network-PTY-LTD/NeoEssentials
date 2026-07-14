@@ -16,6 +16,16 @@ import com.zerog.neoessentials.util.MessageUtil;
  */
 public class UnmuteCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
+            return;
+        }
+
+        // Check if the unmute command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("unmute")) {
+            return;
+        }
+
         dispatcher.register(Commands.literal("unmute")
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> {

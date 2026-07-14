@@ -30,6 +30,10 @@ public class ListKitsCommand {
             return; // Don't register kit commands if module is disabled
         }
         
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("listkits")) {
+            return;
+        }
+
         registerListKitsCommand(dispatcher, "listkits");
         registerListKitsCommand(dispatcher, "kits");
     }

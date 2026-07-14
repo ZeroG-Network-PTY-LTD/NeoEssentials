@@ -26,6 +26,9 @@ import net.minecraft.network.chat.Component;
 public class DashboardCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!ConfigManager.getInstance().isCommandEnabled("dashboard")) {
+            return;
+        }
         dispatcher.register(Commands.literal("dashboard")
             .requires(source -> PermissionValidator.validateAdminPermission(source, "neoessentials.admin.dashboard").hasPermission())
             .executes(DashboardCommand::showStatus)

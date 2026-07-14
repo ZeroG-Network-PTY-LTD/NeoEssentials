@@ -22,6 +22,12 @@ public class ChannelCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelCommands.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if chat module is enabled
+        if (!ConfigManager.isChatEnabled()) {
+            LOGGER.debug("Chat module is disabled, skipping channel command registration");
+            return;
+        }
+
         try {
             // Load channel configuration
             JsonObject mainConfig = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);

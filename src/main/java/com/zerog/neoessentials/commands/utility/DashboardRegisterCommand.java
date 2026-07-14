@@ -29,6 +29,9 @@ import net.minecraft.server.level.ServerPlayer;
 public class DashboardRegisterCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("dashboardregister")) {
+            return;
+        }
         dispatcher.register(Commands.literal("dashboardregister")
             .requires(source -> {
                 // Allow console to use the command too for testing

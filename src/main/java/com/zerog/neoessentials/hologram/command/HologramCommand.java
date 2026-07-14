@@ -60,6 +60,17 @@ public class HologramCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isHologramModuleEnabled()) {
+            return;
+        }
+
+        boolean hologramEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("hologram");
+        boolean holoEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("holo");
+
+        if (!hologramEnabled && !holoEnabled) {
+            return;
+        }
+
         var root = Commands.literal("hologram")
             .requires(src -> hasPermission(src))
             .then(Commands.literal("create")
@@ -299,11 +310,15 @@ public class HologramCommand {
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "color"))))));
 
-        dispatcher.register(root);
+        if (hologramEnabled) {
+            dispatcher.register(root);
+        }
         // Alias /holo
-        dispatcher.register(Commands.literal("holo")
-            .requires(src -> hasPermission(src))
-            .redirect(dispatcher.getRoot().getChild("hologram")));
+        if (holoEnabled && hologramEnabled) {
+            dispatcher.register(Commands.literal("holo")
+                .requires(src -> hasPermission(src))
+                .redirect(dispatcher.getRoot().getChild("hologram")));
+        }
     }
     // ── Subcommand implementations ─────────────────────────────────────────────
     private static int cmdCreate(CommandSourceStack src, String id, double x, double y, double z, String worldArg) {

@@ -39,13 +39,16 @@ public class FreezeCommand {
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
             return;
         }
+        var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
+
         // /freeze <player> [reason]
+        if (cfg.isCommandEnabled("freeze")) {
         dispatcher.register(Commands.literal("freeze")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.freeze").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
-                .executes(ctx -> executeFreeze(ctx, 
+                .executes(ctx -> executeFreeze(ctx,
                     StringArgumentType.getString(ctx, "player"),
                     com.zerog.neoessentials.config.ConfigManager.getDefaultFreezeReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
@@ -53,34 +56,43 @@ public class FreezeCommand {
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "reason")))))
         );
+        }
 
         // /unfreeze <player>
+        if (cfg.isCommandEnabled("unfreeze")) {
         dispatcher.register(Commands.literal("unfreeze")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unfreeze").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_FROZEN_PLAYERS)
                 .executes(ctx -> executeUnfreeze(ctx, StringArgumentType.getString(ctx, "player"))))
         );
-        
+        }
+
         // /freezeall [reason]
+        if (cfg.isCommandEnabled("freezeall")) {
         dispatcher.register(Commands.literal("freezeall")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.freezeall").hasPermission())
             .executes(ctx -> executeFreezeAll(ctx, com.zerog.neoessentials.config.ConfigManager.getDefaultFreezeReason()))
             .then(Commands.argument("reason", StringArgumentType.greedyString())
                 .executes(ctx -> executeFreezeAll(ctx, StringArgumentType.getString(ctx, "reason"))))
         );
-        
+        }
+
         // /unfreezeall
+        if (cfg.isCommandEnabled("unfreezeall")) {
         dispatcher.register(Commands.literal("unfreezeall")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.unfreezeall").hasPermission())
             .executes(ctx -> executeUnfreezeAll(ctx))
         );
-        
+        }
+
         // /freezelist
+        if (cfg.isCommandEnabled("freezelist")) {
         dispatcher.register(Commands.literal("freezelist")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.freezelist").hasPermission())
             .executes(ctx -> executeFreezeList(ctx))
         );
+        }
     }
     
     private static int executeFreeze(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {
