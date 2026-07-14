@@ -100,7 +100,7 @@ public class AuthenticationManager {
         }
 
         boolean changed = false;
-        if (!hashPassword(password).equals(existing.getPasswordHash())) {
+        if (!verifyPassword(password, existing.getPasswordHash())) {
             updatePassword(existing.getId(), password);
             changed = true;
         }

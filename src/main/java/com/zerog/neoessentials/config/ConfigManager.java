@@ -1356,7 +1356,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 30);          // v30 — webDashboard.serviceAccount, hologram/shop/auctionHouse/vault/tablist/resourcePacks/playerTags/discordIntegration module toggles + missing command entries, webDashboard.mode (internal/external/both)
+        put(MAIN_CONFIG, 31);          // v31 — webDashboard.serviceAccount (config-driven service account), hologram/shop/auctionHouse/vault/tablist/resourcePacks/playerTags/discordIntegration module toggles + missing command entries, webDashboard.mode (internal/external/both)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
