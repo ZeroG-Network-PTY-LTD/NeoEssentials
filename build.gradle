@@ -220,7 +220,7 @@ dependencies {
     // place of the old reflection-only adapters. Both are still runtime-optional: the
     // adapter classes are only ever touched after a ModList.isLoaded(modid) check passes.
     compileOnly 'curse.maven:simple-discord-link-bot-forge-fabric-spigot-541320:8437065'
-    compileOnly 'curse.maven:craterlib-867099:8117924'
+    compileOnly 'curse.maven:craterlib-867099:8117841'
     compileOnly 'curse.maven:mc2discord-325235:7595200'
 
     // Alternative: if you want them available during testing, use runtimeOnly

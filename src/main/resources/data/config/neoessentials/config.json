@@ -333,19 +333,19 @@
     // Bind address: '0.0.0.0' = all interfaces, '127.0.0.1' = localhost only (more secure)
     "bindAddress": "0.0.0.0",
     // How the dashboard is served:
-    //  "internal" — serve the mod's own bundled dashboard UI at "/" AND the REST API
-    //               under "/api/*" (default; what you want if you only use the
-    //               built-in dashboard at http://<server>:<port>).
     //  "external" — serve ONLY the REST API under "/api/*"; the "/" static-file
-    //               route is not registered at all. Use this if you run a separate
-    //               dashboard app (e.g. NeoEssentials-Dashboard, a Laravel app) that
-    //               talks to this API from outside — avoids the confusing
-    //               "Dashboard resources NOT found" log spam when you never intend
-    //               to load the bundled UI anyway.
+    //               route is not registered at all (default). Use this if you run
+    //               a separate dashboard app (e.g. NeoEssentials-Dashboard, a
+    //               Laravel app) that talks to this API from outside.
+    //  "internal" — serve the mod's own bundled dashboard UI at "/" AND the REST API
+    //               under "/api/*". NOTE: no built-in UI currently ships with the
+    //               mod — only use this once you've placed a built dashboard at
+    //               src/main/resources/webdashboard/index.html yourself, otherwise
+    //               requests to "/" will fail.
     //  "both"     — serve both (same as "internal", kept as an explicit alias for
     //               clarity when you intentionally use the built-in UI AND point an
     //               external app at the same API).
-    "mode": "internal",
+    "mode": "external",
 
     // Config-driven dashboard service account — for an external app (e.g. the Laravel
     // NeoEssentials-Dashboard) that authenticates against this API server-to-server.
