@@ -113,6 +113,16 @@ public interface ChatIntegrationAdapter {
     }
 
     /**
+     * Reverse of {@link #getLinkedDiscordId(UUID)} — resolve the Minecraft account linked to a
+     * Discord user ID, if the companion mod has that link and it's verified.
+     * @param discordId The Discord snowflake ID
+     * @return The linked Minecraft UUID, or empty if not linked/unsupported
+     */
+    default Optional<UUID> getLinkedMinecraftUuid(String discordId) {
+        return Optional.empty();
+    }
+
+    /**
      * Called when a player earns an advancement.
      * @param player The player
      * @param advancementName The advancement's display/title text

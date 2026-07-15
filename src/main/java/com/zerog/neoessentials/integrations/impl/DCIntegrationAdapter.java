@@ -68,6 +68,18 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     }
 
     @Override
+    public Optional<UUID> getLinkedMinecraftUuid(String discordId) {
+        if (!isReady()) return Optional.empty();
+        try {
+            PlayerLink link = LinkManager.getLink(discordId, null);
+            return link != null ? Optional.of(UUID.fromString(link.mcPlayerUUID)) : Optional.empty();
+        } catch (Exception e) {
+            LOGGER.debug("DCIntegration reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public void shutdown() {
         LOGGER.info("DCIntegration integration shut down.");
     }

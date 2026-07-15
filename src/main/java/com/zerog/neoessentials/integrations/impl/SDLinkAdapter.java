@@ -148,6 +148,18 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     }
 
     @Override
+    public Optional<UUID> getLinkedMinecraftUuid(String discordId) {
+        if (!isReady()) return Optional.empty();
+        try {
+            MinecraftAccount account = MinecraftAccount.fromDiscordId(discordId);
+            return account != null && account.isAccountVerified() ? Optional.of(account.getUuid()) : Optional.empty();
+        } catch (Exception e) {
+            LOGGER.debug("SDLink reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public List<String> getDiscordRoleIds(UUID minecraftUuid) {
         // SDLink's public API doesn't expose the linked member's role ID list, only
         // display identity (DiscordUser: name/avatar/mention/role color) — role-based

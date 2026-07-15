@@ -286,6 +286,21 @@ public class ChatIntegrationManager {
     }
 
     /**
+     * Reverse of {@link #findLinkedDiscordId(UUID)} — resolve the Minecraft account linked to
+     * a Discord user ID, checking whichever registered adapter is currently ready. Used by
+     * the dashboard's Discord OAuth2 login flow to map a visitor's real Discord ID (obtained
+     * by the Laravel app, not this mod) back to a linked player.
+     */
+    public static Optional<UUID> findLinkedMinecraftUuid(String discordId) {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            if (!adapter.isReady()) continue;
+            Optional<UUID> uuid = adapter.getLinkedMinecraftUuid(discordId);
+            if (uuid.isPresent()) return uuid;
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Get all registered adapters
      * @return List of registered adapters
      */

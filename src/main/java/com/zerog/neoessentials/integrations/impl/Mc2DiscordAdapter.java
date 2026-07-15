@@ -121,6 +121,22 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
         }
     }
 
+    @Override
+    public Optional<UUID> getLinkedMinecraftUuid(String discordId) {
+        if (!isReady()) return Optional.empty();
+        try {
+            for (LinkedPlayerEntry entry : Mc2Discord.INSTANCE.linkedPlayerList.getEntries()) {
+                if (entry.getDiscordId().asString().equals(discordId)) {
+                    return Optional.of(entry.getPlayerUuid());
+                }
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            LOGGER.debug("Mc2Discord reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     private String avatarFor(ServerPlayer player) {
         return "https://mc-heads.net/avatar/" + player.getUUID();
     }
