@@ -483,7 +483,7 @@ public class AuthenticationHandler implements HttpHandler {
         // Check if SDLink is available
         if (!discordProvider.isAvailable()) {
             sendJsonResponse(exchange, 503, createErrorResponse(
-                "Discord authentication unavailable. Install Simple Discord Link or Mc2Discord and link your account in-game."));
+                "Discord authentication unavailable. Install Simple Discord Link, Mc2Discord, or DCIntegration and link your account in-game."));
             return;
         }
         

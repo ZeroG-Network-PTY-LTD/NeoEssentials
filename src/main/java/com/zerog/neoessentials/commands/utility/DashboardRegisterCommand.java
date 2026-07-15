@@ -47,7 +47,7 @@ public class DashboardRegisterCommand {
                 source.sendSuccess(() -> Component.literal("  §e/dashboardregister complete <user> <pass> §7- Finish manual registration"), false);
                 source.sendSuccess(() -> Component.literal("  §e/dashboardregister status §7- Check your status"), false);
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§7§oDiscord registration requires an in-game link via Simple Discord Link or Mc2Discord"), false);
+                source.sendSuccess(() -> Component.literal("§7§oDiscord registration requires an in-game link via Simple Discord Link, Mc2Discord, or DCIntegration"), false);
                 source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
                 return 1;
             })
@@ -86,11 +86,11 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
-        // Require a Discord companion mod (SDLink or Mc2Discord) to be installed and ready
+        // Require a Discord companion mod (SDLink, Mc2Discord, or DCIntegration) to be installed and ready
         DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
         if (!discordProvider.isAvailable()) {
             source.sendSuccess(() -> Component.literal("§c§lERROR: §cDiscord registration is not available"), false);
-            source.sendSuccess(() -> Component.literal("§7Simple Discord Link or Mc2Discord is not installed/connected on this server"), false);
+            source.sendSuccess(() -> Component.literal("§7Simple Discord Link, Mc2Discord, or DCIntegration is not installed/connected on this server"), false);
             source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register manually instead"), false);
             return 0;
         }

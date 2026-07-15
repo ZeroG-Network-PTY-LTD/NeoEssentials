@@ -215,13 +215,15 @@ dependencies {
     compileOnly 'curse.maven:architectury-api-419699:5786327'
     compileOnly 'curse.maven:ftb-ranks-314905:6522073'
 
-    // Simple Discord Link (SDLink) + its required CraterLib dependency, and Mc2Discord —
-    // real compile-time APIs for the Discord chat-relay/account-link integrations, in
-    // place of the old reflection-only adapters. Both are still runtime-optional: the
-    // adapter classes are only ever touched after a ModList.isLoaded(modid) check passes.
+    // Simple Discord Link (SDLink) + its required CraterLib dependency, Mc2Discord, and
+    // DCIntegration — real compile-time APIs for the Discord chat-relay/account-link
+    // integrations, in place of the old reflection-only adapters. All are still
+    // runtime-optional: the adapter classes are only ever touched after a
+    // ModList.isLoaded(modid) check passes.
     compileOnly 'curse.maven:simple-discord-link-bot-forge-fabric-spigot-541320:8437065'
     compileOnly 'curse.maven:craterlib-867099:8117951'
     compileOnly 'curse.maven:mc2discord-325235:7595200'
+    compileOnly 'curse.maven:dcintegration-324952:8281471'
 
     // Alternative: if you want them available during testing, use runtimeOnly
     // runtimeOnly fg.deobf("dev.architectury:architectury-neoforge:VERSION")

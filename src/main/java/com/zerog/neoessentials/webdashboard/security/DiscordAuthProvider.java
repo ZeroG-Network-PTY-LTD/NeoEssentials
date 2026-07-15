@@ -31,7 +31,7 @@ public class DiscordAuthProvider {
     }
 
     /**
-     * Whether a Discord companion mod (SDLink or Mc2Discord) is installed and its
+     * Whether a Discord companion mod (SDLink, Mc2Discord, or DCIntegration) is installed and its
      * bot connection is currently ready.
      */
     public boolean isAvailable() {
