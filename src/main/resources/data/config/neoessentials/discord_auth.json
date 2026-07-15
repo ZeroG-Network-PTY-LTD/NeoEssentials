@@ -1,37 +1,21 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
-  "_configVersion": 8,
+  "_configVersion": 9,
 
   /* ================================================================
      Discord Authentication Configuration
-     OAuth2 login button  +  role-based Minecraft permissions
+     Dashboard login/identity + role-based Minecraft permissions,
+     sourced from a Discord companion mod (Simple Discord Link or
+     Mc2Discord) — NeoEssentials never talks to Discord directly.
   ================================================================ */
 
-  // Enable/disable Discord authentication. Shows the 'Login with Discord' button on the dashboard.
-  // Works standalone with OAuth2 — Simple Discord Link mod is optional.
+  // Enable/disable Discord-linked dashboard login. Requires a player to have already
+  // linked their account in-game via Simple Discord Link or Mc2Discord's own commands.
   "enabled": false,
 
-  /* OAuth2 settings for the 'Login with Discord' button.
-   * Create an application at https://discord.com/developers/applications:
-   *  1. Open your application → OAuth2 → General: copy Client ID and Client Secret
-   *  2. OAuth2 → Redirects: add  http://YOUR_SERVER_IP:YOUR_DASHBOARD_PORT/api/auth/discord/callback
-   *  3. Paste the values below, OR configure them from Dashboard → Discord Integration (admin only)
-   */
-  "oauth2": {
-    // Discord Application Client ID (visible on the OAuth2 General page)
-    "clientId": "",
-    // Discord Application Client Secret — keep this private, never share it
-    "clientSecret": "",
-    // Must exactly match a redirect URI registered in your Discord application
-    "redirectUri": "http://localhost:8080/api/auth/discord/callback",
-    // OAuth2 scopes. Do not change unless you know what you are doing.
-    // 'identify' = basic user info, 'guilds.members.read' = server roles (required for role mapping)
-    "scopes": "identify guilds.members.read"
-  },
-
-  // When true, only players linked via the Discord bot (Simple Discord Link) can use Discord login.
-  // Set false (recommended) when SDLink is not installed.
-  "requireLinkedAccount": false,
+  // When true, dashboard login via Discord identity requires the player's Minecraft
+  // account to actually be linked to Discord (recommended: true).
+  "requireLinkedAccount": true,
 
   // Automatically create dashboard accounts for Discord users on first login (recommended: true)
   "allowAutoRegistration": true,

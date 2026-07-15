@@ -25,8 +25,8 @@ import java.util.*;
  *   GET    /api/discord/events       – recent relay event log (rolling buffer)
  *   POST   /api/discord/test         – send a test message via all active adapters [ADMIN]
  *   DELETE /api/discord/events       – clear the event log [ADMIN]
- *   GET    /api/discord/auth-config  – read discord_auth.json OAuth2/login settings [ADMIN]
- *   POST   /api/discord/auth-config  – update discord_auth.json OAuth2/login settings [ADMIN]
+ *   GET    /api/discord/auth-config  – read discord_auth.json login/role settings [ADMIN]
+ *   POST   /api/discord/auth-config  – update discord_auth.json login/role settings [ADMIN]
  */
 public class DiscordEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordEndpoint.class);
@@ -85,7 +85,8 @@ public class DiscordEndpoint implements HttpHandler {
             if (i > 0) sb.append(",");
             Map<String, Object> a = adapterList.get(i);
             sb.append("{\"name\":\"").append(escape(String.valueOf(a.get("name")))).append("\",");
-            sb.append("\"enabled\":").append(a.get("enabled")).append("}");
+            sb.append("\"enabled\":").append(a.get("enabled")).append(",");
+            sb.append("\"ready\":").append(a.get("ready")).append("}");
         }
         sb.append("]}");
         sendJson(exchange, 200, sb.toString());
@@ -206,17 +207,7 @@ public class DiscordEndpoint implements HttpHandler {
         resp.addProperty("requireLinkedAccount", cfg.requiresLinkedAccount());
         resp.addProperty("allowAutoRegistration", cfg.allowsAutoRegistration());
         resp.addProperty("defaultRole", cfg.getDefaultRole().name());
-        resp.addProperty("sdlinkAvailable", provider.isAvailable());
-
-        JsonObject oauth2 = new JsonObject();
-        oauth2.addProperty("configured",       cfg.isOauth2Configured());
-        oauth2.addProperty("clientId",         cfg.getOauth2ClientId());
-        // Never send clientSecret — only indicate whether it is set
-        oauth2.addProperty("clientSecretSet",  cfg.getOauth2ClientSecret() != null
-                                               && !cfg.getOauth2ClientSecret().isEmpty());
-        oauth2.addProperty("redirectUri",      cfg.getOauth2RedirectUri());
-        oauth2.addProperty("scopes",           cfg.getOauth2Scopes());
-        resp.add("oauth2", oauth2);
+        resp.addProperty("linkAdapterAvailable", provider.isAvailable());
 
         sendJson(exchange, 200, new GsonBuilder().disableHtmlEscaping().create().toJson(resp));
     }
@@ -267,30 +258,6 @@ public class DiscordEndpoint implements HttpHandler {
             String role = submitted.get("defaultRole").getAsString().toUpperCase();
             if (role.equals("ADMIN") || role.equals("MODERATOR") || role.equals("VIEWER"))
                 onDisk.addProperty("defaultRole", role);
-        }
-
-        // Apply oauth2 sub-object
-        if (submitted.has("oauth2") && submitted.get("oauth2").isJsonObject()) {
-            JsonObject submittedOauth = submitted.getAsJsonObject("oauth2");
-            JsonObject diskOauth = onDisk.has("oauth2") ? onDisk.getAsJsonObject("oauth2") : new JsonObject();
-
-            if (submittedOauth.has("clientId"))
-                diskOauth.addProperty("clientId", submittedOauth.get("clientId").getAsString().trim());
-
-            // Only update clientSecret if a non-empty value was submitted
-            if (submittedOauth.has("clientSecret")) {
-                String secret = submittedOauth.get("clientSecret").getAsString().trim();
-                if (!secret.isEmpty())
-                    diskOauth.addProperty("clientSecret", secret);
-            }
-
-            if (submittedOauth.has("redirectUri"))
-                diskOauth.addProperty("redirectUri", submittedOauth.get("redirectUri").getAsString().trim());
-
-            if (submittedOauth.has("scopes"))
-                diskOauth.addProperty("scopes", submittedOauth.get("scopes").getAsString().trim());
-
-            onDisk.add("oauth2", diskOauth);
         }
 
         // Write back

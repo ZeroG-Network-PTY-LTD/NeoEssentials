@@ -2,6 +2,10 @@ package com.zerog.neoessentials.integrations;
 
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * Interface for chat integration adapters.
  * Allows external NeoForge mods to hook into NeoEssentials chat events.
@@ -79,7 +83,44 @@ public interface ChatIntegrationAdapter {
     default boolean isEnabled() {
         return true;
     }
-    
+
+    /**
+     * Whether the underlying Discord bot/gateway connection is actually up right now.
+     * Distinct from {@link #isEnabled()}, which only means the companion mod is present.
+     * @return true if messages sent now are actually expected to reach Discord
+     */
+    default boolean isReady() {
+        return isEnabled();
+    }
+
+    /**
+     * Resolve the Discord user ID linked to a Minecraft player, if the companion mod
+     * has that link and it's verified.
+     * @param minecraftUuid The player's Minecraft UUID
+     * @return The linked Discord snowflake ID, or empty if not linked/unsupported
+     */
+    default Optional<String> getLinkedDiscordId(UUID minecraftUuid) {
+        return Optional.empty();
+    }
+
+    /**
+     * Resolve the Discord role IDs held by a linked player, if the companion mod exposes them.
+     * @param minecraftUuid The player's Minecraft UUID
+     * @return The player's Discord role IDs, or an empty list if not linked/unsupported
+     */
+    default List<String> getDiscordRoleIds(UUID minecraftUuid) {
+        return List.of();
+    }
+
+    /**
+     * Called when a player earns an advancement.
+     * @param player The player
+     * @param advancementName The advancement's display/title text
+     */
+    default void onPlayerAdvancement(ServerPlayer player, String advancementName) {
+        // Default implementation does nothing
+    }
+
     /**
      * Called when the adapter should initialize itself
      * @return true if initialization was successful
@@ -87,7 +128,7 @@ public interface ChatIntegrationAdapter {
     default boolean initialize() {
         return true;
     }
-    
+
     /**
      * Called when the adapter should clean up resources
      */

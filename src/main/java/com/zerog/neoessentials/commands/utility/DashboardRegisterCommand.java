@@ -3,13 +3,9 @@ package com.zerog.neoessentials.commands.utility;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.zerog.neoessentials.util.ChatComponentUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
-import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
-import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.security.DashboardRegistrationManager;
 import com.zerog.neoessentials.webdashboard.security.DashboardAccountRegistration;
-import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
 import com.zerog.neoessentials.webdashboard.security.DiscordUser;
 import net.minecraft.commands.CommandSourceStack;
@@ -51,7 +47,7 @@ public class DashboardRegisterCommand {
                 source.sendSuccess(() -> Component.literal("  §e/dashboardregister complete <user> <pass> §7- Finish manual registration"), false);
                 source.sendSuccess(() -> Component.literal("  §e/dashboardregister status §7- Check your status"), false);
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§7§oDiscord registration works with SDLink or dashboard OAuth2"), false);
+                source.sendSuccess(() -> Component.literal("§7§oDiscord registration requires an in-game link via Simple Discord Link or Mc2Discord"), false);
                 source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
                 return 1;
             })
@@ -69,8 +65,8 @@ public class DashboardRegisterCommand {
     }
 
     /**
-     * Register using linked Discord account via Simple Discord Link (SDLink).
-     * No username/password needed — the player logs in via the Discord OAuth2 button.
+     * Register using a Discord account already linked in-game via Simple Discord Link
+     * or Mc2Discord. No username/password needed.
      */
     private static int registerWithDiscord(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
@@ -90,16 +86,11 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
-        // Require SDLink
+        // Require a Discord companion mod (SDLink or Mc2Discord) to be installed and ready
         DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
         if (!discordProvider.isAvailable()) {
-            // ── Fallback: use Discord OAuth2 web flow ──────────────────────────
-            DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
-            if (discordConfig.isEnabled() && discordConfig.isOauth2Configured()) {
-                return registerWithDiscordOAuth(source, player);
-            }
             source.sendSuccess(() -> Component.literal("§c§lERROR: §cDiscord registration is not available"), false);
-            source.sendSuccess(() -> Component.literal("§7The Simple Discord Link mod is not installed on this server"), false);
+            source.sendSuccess(() -> Component.literal("§7Simple Discord Link or Mc2Discord is not installed/connected on this server"), false);
             source.sendSuccess(() -> Component.literal("§7Use §e/dashboardregister start §7to register manually instead"), false);
             return 0;
         }
@@ -142,54 +133,6 @@ public class DashboardRegisterCommand {
         source.sendSuccess(() -> Component.literal("§7View the dashboard URL with: §e/dashboard url"), false);
         source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
 
-        return 1;
-    }
-
-    /**
-     * Generates a one-time Discord OAuth2 URL the player can click in chat to register.
-     * Works without Simple Discord Link — only requires OAuth2 to be configured in
-     * discord_auth.json (clientId + clientSecret).
-     */
-    private static int registerWithDiscordOAuth(CommandSourceStack source, ServerPlayer player) {
-        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
-
-        // Build a state token bound to this player's UUID
-        String state = AuthenticationHandler.createPendingDiscordRegistration(
-            player.getUUID(), player.getName().getString());
-
-        // Build the Discord authorize URL (only "identify" scope needed for registration)
-        String authorizeUrl = "https://discord.com/api/oauth2/authorize"
-            + "?client_id=" + java.net.URLEncoder.encode(discordConfig.getOauth2ClientId(), java.nio.charset.StandardCharsets.UTF_8)
-            + "&redirect_uri=" + java.net.URLEncoder.encode(discordConfig.getOauth2RedirectUri(), java.nio.charset.StandardCharsets.UTF_8)
-            + "&response_type=code"
-            + "&scope=" + java.net.URLEncoder.encode("identify", java.nio.charset.StandardCharsets.UTF_8)
-            + "&state=" + state;
-
-        // Get the dashboard URL so the player knows where to log in afterwards
-        DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
-        String dashboardUrl = status.url;
-
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
-        source.sendSuccess(() -> Component.literal("§b§lDiscord Registration Link"), false);
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§7Click the link below to register with Discord:"), false);
-        source.sendSuccess(() -> ChatComponentUtil.createClickableUrl(
-            "  §b§l» Click here to Register with Discord «",
-            authorizeUrl,
-            "Opens Discord authorisation in your browser.\nYour dashboard account will be created automatically."), false);
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§c§lThis link expires in §e5 minutes§c."), false);
-        source.sendSuccess(() -> Component.literal("§7Your account username will be: §a" + player.getName().getString()), false);
-        if (status.running) {
-            source.sendSuccess(() -> Component.literal("§7After registering, log in at:"), false);
-            source.sendSuccess(() -> ChatComponentUtil.createClickableUrl(
-                "  §b§l» " + dashboardUrl + "/login.html",
-                dashboardUrl + "/login.html",
-                "Open dashboard login page"), false);
-        }
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§6§l═══════════════════════════════════"), false);
         return 1;
     }
 

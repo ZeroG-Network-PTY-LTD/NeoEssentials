@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.integrations;
 
-import com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter;
-import com.zerog.neoessentials.integrations.impl.DiscordSRVAdapter;
+import com.zerog.neoessentials.integrations.impl.Mc2DiscordAdapter;
 import com.zerog.neoessentials.integrations.impl.SDLinkAdapter;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -14,6 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Central integration manager for external chat mods.
@@ -75,8 +76,7 @@ public class ChatIntegrationManager {
 
         List<ChatIntegrationAdapter> candidates = List.of(
             new SDLinkAdapter(),
-            new DCIntegrationAdapter(),
-            new DiscordSRVAdapter()
+            new Mc2DiscordAdapter()
         );
 
         int loaded = 0;
@@ -250,9 +250,37 @@ public class ChatIntegrationManager {
             Map<String, Object> info = new LinkedHashMap<>();
             info.put("name",    adapter.getName());
             info.put("enabled", adapter.isEnabled());
+            info.put("ready",   adapter.isReady());
             result.add(info);
         }
         return result;
+    }
+
+    /**
+     * Resolve the Discord user ID linked to a Minecraft player, checking whichever
+     * registered adapter is currently ready. Used by dashboard Discord-identity
+     * lookups and permission sync — adapter-agnostic, works with SDLink or Mc2Discord.
+     */
+    public static Optional<String> findLinkedDiscordId(UUID minecraftUuid) {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            if (!adapter.isReady()) continue;
+            Optional<String> id = adapter.getLinkedDiscordId(minecraftUuid);
+            if (id.isPresent()) return id;
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Resolve the Discord role IDs held by a linked player, checking whichever
+     * registered adapter is currently ready.
+     */
+    public static List<String> findDiscordRoleIds(UUID minecraftUuid) {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            if (!adapter.isReady()) continue;
+            List<String> roles = adapter.getDiscordRoleIds(minecraftUuid);
+            if (!roles.isEmpty()) return roles;
+        }
+        return List.of();
     }
 
     /**

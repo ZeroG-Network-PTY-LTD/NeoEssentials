@@ -33,7 +33,7 @@ registering.
 /dashboardregister complete <username> <password>
 ```
 
-Or, if Simple Discord Link is installed and the player has linked their Discord account:
+Or, if Simple Discord Link or Mc2Discord is installed and the player has linked their Discord account:
 
 ```
 /dashboardregister discord
@@ -60,65 +60,60 @@ check your current registration state.
 
 ### Discord Auth (Optional)
 
-If **Simple Discord Link** is installed and configured, players can also authenticate via Discord. The mod is fully optional — standalone account registration works without it.
+If a supported Discord companion mod — **Simple Discord Link** or **Mc2Discord** — is installed, players can link
+their Discord account, and the dashboard can source their Discord identity and roles from it. The mod is fully
+optional — standalone account registration works without it.
 
 ---
 
-## Discord OAuth2 Login
+## Discord-Linked Dashboard Identity
 
-NeoEssentials supports logging into the dashboard directly with a Discord account via OAuth2 ("Login with Discord" button). This is separate from — and works alongside — the standard username/password login.
+NeoEssentials does **not** talk to Discord's API directly — no bot token, no OAuth2 code exchange, no REST calls to
+`discord.com`. All Discord communication is delegated entirely to whichever companion mod is installed
+(Simple Discord Link or Mc2Discord); NeoEssentials only reads the account-link data that mod already has.
 
 ### How It Works
 
 ```
-Browser                Dashboard Server              Discord
-  |                          |                           |
-  |-- click Discord Login --> |                           |
-  |<-- authorizeUrl ----------|                           |
-  |-- redirect ---------------------------------------------> Discord consent screen
-  |<----------------------------------------------------- redirect back with ?code=
-  |                  /api/auth/discord/callback           |
-  |              1. Exchange code → access token          |
-  |              2. Fetch Discord user (/users/@me)       |
-  |              3. Check blacklist / whitelist roles     |
-  |              4. Map Discord roles → dashboard role    |
-  |              5. Lookup linked MC account (SDLink)     |
-  |              6. Get-or-create dashboard user          |
-  |              7. Create session, redirect to dashboard |
-  |<-- redirect to /index.html?sessionId=...&auth=discord |
+Player links their account in-game (via SDLink's or Mc2Discord's own commands)
+         │
+         ▼
+ChatIntegrationManager.findLinkedDiscordId(uuid)  ── checks whichever companion mod is ready
+         │
+         ▼
+DiscordAuthProvider  ── resolves Discord ID + role IDs for that player
+         │
+         ▼
+Dashboard: GET /api/auth/discord?username=<name>
+  1. Look up the linked Discord account
+  2. Check blacklist / whitelist roles
+  3. Map Discord roles → dashboard role
+  4. Get-or-create dashboard user, create session
 ```
 
-### Discord Application Setup
+There is no "Login with Discord" OAuth2 button — a player must first link their account in-game through
+Simple Discord Link's or Mc2Discord's own linking flow.
 
-1. Go to **https://discord.com/developers/applications** and create a new application (or open your bot's existing one)
-2. Under **OAuth2 → General**, copy the **Client ID** and **Client Secret**
-3. Under **OAuth2 → Redirects**, add the exact callback URL:
-   ```
-   http://YOUR_SERVER_IP:8080/api/auth/discord/callback
-   ```
-   Replace `YOUR_SERVER_IP` with your server's public IP or domain and `8080` with your dashboard port.
-4. Save your changes in the Discord Developer Portal
+### Companion mods
+
+| Mod | Chat relay | Account link lookup | Notes |
+|---|---|---|---|
+| Simple Discord Link (SDLink) | ✅ | ✅ | Real compile-time API (`com.hypherionmc.sdlink.api.*`), also requires CraterLib |
+| Mc2Discord | ✅ | ✅ | Real compile-time API (`fr.denisd3d.mc2discord.core.*`) |
+| DiscordSRV | ❌ | ❌ | Not supported — it's a Bukkit/Paper plugin and cannot run on a NeoForge server |
+
+Detection is purely runtime (`ModList.isLoaded(...)`) — neither mod is a hard dependency, and NeoEssentials works
+fine standalone if neither is installed.
 
 ### Config (`discord_auth.json`)
 
 Located at `config/neoessentials/discord_auth.json`. Auto-generated on first start.
 
-#### OAuth2 section
-
-| Key | Description |
-|---|---|
-| `oauth2.clientId` | Discord Application Client ID |
-| `oauth2.clientSecret` | Discord Application Client Secret (**keep private**) |
-| `oauth2.redirectUri` | Must exactly match the redirect URI registered in your Discord app |
-| `oauth2.scopes` | OAuth2 scopes — default: `identify guilds.members.read` (do not change) |
-
-#### Auth behavior
-
 | Key | Default | Description |
 |---|---|---|
-| `enabled` | `true` | Enable Discord auth (requires `clientId` + `clientSecret` to actually work) |
-| `requireLinkedAccount` | `true` | Require the Discord user to have a linked Minecraft account via SDLink |
-| `allowAutoRegistration` | `true` | Auto-create a dashboard account on first Discord login |
+| `enabled` | `false` | Enable Discord-linked dashboard identity/login |
+| `requireLinkedAccount` | `true` | Require the player's Minecraft account to actually be linked to Discord |
+| `allowAutoRegistration` | `true` | Auto-create a dashboard account on first Discord-linked login |
 | `defaultRole` | `VIEWER` | Dashboard role given when no Discord role is mapped |
 
 #### Role mapping
@@ -140,23 +135,19 @@ Discord role IDs (not names) are mapped to dashboard roles. Enable **Developer M
 "blacklistedUsers":  ["987654321098765432"]    // these Discord user IDs are always denied
 ```
 
-### Without Simple Discord Link
+### Without a Discord companion mod
 
-If SDLink is **not** installed, the OAuth2 flow still works for identification, but:
-- `requireLinkedAccount: true` → login will be denied (no Minecraft account can be looked up)
-- `requireLinkedAccount: false` → login succeeds; dashboard username = Discord display name
-
-Set `requireLinkedAccount: false` in `discord_auth.json` to allow Discord-only accounts.
+If neither SDLink nor Mc2Discord is installed, `GET /api/auth/discord` returns `503` — Discord-linked
+login is unavailable entirely (there's no account-link data to read). Standalone username/password login
+is unaffected.
 
 ### Troubleshooting
 
 | Symptom | Likely Cause |
 |---|---|
-| Discord button missing on login page | `clientId` / `clientSecret` not set in `discord_auth.json` |
-| `discord_auth_failed` error after redirect | Wrong `redirectUri` in config or Discord app |
-| "no linked account" error | SDLink not installed or player hasn't used `/link` in Discord |
+| `GET /api/auth/discord/status` reports `linkAdapterAvailable: false` | Neither SDLink nor Mc2Discord is installed, or its bot connection isn't ready yet |
+| "No Discord account linked" error | Player hasn't linked their account in-game via the companion mod's own command |
 | "does not have a whitelisted role" | User doesn't hold one of the `whitelistedRoles` IDs |
-| Button shows warning tooltip | SDLink absent but `requireLinkedAccount: true` |
 
 ---
 
@@ -244,7 +235,7 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
-| `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (SDLink) or the OAuth2 web flow |
+| `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink or Mc2Discord) |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
 
 ---
