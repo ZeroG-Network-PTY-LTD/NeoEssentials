@@ -33,7 +33,7 @@ registering.
 /dashboardregister complete <username> <password>
 ```
 
-Or, if Simple Discord Link or Mc2Discord is installed and the player has linked their Discord account:
+Or, if Simple Discord Link, Mc2Discord, or DCIntegration is installed and the player has linked their Discord account:
 
 ```
 /dashboardregister discord
@@ -99,6 +99,7 @@ Simple Discord Link's or Mc2Discord's own linking flow.
 |---|---|---|---|
 | Simple Discord Link (SDLink) | ✅ | ✅ | Real compile-time API (`com.hypherionmc.sdlink.api.*`), also requires CraterLib |
 | Mc2Discord | ✅ | ✅ | Real compile-time API (`fr.denisd3d.mc2discord.core.*`) |
+| DCIntegration | — (self-relays) | ✅ | Real compile-time API (`de.erdbeerbaerlp.dcintegration.common.*`). Relays chat/join/leave/commands to Discord on its own via mixins — NeoEssentials doesn't push those events to it, only reads account links |
 | DiscordSRV | ❌ | ❌ | Not supported — it's a Bukkit/Paper plugin and cannot run on a NeoForge server |
 
 Detection is purely runtime (`ModList.isLoaded(...)`) — neither mod is a hard dependency, and NeoEssentials works
@@ -136,7 +137,7 @@ Discord role IDs (not names) are mapped to dashboard roles. Enable **Developer M
 
 ### Without a Discord companion mod
 
-If neither SDLink nor Mc2Discord is installed, `GET /api/auth/discord` returns `503` — Discord-linked
+If none of SDLink, Mc2Discord, or DCIntegration is installed, `GET /api/auth/discord` returns `503` — Discord-linked
 login is unavailable entirely (there's no account-link data to read). Standalone username/password login
 is unaffected.
 
@@ -144,7 +145,7 @@ is unaffected.
 
 | Symptom | Likely Cause |
 |---|---|
-| `GET /api/auth/discord/status` reports `linkAdapterAvailable: false` | Neither SDLink nor Mc2Discord is installed, or its bot connection isn't ready yet |
+| `GET /api/auth/discord/status` reports `linkAdapterAvailable: false` | No supported companion mod is installed, or its bot connection isn't ready yet |
 | "No Discord account linked" error | Player hasn't linked their account in-game via the companion mod's own command |
 | "does not have a whitelisted role" | User doesn't hold one of the `whitelistedRoles` IDs |
 
@@ -256,7 +257,7 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
-| `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink or Mc2Discord) |
+| `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink, Mc2Discord, or DCIntegration) |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
 
 ---

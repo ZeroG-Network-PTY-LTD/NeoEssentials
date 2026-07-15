@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.integrations;
 
+import com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter;
 import com.zerog.neoessentials.integrations.impl.Mc2DiscordAdapter;
 import com.zerog.neoessentials.integrations.impl.SDLinkAdapter;
 import net.minecraft.server.level.ServerPlayer;
@@ -76,7 +77,8 @@ public class ChatIntegrationManager {
 
         List<ChatIntegrationAdapter> candidates = List.of(
             new SDLinkAdapter(),
-            new Mc2DiscordAdapter()
+            new Mc2DiscordAdapter(),
+            new DCIntegrationAdapter()
         );
 
         int loaded = 0;
@@ -259,7 +261,7 @@ public class ChatIntegrationManager {
     /**
      * Resolve the Discord user ID linked to a Minecraft player, checking whichever
      * registered adapter is currently ready. Used by dashboard Discord-identity
-     * lookups and permission sync — adapter-agnostic, works with SDLink or Mc2Discord.
+     * lookups and permission sync — adapter-agnostic, works with SDLink, Mc2Discord, or DCIntegration.
      */
     public static Optional<String> findLinkedDiscordId(UUID minecraftUuid) {
         for (ChatIntegrationAdapter adapter : adapters) {

@@ -90,7 +90,7 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
-        // Require a Discord companion mod (SDLink or Mc2Discord) to be installed and ready
+        // Require a Discord companion mod (SDLink, Mc2Discord, or DCIntegration) to be installed and ready
         DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
         if (!discordProvider.isAvailable()) {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.discord_unavailable"), false);
