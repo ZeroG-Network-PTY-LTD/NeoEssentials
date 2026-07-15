@@ -361,20 +361,6 @@
       "role": "MODERATOR"
     },
 
-    // Config-driven dashboard service account — for an external app (e.g. the Laravel
-    // NeoEssentials-Dashboard) that authenticates against this API server-to-server.
-    // When enabled, this account is auto-created on boot (or its password/role kept in
-    // sync with these values on every boot if it already exists) instead of needing to
-    // be provisioned by hand via the users API. Set these to the SAME values as the
-    // external app's MC_SERVICE_USERNAME/MC_SERVICE_PASSWORD env vars.
-    "serviceAccount": {
-      "enabled": false,
-      "username": "",
-      "password": "",
-      // ADMIN, OPERATOR, MODERATOR, or VIEWER
-      "role": "MODERATOR"
-    },
-
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)
       "requireAuthentication": true,
