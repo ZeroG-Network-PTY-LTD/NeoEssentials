@@ -3,14 +3,10 @@ package com.zerog.neoessentials.commands.utility;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.zerog.neoessentials.util.ChatComponentUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
-import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
-import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.security.DashboardRegistrationManager;
 import com.zerog.neoessentials.webdashboard.security.DashboardAccountRegistration;
-import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
 import com.zerog.neoessentials.webdashboard.security.DiscordUser;
 import net.minecraft.commands.CommandSourceStack;
@@ -94,14 +90,9 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
-        // Require SDLink
+        // Require a Discord companion mod (SDLink or Mc2Discord) to be installed and ready
         DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
         if (!discordProvider.isAvailable()) {
-            // ── Fallback: use Discord OAuth2 web flow ──────────────────────────
-            DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
-            if (discordConfig.isEnabled() && discordConfig.isOauth2Configured()) {
-                return registerWithDiscordOAuth(source, player);
-            }
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.discord_unavailable"), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.discord_sdlink_missing"), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.hint_manual_instead"), false);
@@ -146,54 +137,6 @@ public class DashboardRegisterCommand {
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.view_url_hint"), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
 
-        return 1;
-    }
-
-    /**
-     * Generates a one-time Discord OAuth2 URL the player can click in chat to register.
-     * Works without Simple Discord Link — only requires OAuth2 to be configured in
-     * discord_auth.json (clientId + clientSecret).
-     */
-    private static int registerWithDiscordOAuth(CommandSourceStack source, ServerPlayer player) {
-        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
-
-        // Build a state token bound to this player's UUID
-        String state = AuthenticationHandler.createPendingDiscordRegistration(
-            player.getUUID(), player.getName().getString());
-
-        // Build the Discord authorize URL (only "identify" scope needed for registration)
-        String authorizeUrl = "https://discord.com/api/oauth2/authorize"
-            + "?client_id=" + java.net.URLEncoder.encode(discordConfig.getOauth2ClientId(), java.nio.charset.StandardCharsets.UTF_8)
-            + "&redirect_uri=" + java.net.URLEncoder.encode(discordConfig.getOauth2RedirectUri(), java.nio.charset.StandardCharsets.UTF_8)
-            + "&response_type=code"
-            + "&scope=" + java.net.URLEncoder.encode("identify", java.nio.charset.StandardCharsets.UTF_8)
-            + "&state=" + state;
-
-        // Get the dashboard URL so the player knows where to log in afterwards
-        DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
-        String dashboardUrl = status.url;
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.oauth_link_title"), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.oauth_click_hint"), false);
-        source.sendSuccess(() -> ChatComponentUtil.createClickableUrl(
-            MessageUtil.localize("commands.neoessentials.dashboardregister.oauth_click_text"),
-            authorizeUrl,
-            MessageUtil.localize("commands.neoessentials.dashboardregister.oauth_click_hover")), false);
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.oauth_expiry_note"), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.oauth_username_note", player.getName().getString()), false);
-        if (status.running) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.oauth_after_register_hint"), false);
-            source.sendSuccess(() -> ChatComponentUtil.createClickableUrl(
-                MessageUtil.localize("commands.neoessentials.dashboardregister.oauth_login_link_text", dashboardUrl),
-                dashboardUrl + "/login.html",
-                MessageUtil.localize("commands.neoessentials.dashboardregister.oauth_login_hover")), false);
-        }
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
         return 1;
     }
 

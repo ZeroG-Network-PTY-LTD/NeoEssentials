@@ -1,26 +1,32 @@
 package com.zerog.neoessentials.integrations.impl;
 
+import com.hypherionmc.craterlib.api.game.authlib.CraterGameProfile;
+import com.hypherionmc.sdlink.api.accounts.DiscordAuthor;
+import com.hypherionmc.sdlink.api.accounts.DiscordUser;
+import com.hypherionmc.sdlink.api.accounts.MinecraftAccount;
+import com.hypherionmc.sdlink.api.messaging.MessageType;
+import com.hypherionmc.sdlink.api.messaging.discord.DiscordMessageBuilder;
+import com.hypherionmc.sdlink.core.discord.BotController;
 import com.zerog.neoessentials.integrations.ChatIntegrationAdapter;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Simple Discord Link (SDLink) integration adapter for NeoEssentials.
- * Sends NeoEssentials events to Discord via Simple Discord Link mod by hypherionsa.
- * Uses reflection to avoid a hard compile-time dependency on SDLink.
+ * Simple Discord Link (SDLink) integration adapter.
+ * Talks to SDLink's real public API (com.hypherionmc.sdlink.api.*), compiled against
+ * a compileOnly CurseMaven dependency — only ever touched after ModList confirms SDLink
+ * is actually loaded, so the mod remains fully optional at runtime.
  */
 public class SDLinkAdapter implements ChatIntegrationAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SDLinkAdapter.class);
 
-    private boolean sdLinkLoaded = false;
-
-    // Reflected SDLink messaging API
-    private Method sendMessageMethod = null;   // SDLinkMessagingService or BotController.sendMessage
-    private Object messagingInstance = null;   // instance to call the method on (null = static)
+    private boolean loaded = false;
 
     @Override
     public String getName() {
@@ -29,226 +35,141 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     @Override
     public boolean initialize() {
-        sdLinkLoaded = ModList.get().isLoaded("sdlink");
-
-        if (!sdLinkLoaded) {
-            LOGGER.debug("Simple Discord Link mod not found, integration disabled");
-            return false;
+        loaded = ModList.get().isLoaded("sdlink");
+        if (loaded) {
+            LOGGER.info("Simple Discord Link mod detected, integration enabled.");
+        } else {
+            LOGGER.debug("Simple Discord Link mod not found, integration disabled.");
         }
-
-        try {
-            LOGGER.info("Simple Discord Link mod detected, initializing messaging integration...");
-
-            // SDLink v3+ exposes a static sendMessage on BotController:
-            //   BotController.INSTANCE.sendMessage(String channelNameOrId, String message)
-            // Try that first, then fall back to older API shapes.
-            if (tryInitBotController()) {
-                LOGGER.info("SDLink BotController messaging API initialised successfully");
-                return true;
-            }
-
-            // Fallback: SDLinkAPI static helper (older versions)
-            if (tryInitStaticApi()) {
-                LOGGER.info("SDLink static messaging API initialised successfully");
-                return true;
-            }
-
-            LOGGER.warn("SDLink detected but no supported messaging API found. " +
-                        "Messages will be logged only. Ensure SDLink v3.2+ is installed.");
-            // Return true — the mod IS loaded; we log events but can't forward to Discord
-            sdLinkLoaded = true;
-            return true;
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to initialize Simple Discord Link integration: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-    /** Try to get BotController.INSTANCE.sendMessage(String, String) */
-    private boolean tryInitBotController() {
-        try {
-            Class<?> botControllerClass =
-                Class.forName("com.hypherionmc.sdlink.core.discord.BotController");
-            Object instance = botControllerClass.getField("INSTANCE").get(null);
-            Method method = botControllerClass.getMethod("sendMessage", String.class, String.class);
-            messagingInstance = instance;
-            sendMessageMethod = method;
-            return true;
-        } catch (Exception e) {
-            LOGGER.debug("BotController.sendMessage not found: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    /** Try static SDLinkAPI.sendMessage(String, String) (older/alternative API) */
-    private boolean tryInitStaticApi() {
-        try {
-            Class<?> apiClass = Class.forName("com.hypherionmc.sdlink.api.SDLinkAPI");
-            Method method = apiClass.getMethod("sendMessage", String.class, String.class);
-            messagingInstance = null; // static
-            sendMessageMethod = method;
-            return true;
-        } catch (Exception e) {
-            LOGGER.debug("SDLinkAPI.sendMessage not found: {}", e.getMessage());
-            return false;
-        }
+        return loaded;
     }
 
     @Override
     public boolean isEnabled() {
-        return sdLinkLoaded; // loaded = we can at least log; messaging uses sendMessageMethod
+        return loaded;
     }
-    
+
+    @Override
+    public boolean isReady() {
+        return loaded && BotController.INSTANCE != null && BotController.INSTANCE.isBotReady();
+    }
+
     @Override
     public void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
-        if (!isEnabled()) return;
-
+        if (!isReady()) return;
         try {
-            String emoji = getChannelEmoji(channel);
-            // Strip Minecraft formatting codes for Discord
             String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
-            String discordMessage = String.format("%s **[%s]** %s: %s",
-                emoji, channel.toUpperCase(), player.getName().getString(), cleanMessage);
-
-            // Determine which Discord channel to use
-            String targetChannel;
-            if (discordChannelId != null && !discordChannelId.isEmpty()) {
-                // Use configured Discord channel ID
-                targetChannel = discordChannelId;
-            } else {
-                // Fallback to default channel names based on channel type
-                targetChannel = switch (channel.toLowerCase()) {
-                    case "staff" -> "staff"; // Staff channel goes to staff/moderation Discord channel
-                    case "global" -> "chat"; // Global goes to main chat
-                    case "local" -> "chat";  // Local (if enabled) goes to main chat
-                    default -> "chat";
-                };
-            }
-
-            sendToDiscord(targetChannel, discordMessage);
+            send(MessageType.CHAT, authorFor(player), cleanMessage);
         } catch (Exception e) {
-            LOGGER.error("Failed to send chat message to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay chat message via SDLink: {}", e.getMessage());
         }
-    }
-
-    /**
-     * Get emoji for channel type
-     */
-    private String getChannelEmoji(String channel) {
-        return switch (channel.toLowerCase()) {
-            case "local" -> "💬";
-            case "global" -> "🌍";
-            case "staff" -> "🛡️";
-            default -> "💭";
-        };
     }
 
     @Override
     public void onPrivateMessage(ServerPlayer sender, ServerPlayer recipient, String message) {
-        if (!isEnabled()) return;
-        
+        if (!isReady()) return;
         try {
-            // Send private message notification to Discord
-            String discordMessage = String.format("📩 **Private Message** | %s → %s: %s", 
-                sender.getName().getString(), 
-                recipient.getName().getString(), 
-                message);
-            
-            sendToDiscord("private-messages", discordMessage);
+            send(MessageType.CUSTOM, authorFor(sender),
+                String.format("Private message to %s: %s", recipient.getName().getString(), message));
         } catch (Exception e) {
-            LOGGER.error("Failed to send private message to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay private message via SDLink: {}", e.getMessage());
         }
     }
-    
+
     @Override
     public void onPlayerMute(ServerPlayer player, String reason, boolean isMuted) {
-        if (!isEnabled()) return;
-        
+        if (!isReady()) return;
         try {
             String action = isMuted ? "muted" : "unmuted";
-            String emoji = isMuted ? "🔇" : "🔊";
-            String discordMessage = String.format("%s **%s** has been %s%s", 
-                emoji,
-                player.getName().getString(), 
-                action,
-                reason != null && !reason.isEmpty() ? " (Reason: " + reason + ")" : "");
-            
-            sendToDiscord("moderation", discordMessage);
+            send(MessageType.CUSTOM, DiscordAuthor.getServer(),
+                String.format("%s has been %s%s", player.getName().getString(), action,
+                    reason != null && !reason.isEmpty() ? " (Reason: " + reason + ")" : ""));
         } catch (Exception e) {
-            LOGGER.error("Failed to send mute event to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay mute event via SDLink: {}", e.getMessage());
         }
     }
-    
+
     @Override
     public void onAfkStatusChange(ServerPlayer player, boolean isAfk, String reason) {
-        if (!isEnabled()) return;
-        
+        if (!isReady()) return;
         try {
             String status = isAfk ? "is now AFK" : "is no longer AFK";
-            String emoji = isAfk ? "💤" : "✅";
-            String discordMessage = String.format("%s **%s** %s%s", 
-                emoji,
-                player.getName().getString(), 
-                status,
-                (isAfk && reason != null && !reason.isEmpty()) ? " (" + reason + ")" : "");
-            
-            sendToDiscord("chat", discordMessage);
+            send(MessageType.CUSTOM, DiscordAuthor.getServer(),
+                String.format("%s %s%s", player.getName().getString(), status,
+                    (isAfk && reason != null && !reason.isEmpty()) ? " (" + reason + ")" : ""));
         } catch (Exception e) {
-            LOGGER.error("Failed to send AFK event to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay AFK event via SDLink: {}", e.getMessage());
         }
     }
-    
+
     @Override
     public void onPlayerJoin(ServerPlayer player) {
-        if (!isEnabled()) return;
-        
+        if (!isReady()) return;
         try {
-            String discordMessage = String.format("➡️ **%s** joined the server", 
-                player.getName().getString());
-            
-            sendToDiscord("chat", discordMessage);
+            send(MessageType.JOIN, authorFor(player), player.getName().getString() + " joined the server");
         } catch (Exception e) {
-            LOGGER.error("Failed to send join event to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay join event via SDLink: {}", e.getMessage());
         }
     }
-    
+
     @Override
     public void onPlayerQuit(ServerPlayer player) {
-        if (!isEnabled()) return;
-        
+        if (!isReady()) return;
         try {
-            String discordMessage = String.format("⬅️ **%s** left the server", 
-                player.getName().getString());
-            
-            sendToDiscord("chat", discordMessage);
+            send(MessageType.LEAVE, authorFor(player), player.getName().getString() + " left the server");
         } catch (Exception e) {
-            LOGGER.error("Failed to send quit event to Discord: {}", e.getMessage());
+            LOGGER.error("Failed to relay quit event via SDLink: {}", e.getMessage());
         }
     }
-    
-    /**
-     * Send a message to Discord via Simple Discord Link using the reflected API.
-     * Falls back to debug logging if the API is not available.
-     */
-    private void sendToDiscord(String channel, String message) {
-        if (sendMessageMethod != null) {
-            try {
-                sendMessageMethod.invoke(messagingInstance, channel, message);
-                LOGGER.debug("Sent to Discord channel '{}' via SDLink: {}", channel, message);
-            } catch (Exception e) {
-                LOGGER.warn("SDLink sendMessage failed for channel '{}': {}", channel, e.getMessage());
-            }
-        } else {
-            // API unavailable — log so server admins can see the event
-            LOGGER.info("[Discord->{}] {}", channel, message);
+
+    @Override
+    public void onPlayerAdvancement(ServerPlayer player, String advancementName) {
+        if (!isReady()) return;
+        try {
+            send(MessageType.ADVANCEMENTS, authorFor(player),
+                player.getName().getString() + " earned the advancement " + advancementName);
+        } catch (Exception e) {
+            LOGGER.error("Failed to relay advancement event via SDLink: {}", e.getMessage());
         }
     }
-    
+
+    @Override
+    public Optional<String> getLinkedDiscordId(UUID minecraftUuid) {
+        if (!isReady()) return Optional.empty();
+        try {
+            MinecraftAccount account = MinecraftAccount.of(CraterGameProfile.fromGame(minecraftUuid.toString(), minecraftUuid));
+            if (account == null || !account.isAccountVerified()) return Optional.empty();
+            DiscordUser user = account.getDiscordUser();
+            return user != null ? Optional.of(Long.toUnsignedString(user.getUserId())) : Optional.empty();
+        } catch (Exception e) {
+            LOGGER.debug("SDLink linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<String> getDiscordRoleIds(UUID minecraftUuid) {
+        // SDLink's public API doesn't expose the linked member's role ID list, only
+        // display identity (DiscordUser: name/avatar/mention/role color) — role-based
+        // permission sync isn't achievable through this adapter without reaching into
+        // SDLink's internal (non-API) classes, which is exactly what this rewrite avoids.
+        return List.of();
+    }
+
+    private DiscordAuthor authorFor(ServerPlayer player) {
+        return DiscordAuthor.of(player.getName().getString(), player.getUUID().toString(), player.getName().getString());
+    }
+
+    private void send(MessageType type, DiscordAuthor author, String message) {
+        new DiscordMessageBuilder(type)
+            .author(author)
+            .message(message)
+            .build()
+            .sendMessage();
+    }
+
     @Override
     public void shutdown() {
-        sendMessageMethod = null;
-        messagingInstance = null;
-        LOGGER.info("Simple Discord Link integration shut down");
+        LOGGER.info("Simple Discord Link integration shut down.");
     }
 }

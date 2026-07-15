@@ -41,12 +41,6 @@ public class DiscordAuthConfig {
     private boolean syncOnJoin;
     private Map<String, List<String>> permissionMappings; // Discord Role ID -> List of Minecraft permissions
 
-    // OAuth2 settings
-    private String oauth2ClientId;
-    private String oauth2ClientSecret;
-    private String oauth2RedirectUri;
-    private String oauth2Scopes;
-
     private DiscordAuthConfig() {
         // Set defaults
         this.enabled = true;
@@ -61,10 +55,6 @@ public class DiscordAuthConfig {
         this.permissionSyncEnabled = true;
         this.syncOnJoin = true;
         this.permissionMappings = new HashMap<>();
-        this.oauth2ClientId = "";
-        this.oauth2ClientSecret = "";
-        this.oauth2RedirectUri = "http://localhost:8080/api/auth/discord/callback";
-        this.oauth2Scopes = "identify guilds.members.read";
     }
     
     /**
@@ -172,21 +162,8 @@ public class DiscordAuthConfig {
                 }
             }
 
-            // Parse OAuth2 settings
-            if (root.has("oauth2")) {
-                JsonObject oauth2Obj = root.getAsJsonObject("oauth2");
-                if (oauth2Obj.has("clientId"))
-                    config.oauth2ClientId = oauth2Obj.get("clientId").getAsString();
-                if (oauth2Obj.has("clientSecret"))
-                    config.oauth2ClientSecret = oauth2Obj.get("clientSecret").getAsString();
-                if (oauth2Obj.has("redirectUri"))
-                    config.oauth2RedirectUri = oauth2Obj.get("redirectUri").getAsString();
-                if (oauth2Obj.has("scopes"))
-                    config.oauth2Scopes = oauth2Obj.get("scopes").getAsString();
-            }
-
-            LOGGER.info("Discord auth config loaded successfully. Enabled: {}, Permission Sync: {}, OAuth2 configured: {}",
-                config.enabled, config.permissionSyncEnabled, !config.oauth2ClientId.isEmpty());
+            LOGGER.info("Discord auth config loaded successfully. Enabled: {}, Permission Sync: {}",
+                config.enabled, config.permissionSyncEnabled);
 
         } catch (Exception e) {
             LOGGER.error("Failed to load Discord auth config: {}", e.getMessage(), e);
@@ -285,16 +262,6 @@ public class DiscordAuthConfig {
     public boolean isPermissionSyncEnabled() { return permissionSyncEnabled; }
     public boolean isSyncOnJoin() { return syncOnJoin; }
     public Map<String, List<String>> getPermissionMappings() { return new HashMap<>(permissionMappings); }
-
-    // OAuth2 getters
-    public String getOauth2ClientId() { return oauth2ClientId; }
-    public String getOauth2ClientSecret() { return oauth2ClientSecret; }
-    public String getOauth2RedirectUri() { return oauth2RedirectUri; }
-    public String getOauth2Scopes() { return oauth2Scopes; }
-    public boolean isOauth2Configured() {
-        return oauth2ClientId != null && !oauth2ClientId.isEmpty()
-            && oauth2ClientSecret != null && !oauth2ClientSecret.isEmpty();
-    }
 
     // Setters
     public void setEnabled(boolean enabled) { this.enabled = enabled; }

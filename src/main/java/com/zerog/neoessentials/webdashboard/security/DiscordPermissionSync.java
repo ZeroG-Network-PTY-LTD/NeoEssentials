@@ -46,7 +46,7 @@ public class DiscordPermissionSync {
         
         try {
             // Check if Discord integration is available
-            if (!SDLinkEventListener.isBotReady()) {
+            if (!DiscordAuthProvider.getInstance().isAvailable()) {
                 return new SyncResult(false, "Discord bot not ready", 0);
             }
             

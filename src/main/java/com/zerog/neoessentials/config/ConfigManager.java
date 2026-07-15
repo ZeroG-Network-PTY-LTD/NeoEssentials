@@ -1360,7 +1360,7 @@ public class ConfigManager {
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
-        put(DISCORD_AUTH_CONFIG, 8);   // v8  — migrated to // comment style
+        put(DISCORD_AUTH_CONFIG, 9);   // v9  — removed OAuth2 (no direct Discord API calls); dashboard login now sources identity from a Discord companion mod (SDLink/Mc2Discord)
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
     }};
