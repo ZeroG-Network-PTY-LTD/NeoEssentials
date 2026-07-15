@@ -10,6 +10,8 @@ import com.zerog.neoessentials.integrations.ChatIntegrationManager;
 import com.zerog.neoessentials.util.ResourceUtil;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
+import net.minecraft.server.MinecraftServer;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,9 @@ import java.util.*;
  *   DELETE /api/discord/events       – clear the event log [ADMIN]
  *   GET    /api/discord/auth-config  – read discord_auth.json login/role settings [ADMIN]
  *   POST   /api/discord/auth-config  – update discord_auth.json login/role settings [ADMIN]
+ *   GET    /api/discord/link-lookup  – resolve a Discord ID to its linked Minecraft account,
+ *                                       for an external app's own OAuth2 login flow (this mod
+ *                                       never performs Discord OAuth2 itself — see DiscordAuthProvider)
  */
 public class DiscordEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordEndpoint.class);
@@ -59,6 +64,8 @@ public class DiscordEndpoint implements HttpHandler {
                 handleGetAuthConfig(exchange);
             } else if (path.endsWith("/auth-config") && "POST".equals(method)) {
                 handlePostAuthConfig(exchange);
+            } else if (path.endsWith("/link-lookup") && "GET".equals(method)) {
+                handleLinkLookup(exchange);
             } else {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown discord endpoint\"}");
             }
@@ -273,6 +280,60 @@ public class DiscordEndpoint implements HttpHandler {
         LOGGER.info("[Discord] Admin updated discord_auth.json via dashboard");
 
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Discord auth config saved. Changes take effect immediately.\"}");
+    }
+
+    // ── GET /api/discord/link-lookup?discordId=<id> ─────────────────────────
+    // Reverse of the mod's own UUID->Discord lookups: given a real Discord ID (obtained by
+    // an external app's own OAuth2 flow — this mod never talks to Discord directly), resolve
+    // the Minecraft account linked to it, if any. [AUTH] — same tier as /status and /events.
+
+    private void handleLinkLookup(HttpExchange exchange) throws IOException {
+        String query = exchange.getRequestURI().getQuery();
+        String discordId = null;
+        if (query != null) {
+            for (String param : query.split("&")) {
+                if (param.startsWith("discordId=")) {
+                    discordId = java.net.URLDecoder.decode(param.substring("discordId=".length()), StandardCharsets.UTF_8);
+                    break;
+                }
+            }
+        }
+
+        if (discordId == null || discordId.isEmpty()) {
+            sendJson(exchange, 400, "{\"success\":false,\"error\":\"Missing discordId parameter\"}");
+            return;
+        }
+
+        Optional<UUID> linkedUuid = ChatIntegrationManager.findLinkedMinecraftUuid(discordId);
+        if (linkedUuid.isEmpty()) {
+            sendJson(exchange, 200, "{\"success\":true,\"linked\":false}");
+            return;
+        }
+
+        UUID uuid = linkedUuid.get();
+        String username = resolveUsername(uuid);
+
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("linked", true);
+        resp.addProperty("minecraftUuid", uuid.toString());
+        resp.addProperty("minecraftUsername", username);
+        sendJson(exchange, 200, new GsonBuilder().disableHtmlEscaping().create().toJson(resp));
+    }
+
+    private String resolveUsername(UUID uuid) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return uuid.toString();
+
+        var online = server.getPlayerList().getPlayer(uuid);
+        if (online != null) return online.getName().getString();
+
+        try {
+            var profile = server.services().profileResolver().fetchById(uuid);
+            if (profile.isPresent() && profile.get().name() != null) return profile.get().name();
+        } catch (Exception ignored) {}
+
+        return uuid.toString();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
