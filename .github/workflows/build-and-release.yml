@@ -1,0 +1,60 @@
+name: Build & Release Jar
+
+# Builds the mod jar for a dev branch and publishes it as that branch's
+# "latest" GitHub Release — no need to run gradle locally to grab a build.
+# The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
+# mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
+# resolver (org.gradle.toolchains.foojay-resolver-convention, already
+# configured in settings.gradle) — the runner JDK below is only what launches
+# Gradle itself, not what compiles the mod.
+
+on:
+  push:
+    branches:
+      - Dev-Builds
+      - mc-26.1-port
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build jar
+        run: ./gradlew build -x test --console=plain
+
+      - name: Locate built jar
+        id: jar
+        run: |
+          jar_path=$(ls -t build/libs/*.jar | head -n 1)
+          echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
+
+      - name: Publish branch release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.ref_name }}
+          name: "${{ github.ref_name }} — latest automated build"
+          body: |
+            Automated build from commit ${{ github.sha }} on `${{ github.ref_name }}`.
+
+            This release is overwritten on every push to this branch — it always
+            reflects the latest commit, not a specific version.
+          target_commitish: ${{ github.sha }}
+          files: ${{ steps.jar.outputs.path }}
+          prerelease: true
+          make_latest: false
