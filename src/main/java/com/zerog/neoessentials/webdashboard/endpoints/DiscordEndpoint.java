@@ -27,7 +27,7 @@ import java.util.*;
  *   GET    /api/discord/events       – recent relay event log (rolling buffer)
  *   POST   /api/discord/test         – send a test message via all active adapters [ADMIN]
  *   DELETE /api/discord/events       – clear the event log [ADMIN]
- *   GET    /api/discord/auth-config  – read discord_auth.json login/role settings [ADMIN]
+ *   GET    /api/discord/auth-config  – read discord_auth.json login/role settings
  *   POST   /api/discord/auth-config  – update discord_auth.json login/role settings [ADMIN]
  *   GET    /api/discord/link-lookup  – resolve a Discord ID to its linked Minecraft account,
  *                                       for an external app's own OAuth2 login flow (this mod
@@ -195,16 +195,14 @@ public class DiscordEndpoint implements HttpHandler {
     }
 
     // ── GET /api/discord/auth-config ─────────────────────────────────────────
-    // Returns the current discord_auth.json OAuth2 / auth settings (ADMIN only).
-    // The clientSecret is never returned — only whether it is set.
+    // Returns the current discord_auth.json login/role settings. [AUTH] tier, not
+    // [ADMIN]: every field here is a non-secret boolean/enum (no tokens or
+    // passwords), and callers that only need to know "is Discord login possible
+    // right now" — e.g. a dashboard's own guest-facing login page, via its shared
+    // service account — shouldn't need an admin-tier credential just to read it.
+    // Writing these settings (below) still requires ADMIN.
 
     private void handleGetAuthConfig(HttpExchange exchange) throws IOException {
-        Boolean isAdmin = (Boolean) exchange.getAttribute("auth-admin");
-        if (!Boolean.TRUE.equals(isAdmin)) {
-            sendJson(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
-            return;
-        }
-
         DiscordAuthConfig cfg = DiscordAuthConfig.load();
         DiscordAuthProvider provider = DiscordAuthProvider.getInstance();
 
