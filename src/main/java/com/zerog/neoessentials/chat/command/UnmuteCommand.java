@@ -28,14 +28,12 @@ public class UnmuteCommand {
                         return 0;
                     }
                     String targetName = targetPlayer.getName().getString();
-                    
-                    // Validate sender
+
+                    // Sender may be console/RCON — allowed, same as every other moderation
+                    // command (ban, kick, freeze, jail, ...).
                     ServerPlayer sender = source.getPlayer();
-                    if (sender == null) {
-                        source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
-                        return 0;
-                    }
-                    
+                    String senderName = sender != null ? sender.getName().getString() : "Console";
+
                     // Check if chat module is enabled
                     if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));
@@ -55,19 +53,19 @@ public class UnmuteCommand {
                         return 0;
                     }
                     
-                    // Check permissions
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
+                    // Check permissions (console always passes)
+                    if (sender != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
-                    
+
                     // Check if player is actually muted
                     if (!com.zerog.neoessentials.chat.MuteManager.getMutedPlayers().contains(targetName.toLowerCase())) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.not_muted", targetName));
                         return 0;
                     }
-                    
-                    com.zerog.neoessentials.chat.MuteManager.unmute(targetName, sender.getName().getString());
+
+                    com.zerog.neoessentials.chat.MuteManager.unmute(targetName, senderName);
                     // Notify Discord integrations
                     try {
                         com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, null, false);

@@ -611,7 +611,22 @@
       // Prevent jailed players from using teleportation commands
       "preventJailEscape": true,
       // Log all jail / unjail actions
-      "logJailActions": true
+      "logJailActions": true,
+      // Item used as the jail-region selection wand (/jailwand) — right-click sets corner 1,
+      // left-click sets corner 2. Any valid item id works.
+      "wandItem": "minecraft:stick",
+      // Default radius (blocks) for sphere-shaped jails when no explicit radius is given
+      "defaultSphereRadius": 10.0,
+      // Repeat-offender auto-escalation: jailing the same player this many times (tracked
+      // per-player, resets after a perm-ban fires) automatically issues a ban instead of the
+      // Nth jail. maxJailsBeforePermBan must stay HIGHER than maxJailsBeforeTempBan, or the
+      // temp-ban tier never triggers (the perm-ban check runs first). The admin who triggered
+      // the auto-ban gets a direct in-game notice when this fires, in addition to the log line.
+      "maxJailsBeforeTempBan": 3,
+      "maxJailsBeforePermBan": 6,
+      // Duration (minutes) of the automatic temp-ban issued at the maxJailsBeforeTempBan
+      // threshold. Default 1440 = 24 hours.
+      "tempBanDurationMinutes": 1440
     },
 
     "vanishSettings": {
@@ -880,7 +895,10 @@
       "global": {
         "enabled": true,
         "command": "g",
-        "aliases": ["global", "gc"],
+        // "gc" was previously listed here too, but it collides with the built-in memory/TPS
+        // diagnostics command (/gc) — that command wins the registration, so the alias was
+        // silently unusable for switching channels. Use /g or /global instead.
+        "aliases": ["global"],
         "prefix": "!",
         "default": false,
         "discord": {

@@ -35,6 +35,14 @@ public class BaltopCommand {
     private static volatile BigDecimal cachedTotal = BigDecimal.ZERO;
     private static volatile long cacheAge = 0L;
     private static final AtomicBoolean cacheBuilding = new AtomicBoolean(false);
+    // Set whenever invalidateCache() fires while a build is already in flight — that build
+    // started reading balancesCache before the invalidating change landed, so its result is
+    // stale the moment it finishes. Checked at the end of every build; if set, another build
+    // is kicked off immediately instead of the invalidation being silently dropped (previously:
+    // a rapid invalidate-while-building could leave the cache stuck on old data indefinitely,
+    // since compareAndSet(false, true) just no-ops when a build is already running).
+    private static final AtomicBoolean rebuildQueued = new AtomicBoolean(false);
+    private static volatile MinecraftServer lastServer = null;
 
     /** Immutable leaderboard entry. */
     private record BaltopEntry(UUID uuid, String name, BigDecimal balance) {}
@@ -107,9 +115,19 @@ public class BaltopCommand {
 
     // ── Async cache rebuild (BalanceTopImpl.calculateBalanceTopMapAsync port) ─
     public static CompletableFuture<Void> refreshCacheAsync(MinecraftServer server) {
+        lastServer = server;
         if (!cacheBuilding.compareAndSet(false, true)) {
-            return CompletableFuture.completedFuture(null); // Already building
+            // A build is already in flight. It started reading balancesCache before whatever
+            // just called refreshCacheAsync() (e.g. this /eco give) landed, so mark that its
+            // result will be stale — the in-flight build re-checks this flag when it finishes
+            // and immediately re-runs itself if set, instead of this invalidation being lost.
+            rebuildQueued.set(true);
+            return CompletableFuture.completedFuture(null);
         }
+        return runBuild(server);
+    }
+
+    private static CompletableFuture<Void> runBuild(MinecraftServer server) {
         return CompletableFuture.runAsync(() -> {
             try {
                 Map<UUID, BigDecimal> all = EconomyManager.getInstance().getAllBalances();
@@ -144,11 +162,28 @@ public class BaltopCommand {
             } finally {
                 cacheBuilding.set(false);
             }
+            // If an invalidation arrived while we were building, our just-published result is
+            // already stale — immediately rebuild again rather than waiting for the next
+            // /baltop call (which, under the old cacheAge>60s check alone, could be minutes away).
+            if (rebuildQueued.compareAndSet(true, false)
+                    && cacheBuilding.compareAndSet(false, true)) {
+                runBuild(server);
+            }
         });
     }
 
     /** Invalidate cache (call after eco give/take/set). */
     public static void invalidateCache() {
         cacheAge = 0L;
+        // Proactively kick off a rebuild now rather than waiting for the next /baltop call to
+        // notice staleness — that could otherwise be minutes away, or (for a brand-new account
+        // that's never been in the leaderboard before) might not happen until someone thinks to
+        // run /baltop again at all. Safe to call before any /baltop has ever run: lastServer is
+        // simply null until then, and refreshCacheAsync() itself sets rebuildQueued if a build
+        // is already in flight rather than dropping this invalidation.
+        MinecraftServer server = lastServer;
+        if (server != null) {
+            refreshCacheAsync(server);
+        }
     }
 }

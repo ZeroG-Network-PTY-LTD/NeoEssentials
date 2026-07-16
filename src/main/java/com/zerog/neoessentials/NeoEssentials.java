@@ -831,6 +831,8 @@ public class NeoEssentials {
         com.zerog.neoessentials.chat.command.UnmuteCommand.register(dispatcher);
         com.zerog.neoessentials.chat.command.MuteListCommand.register(dispatcher);
         com.zerog.neoessentials.chat.command.MsgToggleCommand.register(dispatcher);
+        registry.registerCommand("chatformat", "Manage per-player/per-group chat formats");
+        com.zerog.neoessentials.chat.command.ChatFormatCommand.register(dispatcher);
 
         // Register channel commands (dynamically from config)
         com.zerog.neoessentials.chat.commands.ChannelCommands.register(dispatcher);

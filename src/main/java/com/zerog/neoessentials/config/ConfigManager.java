@@ -2723,8 +2723,10 @@ public class ConfigManager {
     }
 
     /**
-     * Get max jails before permanent ban from moderation.jailSettings.maxJailsBeforePermBan
-     * Defaults to 3 if not set
+     * Get max jails before permanent ban from moderation.jailSettings.maxJailsBeforePermBan.
+     * Defaults to 6 if not set — deliberately higher than {@link #getMaxJailsBeforeTempBan()}'s
+     * default of 3, so the temp-ban tier is actually reachable rather than dead code (both used
+     * to default to the same value, meaning the perm-ban check — evaluated first — always won).
      */
     public static int getMaxJailsBeforePermBan() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
@@ -2737,7 +2739,7 @@ public class ConfigManager {
                 }
             }
         }
-        return 3;
+        return 6;
     }
 
     /**

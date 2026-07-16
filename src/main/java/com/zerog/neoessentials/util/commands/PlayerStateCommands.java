@@ -560,9 +560,21 @@ public class PlayerStateCommands {
     }
 
     // ── /sudo <player|*|**> <command|c:message> ─────────────────────────────────
+    // "*" and "**" are registered as their own literal branches, not folded into the
+    // "target" word argument below — Brigadier's unquoted-string charset for
+    // StringArgumentType.word() doesn't include '*', so a literal "*"/"**" token would
+    // never match that argument and always fail to parse ("trailing data").
     private static void registerSudo(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("sudo")
             .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.sudo"); })
+            .then(Commands.literal("*")
+                .then(Commands.argument("command", StringArgumentType.greedyString())
+                    .executes(ctx -> executeSudo(ctx, "*", StringArgumentType.getString(ctx, "command"))))
+            )
+            .then(Commands.literal("**")
+                .then(Commands.argument("command", StringArgumentType.greedyString())
+                    .executes(ctx -> executeSudo(ctx, "**", StringArgumentType.getString(ctx, "command"))))
+            )
             .then(Commands.argument("target", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
                     Stream.concat(Stream.of("*", "**"), Arrays.stream(ctx.getSource().getServer().getPlayerNames())),

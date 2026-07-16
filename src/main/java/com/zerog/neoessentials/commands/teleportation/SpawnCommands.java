@@ -67,7 +67,6 @@ public class SpawnCommands {
      */
     private static void registerSpawnCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerSpawnCommandWithName(dispatcher, "spawn");
-        registerSpawnCommandWithName(dispatcher, "hub");
     }
     
     private static void registerSpawnCommandWithName(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {

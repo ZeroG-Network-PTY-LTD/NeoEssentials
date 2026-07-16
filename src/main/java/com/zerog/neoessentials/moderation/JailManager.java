@@ -129,7 +129,25 @@ public class JailManager {
         }
         return instance;
     }
-    
+
+    /**
+     * Best-effort direct notice to whoever issued the /jail(for) that just triggered an
+     * auto-ban — previously this only reached a LOGGER.info line (gated behind
+     * isLogJailActionsEnabled), completely invisible to the admin who ran the command unless
+     * they went looking in the server log afterward. No-ops silently if {@code jailedBy}
+     * isn't a currently-online player (e.g. "Console", or the admin has since logged off) —
+     * the log line is still the fallback of record for those cases.
+     */
+    private void notifyJailer(String jailedBy, net.minecraft.network.chat.Component message) {
+        if (jailedBy == null) return;
+        MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        ServerPlayer jailer = server.getPlayerList().getPlayerByName(jailedBy);
+        if (jailer != null) {
+            jailer.sendSystemMessage(message);
+        }
+    }
+
     /**
      * Jail a player indefinitely (no expiry).
      */
@@ -179,6 +197,8 @@ public class JailManager {
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
                 LOGGER.info("Player {} ({}) permanently banned after {} jailings.", playerName, playerId, jailCount);
             }
+            notifyJailer(jailedBy, MessageUtil.error("commands.neoessentials.jail.auto_permban_notice",
+                playerName, jailCount));
             return false;
         } else if (jailCount >= tempBanThreshold) {
             // Issue temp ban
@@ -188,6 +208,8 @@ public class JailManager {
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
                 LOGGER.info("Player {} ({}) temp-banned for {} minutes after {} jailings.", playerName, playerId, tempBanDuration, jailCount);
             }
+            notifyJailer(jailedBy, MessageUtil.error("commands.neoessentials.jail.auto_tempban_notice",
+                playerName, jailCount, tempBanDuration));
             return false;
         }
 

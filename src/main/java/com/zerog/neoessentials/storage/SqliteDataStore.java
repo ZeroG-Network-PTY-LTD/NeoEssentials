@@ -31,37 +31,71 @@ public class SqliteDataStore implements DataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqliteDataStore.class);
     private static final Gson GSON = new Gson();
 
-    private final Connection connection;
+    private final File dbFile;
+    // Not final: if the very first connection attempt fails (see openConnection()'s
+    // Javadoc for why that can legitimately happen at mod-construction time), later
+    // callers retry via connection() instead of being permanently stuck with a null
+    // connection for the rest of the server's life.
+    private volatile Connection connection;
     // Collections whose table we've already confirmed/created, so we don't run
     // CREATE TABLE IF NOT EXISTS on every single call.
     private final Set<String> knownTables = new CopyOnWriteArraySet<>();
 
     public SqliteDataStore(File dbFile) {
+        this.dbFile = dbFile;
         File parent = dbFile.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
             LOGGER.error("Failed to create storage directory: {}", parent.getAbsolutePath());
         }
-        Connection conn = null;
+        this.connection = openConnection();
+    }
+
+    /**
+     * Opens the SQLite connection, tolerating failure — returns {@code null} rather than
+     * throwing. Callers must retry via {@link #connection()} rather than trusting this
+     * result forever.
+     *
+     * <p>This can genuinely fail the very first time it's called: {@code StorageManager}
+     * (and therefore this class) is constructed as a side effect of the first manager
+     * singleton's {@code getInstance()} call, which for some managers happens as early as
+     * the mod's {@code @Mod} constructor — before NeoForge/JarJar has necessarily finished
+     * making the bundled {@code sqlite-jdbc} dependency's classes visible to this mod's
+     * classloader. By the time any *real* data operation happens (well after mod
+     * construction), that race has always resolved — so {@link #connection()} retrying
+     * on next use, instead of this class staying permanently broken, is the actual fix.</p>
+     */
+    private Connection openConnection() {
         try {
             // Force the driver to register — bundled via JarJar, whose isolated
             // classloader doesn't reliably trigger SQLite's own ServiceLoader
             // auto-registration (same workaround AuctionDB already needed).
             Class.forName("org.sqlite.JDBC");
-            conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
+            Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
             LOGGER.info("SqliteDataStore: opened {}", dbFile.getAbsolutePath());
+            return conn;
         } catch (Exception e) {
-            LOGGER.error("SqliteDataStore: failed to open {}", dbFile.getAbsolutePath(), e);
+            LOGGER.error("SqliteDataStore: failed to open {} (will retry on next use)",
+                dbFile.getAbsolutePath(), e);
+            return null;
         }
-        this.connection = conn;
+    }
+
+    /** Returns the live connection, retrying {@link #openConnection()} if a previous attempt failed. */
+    private synchronized Connection connection() {
+        if (connection == null) {
+            connection = openConnection();
+        }
+        return connection;
     }
 
     @Override
     public synchronized void put(String collection, String id, JsonObject data) {
-        if (connection == null) return;
+        Connection conn = connection();
+        if (conn == null) return;
         ensureTable(collection);
         String sql = "INSERT INTO " + tableName(collection) + " (id, data) VALUES (?, ?) "
             + "ON CONFLICT(id) DO UPDATE SET data = excluded.data";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             stmt.setString(2, GSON.toJson(data));
             stmt.executeUpdate();
@@ -72,10 +106,11 @@ public class SqliteDataStore implements DataStore {
 
     @Override
     public synchronized JsonObject get(String collection, String id) {
-        if (connection == null) return null;
+        Connection conn = connection();
+        if (conn == null) return null;
         ensureTable(collection);
         String sql = "SELECT data FROM " + tableName(collection) + " WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return GSON.fromJson(rs.getString("data"), JsonObject.class);
@@ -88,10 +123,11 @@ public class SqliteDataStore implements DataStore {
 
     @Override
     public synchronized boolean delete(String collection, String id) {
-        if (connection == null) return false;
+        Connection conn = connection();
+        if (conn == null) return false;
         ensureTable(collection);
         String sql = "DELETE FROM " + tableName(collection) + " WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -103,10 +139,11 @@ public class SqliteDataStore implements DataStore {
     @Override
     public synchronized Map<String, JsonObject> getAll(String collection) {
         Map<String, JsonObject> results = new LinkedHashMap<>();
-        if (connection == null) return results;
+        Connection conn = connection();
+        if (conn == null) return results;
         ensureTable(collection);
         String sql = "SELECT id, data FROM " + tableName(collection);
-        try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 results.put(rs.getString("id"), GSON.fromJson(rs.getString("data"), JsonObject.class));
             }
@@ -123,6 +160,8 @@ public class SqliteDataStore implements DataStore {
 
     @Override
     public void close() {
+        // Deliberately reads the raw field, not connection() — closing should never trigger
+        // a fresh open just to immediately close it again.
         if (connection != null) {
             try { connection.close(); }
             catch (SQLException e) { LOGGER.warn("SqliteDataStore: error closing connection", e); }
@@ -131,9 +170,11 @@ public class SqliteDataStore implements DataStore {
 
     private synchronized void ensureTable(String collection) {
         if (knownTables.contains(collection)) return;
+        Connection conn = connection();
+        if (conn == null) return;
         String table = tableName(collection);
         String sql = "CREATE TABLE IF NOT EXISTS " + table + " (id TEXT PRIMARY KEY, data TEXT NOT NULL)";
-        try (Statement stmt = connection.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
             knownTables.add(collection);
         } catch (SQLException e) {
