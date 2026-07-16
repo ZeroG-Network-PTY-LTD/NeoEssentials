@@ -25,23 +25,19 @@ public class MuteListCommand {
         dispatcher.register(Commands.literal("mutelist")
             .executes(ctx -> {
                 CommandSourceStack source = ctx.getSource();
-                
-                // Validate sender
+
+                // Sender may be console/RCON — allowed, same as every other moderation command.
                 net.minecraft.server.level.ServerPlayer sender = source.getPlayer();
-                if (sender == null) {
-                    source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
-                    return 0;
-                }
-                
+
                 // Check if command is enabled
                 ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isMuteListEnabled()) {
                     source.sendFailure(MessageUtil.error("commands.neoessentials.mutelist.disabled"));
                     return 0;
                 }
-                
-                // Check permissions
-                if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
+
+                // Check permissions (console always passes)
+                if (sender != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
                     source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                     return 0;
                 }

@@ -9,6 +9,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.MessageArgument;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -72,10 +73,18 @@ public class ItemCustomisationCommands {
                 var p = src.getPlayer();
                 return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.me");
             })
-            .then(Commands.argument("action", StringArgumentType.greedyString())
+            // Vanilla already registers its own built-in "/me <action>" using
+            // MessageArgumentType for the "action" argument. Brigadier's addChild() merges
+            // same-named argument nodes by keeping the FIRST-registered node's type and just
+            // swapping in whichever .executes() was registered last — so regardless of what
+            // type this registration declares, the argument is retrieved at runtime as
+            // whatever vanilla's node actually is. Using StringArgumentType here (as this used
+            // to) threw "Argument 'action' is defined as Message, not String" for exactly that
+            // reason. Matching vanilla's own MessageArgument.message() avoids the mismatch.
+            .then(Commands.argument("action", MessageArgument.message())
                 .executes(ctx -> {
                     var src = ctx.getSource();
-                    String action = StringArgumentType.getString(ctx, "action");
+                    String action = MessageArgument.getMessage(ctx, "action").getString();
                     String name = src.getPlayer() != null
                         ? src.getPlayer().getName().getString() : "Console";
                     Component msg = MessageUtil.coloredText("§5* §d" + name + " §f" + action);

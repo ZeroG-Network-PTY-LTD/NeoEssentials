@@ -52,41 +52,41 @@ public class MuteCommand {
             return 0;
         }
         String targetName = targetPlayer.getName().getString();
-        
-        // Validate sender
+
+        // Sender may be console/RCON (source.getPlayer() == null) — every other moderation
+        // command (ban, kick, freeze, jail, warn, ...) already allows that, so mute/unmute/
+        // mutelist should too rather than rejecting with a "server context" error that doesn't
+        // even describe the real condition being checked.
         net.minecraft.server.level.ServerPlayer sender = source.getPlayer();
-        if (sender == null) {
-            source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
-            return 0;
-        }
-        
+        String senderName = sender != null ? sender.getName().getString() : "Console";
+
         // Check if command is enabled
         ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
         if (chatManager != null && !chatManager.isMuteEnabled()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.mute.disabled"));
             return 0;
         }
-        
-        // Check permissions
-        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
+
+        // Check permissions (console always passes, same as every other moderation command)
+        if (sender != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
             return 0;
         }
-        
+
         // Check if trying to mute self
-        if (sender.getName().getString().equalsIgnoreCase(targetName)) {
+        if (sender != null && senderName.equalsIgnoreCase(targetName)) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.mute.self"));
             return 0;
         }
-        
+
         // Check if target has exempt permission
         if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(targetPlayer.getUUID(), "neoessentials.chat.mute.exempt")) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.mute.exempt", targetName));
             return 0;
         }
-        
+
         com.zerog.neoessentials.chat.MuteManager.mute(
-            targetName, reason.isEmpty() ? null : reason, sender.getName().getString(), 0L);
+            targetName, reason.isEmpty() ? null : reason, senderName, 0L);
         // Notify Discord integrations
         try {
             com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, reason.isEmpty() ? "No reason given" : reason, true);

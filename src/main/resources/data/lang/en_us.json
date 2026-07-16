@@ -169,6 +169,8 @@
     "commands.neoessentials.jail.invalid_duration":  "§cInvalid duration: §f{0}§c. Use 30s, 5m, 2h, 1d, 1w.",
     "commands.neoessentials.jail.deljail_success":  "§aJail location §f{0}§a deleted.",
     "commands.neoessentials.jail.deljail_had_inmates":  "§eWarning: §f{0}§e player(s) were jailed in this location. They have been removed from jail.",
+    "commands.neoessentials.jail.auto_permban_notice":  "§c⚠ §f{0}§c was §lpermanently banned§r§c instead of jailed — they hit the {1} jailings threshold. Adjust moderation.jailSettings.maxJailsBeforePermBan in config.json if this wasn't intended.",
+    "commands.neoessentials.jail.auto_tempban_notice":  "§c⚠ §f{0}§c was §ltemp-banned for {2}m§r§c instead of jailed — they hit the {1} jailings threshold. Adjust moderation.jailSettings.maxJailsBeforeTempBan in config.json if this wasn't intended.",
     "commands.neoessentials.list.header_with_vanished":  "§6=== Online Players ({0}/{1} - {2} total) ===",
     "commands.neoessentials.msg.sender_muted":  "You cannot send messages while muted.",
     "commands.neoessentials.mute.disabled":  "Mute command is disabled.",

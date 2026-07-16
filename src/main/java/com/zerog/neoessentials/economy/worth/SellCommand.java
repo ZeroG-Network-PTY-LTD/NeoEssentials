@@ -11,6 +11,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -96,12 +97,13 @@ public class SellCommand {
                 var p = src.getPlayer();
                 return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.setworth");
             })
-            .then(Commands.argument("item", StringArgumentType.word())
+            .then(Commands.argument("item", ResourceLocationArgument.id())
                 .then(Commands.literal("remove")
-                    .executes(ctx -> executeRemoveWorth(ctx, StringArgumentType.getString(ctx, "item"))))
+                    .executes(ctx -> executeRemoveWorth(ctx,
+                        ResourceLocationArgument.getId(ctx, "item").toString())))
                 .then(Commands.argument("price", DoubleArgumentType.doubleArg(0))
                     .executes(ctx -> executeSetWorth(ctx,
-                        StringArgumentType.getString(ctx, "item"),
+                        ResourceLocationArgument.getId(ctx, "item").toString(),
                         DoubleArgumentType.getDouble(ctx, "price"))))
             )
         );
@@ -276,7 +278,11 @@ public class SellCommand {
     }
 
     private static ItemStack resolveItemOrHand(CommandSourceStack source, String itemId) {
-        if (itemId.equalsIgnoreCase("hand")) {
+        // "hand" is a special sentinel, not a real item — since /setworth's argument is now a
+        // ResourceLocationArgument (needed so "minecraft:dirt"-style full IDs parse at all, not
+        // just bare names), a bare "hand" normalizes to "minecraft:hand" by the time it gets
+        // here, so both forms need to match.
+        if (itemId.equalsIgnoreCase("hand") || itemId.equalsIgnoreCase("minecraft:hand")) {
             var p = source.getPlayer();
             if (p == null) { source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return null; }
             ItemStack held = p.getMainHandItem();
