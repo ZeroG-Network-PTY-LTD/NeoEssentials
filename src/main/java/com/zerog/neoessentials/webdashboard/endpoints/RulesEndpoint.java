@@ -47,6 +47,13 @@ public class RulesEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/rules", "");
         if (path.isEmpty()) path = "/";
 
+        // Server rules are player-facing content; mutating them requires ADMIN, matching every
+        // other config-writing endpoint group. Reads stay open to any authenticated caller.
+        if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            sendResponse(exchange, 403, error("Admin access required"));
+            return;
+        }
+
         try {
             JsonObject response;
             int statusCode = 200;

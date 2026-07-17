@@ -1520,6 +1520,41 @@ public class ConfigManager {
     }
 
     /**
+     * URL the mod POSTs to whenever a dashboard_user is created/updated/deleted (via
+     * in-game {@code /dashboardregister}, an admin REST call, or role/enable/disable changes) —
+     * lets the external dashboard mirror the mod's own account lifecycle into its own user
+     * table automatically instead of requiring manual dual maintenance. Empty/absent = disabled
+     * (default) — this is a genuinely optional integration point, not everyone runs an external
+     * dashboard that wants pushed notifications on top of its own REST polling/sync.
+     */
+    public static String getUserSyncWebhookUrl() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("userSyncWebhookUrl")) {
+                return dashboard.get("userSyncWebhookUrl").getAsString();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Shared secret used to HMAC-sign the webhook body (header {@code X-NeoEssentials-Signature},
+     * hex-encoded HMAC-SHA256) so the receiving external dashboard can verify a request genuinely
+     * came from this mod and not an attacker who merely knows/guesses its endpoint URL.
+     */
+    public static String getUserSyncWebhookSecret() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("userSyncWebhookSecret")) {
+                return dashboard.get("userSyncWebhookSecret").getAsString();
+            }
+        }
+        return "";
+    }
+
+    /**
      * Returns the web dashboard HTTP port (webDashboard.port). Defaults to 8080.
      */
     public int getWebDashboardPort() {

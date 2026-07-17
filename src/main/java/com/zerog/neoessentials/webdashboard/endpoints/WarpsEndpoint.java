@@ -46,6 +46,13 @@ public class WarpsEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/warps", "");
         if (path.isEmpty()) path = "/";
 
+        // Creating/deleting warps requires ADMIN, matching every other config-writing endpoint
+        // group. Reads stay open to any authenticated caller.
+        if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            sendResponse(exchange, 403, error("Admin access required"));
+            return;
+        }
+
         try {
             JsonObject response;
             int statusCode = 200;
