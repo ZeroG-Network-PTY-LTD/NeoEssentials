@@ -1,16 +1,31 @@
 package com.zerog.neoessentials.commands.utility;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.DashboardAPI;
 import com.zerog.neoessentials.webdashboard.DashboardFileManager;
 import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
+import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
+import com.zerog.neoessentials.webdashboard.security.User;
 import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * Command to manage the Dashboard API server
@@ -22,8 +37,16 @@ import net.minecraft.network.chat.Component;
  * - /dashboard url       — Show dashboard URL
  * - /dashboard update    — Smart-update changed dashboard files from JAR
  * - /dashboard update check — Preview which files would change (dry-run)
+ * - /dashboard pair &lt;dashboardUrl&gt; &lt;code&gt; — complete the mutual pairing handshake with an
+ *   external dashboard (see {@link com.zerog.neoessentials.webdashboard.security.DashboardUserSyncWebhook})
+ * - /dashboard unpair    — clear the paired connection and revoke its API key
  */
 public class DashboardCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardCommand.class);
+    private static final Gson GSON = new Gson();
+    private static final HttpClient PAIR_CLIENT = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(8))
+        .build();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("dashboard")) {
@@ -50,7 +73,95 @@ public class DashboardCommand {
                 // /dashboard update force — bypass checksum, overwrite everything
                 .then(Commands.literal("force")
                     .executes(DashboardCommand::forceUpdateDashboardFiles)))
+            .then(Commands.literal("pair")
+                .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
+                .then(Commands.argument("dashboardUrl", StringArgumentType.word())
+                    .then(Commands.argument("code", StringArgumentType.word())
+                        .executes(ctx -> pair(ctx,
+                            StringArgumentType.getString(ctx, "dashboardUrl"),
+                            StringArgumentType.getString(ctx, "code"))))))
+            .then(Commands.literal("unpair")
+                .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
+                .executes(DashboardCommand::unpair))
         );
+    }
+
+    // ── Dashboard pairing (mutual handshake with an external dashboard) ────────
+
+    private static int pair(CommandContext<CommandSourceStack> ctx, String dashboardUrl, String code) {
+        CommandSourceStack source = ctx.getSource();
+        String normalizedUrl = dashboardUrl.replaceAll("/+$", "");
+
+        String modToken = ApiKeyManager.getInstance().createKey("dashboard-pairing", User.Role.ADMIN);
+        String keyId = ApiKeyManager.extractKeyId(modToken);
+
+        String serverName = ServerLifecycleHooks.getCurrentServer() != null
+            ? ServerLifecycleHooks.getCurrentServer().getMotd()
+            : "Minecraft Server";
+
+        JsonObject body = new JsonObject();
+        body.addProperty("code", code);
+        body.addProperty("modToken", modToken);
+        body.addProperty("serverName", serverName);
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(normalizedUrl + "/api/pair/complete"))
+                .timeout(Duration.ofSeconds(8))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString(), StandardCharsets.UTF_8))
+                .build();
+
+            HttpResponse<String> response = PAIR_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                if (keyId != null) ApiKeyManager.getInstance().revoke(keyId);
+                source.sendFailure(Component.literal("§cPairing failed — dashboard responded with " + response.statusCode() + ". Is the code correct and not expired?"));
+                return 0;
+            }
+
+            JsonObject json = GSON.fromJson(response.body(), JsonObject.class);
+            if (json == null || !json.has("success") || !json.get("success").getAsBoolean() || !json.has("dashboardToken")) {
+                if (keyId != null) ApiKeyManager.getInstance().revoke(keyId);
+                String message = json != null && json.has("message") ? json.get("message").getAsString() : "unexpected response";
+                source.sendFailure(Component.literal("§cPairing failed — " + message));
+                return 0;
+            }
+
+            String dashboardToken = json.get("dashboardToken").getAsString();
+
+            ConfigManager.setExternalDashboardUrl(normalizedUrl);
+            ConfigManager.setExternalDashboardToken(dashboardToken);
+            ConfigManager.setExternalDashboardKeyId(keyId != null ? keyId : "");
+
+            source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aPaired with dashboard at " + normalizedUrl + "."), false);
+            source.sendSuccess(() -> Component.literal("§7Both directions are now connected — the dashboard can control this server, and this server can push account-sync events to it."), false);
+            return 1;
+        } catch (Exception e) {
+            if (keyId != null) ApiKeyManager.getInstance().revoke(keyId);
+            LOGGER.warn("Dashboard pairing failed: {}", e.getMessage());
+            source.sendFailure(Component.literal("§cCould not reach the dashboard at " + normalizedUrl + " — " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int unpair(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        String keyId = ConfigManager.getExternalDashboardKeyId();
+        String url = ConfigManager.getExternalDashboardUrl();
+
+        if (url == null || url.isBlank()) {
+            source.sendSuccess(() -> Component.literal("§7Not currently paired with any dashboard."), false);
+            return 1;
+        }
+
+        if (keyId != null && !keyId.isBlank()) {
+            ApiKeyManager.getInstance().revoke(keyId);
+        }
+        ConfigManager.clearExternalDashboard();
+
+        source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aUnpaired from " + url + " and revoked its API key."), false);
+        return 1;
     }
 
     // ── Existing commands ──────────────────────────────────────────────────────

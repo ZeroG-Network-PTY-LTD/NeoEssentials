@@ -1520,38 +1520,78 @@ public class ConfigManager {
     }
 
     /**
-     * URL the mod POSTs to whenever a dashboard_user is created/updated/deleted (via
-     * in-game {@code /dashboardregister}, an admin REST call, or role/enable/disable changes) —
-     * lets the external dashboard mirror the mod's own account lifecycle into its own user
-     * table automatically instead of requiring manual dual maintenance. Empty/absent = disabled
-     * (default) — this is a genuinely optional integration point, not everyone runs an external
-     * dashboard that wants pushed notifications on top of its own REST polling/sync.
+     * Base URL of the external dashboard this server is paired with (e.g. {@code https://dash.example.com}),
+     * set automatically by {@code /dashboard pair} — never hand-typed into config.json. Used as the
+     * target for the outbound user-sync webhook. Empty/absent means not paired yet.
      */
-    public static String getUserSyncWebhookUrl() {
+    public static String getExternalDashboardUrl() {
+        return getExternalDashboardField("url");
+    }
+
+    public static void setExternalDashboardUrl(String url) {
+        setExternalDashboardField("url", url);
+    }
+
+    /**
+     * Bearer token the paired external dashboard minted for this mod during pairing, presented as
+     * {@code Authorization: Bearer <token>} on the outbound user-sync webhook — replaces the old
+     * HMAC-signature scheme now that both directions of this integration use a token the
+     * *receiving* side generated for the *calling* side.
+     */
+    public static String getExternalDashboardToken() {
+        return getExternalDashboardField("token");
+    }
+
+    public static void setExternalDashboardToken(String token) {
+        setExternalDashboardField("token", token);
+    }
+
+    /**
+     * The {@code keyId} (not the full secret) of the {@link com.zerog.neoessentials.webdashboard.security.ApiKeyManager}
+     * key minted during pairing for the dashboard's own use — stored so {@code /dashboard unpair}
+     * can cleanly revoke exactly that key instead of leaving it live forever.
+     */
+    public static String getExternalDashboardKeyId() {
+        return getExternalDashboardField("keyId");
+    }
+
+    public static void setExternalDashboardKeyId(String keyId) {
+        setExternalDashboardField("keyId", keyId);
+    }
+
+    /** Clears all paired-dashboard state (used by {@code /dashboard unpair}). */
+    public static void clearExternalDashboard() {
+        ConfigManager instance = getInstance();
+        JsonObject config = instance.getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            dashboard.remove("externalDashboard");
+            config.add("webDashboard", dashboard);
+            instance.saveConfig(MAIN_CONFIG, config);
+        }
+    }
+
+    private static String getExternalDashboardField(String field) {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("webDashboard")) {
             JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("userSyncWebhookUrl")) {
-                return dashboard.get("userSyncWebhookUrl").getAsString();
+            if (dashboard.has("externalDashboard")) {
+                JsonObject external = dashboard.getAsJsonObject("externalDashboard");
+                if (external.has(field)) return external.get(field).getAsString();
             }
         }
         return "";
     }
 
-    /**
-     * Shared secret used to HMAC-sign the webhook body (header {@code X-NeoEssentials-Signature},
-     * hex-encoded HMAC-SHA256) so the receiving external dashboard can verify a request genuinely
-     * came from this mod and not an attacker who merely knows/guesses its endpoint URL.
-     */
-    public static String getUserSyncWebhookSecret() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("userSyncWebhookSecret")) {
-                return dashboard.get("userSyncWebhookSecret").getAsString();
-            }
-        }
-        return "";
+    private static void setExternalDashboardField(String field, String value) {
+        ConfigManager instance = getInstance();
+        JsonObject config = instance.getConfig(MAIN_CONFIG);
+        JsonObject dashboard = config.has("webDashboard") ? config.getAsJsonObject("webDashboard") : new JsonObject();
+        JsonObject external = dashboard.has("externalDashboard") ? dashboard.getAsJsonObject("externalDashboard") : new JsonObject();
+        external.addProperty(field, value);
+        dashboard.add("externalDashboard", external);
+        config.add("webDashboard", dashboard);
+        instance.saveConfig(MAIN_CONFIG, config);
     }
 
     /**

@@ -115,9 +115,14 @@ The operator (not the external dashboard) controls these:
     "publicModerationLookupEnabled": true
   },
   "mode": "external",
-  "serviceAccount": { "enabled": true, "username": "...", "password": "...", "role": "ADMIN" }
+  "serviceAccount": { "enabled": true, "username": "...", "password": "...", "role": "ADMIN" },
+  "externalDashboard": { "url": "", "token": "", "keyId": "" }
 }
 ```
+
+- `externalDashboard` is populated automatically by `/dashboard pair` (see "Pairing" above) —
+  don't hand-edit it. `url`/`token` are used for the outbound user-sync webhook;
+  `keyId` lets `/dashboard unpair` cleanly revoke the API key that was minted for this connection.
 
 - `mode: "external"` is what disables the mod's own bundled dashboard UI at `/` — REST-only, as
   intended now that there's no internal dashboard. Keep it set to `"external"`.
@@ -696,32 +701,50 @@ whether it already exists here first. Returns `201` with `"created":true` the fi
 
 **Mod → external dashboard:** whenever a dashboard_user is created, role/enabled-changed, or
 deleted here — via in-game `/dashboardregister`, `/api/users/create`, `/api/users/sync`, or any
-other admin action — the mod can push a notification to a webhook URL you configure, so the
-external dashboard mirrors the change into its own table automatically instead of needing to
-poll `/api/users/list`. Configure in `config.json`:
+other admin action — the mod pushes a notification to the paired dashboard's webhook endpoint,
+so it mirrors the change into its own table automatically instead of needing to poll
+`/api/users/list`. This is set up automatically by the pairing flow below, not hand-configured.
 
-```json
-"webDashboard": {
-  "userSyncWebhookUrl": "https://your-dashboard.example.com/webhooks/neoessentials/users",
-  "userSyncWebhookSecret": "some-long-random-string"
-}
-```
-
-Empty `userSyncWebhookUrl` (the default) disables this entirely — it's optional, on top of the
-REST endpoints above, not a replacement for them. When enabled, every event fires a `POST` to
-that URL:
+Empty `webDashboard.externalDashboard.url`/`.token` (the default, before pairing) disables this
+entirely — it's optional, on top of the REST endpoints above, not a replacement for them. Once
+paired, every event fires a `POST` to `<dashboardUrl>/webhooks/mod/user-sync`:
 
 ```json
 { "event": "user_created", "id": "...", "username": "mod1", "email": "m@x.com",
   "role": "MODERATOR", "enabled": true, "timestamp": 1700000000000 }
 ```
-`event` is one of `user_created` / `user_updated` / `user_deleted`. If `userSyncWebhookSecret`
-is set, the request also carries `X-NeoEssentials-Signature: <hex HMAC-SHA256 of the raw body
-using that secret>` — verify it before trusting the payload, since this is an unauthenticated
-inbound webhook from the dashboard's perspective (the mod is the one holding the secret, not
-presenting a Bearer token). This is fire-and-forget: if the URL is unreachable or the operator
-hasn't configured one, the actual user-account change already happened regardless — nothing on
-the mod side blocks or retries on delivery failure.
+`event` is one of `user_created` / `user_updated` / `user_deleted`, sent with
+`Authorization: Bearer <token>` — the token the dashboard minted for the mod during pairing (see
+below). This is fire-and-forget: if the dashboard is briefly unreachable, the actual user-account
+change already happened regardless — nothing on the mod side blocks or retries on delivery
+failure.
+
+### Pairing — the recommended one-step setup
+
+Manually running `/apikey create` and hand-copying the token into the external dashboard's
+config, *and* separately configuring a shared webhook secret on both sides, used to be two
+different manual steps that had to be kept in sync by hand. **Pairing replaces both with one
+command**, run once:
+
+1. On the dashboard's own admin Configuration page, click "Generate Pairing Code." It shows a
+   one-time code (valid 10 minutes) and the exact command to run.
+2. On the Minecraft server console (or in-game, if OP), run:
+   ```
+   /dashboard pair <dashboardUrl> <code>
+   ```
+   Requires permission `neoessentials.dashboard.pair`.
+3. In that single request/response round-trip:
+   - The mod mints an API key (via the same `ApiKeyManager` `/apikey` uses) and sends it to the
+     dashboard at `POST <dashboardUrl>/api/pair/complete` — the dashboard stores this and uses it
+     for all its own outbound calls to this mod's API from then on.
+   - The dashboard mints its own token and returns it in the response — the mod stores this (as
+     `webDashboard.externalDashboard.url`/`.token`) and uses it to authenticate the user-sync
+     webhook above.
+4. `/dashboard unpair` clears the stored connection and revokes the API key that was minted for
+   it — use this before re-pairing with a different dashboard instance.
+
+Both directions of traffic now authenticate with a token the *receiving* side generated for the
+*calling* side — the same trust model both ways, nothing to manually keep in sync afterward.
 
 ---
 

@@ -5,8 +5,6 @@ import com.zerog.neoessentials.config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -36,8 +34,9 @@ public class DashboardUserSyncWebhook {
 
     /** Fire-and-forget notification for a user lifecycle event ("user_created"/"user_updated"/"user_deleted"). */
     public static void notify(String event, User user) {
-        String url = ConfigManager.getUserSyncWebhookUrl();
-        if (url == null || url.isBlank()) return; // disabled — the common case
+        String url = ConfigManager.getExternalDashboardUrl();
+        String token = ConfigManager.getExternalDashboardToken();
+        if (url == null || url.isBlank() || token == null || token.isBlank()) return; // not paired — the common case
 
         JsonObject payload = new JsonObject();
         payload.addProperty("event", event);
@@ -49,21 +48,19 @@ public class DashboardUserSyncWebhook {
         payload.addProperty("timestamp", System.currentTimeMillis());
         String body = payload.toString();
 
-        String secret = ConfigManager.getUserSyncWebhookSecret();
+        String endpoint = url.replaceAll("/+$", "") + "/webhooks/mod/user-sync";
 
         CompletableFuture.runAsync(() -> {
             try {
-                HttpRequest.Builder request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
                     .timeout(Duration.ofSeconds(5))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+                    .header("Authorization", "Bearer " + token)
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
 
-                if (secret != null && !secret.isBlank()) {
-                    request.header("X-NeoEssentials-Signature", sign(body, secret));
-                }
-
-                HttpResponse<Void> response = CLIENT.send(request.build(), HttpResponse.BodyHandlers.discarding());
+                HttpResponse<Void> response = CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
                 if (response.statusCode() >= 400) {
                     LOGGER.warn("User-sync webhook returned {} for event '{}' (user: {})", response.statusCode(), event, user.getUsername());
                 }
@@ -71,23 +68,5 @@ public class DashboardUserSyncWebhook {
                 LOGGER.warn("User-sync webhook unreachable for event '{}' (user: {}): {}", event, user.getUsername(), e.getMessage());
             }
         });
-    }
-
-    private static String sign(String body, String secret) {
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] hash = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(hash.length * 2);
-            for (byte b : hash) {
-                String h = Integer.toHexString(0xff & b);
-                if (h.length() == 1) hex.append('0');
-                hex.append(h);
-            }
-            return hex.toString();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to sign user-sync webhook payload: {}", e.getMessage());
-            return "";
-        }
     }
 }
