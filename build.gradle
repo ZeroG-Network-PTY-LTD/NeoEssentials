@@ -152,6 +152,13 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 sourceSets.main.resources { srcDir 'build/generated/jarJar' }
 tasks.named('processResources') { dependsOn 'jarJar' }
 
+// The srcDir above means the final `jar` task now sees each jarJar-embedded library under
+// META-INF/jarjar/ twice: once copied in via processResources (from that extra source dir,
+// needed for the dev-mode exploded classpath above) and once from jarJar's own direct packaging
+// of the same path into the output jar. Both copies are byte-identical, so excluding the
+// duplicate (rather than failing, which is Gradle 8's default for an unset strategy) is safe.
+tasks.named('jar') { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+
 // Sets up a dependency configuration called 'localRuntime'.
 // This configuration should be used instead of 'runtimeOnly' to declare
 // a dependency that will be present for runtime testing but that is
