@@ -294,6 +294,49 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     }
 
     @Override
+    public int getGroupWeight(UUID uuid) {
+        if (!luckPermsLoaded || luckPermsApi == null) return Integer.MIN_VALUE;
+        try {
+            User user = luckPermsApi.getUserManager().getUser(uuid);
+            if (user == null) {
+                try {
+                    user = luckPermsApi.getUserManager().loadUser(uuid).get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load user {} from LuckPerms for group weight: {}", uuid, e.getMessage());
+                    return Integer.MIN_VALUE;
+                }
+            }
+            if (user == null) return Integer.MIN_VALUE;
+            var group = luckPermsApi.getGroupManager().getGroup(user.getPrimaryGroup());
+            if (group == null) return Integer.MIN_VALUE;
+            return group.getWeight().orElse(0);
+        } catch (Exception e) {
+            LOGGER.error("Error getting group weight for user {}: {}", uuid, e.getMessage(), e);
+            return Integer.MIN_VALUE;
+        }
+    }
+
+    @Override
+    public String getPrimaryGroup(UUID uuid) {
+        if (!luckPermsLoaded || luckPermsApi == null) return null;
+        try {
+            User user = luckPermsApi.getUserManager().getUser(uuid);
+            if (user == null) {
+                try {
+                    user = luckPermsApi.getUserManager().loadUser(uuid).get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load user {} from LuckPerms for primary group: {}", uuid, e.getMessage());
+                    return null;
+                }
+            }
+            return user != null ? user.getPrimaryGroup() : null;
+        } catch (Exception e) {
+            LOGGER.error("Error getting primary group for user {}: {}", uuid, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
     public String getSuffix(UUID uuid) {
         if (!luckPermsLoaded || luckPermsApi == null) {
             return null;

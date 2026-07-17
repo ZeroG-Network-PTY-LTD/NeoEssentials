@@ -99,4 +99,32 @@ public interface ExternalPermissionAdapter {
     default boolean isExplicitlyDenied(UUID uuid, String permission) {
         return false;
     }
+
+    /**
+     * Returns the rank/weight of the user's primary group in the external system, for
+     * features that need to compare rank (tablist sort order, vanish see-priority, etc).
+     *
+     * <p>The default implementation returns {@link Integer#MIN_VALUE} as a sentinel meaning
+     * "not supported / unknown" — callers must check for this rather than treating it as a
+     * real weight of 0, since adapters that can't determine a weight would otherwise silently
+     * flatten every player to the same rank.</p>
+     *
+     * @param uuid the player's UUID
+     * @return the group's weight, or {@code Integer.MIN_VALUE} if unavailable
+     */
+    default int getGroupWeight(UUID uuid) {
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Returns the name of the user's primary group in the external system, for
+     * features that key formatting/styling off a group name (chat format, tablist
+     * per-group styling, etc).
+     *
+     * @param uuid the player's UUID
+     * @return the primary group name, or {@code null} if unavailable/not supported
+     */
+    default String getPrimaryGroup(UUID uuid) {
+        return null;
+    }
 }
