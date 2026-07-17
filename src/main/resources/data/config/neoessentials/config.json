@@ -361,15 +361,17 @@
       "role": "MODERATOR"
     },
 
-    // Optional: when a dashboard_user is created/updated/deleted here (in-game
-    // /dashboardregister, or an admin REST call), POST a notification to this URL so an
-    // external dashboard can mirror the change into its own user table automatically.
-    // Leave userSyncWebhookUrl empty to disable (default) — this is a push on top of the
-    // existing /api/users REST endpoints, not a replacement for them.
-    "userSyncWebhookUrl": "",
-    // Shared secret used to HMAC-sign each webhook body (X-NeoEssentials-Signature header,
-    // hex HMAC-SHA256) so the receiver can verify it genuinely came from this mod.
-    "userSyncWebhookSecret": "",
+    // Populated automatically by running `/dashboard pair <dashboardUrl> <code>` in-game/
+    // console (get the code from the dashboard's own Configuration page) — never hand-type
+    // these. Once paired, url/token push a notification (Authorization: Bearer <token>)
+    // whenever a dashboard_user is created/updated/deleted here, so the external dashboard
+    // can mirror the change into its own user table automatically. Empty/absent = not
+    // paired yet. Use /dashboard unpair to clear.
+    "externalDashboard": {
+      "url": "",
+      "token": "",
+      "keyId": ""
+    },
 
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)

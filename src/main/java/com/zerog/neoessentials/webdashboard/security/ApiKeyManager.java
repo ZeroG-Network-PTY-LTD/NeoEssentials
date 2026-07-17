@@ -136,6 +136,20 @@ public class ApiKeyManager {
         return new ArrayList<>(keys.values());
     }
 
+    /**
+     * Extracts the public {@code keyId} portion from a full token string (e.g. so a caller that
+     * just minted a key via {@link #createKey} can remember its id for a later {@link #revoke}
+     * without having to separately track the return value of some other call). Returns null if
+     * the token doesn't match the expected {@code neo_<keyId>_<secret>} shape.
+     */
+    public static String extractKeyId(String token) {
+        if (token == null || !token.startsWith(TOKEN_PREFIX)) return null;
+        String rest = token.substring(TOKEN_PREFIX.length());
+        int keyIdLength = (KEY_ID_BYTES * 8) / 6;
+        if (rest.length() <= keyIdLength + 1 || rest.charAt(keyIdLength) != '_') return null;
+        return rest.substring(0, keyIdLength);
+    }
+
     public boolean revoke(String keyId) {
         ApiKeyRecord record = keys.remove(keyId);
         if (record == null) return false;
