@@ -117,23 +117,43 @@ public class DashboardWebSocketServer extends WebSocketServer {
 
     // ── Message handlers ─────────────────────────────────────────────────────
 
+    /**
+     * Accepts either a human dashboard session ({@code sessionId}) or a long-lived API key
+     * ({@code apiKey}) — the same two credential types the REST API's {@code withAuth()}
+     * accepts, so an external dashboard backend can use the one API key for both its REST calls
+     * and this live event feed rather than needing a human session just to subscribe.
+     */
     private void handleAuthenticate(WebSocket conn, JsonObject msg) {
-        if (!msg.has("sessionId")) {
-            sendError(conn, "Missing sessionId in authentication request");
-            return;
-        }
-        String sessionId = msg.get("sessionId").getAsString();
+        String username;
+        String role;
 
-        com.zerog.neoessentials.webdashboard.security.AuthenticationManager authManager =
-            com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance();
-        com.zerog.neoessentials.webdashboard.security.Session session =
-            authManager.validateSession(sessionId);
-
-        if (session == null) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "auth_error");
-            error.addProperty("message", "Invalid or expired session");
-            sendToClient(conn, error);
+        if (msg.has("apiKey")) {
+            com.zerog.neoessentials.webdashboard.security.ApiKeyManager.ApiKeyRecord record =
+                com.zerog.neoessentials.webdashboard.security.ApiKeyManager.getInstance().validate(msg.get("apiKey").getAsString());
+            if (record == null) {
+                JsonObject error = new JsonObject();
+                error.addProperty("type", "auth_error");
+                error.addProperty("message", "Invalid or revoked API key");
+                sendToClient(conn, error);
+                return;
+            }
+            username = "apikey:" + record.label;
+            role = record.role.name();
+        } else if (msg.has("sessionId")) {
+            com.zerog.neoessentials.webdashboard.security.Session session =
+                com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance()
+                    .validateSession(msg.get("sessionId").getAsString());
+            if (session == null) {
+                JsonObject error = new JsonObject();
+                error.addProperty("type", "auth_error");
+                error.addProperty("message", "Invalid or expired session");
+                sendToClient(conn, error);
+                return;
+            }
+            username = session.getUsername();
+            role = session.getRole().name();
+        } else {
+            sendError(conn, "Missing sessionId or apiKey in authentication request");
             return;
         }
 
@@ -142,12 +162,12 @@ public class DashboardWebSocketServer extends WebSocketServer {
         JsonObject response = new JsonObject();
         response.addProperty("type", "authenticated");
         response.addProperty("message", "Authentication successful");
-        response.addProperty("username", session.getUsername());
-        response.addProperty("role", session.getRole().name());
+        response.addProperty("username", username);
+        response.addProperty("role", role);
         response.addProperty("timestamp", System.currentTimeMillis());
         sendToClient(conn, response);
 
-        LOGGER.debug("WebSocket client authenticated: {} ({})", session.getUsername(), conn.getRemoteSocketAddress());
+        LOGGER.debug("WebSocket client authenticated: {} ({})", username, conn.getRemoteSocketAddress());
     }
 
     private void handleSubscribe(WebSocket conn, JsonObject msg) {

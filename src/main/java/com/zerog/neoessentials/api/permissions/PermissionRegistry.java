@@ -233,6 +233,7 @@ public class PermissionRegistry {
         // Core permissions
         register("neoessentials.use", "Basic mod usage", PermissionCategory.CORE, true);
         register("neoessentials.admin", "Administrative access", PermissionCategory.ADMIN, false);
+        register("neoessentials.dashboard.apikeys", "Create/list/revoke API keys for external dashboard integrations (/apikey)", PermissionCategory.ADMIN, false);
         register("neoessentials.reload", "Reload configuration", PermissionCategory.ADMIN, false);
         
         // Economy permissions

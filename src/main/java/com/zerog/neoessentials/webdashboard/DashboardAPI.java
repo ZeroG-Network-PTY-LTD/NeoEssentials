@@ -323,6 +323,21 @@ public class DashboardAPI {
                             authUsername = AuthHandler.getUsername(token);
                             authAdmin = AuthHandler.isAdmin(token);
                         }
+
+                        // Fallback: long-lived API key (server-to-server — the external dashboard's
+                        // own backend, not a human session). Distinct credential space from the
+                        // above; see ApiKeyManager for why.
+                        if (!authenticated) {
+                            com.zerog.neoessentials.webdashboard.security.ApiKeyManager.ApiKeyRecord keyRecord =
+                                com.zerog.neoessentials.webdashboard.security.ApiKeyManager.getInstance().validate(token);
+                            if (keyRecord != null) {
+                                authenticated = true;
+                                authUsername = "apikey:" + keyRecord.label;
+                                authAdmin = keyRecord.role == com.zerog.neoessentials.webdashboard.security.User.Role.ADMIN;
+                                exchange.setAttribute("auth-type", "apikey");
+                                exchange.setAttribute("auth-role", keyRecord.role.name());
+                            }
+                        }
                     }
 
                     if (!authenticated) {
@@ -384,6 +399,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
         apiServer.createContext("/api/placeholders", withAuth(new PlaceholderEndpoint(server)));
         apiServer.createContext("/api/shops", withAuth(new com.zerog.neoessentials.shop.dashboard.ShopEndpoint()));
+        apiServer.createContext("/api/apikeys",     withAuth(new com.zerog.neoessentials.webdashboard.endpoints.ApiKeyEndpoint()));
         apiServer.createContext("/api/backup",      withAuth(new BackupEndpoint()));
         apiServer.createContext("/api/discord",     withAuth(new DiscordEndpoint()));
         apiServer.createContext("/api/cloud",       withAuth(new CloudStorageEndpoint()));

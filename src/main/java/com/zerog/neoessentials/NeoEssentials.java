@@ -1046,6 +1046,10 @@ public class NeoEssentials {
         registry.registerCommand("tpoffline", "Teleport to offline player's last position");
         com.zerog.neoessentials.util.commands.ServerAdminCommands.register(dispatcher);
 
+        // ========== DASHBOARD API KEYS ==========
+        registry.registerCommand("apikey", "Manage long-lived API keys for external dashboard integrations");
+        com.zerog.neoessentials.webdashboard.commands.ApiKeyCommand.register(dispatcher);
+
         // ========== UTILITY COMMANDS ==========
         registry.registerCommand("ptime", "Set per-player time override");
         registry.registerCommand("pweather", "Set per-player weather override");
