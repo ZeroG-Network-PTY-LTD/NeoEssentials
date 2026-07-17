@@ -442,7 +442,7 @@ GET-only, all AUTH. Limits are hard-coded server-side (no query params).
 
 **Handler:** `MotdEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/MotdEndpoint.java`
 
-**All routes AUTH** (no admin check anywhere). `{name}` is a profile name (lowercased server-side).
+**GET = AUTH; every POST/PUT/DELETE = ADMIN.** `{name}` is a profile name (lowercased server-side).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -473,7 +473,7 @@ Note `timestamp` here is a pre-formatted `MM/dd/yyyy HH:mm` string, not epoch mi
 
 **Handler:** `RulesEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/RulesEndpoint.java`
 
-**All routes AUTH.** `{number}` is a **1-based index**. Rule text max 200 chars.
+**GET = AUTH; every POST/PUT/DELETE = ADMIN.** `{number}` is a **1-based index**. Rule text max 200 chars.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -538,7 +538,7 @@ GET-only, all AUTH.
 
 **Handler:** `ShopEndpoint` — `src/main/java/com/zerog/neoessentials/shop/dashboard/ShopEndpoint.java`
 
-**All routes AUTH** (no admin check). `/list` supports `?page=&size=` pagination (defaults page=1, size=50). Shops are keyed by a **`signKey`** (opaque string from `ShopData.toKey()`), not a UUID.
+**GET = AUTH; every POST/PUT = ADMIN** (list/stats/npc/csv-export reads stay open). `/list` supports `?page=&size=` pagination (defaults page=1, size=50). Shops are keyed by a **`signKey`** (opaque string from `ShopData.toKey()`), not a UUID.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -661,7 +661,8 @@ Read routes AUTH; mutating/config-write routes ADMIN. This mod never performs Di
 |---|---|---|---|
 | GET | `/api/users/list` | ADMIN | All dashboard users |
 | GET | `/api/users/sessions` | ADMIN | Active sessions |
-| POST | `/api/users/create` | ADMIN | Create user |
+| POST | `/api/users/create` | ADMIN | Create user (errors if username taken) |
+| POST | `/api/users/sync` | ADMIN | Create-or-update by username (idempotent) |
 | POST | `/api/users/{id}/role` | ADMIN | Change role `{role}` |
 | POST | `/api/users/{id}/password` | ADMIN | Set password, or generate temp if empty |
 | POST | `/api/users/{id}/enable` | ADMIN | Enable account |
@@ -676,6 +677,51 @@ Read routes AUTH; mutating/config-write routes ADMIN. This mod never performs Di
 **POST `/api/users/{id}/password`** with empty/absent password → generates a temp password: `{"success":true,"message":"Temporary password generated","tempPassword":"..."}`.
 
 **GET `/api/users/sessions`**: each session has `sessionId, username, role, ipAddress, createdAt, lastAccessAt`.
+
+### Keeping dashboard accounts in sync with the external dashboard's own user table
+
+There are two directions here — use whichever (or both) fit your architecture:
+
+**External dashboard → mod:** if the external dashboard has its own user accounts and wants a
+matching mod-side account to exist (e.g. so that account's Minecraft-side permissions/identity
+line up), call:
+
+**POST `/api/users/sync`** — `{"username":"mod1","email":"m@x.com","role":"MODERATOR"}` (no
+`password` field — this route mints its own throwaway one internally, since the real login
+surface for this account is the external dashboard, not this mod's `/api/auth/login`). Unlike
+`/create`, **this never errors on an existing username** — it updates role/email in place
+instead — so it's safe to re-POST an account's current state at any time without checking
+whether it already exists here first. Returns `201` with `"created":true` the first time,
+`200` with `"created":false` on subsequent syncs of the same username.
+
+**Mod → external dashboard:** whenever a dashboard_user is created, role/enabled-changed, or
+deleted here — via in-game `/dashboardregister`, `/api/users/create`, `/api/users/sync`, or any
+other admin action — the mod can push a notification to a webhook URL you configure, so the
+external dashboard mirrors the change into its own table automatically instead of needing to
+poll `/api/users/list`. Configure in `config.json`:
+
+```json
+"webDashboard": {
+  "userSyncWebhookUrl": "https://your-dashboard.example.com/webhooks/neoessentials/users",
+  "userSyncWebhookSecret": "some-long-random-string"
+}
+```
+
+Empty `userSyncWebhookUrl` (the default) disables this entirely — it's optional, on top of the
+REST endpoints above, not a replacement for them. When enabled, every event fires a `POST` to
+that URL:
+
+```json
+{ "event": "user_created", "id": "...", "username": "mod1", "email": "m@x.com",
+  "role": "MODERATOR", "enabled": true, "timestamp": 1700000000000 }
+```
+`event` is one of `user_created` / `user_updated` / `user_deleted`. If `userSyncWebhookSecret`
+is set, the request also carries `X-NeoEssentials-Signature: <hex HMAC-SHA256 of the raw body
+using that secret>` — verify it before trusting the payload, since this is an unauthenticated
+inbound webhook from the dashboard's perspective (the mod is the one holding the secret, not
+presenting a Bearer token). This is fire-and-forget: if the URL is unreachable or the operator
+hasn't configured one, the actual user-account change already happened regardless — nothing on
+the mod side blocks or retries on delivery failure.
 
 ---
 
@@ -782,7 +828,7 @@ GET-only, all AUTH. `{name}` is a kit name (any path not ending `/list` or `/sta
 
 **Handler:** `HologramEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/HologramEndpoint.java`
 
-**All routes AUTH — no admin check** (even create/update/delete are only AUTH-gated). `{id}` is the hologram string id. **Quirk:** action routes are `/{id}/spawn|despawn|visible`; the handler parses the last two path segments, so `/list`, `/stats`, `/create` are reserved names.
+**GET = AUTH; every POST/PUT/DELETE = ADMIN.** `{id}` is the hologram string id. **Quirk:** action routes are `/{id}/spawn|despawn|visible`; the handler parses the last two path segments, so `/list`, `/stats`, `/create` are reserved names.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -813,7 +859,7 @@ Response: `{"success":true,"id":"welcome"}`. GET list/get returns the same field
 
 **Handler:** `WarpsEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/WarpsEndpoint.java`
 
-**All routes AUTH — no admin check.** `{name}` is a warp name.
+**GET = AUTH; POST/DELETE = ADMIN.** `{name}` is a warp name.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -941,6 +987,6 @@ GET-only, all AUTH. Samples TPS + memory into a 60-point/60-minute ring buffer o
 
 - **`/api/ping`** (registered inline in `DashboardAPI`, PUBLIC, no auth): `GET` returns `{"success":true,"mod":"neoessentials","mode":"internal|external"}` — a reachability check independent of auth. Good first call to verify connectivity before attempting login/API-key auth.
 - **CORS:** every handler sets `Access-Control-Allow-Origin: *` and answers `OPTIONS` preflight (204). This is permissive by design given the intended integration shape (external dashboard's own backend holds the API key and calls this API server-to-server — never a browser calling directly with the key embedded). If the external dashboard's frontend ever needs to call this API directly from a browser, that would need the key threaded through the dashboard's own backend as a proxy instead; do not embed an API key in frontend JS under any circumstance.
-- **Security-tier surprises worth knowing up front:** `/api/motd`, `/api/rules`, `/api/shops`, `/api/holograms`, `/api/warps`, `/api/kits` perform **no admin check** — any authenticated identity (including a VIEWER-role key/session) can mutate MOTD/rules/shops/holograms/warps. By contrast `/api/files`, `/api/users`, `/api/commands`, `/api/apikeys` are **fully admin-only**, and `/api/permissions`, `/api/admin`, `/api/teleport`, `/api/economy`, `/api/backup`, `/api/moderation`, `/api/cloud`, `/api/discord` are **mixed** (read = AUTH, write = ADMIN) as tabled above. If building fine-grained UI permissions into the external dashboard, use these actual gates, not assumptions from the route name.
+- **Security tiers, current as of the last lockdown pass:** `/api/files`, `/api/users`, `/api/commands`, `/api/apikeys` are **fully admin-only**. `/api/motd`, `/api/rules`, `/api/shops`, `/api/holograms`, `/api/warps` are **mixed — GET = AUTH, every mutating route = ADMIN** (this was tightened from a previous "no admin check at all" state; if you're looking at an older copy of this doc, re-check). `/api/kits` is GET-only — there's nothing to lock down, the mod has no create/update/delete routes for kits at all. `/api/permissions`, `/api/admin`, `/api/teleport`, `/api/economy`, `/api/backup`, `/api/moderation`, `/api/cloud`, `/api/discord` are also **mixed** (read = AUTH, write = ADMIN) as tabled above. If building fine-grained UI permissions into the external dashboard, use these actual gates, not assumptions from the route name.
 - **Binary/non-JSON responses:** `/api/files/download` (octet-stream), `/api/backup/download` (zip), `/api/shops/csv/export` (text/csv). `/api/shops/csv/import` takes a **raw CSV body**, not JSON.
 - **Path-segment identity varies by endpoint group:** player GETs and moderation mutes/kicks/warns use **username**; moderation bans use **UUID**; economy accepts **either**; shops use an opaque **signKey**; permissions groups by **name**, users by **name** (offline-resolvable via Mojang API fallback).

@@ -60,6 +60,8 @@ public class UserManagementEndpoint implements HttpHandler {
                 handleSessions(exchange);
             } else if ("POST".equals(method) && path.endsWith("/create")) {
                 handleCreate(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/sync")) {
+                handleSync(exchange);
             } else if ("POST".equals(method) && path.contains("/role")) {
                 handleSetRole(exchange, extractId(path, "/role"));
             } else if ("POST".equals(method) && path.contains("/password")) {
@@ -136,6 +138,51 @@ public class UserManagementEndpoint implements HttpHandler {
         User created = AuthenticationManager.getInstance().createUser(username, password, email, role);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"User created\",\"user\":" + created.toJson() + "}");
         LOGGER.info("Dashboard user created: {} ({})", username, role);
+    }
+
+    // ── Sync (idempotent create-or-update) ──────────────────────────────────────
+    //
+    // For an external dashboard that manages its own user accounts and wants the mod to
+    // mirror them, rather than the reverse (see DashboardUserSyncWebhook for that direction).
+    // Unlike /create, this never errors on an existing username — it just updates role/email
+    // in place — so the caller can safely re-POST the same account's current state any time
+    // without first checking whether it already exists here.
+
+    private void handleSync(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String username = body.has("username") ? body.get("username").getAsString() : "";
+        if (username.isBlank()) throw new IllegalArgumentException("Missing required field: username");
+
+        String email = body.has("email") ? body.get("email").getAsString() : "";
+        String roleStr = body.has("role") ? body.get("role").getAsString() : "VIEWER";
+        User.Role role;
+        try { role = User.Role.valueOf(roleStr.toUpperCase()); }
+        catch (Exception e) { throw new IllegalArgumentException("Invalid role: " + roleStr); }
+
+        AuthenticationManager auth = AuthenticationManager.getInstance();
+        User existing = auth.getUserByUsername(username);
+
+        User result;
+        boolean created;
+        if (existing == null) {
+            // No mod-side password is meaningful here — the external dashboard is the actual
+            // login surface for this account; generate one only to satisfy createUser()'s
+            // validation, and mark it as requiring a change so it's obviously a placeholder if
+            // anyone ever tries to log in with it directly against this mod's own /api/auth.
+            String placeholder = auth.generateSecureRandomPassword();
+            result = auth.createUser(username, placeholder, email, role);
+            created = true;
+        } else {
+            if (existing.getRole() != role) auth.updateUserRole(existing.getId(), role);
+            if (email != null && !email.isBlank()) existing.setEmail(email);
+            auth.saveUsers();
+            result = existing;
+            created = false;
+        }
+
+        sendJson(exchange, created ? 201 : 200,
+            "{\"success\":true,\"created\":" + created + ",\"user\":" + result.toJson() + "}");
+        LOGGER.info("Dashboard user synced from external source: {} ({}, created={})", username, role, created);
     }
 
     // ── Set role ───────────────────────────────────────────────────────────────

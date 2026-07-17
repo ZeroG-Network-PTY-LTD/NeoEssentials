@@ -290,7 +290,8 @@ public class AuthenticationManager {
         saveUsers();
         
         logAuditEvent("USER_CREATED", username, "system", "Role: " + user.getRole());
-        
+        DashboardUserSyncWebhook.notify("user_created", user);
+
         return user;
     }
     
@@ -328,9 +329,10 @@ public class AuthenticationManager {
         User.Role oldRole = user.getRole();
         user.setRole(newRole);
         saveUsers();
-        
-        logAuditEvent("ROLE_CHANGED", user.getUsername(), "system", 
+
+        logAuditEvent("ROLE_CHANGED", user.getUsername(), "system",
             "Role changed from " + oldRole + " to " + newRole);
+        DashboardUserSyncWebhook.notify("user_updated", user);
     }
     
     /**
@@ -344,9 +346,10 @@ public class AuthenticationManager {
         
         user.setEnabled(enabled);
         saveUsers();
-        
-        logAuditEvent(enabled ? "USER_ENABLED" : "USER_DISABLED", 
+
+        logAuditEvent(enabled ? "USER_ENABLED" : "USER_DISABLED",
             user.getUsername(), "system", "Account " + (enabled ? "enabled" : "disabled"));
+        DashboardUserSyncWebhook.notify("user_updated", user);
     }
     
     /**
@@ -368,6 +371,7 @@ public class AuthenticationManager {
             .forEach(Session::invalidate);
         
         logAuditEvent("USER_DELETED", user.getUsername(), "system", "Account deleted");
+        DashboardUserSyncWebhook.notify("user_deleted", user);
     }
     
     /**
@@ -428,6 +432,17 @@ public class AuthenticationManager {
         return tempPassword;
     }
     
+    /**
+     * A random password meeting this class's own minimum-length policy, for callers that need
+     * to satisfy {@link #createUser}'s validation without a human ever actually typing/using
+     * it — e.g. an account whose real login surface is an external system, not this mod's own
+     * {@code /api/auth/login}. Not persisted or hashed by this method; the caller passes it
+     * straight to {@code createUser}.
+     */
+    public String generateSecureRandomPassword() {
+        return generateRandomPassword(24);
+    }
+
     /**
      * Generate random password with letters, numbers, and special characters
      */

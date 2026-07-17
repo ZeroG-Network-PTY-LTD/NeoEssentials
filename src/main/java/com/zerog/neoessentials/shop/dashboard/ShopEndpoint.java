@@ -40,6 +40,13 @@ public class ShopEndpoint implements HttpHandler {
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
 
+        // Importing/updating shop prices requires ADMIN, matching every other config-writing
+        // endpoint group. Reads (list/stats/npc/csv export) stay open to any authenticated caller.
+        if (!"GET".equalsIgnoreCase(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            respond(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
+            return;
+        }
+
         try {
             if (path.endsWith("/list"))        { handleList(exchange); }
             else if (path.endsWith("/stats"))  { handleStats(exchange); }

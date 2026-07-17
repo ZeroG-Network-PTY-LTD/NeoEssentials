@@ -55,6 +55,14 @@ public class MotdEndpoint implements HttpHandler {
         // Strip /api/motd prefix
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/motd", "");
 
+        // MOTD content is server-visible to every player who connects — mutating it (or the
+        // broadcast/rotation controls) requires ADMIN, matching every other config-writing
+        // endpoint group. Reads stay open to any authenticated caller.
+        if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            sendResponse(exchange, 403, error("Admin access required"));
+            return;
+        }
+
         try {
             JsonObject response;
             int statusCode = 200;

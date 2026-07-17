@@ -40,6 +40,14 @@ public class HologramEndpoint implements HttpHandler {
         }
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        // Creating/updating/deleting/spawning holograms requires ADMIN, matching every other
+        // config-writing endpoint group. Reads stay open to any authenticated caller.
+        if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+            sendJson(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
+            return;
+        }
+
         try {
             if (path.endsWith("/list")) {
                 handleList(exchange);
