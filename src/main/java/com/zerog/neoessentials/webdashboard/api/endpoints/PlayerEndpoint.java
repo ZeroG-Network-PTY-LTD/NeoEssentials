@@ -466,6 +466,9 @@ public class PlayerEndpoint implements HttpHandler {
                 response = playerCollector.getPlayerHomes(username);
             } else if (path.equals("/api/player/online")) {
                 response = playerCollector.getOnlinePlayers();
+            } else if (path.matches("/api/player/lookup/.*")) {
+                String username = path.substring("/api/player/lookup/".length());
+                response = playerCollector.lookupPlayer(username);
             } else {
                 response = new JsonObject();
                 response.addProperty("error", "Endpoint not found");

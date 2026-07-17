@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PermissionGroup {
-    private final String name;
+    private String name;
     private final Set<String> permissions;
     private final Set<String> inherits;
     private String prefix = "";
@@ -33,6 +33,9 @@ public class PermissionGroup {
     }
 
     public String getName() { return name; }
+    /** Package-private — only {@link PermissionManager#renameGroup} should call this, so the
+     *  map key (lowercased name) and every cross-reference stay in sync with it. */
+    void setName(String name) { this.name = name; }
     public Set<String> getPermissions() { return permissions; }
     public Set<String> getInherits() { return inherits; }
     public String getPrefix() { return prefix; }

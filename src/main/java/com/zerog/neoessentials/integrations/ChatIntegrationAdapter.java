@@ -123,6 +123,21 @@ public interface ChatIntegrationAdapter {
     }
 
     /**
+     * Sends a raw message to an arbitrary Discord channel by its snowflake ID — used by the
+     * dashboard's "send test message" feature, which needs to target a specific channel
+     * directly rather than going through this mod's own event-type routing
+     * ({@link #onPlayerChat}/{@link #onPlayerMute}/etc, which route to whatever channel the
+     * companion mod has configured for that event type).
+     * @param channelId Discord channel snowflake ID
+     * @param message   Plain text to send
+     * @return true if the message was actually sent, false if unsupported/channel not
+     *         found/adapter not ready — callers should try the next adapter or report failure.
+     */
+    default boolean sendToChannel(String channelId, String message) {
+        return false;
+    }
+
+    /**
      * Called when a player earns an advancement.
      * @param player The player
      * @param advancementName The advancement's display/title text

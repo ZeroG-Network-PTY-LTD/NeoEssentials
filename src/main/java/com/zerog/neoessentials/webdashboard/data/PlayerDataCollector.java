@@ -847,6 +847,92 @@ public class PlayerDataCollector {
         return response;
     }
     
+    /**
+     * Look up a single player by name whether or not they're online, in the recent-offline
+     * roster {@link #getOnlinePlayers()} already returns (capped at 50), or have ever even
+     * joined this server — resolves via the online player list, then the profile cache, then
+     * falls back to Mojang's API for a name that's real but has never connected here. Powers
+     * the dashboard's "look up a player" search, which exists specifically for servers with
+     * more players than that 50-entry cap.
+     */
+    public JsonObject lookupPlayer(String username) {
+        JsonObject response = new JsonObject();
+
+        ServerPlayer online = server.getPlayerList().getPlayerByName(username);
+        UUID uuid = online != null ? online.getUUID() : null;
+        String resolvedName = online != null ? online.getName().getString() : username;
+
+        if (uuid == null) {
+            var profile = server.getProfileCache().get(username);
+            if (profile.isPresent()) {
+                uuid = profile.get().getId();
+                resolvedName = profile.get().getName();
+            }
+        }
+
+        if (uuid == null) {
+            uuid = fetchUuidFromMojangAPI(username);
+        }
+
+        if (uuid == null) {
+            response.addProperty("error", "Player not found");
+            return response;
+        }
+
+        response.addProperty("uuid", uuid.toString());
+        response.addProperty("username", resolvedName);
+        response.addProperty("online", online != null);
+
+        if (online == null) {
+            try {
+                java.nio.file.Path playerDataFile = server.overworld().getServer()
+                    .getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR)
+                    .resolve(uuid + ".dat");
+                if (java.nio.file.Files.exists(playerDataFile)) {
+                    long lastModified = java.nio.file.Files.getLastModifiedTime(playerDataFile).toMillis();
+                    response.addProperty("lastSeen", formatLastSeenTimestamp(lastModified));
+                } else {
+                    response.addProperty("lastSeen", "Never joined this server");
+                }
+            } catch (Exception e) {
+                response.addProperty("lastSeen", "Unknown");
+            }
+        }
+
+        response.addProperty("success", true);
+        return response;
+    }
+
+    /** Fetch a UUID from Mojang's API for a real account that's never joined this server. */
+    private UUID fetchUuidFromMojangAPI(String username) {
+        try {
+            java.net.URL url = new java.net.URL("https://api.mojang.com/users/profiles/minecraft/" + username);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            if (connection.getResponseCode() != 200) return null;
+
+            try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+
+                com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(sb.toString()).getAsJsonObject();
+                String uuidString = json.get("id").getAsString();
+                String formatted = uuidString.replaceFirst(
+                    "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                    "$1-$2-$3-$4-$5"
+                );
+                return UUID.fromString(formatted);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
+            return null;
+        }
+    }
+
     private String formatLastSeenTimestamp(long timestamp) {
         long now = System.currentTimeMillis();
         long diff = now - timestamp;

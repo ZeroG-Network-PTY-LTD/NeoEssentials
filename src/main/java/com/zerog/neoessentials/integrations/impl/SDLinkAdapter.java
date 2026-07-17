@@ -172,6 +172,24 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         return DiscordAuthor.of(player.getName().getString(), player.getUUID().toString(), player.getName().getString());
     }
 
+    @Override
+    public boolean sendToChannel(String channelId, String message) {
+        if (!isReady()) return false;
+        try {
+            var jda = BotController.INSTANCE.getJDA();
+            var channel = jda.getTextChannelById(channelId);
+            if (channel == null) {
+                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                return false;
+            }
+            channel.sendMessage(message).queue();
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to send message to Discord channel {} via SDLink: {}", channelId, e.getMessage());
+            return false;
+        }
+    }
+
     private void send(MessageType type, DiscordAuthor author, String message) {
         new DiscordMessageBuilder(type)
             .author(author)

@@ -55,15 +55,15 @@ public class BanCommand {
         if (ConfigManager.getInstance().isCommandEnabled("ban")) {
         dispatcher.register(Commands.literal("ban")
             .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.moderation.ban").hasPermission())
-            .then(Commands.argument("player", StringArgumentType.greedyString())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .executes(ctx -> executeBan(ctx, StringArgumentType.getString(ctx, "player"),
                     com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(ctx -> executeBan(ctx,
-                        ctx.getInput().split(" ", 3)[1], // Get player name
-                        ctx.getInput().split(" ", 3).length > 2 ? ctx.getInput().split(" ", 3)[2] : com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))))
+                        StringArgumentType.getString(ctx, "player"),
+                        StringArgumentType.getString(ctx, "reason")))))
         );
         }
 
