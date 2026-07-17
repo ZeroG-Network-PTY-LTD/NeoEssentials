@@ -301,6 +301,18 @@ public class ChatIntegrationManager {
     }
 
     /**
+     * Sends a raw message to a specific Discord channel by ID, trying each ready adapter in
+     * turn until one succeeds. Used by the dashboard's "send test message" feature.
+     */
+    public static boolean sendToChannel(String channelId, String message) {
+        for (ChatIntegrationAdapter adapter : adapters) {
+            if (!adapter.isReady()) continue;
+            if (adapter.sendToChannel(channelId, message)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Get all registered adapters
      * @return List of registered adapters
      */

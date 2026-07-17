@@ -84,6 +84,53 @@ public class PermissionManager {
         return groups.values();
     }
 
+    /**
+     * Removes a group by name. {@code getGroups().remove(name)} does NOT work for this —
+     * {@link #getGroups()} returns a {@code Collection<PermissionGroup>} view, so calling
+     * {@code .remove(String)} on it compares the string against {@code PermissionGroup}
+     * objects via {@code equals()} and never matches anything.
+     */
+    public boolean removeGroup(String name) {
+        return groups.remove(name.toLowerCase()) != null;
+    }
+
+    /**
+     * Renames a group in place, updating every reference to the old name: the default-group
+     * pointer, every other group's {@code inherits} set, and every user currently assigned to
+     * it. Returns false if {@code oldName} doesn't exist or {@code newName} is already taken.
+     */
+    public boolean renameGroup(String oldName, String newName) {
+        String oldKey = oldName.toLowerCase();
+        String newKey = newName.toLowerCase();
+        PermissionGroup group = groups.get(oldKey);
+        if (group == null || groups.containsKey(newKey)) {
+            return false;
+        }
+
+        groups.remove(oldKey);
+        group.setName(newName);
+        groups.put(newKey, group);
+
+        if (oldKey.equals(defaultGroup == null ? null : defaultGroup.toLowerCase())) {
+            defaultGroup = newName;
+        }
+
+        for (PermissionGroup other : groups.values()) {
+            if (other.getInherits().remove(oldName)) {
+                other.getInherits().add(newName);
+            }
+        }
+
+        for (PermissionUser user : users.values()) {
+            if (user.getGroup() != null && user.getGroup().equalsIgnoreCase(oldName)) {
+                user.setGroup(newName);
+            }
+        }
+
+        clearCache();
+        return true;
+    }
+
     public void addUser(PermissionUser user) {
         users.put(user.getUuid(), user);
     }

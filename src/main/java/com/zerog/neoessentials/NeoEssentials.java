@@ -664,7 +664,23 @@ public class NeoEssentials {
             removeVanillaCommand(dispatcher, "msg");
             removeVanillaCommand(dispatcher, "tell");
             removeVanillaCommand(dispatcher, "w");
-            
+
+            // Remove vanilla moderation commands that share a name with ours — without this,
+            // Brigadier's node-merge behavior on same-named literals means vanilla's own
+            // BanPlayerCommands/BanListCommands/KickCommand keep handling these, completely
+            // bypassing BanManager/KickManager. That meant every ban/kick went straight into
+            // vanilla's banned-players.json with zero record in our own storage: invisible to
+            // the dashboard's player lookup, the /api/public/moderation/lookup endpoint, and
+            // any of our own /banlist or history commands. "pardon"/"pardon-ip" are also
+            // removed even though their names don't collide with ours (unban/unbanip) — left
+            // in place, they'd be a silent bypass that lifts a ban without ever touching
+            // BanManager's own state.
+            removeVanillaCommand(dispatcher, "ban");
+            removeVanillaCommand(dispatcher, "banlist");
+            removeVanillaCommand(dispatcher, "kick");
+            removeVanillaCommand(dispatcher, "pardon");
+            removeVanillaCommand(dispatcher, "pardon-ip");
+
             registerAllCommands(dispatcher, registry);
         }
         
@@ -808,6 +824,9 @@ public class NeoEssentials {
         registry.registerCommand("reports", "View the pending report queue");
         registry.registerCommand("reviewreport", "Accept or dismiss a player report");
         com.zerog.neoessentials.moderation.commands.ReportCommand.register(dispatcher);
+        registry.registerCommand("modhistory", "View a player's full moderation history (bans/mutes/kicks/warns)");
+        registry.registerCommand("history", "View a player's moderation history (alias)");
+        com.zerog.neoessentials.moderation.commands.ModHistoryCommand.register(dispatcher);
 
         // ========== CHAT/MESSAGING COMMANDS ==========
         registry.registerCommand("msg", "Send a private message");

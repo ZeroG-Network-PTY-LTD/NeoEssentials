@@ -110,6 +110,9 @@ public class PermissionEndpoint implements HttpHandler {
             return reloadPermissions();
         } else if (path.equals("/group/create")) {
             return createGroup(data);
+        } else if (path.startsWith("/group/") && path.endsWith("/rename")) {
+            String groupName = extractGroupName(path, "/rename");
+            return renameGroup(groupName, data);
         } else if (path.startsWith("/group/") && path.endsWith("/permission/add")) {
             String groupName = extractGroupName(path, "/permission/add");
             return addPermissionToGroup(groupName, data);
@@ -250,13 +253,17 @@ public class PermissionEndpoint implements HttpHandler {
                 groupObj.addProperty("name", group.getName());
                 groupObj.addProperty("prefix", group.getPrefix());
                 groupObj.addProperty("suffix", group.getSuffix());
-                groupObj.addProperty("weight", 0); // PermissionGroup doesn't have weight yet
+                groupObj.addProperty("priority", group.getPriority());
                 groupObj.addProperty("isDefault", group.getName().equalsIgnoreCase(manager.getDefaultGroup()));
                 groupObj.addProperty("permissionCount", group.getPermissions().size());
 
                 JsonArray permissions = new JsonArray();
                 group.getPermissions().forEach(permissions::add);
                 groupObj.add("permissions", permissions);
+
+                JsonArray inherits = new JsonArray();
+                group.getInherits().forEach(inherits::add);
+                groupObj.add("inherits", inherits);
 
                 groups.add(groupObj);
             }
@@ -280,12 +287,16 @@ public class PermissionEndpoint implements HttpHandler {
                 response.addProperty("name", groupName);
                 response.addProperty("prefix", group.getPrefix());
                 response.addProperty("suffix", group.getSuffix());
-                response.addProperty("weight", 0); // PermissionGroup doesn't have weight yet
+                response.addProperty("priority", group.getPriority());
                 response.addProperty("isDefault", group.getName().equalsIgnoreCase(manager.getDefaultGroup()));
 
                 JsonArray permissions = new JsonArray();
                 group.getPermissions().forEach(permissions::add);
                 response.add("permissions", permissions);
+
+                JsonArray inherits = new JsonArray();
+                group.getInherits().forEach(inherits::add);
+                response.add("inherits", inherits);
 
                 response.addProperty("success", true);
             } else {
@@ -350,108 +361,81 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject getUser(String username) {
         JsonObject response = new JsonObject();
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        UUID uuid = resolvePlayerUuid(username);
 
-        if (player != null) {
-            response.addProperty("username", player.getName().getString());
-            response.addProperty("uuid", player.getUUID().toString());
-            response.addProperty("online", true);
+        if (uuid != null) {
+            boolean online = server.getPlayerList().getPlayer(uuid) != null;
+            response.addProperty("username", username);
+            response.addProperty("uuid", uuid.toString());
+            response.addProperty("online", online);
 
             PermissionManager manager = PermissionAPI.getManager();
             String group = "default";
             if (manager != null) {
-                PermissionUser user = manager.getUser(player.getUUID());
-                if (user != null) {
-                    group = user.getGroup();
-                }
+                PermissionUser user = manager.getUser(uuid);
+                group = user.getGroup();
             }
             response.addProperty("group", group);
 
-            String prefix = PermissionAPI.getPrefix(player.getUUID());
-            String suffix = PermissionAPI.getSuffix(player.getUUID());
+            String prefix = PermissionAPI.getPrefix(uuid);
+            String suffix = PermissionAPI.getSuffix(uuid);
             response.addProperty("prefix", prefix != null ? prefix : "");
             response.addProperty("suffix", suffix != null ? suffix : "");
 
             if (manager != null) {
-                PermissionUser user = manager.getUser(player.getUUID());
-                if (user != null) {
-                    Set<String> permissions = user.getPermissions();
-                    JsonArray permsArray = new JsonArray();
-                    permissions.forEach(permsArray::add);
-                    response.add("permissions", permsArray);
-                }
+                PermissionUser user = manager.getUser(uuid);
+                Set<String> permissions = user.getPermissions();
+                JsonArray permsArray = new JsonArray();
+                permissions.forEach(permsArray::add);
+                response.add("permissions", permsArray);
             }
 
             response.addProperty("success", true);
         } else {
             response.addProperty("success", false);
-            response.addProperty("message", "Player not found or offline: " + username);
+            response.addProperty("message", "Player not found: " + username + " (never joined this server and not resolvable via Mojang)");
         }
 
         return response;
     }
 
+    /**
+     * Real permission-node catalog, sourced from {@link com.zerog.neoessentials.api.permissions.PermissionRegistry}
+     * — the same registry every permission node in the mod is registered against — rather than
+     * the small hand-maintained sample list this used to return. Powers the dashboard's
+     * searchable node picker when adding a permission to a group or user.
+     */
     private JsonObject getAllAvailablePermissions() {
         JsonObject response = new JsonObject();
         JsonArray categories = new JsonArray();
 
-        // Core permissions
-        JsonObject core = new JsonObject();
-        core.addProperty("category", "Core");
-        JsonArray corePerms = new JsonArray();
-        corePerms.add("neoessentials.use");
-        corePerms.add("neoessentials.admin");
-        corePerms.add("neoessentials.reload");
-        corePerms.add("neoessentials.info");
-        corePerms.add("neoessentials.debug");
-        core.add("permissions", corePerms);
-        categories.add(core);
+        com.zerog.neoessentials.api.permissions.PermissionRegistry registry =
+            com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance();
 
-        // Economy permissions
-        JsonObject economy = new JsonObject();
-        economy.addProperty("category", "Economy");
-        JsonArray economyPerms = new JsonArray();
-        economyPerms.add("neoessentials.economy.*");
-        economyPerms.add("neoessentials.economy.balance");
-        economyPerms.add("neoessentials.economy.pay");
-        economyPerms.add("neoessentials.economy.admin");
-        economy.add("permissions", economyPerms);
-        categories.add(economy);
+        Map<com.zerog.neoessentials.api.permissions.PermissionRegistry.PermissionCategory, JsonArray> byCategory =
+            new EnumMap<>(com.zerog.neoessentials.api.permissions.PermissionRegistry.PermissionCategory.class);
 
-        // Teleportation permissions
-        JsonObject teleport = new JsonObject();
-        teleport.addProperty("category", "Teleportation");
-        JsonArray teleportPerms = new JsonArray();
-        teleportPerms.add("neoessentials.teleport.*");
-        teleportPerms.add("neoessentials.teleport.home");
-        teleportPerms.add("neoessentials.teleport.warp");
-        teleportPerms.add("neoessentials.teleport.spawn");
-        teleportPerms.add("neoessentials.teleport.back");
-        teleportPerms.add("neoessentials.teleport.admin");
-        teleport.add("permissions", teleportPerms);
-        categories.add(teleport);
+        for (String node : registry.getAllPermissions()) {
+            com.zerog.neoessentials.api.permissions.PermissionRegistry.PermissionInfo info = registry.getPermissionInfo(node);
+            var category = info != null ? info.getCategory() : com.zerog.neoessentials.api.permissions.PermissionRegistry.PermissionCategory.MISC;
 
-        // Chat permissions
-        JsonObject chat = new JsonObject();
-        chat.addProperty("category", "Chat");
-        JsonArray chatPerms = new JsonArray();
-        chatPerms.add("neoessentials.chat.*");
-        chatPerms.add("neoessentials.chat.msg");
-        chatPerms.add("neoessentials.chat.color");
-        chatPerms.add("neoessentials.chat.format");
-        chatPerms.add("neoessentials.chat.staff");
-        chat.add("permissions", chatPerms);
-        categories.add(chat);
+            JsonObject entry = new JsonObject();
+            entry.addProperty("node", node);
+            entry.addProperty("description", info != null ? info.getDescription() : "");
+            entry.addProperty("defaultValue", info != null && info.getDefaultValue());
 
-        // Kits permissions
-        JsonObject kits = new JsonObject();
-        kits.addProperty("category", "Kits");
-        JsonArray kitsPerms = new JsonArray();
-        kitsPerms.add("neoessentials.kits.*");
-        kitsPerms.add("neoessentials.kits.use");
-        kitsPerms.add("neoessentials.kits.admin");
-        kits.add("permissions", kitsPerms);
-        categories.add(kits);
+            byCategory.computeIfAbsent(category, k -> new JsonArray()).add(entry);
+        }
+
+        for (var category : com.zerog.neoessentials.api.permissions.PermissionRegistry.PermissionCategory.values()) {
+            JsonArray perms = byCategory.get(category);
+            if (perms == null) continue;
+            JsonObject categoryObj = new JsonObject();
+            categoryObj.addProperty("category", category.getDescription());
+            categoryObj.addProperty("key", category.getKey());
+            categoryObj.add("permissions", perms);
+            categories.add(categoryObj);
+        }
 
         response.add("categories", categories);
         response.addProperty("success", true);
@@ -516,6 +500,12 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionGroup group = new PermissionGroup(name);
             if (!prefix.isEmpty()) group.setPrefix(prefix);
             if (!suffix.isEmpty()) group.setSuffix(suffix);
+            if (data.has("priority")) group.setPriority(data.get("priority").getAsInt());
+            if (data.has("inherits")) {
+                for (JsonElement inh : data.getAsJsonArray("inherits")) {
+                    group.addInheritance(inh.getAsString());
+                }
+            }
 
             manager.addGroup(group);
 
@@ -568,11 +558,11 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject setUserGroup(String username, JsonObject data) {
         JsonObject response = new JsonObject();
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        UUID uuid = resolvePlayerUuid(username);
 
-        if (player == null) {
+        if (uuid == null) {
             response.addProperty("success", false);
-            response.addProperty("message", "Player not found or offline: " + username);
+            response.addProperty("message", "Player not found: " + username);
             return response;
         }
 
@@ -585,18 +575,13 @@ public class PermissionEndpoint implements HttpHandler {
 
         try {
             String groupName = data.get("group").getAsString();
-            PermissionUser user = manager.getUser(player.getUUID());
-            if (user != null) {
-                user.setGroup(groupName);
-                PermissionStorage.save(manager);
-                manager.clearCache(); // Clear permission cache
+            PermissionUser user = manager.getUser(uuid);
+            user.setGroup(groupName);
+            PermissionStorage.save(manager);
+            manager.clearCache(); // Clear permission cache
 
-                response.addProperty("success", true);
-                response.addProperty("message", "User " + username + " set to group: " + groupName);
-            } else {
-                response.addProperty("success", false);
-                response.addProperty("message", "User not found: " + username);
-            }
+            response.addProperty("success", true);
+            response.addProperty("message", "User " + username + " set to group: " + groupName);
         } catch (Exception e) {
             response.addProperty("success", false);
             response.addProperty("message", "Failed to set user group: " + e.getMessage());
@@ -607,11 +592,11 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject addPermissionToUser(String username, JsonObject data) {
         JsonObject response = new JsonObject();
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        UUID uuid = resolvePlayerUuid(username);
 
-        if (player == null) {
+        if (uuid == null) {
             response.addProperty("success", false);
-            response.addProperty("message", "Player not found or offline: " + username);
+            response.addProperty("message", "Player not found: " + username);
             return response;
         }
 
@@ -624,18 +609,13 @@ public class PermissionEndpoint implements HttpHandler {
 
         try {
             String permission = data.get("permission").getAsString();
-            PermissionUser user = manager.getUser(player.getUUID());
-            if (user != null) {
-                user.addPermission(permission);
-                PermissionStorage.save(manager);
-                manager.clearCache(); // Clear permission cache
+            PermissionUser user = manager.getUser(uuid);
+            user.addPermission(permission);
+            PermissionStorage.save(manager);
+            manager.clearCache(); // Clear permission cache
 
-                response.addProperty("success", true);
-                response.addProperty("message", "Permission added to user: " + username);
-            } else {
-                response.addProperty("success", false);
-                response.addProperty("message", "User not found: " + username);
-            }
+            response.addProperty("success", true);
+            response.addProperty("message", "Permission added to user: " + username);
         } catch (Exception e) {
             response.addProperty("success", false);
             response.addProperty("message", "Failed to add permission: " + e.getMessage());
@@ -661,10 +641,21 @@ public class PermissionEndpoint implements HttpHandler {
             if (group != null) {
                 if (data.has("prefix")) group.setPrefix(data.get("prefix").getAsString());
                 if (data.has("suffix")) group.setSuffix(data.get("suffix").getAsString());
+                if (data.has("priority")) group.setPriority(data.get("priority").getAsInt());
+                if (data.has("inherits")) {
+                    // Full replace, matching how the config file itself represents this list —
+                    // simpler for the dashboard to send "here's the new complete set" than to
+                    // diff against what it last fetched.
+                    group.getInherits().clear();
+                    for (JsonElement inh : data.getAsJsonArray("inherits")) {
+                        group.addInheritance(inh.getAsString());
+                    }
+                }
                 if (data.has("isDefault") && data.get("isDefault").getAsBoolean()) {
                     manager.setDefaultGroup(groupName);
                 }
 
+                manager.clearCache();
                 PermissionStorage.save(manager);
                 response.addProperty("success", true);
                 response.addProperty("message", "Group updated: " + groupName);
@@ -675,6 +666,41 @@ public class PermissionEndpoint implements HttpHandler {
         } catch (Exception e) {
             response.addProperty("success", false);
             response.addProperty("message", "Failed to update group: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    private JsonObject renameGroup(String groupName, JsonObject data) {
+        JsonObject response = new JsonObject();
+        PermissionManager manager = PermissionAPI.getManager();
+
+        if (manager == null) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Cannot manage groups with external permission system");
+            return response;
+        }
+
+        if (!data.has("newName") || data.get("newName").getAsString().isBlank()) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Required field: newName");
+            return response;
+        }
+
+        try {
+            String newName = data.get("newName").getAsString().trim();
+            boolean renamed = manager.renameGroup(groupName, newName);
+            if (!renamed) {
+                response.addProperty("success", false);
+                response.addProperty("message", "Group not found, or a group named '" + newName + "' already exists");
+                return response;
+            }
+            PermissionStorage.save(manager);
+            response.addProperty("success", true);
+            response.addProperty("message", "Group '" + groupName + "' renamed to '" + newName + "'");
+        } catch (Exception e) {
+            response.addProperty("success", false);
+            response.addProperty("message", "Failed to rename group: " + e.getMessage());
         }
 
         return response;
@@ -701,7 +727,12 @@ public class PermissionEndpoint implements HttpHandler {
         }
 
         try {
-            manager.getGroups().remove(groupName);
+            boolean removed = manager.removeGroup(groupName);
+            if (!removed) {
+                response.addProperty("success", false);
+                response.addProperty("message", "Group not found: " + groupName);
+                return response;
+            }
             PermissionStorage.save(manager);
 
             response.addProperty("success", true);
@@ -745,11 +776,11 @@ public class PermissionEndpoint implements HttpHandler {
 
     private JsonObject removePermissionFromUser(String username, String permission) {
         JsonObject response = new JsonObject();
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+        UUID uuid = resolvePlayerUuid(username);
 
-        if (player == null) {
+        if (uuid == null) {
             response.addProperty("success", false);
-            response.addProperty("message", "Player not found or offline: " + username);
+            response.addProperty("message", "Player not found: " + username);
             return response;
         }
 
@@ -761,18 +792,13 @@ public class PermissionEndpoint implements HttpHandler {
         }
 
         try {
-            PermissionUser user = manager.getUser(player.getUUID());
-            if (user != null) {
-                user.removePermission(permission);
-                PermissionStorage.save(manager);
-                manager.clearCache(); // Clear permission cache
+            PermissionUser user = manager.getUser(uuid);
+            user.removePermission(permission);
+            PermissionStorage.save(manager);
+            manager.clearCache(); // Clear permission cache
 
-                response.addProperty("success", true);
-                response.addProperty("message", "Permission removed from user: " + username);
-            } else {
-                response.addProperty("success", false);
-                response.addProperty("message", "User not found: " + username);
-            }
+            response.addProperty("success", true);
+            response.addProperty("message", "Permission removed from user: " + username);
         } catch (Exception e) {
             response.addProperty("success", false);
             response.addProperty("message", "Failed to remove permission: " + e.getMessage());
@@ -855,9 +881,9 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
-        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         JsonObject ctxObj = new JsonObject();
         user.getContextualPermissions().forEach((ctxKey, nodeMap) -> {
             JsonObject nodes = new JsonObject();
@@ -873,11 +899,11 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
         if (!data.has("contextKey") || !data.has("node") || !data.has("allow"))
             return createErrorResponse("Required fields: contextKey, node, allow");
-        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         user.addContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString(), data.get("allow").getAsBoolean());
         manager.clearCache();
         try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
@@ -890,11 +916,11 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
         if (!data.has("contextKey") || !data.has("node"))
             return createErrorResponse("Required fields: contextKey, node");
-        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         boolean removed = user.removeContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString());
         if (!removed) return createErrorResponse("No such contextual override");
         manager.clearCache();
@@ -965,9 +991,9 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
-        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         JsonArray arr = new JsonArray();
         long now = System.currentTimeMillis();
         user.getTempPermissions().forEach((node, expiry) -> {
@@ -988,13 +1014,13 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
         if (!data.has("node") || !data.has("duration"))
             return createErrorResponse("Required fields: node, duration");
         try {
             long ms = com.zerog.neoessentials.permissions.PermissionManager.parseDurationMs(data.get("duration").getAsString());
-            com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+            com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
             user.addTempPermission(data.get("node").getAsString(), System.currentTimeMillis() + ms);
             manager.clearCache();
             PermissionStorage.save(manager);
@@ -1008,9 +1034,9 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) return createErrorResponse("Permission manager not available");
-        ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        if (player == null) return createErrorResponse("Player not online: " + username);
-        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(player.getUUID());
+        UUID uuid = resolvePlayerUuid(username);
+        if (uuid == null) return createErrorResponse("Player not found: " + username);
+        com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         user.removeTempPermission(node);
         manager.clearCache();
         try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
@@ -1071,6 +1097,56 @@ public class PermissionEndpoint implements HttpHandler {
 
     private int getOnlineUserCount() {
         return server.getPlayerList().getPlayerCount();
+    }
+
+    /**
+     * Resolves a username to a UUID whether or not the player is currently online, so
+     * group/permission management works for offline players too (not just whoever happens to
+     * be logged in right now). Tries, in order: the live player list, the server's profile
+     * cache (anyone who has ever joined), then the Mojang API as a last resort (same fallback
+     * {@link com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler} uses for
+     * offline-capable Minecraft-account auth).
+     */
+    private UUID resolvePlayerUuid(String username) {
+        ServerPlayer online = server.getPlayerList().getPlayerByName(username);
+        if (online != null) return online.getUUID();
+
+        net.minecraft.server.players.NameAndId cached = server.services().nameToIdCache().get(username).orElse(null);
+        if (cached != null) return cached.id();
+
+        return fetchUuidFromMojangAPI(username);
+    }
+
+    private UUID fetchUuidFromMojangAPI(String username) {
+        try {
+            java.net.URL url = new java.net.URL("https://api.mojang.com/users/profiles/minecraft/" + username);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                return null;
+            }
+
+            try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream()))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+
+                JsonObject json = JsonParser.parseString(sb.toString()).getAsJsonObject();
+                String uuidString = json.get("id").getAsString();
+                String formatted = uuidString.replaceFirst(
+                    "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                    "$1-$2-$3-$4-$5"
+                );
+                return UUID.fromString(formatted);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
+            return null;
+        }
     }
 
     private JsonObject createErrorResponse(String message) {

@@ -152,6 +152,8 @@ public class DiscordEndpoint implements HttpHandler {
 
     // ── POST /api/discord/test ────────────────────────────────────────────────
 
+    private static final java.util.regex.Pattern DISCORD_SNOWFLAKE = java.util.regex.Pattern.compile("^\\d{15,25}$");
+
     private void handleTest(HttpExchange exchange) throws IOException {
         Boolean isAdmin = (Boolean) exchange.getAttribute("auth-admin");
         if (!Boolean.TRUE.equals(isAdmin)) {
@@ -159,39 +161,37 @@ public class DiscordEndpoint implements HttpHandler {
             return;
         }
 
-        // Parse body: { "channel": "chat", "message": "Test!" }
+        // Parse body: { "channel": "123456789012345678", "message": "Test!" }
         String body;
         try (InputStream is = exchange.getRequestBody()) {
             body = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
         }
 
-        String channel = "chat";
-        String message = " Test message from NeoEssentials Dashboard";
+        String channel = extractJsonString(body, "channel", "");
+        String message = extractJsonString(body, "message", "Test message from NeoEssentials Dashboard");
 
-        if (!body.isEmpty()) {
-            channel = extractJsonString(body, "channel", channel);
-            message = extractJsonString(body, "message", message);
+        if (channel.isBlank()) {
+            sendJson(exchange, 400, "{\"success\":false,\"error\":\"Missing channel — this must be the target Discord channel's numeric ID, not a name (right-click the channel in Discord with Developer Mode on, then 'Copy Channel ID').\"}");
+            return;
+        }
+        if (!DISCORD_SNOWFLAKE.matcher(channel).matches()) {
+            sendJson(exchange, 400, "{\"success\":false,\"error\":\"'" + escape(channel) + "' doesn't look like a Discord channel ID (should be a 15-25 digit number, not a channel name).\"}");
+            return;
         }
 
-        // We don't have a real player to pass, so we record a manual test event
-        final String finalChannel = channel;
-        final String finalMessage = message;
-        // Record test event in the log
-        boolean hasAdapters = ChatIntegrationManager.hasIntegrations();
-        LOGGER.info("[Discord Test] Admin sent test message to channel '{}': {}", finalChannel, finalMessage);
+        if (!ChatIntegrationManager.hasIntegrations()) {
+            sendJson(exchange, 503, "{\"success\":false,\"error\":\"No Discord adapters are currently loaded on this server.\"}");
+            return;
+        }
 
-        String resp;
-        if (hasAdapters) {
-            resp = "{\"success\":true,\"message\":\"Test event logged. Adapters are active — "
-                 + "check your Discord channel ''" + escape(finalChannel) + "'' for the message.\","
-                 + "\"channel\":\"" + escape(finalChannel) + "\","
-                 + "\"text\":\"" + escape(finalMessage) + "\"}";
+        boolean sent = ChatIntegrationManager.sendToChannel(channel, message);
+        LOGGER.info("[Discord Test] Admin sent test message to channel '{}': {} (delivered: {})", channel, message, sent);
+
+        if (sent) {
+            sendJson(exchange, 200, "{\"success\":true,\"message\":\"Message sent to channel " + escape(channel) + ".\"}");
         } else {
-            resp = "{\"success\":true,\"message\":\"Test logged. No Discord adapters are currently loaded on this server.\","
-                 + "\"channel\":\"" + escape(finalChannel) + "\","
-                 + "\"text\":\"" + escape(finalMessage) + "\"}";
+            sendJson(exchange, 502, "{\"success\":false,\"error\":\"Could not deliver the message — the bot may not be in that channel/server, or the channel ID is wrong.\"}");
         }
-        sendJson(exchange, 200, resp);
     }
 
     // ── GET /api/discord/auth-config ─────────────────────────────────────────
