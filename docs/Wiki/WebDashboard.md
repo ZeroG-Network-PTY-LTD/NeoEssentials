@@ -6,7 +6,17 @@
 
 ## Overview
 
-NeoEssentials ships a built-in web dashboard for server monitoring and administration. It runs on an embedded HTTP server with WebSocket support for real-time updates. No external software required.
+NeoEssentials runs an embedded HTTP server (plus a WebSocket server for live updates) exposing a
+full REST API for server monitoring and administration. **There is no bundled dashboard UI
+shipped anymore** — the mod's own dashboard runs REST-only, and a separately-hosted external
+dashboard app is the actual interface. The shipped `config.json` template already sets
+`webDashboard.mode: "external"` to match this — see [API System](APISystem) and
+[`docs/API.md`](../API.md) for the full REST/WebSocket reference an external dashboard is built
+against.
+
+The account system, permission model, and moderation/economy/etc. backing data described below
+are unaffected by this — they're the same accounts and data an external dashboard authenticates
+against and reads/writes through the API.
 
 ---
 
@@ -14,11 +24,16 @@ NeoEssentials ships a built-in web dashboard for server monitoring and administr
 
 1. Set `webDashboard.enabled: true` **and** `modules.webDashboardEnabled: true` in `config.json` (both default to `true`)
 2. Configure `port` (default `8080`) and `websocketPort` (default `8081`)
-3. Start the server — the dashboard auto-starts
-4. Register a dashboard account in-game: `/dashboardregister start` then
-   `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
-   Simple Discord Link is linked) — or use one of the other paths below
-5. Open `http://<server-ip>:8080` in a browser and log in
+3. Start the server — the dashboard's REST API auto-starts
+4. Create a credential for whatever's going to call the API:
+   - **An external dashboard backend (recommended path):** create an API key in-game —
+     `/apikey create <label> [role]` — and give the printed token to that dashboard's server
+     config. See [API System → Authentication](APISystem#authentication) for the full picture.
+   - **A human dashboard account:** register in-game via `/dashboardregister start` then
+     `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
+     Simple Discord Link is linked) — or use one of the other paths below.
+5. Point your external dashboard app at `http://<server-ip>:<port>/api/...` (`port` from step 2)
+   using the API key or session token as a Bearer token.
 
 ---
 
@@ -45,17 +60,26 @@ check your current registration state.
 
 **Other ways to get dashboard access:**
 
-1. **Default admin account** — `admin` / `admin123` is created automatically the first time the
-   dashboard starts with no accounts yet. Change the password immediately after logging in.
-2. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
+1. **API key (for an external dashboard backend, not a human)** — `/apikey create <label>
+   [role]` in-game, or `POST /api/apikeys` once a first key exists. Not a login account at all;
+   see [API System](APISystem) and `docs/API.md`.
+2. **Default admin account** — the first time the dashboard starts with no accounts at all, an
+   `admin` account is auto-created with a **random** temporary password, printed once to the
+   server console/log (`Temporary password: ...`) and flagged to require a password change on
+   first login. There is no fixed default password — check the boot log if you've lost it, or
+   reset it via `/api/users/{id}/password` (admin session) if you still have another admin
+   account.
+3. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
    authenticate with just your Minecraft username (no password). The server checks whether that
    player has `neoessentials.dashboard.access` and auto-creates an account with role assigned
    from `neoessentials.dashboard.admin`/`.moderator`/`.access`. Predates the `/dashboardregister`
    flow above and is marked deprecated in server logs, but still functional.
-3. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
+4. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
    (the default), logging in with Discord auto-creates an account on first use.
-4. **Admin-created accounts** — an existing admin can create accounts for other players via the
-   dashboard's own Users management page, or `POST /api/users/create`.
+5. **Admin-created accounts** — an existing admin can create accounts directly via
+   `POST /api/users/create` (or whatever user-management screen the external dashboard exposes
+   for it), or push-sync one from the external dashboard's own user table with
+   `POST /api/users/sync` — see `docs/API.md`.
 
 ### Discord Auth (Optional)
 
@@ -160,8 +184,10 @@ is unaffected.
 | `port` | `8080` | HTTP port |
 | `websocketPort` | `8081` | WebSocket port for live updates |
 | `bindAddress` | `"0.0.0.0"` | IP to bind (use `127.0.0.1` for local-only) |
-| `mode` | `"internal"` | `"internal"`/`"both"` serve the bundled UI + API; `"external"` serves only `/api/*` for setups using a separately-hosted dashboard app. See [Dashboard Connectivity](DashboardConnectivity) |
-| `securitySettings.requireAuthentication` | `true` | Require a Bearer token on dashboard API endpoints |
+| `mode` | `"external"` | The shipped config template sets this explicitly (there's no bundled UI to serve anymore). `"internal"`/`"both"` would serve a bundled static UI if `mode` were absent entirely (code-level fallback only — no such UI files actually ship); `"external"` serves only `/api/*`, which is the supported setup. See [Dashboard Connectivity](DashboardConnectivity) |
+| `userSyncWebhookUrl` | `""` (disabled) | Optional: POST a notification here whenever a dashboard_user is created/updated/deleted, so an external dashboard can mirror the change into its own user table. See `docs/API.md` |
+| `userSyncWebhookSecret` | `""` | HMAC-SHA256 secret for signing the webhook above (`X-NeoEssentials-Signature` header) |
+| `securitySettings.requireAuthentication` | `true` | Require a Bearer token (session or API key) on dashboard API endpoints |
 | `securitySettings.enableRateLimiting` | `true` | Enable per-IP rate limiting on the dashboard API |
 | `securitySettings.maxRequestsPerMinute` | `60` | Max API requests per IP per minute when rate limiting is enabled |
 | `securitySettings.publicModerationLookupEnabled` | `true` | Enable the no-login `/api/public/moderation/*` routes (see below) |
@@ -178,16 +204,14 @@ Either one set to `false` disables the whole dashboard.
 
 ---
 
-## Dashboard Pages
+## What the External Dashboard Can Do
 
-| Page | URL | Permission | Description |
-|---|---|---|---|
-| Overview | `/` | `neoessentials.dashboard.view` | Server stats, player count, TPS, memory |
-| Players | `/players` | `neoessentials.dashboard.view` | Online players, ban/kick/tp actions |
-| Console | `/console` | `neoessentials.dashboard.manage` | View logs, send commands |
-| Admin Controls | `/admin` | `neoessentials.dashboard.admin` | Server admin tools |
-| Permissions | `/permissions` | `neoessentials.dashboard.admin` | Manage permission groups and nodes |
-| Config | `/config` | `neoessentials.dashboard.admin` | Edit config files (file writes require the admin role — there is no separate config toggle to disable this) |
+There's no bundled UI to screenshot/reference here anymore — the equivalent of the old
+"Overview / Players / Console / Admin Controls / Permissions / Config" pages is now just REST
+endpoint groups the external dashboard's own UI calls: `/api/stats` + `/api/server` (overview),
+`/api/player` + `/api/moderation` (players), `/api/commands` + `/api/logging` (console),
+`/api/admin` (admin controls), `/api/permissions` (permissions), `/api/files` (config editing).
+Full detail on every one of these in [API System](APISystem) → `docs/API.md`.
 
 ---
 
@@ -219,7 +243,7 @@ The dashboard's moderation endpoints are backed directly by the same manager cla
 | `/api/moderation/reports`, `/reports/all`, `/reports/{id}` | GET | Pending / all / one report |
 | `/api/moderation/reports/{id}/review` | POST | Accept or dismiss a report |
 
-All routes above require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
+All routes above require the standard dashboard Bearer-token authentication (session or API key); mutating routes (POST/DELETE) additionally require the **ADMIN** role specifically — a MODERATOR-role credential can read but not act.
 
 ### Public Moderation Lookup (no login required)
 
@@ -253,12 +277,19 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboard restart` | `neoessentials.admin.dashboard` | Restart the dashboard |
 | `/dashboard status` | `neoessentials.admin.dashboard` | Show dashboard status |
 | `/dashboard url` | `neoessentials.admin.dashboard` | Show the dashboard URL |
-| `/dashboard update [check\|force]` | `neoessentials.admin.dashboard` | Update bundled dashboard files from the JAR (`check` = dry-run, `force` = bypass checksum) |
+| `/dashboard update [check\|force]` | `neoessentials.admin.dashboard` | Update bundled dashboard files from the JAR (`check` = dry-run, `force` = bypass checksum). **Vestigial** — the mod ships no bundled UI files anymore, so this has nothing to find/update; kept for compatibility, not part of the supported workflow |
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
 | `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink, Mc2Discord, or DCIntegration) |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
+| `/apikey create <label> [role]` | `neoessentials.dashboard.apikeys` | Create an API key for an external dashboard backend — prints the token once |
+| `/apikey list` | `neoessentials.dashboard.apikeys` | List keys (label/role/enabled/last-used — never the secret) |
+| `/apikey revoke <id>` | `neoessentials.dashboard.apikeys` | Revoke a key immediately |
+
+`/apikey` is a **separate** command tree from `/dashboard`/`/dashboardregister` — see
+[API System → Authentication](APISystem#authentication) for the full picture of what these
+keys are for and how they differ from a human dashboard account.
 
 ---
 
@@ -272,16 +303,21 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `neoessentials.dashboard.moderator` | 🔒 | Moderator-level dashboard access |
 | `neoessentials.dashboard.admin` | 🔒 | Full admin dashboard access |
 | `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the dashboard server (`/dashboard`) |
+| `neoessentials.dashboard.apikeys` | 🔒 | Create/list/revoke API keys for external dashboard integrations (`/apikey`) |
 
 > Unlike most permission nodes documented on the [Permission System](PermissionSystem) page,
-> the dashboard nodes above are **not** pre-registered in `PermissionRegistry` — they're checked
-> ad hoc, so grant them explicitly to non-OP groups rather than relying on a documented default.
+> the dashboard nodes above (other than `neoessentials.dashboard.apikeys`, which **is**
+> registered) are not pre-registered in `PermissionRegistry` — they're checked ad hoc, so grant
+> them explicitly to non-OP groups rather than relying on a documented default.
 
 ---
 
-## File Auto-Update
+## File Auto-Update (legacy, no longer applicable)
 
-Dashboard HTML/JS/CSS files are versioned. On every server start, NeoEssentials checks if the bundled dashboard files in the JAR are newer than the deployed files on disk — if so, they are automatically updated. Customised files will be overwritten if the version number increases.
+This mechanism (versioned dashboard HTML/JS/CSS auto-copied from the JAR on boot) predates the
+move to an external-only dashboard. The mod ships no bundled UI files anymore, so there's
+nothing for it to check or copy — `/dashboard update` still runs without erroring, it just finds
+zero files to update. Left here for history; not something to configure or rely on.
 
 ---
 

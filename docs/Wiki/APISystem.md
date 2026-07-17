@@ -273,94 +273,97 @@ if (minor >= 2) {
 
 ---
 
-## REST API (Web Dashboard)
+## REST API (External Dashboard)
 
-All endpoints require authentication via `Authorization: Bearer <token>` unless otherwise noted.
-Obtain a token from `POST /api/auth/login`. Enable in `config.json` → `webDashboard`.
+> **The mod no longer ships its own dashboard UI.** `webDashboard.mode` is `"external"` —
+> the embedded HTTP server on `config.json → webDashboard.port` (default `8090`) serves
+> **REST only**; a separately-hosted dashboard app is the actual UI. Everything below is the
+> integration surface for that app.
+>
+> **This section is a summary.** The full, exhaustive reference — every route across all ~29
+> endpoint groups, real example request/response JSON pulled from a live server, quirks like
+> binary downloads and non-UUID path segments, and the WebSocket protocol — lives in
+> **[`docs/API.md`](../API.md)** at the repo root. That file is what an external dashboard
+> developer should actually build against; treat this wiki section as an index into it.
 
 ### Authentication
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/login` | No | Log in with username + password → returns session token |
-| `GET` | `/api/auth/discord` | No | Log in with a Discord-linked Minecraft account (`?username=`) → returns session token |
-| `POST` | `/api/auth/logout` | Yes | Invalidate session token |
-| `GET` | `/api/auth/validate` | Yes | Check if current session is valid |
+Two credential types, both presented the same way — `Authorization: Bearer <token>` — tried in
+this order by the server:
+
+1. **API key** (recommended for a dashboard backend) — a long-lived, independently-revocable
+   credential, never expiring on its own, created in-game so an operator is never locked out:
+   ```
+   /apikey create <label> [role]     # role: ADMIN (default) | OPERATOR | MODERATOR | VIEWER
+   /apikey list
+   /apikey revoke <id>
+   ```
+   The full token (`neo_<keyId>_<secret>`) is printed **exactly once** at creation — only its
+   salted hash is stored, so it can't be recovered later, only revoked and re-created. Never put
+   it in frontend/browser code; it belongs on the external dashboard's own server, which then
+   calls this API on the browser's behalf. Also manageable over REST once a first key exists —
+   `GET/POST /api/apikeys`, `DELETE /api/apikeys/{id}` (ADMIN-gated).
+2. **Session token** — from `POST /api/auth/login` (username/password) or the Discord-linked
+   flow — see [Web Dashboard](WebDashboard) for account registration. This is the mod's own
+   human-login concept; an external dashboard backend calling this API as a service should
+   generally prefer an API key instead.
+
+Every route is gated as **PUBLIC** (no token needed — a small deliberate set: public moderation
+lookup, `/api/docs/*`, `/api/ping`), **AUTH** (any valid key/session, any role), or **ADMIN**
+(the credential's role must be `ADMIN`) — see `docs/API.md` for the exact tier of every route.
 
 ```bash
-# Login
-curl -X POST http://localhost:8080/api/auth/login \
+# Login (session-based)
+curl -X POST http://localhost:8090/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"username":"admin","password":"secret"}'
-# Response: {"token":"abc123..."}
+# Response includes: {"success":true,"sessionId":"...", "user":{...}}
 
-# Authenticated request
-curl http://localhost:8080/api/placeholders/list \
-     -H "Authorization: Bearer abc123..."
+# Authenticated request — works identically with a session id or an API key
+curl http://localhost:8090/api/placeholders/list \
+     -H "Authorization: Bearer <sessionId-or-api-key>"
 ```
 
-### Placeholders
+### Endpoint groups (see `docs/API.md` for full detail on each)
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/placeholders/list` | All registered placeholder identifiers (sorted) |
-| `GET` | `/api/placeholders/resolve?player=<name>&text=<str>` | Resolve placeholders server-side |
-| `GET` | `/api/placeholders/stats` | Registry statistics (total count, expansion count) |
+| Prefix | Covers |
+|---|---|
+| `/api/apikeys` | Manage API keys (see above) |
+| `/api/auth` | Login/logout/session validation, dashboard-account CRUD |
+| `/api/player` | Online/offline player info, kick/teleport/heal/gamemode |
+| `/api/server`, `/api/game` | Server/world profile, performance, game events |
+| `/api/logging` | Dashboard's own request/error/performance logs |
+| `/api/admin` | Restart/stop/save/reload/broadcast |
+| `/api/files` | Sandboxed config/log file browser, editor, backups |
+| `/api/permissions` | Groups, users, aliases, node catalog — the internal permission system |
+| `/api/motd`, `/api/rules` | MOTD profiles + rotation; server rules (both ADMIN-gated for writes) |
+| `/api/teleport` | Teleport/home/warp/spawn/back settings |
+| `/api/placeholders` | List/resolve/stats for the placeholder registry |
+| `/api/shops` | Sign shops + NPC shops, CSV import/export (ADMIN-gated for writes) |
+| `/api/backup` | Snapshot create/list/restore/delete/download |
+| `/api/discord` | Bridge adapter status, event log, channel-ID test message, auth-config |
+| `/api/cloud` | Dropbox/Google Drive backup upload config |
+| `/api/users` | Dashboard account management + external-dashboard user sync (see below) |
+| `/api/moderation`, `/api/public/moderation` | Bans/mutes/kicks/warns/notes/reports (public variant is unauthenticated, privacy-limited) |
+| `/api/kits`, `/api/holograms`, `/api/warps` | Read/manage kits (read-only), holograms, warps (holograms/warps ADMIN-gated for writes) |
+| `/api/commands` | Run arbitrary server commands (blocklist applies) |
+| `/api/economy` | Balance lookups + admin give/take/set |
+| `/api/stats` | Economy/activity/performance dashboards, 60-min history |
+| `/api/docs` | The mod's own public in-game documentation content (unrelated to this API doc) |
 
-`player` parameter in `/resolve` is optional (must be online if provided).
+A live event feed also runs on `websocketPort` (default `8091`) alongside REST — channels
+`events`/`chat`/`stats`, authenticated the same way (session id or API key). Full protocol in
+`docs/API.md`.
 
-### Players
+### Syncing dashboard accounts with an external user table
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/player/online` | List all online players (UUID, name, ping, world, coords) |
-| `GET` | `/api/player/{uuid}` | Detailed info for a player by UUID |
-
-### Server
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/server/status` | Online count, version, TPS, uptime |
-| `GET` | `/api/server/performance` | Memory, TPS history, chunk count |
-| `GET` | `/api/server/worlds` | All loaded dimensions with player counts |
-
-### Logs
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/logging` | Latest N log lines (N configured per dashboard settings) |
-
-### Admin
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/admin/command` | Execute a server command (`dashboard.manage` required) |
-| `GET` | `/api/files` | Browse / read config files (`dashboard.admin` required) |
-
-### Permissions
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/permissions/overview` | Permission system overview |
-| `GET/PUT` | `/api/permissions/groups` | List / manage permission groups |
-| `GET/PUT` | `/api/permissions/users` | List / manage user permissions |
-
-### Teleport Settings
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/teleport/settings` | Read all teleport config sections |
-| `PUT` | `/api/teleport/settings` | Write teleport config + live-reload managers |
-
-### Documentation (public — no auth)
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/docs/sections` | All documentation sections |
-| `GET` | `/api/docs/api` | API endpoint documentation |
-| `GET` | `/api/docs/tutorials` | Step-by-step tutorials |
-| `GET` | `/api/docs/faq` | Frequently asked questions |
-| `GET` | `/api/docs/search?q=<query>` | Search across all docs |
+If the external dashboard has its own user accounts and wants a matching mod-side account to
+exist (or vice versa), see the **"Keeping dashboard accounts in sync"** section under `/api/users`
+in `docs/API.md` — covers `POST /api/users/sync` (idempotent create-or-update, for the external
+dashboard pushing its accounts into the mod) and `webDashboard.userSyncWebhookUrl` (an optional,
+HMAC-signed outbound webhook fired whenever a dashboard_user is created/updated/deleted here —
+in-game `/dashboardregister` included — so the external dashboard can mirror it back out
+automatically).
 
 ---
 
