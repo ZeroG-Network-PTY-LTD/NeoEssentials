@@ -425,6 +425,27 @@ public class PermissionAPI {
         return group != null ? group.getPriority() : 0;
     }
 
+    /**
+     * Returns the player's primary group name, checking the external adapter (LuckPerms, etc)
+     * first when one is configured, falling back to the internal permission system's group
+     * assignment otherwise. Used by features that key formatting/styling off a group name
+     * (chat format's {@code group:<name>} keys, tablist per-group styling), as opposed to
+     * {@link #hasPermission} / {@link #getGroupWeight} which operate on nodes/rank.
+     */
+    public static String getPrimaryGroup(UUID uuid) {
+        if (uuid == null) return null;
+
+        if (externalAdapter != null) {
+            String group = externalAdapter.getPrimaryGroup(uuid);
+            if (group != null) return group;
+            // Adapter had no opinion (e.g. player not cached) — fall through to internal.
+        }
+
+        if (manager == null) return null;
+        PermissionUser user = manager.getUser(uuid);
+        return (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
+    }
+
     public static String getSuffix(UUID uuid) {
         // Validate input parameters
         if (uuid == null) {

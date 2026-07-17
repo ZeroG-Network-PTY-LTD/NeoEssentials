@@ -115,4 +115,16 @@ public interface ExternalPermissionAdapter {
     default int getGroupWeight(UUID uuid) {
         return Integer.MIN_VALUE;
     }
+
+    /**
+     * Returns the name of the user's primary group in the external system, for
+     * features that key formatting/styling off a group name (chat format, tablist
+     * per-group styling, etc).
+     *
+     * @param uuid the player's UUID
+     * @return the primary group name, or {@code null} if unavailable/not supported
+     */
+    default String getPrimaryGroup(UUID uuid) {
+        return null;
+    }
 }

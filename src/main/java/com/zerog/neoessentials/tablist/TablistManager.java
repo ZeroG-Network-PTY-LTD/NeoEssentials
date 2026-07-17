@@ -823,13 +823,13 @@ public class TablistManager {
     }
 
     private String getPermissionGroup(ServerPlayer player) {
+        // Goes through PermissionAPI (checks the external adapter, e.g. LuckPerms, first) — this
+        // used to go straight to the internal PermissionManager, which never knew about LuckPerms
+        // group assignments and silently fell back to "default", same class of bug getGroupWeight()
+        // below was already fixed for.
         try {
-            com.zerog.neoessentials.permissions.PermissionManager mgr =
-                com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return "default";
-            com.zerog.neoessentials.permissions.PermissionUser user = mgr.getUser(player.getUUID());
-            if (user != null && user.getGroup() != null) return user.getGroup();
-            return mgr.getDefaultGroup();
+            String group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
+            if (group != null) return group;
         } catch (Exception ignored) {}
         return "default";
     }

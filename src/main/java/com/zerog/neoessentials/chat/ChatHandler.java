@@ -190,15 +190,10 @@ public class ChatHandler {
             // Get group and world for per-group/world chat format
             String group = null;
             try {
-                var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-                if (permManager != null) {
-                    var user = permManager.getUser(player.getUUID());
-                    if (user != null && user.getGroup() != null) {
-                        group = user.getGroup();
-                    } else {
-                        group = permManager.getDefaultGroup();
-                    }
-                }
+                // Goes through PermissionAPI (checks the external adapter, e.g. LuckPerms, first) —
+                // this used to go straight to the internal PermissionManager, which never knew about
+                // LuckPerms group assignments and silently fell back to the default group/format.
+                group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
             } catch (Exception e) {
                 LOGGER.debug("Could not get group for player {}: {}", playerName, e.getMessage());
             }
