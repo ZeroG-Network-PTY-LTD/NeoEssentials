@@ -1,0 +1,7 @@
+# Builds ONLY the standalone vault-api module for JitPack consumption — not the main NeoForge
+# mod (which needs a full Minecraft/NeoForge toolchain JitPack's generic build container can't
+# provide). See docs/VaultAPI.md for the consumer-facing dependency coordinate and setup.
+jdk:
+  - openjdk21
+install:
+  - ./gradlew :vault-api:publishToMavenLocal --no-daemon
