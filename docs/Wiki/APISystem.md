@@ -292,7 +292,27 @@ Two credential types, both presented the same way — `Authorization: Bearer <to
 this order by the server:
 
 1. **API key** (recommended for a dashboard backend) — a long-lived, independently-revocable
-   credential, never expiring on its own, created in-game so an operator is never locked out:
+   credential, never expiring on its own. The recommended way to get one connected is
+   **pairing**, not manually running `/apikey create` and copy-pasting the token:
+
+   #### Pairing
+
+   1. On the external dashboard's own admin Configuration page, click "Generate Pairing Code" —
+      it shows a one-time code (valid 10 minutes) and the exact command to run.
+   2. On the Minecraft server console (or in-game, if OP), run the command it showed:
+      ```
+      /dashboard pair "<dashboardUrl>" <code>
+      ```
+      The URL must be quoted — unquoted command arguments can't contain `:` or `/`.
+      Requires permission `neoessentials.dashboard.pair`.
+   3. In that single round trip: the mod mints an API key and sends it to the dashboard (for the
+      dashboard's own outbound calls to this API), and the dashboard mints a token back for the
+      mod's outbound account-sync webhook (see below) — both directions connected, nothing
+      hand-copied between two config files.
+
+   `/dashboard unpair` clears the connection and revokes the key that was minted for it.
+
+   The manual path still exists for scripting/one-off keys:
    ```
    /apikey create <label> [role]     # role: ADMIN (default) | OPERATOR | MODERATOR | VIEWER
    /apikey list
@@ -360,10 +380,10 @@ A live event feed also runs on `websocketPort` (default `8091`) alongside REST �
 If the external dashboard has its own user accounts and wants a matching mod-side account to
 exist (or vice versa), see the **"Keeping dashboard accounts in sync"** section under `/api/users`
 in `docs/API.md` — covers `POST /api/users/sync` (idempotent create-or-update, for the external
-dashboard pushing its accounts into the mod) and `webDashboard.userSyncWebhookUrl` (an optional,
-HMAC-signed outbound webhook fired whenever a dashboard_user is created/updated/deleted here —
-in-game `/dashboardregister` included — so the external dashboard can mirror it back out
-automatically).
+dashboard pushing its accounts into the mod) and the outbound webhook fired whenever a
+dashboard_user is created/updated/deleted here (in-game `/dashboardregister` included), so the
+external dashboard can mirror it back out automatically. The webhook's target URL and auth token
+are set automatically by pairing (see above), not hand-configured.
 
 ---
 
