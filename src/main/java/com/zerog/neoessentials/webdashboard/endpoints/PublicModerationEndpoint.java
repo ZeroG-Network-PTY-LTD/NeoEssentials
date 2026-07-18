@@ -225,10 +225,10 @@ public class PublicModerationEndpoint implements HttpHandler {
         var online = server.getPlayerList().getPlayerByName(playerName);
         if (online != null) return online.getUUID();
         try {
-            var cache = server.getProfileCache();
+            var cache = server.services().nameToIdCache();
             if (cache != null) {
                 var profile = cache.get(playerName);
-                if (profile.isPresent()) return profile.get().getId();
+                if (profile.isPresent()) return profile.get().id();
             }
         } catch (Exception ignored) {}
         return null;
