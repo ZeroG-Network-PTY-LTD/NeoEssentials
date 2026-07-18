@@ -1,13 +1,16 @@
 package com.zerog.neoessentials.vault;
 
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.vault.api.VaultServiceRegistry;
 import com.zerog.neoessentials.vault.api.VaultServiceRegistry.ServicePriority;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsChat;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsEconomy;
 import com.zerog.neoessentials.vault.impl.NeoEssentialsPermission;
+import com.zerog.neoessentials.vault.impl.SGEconomyAdapter;
 import com.zerog.neoessentials.vault.impl.VaultShopEconomyAdapter;
 import com.zerog.neoessentials.shop.api.ShopEconomyRegistry;
 import com.zerog.neoessentials.shop.api.NeoEssentialsShopEconomy;
+import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +87,21 @@ public class VaultManager {
             registry.registerChat(chat, ServicePriority.NORMAL, "neoessentials");
         } catch (Exception e) {
             LOGGER.error("[VaultAPI] Failed to register Chat provider: {}", e.getMessage(), e);
+        }
+
+        // Third-party economy mods this build knows how to bridge — each is a one-directional
+        // adapter WE wrote (the mod itself has no NeoEssentials awareness), gated behind
+        // economy.useExternalEconomy so an operator has to opt in before it can override the
+        // built-in economy above. Registered at HIGH priority, which is all that's needed for
+        // it to take over — see VaultServiceRegistry's priority-sorted lookup.
+        if (ConfigManager.isUsingExternalEconomy()) {
+            if (ModList.get().isLoaded("sg_economy")) {
+                try {
+                    registry.registerEconomy(new SGEconomyAdapter(), ServicePriority.HIGH, "sg_economy");
+                } catch (Exception e) {
+                    LOGGER.error("[VaultAPI] Failed to register SG Economy API adapter: {}", e.getMessage(), e);
+                }
+            }
         }
 
         registry.logStatus();

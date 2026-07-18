@@ -314,7 +314,13 @@
     // Multiplier for all /sell prices  (1.0 = 100%, 0.5 = 50%, 2.0 = 200%)
     "sellMultiplier": 1.0,
     // Allow selling items that have a custom display name (renamed items)
-    "allowSellNamedItems": false
+    "allowSellNamedItems": false,
+    // Use a detected external economy mod (e.g. SG Economy API) instead of NeoEssentials'
+    // own internal balances, registered at higher priority into the Vault service registry
+    // (see vault/VaultManager.java). Off by default — an operator has to explicitly opt in,
+    // since silently switching which mod controls player money is higher-stakes than the
+    // equivalent external-permissions toggle.
+    "useExternalEconomy": false
   },
 
   /* ----------------------------------------------------------------
