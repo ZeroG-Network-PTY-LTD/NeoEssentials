@@ -37,8 +37,10 @@ import java.time.Duration;
  * - /dashboard url       — Show dashboard URL
  * - /dashboard update    — Smart-update changed dashboard files from JAR
  * - /dashboard update check — Preview which files would change (dry-run)
- * - /dashboard pair &lt;dashboardUrl&gt; &lt;code&gt; — complete the mutual pairing handshake with an
- *   external dashboard (see {@link com.zerog.neoessentials.webdashboard.security.DashboardUserSyncWebhook})
+ * - /dashboard pair "&lt;dashboardUrl&gt;" &lt;code&gt; — complete the mutual pairing handshake with an
+ *   external dashboard (see {@link com.zerog.neoessentials.webdashboard.security.DashboardUserSyncWebhook}).
+ *   The URL must be quoted — Brigadier's unquoted string parsing can't contain ':' or '/',
+ *   which every URL does.
  * - /dashboard unpair    — clear the paired connection and revoke its API key
  */
 public class DashboardCommand {
@@ -75,7 +77,7 @@ public class DashboardCommand {
                     .executes(DashboardCommand::forceUpdateDashboardFiles)))
             .then(Commands.literal("pair")
                 .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
-                .then(Commands.argument("dashboardUrl", StringArgumentType.word())
+                .then(Commands.argument("dashboardUrl", StringArgumentType.string())
                     .then(Commands.argument("code", StringArgumentType.word())
                         .executes(ctx -> pair(ctx,
                             StringArgumentType.getString(ctx, "dashboardUrl"),
