@@ -2152,6 +2152,23 @@ public class ConfigManager {
     }
 
     /**
+     * Use a detected external economy mod (e.g. SG Economy API) instead of NeoEssentials' own
+     * internal balances — same opt-in posture as {@code permissions.useExternalPermissions}.
+     * Defaults to false: money is higher-stakes than permissions to silently switch out from
+     * under an existing server, so an operator has to explicitly turn this on.
+     */
+    public static boolean isUsingExternalEconomy() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("economy")) {
+            JsonObject economy = config.getAsJsonObject("economy");
+            if (economy.has("useExternalEconomy")) {
+                return economy.get("useExternalEconomy").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the economy starting balance from economy.json (startingBalance).
      * Defaults to 100.0 if not set.
      */
