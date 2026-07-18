@@ -616,6 +616,8 @@ public class KitManager {
             saveCooldowns(player.getUUID());
             saveUsages(player.getUUID());
 
+            runKitCommands(kit, player);
+
             String result = MessageUtil.localize("commands.neoessentials.kits.util.given", kit.getDisplayName(), itemsGiven.size());
             if (!itemsDropped.isEmpty()) {
                 result += MessageUtil.localize("commands.neoessentials.kits.util.items_dropped_suffix", itemsDropped.size());
@@ -635,7 +637,33 @@ public class KitManager {
             return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.give_error"));
         }
     }
-    
+
+    /**
+     * Runs this kit's console commands (kits.json's per-kit "commands" array) once the items
+     * have actually been handed over — e.g. granting a permission or broadcasting a message
+     * alongside the items. {player} is replaced with the claiming player's name. Same
+     * server.execute()-wrapped console-dispatch pattern as {@link com.zerog.neoessentials.scheduler.TaskScheduler}.
+     */
+    private void runKitCommands(Kit kit, ServerPlayer player) {
+        List<String> commands = kit.getCommands();
+        if (commands.isEmpty()) return;
+
+        var server = player.getServer();
+        if (server == null) return;
+
+        for (String command : commands) {
+            String cmd = (command.startsWith("/") ? command.substring(1) : command)
+                .replace("{player}", player.getName().getString());
+            server.execute(() -> {
+                try {
+                    server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), cmd);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to execute kit command '{}' from kit '{}': {}", cmd, kit.getName(), e.getMessage(), e);
+                }
+            });
+        }
+    }
+
     // Cooldown and Usage Tracking
 
     private long getRemainingCooldown(UUID playerId, String kitName) {

@@ -33,10 +33,11 @@ public class Kit {
     private final String permission;
     private final int maxUses;
     private final boolean enabled;
+    private final List<String> commands;
 
     /**
      * Creates a new Kit instance.
-     * 
+     *
      * @param name Unique identifier for the kit (lowercase, no spaces)
      * @param displayName Human-readable name for display
      * @param description Brief description of the kit
@@ -46,8 +47,16 @@ public class Kit {
      * @param maxUses Maximum uses per player (-1 for unlimited)
      * @param enabled Whether the kit is currently enabled
      */
-    public Kit(String name, String displayName, String description, List<ItemStack> items, 
+    public Kit(String name, String displayName, String description, List<ItemStack> items,
                long cooldownMillis, String permission, int maxUses, boolean enabled) {
+        this(name, displayName, description, items, cooldownMillis, permission, maxUses, enabled, null);
+    }
+
+    /**
+     * Creates a new Kit instance with console commands run on claim (see {@link #getCommands()}).
+     */
+    public Kit(String name, String displayName, String description, List<ItemStack> items,
+               long cooldownMillis, String permission, int maxUses, boolean enabled, List<String> commands) {
         this.name = name.toLowerCase().replaceAll("[^a-z0-9_]", ""); // Sanitize name
         this.displayName = displayName != null ? displayName : name;
         this.description = description != null ? description : "";
@@ -56,8 +65,9 @@ public class Kit {
         this.permission = permission;
         this.maxUses = maxUses;
         this.enabled = enabled;
+        this.commands = new ArrayList<>(commands != null ? commands : Collections.emptyList());
     }
-    
+
     // Getters
     public String getName() { return name; }
     public String getDisplayName() { return displayName; }
@@ -67,6 +77,13 @@ public class Kit {
     public String getPermission() { return permission; }
     public int getMaxUses() { return maxUses; }
     public boolean isEnabled() { return enabled; }
+
+    /**
+     * Console commands run (as the server, with {player} replaced by the claiming player's
+     * name) each time this kit is successfully claimed — e.g. granting a permission, playing
+     * a sound, or broadcasting a message alongside the items.
+     */
+    public List<String> getCommands() { return new ArrayList<>(commands); }
 
     @SuppressWarnings("unused") // Public API method - reserved for future use
     public Map<String, Object> getMetadata() { return new HashMap<>(); }
@@ -104,20 +121,20 @@ public class Kit {
      */
     @SuppressWarnings("unused") // Public API method
     public Kit withEnabled(boolean enabled) {
-        return new Kit(name, displayName, description, items, cooldownMillis, 
-                      permission, maxUses, enabled);
+        return new Kit(name, displayName, description, items, cooldownMillis,
+                      permission, maxUses, enabled, commands);
     }
-    
+
     @SuppressWarnings("unused") // Public API method
     public Kit withCooldown(long cooldownMillis) {
-        return new Kit(name, displayName, description, items, cooldownMillis, 
-                      permission, maxUses, enabled);
+        return new Kit(name, displayName, description, items, cooldownMillis,
+                      permission, maxUses, enabled, commands);
     }
-    
+
     @SuppressWarnings("unused") // Public API method
     public Kit withPermission(String permission) {
-        return new Kit(name, displayName, description, items, cooldownMillis, 
-                      permission, maxUses, enabled);
+        return new Kit(name, displayName, description, items, cooldownMillis,
+                      permission, maxUses, enabled, commands);
     }
     
     /**
@@ -180,7 +197,13 @@ public class Kit {
             }
         }
         json.add("items", itemsArray);
-        
+
+        if (!commands.isEmpty()) {
+            JsonArray commandsArray = new JsonArray();
+            for (String command : commands) commandsArray.add(command);
+            json.add("commands", commandsArray);
+        }
+
         return json;
     }
     
@@ -259,10 +282,18 @@ public class Kit {
             }
         }
         
-        return new Kit(name, displayName, description, items, cooldownMillis, 
-                      permission, maxUses, enabled);
+        // Commands run as console on claim (see getCommands()) — optional, absent in most kits.
+        List<String> commands = new ArrayList<>();
+        if (json.has("commands")) {
+            for (JsonElement element : json.getAsJsonArray("commands")) {
+                commands.add(element.getAsString());
+            }
+        }
+
+        return new Kit(name, displayName, description, items, cooldownMillis,
+                      permission, maxUses, enabled, commands);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

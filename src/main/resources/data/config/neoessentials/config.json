@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 31,
+  "_configVersion": 32,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -307,10 +307,8 @@
      Economy  —  in-game currency (full database settings in economy.json)
   ---------------------------------------------------------------- */
   "economy": {
-    // Symbol shown before money amounts (e.g. "$100.00")
-    "currencySymbol": "$",
-    // Starting balance for new players
-    "startingBalance": 0.0,
+    // Currency symbol and starting balance are configured in economy.json, not here —
+    // these keys used to also exist here but were always shadowed by economy.json's copy.
     // Multiplier for all /sell prices  (1.0 = 100%, 0.5 = 50%, 2.0 = 200%)
     "sellMultiplier": 1.0,
     // Allow selling items that have a custom display name (renamed items)
@@ -352,20 +350,6 @@
     //               clarity when you intentionally use the built-in UI AND point an
     //               external app at the same API).
     "mode": "external",
-
-    // Config-driven dashboard service account — for an external app (e.g. the Laravel
-    // NeoEssentials-Dashboard) that authenticates against this API server-to-server.
-    // When enabled, this account is auto-created on boot (or its password/role kept in
-    // sync with these values on every boot if it already exists) instead of needing to
-    // be provisioned by hand via the users API. Set these to the SAME values as the
-    // external app's MC_SERVICE_USERNAME/MC_SERVICE_PASSWORD env vars.
-    "serviceAccount": {
-      "enabled": false,
-      "username": "",
-      "password": "",
-      // ADMIN, OPERATOR, MODERATOR, or VIEWER
-      "role": "MODERATOR"
-    },
 
     // Populated automatically by running `/dashboard pair <dashboardUrl> <code>` in-game/
     // console (get the code from the dashboard's own Configuration page) — never hand-type
@@ -468,9 +452,8 @@
     "broadcastOnReturn": true,
     "afkMessage": "{player} is now AFK",
     "returnMessage": "{player} is no longer AFK",
-    "enableTablistIndicator": true,
-    "tablistAfkPrefix": "[AFK] ",
-    "tablistAfkSuffix": "",
+    // AFK indicator in the tablist is configured in tablist.json (showAfkIndicator/afkSuffix),
+    // not here.
     // Ignore AFK players when counting sleep votes
     "ignoreAfkInSleep": true,
     "enableActivityTracking": true,
@@ -1063,36 +1046,5 @@
     "useCustomServerFullMessage": false,
     // Hide join/quit messages when online count exceeds this value (-1 = always show)
     "hideJoinQuitMessagesAbove": -1
-  },
-
-  /* ----------------------------------------------------------------
-     Tablist  —  legacy fallback section  (preferred: tablist.json)
-     Kept for backward compatibility. tablist.json takes priority when present.
-  ---------------------------------------------------------------- */
-  "tablist": {
-    // Enable the custom tablist header/footer system
-    "enabled": true,
-    // Refresh interval in ticks (20 = 1 second)
-    "refreshInterval": 20,
-    "showPing": true,
-    // Hide vanished players from the online count for non-staff viewers
-    "hideVanished": true,
-    "showAfkIndicator": true,
-    "afkSuffix": " §7[AFK]",
-    // Row format — supports {prefix}, {player}, {suffix}, {group}, & color codes
-    "playerFormat": "§f{prefix}§r{player}{suffix}",
-    // Header above the player list. Array = animated frames, string = static.
-    // Supports: {player} {online} {max} {ping} {world} {tps} {time} {server_name} {balance}
-    //           {prefix} {suffix} {group} {newline} {bar} {animation:NAME}
-    "header": [
-      "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-      "§e§l         Welcome to {server_name}         ",
-      "§6§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    ],
-    // Footer below the player list. Same placeholder support as header.
-    "footer": [
-      "§7Players: §a{online}§7/§a{max}  §8|  §7TPS: {tps}  §8|  §7Ping: §a{ping}§7ms",
-      "§7World: §e{world}  §8|  §7Time: §e{time}  §8|  §7Bal: §a${balance}"
-    ]
   }
 }

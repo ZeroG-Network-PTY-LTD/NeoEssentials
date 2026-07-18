@@ -119,7 +119,6 @@ The operator (not the external dashboard) controls these:
     "publicModerationLookupEnabled": true
   },
   "mode": "external",
-  "serviceAccount": { "enabled": true, "username": "...", "password": "...", "role": "ADMIN" },
   "externalDashboard": { "url": "", "token": "", "keyId": "" }
 }
 ```
@@ -130,11 +129,6 @@ The operator (not the external dashboard) controls these:
 
 - `mode: "external"` is what disables the mod's own bundled dashboard UI at `/` — REST-only, as
   intended now that there's no internal dashboard. Keep it set to `"external"`.
-- `serviceAccount` is a *separate*, older service-account mechanism (username/password, same
-  session machinery as human logins) that predates API keys. **Prefer API keys for new
-  integrations** — they're purpose-built for this, independently revocable, and don't share a
-  credential space with human dashboard accounts. The service account still works if already in
-  use elsewhere, but don't build new tooling against it.
 - `bindAddress: "0.0.0.0"` means it listens on every network interface. If the reverse proxy
   terminating TLS runs on the same machine, consider binding to `127.0.0.1` instead and letting
   only the proxy reach it.
