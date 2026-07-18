@@ -248,7 +248,7 @@ public class ModerationEventHandler {
         if (!(event.getPlayer() instanceof ServerPlayer player)) return;
         try {
             if (!FreezeManager.getInstance().canPlayerPickupItems(player)) {
-                event.setCanPickup(net.neoforged.neoforge.common.util.TriState.FALSE);
+                event.setCanPickup(net.minecraft.util.TriState.FALSE);
             }
         } catch (Exception e) {
             LOGGER.error("Error handling item pickup for frozen player", e);
