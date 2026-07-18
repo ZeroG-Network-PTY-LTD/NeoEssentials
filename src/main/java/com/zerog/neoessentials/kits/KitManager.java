@@ -657,7 +657,7 @@ public class KitManager {
         List<String> commands = kit.getCommands();
         if (commands.isEmpty()) return;
 
-        var server = player.getServer();
+        var server = player.level().getServer();
         if (server == null) return;
 
         for (String command : commands) {
