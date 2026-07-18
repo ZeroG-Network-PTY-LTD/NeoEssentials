@@ -486,7 +486,7 @@ public class JailManager {
         // JailLocation.contains() handles both the dimension check and the shape-specific
         // (sphere/cuboid) bounds check in one place, shared with the region-wide block
         // break/place protection so both enforce the exact same cell boundary.
-        String currentDimension = player.level().dimension().location().toString();
+        String currentDimension = player.level().dimension().identifier().toString();
         return jailLoc.contains(newPos, currentDimension);
     }
     

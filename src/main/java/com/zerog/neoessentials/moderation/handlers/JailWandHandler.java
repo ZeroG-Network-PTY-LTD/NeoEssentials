@@ -48,7 +48,7 @@ public class JailWandHandler {
         event.setCanceled(true);
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         BlockPos pos = event.getPos();
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         JailSelectionManager.getInstance().setPos1(player.getUUID(), pos, dimension);
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.jail.wand.pos1_set",
             pos.getX(), pos.getY(), pos.getZ()));
@@ -69,7 +69,7 @@ public class JailWandHandler {
         event.setCanceled(true);
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         BlockPos pos = event.getPos();
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         JailSelectionManager.getInstance().setPos2(player.getUUID(), pos, dimension);
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.jail.wand.pos2_set",
             pos.getX(), pos.getY(), pos.getZ()));

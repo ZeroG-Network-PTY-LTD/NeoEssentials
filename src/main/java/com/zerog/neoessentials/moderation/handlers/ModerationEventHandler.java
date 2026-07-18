@@ -294,7 +294,7 @@ public class ModerationEventHandler {
             if (JailManager.isJailSystemEnabled()
                     && !PermissionAPI.hasPermission(playerId, "neoessentials.jail.bypass")
                     && JailManager.getInstance().isInsideAnyJail(event.getPos(),
-                        player.level().dimension().location().toString())) {
+                        player.level().dimension().identifier().toString())) {
                 event.setCanceled(true);
                 return;
             }
@@ -337,7 +337,7 @@ public class ModerationEventHandler {
             if (JailManager.isJailSystemEnabled()
                     && !PermissionAPI.hasPermission(playerId, "neoessentials.jail.bypass")
                     && JailManager.getInstance().isInsideAnyJail(event.getPos(),
-                        player.level().dimension().location().toString())) {
+                        player.level().dimension().identifier().toString())) {
                 event.setCanceled(true);
                 return;
             }

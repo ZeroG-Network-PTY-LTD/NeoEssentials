@@ -438,7 +438,7 @@ public class JailCommand {
 
             var weSelection = com.zerog.neoessentials.moderation.WorldEditIntegration.getSelection(player);
             if (weSelection != null) {
-                String dimension = player.level().dimension().location().toString();
+                String dimension = player.level().dimension().identifier().toString();
                 boolean success = jailManager.setJailLocationCuboid(jailName, weSelection.min(), weSelection.max(), dimension, createdBy);
                 return reportSetJailResult(source, jailName, success);
             }
@@ -464,7 +464,7 @@ public class JailCommand {
                 return 0;
             }
             BlockPos position = player.blockPosition();
-            String dimension = player.level().dimension().location().toString();
+            String dimension = player.level().dimension().identifier().toString();
             boolean success = JailManager.getInstance().setJailLocationSphere(
                 jailName, position, radius, dimension, player.getName().getString());
             return reportSetJailResult(source, jailName, success);
@@ -497,7 +497,7 @@ public class JailCommand {
 
             var weSelection = com.zerog.neoessentials.moderation.WorldEditIntegration.getSelection(player);
             if (weSelection != null) {
-                String dimension = player.level().dimension().location().toString();
+                String dimension = player.level().dimension().identifier().toString();
                 boolean success = JailManager.getInstance().setJailLocationCuboid(
                     jailName, weSelection.min(), weSelection.max(), dimension, player.getName().getString());
                 return reportSetJailResult(source, jailName, success);
