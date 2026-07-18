@@ -5,6 +5,10 @@ importantly, the external web dashboard. **The mod no longer ships its own dashb
 This API is the only integration surface; everything a dashboard needs (players, economy,
 permissions, moderation, backups, Discord bridge status, server control, etc.) goes through it.
 
+> **Building another NeoForge mod (not a web dashboard) that needs economy/permission/chat
+> interop instead?** See [`docs/VaultAPI.md`](VaultAPI.md) — a separate, much smaller
+> standalone Java API for that, unrelated to the HTTP surface documented below.
+
 - Base URL: `http://<server-host>:<dashboardPort>/api/...` (default port `8090`, configurable —
   see `webDashboard.port` in `config.json`).
 - All responses are JSON. Almost every response includes a top-level `"success": true/false`

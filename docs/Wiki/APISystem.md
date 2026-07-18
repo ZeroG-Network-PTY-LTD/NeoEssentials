@@ -6,7 +6,7 @@
 
 ## Overview
 
-NeoEssentials exposes four integration surfaces for server admins and mod developers:
+NeoEssentials exposes five integration surfaces for server admins and mod developers:
 
 | Surface | What it provides |
 |---|---|
@@ -14,6 +14,7 @@ NeoEssentials exposes four integration surfaces for server admins and mod develo
 | **Placeholder Java API** | Register custom tokens (`PlaceholderProvider`) or grouped expansions (`PlaceholderExpansion`) |
 | **REST API** | HTTP endpoints for external tools, dashboards, and automation |
 | **`NeoEssentialsAPI`** | Single stable entry-point exposing Economy, Permissions, and Placeholder services |
+| **Vault API** | Standalone, dependency-free economy/permission/chat interop for *other NeoForge mods* — see [`docs/VaultAPI.md`](../VaultAPI) |
 
 ---
 

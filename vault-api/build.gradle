@@ -1,0 +1,40 @@
+// Standalone, dependency-free API module — no NeoForge/Minecraft classes anywhere in this
+// package. This is deliberately its own tiny Gradle module so another NeoForge mod author can
+// depend on JUST this jar (via JitPack — see the root jitpack.yml) without adding a dependency
+// on the entire NeoEssentials mod. See docs/VaultAPI.md at the repo root for the integration
+// guide this module exists to support.
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Any NeoForge/Minecraft runtime already provides a real slf4j-api implementation at a
+    // compatible version — this is compileOnly so it's never bundled or forced on a consumer.
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+}
+
+// gradle.properties at the repo root is automatically visible to every subproject as a project
+// property, so mod_version/mod_group_id here are the exact same values the main mod uses.
+group = mod_group_id
+version = mod_version
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+            artifactId = 'vault-api'
+        }
+    }
+}

@@ -157,7 +157,18 @@ tasks.named('processResources') { dependsOn 'jarJar' }
 // needed for the dev-mode exploded classpath above) and once from jarJar's own direct packaging
 // of the same path into the output jar. Both copies are byte-identical, so excluding the
 // duplicate (rather than failing, which is Gradle 8's default for an unset strategy) is safe.
-tasks.named('jar') { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // Merges :vault-api's compiled classes directly into this jar — it's a plain Gradle
+    // project() dependency (compile/runtime classpath only, inside this buildscript), which
+    // is NOT enough on its own for NeoForge to load those classes on a real server: only the
+    // single physical mod jar gets loaded, not the buildscript's dependency graph. vault-api
+    // is meant to be BOTH independently publishable (see jitpack.yml, docs/VaultAPI.md) AND
+    // bundled unchanged inside the shipped mod (same source, same package, same classes
+    // either way), so this is simpler than routing it through the jarJar mechanism above
+    // (which is for genuinely external third-party jars, not our own sibling module).
+    from(project(':vault-api').sourceSets.main.output)
+}
 
 // Sets up a dependency configuration called 'localRuntime'.
 // This configuration should be used instead of 'runtimeOnly' to declare
@@ -169,6 +180,19 @@ configurations {
 }
 
 dependencies {
+    // vault/api's pure-Java interfaces (VaultServiceRegistry, VaultEconomy, VaultPermission,
+    // VaultChat) live in their own module now — see vault-api/build.gradle and
+    // docs/VaultAPI.md — so another mod author can depend on just that tiny jar via JitPack
+    // instead of all of NeoEssentials. Bundled into the shipped mod jar via the
+    // `from(project(':vault-api')...)` addition on the `jar` task above, which is the ONLY
+    // place these classes should physically end up at runtime — compileOnly here (not
+    // implementation) deliberately keeps vault-api's own jar off the runtime/module classpath.
+    // Adding it as `implementation` puts vault-api's jar on the module path in ADDITION to the
+    // merged copy already inside this mod's own jar, and NeoForge's JPMS module resolution then
+    // sees the same package "exported" by two different modules (a split-package violation) and
+    // refuses to boot with a ResolutionException.
+    compileOnly project(':vault-api')
+
     // YAWP (Yet Another World Protector) for region protection integration (local JAR workaround)
     // implementation name: 'yawp-1.21.1-neoforge-0.6.2-beta1'  // Disabled - jar file is currently .disabled
     // Example optional mod dependency with JEI
