@@ -22,6 +22,263 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.3+build.24] — 2026-07-18
+
+### 🧹 Config Cleanup — Removed Dead/Shadowed Keys, Kit Commands Now Actually Run
+
+Full audit of every shipped config file against actual code usage before touching anything.
+
+- **`config.json`:** removed the entire legacy `tablist` section (~26 keys) — `tablist.json`
+  always wins when present (every real deployment), so this was pure dead weight and a
+  confusing "which file actually wins" trap for operators. Removed
+  `economy.currencySymbol`/`startingBalance` — literal duplicates always shadowed by
+  `economy.json`'s own copies. Removed `afk.enableTablistIndicator`/`tablistAfkPrefix`/
+  `tablistAfkSuffix` — confirmed `AfkManager` never reads them; `tablist.json`'s own
+  `showAfkIndicator`/`afkSuffix` already own this.
+- **`discord_auth.json`:** removed `permissionMappings_common_examples`, an empty stub
+  self-labeled "not loaded by the mod" in its own comment.
+- **`webDashboard.serviceAccount` removed entirely** — config keys plus the
+  auto-provisioning sync code in `AuthenticationManager`. A real breaking change,
+  deliberately: it was the pre-pairing auth mechanism, already documented as superseded by
+  `/dashboard pair`/API keys, and keeping two working-but-redundant dashboard auth paths was
+  exactly the kind of confusion this cleanup targets.
+- **`kits.json`'s per-kit `commands` array now actually executes.** It was defined in the
+  schema and every sample kit but silently never read — `Kit.java` parsed everything else but
+  ignored it entirely. `KitManager` now runs each command as console
+  (`server.execute`/`performPrefixedCommand`, same pattern `TaskScheduler` already uses)
+  right after a kit's items are handed over, with `{player}` replaced by the claiming
+  player's name.
+- `config.json`'s `_configVersion` bumped to 32, `discord_auth.json`'s to 10.
+
+---
+
+## [1.0.3+build.23] — 2026-07-18
+
+### ✨ Vault API Extracted Into a Standalone Module + First Real Economy Bridge
+
+- **`vault/api` (`VaultServiceRegistry`/`VaultEconomy`/`VaultPermission`/`VaultChat`) is now
+  its own Gradle subproject (`:vault-api`)**, published independently via JitPack
+  (`com.github.ZeroG-Network-PTY-LTD:NeoEssentials:vault-api-1.0.3`) — see the new
+  `docs/VaultAPI.md`. This registry was always architecturally sound (a NeoForge
+  reimplementation of Bukkit's Vault concept), but had zero real-world adoption since no
+  other mod could target it without depending on all of NeoEssentials. Same package, so
+  nothing in the main mod needed to change; its classes are still bundled into the shipped
+  jar exactly as before (build size/contents unchanged).
+- **Added `SGEconomyAdapter`**, the first real third-party economy bridge, for
+  [SG Economy API](https://www.curseforge.com/minecraft/mc-mods/sg-economy-api). Gated
+  behind new `economy.useExternalEconomy` (default `false` — opt-in, since silently
+  switching which mod controls player money is higher-stakes than the equivalent
+  external-permissions toggle). When enabled and SG Economy API is detected installed, it's
+  registered into the Vault registry at `HIGH` priority, taking over from the built-in
+  economy automatically. Note: SG Economy API's own public API only works with online
+  players (no offline-balance lookup exists in its API at all), so the adapter returns
+  conservative failure/zero for offline players rather than guessing.
+
+---
+
+## [1.0.3+build.22] — 2026-07-18
+
+### 🧹 Dashboard Command Cleanup + Pairing URL Fix
+
+- **Fixed `/dashboard pair` being unable to accept a URL argument at all** —
+  `dashboardUrl` used `StringArgumentType.word()`, which never accepts `:` or `/` in any
+  form, quoted or not. Every real URL contains both, so the command was completely unusable
+  as shipped. Switched to `StringArgumentType.string()`; usage is now
+  `/dashboard pair "http://host:port" <code>` (URL must be quoted).
+- **Removed the vestigial bundled-UI file-sync subsystem** — `/dashboard update`/`check`/
+  `force` and the "Files: build.X → build.Y available" status line were leftovers from when
+  the mod shipped its own bundled dashboard HTML/JS/CSS. There's no bundled UI anymore
+  (external-only, REST + WebSocket), so this had nothing to ever find or copy. Deleted
+  `DashboardFileManager` entirely; reworded the remaining status/start/stop/restart output to
+  describe "the API server" instead of "the dashboard," since there's no browsable UI to
+  imply.
+
+---
+
+## [1.0.3+build.21] — 2026-07-17
+
+### ✨ One-Command Dashboard Pairing Handshake
+
+Previously, connecting an external dashboard required an admin to run `/apikey create`,
+hand-copy the token into the dashboard's config, and separately configure a matching
+webhook secret on both sides for the reverse direction — two manual steps kept in sync by
+hand, with nothing that verified both ends actually agreed.
+
+- **`/dashboard pair <dashboardUrl> <code>` now completes both directions in one round
+  trip:** the mod mints an API key and hands it to the dashboard (for the dashboard's own
+  outbound calls), and the dashboard mints a token back (for the mod's outbound user-sync
+  webhook), replacing the old HMAC-signature scheme so both directions share one trust
+  model — a token the receiving side generated for the calling side.
+- **`/dashboard unpair`** reverses it cleanly, revoking the minted key.
+
+---
+
+## [1.0.3+build.20] — 2026-07-17
+
+### 🐛 LuckPerms Primary Group Now Actually Affects Chat Format & Tablist
+
+- **Root cause:** `hasPermission()`/`getGroupWeight()` already checked the external
+  permission adapter (LuckPerms) first, but nothing resolved a player's *group name*
+  through it. `ChatHandler` and `TablistManager` both read straight from the internal
+  `PermissionManager`, which silently returned the internal default group whenever LuckPerms
+  was in charge — so `group:<name>` chat formats and per-group tablist styling never
+  matched a player's real LuckPerms primary group.
+- **Fix:** added `ExternalPermissionAdapter.getPrimaryGroup()`, implemented in
+  `LuckPermsAdapter`, and a `PermissionAPI.getPrimaryGroup()` facade mirroring the existing
+  `getGroupWeight()` external-then-internal fallback pattern. `ChatHandler` and
+  `TablistManager.getPermissionGroup()` now call it.
+
+---
+
+## [1.0.3+build.19] — 2026-07-17
+
+### ✨ API Keys, Locked-Down Config Endpoints, and Dashboard Account Sync
+
+The internal Laravel dashboard is retired in favor of an external dashboard built directly
+against this REST API — these three changes are the missing pieces for that.
+
+- **API key authentication:** new `ApiKeyManager` — long-lived, non-expiring, independently
+  revocable credentials for service-to-service auth, stored as a salted PBKDF2 hash (same
+  scheme as dashboard passwords), shown exactly once at creation. `/apikey create|list|revoke`
+  in-game (console/OP only, so a key can always be created/revoked even if every dashboard
+  session is locked out) and `/api/apikeys` (GET/POST/DELETE, ADMIN-gated) over REST. Wired
+  into `DashboardAPI`'s existing `withAuth()` as a third Bearer-token type alongside sessions,
+  so all ~28 existing endpoint handlers gained API-key support automatically.
+- **Locked down `motd`/`rules`/`shops`/`holograms`/`warps` to ADMIN for writes** — these
+  previously had no role check at all, so any authenticated identity (including a
+  VIEWER-role key) could mutate server-facing MOTD, rules, shop prices, holograms, and warps.
+  Reads stay open to any authenticated caller.
+- **Dashboard account sync, both directions:** `POST /api/users/sync` (idempotent
+  create-or-update, for an external dashboard pushing its own accounts into the mod) and
+  `DashboardUserSyncWebhook` (an outbound, HMAC-signed notification fired whenever a
+  dashboard account changes through any path — disabled by default, fire-and-forget).
+- Added `docs/API.md` — a complete reference for every REST endpoint (auth tier,
+  request/response shapes, WebSocket protocol) — and refreshed `docs/Wiki/APISystem.md`/
+  `WebDashboard.md` to match the external-only reality (correcting several stale claims:
+  the fictional "admin/admin123 default password," "moderator or admin" on moderation writes
+  which is actually ADMIN-only, and the non-existent bundled-UI "Dashboard Pages" section).
+
+---
+
+## [1.0.3+build.18] — 2026-07-17
+
+### 🐛 Ban/Kick Tracking Restored, Discord Channel Sending, Permission Group Management
+
+- **Fixed bans and kicks being invisible to the mod entirely.** Vanilla's built-in
+  `/ban`/`/kick`/`/banlist`/`/pardon`/`/pardon-ip` were never removed from the command
+  dispatcher, and Brigadier's same-name node merging meant vanilla silently handled these
+  instead of `BanManager`/`KickManager` — every ban landed straight in vanilla's
+  `banned-players.json`, invisible to the dashboard and `/modhistory`. Also fixed `/ban`'s
+  player-name argument using `greedyString()` instead of `word()`, which swallowed the
+  reason text into the player name and always fell back to the default ban reason.
+- **Added `/modhistory`** (alias `/history`) — in-game view of a player's full
+  ban/mute/kick/warn record, mirroring the dashboard's public moderation lookup.
+- **Discord channel-ID test messages actually send now.** The dashboard's "send test
+  message" endpoint was a stub that only logged and faked success; it now delivers to the
+  given channel ID for real via `ChatIntegrationAdapter.sendToChannel()` (implemented in
+  `SDLinkAdapter` through SDLink's own JDA session), and validates the input is a real
+  channel snowflake, not a name.
+- **Fixed permission group deletion silently doing nothing** —
+  `PermissionEndpoint`'s delete call compared a `String` against `PermissionGroup` objects,
+  always failing to match. Added `PermissionManager.removeGroup()`/`renameGroup()`, and
+  exposed group priority/inheritance (already persisted, never read back) through the API.
+  Permission endpoints now resolve offline players via profile cache + Mojang API fallback
+  instead of online-only lookups.
+- Fixed a jar-packaging failure (`duplicate META-INF/jarjar entries`) introduced by the
+  storage-backend dev-mode fix, caught only by CI's full `./gradlew build` (local testing
+  had only run `compileJava`).
+
+---
+
+## [1.0.3+build.17] — 2026-07-16
+
+### 🐛 Storage Backend Fix + 9 Bugs From a Full Command Audit
+
+- **Fixed the SQLite storage backend silently no-op'ing on every read/write in dev.**
+  JarJar-embedded dependencies (`sqlite-jdbc`, `mysql-connector-j`, `HikariCP`, `snakeyaml`,
+  `Java-WebSocket`) only landed in the packaged `build/libs` jar, never in the exploded
+  classes/resources directories `runServer` actually loads from, so FML's JarJar locator
+  never found `org.sqlite.JDBC`. This also silently blocked permission group assignment,
+  which depends on the same storage layer.
+- Also fixed, per a full command audit: `/baltop` cache lost-update race on rapid balance
+  changes, `/setworth` rejecting namespaced item IDs, `/invseeedit` using an unregistered
+  `MenuType`, jail auto-ban thresholds being unreachable and unannounced, `/chatformat`
+  never being registered, the `/mute` family rejecting console/RCON, `/gc` colliding with
+  the global-chat alias, `/me` conflicting with vanilla's built-in command node, and removed
+  the undocumented `/hub` alias for `/spawn`.
+
+---
+
+## [1.0.3+build.16] — 2026-07-16
+
+### ✨ `/sudo` Chat & Wildcard Targets + Per-Branch CI Releases
+
+- **`/sudo <player> c:<message>`** forces the player to publicly say the message, posted as
+  a real `ServerChatEvent` (going through the mod's full chat pipeline — formatting,
+  mute/freeze/anti-spam checks, Discord relay — instead of a raw broadcast).
+- **`/sudo * <command>`** targets every online player except the sender; `/sudo **` includes
+  the sender too. Exempt players (`neoessentials.sudo.exempt`) are silently skipped in bulk
+  mode instead of aborting the whole batch.
+- Relaxed `GET /api/discord/auth-config` from ADMIN to AUTH tier — every field in the
+  response is a non-secret boolean/enum, and requiring ADMIN broke the dashboard's
+  MODERATOR-tier service account checking "is Discord login even possible."
+- Added a CI workflow that builds the mod jar and publishes it to a per-branch GitHub
+  Release on every push — no local Gradle build required to grab the latest build.
+
+---
+
+## [1.0.3+build.15] — 2026-07-15
+
+### ✨ Real Discord Companion-Mod Integrations (SDLink, Mc2Discord, DCIntegration)
+
+The mod never opened its own connections to Discord, but its chat-relay adapters used to
+target reflection against guessed (and wrong) class/method names, and the dashboard's
+"Login with Discord" performed its own OAuth2 exchange straight against discord.com — both
+against the goal of always delegating actual Discord communication to a real companion mod.
+
+- Replaced the 3 reflection-based chat adapters with 2 real compile-time integrations
+  (SDLink and Mc2Discord's actual public API classes), still runtime-optional via `ModList`.
+  Dropped DiscordSRV support entirely — it's a Bukkit/Paper plugin and can't run on NeoForge.
+- Added a real `DCIntegrationAdapter` (`de.erdbeerbaerlp.dcintegration`), restoring the third
+  companion mod, against its real API rather than reflection.
+- Dashboard "Login with Discord" is now identity-lookup only — a player links their account
+  in-game via a companion mod's own commands, and the dashboard reads that link. No direct
+  network calls to Discord anywhere in the mod. Added the reverse lookup
+  (Discord ID → linked Minecraft account) this requires.
+- `webDashboard.mode` now defaults to `"external"` (REST-only) — no built-in dashboard UI has
+  ever actually shipped with the mod; the old default silently logged a scary (but harmless)
+  "Dashboard resources NOT found" error on every request to `/`.
+
+---
+
+## [1.0.3+build.14] — 2026-07-14
+
+### ✨ Module/Command Toggles Actually Work, Public Moderation Lookup API, Dashboard Command Wiring Fixed
+
+- **Fixed `config.json`'s module/command enable-disable toggles doing nothing in most
+  cases** — most `modules` flags were only checked by *some* of their commands, and ~45
+  command-registration files never checked their own `commands.json` entry at all. Every
+  affected command now checks both flags before registering. Added 4 new module flags
+  (`hologramsEnabled`/`shopEnabled`/`auctionHouseEnabled`/`vaultEnabled`) that previously had
+  no kill-switch at all, plus `tablistEnabled`/`resourcePacksEnabled`/`playerTagsEnabled`/
+  `discordIntegrationEnabled` for subsystems that had none before either. Fixed two
+  pre-existing double-registration bugs (`/pt`, `/enchanthand`) and deleted two dead
+  duplicate command classes. **Note: toggling any of these still requires a restart, not
+  just `/neoe reload`** — Brigadier commands and one-time manager `initialize()` calls can't
+  be added/removed at runtime; `/neoe reload` now says so explicitly.
+- **New public (no-login) moderation lookup:** `GET /api/public/moderation/lookup/{name}`
+  and `/recent`, matching ban-management plugins' public transparency page. Deliberately
+  excludes IP bans/mutes, staff notes, and player reports. Gated by
+  `webDashboard.securitySettings.publicModerationLookupEnabled` (default on).
+- **Fixed `/dashboard` and `/dashboardregister` being completely dead code** — both command
+  classes existed and compiled fine but were never actually registered with the command
+  dispatcher, so typing them in-game did nothing at all.
+- Added `webDashboard.mode` (`internal`/`external`/`both`) and a public, unauthenticated
+  `GET /api/ping` reachability check — lets an external dashboard confirm "can I reach this
+  port at all" independently of whether login/auth succeeds.
+
+---
+
 ## [1.0.3+build.10] — 2026-07-12
 
 ### ✨ Storage Backends Now Cover the Whole Mod
