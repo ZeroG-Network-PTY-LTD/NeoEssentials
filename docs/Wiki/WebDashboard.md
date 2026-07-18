@@ -271,13 +271,14 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 
 | Command | Permission | Description |
 |---|---|---|
-| `/dashboard` | `neoessentials.admin.dashboard` | Show dashboard status, URL, and installed file version |
-| `/dashboard start` | `neoessentials.admin.dashboard` | Start dashboard if stopped |
-| `/dashboard stop` | `neoessentials.admin.dashboard` | Stop the dashboard |
-| `/dashboard restart` | `neoessentials.admin.dashboard` | Restart the dashboard |
-| `/dashboard status` | `neoessentials.admin.dashboard` | Show dashboard status |
-| `/dashboard url` | `neoessentials.admin.dashboard` | Show the dashboard URL |
-| `/dashboard update [check\|force]` | `neoessentials.admin.dashboard` | Update bundled dashboard files from the JAR (`check` = dry-run, `force` = bypass checksum). **Vestigial** — the mod ships no bundled UI files anymore, so this has nothing to find/update; kept for compatibility, not part of the supported workflow |
+| `/dashboard` | `neoessentials.admin.dashboard` | Show the REST API + WebSocket server's status |
+| `/dashboard start` | `neoessentials.admin.dashboard` | Start the API server if stopped |
+| `/dashboard stop` | `neoessentials.admin.dashboard` | Stop the API server |
+| `/dashboard restart` | `neoessentials.admin.dashboard` | Restart the API server |
+| `/dashboard status` | `neoessentials.admin.dashboard` | Show the API server's status |
+| `/dashboard url` | `neoessentials.admin.dashboard` | Show the API base URL |
+| `/dashboard pair "<dashboardUrl>" <code>` | `neoessentials.dashboard.pair` | Complete the pairing handshake with an external dashboard — see [API System → Pairing](APISystem#pairing) |
+| `/dashboard unpair` | `neoessentials.dashboard.pair` | Clear the paired connection and revoke its API key |
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
@@ -302,22 +303,14 @@ keys are for and how they differ from a human dashboard account.
 | `neoessentials.dashboard.manage` | 🔒 | Access console and management tools |
 | `neoessentials.dashboard.moderator` | 🔒 | Moderator-level dashboard access |
 | `neoessentials.dashboard.admin` | 🔒 | Full admin dashboard access |
-| `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the dashboard server (`/dashboard`) |
+| `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the API server (`/dashboard`) |
 | `neoessentials.dashboard.apikeys` | 🔒 | Create/list/revoke API keys for external dashboard integrations (`/apikey`) |
+| `neoessentials.dashboard.pair` | 🔒 | Pair/unpair this server with an external dashboard (`/dashboard pair`, `/dashboard unpair`) |
 
 > Unlike most permission nodes documented on the [Permission System](PermissionSystem) page,
-> the dashboard nodes above (other than `neoessentials.dashboard.apikeys`, which **is**
+> the dashboard nodes above (other than `neoessentials.dashboard.apikeys`/`.pair`, which **are**
 > registered) are not pre-registered in `PermissionRegistry` — they're checked ad hoc, so grant
 > them explicitly to non-OP groups rather than relying on a documented default.
-
----
-
-## File Auto-Update (legacy, no longer applicable)
-
-This mechanism (versioned dashboard HTML/JS/CSS auto-copied from the JAR on boot) predates the
-move to an external-only dashboard. The mod ships no bundled UI files anymore, so there's
-nothing for it to check or copy — `/dashboard update` still runs without erroring, it just finds
-zero files to update. Left here for history; not something to configure or rely on.
 
 ---
 

@@ -8,7 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.DashboardAPI;
-import com.zerog.neoessentials.webdashboard.DashboardFileManager;
 import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
 import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
 import com.zerog.neoessentials.webdashboard.security.User;
@@ -28,15 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * Command to manage the Dashboard API server
+ * Command to manage the mod's REST API + WebSocket server — external-only, no bundled UI.
  * Usage:
- * - /dashboard           — Show dashboard status
- * - /dashboard start     — Start the dashboard
- * - /dashboard stop      — Stop the dashboard
- * - /dashboard restart   — Restart the dashboard
- * - /dashboard url       — Show dashboard URL
- * - /dashboard update    — Smart-update changed dashboard files from JAR
- * - /dashboard update check — Preview which files would change (dry-run)
+ * - /dashboard           — Show API/WebSocket server status
+ * - /dashboard start     — Start the REST API + WebSocket server
+ * - /dashboard stop      — Stop it
+ * - /dashboard restart   — Restart it
+ * - /dashboard url       — Show the base URL an external dashboard should connect to
  * - /dashboard pair "&lt;dashboardUrl&gt;" &lt;code&gt; — complete the mutual pairing handshake with an
  *   external dashboard (see {@link com.zerog.neoessentials.webdashboard.security.DashboardUserSyncWebhook}).
  *   The URL must be quoted — Brigadier's unquoted string parsing can't contain ':' or '/',
@@ -67,14 +64,6 @@ public class DashboardCommand {
                 .executes(DashboardCommand::showStatus))
             .then(Commands.literal("url")
                 .executes(DashboardCommand::showUrl))
-            .then(Commands.literal("update")
-                .executes(DashboardCommand::updateDashboardFiles)
-                // /dashboard update check — dry-run preview
-                .then(Commands.literal("check")
-                    .executes(DashboardCommand::checkDashboardFiles))
-                // /dashboard update force — bypass checksum, overwrite everything
-                .then(Commands.literal("force")
-                    .executes(DashboardCommand::forceUpdateDashboardFiles)))
             .then(Commands.literal("pair")
                 .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
                 .then(Commands.argument("dashboardUrl", StringArgumentType.string())
@@ -188,18 +177,8 @@ public class DashboardCommand {
         }
 
         if (status.running) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
         }
-
-        // Show installed file version
-        String installedVer = DashboardFileManager.getInstalledDashboardVersion();
-        String currentVer   = DashboardFileManager.getCurrentModVersion();
-        String verColour    = installedVer.equals(currentVer) ? "§a" : "§e";
-        String filesSuffix  = installedVer.equals(currentVer)
-            ? MessageUtil.localize("commands.neoessentials.dashboard.files_uptodate_suffix")
-            : MessageUtil.localize("commands.neoessentials.dashboard.files_update_available_suffix", currentVer);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.files_line", verColour, installedVer, filesSuffix), false);
 
         source.sendSuccess(() -> Component.literal(""), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.footer_separator"), false);
@@ -234,7 +213,6 @@ public class DashboardCommand {
         if (success) {
             DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.started_success"), false);
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
             return 1;
         } else {
@@ -289,9 +267,7 @@ public class DashboardCommand {
         boolean startSuccess = DashboardLifecycleManager.startDashboard(source.getServer());
 
         if (startSuccess) {
-            DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restarted_success"), false);
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.url_line", status.url), false);
             return 1;
         } else {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.failed_restart"), false);
@@ -311,125 +287,8 @@ public class DashboardCommand {
 
         DashboardLifecycleManager.DashboardStatus status = DashboardLifecycleManager.getStatus();
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.urls_header"), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.frontend_line", status.url), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.api_line", status.url), false);
         return 1;
     }
 
-    // ── Update commands ────────────────────────────────────────────────────────
-
-    /**
-     * /dashboard update — smart per-file update using MD5 comparison.
-     * Only overwrites files whose content differs from the JAR copy.
-     */
-    private static int updateDashboardFiles(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.checking_updates"), false);
-
-        try {
-            DashboardFileManager.UpdateSummary summary = DashboardFileManager.smartUpdateDashboardFiles(false);
-            return sendUpdateSummary(source, summary, false);
-        } catch (Exception e) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.update_failed", e.getMessage()), false);
-            return 0;
-        }
-    }
-
-    /**
-     * /dashboard update check — dry-run: shows what would change without writing any files.
-     */
-    private static int checkDashboardFiles(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.checking_dry_run"), false);
-
-        try {
-            DashboardFileManager.UpdateSummary summary = DashboardFileManager.smartUpdateDashboardFiles(true);
-            return sendUpdateSummary(source, summary, true);
-        } catch (Exception e) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.check_failed", e.getMessage()), false);
-            return 0;
-        }
-    }
-
-    /**
-     * /dashboard update force — bypass checksum comparison and overwrite every file.
-     */
-    private static int forceUpdateDashboardFiles(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_updating"), false);
-
-        try {
-            DashboardFileManager.forceUpdateDashboardFiles();
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_done"), false);
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_path"), false);
-            if (DashboardAPI.getInstance().isRunning()) {
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restart_to_apply"), false);
-            }
-            return 1;
-        } catch (Exception e) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.force_update_failed", e.getMessage()), false);
-            return 0;
-        }
-    }
-
-    // ── Helper ─────────────────────────────────────────────────────────────────
-
-    private static int sendUpdateSummary(CommandSourceStack source,
-                                          DashboardFileManager.UpdateSummary summary,
-                                          boolean dryRun) {
-        String label = dryRun ? MessageUtil.localize("commands.neoessentials.dashboard.summary_dryrun_label") : "";
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_separator"), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_checked", summary.total(), label), false);
-
-        if (!summary.added.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.component(dryRun
-                ? "commands.neoessentials.dashboard.summary_added_dryrun"
-                : "commands.neoessentials.dashboard.summary_added_normal", summary.added.size()), false);
-            for (String f : summary.added)
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item", f), false);
-        }
-
-        if (!summary.updated.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.component(dryRun
-                ? "commands.neoessentials.dashboard.summary_updated_dryrun"
-                : "commands.neoessentials.dashboard.summary_updated_normal", summary.updated.size()), false);
-            for (String f : summary.updated)
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item_updated", f), false);
-        }
-
-        if (!summary.unchanged.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_unchanged", summary.unchanged.size()), false);
-        }
-
-        if (!summary.failed.isEmpty()) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_failed", summary.failed.size()), false);
-            for (String f : summary.failed)
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_file_item_failed", f), false);
-        }
-
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_separator"), false);
-
-        if (dryRun) {
-            if (summary.hasChanges()) {
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_dryrun_hint"), false);
-            } else {
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_dryrun_uptodate"), false);
-            }
-        } else {
-            if (summary.hasChanges()) {
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_update_success"), false);
-                if (DashboardAPI.getInstance().isRunning()) {
-                    source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.restart_to_apply"), false);
-                }
-            } else {
-                source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboard.summary_update_nochange"), false);
-            }
-        }
-
-        return summary.failed.isEmpty() ? 1 : 0;
-    }
 }
