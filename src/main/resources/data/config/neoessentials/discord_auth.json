@@ -92,12 +92,11 @@
       ]
     },
 
-    /* Common permission mapping examples (for reference — not loaded by the mod):
+    /* Common permission mapping examples (for reference):
      * admin_role   : ["neoessentials.*"]  — full access to all NeoEssentials features
      * mod_role     : ["neoessentials.dashboard.temppass","neoessentials.kick","neoessentials.mute"]
      * helper_role  : ["neoessentials.dashboard.status","neoessentials.discord.syncperms"]
      * member_role  : ["neoessentials.home","neoessentials.tpa","neoessentials.warp"]
      */
-    "permissionMappings_common_examples": {}
   }
 }

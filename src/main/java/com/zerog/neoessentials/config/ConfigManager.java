@@ -1356,7 +1356,11 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 31);          // v31 — webDashboard.serviceAccount (config-driven service account), hologram/shop/auctionHouse/vault/tablist/resourcePacks/playerTags/discordIntegration module toggles + missing command entries, webDashboard.mode (internal/external/both)
+        put(MAIN_CONFIG, 32);          // v32 — removed dead weight: legacy tablist{} section (tablist.json
+                                       //        always wins), duplicate/shadowed economy.currencySymbol+
+                                       //        startingBalance (economy.json is authoritative), unread
+                                       //        afk tablist-indicator keys, and webDashboard.serviceAccount
+                                       //        (superseded by the /dashboard pair handshake)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
@@ -1477,46 +1481,6 @@ public class ConfigManager {
             }
         }
         return true;
-    }
-
-    /**
-     * Returns true if a config-defined dashboard service account (webDashboard.serviceAccount)
-     * should be auto-created/kept-in-sync on boot. Lets an external dashboard app's credentials
-     * (e.g. the Laravel app's MC_SERVICE_USERNAME/MC_SERVICE_PASSWORD) be set once in config.json
-     * instead of provisioned by hand via the users API.
-     */
-    public static boolean isDashboardServiceAccountEnabled() {
-        JsonObject serviceAccount = getDashboardServiceAccountConfig();
-        return serviceAccount != null && serviceAccount.has("enabled") && serviceAccount.get("enabled").getAsBoolean();
-    }
-
-    public static String getDashboardServiceAccountUsername() {
-        JsonObject serviceAccount = getDashboardServiceAccountConfig();
-        return serviceAccount != null && serviceAccount.has("username") ? serviceAccount.get("username").getAsString() : "";
-    }
-
-    public static String getDashboardServiceAccountPassword() {
-        JsonObject serviceAccount = getDashboardServiceAccountConfig();
-        return serviceAccount != null && serviceAccount.has("password") ? serviceAccount.get("password").getAsString() : "";
-    }
-
-    public static String getDashboardServiceAccountRole() {
-        JsonObject serviceAccount = getDashboardServiceAccountConfig();
-        if (serviceAccount != null && serviceAccount.has("role")) {
-            return serviceAccount.get("role").getAsString();
-        }
-        return "MODERATOR";
-    }
-
-    private static JsonObject getDashboardServiceAccountConfig() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject dashboard = config.getAsJsonObject("webDashboard");
-            if (dashboard.has("serviceAccount")) {
-                return dashboard.getAsJsonObject("serviceAccount");
-            }
-        }
-        return null;
     }
 
     /**

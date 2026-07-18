@@ -35,16 +35,17 @@ Unauthenticated, always registered regardless of `mode`. Returns:
 ```json
 {"success": true, "mod": "neoessentials", "mode": "internal"}
 ```
-Use this to answer "can I reach the mod's HTTP port at all" as a separate question from "does my
-service account actually authenticate" — the two failure modes look identical from the outside
+Use this to answer "can I reach the mod's HTTP port at all" as a separate question from "is the
+dashboard actually paired/authenticated" — the two failure modes look identical from the outside
 (both just time out or error) but need completely different fixes.
 
 ```bash
 curl http://<mod-server-ip>:8080/api/ping
 ```
 - **Connection refused / timeout** → network problem (see checklist below), not a mod bug.
-- **200 with the JSON above** → the mod's API is reachable; if the dashboard app still can't log
-  in, the problem is in the service-account credentials, not connectivity.
+- **200 with the JSON above** → the mod's API is reachable; if the dashboard app still can't
+  connect, the problem is in the pairing/API key, not connectivity — see
+  [API System → Pairing](APISystem#pairing).
 
 ---
 
@@ -101,17 +102,18 @@ Work through these in order — each rules out one layer:
    "the Laravel server itself", not the Minecraft server. Must be the Minecraft server's real
    reachable IP/hostname.
 
-5. **Does the service account actually exist and have the right role?**
-   `/api/ping` succeeding but login failing means steps 1–4 are fine. Check:
-   - `MC_SERVICE_USERNAME`/`MC_SERVICE_PASSWORD` in Laravel's `.env` match a real account created
-     via the mod's dashboard (see `config/minecraft.php`'s setup comment, or now: register via
-     `/dashboardregister` in-game, or the Laravel app's own `/register` page — which as of this
-     session also creates a matching mod-side account automatically).
-   - The account isn't locked out from repeated failed attempts (`MAX_FAILED_ATTEMPTS` — check
-     the mod's server log for lockout warnings, or reset the account's password via
-     `/api/users/{id}/password` using a *different*, known-working admin account).
-   - The account has at least `MODERATOR` role if the Laravel app needs to call mutating
-     endpoints (ban/kick/economy adjust/etc.) — `VIEWER` is read-only.
+5. **Is the dashboard actually paired?**
+   `/api/ping` succeeding but the dashboard still can't call mutating endpoints means steps 1–4
+   are fine. Check:
+   - `MC_SERVICE_API_KEY` in the Laravel app's `.env` is actually populated — it's set
+     automatically by running `/dashboard pair "<dashboardUrl>" <code>` (get the code from the
+     dashboard's own Configuration page), never hand-typed. See
+     [API System → Pairing](APISystem#pairing).
+   - The paired key hasn't been revoked — `/apikey list` in-game shows every key's status; if
+     it's gone, re-pair.
+   - The key's role is at least `MODERATOR` if the Laravel app needs to call mutating endpoints
+     (ban/kick/economy adjust/etc.) — `VIEWER` is read-only. Role is set at pairing time via
+     `/apikey create`'s role (pairing itself always mints an `ADMIN` key).
 
 6. **Is `storage.type`/database connectivity a separate red herring?**
    Not related to dashboard connectivity — don't confuse a `ClassNotFoundException` from the
