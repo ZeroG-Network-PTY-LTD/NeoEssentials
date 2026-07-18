@@ -730,9 +730,11 @@ command**, run once:
    one-time code (valid 10 minutes) and the exact command to run.
 2. On the Minecraft server console (or in-game, if OP), run:
    ```
-   /dashboard pair <dashboardUrl> <code>
+   /dashboard pair "<dashboardUrl>" <code>
    ```
-   Requires permission `neoessentials.dashboard.pair`.
+   The quotes around the URL are required (Brigadier's unquoted string parsing can't contain
+   `:` or `/`, which every URL does) — the dashboard's own generated command already includes
+   them. Requires permission `neoessentials.dashboard.pair`.
 3. In that single request/response round-trip:
    - The mod mints an API key (via the same `ApiKeyManager` `/apikey` uses) and sends it to the
      dashboard at `POST <dashboardUrl>/api/pair/complete` — the dashboard stores this and uses it
