@@ -6,6 +6,149 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.24 — 2026-07-18
+
+### 🧹 Config Cleanup — Kit Commands Now Actually Run
+
+- Removed a handful of dead/duplicate config settings that either did nothing or were
+  always overridden by another file, so the config files are less confusing to edit.
+- **Fixed:** the `commands` list on a kit (run when it's claimed, e.g. a welcome message)
+  was silently ignored — it now actually runs.
+- The service-account login option for external dashboards has been removed — use
+  `/dashboard pair` or `/apikey create` instead (see below).
+
+---
+
+## 1.0.3+build.23 — 2026-07-18
+
+### ✨ Economy Now Supports Third-Party Economy Mods
+
+- Added support for [SG Economy API](https://www.curseforge.com/minecraft/mc-mods/sg-economy-api)
+  as an optional alternative to NeoEssentials' own economy — enable with
+  `economy.useExternalEconomy: true` in config.json if you'd rather players' balances live
+  in that mod instead. Off by default.
+- The mod's internal economy/permission interop system (used for advanced mod-to-mod
+  integrations) was also split into its own publicly-installable component for other mod
+  developers.
+
+---
+
+## 1.0.3+build.22 — 2026-07-18
+
+### 🧹 Dashboard Command Cleanup
+
+- Fixed `/dashboard pair` not being able to accept a server URL at all — it now works
+  correctly (the URL needs quotes: `/dashboard pair "http://host:port" <code>`).
+- Removed `/dashboard update`/`check`/`force` — leftovers from an old bundled dashboard UI
+  that no longer ships with the mod, so these commands never actually did anything useful.
+
+---
+
+## 1.0.3+build.21 — 2026-07-17
+
+### ✨ One-Command External Dashboard Pairing
+
+- Connecting an external dashboard app to your server is now a single command:
+  `/dashboard pair "<dashboardUrl>" <code>` (get the code from the dashboard's own setup
+  page). Both sides connect to each other automatically — no more manually copying keys
+  between two config files.
+- `/dashboard unpair` disconnects cleanly.
+
+---
+
+## 1.0.3+build.20 — 2026-07-17
+
+### 🐛 Bug Fix — LuckPerms Group Now Affects Chat & Tablist
+
+- **Fixed:** a player's LuckPerms group wasn't being used for `group:<name>` chat formats
+  or per-group tablist styling — both always fell back to the default, even though
+  permission *nodes* from LuckPerms worked fine. Now the player's real LuckPerms primary
+  group is used correctly for both.
+
+---
+
+## 1.0.3+build.19 — 2026-07-17
+
+### ✨ API Keys, Locked-Down Admin Settings, and Dashboard Account Sync
+
+- **New: API keys** for external dashboard apps — a proper, revocable login credential
+  separate from human dashboard accounts. Create one with `/apikey create <label>`.
+- **Security fix:** MOTD, rules, shops, holograms, and warps could previously be edited by
+  any logged-in dashboard account, including read-only ones. Editing these now correctly
+  requires an admin-level account; viewing them still doesn't.
+- Dashboard user accounts can now sync automatically between the mod and an external
+  dashboard app in both directions.
+
+---
+
+## 1.0.3+build.18 — 2026-07-17
+
+### 🐛 Bans and Kicks Weren't Actually Being Tracked
+
+- **Fixed:** `/ban` and `/kick` (and related commands) were silently being intercepted by
+  vanilla Minecraft's own built-in versions instead of NeoEssentials' — meaning bans and
+  kicks never showed up in the mod's own history or the dashboard, even though the ban/kick
+  itself still worked. Now correctly tracked.
+- Fixed `/ban`'s reason text sometimes getting merged into the player name field.
+- Added `/modhistory <player>` (alias `/history`) to view a player's full moderation record
+  in-game.
+- Fixed the dashboard's Discord "send test message" button, which previously always
+  reported success without actually sending anything.
+- Fixed deleting a permission group silently doing nothing.
+
+---
+
+## 1.0.3+build.17 — 2026-07-16
+
+### 🐛 Storage Fix + 9 Bugs From a Full Command Audit
+
+- **Fixed:** the SQLite storage option could silently fail to save/load data in some setups.
+- Also fixed: `/baltop` occasionally showing stale balances, `/setworth` rejecting some
+  item IDs, `/invseeedit` crashing, jail auto-ban thresholds never actually triggering,
+  `/chatformat` not being a registered command, `/mute` commands failing from console/RCON,
+  and a couple of command-name conflicts (`/gc`, `/me`).
+
+---
+
+## 1.0.3+build.16 — 2026-07-16
+
+### ✨ `/sudo` Improvements
+
+- `/sudo <player> c:<message>` makes a player say something in real chat (going through
+  normal chat formatting/filters), instead of just running a command as them.
+- `/sudo *` runs a command as every online player at once; `/sudo **` includes yourself too.
+
+---
+
+## 1.0.3+build.15 — 2026-07-15
+
+### ✨ Discord Integration Rewrite
+
+- Rebuilt the Discord chat-relay integrations for Simple Discord Link, Mc2Discord, and
+  DCIntegration against their real, official APIs (previously used guesswork that could
+  break on updates). Dropped DiscordSRV support — it doesn't run on NeoForge servers.
+- Dashboard's "Login with Discord" now only works by reading an account link you've
+  already set up in-game via one of the above mods — the mod itself never talks to
+  Discord directly.
+
+---
+
+## 1.0.3+build.14 — 2026-07-14
+
+### ✨ Module Toggles Fixed, Public Moderation Lookup, Dashboard Commands Fixed
+
+- **Fixed:** many of the on/off switches in `config.json`'s `modules`/`commands` sections
+  didn't actually do anything for a lot of commands. They all work correctly now — note
+  that toggling any of these still needs a server restart, not just `/neoe reload`.
+- Added new toggles for holograms, shops, the auction house, and a few other systems that
+  previously couldn't be disabled at all.
+- **Fixed:** `/dashboard` and `/dashboardregister` were completely non-functional commands
+  — typing them did nothing. Both now work.
+- Added a public, no-login player moderation lookup page/API for transparency, similar to
+  other ban-management plugins.
+
+---
+
 ## 1.0.3+build.10 — 2026-07-12
 
 ### ✨ Storage Backends Now Cover the Whole Mod
