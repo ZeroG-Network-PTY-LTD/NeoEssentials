@@ -90,7 +90,7 @@
         "neoessentials.tpa",
         "neoessentials.warp"
       ]
-    },
+    }
 
     /* Common permission mapping examples (for reference):
      * admin_role   : ["neoessentials.*"]  — full access to all NeoEssentials features

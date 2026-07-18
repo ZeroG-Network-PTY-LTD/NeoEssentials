@@ -98,11 +98,17 @@ neoForge {
     runs {
         client {
             client()
+            // Dedicated run directory — this repo's ./run is shared physical disk state
+            // across every branch checked out here, and Dev-Builds (MC 1.21.1) leaves an
+            // incompatible world there. Never point 26.x at the shared ./run.
+            gameDirectory = project.file('run-26.1-port')
         }
 
         server {
             server()
             programArgument '--nogui'
+            // See client{} above — same shared-./run world-corruption risk applies here.
+            gameDirectory = project.file('run-26.1-port')
         }
 
         data {
@@ -169,6 +175,20 @@ tasks.named('jar') {
     // (which is for genuinely external third-party jars, not our own sibling module).
     from(project(':vault-api').sourceSets.main.output)
 }
+
+// Same dev-mode exploded-classpath gap as the jarJar resources srcDir above, but for
+// :vault-api's compiled .class files instead of jarJar's packaged libraries: the `jar` task's
+// `from(project(':vault-api')...)` above only merges vault-api into the final packaged
+// build/libs/*.jar, which `./gradlew runServer`/`runClient` never touch — those dev runs load
+// straight from this project's exploded build/classes+build/resources, so without this,
+// referencing any vault/api/* class at runtime throws NoClassDefFoundError in dev even though
+// a real packaged jar boots fine. Copied as a resources srcDir (like the jarJar fix above),
+// not registered as a classes output dir, because NeoForge's dev-mode run config builds its
+// module path from resourcesDir + the single classesDirs entry, not from arbitrary additional
+// output dirs.
+def vaultApiClassesDir = file("$rootDir/vault-api/build/classes/java/main")
+sourceSets.main.resources { srcDir vaultApiClassesDir }
+tasks.named('processResources') { dependsOn ':vault-api:compileJava' }
 
 // Sets up a dependency configuration called 'localRuntime'.
 // This configuration should be used instead of 'runtimeOnly' to declare
