@@ -37,6 +37,25 @@ jobs:
       - name: Build jar
         run: ./gradlew build -x test --console=plain
 
+      # build_number.txt is tracked in git (not gitignored) so this counter survives across
+      # both local dev builds and CI runs instead of each fresh CI checkout starting from 0 —
+      # that mismatch used to make every CI build report "build.1" regardless of how far along
+      # local builds had gotten. Gradle already incremented it during the build above; this
+      # just commits that new value back so the next build (local or CI) continues from it.
+      # Uses the default GITHUB_TOKEN checkout already authenticated with — pushes made with it
+      # don't re-trigger this workflow's `push` event, so this can't cause a build loop.
+      - name: Commit updated build number
+        run: |
+          if git diff --quiet -- build_number.txt; then
+            echo "build_number.txt unchanged, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build_number.txt
+          git commit -m "chore: bump build number to $(cat build_number.txt) [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
       - name: Locate built jar
         id: jar
         run: |
