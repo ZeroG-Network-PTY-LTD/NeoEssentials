@@ -28,11 +28,26 @@ public class PermissionBasedModifiers implements EconomyModifierProvider {
     private static final int[] SELL_MULTIPLIER_TIERS = {300, 250, 200, 175, 150, 125};
     @Override
     public String getName() { return "PermissionBased"; }
+
+    /**
+     * All permission checks in this class go through here rather than calling
+     * {@link PermissionAPI#hasPermission} directly, so that whether OP-bypass extends to
+     * these graded/opt-in economy bonuses is a single config-driven decision
+     * ({@code permissions.opsBypassEconomyModifierPermissions}, default {@code false}) instead
+     * of being hardcoded per node.
+     */
+    private static boolean check(UUID player, String node) {
+        boolean allowOpBypass = com.zerog.neoessentials.config.ConfigManager.getInstance()
+            .isOpsBypassEconomyModifierPermissionsEnabled();
+        return allowOpBypass
+            ? PermissionAPI.hasPermission(player, node)
+            : PermissionAPI.hasPermissionStrict(player, node);
+    }
+
     @Override
     public double getSellMultiplier(UUID player) {
         for (int tier : SELL_MULTIPLIER_TIERS) {
-            if (PermissionAPI.hasPermission(player,
-                    "neoessentials.economy.sellmultiplier." + tier)) {
+            if (check(player, "neoessentials.economy.sellmultiplier." + tier)) {
                 return tier / 100.0;
             }
         }
@@ -40,11 +55,11 @@ public class PermissionBasedModifiers implements EconomyModifierProvider {
     }
     @Override
     public boolean isTaxExempt(UUID player) {
-        return PermissionAPI.hasPermission(player, "neoessentials.economy.taxexempt");
+        return check(player, "neoessentials.economy.taxexempt");
     }
     @Override
     public boolean hasNoPayCooldown(UUID player) {
-        return PermissionAPI.hasPermission(player, "neoessentials.economy.nopaycooldown");
+        return check(player, "neoessentials.economy.nopaycooldown");
     }
     @Override
     public BigDecimal getMaxBalance(UUID player) {
@@ -53,8 +68,7 @@ public class PermissionBasedModifiers implements EconomyModifierProvider {
             100_000_000L, 50_000_000L, 10_000_000L, 5_000_000L, 1_000_000L, 500_000L
         };
         for (long tier : maxBalTiers) {
-            if (PermissionAPI.hasPermission(player,
-                    "neoessentials.economy.maxbalance." + tier)) {
+            if (check(player, "neoessentials.economy.maxbalance." + tier)) {
                 return BigDecimal.valueOf(tier);
             }
         }
@@ -65,8 +79,7 @@ public class PermissionBasedModifiers implements EconomyModifierProvider {
         // Common pay-limit tiers
         long[] tiers = {1_000_000L, 500_000L, 100_000L, 50_000L, 25_000L};
         for (long tier : tiers) {
-            if (PermissionAPI.hasPermission(player,
-                    "neoessentials.economy.paylimit." + tier)) {
+            if (check(player, "neoessentials.economy.paylimit." + tier)) {
                 return BigDecimal.valueOf(tier);
             }
         }

@@ -349,7 +349,7 @@ public class PermissionManager {
             String key = e.getKey();
             if (key.endsWith(".*")) {
                 String prefix = key.substring(0, key.length() - 2);
-                if (permission.startsWith(prefix + ".")) return e.getValue();
+                if (permission.startsWith(prefix + ".") && wildcardCanGrant(prefix, permission)) return e.getValue();
             }
         }
         return null;
@@ -466,13 +466,69 @@ public class PermissionManager {
             if (perm.endsWith(".*")) {
                 String prefix = perm.substring(0, perm.length() - 2);
                 LOGGER.debug("  -> Wildcard check: does '{}' start with '{}'?", permission, prefix + ".");
-                if (permission.startsWith(prefix + ".")) {
+                if (permission.startsWith(prefix + ".") && wildcardCanGrant(prefix, permission)) {
                     LOGGER.debug("  -> Wildcard match!");
                     return true;
                 }
             }
         }
         LOGGER.debug("No match found for permission '{}'", permission);
+        return false;
+    }
+
+    // Tiered node families that a wildcard may only cover when scoped to exactly this family
+    // (e.g. "neoessentials.economy.sellmultiplier.*"), never via a broader ancestor wildcard
+    // like "neoessentials.*" or "neoessentials.economy.*".
+    private static final String[] GRADED_TIER_FAMILIES = {
+        "neoessentials.economy.sellmultiplier",
+        "neoessentials.economy.maxbalance",
+        "neoessentials.economy.paylimit"
+    };
+    // Single (non-tiered) graded nodes: no wildcard can cover these at all, only an exact
+    // literal grant of the node itself.
+    private static final Set<String> GRADED_EXACT_ONLY_NODES = Set.of(
+        "neoessentials.economy.taxexempt",
+        "neoessentials.economy.nopaycooldown"
+    );
+
+    /**
+     * Whether {@code targetPermission} is one of the graded/opt-in economy-modifier nodes
+     * checked by {@link com.zerog.neoessentials.economy.compat.PermissionBasedModifiers}
+     * (sell-multiplier / max-balance / pay-limit tiers, tax-exempt, no-pay-cooldown).
+     */
+    private static boolean isGradedEconomyModifierNode(String targetPermission) {
+        if (GRADED_EXACT_ONLY_NODES.contains(targetPermission)) return true;
+        for (String family : GRADED_TIER_FAMILIES) {
+            if (targetPermission.startsWith(family + ".")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gate applied on top of the ordinary "does this wildcard's prefix match" check, for every
+     * wildcard-matching helper in this class ({@link #hasPermissionWithWildcards},
+     * {@link #hasTempPermissionWithWildcards}, {@link #wildcardLookup}).
+     *
+     * <p>Graded economy-modifier nodes represent opt-in bonuses meant to be granted
+     * deliberately, not incidentally swept up by a broad admin wildcard. So unless
+     * {@code permissions.wildcardsGrantEconomyModifierPermissions} is enabled, a wildcard only
+     * grants one of these nodes when it's scoped to exactly that node's own tier family (e.g.
+     * {@code neoessentials.economy.sellmultiplier.*}) — a broader ancestor wildcard like
+     * {@code neoessentials.*} or {@code neoessentials.economy.*} does not count, and the
+     * exact-only nodes ({@code taxexempt}, {@code nopaycooldown}) never match via wildcard at
+     * all, only an exact literal grant.
+     *
+     * @param wildcardPrefix the stored wildcard permission with its trailing {@code .*} removed
+     */
+    private static boolean wildcardCanGrant(String wildcardPrefix, String targetPermission) {
+        if (!isGradedEconomyModifierNode(targetPermission)) return true;
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance()
+                .isWildcardsGrantEconomyModifierPermissionsEnabled()) {
+            return true;
+        }
+        for (String family : GRADED_TIER_FAMILIES) {
+            if (wildcardPrefix.equals(family)) return true;
+        }
         return false;
     }
 
@@ -507,7 +563,7 @@ public class PermissionManager {
             if (perm.equals(permission)) return true;
             if (perm.endsWith(".*")) {
                 String prefix = perm.substring(0, perm.length() - 2);
-                if (permission.startsWith(prefix + ".")) return true;
+                if (permission.startsWith(prefix + ".") && wildcardCanGrant(prefix, permission)) return true;
             }
         }
         return false;

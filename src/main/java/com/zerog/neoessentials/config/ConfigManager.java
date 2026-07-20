@@ -1143,6 +1143,53 @@ public class ConfigManager {
     }
 
     /**
+     * Whether {@link #isOpsBypassPermissionsEnabled()} and {@link #isVanillaOpFallbackEnabled()}
+     * also apply to GRADED economy-modifier permission nodes — {@code
+     * neoessentials.economy.sellmultiplier.*}, {@code .taxexempt}, {@code .nopaycooldown},
+     * {@code .maxbalance.*}, {@code .paylimit.*} — checked by {@link
+     * com.zerog.neoessentials.economy.compat.PermissionBasedModifiers}.
+     * (permissions.opsBypassEconomyModifierPermissions)
+     *
+     * <p>Those nodes represent opt-in bonuses meant to be granted explicitly, not admin
+     * capabilities, so this defaults to {@code false}: an OP still bypasses ordinary command
+     * permission checks, but doesn't silently get the highest sell multiplier / free tax
+     * exemption / no pay cooldown just for being OP.
+     */
+    public boolean isOpsBypassEconomyModifierPermissionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("opsBypassEconomyModifierPermissions")) {
+                return perms.get("opsBypassEconomyModifierPermissions").getAsBoolean();
+            }
+        }
+        return false; // Default: graded economy bonuses require an explicit grant
+    }
+
+    /**
+     * Whether a wildcard permission (e.g. {@code neoessentials.*}, {@code
+     * neoessentials.economy.*}) granted to a group or user is allowed to satisfy the same
+     * graded economy-modifier nodes covered by {@link #isOpsBypassEconomyModifierPermissionsEnabled()}.
+     * (permissions.wildcardsGrantEconomyModifierPermissions)
+     *
+     * <p>Defaults to {@code false}: those nodes must be listed explicitly — either the exact
+     * node itself, or a wildcard scoped no broader than the node's own tier family (e.g.
+     * {@code neoessentials.economy.sellmultiplier.*}) — even for a group whose permission list
+     * is just {@code neoessentials.*}. Consulted by {@link
+     * com.zerog.neoessentials.permissions.PermissionManager}'s wildcard-matching helpers.
+     */
+    public boolean isWildcardsGrantEconomyModifierPermissionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("wildcardsGrantEconomyModifierPermissions")) {
+                return perms.get("wildcardsGrantEconomyModifierPermissions").getAsBoolean();
+            }
+        }
+        return false; // Default: graded economy bonuses require an explicit grant
+    }
+
+    /**
      * Check if vanilla OP status should act as a last-resort fallback when every
      * permission system (external adapter + internal manager) is unavailable or
      * returns {@code false}. (permissions.vanillaOpFallback)
@@ -1356,7 +1403,15 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 32);          // v32 — removed dead weight: legacy tablist{} section (tablist.json
+        put(MAIN_CONFIG, 34);          // v34 — added permissions.wildcardsGrantEconomyModifierPermissions
+                                       //        (default false): a group/user wildcard like
+                                       //        neoessentials.* no longer implies the graded
+                                       //        economy-modifier nodes unless scoped to their
+                                       //        own tier family
+                                       // v33 — added permissions.opsBypassEconomyModifierPermissions
+                                       //        (default false): decouples OP command-permission
+                                       //        bypass from graded economy-modifier permission nodes
+                                       // v32 — removed dead weight: legacy tablist{} section (tablist.json
                                        //        always wins), duplicate/shadowed economy.currencySymbol+
                                        //        startingBalance (economy.json is authoritative), unread
                                        //        afk tablist-indicator keys, and webDashboard.serviceAccount
@@ -1364,7 +1419,10 @@ public class ConfigManager {
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
         put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
-        put(DISCORD_AUTH_CONFIG, 10);  // v10 — removed permissionMappings_common_examples, a dead
+        put(DISCORD_AUTH_CONFIG, 11);  // v11 — fixed dangling trailing comma after permissionMappings'
+                                       //        closing brace (malformed JSON, broke JAR-template
+                                       //        reload on every boot)
+                                       // v10 — removed permissionMappings_common_examples, a dead
                                        //       stub self-labeled "not loaded by the mod"
                                        // v9  — removed OAuth2 (no direct Discord API calls); dashboard login now sources identity from a Discord companion mod (SDLink/Mc2Discord)
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
