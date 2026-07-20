@@ -58,3 +58,35 @@ jobs:
           files: ${{ steps.jar.outputs.path }}
           prerelease: true
           make_latest: false
+
+      # Posts the built jar straight into a Discord channel via webhook, in addition to the
+      # GitHub Release above. Requires a repo secret DISCORD_BUILDS_WEBHOOK_URL (Discord channel
+      # → Edit Channel → Integrations → Webhooks → Copy URL). Skipped (not failed) if that
+      # secret isn't configured, so forks / other clones of this workflow don't break.
+      # continue-on-error: a Discord outage or an oversized jar (webhook attachments cap out at
+      # 8-100MB depending on the server's boost level) shouldn't fail the actual release.
+      - name: Post build to Discord
+        continue-on-error: true
+        env:
+          DISCORD_BUILDS_WEBHOOK_URL: ${{ secrets.DISCORD_BUILDS_WEBHOOK_URL }}
+          BRANCH: ${{ github.ref_name }}
+          SHORT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMPARE_URL: ${{ github.event.compare }}
+        run: |
+          # The secrets context can't be referenced in a step-level `if:` (GitHub Actions
+          # rejects it at workflow-parse time — "Unrecognized named-value: 'secrets'"), so the
+          # no-op-when-unset check happens here in the script instead.
+          if [ -z "$DISCORD_BUILDS_WEBHOOK_URL" ]; then
+            echo "DISCORD_BUILDS_WEBHOOK_URL not set — skipping Discord notification."
+            exit 0
+          fi
+          # jq builds the JSON payload so quotes/newlines/backslashes in the commit message
+          # (or anything else user-controlled) can't break or inject into the request body.
+          payload=$(jq -n --arg branch "$BRANCH" --arg sha "${SHORT_SHA:0:7}" \
+            --arg msg "$COMMIT_MSG" --arg url "$COMPARE_URL" \
+            '{content: "**\($branch)** — new build (`\($sha)`)\n\($msg)\n\($url)"}')
+          curl -sS -f \
+            -F "payload_json=${payload}" \
+            -F "file=@${{ steps.jar.outputs.path }};filename=${{ steps.jar.outputs.name }}" \
+            "$DISCORD_BUILDS_WEBHOOK_URL"
