@@ -44,7 +44,12 @@ jobs:
       # just commits that new value back so the next build (local or CI) continues from it.
       # Uses the default GITHUB_TOKEN checkout already authenticated with — pushes made with it
       # don't re-trigger this workflow's `push` event, so this can't cause a build loop.
+      # continue-on-error: this push can fail on its own (e.g. branch-protection rejecting the
+      # default token until GitHub Actions is added as a bypass actor) and that must NOT skip
+      # the actual jar release below — a build-number sync hiccup is far less important than
+      # publishing the build.
       - name: Commit updated build number
+        continue-on-error: true
         run: |
           if git diff --quiet -- build_number.txt; then
             echo "build_number.txt unchanged, nothing to commit."
