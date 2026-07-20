@@ -49,7 +49,18 @@ public class SellCommand {
                 var p = src.getPlayer();
                 return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.sell");
             })
-            .executes(ctx -> { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sell.usage")); return 0; })
+            // Bare "/sell" with no sub-argument auto-detects: sells whatever's in your hand,
+            // same as "/sell hand" — still gated by neoessentials.sell.hand (not just the
+            // weaker neoessentials.sell the root node requires) so this can't be used to skip
+            // that permission.
+            .executes(ctx -> {
+                var p = ctx.getSource().getPlayer();
+                if (p != null && !PermissionAPI.hasPermission(p.getUUID(), "neoessentials.sell.hand")) {
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sell.usage"));
+                    return 0;
+                }
+                return executeSellHand(ctx, 0);
+            })
             .then(Commands.literal("hand")
                 .requires(src -> {
                     var p = src.getPlayer();
@@ -235,16 +246,23 @@ public class SellCommand {
             .getInstance().getSellMultiplier(player.getUUID());
         BigDecimal multiplier = (modMult > 0) ? BigDecimal.valueOf(modMult) : wm.getSellMultiplier();
 
+        // Captured BEFORE removeFromInventory: for /sell hand, `template` IS the same live
+        // ItemStack instance sitting in the player's inventory slot (getMainHandItem() returns
+        // a direct reference, not a copy). removeFromInventory() shrinks that exact object, and
+        // once its count hits 0 vanilla's ItemStack.getItem() starts returning Items.AIR (it's
+        // isEmpty()-gated), so reading the item id from `template` afterward would log/report
+        // "minecraft:air" instead of the item actually sold.
+        String itemId = WorthManager.getItemId(template);
         removeFromInventory(player, template, toSell, allowNamed);
         BigDecimal earned = price.multiply(multiplier).multiply(BigDecimal.valueOf(toSell));
         EconomyManager.getInstance().addBalance(player.getUUID(), earned);
         LOGGER.info("Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
-            toSell, WorthManager.getItemId(template),
+            toSell, itemId,
             WorthCommand.getCurrencySymbol(), WorthCommand.format(earned), multiplier.toPlainString());
         String sym = WorthCommand.getCurrencySymbol();
         final int fs = toSell; final BigDecimal fe = earned; final BigDecimal fp = price;
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.sell.item_sold",
-            fs, WorthManager.getItemId(template), sym + WorthCommand.format(fe),
+            fs, itemId, sym + WorthCommand.format(fe),
             sym + WorthCommand.format(fp)), false);
         return 1;
     }

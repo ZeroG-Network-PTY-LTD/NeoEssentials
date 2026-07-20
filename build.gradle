@@ -152,6 +152,20 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 sourceSets.main.resources { srcDir 'build/generated/jarJar' }
 tasks.named('processResources') { dependsOn 'jarJar' }
 
+// Same dev-mode exploded-classpath gap as the jarJar resources srcDir above, but for
+// :vault-api's compiled .class files instead of jarJar's packaged libraries: the `jar` task's
+// `from(project(':vault-api')...)` below only merges vault-api into the final packaged
+// build/libs/*.jar, which `./gradlew runServer`/`runClient` never touch — those dev runs load
+// straight from this project's exploded build/classes+build/resources, so without this,
+// referencing any vault/api/* class at runtime throws NoClassDefFoundError in dev even though
+// a real packaged jar boots fine. Copied as a resources srcDir (like the jarJar fix above),
+// not registered as a classes output dir, because NeoForge's dev-mode run config builds its
+// module path from resourcesDir + the single classesDirs entry, not from arbitrary additional
+// output dirs.
+def vaultApiClassesDir = file("$rootDir/vault-api/build/classes/java/main")
+sourceSets.main.resources { srcDir vaultApiClassesDir }
+tasks.named('processResources') { dependsOn ':vault-api:compileJava' }
+
 // The srcDir above means the final `jar` task now sees each jarJar-embedded library under
 // META-INF/jarjar/ twice: once copied in via processResources (from that extra source dir,
 // needed for the dev-mode exploded classpath above) and once from jarJar's own direct packaging

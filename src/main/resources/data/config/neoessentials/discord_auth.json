@@ -1,6 +1,6 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
-  "_configVersion": 10,
+  "_configVersion": 11,
 
   /* ================================================================
      Discord Authentication Configuration
@@ -90,7 +90,7 @@
         "neoessentials.tpa",
         "neoessentials.warp"
       ]
-    },
+    }
 
     /* Common permission mapping examples (for reference):
      * admin_role   : ["neoessentials.*"]  — full access to all NeoEssentials features

@@ -100,6 +100,28 @@ public class PermissionAPI {
      */
     public static boolean hasPermission(UUID uuid, String permission,
                                         com.zerog.neoessentials.permissions.PermissionContext context) {
+        return hasPermission(uuid, permission, context, true);
+    }
+
+    /**
+     * Same 5-step resolution chain as {@link #hasPermission}, but with both OP-bypass
+     * shortcuts (the {@code opsBypassPermissions} fast path and the vanilla-OP last-resort
+     * fallback) disabled.
+     *
+     * <p>Use this for permission nodes that gate a graded/opt-in benefit rather than an
+     * admin capability — e.g. per-tier sell multipliers. The regular {@link #hasPermission}
+     * treats every node the same way, so an OP with {@code opsBypassPermissions} enabled
+     * (the default) would silently pass a check for {@code
+     * neoessentials.economy.sellmultiplier.300} despite never having been granted it,
+     * tripling their sell income without anyone intending that.
+     */
+    public static boolean hasPermissionStrict(UUID uuid, String permission) {
+        return hasPermission(uuid, permission, com.zerog.neoessentials.permissions.PermissionContext.EMPTY, false);
+    }
+
+    private static boolean hasPermission(UUID uuid, String permission,
+                                        com.zerog.neoessentials.permissions.PermissionContext context,
+                                        boolean allowOpBypass) {
         // Validate input parameters
         if (uuid == null) {
             LOGGER.warn("PermissionAPI.hasPermission: UUID is null");
@@ -140,7 +162,7 @@ public class PermissionAPI {
         // ── Fast-path: OP bypass (runs BEFORE any permission system) ──────────
         // opsBypassPermissions: true means OPs skip all checks entirely.
         // Different from vanillaOpFallback (which runs AFTER all checks).
-        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
+        if (allowOpBypass && com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
             if (isPlayerOpped(uuid)) {
                 LOGGER.debug("Player is OP - bypassing permission check (opsBypassPermissions)");
                 LOGGER.debug("Result: TRUE (op bypass)");
@@ -233,7 +255,7 @@ public class PermissionAPI {
             }
 
             // ── Vanilla OP fallback (last resort after external+internal both failed/denied) ──
-            return checkVanillaOpFallback(uuid, permission, "external+internal");
+            return allowOpBypass && checkVanillaOpFallback(uuid, permission, "external+internal");
         }
 
         // ── Pure-internal path (no external adapter configured) ───────────────
@@ -241,7 +263,7 @@ public class PermissionAPI {
         if (manager == null) {
             LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null");
             // No manager at all — fall straight to vanilla-OP fallback
-            return checkVanillaOpFallback(uuid, permission, "no-manager");
+            return allowOpBypass && checkVanillaOpFallback(uuid, permission, "no-manager");
         }
 
         boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
@@ -263,7 +285,7 @@ public class PermissionAPI {
         }
 
         // Internal said "no" — vanilla-OP fallback is the last resort.
-        return checkVanillaOpFallback(uuid, permission, "internal");
+        return allowOpBypass && checkVanillaOpFallback(uuid, permission, "internal");
     }
 
     /**

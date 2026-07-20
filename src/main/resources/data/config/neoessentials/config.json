@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 32,
+  "_configVersion": 34,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -430,6 +430,23 @@
     // Allow server operators (OP level) to bypass permission checks
     "opsBypassPermissions": true,
     "vanillaOpFallback": true,
+    // Whether the two OP-bypass settings above also apply to GRADED economy-modifier
+    // permission nodes (neoessentials.economy.sellmultiplier.*, .taxexempt, .nopaycooldown,
+    // .maxbalance.*, .paylimit.*). Those nodes represent opt-in bonuses meant to be granted
+    // explicitly (per-player or per-group) — not admin capabilities — so this defaults to
+    // false: OPs get their usual command-permission bypass, but do NOT silently receive the
+    // highest sell multiplier / free tax exemption / no pay cooldown just for being OP.
+    // Set true to restore the old blanket-bypass behavior.
+    "opsBypassEconomyModifierPermissions": false,
+    // Whether a wildcard permission (e.g. "neoessentials.*", "neoessentials.economy.*")
+    // granted to a group or user is allowed to satisfy the same graded economy-modifier nodes
+    // above (sellmultiplier tiers, taxexempt, nopaycooldown, maxbalance/paylimit tiers).
+    // Defaults to false: those nodes must be listed explicitly (either the exact node itself,
+    // or a wildcard scoped no broader than "neoessentials.economy.sellmultiplier.*" etc.) even
+    // for a group whose permission list is just "neoessentials.*" — a broad admin wildcard
+    // should not silently hand out a 3x sell multiplier or free tax exemption nobody
+    // deliberately assigned that group. Set true to let wildcards cover these nodes too.
+    "wildcardsGrantEconomyModifierPermissions": false,
     "cachePermissions": true,
     // Minutes before cached permission entries expire
     "permissionCacheExpiryMinutes": 30,
