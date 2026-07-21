@@ -6,6 +6,20 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.4 — 2026-07-22
+
+### ✨ A Real Built-In Dashboard Option
+
+- Prefer not to run a separate app for your web dashboard? Set `webDashboard.mode` to
+  `"internal"` (or `"both"`) in `config.json` and the mod now serves a real, working
+  dashboard straight from its own port — no separate app to install.
+- This first update covers logging in, the server overview, and the players page
+  (heal/kick/ban/mute, lookup, homes). More pages are coming in future updates.
+- If you're already using the separate `NeoEssentials-Dashboard` app, nothing changes
+  for you — the default stays the same.
+
+---
+
 ## 1.0.4+build.1 — 2026-07-21
 
 ### ✨ Support/Discord/GitHub Links on Startup

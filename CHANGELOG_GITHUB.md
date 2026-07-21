@@ -11,6 +11,30 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.4] — 2026-07-22
+
+### ✨ A Real Internal Dashboard (`webDashboard.mode: "internal"`)
+
+- `webDashboard.mode` has had an `"internal"` option for a long time, but it never
+  actually worked — `src/main/resources/webdashboard/` only ever held a Laravel
+  *scaffold* (raw PHP/TSX source meant to be copied into a separate project), not
+  a servable `index.html`. Setting `mode` to `"internal"` or `"both"` now serves a
+  real, working bundled dashboard from `/` on the mod's own port — no separate
+  Laravel/PHP app required. Talks to this mod's own REST API directly.
+- This first pass covers login, the server overview, and the players page (roster,
+  heal/kick/ban/mute, lookup, homes). The remaining pages (economy, warps, kits,
+  holograms, Discord, permissions, backups, commands, logs, users, public lookup)
+  are still only available via the external `NeoEssentials-Dashboard` app for now
+  — more land in follow-up updates.
+- The shipped default remains `"external"` — this doesn't change anything for
+  servers already using the separate dashboard app.
+- Also fixed: a missing static file under `webDashboard.mode: "internal"` used to
+  silently hang the connection instead of returning a 404, and there was no
+  fallback for a hard-refreshed client-side route (e.g. `/players`) — both fixed
+  as part of building this.
+
+---
+
 ## [1.0.4+build.3] — 2026-07-21
 
 ### ✨ Pairing Now Includes the WebSocket Port
