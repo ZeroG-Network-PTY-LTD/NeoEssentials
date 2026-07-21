@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -176,15 +177,14 @@ public class ModerationEventHandler {
                 return;
             }
 
-            // Vanish interact check
+            // Vanish interact check — neoessentials.vanish.interact (or the .* wildcard) is
+            // opt-in; by default a vanished player can't interact with anything.
             if (ConfigManager.getInstance().isVanishSystemEnabled()
                     && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
-                if (vanishManager.isPlayerVanished(playerId)) {
-                    String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();
-                    if (!PermissionAPI.hasPermission(playerId, seePerm)) {
-                        event.setCanceled(true);
-                    }
+                if (vanishManager.isPlayerVanished(playerId)
+                        && !PermissionAPI.hasPermission(playerId, "neoessentials.vanish.interact")) {
+                    event.setCanceled(true);
                 }
             }
         } catch (Exception e) {
@@ -232,9 +232,41 @@ public class ModerationEventHandler {
             // a frozen player could still attack and damage other players.
             if (!FreezeManager.getInstance().canPlayerAttack(attacker)) {
                 event.setNewDamage(0f);
+                return;
+            }
+            // Vanished players hitting other players (mobs are unaffected — vanish is about not
+            // revealing yourself to other players, not a general combat lock) previously had no
+            // restriction at all. neoessentials.vanish.hurt is opt-in, same pattern as
+            // .interact/.build below; neoessentials.vanish.* wildcard covers all three.
+            if (ConfigManager.getInstance().isVanishSystemEnabled()
+                    && event.getEntity() instanceof ServerPlayer
+                    && VanishManager.getInstance().isPlayerVanished(attacker.getUUID())
+                    && !PermissionAPI.hasPermission(attacker.getUUID(), "neoessentials.vanish.hurt")) {
+                event.setNewDamage(0f);
             }
         } catch (Exception e) {
             LOGGER.error("Error handling attack for jailed/frozen player", e);
+        }
+    }
+
+    // ── Mob Targeting ─────────────────────────────────────────────────────────
+    /**
+     * Vanish previously only hid a player from other PLAYERS' clients — hostile mobs could
+     * still notice, target, and attack a vanished player normally, since vanilla's targeting AI
+     * has nothing to do with the packet-level hide/show this mod does. Cancelling here stops
+     * any mob from newly acquiring a vanished player as its target; existing targets acquired
+     * before vanishing are cleared separately in {@link VanishManager#vanishPlayer}.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onMobChangeTarget(LivingChangeTargetEvent event) {
+        try {
+            if (!ConfigManager.getInstance().isVanishSystemEnabled()) return;
+            if (event.getNewAboutToBeSetTarget() instanceof ServerPlayer target
+                    && VanishManager.getInstance().isPlayerVanished(target.getUUID())) {
+                event.setCanceled(true);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling mob target change for vanished player", e);
         }
     }
 
@@ -299,14 +331,14 @@ public class ModerationEventHandler {
                 return;
             }
 
+            // neoessentials.vanish.build (or .* wildcard) is opt-in; by default a vanished
+            // player can't break blocks either.
             if (ConfigManager.getInstance().isVanishSystemEnabled()
                     && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
-                if (vanishManager.isPlayerVanished(playerId)) {
-                    String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();
-                    if (!PermissionAPI.hasPermission(playerId, seePerm)) {
-                        event.setCanceled(true);
-                    }
+                if (vanishManager.isPlayerVanished(playerId)
+                        && !PermissionAPI.hasPermission(playerId, "neoessentials.vanish.build")) {
+                    event.setCanceled(true);
                 }
             }
         } catch (Exception e) {
@@ -342,14 +374,14 @@ public class ModerationEventHandler {
                 return;
             }
 
+            // neoessentials.vanish.build (or .* wildcard) is opt-in; by default a vanished
+            // player can't place blocks either.
             if (ConfigManager.getInstance().isVanishSystemEnabled()
                     && ConfigManager.isVanishPreventInteractionEnabled()) {
                 VanishManager vanishManager = VanishManager.getInstance();
-                if (vanishManager.isPlayerVanished(playerId)) {
-                    String seePerm = ConfigManager.getInstance().getSeeVanishedPermission();
-                    if (!PermissionAPI.hasPermission(playerId, seePerm)) {
-                        event.setCanceled(true);
-                    }
+                if (vanishManager.isPlayerVanished(playerId)
+                        && !PermissionAPI.hasPermission(playerId, "neoessentials.vanish.build")) {
+                    event.setCanceled(true);
                 }
             }
         } catch (Exception e) {
