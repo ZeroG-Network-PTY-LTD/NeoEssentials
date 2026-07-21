@@ -6,16 +6,6 @@ migration history) is not carried over.
 Format: `[version+build] — date`  
 Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
-> **Known gap:** this branch has not yet merged several `Dev-Builds` fixes
-> landed on 07-06/07-08 (after this branch had already forked): permission
-> precedence and a `getUser()` race, freeze/jail/vanish/mute enforcement gaps,
-> kit permanent-lockout/double-claim/data-loss fixes, an Auction House
-> duplication exploit fix, jail bounds ignoring dimension, web dashboard
-> admin-role/password-hashing security fixes, the `/jail` NPE (jailing is
-> currently broken on this branch), `localize()` overload/placeholder-shift
-> fixes, `/invseeedit`/`/pay`/`/eco` fixes, and the tablist nametag feature.
-> These need porting over separately.
-
 > The build counter was reset alongside the v1.0.3 bump, so build numbers here are
 > not monotonically increasing relative to now-removed v1.0.2.x entries — always
 > go by date/version, not build number, when comparing across the reset.
