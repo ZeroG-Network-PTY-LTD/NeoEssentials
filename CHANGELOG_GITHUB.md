@@ -12,7 +12,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.2] — 2026-07-21
+## [1.0.4-mc26.1.2+build.4] — 2026-07-21
 
 ### ✨ Pairing Now Includes the WebSocket Port
 
