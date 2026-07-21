@@ -11,7 +11,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.4+build.2] — 2026-07-21
+## [1.0.4+build.3] — 2026-07-21
 
 ### ✨ Pairing Now Includes the WebSocket Port
 
