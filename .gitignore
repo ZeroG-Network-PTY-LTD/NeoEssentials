@@ -67,3 +67,9 @@ Issues_Discovered.md
 *.zip
 /build/
 /dist/
+
+# webdashboard-ui/ — the bundled internal dashboard's frontend source (see build.gradle's
+# buildDashboardUI/copyDashboardUI tasks). Its own build output isn't committed either;
+# Gradle builds it fresh into build/generated/dashboardUiResources/ every time.
+webdashboard-ui/node_modules/
+webdashboard-ui/dist/

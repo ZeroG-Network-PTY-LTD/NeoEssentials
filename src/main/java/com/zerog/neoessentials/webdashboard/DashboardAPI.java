@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.webdashboard;
 
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
@@ -507,55 +508,30 @@ public class DashboardAPI {
             // Serve file from resources
             try (java.io.InputStream in = getClass().getResourceAsStream("/webdashboard" + path)) {
                 if (in != null) {
-                    byte[] bytes = in.readAllBytes();
-                    
-                    // Generate ETag based on content hash for proper cache validation
-                    String etag = "\"" + Integer.toHexString(java.util.Arrays.hashCode(bytes)) + "\"";
+                    serveStaticBytes(exchange, path, in.readAllBytes());
+                    return;
+                }
 
-                    // Check If-None-Match header (ETag validation)
-                    String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
-                    if (etag.equals(ifNoneMatch)) {
-                        // Content hasn't changed - return 304 Not Modified
-                        exchange.sendResponseHeaders(304, -1);
-                        LOGGER.debug("Served 304 Not Modified for: {} (ETag: {})", path, etag);
+                // No exact resource match. `getResourceAsStream` returns null rather than
+                // throwing, so without this branch a missing file silently produced no
+                // response at all (the connection just hung until the client gave up) —
+                // neither a 404 nor the SPA fallback below ever fired. A path with a file
+                // extension (".js", ".css", an image, ...) is a genuine missing asset; anything
+                // else is a client-side route (react-router) being deep-linked/refreshed, which
+                // needs index.html so the SPA can boot and render that route itself.
+                boolean looksLikeAssetRequest = path.lastIndexOf('.') > path.lastIndexOf('/');
+                if (looksLikeAssetRequest) {
+                    sendStatic404(exchange, path);
+                    return;
+                }
+
+                try (java.io.InputStream fallback = getClass().getResourceAsStream("/webdashboard/index.html")) {
+                    if (fallback == null) {
+                        sendStatic404(exchange, path);
                         return;
                     }
-
-                    // Set content type and CORS headers
-                    String contentType = getContentType(path);
-                    exchange.getResponseHeaders().set("Content-Type", contentType);
-                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-
-                    // Strong cache-busting headers - force revalidation
-                    exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
-                    exchange.getResponseHeaders().set("Pragma", "no-cache");
-                    exchange.getResponseHeaders().set("Expires", "0");
-                    
-                    // Add ETag for proper cache validation
-                    exchange.getResponseHeaders().set("ETag", etag);
-
-                    // Add Last-Modified header (use build time as baseline)
-                    exchange.getResponseHeaders().set("Last-Modified", "Fri, 03 Jan 2026 00:00:00 GMT");
-
-                    // Add custom header indicating mod version for debugging
-                    exchange.getResponseHeaders().set("X-NeoEssentials-Version", getBuildNumber());
-
-                    exchange.sendResponseHeaders(200, bytes.length);
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
-                    }
-                    
-                    LOGGER.debug("Successfully served: {} ({} bytes, ETag: {})", path, bytes.length, etag);
-                }
-            } catch (java.io.FileNotFoundException e) {
-                // 404 Not Found
-                LOGGER.warn("File not found: {}", path);
-                String response = "404 Not Found: " + path;
-                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-                exchange.getResponseHeaders().set("Content-Type", "text/plain");
-                exchange.sendResponseHeaders(404, bytes.length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(bytes);
+                    LOGGER.debug("SPA fallback: serving index.html for client-side route {}", path);
+                    serveStaticBytes(exchange, "/index.html", fallback.readAllBytes());
                 }
             } catch (Exception e) {
                 LOGGER.error("Error serving file: {}", path, e);
@@ -573,18 +549,67 @@ public class DashboardAPI {
         
         LOGGER.info("Static file serving enabled for frontend");
     }
-    
+
+    /**
+     * Writes a static-file response with ETag/cache-control headers, handling the
+     * If-None-Match 304 short-circuit. Shared by the direct-hit and SPA-fallback
+     * (index.html) paths in the "/" catch-all above so both get identical caching behavior.
+     */
+    private void serveStaticBytes(HttpExchange exchange, String servedPath, byte[] bytes) throws IOException {
+        String etag = "\"" + Integer.toHexString(java.util.Arrays.hashCode(bytes)) + "\"";
+
+        String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
+        if (etag.equals(ifNoneMatch)) {
+            exchange.sendResponseHeaders(304, -1);
+            LOGGER.debug("Served 304 Not Modified for: {} (ETag: {})", servedPath, etag);
+            return;
+        }
+
+        exchange.getResponseHeaders().set("Content-Type", getContentType(servedPath));
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+        exchange.getResponseHeaders().set("Pragma", "no-cache");
+        exchange.getResponseHeaders().set("Expires", "0");
+        exchange.getResponseHeaders().set("ETag", etag);
+        exchange.getResponseHeaders().set("Last-Modified", "Fri, 03 Jan 2026 00:00:00 GMT");
+        exchange.getResponseHeaders().set("X-NeoEssentials-Version", getBuildNumber());
+
+        exchange.sendResponseHeaders(200, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
+
+        LOGGER.debug("Successfully served: {} ({} bytes, ETag: {})", servedPath, bytes.length, etag);
+    }
+
+    /** Writes a genuine 404 for a missing static asset (not a client-side SPA route). */
+    private void sendStatic404(HttpExchange exchange, String path) throws IOException {
+        LOGGER.warn("File not found: {}", path);
+        String response = "404 Not Found: " + path;
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/plain");
+        exchange.sendResponseHeaders(404, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
+    }
+
     /**
      * Get content type based on file extension
      */
     private String getContentType(String path) {
         if (path.endsWith(".html")) return "text/html";
         if (path.endsWith(".css")) return "text/css";
-        if (path.endsWith(".js")) return "application/javascript";
+        if (path.endsWith(".js") || path.endsWith(".mjs")) return "application/javascript";
         if (path.endsWith(".json")) return "application/json";
         if (path.endsWith(".png")) return "image/png";
         if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
         if (path.endsWith(".svg")) return "image/svg+xml";
+        if (path.endsWith(".ico")) return "image/x-icon";
+        if (path.endsWith(".woff2")) return "font/woff2";
+        if (path.endsWith(".woff")) return "font/woff";
+        if (path.endsWith(".ttf")) return "font/ttf";
+        if (path.endsWith(".map")) return "application/json";
         return "text/plain";
     }
     
