@@ -94,6 +94,10 @@ public class DashboardCommand {
         body.addProperty("code", code);
         body.addProperty("modToken", modToken);
         body.addProperty("serverName", serverName);
+        // Lets a paired dashboard auto-configure its WebSocket bridge without the admin having
+        // to hand-enter this separately after pairing — the REST API and WebSocket server are
+        // independently configured ports on this side (config.json's port vs websocketPort).
+        body.addProperty("websocketPort", ConfigManager.getInstance().getWebDashboardWebSocketPort());
 
         try {
             HttpRequest request = HttpRequest.newBuilder()

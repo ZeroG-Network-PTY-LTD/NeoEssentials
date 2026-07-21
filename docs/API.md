@@ -734,9 +734,12 @@ command**, run once:
    `:` or `/`, which every URL does) — the dashboard's own generated command already includes
    them. Requires permission `neoessentials.dashboard.pair`.
 3. In that single request/response round-trip:
-   - The mod mints an API key (via the same `ApiKeyManager` `/apikey` uses) and sends it to the
-     dashboard at `POST <dashboardUrl>/api/pair/complete` — the dashboard stores this and uses it
-     for all its own outbound calls to this mod's API from then on.
+   - The mod mints an API key (via the same `ApiKeyManager` `/apikey` uses) and sends it, along
+     with this server's WebSocket port (`webDashboard.websocketPort` — a separately-configured
+     port from the REST API's own, so a dashboard can auto-configure a live WebSocket connection
+     without the admin hand-entering it), to the dashboard at `POST <dashboardUrl>/api/pair/
+     complete`. The dashboard stores both and uses them for its own outbound REST calls and
+     WebSocket subscription to this mod's API from then on.
    - The dashboard mints its own token and returns it in the response — the mod stores this (as
      `webDashboard.externalDashboard.url`/`.token`) and uses it to authenticate the user-sync
      webhook above.
