@@ -78,9 +78,17 @@ jobs:
           chmod 600 ~/.ssh/build_number_deploy_key
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
 
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/build_number_deploy_key -o IdentitiesOnly=yes"
           git remote set-url origin "git@github.com:${{ github.repository }}.git"
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/build_number_deploy_key -o IdentitiesOnly=yes" \
-            git push origin HEAD:${{ github.ref_name }}
+          # actions/checkout's shallow clone (fetch-depth 1) doesn't have enough history for git
+          # to confirm this push is a fast-forward once the remote URL changes to SSH, so it
+          # gets rejected with "fetch first" even with nothing genuinely new on the remote.
+          # Fetching just this branch and rebasing our one bump commit onto it first fixes that
+          # AND correctly handles the rare case where something else really did land in the
+          # meantime.
+          git fetch origin "${{ github.ref_name }}"
+          git rebase "origin/${{ github.ref_name }}"
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Locate built jar
         id: jar
