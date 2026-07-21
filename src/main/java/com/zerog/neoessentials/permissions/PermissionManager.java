@@ -478,7 +478,8 @@ public class PermissionManager {
 
     // Tiered node families that a wildcard may only cover when scoped to exactly this family
     // (e.g. "neoessentials.economy.sellmultiplier.*"), never via a broader ancestor wildcard
-    // like "neoessentials.*" or "neoessentials.economy.*".
+    // like "neoessentials.*" or "neoessentials.economy.*". These respect
+    // permissions.wildcardsGrantEconomyModifierPermissions (see wildcardCanGrant below).
     private static final String[] GRADED_TIER_FAMILIES = {
         "neoessentials.economy.sellmultiplier",
         "neoessentials.economy.maxbalance",
@@ -490,15 +491,27 @@ public class PermissionManager {
         "neoessentials.economy.taxexempt",
         "neoessentials.economy.nopaycooldown"
     );
+    // Same "wildcard must be scoped exactly to this family" rule as GRADED_TIER_FAMILIES, but
+    // unconditional — there's no config toggle to restore blanket-wildcard coverage for these,
+    // since (unlike the economy modifiers) the entire point of vanish-priority tiers is precise,
+    // deliberate rank assignment; a bare neoessentials.* silently maxing everyone's vanish
+    // priority out would defeat that immediately.
+    private static final String[] UNCONDITIONAL_GRADED_TIER_FAMILIES = {
+        "neoessentials.vanish.priority"
+    };
 
     /**
      * Whether {@code targetPermission} is one of the graded/opt-in economy-modifier nodes
      * checked by {@link com.zerog.neoessentials.economy.compat.PermissionBasedModifiers}
-     * (sell-multiplier / max-balance / pay-limit tiers, tax-exempt, no-pay-cooldown).
+     * (sell-multiplier / max-balance / pay-limit tiers, tax-exempt, no-pay-cooldown), or a
+     * vanish-priority tier ({@link com.zerog.neoessentials.moderation.VanishManager}).
      */
     private static boolean isGradedEconomyModifierNode(String targetPermission) {
         if (GRADED_EXACT_ONLY_NODES.contains(targetPermission)) return true;
         for (String family : GRADED_TIER_FAMILIES) {
+            if (targetPermission.startsWith(family + ".")) return true;
+        }
+        for (String family : UNCONDITIONAL_GRADED_TIER_FAMILIES) {
             if (targetPermission.startsWith(family + ".")) return true;
         }
         return false;
@@ -516,12 +529,21 @@ public class PermissionManager {
      * {@code neoessentials.economy.sellmultiplier.*}) — a broader ancestor wildcard like
      * {@code neoessentials.*} or {@code neoessentials.economy.*} does not count, and the
      * exact-only nodes ({@code taxexempt}, {@code nopaycooldown}) never match via wildcard at
-     * all, only an exact literal grant.
+     * all, only an exact literal grant. Vanish-priority tiers follow the same scoped-wildcard
+     * rule, but with no config override — see {@link #UNCONDITIONAL_GRADED_TIER_FAMILIES}.
      *
      * @param wildcardPrefix the stored wildcard permission with its trailing {@code .*} removed
      */
     private static boolean wildcardCanGrant(String wildcardPrefix, String targetPermission) {
         if (!isGradedEconomyModifierNode(targetPermission)) return true;
+        for (String family : UNCONDITIONAL_GRADED_TIER_FAMILIES) {
+            if (wildcardPrefix.equals(family)) return true;
+        }
+        boolean isUnconditional = false;
+        for (String family : UNCONDITIONAL_GRADED_TIER_FAMILIES) {
+            if (targetPermission.startsWith(family + ".")) { isUnconditional = true; break; }
+        }
+        if (isUnconditional) return false; // already checked exact-family-scoped wildcard above
         if (com.zerog.neoessentials.config.ConfigManager.getInstance()
                 .isWildcardsGrantEconomyModifierPermissionsEnabled()) {
             return true;

@@ -1403,7 +1403,11 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 34);          // v34 — added permissions.wildcardsGrantEconomyModifierPermissions
+        put(MAIN_CONFIG, 35);          // v35 — removed moderation.generalSettings.seeVanishedPermission;
+                                       //        vanish now uses dedicated neoessentials.vanish.
+                                       //        interact/.build/.hurt permission nodes instead of
+                                       //        reusing the "can see vanished players" node
+                                       // v34 — added permissions.wildcardsGrantEconomyModifierPermissions
                                        //        (default false): a group/user wildcard like
                                        //        neoessentials.* no longer implies the graded
                                        //        economy-modifier nodes unless scoped to their
@@ -2903,26 +2907,6 @@ public class ConfigManager {
         }
         return false;
     }
-
-    /**
-     * Permission node to allow seeing vanished players. Used by event handlers.
-     * Returns a reasonable default if not set.
-     */
-    public String getSeeVanishedPermission() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("moderation")) {
-            JsonObject moderation = config.getAsJsonObject("moderation");
-            if (moderation.has("generalSettings")) {
-                JsonObject general = moderation.getAsJsonObject("generalSettings");
-                if (general.has("seeVanishedPermission")) {
-                    String val = general.get("seeVanishedPermission").getAsString();
-                    if (val != null && !val.trim().isEmpty()) return val;
-                }
-            }
-        }
-        return "neoessentials.moderation.seevanished";
-    }
-
 
     /**
      * Returns max command length from security.maxCommandLength.

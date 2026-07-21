@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 34,
+  "_configVersion": 35,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -772,9 +772,7 @@
 
     "generalSettings": {
       // Permission required to receive staff moderation notifications
-      "staffNotificationPermission": "neoessentials.moderation.notify",
-      // Permission node required to see vanished players
-      "seeVanishedPermission": "neoessentials.vanish.see"
+      "staffNotificationPermission": "neoessentials.moderation.notify"
     }
   },
 

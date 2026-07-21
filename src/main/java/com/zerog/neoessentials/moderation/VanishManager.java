@@ -42,36 +42,34 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages player vanish system for staff invisibility
  */
 public class VanishManager {
+    // Recognized vanish-priority tiers, checked highest-first — mirrors the tiered-permission
+    // pattern used for sell-multiplier/max-balance/pay-limit nodes in PermissionBasedModifiers.
+    // Node: neoessentials.vanish.priority.<tier>. Higher tier = more senior (opposite of the
+    // old hardcoded group-name scheme this replaced, which used LOWER numbers for higher rank).
+    private static final int[] VANISH_PRIORITY_TIERS = {1000, 500, 250, 100, 50, 25, 10, 5, 1};
+
     /**
-     * Get priority for a player (default 10, override for custom logic)
+     * A player's vanish-visibility priority, purely from permission nodes
+     * ({@code neoessentials.vanish.priority.<tier>}) — no hardcoded group-name mapping anymore.
+     * Defaults to {@code 0} (no special vanish visibility) when no tier is granted. Equal or
+     * higher beats lower: see {@link #canViewerSeeVanishedPlayer} / {@link #hidePlayerFromOthers}.
+     *
+     * <p>Uses {@link com.zerog.neoessentials.api.permissions.PermissionAPI#hasPermissionStrict}
+     * rather than the normal OP-bypassing check: this is a graded, opt-in tier (same reasoning
+     * as the economy-modifier tiers in {@code PermissionBasedModifiers}) meant to be granted
+     * deliberately, not handed to every OP automatically. It's also excluded from ordinary
+     * wildcard matching in {@code PermissionManager} — a bare {@code neoessentials.*} on a
+     * group does not grant a vanish-priority tier, only an exact node or a wildcard scoped to
+     * {@code neoessentials.vanish.priority.*} does.
      */
     public int getPlayerPriority(UUID playerId) {
-        // Integrate with permission/group system
-        // Use PermissionSystem.getManager().getUser(playerId).getGroup()
-        String group = null;
-        try {
-            group = com.zerog.neoessentials.permissions.PermissionSystem.getManager().getUser(playerId).getGroup();
-        } catch (Exception e) {
-            // fallback
+        for (int tier : VANISH_PRIORITY_TIERS) {
+            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermissionStrict(playerId,
+                    "neoessentials.vanish.priority." + tier)) {
+                return tier;
+            }
         }
-        if (group == null) return 10;
-        switch (group.toLowerCase()) {
-            case "owner":
-                return 0;
-            case "admin":
-                return 1;
-            case "mod":
-            case "moderator":
-                return 2;
-            case "helper":
-                return 3;
-            case "vip":
-                return 5;
-            case "default":
-            case "member":
-            default:
-                return 10;
-        }
+        return 0;
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(VanishManager.class);
     private static VanishManager instance;
@@ -138,16 +136,39 @@ public class VanishManager {
             ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(playerId);
             if (vanishedPlayer != null) {
                 hidePlayerFromOthers(vanishedPlayer);
-                
+                // Suppresses the vanished player's own footstep/splash/etc. sounds — these are
+                // broadcast by vanilla based on position to every nearby player regardless of
+                // entity visibility (Entity.playSound() isn't gated by the remove-entity packets
+                // above at all), so without this a vanished player could still be heard running
+                // around even though they were invisible.
+                vanishedPlayer.setSilent(true);
+                clearExistingMobTargets(vanishedPlayer);
+
                 // Don't send message here - let the command handle it
                 // to avoid duplicate messages
             }
         }
-        
+
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
             LOGGER.info("Player {} ({}) vanished by {}", playerName, playerId, vanishedBy);
         }
         return true;
+    }
+
+    /**
+     * Clears any hostile mob's existing target if it's this newly-vanished player — the
+     * {@code LivingChangeTargetEvent} cancellation in {@code ModerationEventHandler} only stops
+     * mobs from newly ACQUIRING a vanished player as a target; a mob that was already chasing
+     * this player before they vanished would otherwise keep right on attacking.
+     */
+    private void clearExistingMobTargets(ServerPlayer vanishedPlayer) {
+        if (!(vanishedPlayer.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
+        for (net.minecraft.world.entity.Mob mob : level.getEntitiesOfClass(
+                net.minecraft.world.entity.Mob.class, vanishedPlayer.getBoundingBox().inflate(64.0))) {
+            if (mob.getTarget() == vanishedPlayer) {
+                mob.setTarget(null);
+            }
+        }
     }
     
     /**
@@ -165,12 +186,13 @@ public class VanishManager {
             ServerPlayer unvanishedPlayer = server.getPlayerList().getPlayer(playerId);
             if (unvanishedPlayer != null) {
                 showPlayerToOthers(unvanishedPlayer);
-                
+                unvanishedPlayer.setSilent(false);
+
                 // Don't send message here - let the command handle it
                 // to avoid duplicate messages
             }
         }
-        
+
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
             LOGGER.info("Player ({}) unvanished", playerId);
         }
@@ -284,10 +306,17 @@ public class VanishManager {
     public boolean canViewerSeeVanishedPlayer(UUID viewerId, UUID vanishedId) {
         if (!isPlayerVanished(vanishedId)) return true;
         if (viewerId.equals(vanishedId)) return true;
-        Integer viewerPriority = viewerPriorities.get(viewerId);
-        if (viewerPriority == null) return false;
-        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
-        return viewerPriority <= vanishedPriority;
+        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 0);
+        // Equal priority sees each other too (same group/tier counts as peers), not just
+        // strictly higher — priority 0 (no tier granted at all) is excluded either way, so two
+        // players with no vanish-priority permission at all still can't see one another.
+        Integer toggledPriority = viewerPriorities.get(viewerId);
+        if (toggledPriority != null && toggledPriority > 0 && toggledPriority >= vanishedPriority) return true;
+        // Automatic, toggle-independent visibility: a high-enough vanish-priority permission
+        // node (neoessentials.vanish.priority.<tier>) sees equal-or-lower-priority vanished
+        // players without needing to run /vanish see at all.
+        int autoPriority = getPlayerPriority(viewerId);
+        return autoPriority > 0 && autoPriority >= vanishedPriority;
     }
     
     /**
@@ -323,6 +352,7 @@ public class VanishManager {
         if (isPlayerVanished(playerId)) {
             player.sendSystemMessage(MessageUtil.info(
                 MessageUtil.localize("neoessentials.moderation.vanish_reminder")));
+            player.setSilent(true);
             if (server != null) {
                 com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1,
                     () -> hidePlayerFromOthers(player));
@@ -332,27 +362,14 @@ public class VanishManager {
         // After 1 tick, handle what the joining player should (or should not) see.
         if (server != null) {
             com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
-                if (canPlayerSeeVanished(playerId)) {
-                    // Show all vanished players whose priority is >= this observer's priority
-                    int viewerPriority = viewerPriorities.getOrDefault(playerId, 10);
-                    for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
-                        if (vanishedId.equals(playerId)) continue;
-                        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
-                        if (viewerPriority <= vanishedPriority) {
-                            ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
-                            if (vanishedPlayer != null) {
-                                showPlayerToSpecific(vanishedPlayer, player);
-                            }
-                        }
-                    }
-                } else {
-                    // Hide every vanished player from this newly joined observer
-                    for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
-                        if (vanishedId.equals(playerId)) continue;
-                        ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
-                        if (vanishedPlayer != null) {
-                            hidePlayerFromSpecific(vanishedPlayer, player);
-                        }
+                for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
+                    if (vanishedId.equals(playerId)) continue;
+                    ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
+                    if (vanishedPlayer == null) continue;
+                    if (canViewerSeeVanishedPlayer(playerId, vanishedId)) {
+                        showPlayerToSpecific(vanishedPlayer, player);
+                    } else {
+                        hidePlayerFromSpecific(vanishedPlayer, player);
                     }
                 }
             });
@@ -376,25 +393,20 @@ public class VanishManager {
      * from every observer who does not have see-vanished permission, and the
      * tab-list removal is performed conditionally on the config flag.
      *
-     * Priority rule: an observer can see a vanished player only when the observer
-     * is explicitly in viewerPriorities AND their priority number is <= the vanished
-     * player's priority (i.e. equal or higher staff rank).
+     * Priority rule (see {@link #canViewerSeeVanishedPlayer}, the single source of truth this
+     * delegates to): an observer sees the vanished player only if they've toggled see-vanished
+     * on with sufficient rank, or automatically via a high-enough vanish-priority permission
+     * node — either way, equal-or-higher priority than the vanished player's (never priority 0).
      */
     private void hidePlayerFromOthers(ServerPlayer vanishedPlayer) {
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
 
         UUID vanishedId = vanishedPlayer.getUUID();
-        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
 
         for (ServerPlayer otherPlayer : server.getPlayerList().getPlayers()) {
             if (otherPlayer == vanishedPlayer) continue;
-            UUID otherId = otherPlayer.getUUID();
-            // The observer may only keep seeing the vanished player if they are
-            // registered as a see-vanished viewer with sufficient rank.
-            boolean canSee = viewerPriorities.containsKey(otherId)
-                    && viewerPriorities.get(otherId) <= vanishedPriority;
-            if (!canSee) {
+            if (!canViewerSeeVanishedPlayer(otherPlayer.getUUID(), vanishedId)) {
                 hidePlayerFromSpecific(vanishedPlayer, otherPlayer);
             }
         }
