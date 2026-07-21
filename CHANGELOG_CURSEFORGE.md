@@ -6,6 +6,21 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.77 — 2026-07-21
+
+### 🐛 Fixed /sell Selling the Wrong Item at the Wrong Price
+
+- Fixed `/sell hand` sometimes showing "minecraft:air" in the sale message and overcharging
+  up to 3x the price you set for the item.
+- Server admins (OPs) and permission groups with a broad wildcard permission no longer
+  automatically get the highest sell-price bonus, free tax exemption, or no pay cooldown —
+  those now have to be granted on purpose. (Configurable if you actually want the old
+  behavior back.)
+- Typing `/sell` with no arguments now sells whatever's in your hand, same as `/sell hand`.
+- Fixed a config file typo that could break Discord-login syncing on server start.
+
+---
+
 ## 1.0.3+build.24 — 2026-07-18
 
 ### 🧹 Config Cleanup — Kit Commands Now Actually Run

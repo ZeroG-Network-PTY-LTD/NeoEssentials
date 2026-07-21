@@ -11,6 +11,38 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.3+build.77] — 2026-07-21
+
+### 🐛 Fixed /sell hand Reporting "minecraft:air" and Overcharging via OP/Wildcard Permission Bugs
+
+- **Wrong item + up-to-3x price bug:** `/sell hand` could log `minecraft:air` instead of the
+  item actually sold, and charge up to 3x the configured price. Root cause of the item bug:
+  the held `ItemStack` passed into the sell logic is the *same live object* as the one sitting
+  in your hand's inventory slot — once that stack was shrunk to 0 during removal, reading it
+  afterward for the log/success message saw vanilla's `Items.AIR` (returned by `getItem()`
+  once a stack `isEmpty()`). Fixed by capturing the item id before removal happens.
+- **OPs and wildcard permission groups no longer get free economy bonuses.** The sell-multiplier
+  tiers (up to 300%), tax exemption, no-pay-cooldown, and max-balance/pay-limit overrides are
+  opt-in permission nodes (`neoessentials.economy.sellmultiplier.*`, `.taxexempt`,
+  `.nopaycooldown`, `.maxbalance.*`, `.paylimit.*`) meant to be granted deliberately — but any
+  OP with `opsBypassPermissions` (default on) silently passed all of them, and any group with a
+  bare `neoessentials.*` wildcard did too. Both paths are now config-driven instead of
+  hardcoded:
+  - `permissions.opsBypassEconomyModifierPermissions` (default `false`) — OPs no longer
+    auto-pass these nodes just from `opsBypassPermissions`/vanilla-OP fallback.
+  - `permissions.wildcardsGrantEconomyModifierPermissions` (default `false`) — a wildcard only
+    covers these nodes when scoped to their own tier family (`neoessentials.economy.
+    sellmultiplier.*` counts; the broader `neoessentials.*` or `neoessentials.economy.*`
+    doesn't).
+  - Both can be flipped back to `true` to restore the old blanket-bypass behavior.
+- Bare `/sell` (no argument) now auto-sells whatever's in your hand, same as `/sell hand` —
+  still gated by `neoessentials.sell.hand`.
+- Fixed a dangling trailing comma in `discord_auth.json`'s `permissionMappings` that broke the
+  JAR-template reload on every boot (`MalformedJsonException`).
+- `config.json`'s `_configVersion` bumped to 34, `discord_auth.json`'s to 11.
+
+---
+
 ## [1.0.3+build.24] — 2026-07-18
 
 ### 🧹 Config Cleanup — Removed Dead/Shadowed Keys, Kit Commands Now Actually Run
