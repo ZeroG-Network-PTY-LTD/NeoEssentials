@@ -1,7 +1,8 @@
 name: Build & Release Jar
 
-# Builds the mod jar for a dev branch and publishes it as that branch's
-# "latest" GitHub Release — no need to run gradle locally to grab a build.
+# Builds the mod jar for a dev branch and publishes it as its own GitHub Release, tagged
+# build-<branch>-<build number> — a new release per build, not one shared/overwritten release
+# per branch — so no need to run gradle locally to grab a build.
 # The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
 # mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
 # resolver (org.gradle.toolchains.foojay-resolver-convention, already
@@ -96,17 +97,21 @@ jobs:
           jar_path=$(ls -t build/libs/*.jar | head -n 1)
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
+          echo "build_number=$(cat build_number.txt)" >> "$GITHUB_OUTPUT"
 
-      - name: Publish branch release
+      # One release PER BUILD now (unique tag = branch + build number), instead of one release
+      # per branch that gets overwritten every push. The old scheme reused the same tag
+      # (build-<branch>) forever, so GitHub only ever fired a release "released" webhook event
+      # once — every subsequent push just "edited" that same release, which a Discord bot (or
+      # any webhook consumer) watching for "released" never saw again. Each build now gets its
+      # own tag/release, so "released" fires fresh every time.
+      - name: Publish build release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.ref_name }}
-          name: "${{ github.ref_name }} — latest automated build"
+          tag_name: build-${{ github.ref_name }}-${{ steps.jar.outputs.build_number }}
+          name: "${{ github.ref_name }} — build ${{ steps.jar.outputs.build_number }}"
           body: |
             Automated build from commit ${{ github.sha }} on `${{ github.ref_name }}`.
-
-            This release is overwritten on every push to this branch — it always
-            reflects the latest commit, not a specific version.
           target_commitish: ${{ github.sha }}
           files: ${{ steps.jar.outputs.path }}
           prerelease: true
