@@ -6,6 +6,25 @@ Starting from **v1.0.3** — earlier history (v1.0.2.x and before) is not carrie
 
 ---
 
+## 1.0.3+build.78 — 2026-07-21
+
+### 🐛 Vanish No Longer Makes Noise or Gets Noticed by Mobs
+
+- Fixed vanished players still being audible — footsteps, splashes, etc. no longer play for
+  other players while you're vanished.
+- Fixed hostile mobs still targeting and attacking vanished players — they're now ignored
+  by mob AI too, not just invisible to other players.
+- Vanished players can no longer hurt other players, interact with anything, or break/place
+  blocks by default — these each now need a specific permission
+  (`neoessentials.vanish.hurt`/`.interact`/`.build`, or the `neoessentials.vanish.*` wildcard
+  for all three) rather than being tied to the "can see vanished players" permission.
+- The "who can see who" rank system for vanish now uses proper permission nodes
+  (`neoessentials.vanish.priority.<number>` — higher number wins, equal numbers can see each
+  other too) instead of a fixed list of group names, so it works with any permission setup,
+  not just the specific group names the mod used to expect.
+
+---
+
 ## 1.0.3+build.77 — 2026-07-21
 
 ### 🐛 Fixed /sell Selling the Wrong Item at the Wrong Price
