@@ -73,6 +73,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add build_number.txt
           git commit -m "chore: bump build number to $(cat build_number.txt) [skip ci]"
+          # Discard anything else left unstaged (e.g. the earlier `chmod +x gradlew` step flips
+          # a tracked file's executable bit, which Linux runners report as a mode-only diff
+          # unlike core.fileMode=false setups) — `git rebase` below refuses to run with ANY
+          # unstaged changes present, even ones unrelated to build_number.txt.
+          git checkout -- .
 
           mkdir -p ~/.ssh
           echo "$BUILD_NUMBER_DEPLOY_KEY" > ~/.ssh/build_number_deploy_key
