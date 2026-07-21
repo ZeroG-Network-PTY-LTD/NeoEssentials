@@ -1,0 +1,123 @@
+/*
+  ZeroG Network dashboard — design tokens.
+
+  Direction: a control-room console, not a generic SaaS admin. Dark
+  indigo-slate (not pure black) reads as "server room at night."
+  Cyan is the primary action color (signal, connectivity); purple is
+  the secondary accent (highlights, active-state markers, gradients) —
+  together they read as "network," which fits a multi-server
+  management tool better than a single warm accent did. Moss green
+  still marks online/healthy state and ember red is still reserved for
+  destructive actions only — those are status conventions, not brand
+  colors, so they're unchanged.
+
+  Display face: Space Grotesk — geometric, slightly blocky, echoes
+  voxel geometry without resorting to a literal pixel font.
+  Body face: Inter — quiet, legible at small sizes.
+  Data face: JetBrains Mono — coordinates, balances, commands, logs
+  are all fundamentally technical strings; monospace makes columns
+  of numbers scan correctly.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --mc-bg-base: #10121c;
+  --mc-bg-surface: #191c2a;
+  --mc-bg-surface-raised: #212536;
+  --mc-border: #2c3145;
+  --mc-border-strong: #383e56;
+
+  --mc-text-primary: #e8e8f0;
+  --mc-text-secondary: #9b9cb5;
+  --mc-text-muted: #6a6b85;
+
+  --mc-cyan-50: #0e2530;
+  --mc-cyan-400: #38c6e0;
+  --mc-cyan-500: #22b8d9;
+  --mc-cyan-600: #1893ae;
+
+  --mc-purple-50: #201a35;
+  --mc-purple-400: #a78bfa;
+  --mc-purple-500: #9061f9;
+  --mc-purple-600: #7c3aed;
+
+  --mc-moss-50: #182219;
+  --mc-moss-400: #6b9b5e;
+  --mc-moss-500: #7fb072;
+
+  --mc-ember-50: #2a1818;
+  --mc-ember-400: #d9534f;
+  --mc-ember-500: #e06864;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-data: 'JetBrains Mono', monospace;
+
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+body {
+  background:
+    radial-gradient(1100px 520px at 100% -8%, rgba(56, 198, 224, 0.10), transparent 60%),
+    radial-gradient(900px 480px at -8% 12%, rgba(167, 139, 250, 0.08), transparent 55%),
+    var(--mc-bg-base);
+  background-attachment: fixed;
+  color: var(--mc-text-primary);
+  font-family: var(--font-body);
+}
+
+.font-display { font-family: var(--font-display); }
+.font-data { font-family: var(--font-data); }
+
+/* Shared "console panel" card recipe — bordered surface, soft glow on
+   hover instead of a hard shadow, and an optional top accent hairline
+   so cards read as instrument panels rather than flat SaaS boxes. */
+.dash-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--mc-bg-surface), var(--mc-bg-surface) 60%, var(--mc-bg-surface-raised));
+  border: 1px solid var(--mc-border);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.dash-card-interactive:hover {
+  border-color: var(--mc-border-strong);
+  box-shadow: 0 0 0 1px var(--mc-border-strong), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+}
+
+.pulse-dot {
+  position: relative;
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.55;
+  animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.5; }
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* Pop micro-interaction for CTA buttons, ported from the BanManager
+   WebUI home page — a subtle spring "pop" on mount and a scale-down
+   while pressed, instead of a shadow/hover-only affordance. */
+.btn-pop {
+  animation: btn-pop 0.25s ease-out;
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+.btn-pop:active {
+  animation: none;
+  transform: scale(0.97);
+}
+@keyframes btn-pop {
+  0% { transform: scale(0.98); }
+  40% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}

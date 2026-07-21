@@ -297,6 +297,46 @@ dependencies {
 }
 
 
+// --- Bundled internal dashboard UI (optional — only matters when webDashboard.mode is
+// "internal" or "both"; the shipped default remains "external") ---
+//
+// webdashboard-ui/ is a plain Vite+React+TS project (NOT a Gradle/Java module, just a
+// sibling directory) — it becomes this mod's own bundled dashboard, calling this mod's
+// REST API directly with no separate PHP/Laravel process. Follows the same "generate
+// elsewhere, wire in as a resources srcDir, make processResources depend on it" pattern
+// already used above for copyBuildNumber/jarJar/:vault-api's classes. Skipped entirely
+// (via onlyIf) if the directory doesn't exist, so a checkout without it still builds fine.
+def dashboardUiDir = file("$rootDir/webdashboard-ui")
+def npmExecutable = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'npm.cmd' : 'npm'
+
+tasks.register("installDashboardUI", Exec) {
+    onlyIf { dashboardUiDir.exists() }
+    workingDir dashboardUiDir
+    commandLine npmExecutable, 'ci'
+    inputs.file(file("$dashboardUiDir/package-lock.json"))
+    outputs.dir(file("$dashboardUiDir/node_modules"))
+}
+
+tasks.register("buildDashboardUI", Exec) {
+    onlyIf { dashboardUiDir.exists() }
+    dependsOn 'installDashboardUI'
+    workingDir dashboardUiDir
+    commandLine npmExecutable, 'run', 'build'
+    inputs.dir(file("$dashboardUiDir/src"))
+    inputs.file(file("$dashboardUiDir/package.json"))
+    outputs.dir(file("$dashboardUiDir/dist"))
+}
+
+tasks.register("copyDashboardUI", Copy) {
+    onlyIf { dashboardUiDir.exists() }
+    dependsOn 'buildDashboardUI'
+    from file("$dashboardUiDir/dist")
+    into file('build/generated/dashboardUiResources/webdashboard')
+}
+
+sourceSets.main.resources { srcDir 'build/generated/dashboardUiResources' }
+tasks.named('processResources') { dependsOn 'copyDashboardUI' }
+
 // Copy build_number.txt to resources so it's included in the JAR
 tasks.register("copyBuildNumber", Copy) {
     from file('build_number.txt')
