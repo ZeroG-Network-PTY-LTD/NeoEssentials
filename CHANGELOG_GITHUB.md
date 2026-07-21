@@ -11,6 +11,18 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.2] — 2026-07-21
+
+### ✨ Pairing Now Includes the WebSocket Port
+
+- `/dashboard pair` now sends `webDashboard.websocketPort` alongside the API key in its
+  `POST /api/pair/complete` request, so a paired external dashboard can auto-configure a live
+  WebSocket connection (server status, chat, player join/leave) instead of needing the admin
+  to hand-enter that port separately. First step toward the external dashboard actually using
+  the mod's existing WebSocket server, which it never has until now.
+
+---
+
 ## [1.0.4+build.1] — 2026-07-21
 
 ### ✨ Support/Discord/GitHub Links on Startup and on Real Detected Problems
