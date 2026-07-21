@@ -42,24 +42,45 @@ jobs:
       # that mismatch used to make every CI build report "build.1" regardless of how far along
       # local builds had gotten. Gradle already incremented it during the build above; this
       # just commits that new value back so the next build (local or CI) continues from it.
-      # Uses the default GITHUB_TOKEN checkout already authenticated with — pushes made with it
-      # don't re-trigger this workflow's `push` event, so this can't cause a build loop.
-      # continue-on-error: this push can fail on its own (e.g. branch-protection rejecting the
-      # default token until GitHub Actions is added as a bypass actor) and that must NOT skip
-      # the actual jar release below — a build-number sync hiccup is far less important than
-      # publishing the build.
+      #
+      # Pushes with the default GITHUB_TOKEN (needed for the "Publish branch release" step
+      # below) get rejected by this repo's branch-protection ruleset, which requires either a
+      # PR or a bypass actor — GitHub Actions isn't one, but "Deploy keys" already is. So this
+      # step pushes over SSH using a repo deploy key (BUILD_NUMBER_DEPLOY_KEY, write access)
+      # instead of the checkout's token. Deploy-key pushes don't re-trigger this workflow's
+      # `push` event either (same as GITHUB_TOKEN), so this still can't cause a build loop.
+      #
+      # continue-on-error + the two no-op-when-missing checks: this push can still fail on its
+      # own (secret not configured, key revoked, etc.) and that must NOT skip the actual jar
+      # release below — a build-number sync hiccup is far less important than publishing the
+      # build.
       - name: Commit updated build number
         continue-on-error: true
+        env:
+          BUILD_NUMBER_DEPLOY_KEY: ${{ secrets.BUILD_NUMBER_DEPLOY_KEY }}
         run: |
           if git diff --quiet -- build_number.txt; then
             echo "build_number.txt unchanged, nothing to commit."
             exit 0
           fi
+          if [ -z "$BUILD_NUMBER_DEPLOY_KEY" ]; then
+            echo "BUILD_NUMBER_DEPLOY_KEY not set — skipping build-number push-back."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add build_number.txt
           git commit -m "chore: bump build number to $(cat build_number.txt) [skip ci]"
-          git push origin HEAD:${{ github.ref_name }}
+
+          mkdir -p ~/.ssh
+          echo "$BUILD_NUMBER_DEPLOY_KEY" > ~/.ssh/build_number_deploy_key
+          chmod 600 ~/.ssh/build_number_deploy_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+          git remote set-url origin "git@github.com:${{ github.repository }}.git"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/build_number_deploy_key -o IdentitiesOnly=yes" \
+            git push origin HEAD:${{ github.ref_name }}
 
       - name: Locate built jar
         id: jar
