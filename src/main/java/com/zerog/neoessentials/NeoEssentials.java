@@ -372,11 +372,17 @@ public class NeoEssentials {
                 int failedCount = ManagerRegistry.getInstance().getFailedCount();
                 if (failedCount > 0) {
                     LOGGER.warn("⚠ {} manager(s) failed to initialize - some features may be unavailable", failedCount);
+                    com.zerog.neoessentials.util.SupportLinks.markProblemDetected();
+                    com.zerog.neoessentials.util.SupportLinks.logConsole(LOGGER, true);
                 }
             } catch (Exception e) {
                 LOGGER.error("Failed to generate manager diagnostics: {}", e.getMessage());
             }
-            
+
+            // Always printed once per restart, regardless of whether anything went wrong —
+            // the prominent (bordered) version above only shows up on an actual failure.
+            com.zerog.neoessentials.util.SupportLinks.logConsole(LOGGER, false);
+
             LOGGER.info("════════════════════════════════════════════════════════════════");
         }
         
@@ -482,6 +488,22 @@ public class NeoEssentials {
         
         @SubscribeEvent
         public static void onPlayerLoggedIn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+            // If a real problem was detected during startup (a manager failed to init, or the
+            // permission system fell back to emergency mode), the first admin to join this
+            // session gets a clickable support/Discord/GitHub message — same admin check as
+            // the config-split notice just below, reused for consistency.
+            // Admin check MUST come before shouldAlertJoiningAdmin() — that call consumes the
+            // "show once" flag via compareAndSet, so checking it first would burn the one
+            // opportunity on a non-admin joining before any admin does.
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer adminCheckPlayer
+                    && (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(adminCheckPlayer, 4) ||
+                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "*") ||
+                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "neoessentials.*") ||
+                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "neoessentials.admin.*"))
+                    && com.zerog.neoessentials.util.SupportLinks.shouldAlertJoiningAdmin()) {
+                adminCheckPlayer.sendSystemMessage(com.zerog.neoessentials.util.SupportLinks.chatMessage());
+            }
+
             // Check if we should notify admins about config splitting
             if (ConfigSplitter.shouldNotifyAdmins() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
                 // Check if player has permission (OP or wildcard permission)

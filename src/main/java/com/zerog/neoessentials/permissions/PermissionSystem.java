@@ -147,6 +147,8 @@ public class PermissionSystem {
             LOGGER.error("╚══════════════════════════════════════════════════════════════╝");
             LOGGER.error("Full stack trace:", e);
             com.zerog.neoessentials.api.permissions.PermissionAPI.setEmergencyMode(true);
+            com.zerog.neoessentials.util.SupportLinks.markProblemDetected();
+            com.zerog.neoessentials.util.SupportLinks.logConsole(LOGGER, true);
             initialized = true; // Mark initialised so reload can recover later
         }
     }
