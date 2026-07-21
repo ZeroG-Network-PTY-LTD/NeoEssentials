@@ -12,6 +12,78 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.3+build.78] — 2026-07-21
+
+### 🐛 Vanish Silence + Mob Targeting, Graded Vanish Permissions
+
+Two real gaps in `/vanish`, both confirmed via live multi-client testing:
+
+- **Sound leak:** footstep/splash/etc. sounds are broadcast by vanilla based on position to
+  every nearby player regardless of entity visibility — the packet-level hide/show this mod
+  does never touched that, so a vanished player could still be heard running around. Fixed by
+  toggling `Entity.setSilent()` on vanish/unvanish/rejoin.
+- **Mobs still noticed you:** hostile mobs could target and attack a vanished player normally,
+  since vanilla's targeting AI has nothing to do with the packet-level hide/show. Fixed via
+  `LivingChangeTargetEvent` cancellation for new targets, plus clearing any mob's existing
+  target the moment a player vanishes.
+
+**Replaced the single, conflated `seeVanishedPermission` check** (used for both "can see
+vanished players" and, confusingly, "can this vanished player themselves interact/build") with
+three dedicated, independent opt-in nodes:
+- `neoessentials.vanish.hurt` — damaging other players while vanished (didn't exist as a
+  restriction at all before; a vanished player could freely hurt others).
+- `neoessentials.vanish.interact` / `neoessentials.vanish.build` — right-click interactions
+  and block break/place while vanished.
+- `neoessentials.vanish.*` wildcard covers all three. By default (no node granted) a vanished
+  player is now *only* invisible.
+
+**Replaced the hardcoded group-name → priority switch** (`owner`/`admin`/`mod`/`helper`/`vip`/
+`default`) with permission-node tiers: `neoessentials.vanish.priority.<tier>` (1000, 500, 250,
+100, 50, 25, 10, 5, 1 — highest granted tier wins, default `0`). A viewer with an
+equal-or-higher tier than the vanished player's now sees them automatically, no `/vanish see`
+toggle needed. Deliberately **not** satisfied by OP status or a bare `neoessentials.*`
+wildcard (unlike the economy-modifier tiers, there's no config override for this one) — the
+entire point is precise, deliberate rank assignment. Confirmed live across several rounds,
+including catching a real test-setup gotcha: a group inheriting another group's tier via
+`inherits` picks it up too, so isolating two groups for a controlled test needs an explicit
+negative override (`-neoessentials.vanish.priority.<tier>`) on the inheriting group.
+- Removed the now-unused `moderation.generalSettings.seeVanishedPermission` config key;
+  `config.json`'s `_configVersion` bumped to 35.
+
+---
+
+## [1.0.3+build.77] — 2026-07-21
+
+### 🐛 Fixed /sell hand Reporting "minecraft:air" and Overcharging via OP/Wildcard Permission Bugs
+
+- **Wrong item + up-to-3x price bug:** `/sell hand` could log `minecraft:air` instead of the
+  item actually sold, and charge up to 3x the configured price. Root cause of the item bug:
+  the held `ItemStack` passed into the sell logic is the *same live object* as the one sitting
+  in your hand's inventory slot — once that stack was shrunk to 0 during removal, reading it
+  afterward for the log/success message saw vanilla's `Items.AIR` (returned by `getItem()`
+  once a stack `isEmpty()`). Fixed by capturing the item id before removal happens.
+- **OPs and wildcard permission groups no longer get free economy bonuses.** The sell-multiplier
+  tiers (up to 300%), tax exemption, no-pay-cooldown, and max-balance/pay-limit overrides are
+  opt-in permission nodes (`neoessentials.economy.sellmultiplier.*`, `.taxexempt`,
+  `.nopaycooldown`, `.maxbalance.*`, `.paylimit.*`) meant to be granted deliberately — but any
+  OP with `opsBypassPermissions` (default on) silently passed all of them, and any group with a
+  bare `neoessentials.*` wildcard did too. Both paths are now config-driven instead of
+  hardcoded:
+  - `permissions.opsBypassEconomyModifierPermissions` (default `false`) — OPs no longer
+    auto-pass these nodes just from `opsBypassPermissions`/vanilla-OP fallback.
+  - `permissions.wildcardsGrantEconomyModifierPermissions` (default `false`) — a wildcard only
+    covers these nodes when scoped to their own tier family (`neoessentials.economy.
+    sellmultiplier.*` counts; the broader `neoessentials.*` or `neoessentials.economy.*`
+    doesn't).
+  - Both can be flipped back to `true` to restore the old blanket-bypass behavior.
+- Bare `/sell` (no argument) now auto-sells whatever's in your hand, same as `/sell hand` —
+  still gated by `neoessentials.sell.hand`.
+- Fixed a dangling trailing comma in `discord_auth.json`'s `permissionMappings` that broke the
+  JAR-template reload on every boot (`MalformedJsonException`).
+- `config.json`'s `_configVersion` bumped to 34, `discord_auth.json`'s to 11.
+
+---
+
 ## [1.0.3+build.24] — 2026-07-18
 
 ### 🧹 Config Cleanup — Removed Dead/Shadowed Keys, Kit Commands Now Actually Run
