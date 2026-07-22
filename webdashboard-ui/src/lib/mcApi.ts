@@ -34,6 +34,8 @@ import type {
   WarnEntry,
   NoteEntry,
   PlayerInventory,
+  FreezeEntry,
+  JailEntry,
 } from '../types';
 
 /**
@@ -215,6 +217,49 @@ export async function setNickname(username: string, nickname: string | null) {
 
 export async function teleportToPlayer(username: string, targetUsername: string) {
   return postJson(`/api/player/teleport/${encodeURIComponent(username)}`, { targetUsername });
+}
+
+// --- Freeze / vanish / jail --------------------------------------------------
+
+export async function freezeStatus(username: string): Promise<{ frozen: boolean; entry?: FreezeEntry }> {
+  return getJson(`/api/moderation/freeze/${encodeURIComponent(username)}`);
+}
+
+export async function freezePlayer(targetName: string, reason?: string) {
+  return postJson('/api/moderation/freeze', { targetName, reason });
+}
+
+export async function unfreezePlayer(username: string) {
+  return del(`/api/moderation/freeze/${encodeURIComponent(username)}`);
+}
+
+export async function vanishStatus(username: string): Promise<{ vanished: boolean }> {
+  return getJson(`/api/moderation/vanish/${encodeURIComponent(username)}`);
+}
+
+export async function vanishPlayer(targetName: string) {
+  return postJson('/api/moderation/vanish', { targetName });
+}
+
+export async function unvanishPlayer(username: string) {
+  return del(`/api/moderation/vanish/${encodeURIComponent(username)}`);
+}
+
+export async function jailLocations(): Promise<string[]> {
+  const data = await getJson<{ jails?: string[] }>('/api/moderation/jails');
+  return data.jails ?? [];
+}
+
+export async function jailStatus(username: string): Promise<{ jailed: boolean; entry?: JailEntry }> {
+  return getJson(`/api/moderation/jail/${encodeURIComponent(username)}`);
+}
+
+export async function jailPlayer(targetName: string, jailName: string, reason?: string, durationSeconds?: number) {
+  return postJson('/api/moderation/jail', { targetName, jailName, reason, duration: durationSeconds });
+}
+
+export async function unjailPlayer(username: string) {
+  return del(`/api/moderation/jail/${encodeURIComponent(username)}`);
 }
 
 // --- Moderation history (per-player) ----------------------------------------

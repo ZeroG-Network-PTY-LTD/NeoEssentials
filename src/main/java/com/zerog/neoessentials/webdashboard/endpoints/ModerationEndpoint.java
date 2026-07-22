@@ -173,6 +173,39 @@ public class ModerationEndpoint implements HttpHandler {
             } else if ("GET".equals(method) && path.endsWith("/reports")) {
                 handlePendingReports(exchange);
 
+            } else if ("GET".equals(method) && path.endsWith("/freeze/list")) {
+                handleFreezeList(exchange);
+            } else if ("GET".equals(method) && path.contains("/freeze/")) {
+                handleFreezeStatus(exchange, lastSegment(path));
+            } else if ("POST".equals(method) && path.endsWith("/freeze")) {
+                requireAdmin(exchange);
+                handleCreateFreeze(exchange);
+            } else if ("DELETE".equals(method) && path.contains("/freeze/")) {
+                requireAdmin(exchange);
+                handleRemoveFreeze(exchange, lastSegment(path));
+
+            } else if ("GET".equals(method) && path.endsWith("/vanish/list")) {
+                handleVanishList(exchange);
+            } else if ("GET".equals(method) && path.contains("/vanish/")) {
+                handleVanishStatus(exchange, lastSegment(path));
+            } else if ("POST".equals(method) && path.endsWith("/vanish")) {
+                requireAdmin(exchange);
+                handleCreateVanish(exchange);
+            } else if ("DELETE".equals(method) && path.contains("/vanish/")) {
+                requireAdmin(exchange);
+                handleRemoveVanish(exchange, lastSegment(path));
+
+            } else if ("GET".equals(method) && path.endsWith("/jails")) {
+                handleJailLocations(exchange);
+            } else if ("GET".equals(method) && path.contains("/jail/")) {
+                handleJailStatus(exchange, lastSegment(path));
+            } else if ("POST".equals(method) && path.endsWith("/jail")) {
+                requireAdmin(exchange);
+                handleCreateJail(exchange);
+            } else if ("DELETE".equals(method) && path.contains("/jail/")) {
+                requireAdmin(exchange);
+                handleRemoveJail(exchange, lastSegment(path));
+
             } else {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown moderation endpoint\"}");
             }
@@ -643,6 +676,163 @@ public class ModerationEndpoint implements HttpHandler {
         obj.addProperty("reviewedBy", r.getReviewedBy());
         obj.addProperty("reviewedAt", r.getReviewedAt());
         obj.addProperty("reviewNotes", r.getReviewNotes());
+        return obj;
+    }
+
+    // ── Freeze ────────────────────────────────────────────────────────────────────
+
+    private void handleFreezeList(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        for (FreezeManager.FreezeEntry f : FreezeManager.getInstance().getAllFrozenPlayers()) arr.add(freezeJson(f));
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.add("frozen", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleFreezeStatus(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        FreezeManager.FreezeEntry entry = uuid != null ? FreezeManager.getInstance().getFreezeEntry(uuid) : null;
+        resp.addProperty("frozen", entry != null);
+        if (entry != null) resp.add("entry", freezeJson(entry));
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleCreateFreeze(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String targetName = body.has("targetName") ? body.get("targetName").getAsString() : "";
+        String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : "Frozen by staff";
+        UUID targetId = resolvePlayerId(targetName);
+        if (targetId == null) {
+            sendJson(exchange, 404, json(false, "Player not found: " + targetName));
+            return;
+        }
+        boolean success = FreezeManager.getInstance().freezePlayer(targetName, targetId, reason, executorName(exchange));
+        sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " frozen" : "Player is already frozen"));
+    }
+
+    private void handleRemoveFreeze(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
+        boolean removed = FreezeManager.getInstance().unfreezePlayer(uuid);
+        sendJson(exchange, 200, json(removed, removed ? playerName + " unfrozen" : "Player was not frozen"));
+    }
+
+    private JsonObject freezeJson(FreezeManager.FreezeEntry f) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("playerName", f.playerName);
+        obj.addProperty("playerId", f.playerId.toString());
+        obj.addProperty("reason", f.reason);
+        obj.addProperty("frozenBy", f.frozenBy);
+        obj.addProperty("freezeTime", f.freezeTime);
+        return obj;
+    }
+
+    // ── Vanish ────────────────────────────────────────────────────────────────────
+
+    private void handleVanishList(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        MinecraftServer srv = this.server;
+        if (srv != null) {
+            for (UUID uuid : VanishManager.getInstance().getVanishedPlayers()) {
+                var player = srv.getPlayerList().getPlayer(uuid);
+                if (player != null) arr.add(player.getName().getString());
+            }
+        }
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.add("vanished", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleVanishStatus(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("vanished", uuid != null && VanishManager.getInstance().isPlayerVanished(uuid));
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleCreateVanish(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String targetName = body.has("targetName") ? body.get("targetName").getAsString() : "";
+        MinecraftServer srv = this.server;
+        var target = srv != null ? srv.getPlayerList().getPlayerByName(targetName) : null;
+        if (target == null) {
+            sendJson(exchange, 404, json(false, "Player '" + targetName + "' is not online"));
+            return;
+        }
+        boolean success = VanishManager.getInstance().vanishPlayer(target.getUUID(), targetName, executorName(exchange), false);
+        sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " vanished" : "Player is already vanished"));
+    }
+
+    private void handleRemoveVanish(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
+        boolean removed = VanishManager.getInstance().unvanishPlayer(uuid);
+        sendJson(exchange, 200, json(removed, removed ? playerName + " unvanished" : "Player was not vanished"));
+    }
+
+    // ── Jail ──────────────────────────────────────────────────────────────────────
+
+    private void handleJailLocations(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        for (JailManager.JailLocation loc : JailManager.getInstance().getAllJailLocations()) arr.add(loc.name);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.add("jails", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleJailStatus(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        JailManager.JailEntry entry = uuid != null ? JailManager.getInstance().getJailEntry(uuid) : null;
+        resp.addProperty("jailed", entry != null);
+        if (entry != null) resp.add("entry", jailEntryJson(entry));
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleCreateJail(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String targetName = body.has("targetName") ? body.get("targetName").getAsString() : "";
+        String jailName = body.has("jailName") ? body.get("jailName").getAsString() : "";
+        String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : "Jailed by staff";
+        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
+
+        JailManager jailManager = JailManager.getInstance();
+        if (jailManager.getJailLocation(jailName) == null) {
+            sendJson(exchange, 404, json(false, "Jail location not found: " + jailName));
+            return;
+        }
+        UUID targetId = resolvePlayerId(targetName);
+        if (targetId == null) {
+            sendJson(exchange, 404, json(false, "Player not found: " + targetName));
+            return;
+        }
+        boolean success = jailManager.jailPlayer(targetName, targetId, reason, executorName(exchange), jailName, durationSeconds * 1000L);
+        sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " jailed" : "Player is already jailed"));
+    }
+
+    private void handleRemoveJail(HttpExchange exchange, String playerName) throws IOException {
+        UUID uuid = resolvePlayerId(playerName);
+        if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
+        boolean removed = JailManager.getInstance().unjailPlayer(uuid);
+        sendJson(exchange, 200, json(removed, removed ? playerName + " unjailed" : "Player was not jailed"));
+    }
+
+    private JsonObject jailEntryJson(JailManager.JailEntry j) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("playerName", j.playerName);
+        obj.addProperty("playerId", j.playerId.toString());
+        obj.addProperty("reason", j.reason);
+        obj.addProperty("jailedBy", j.jailedBy);
+        obj.addProperty("jailTime", j.jailTime);
+        obj.addProperty("expireAt", j.expireAt);
+        obj.addProperty("jailName", j.jailName);
         return obj;
     }
 
