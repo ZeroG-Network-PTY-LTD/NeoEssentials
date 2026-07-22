@@ -12,7 +12,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.17] — 2026-07-22
+## [1.0.4-mc26.1.2+build.15] — 2026-07-22
 
 ### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)
 
@@ -34,7 +34,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.16] — 2026-07-22
+## [1.0.4-mc26.1.2+build.14] — 2026-07-22
 
 ### ✨ New Brand Logo on the Internal Dashboard
 
@@ -45,7 +45,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.15] — 2026-07-22
+## [1.0.4-mc26.1.2+build.13] — 2026-07-22
 
 ### ✨ Dashboard Security: Copyable Keys, Encrypted Token Storage, Permission-Driven Role Sync
 
@@ -70,7 +70,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.14] — 2026-07-22
+## [1.0.4-mc26.1.2+build.12] — 2026-07-22
 
 ### ✨ Economy Tab: Overview Stats, Distribution Chart, Player Lookup + Bug Fix
 
@@ -93,7 +93,12 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.13] — 2026-07-22
+## [1.0.4-mc26.1.2+build.13-pre-fix] — 2026-07-22
+
+> This shipped as build.13 at the time, before the cross-branch build-number-drift
+> fix below reset the counter — that number now belongs to a later, different
+> entry. Kept here under this label rather than renumbered, since the original
+> release artifact no longer exists to renumber against.
 
 ### ✨ Player Profile Page: Phase 4 (Final) — Sudo, Ptime/Pweather, Clear Inventory
 
@@ -115,7 +120,10 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.12] — 2026-07-22
+## [1.0.4-mc26.1.2+build.12-pre-fix] — 2026-07-22
+
+> Same as the note above — shipped as build.12 before the drift fix; that number
+> now belongs to a later, different entry.
 
 ### ✨ Player Profile Page: Phase 3 — Items & Fun Commands
 
