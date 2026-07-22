@@ -1,12 +1,31 @@
 # Web Dashboard
 
-> **Version:** 1.0.3+build.14 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is now controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
+> **Version:** 1.0.4+build.16 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
 ## Overview
 
-NeoEssentials ships a built-in web dashboard for server monitoring and administration. It runs on an embedded HTTP server with WebSocket support for real-time updates. No external software required.
+NeoEssentials runs an embedded HTTP server (plus a WebSocket server for live updates) exposing a
+full REST API for server monitoring and administration. There are now **two ways to actually use
+it**, controlled by `webDashboard.mode`:
+
+- **`"external"` (the shipped default)** — the mod serves only `/api/*`; a separately-hosted
+  dashboard app (the `NeoEssentials-Dashboard` Laravel project) is the actual browser UI, talking
+  to this API from outside. See [API System](APISystem) and [`docs/API.md`](../API.md) for the
+  full REST/WebSocket reference it's built against.
+- **`"internal"` / `"both"`** — the mod serves its **own** bundled dashboard UI directly from `/`,
+  no separate app to install at all. As of build.13 this internal UI is feature-complete and
+  covers the same ground as the external app: Overview, Players (with a full per-player control
+  page), Economy, Warps, Kits, Holograms, Discord, dashboard account management, Backups,
+  Commands, Logs, Permissions, a public no-login player-lookup page, and (as of build.15) an
+  account Settings page — see [Account Settings & Minecraft Account Linking](#account-settings--minecraft-account-linking)
+  below. `"both"` is just an explicit alias for `"internal"`, useful when you deliberately run the
+  built-in UI *and* point an external app at the same API at the same time.
+
+The account system, permission model, and moderation/economy/etc. backing data described below
+are shared by both dashboards — they're the same accounts and data either one authenticates
+against and reads/writes through the API.
 
 ---
 
@@ -161,10 +180,22 @@ is unaffected.
 | `port` | `8080` | HTTP port |
 | `websocketPort` | `8081` | WebSocket port for live updates |
 | `bindAddress` | `"0.0.0.0"` | IP to bind (use `127.0.0.1` for local-only) |
-| `mode` | `"internal"` | `"internal"`/`"both"` serve the bundled UI + API; `"external"` serves only `/api/*` for setups using a separately-hosted dashboard app. See [Dashboard Connectivity](DashboardConnectivity) |
-| `securitySettings.requireAuthentication` | `true` | Require a Bearer token on dashboard API endpoints |
+| `mode` | `"external"` | `"external"` serves only `/api/*` (default — use with the separate `NeoEssentials-Dashboard` app). `"internal"`/`"both"` also serves the mod's own bundled dashboard UI at `/` — see [Dashboard Connectivity](DashboardConnectivity) |
+| `userSyncWebhookUrl` | `""` (disabled) | Optional: POST a notification here whenever a dashboard_user is created/updated/deleted, so an external dashboard can mirror the change into its own user table. See `docs/API.md` |
+| `userSyncWebhookSecret` | `""` | HMAC-SHA256 secret for signing the webhook above (`X-NeoEssentials-Signature` header) |
+| `securitySettings.requireAuthentication` | `true` | Require a Bearer token (session or API key) on dashboard API endpoints |
 | `securitySettings.enableRateLimiting` | `true` | Enable per-IP rate limiting on the dashboard API |
 | `securitySettings.maxRequestsPerMinute` | `60` | Max API requests per IP per minute when rate limiting is enabled |
+| `securitySettings.publicModerationLookupEnabled` | `true` | Enable the no-login `/api/public/moderation/*` routes (see below) |
+| `roleSync.enabled` | `false` | Opt-in: automatically sync a linked player's dashboard role from their real in-game permission — see [Dashboard Security](#dashboard-security) above |
+| `roleSync.intervalSeconds` | `300` | How often the periodic reconciliation sweep runs, in addition to an immediate check on join |
+| `roleSync.adminPermission` | `"neoessentials.admin.dashboard"` | A player with this permission node is granted the dashboard `ADMIN` role |
+| `roleSync.adminGroup` | `"admin"` | A player in this permission group is granted the dashboard `ADMIN` role (checked in addition to, i.e. OR'd with, `adminPermission`) |
+
+The dashboard's on/off switch is now split across two keys that both have to allow it:
+`webDashboard.enabled` (this section) **and** `modules.webDashboardEnabled` (the mod-wide
+`modules` block at the top of `config.json`, alongside `economyEnabled`/`chatEnabled`/etc.).
+Either one set to `false` disables the whole dashboard.
 
 > The `apiSettings`, `uiSettings`, `loggingSettings`, `enableCORS`, and `maxThreads` keys from
 > earlier documentation do not exist in the current codebase — the dashboard's security-related
@@ -173,16 +204,50 @@ is unaffected.
 
 ---
 
-## Dashboard Pages
+## What the Dashboard Can Do
 
-| Page | URL | Permission | Description |
-|---|---|---|---|
-| Overview | `/` | `neoessentials.dashboard.view` | Server stats, player count, TPS, memory |
-| Players | `/players` | `neoessentials.dashboard.view` | Online players, ban/kick/tp actions |
-| Console | `/console` | `neoessentials.dashboard.manage` | View logs, send commands |
-| Admin Controls | `/admin` | `neoessentials.dashboard.admin` | Server admin tools |
-| Permissions | `/permissions` | `neoessentials.dashboard.admin` | Manage permission groups and nodes |
-| Config | `/config` | `neoessentials.dashboard.admin` | Edit config files (file writes require the admin role — there is no separate config toggle to disable this) |
+Both the internal (bundled) and external (Laravel) dashboards cover the same 13 pages, since both
+are built against the same REST API: Overview (`/api/stats` + `/api/server`), Players + full
+per-player control page (`/api/player` + `/api/moderation`), Economy, Warps, Kits, Holograms,
+Discord, dashboard account management (`/api/users`), Backups, Commands/console (`/api/commands`),
+Logs (`/api/logging`), Permissions (`/api/permissions`), and a public no-login player-lookup page.
+Full endpoint detail in [API System](APISystem) → `docs/API.md`.
+
+### Account Settings & Minecraft Account Linking
+
+Both dashboards have an account Settings/Profile page (the internal one gained this in build.15;
+it was previously just a disabled "not yet ported" placeholder) covering:
+
+- **Change password** — same on both dashboards.
+- **Link a Minecraft account** — new this pass, and the first way to do this *without* needing
+  Discord: the Settings page generates a short one-time code, and you type
+  `/linkaccount <code>` in-game to confirm ownership. Works for any dashboard account regardless
+  of how it was created (self-registered, admin-created, or via `/dashboardregister`). Self-service
+  unlink is also available. See `docs/API.md`'s `/api/auth/link-minecraft/*` routes.
+- **Discord status** — read-only on the internal dashboard (resolved via whichever Discord
+  companion mod is installed — see [below](#discord-linked-dashboard-identity)); the external
+  dashboard keeps its existing full OAuth2 "Connect Discord" flow. A genuine browser-initiated
+  Discord OAuth2 flow for the internal dashboard (so it gets the same "Connect Discord" button) is
+  a planned follow-up, not built yet — the mod deliberately doesn't perform Discord OAuth2 itself
+  today (see `DiscordAuthProvider`'s own doc comment).
+- Once linked, the sidebar's user avatar on both dashboards shows your actual Minecraft skin
+  instead of a generic icon.
+
+### Dashboard Security
+
+- `/apikey create` now prints the generated token as a click-to-copy chat component instead of
+  plain text.
+- The external dashboard's paired auth token (the Bearer token it presents on its outbound
+  account-sync webhook) is now encrypted at rest in `config.json` (AES-256-GCM) instead of stored
+  in plaintext — existing plaintext values are migrated transparently the next time they're read,
+  no action needed.
+- New opt-in setting, `webDashboard.roleSync` (off by default): automatically grants a linked
+  player's dashboard account the `ADMIN` role the moment they have a configured in-game permission
+  node or belong to a configured permission group, and revokes it again the moment they don't — no
+  more manually re-running `/apikey create`/the API every time an admin's in-game status changes.
+  Runs an immediate check on join plus a periodic sweep, so it also catches permission changes made
+  outside the mod entirely (e.g. a direct LuckPerms edit). Never touches a role that was set
+  manually — it only ever adjusts a role it granted itself.
 
 ---
 
@@ -238,6 +303,17 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
 | `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink, Mc2Discord, or DCIntegration) |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
+| `/apikey create <label> [role]` | `neoessentials.dashboard.apikeys` | Create an API key for an external dashboard backend — prints the token once, as a click-to-copy chat component |
+| `/apikey list` | `neoessentials.dashboard.apikeys` | List keys (label/role/enabled/last-used — never the secret) |
+| `/apikey revoke <id>` | `neoessentials.dashboard.apikeys` | Revoke a key immediately |
+| `/linkaccount <code>` | none — open to everyone | Finish linking your Minecraft account to a dashboard account, using the code shown on that account's Settings page |
+
+`/apikey` is a **separate** command tree from `/dashboard`/`/dashboardregister` — see
+[API System → Authentication](APISystem#authentication) for the full picture of what these
+keys are for and how they differ from a human dashboard account. `/linkaccount` is the reverse
+direction of `/dashboardregister` — it links an MC account to an *existing* dashboard account
+(started from the dashboard's own Settings page), rather than creating a brand-new dashboard
+account starting from an in-game player.
 
 ---
 
@@ -253,8 +329,14 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 | `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the dashboard server (`/dashboard`) |
 
 > Unlike most permission nodes documented on the [Permission System](PermissionSystem) page,
-> the dashboard nodes above are **not** pre-registered in `PermissionRegistry` — they're checked
-> ad hoc, so grant them explicitly to non-OP groups rather than relying on a documented default.
+> the dashboard nodes above (other than `neoessentials.dashboard.apikeys`/`.pair`, which **are**
+> registered) are not pre-registered in `PermissionRegistry` — they're checked ad hoc, so grant
+> them explicitly to non-OP groups rather than relying on a documented default.
+>
+> As of build.16, `/help <command>` shows each command's **real** permission node (this table
+> included) instead of guessing `neoessentials.<commandname>` — that guess used to be wrong for
+> `/apikey` specifically (it showed `neoessentials.apikey` instead of the real
+> `neoessentials.dashboard.apikeys`), and for roughly 160 other commands mod-wide.
 
 ---
 
