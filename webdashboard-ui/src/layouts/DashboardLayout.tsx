@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, UserCog, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -18,7 +18,7 @@ import * as mcApi from '../lib/mcApi';
 export default function DashboardLayout({ children }: PropsWithChildren) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [reachable, setReachable] = useState(true);
 
@@ -41,6 +41,11 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     { label: 'Economy', href: '/economy', icon: Coins },
     { label: 'Warps', href: '/warps', icon: MapPin },
     { label: 'Kits', href: '/kits', icon: Package },
+    { label: 'Holograms', href: '/holograms', icon: Sparkles },
+    { label: 'Discord', href: '/discord', icon: MessageCircle },
+    // Mod dashboard account management is admin-only, same gate as the external
+    // dashboard's copy of this page.
+    ...(isAdmin ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),
   ];
 
   const handleLogout = () => {
