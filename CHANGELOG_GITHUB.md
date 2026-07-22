@@ -12,6 +12,22 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.9] — 2026-07-22
+
+### ✨ Internal Dashboard: Complete — Permissions and Public Lookup
+
+- Finishes the internal bundled dashboard (`webDashboard.mode: "internal"`/
+  `"both"`) with the last two pages: Permissions (groups, per-user overrides,
+  inheritance, aliases, node catalog) and the public player-lookup page (no
+  login required, same as the mod's own `/api/public/moderation/*` routes).
+- All 13 pages now match the external `NeoEssentials-Dashboard` app's
+  functionality: Overview, Players, Economy, Warps, Kits, Holograms, Discord,
+  Users, Backups, Commands, Logs, Permissions, and public lookup.
+- The shipped default remains `"external"` — nothing changes for servers
+  already using the separate dashboard app.
+
+---
+
 ## [1.0.4-mc26.1.2+build.8] — 2026-07-22
 
 ### ✨ Internal Dashboard: Backups, Commands, and Logs Pages

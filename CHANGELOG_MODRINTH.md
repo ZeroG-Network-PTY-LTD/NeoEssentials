@@ -8,6 +8,20 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.9 — 2026-07-22
+
+### ✨ Built-In Dashboard: Now Feature-Complete
+
+- The built-in dashboard (`webDashboard.mode: "internal"`/`"both"` in
+  `config.json`) now covers everything: server overview, players, economy,
+  warps, kits, holograms, Discord, dashboard accounts, backups, console
+  commands, activity logs, permissions, and a no-login-required public
+  player-lookup page.
+- Already using the separate `NeoEssentials-Dashboard` app? Nothing changes
+  for you — the default stays `"external"`.
+
+---
+
 ## 1.0.4-mc26.1.2+build.5 — 2026-07-22
 
 ### ✨ A Real Built-In Dashboard Option
