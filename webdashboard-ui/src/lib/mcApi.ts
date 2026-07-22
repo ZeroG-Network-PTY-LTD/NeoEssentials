@@ -17,6 +17,12 @@ import type {
   ModUser,
   ModUserSession,
   ModUserRole,
+  BackupSnapshot,
+  BackupStatus,
+  CloudStatus,
+  CloudConfig,
+  CloudFile,
+  LogEntry,
 } from '../types';
 
 /**
@@ -295,4 +301,140 @@ export async function deleteModUser(id: string) {
 
 export async function revokeModUserSession(sessionId: string) {
   return del(`/api/users/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+// --- Backups (status/list readable by any logged-in account; create/restore/
+// delete/download are admin-only) --------------------------------------------
+
+export async function backupStatus(): Promise<BackupStatus> {
+  return getJson('/api/backup/status');
+}
+
+export async function backupList(): Promise<BackupSnapshot[]> {
+  const data = await getJson<BackupSnapshot[] | { snapshots?: BackupSnapshot[] }>('/api/backup/list');
+  // The mod returns a bare JSON array for this endpoint, not an object.
+  return Array.isArray(data) ? data : (data.snapshots ?? []);
+}
+
+export async function createBackup(name: string, targets: string[]) {
+  return postJson('/api/backup/create', { name, targets });
+}
+
+export async function restoreBackup(name: string) {
+  return postJson('/api/backup/restore', { name });
+}
+
+export async function deleteBackup(name: string) {
+  return del(`/api/backup/delete?name=${encodeURIComponent(name)}`);
+}
+
+/**
+ * Streams the backup ZIP and triggers a browser download — plain `<a href>` can't attach the
+ * Bearer token this route needs, so this fetches the blob via mcFetch() and clicks a
+ * throwaway object-URL anchor instead.
+ */
+export async function downloadBackup(name: string): Promise<void> {
+  const res = await mcFetch(`/api/backup/download?name=${encodeURIComponent(name)}`);
+  if (!res.ok) throw new Error(`Download failed (${res.status}).`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name.endsWith('.zip') ? name : `${name}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// --- Cloud storage (status/config/file-listing readable by any logged-in
+// account; everything else is admin-only) ------------------------------------
+
+export async function cloudStatus(): Promise<CloudStatus> {
+  return getJson('/api/cloud/status');
+}
+
+export async function cloudConfig(): Promise<CloudConfig> {
+  return getJson('/api/cloud/config');
+}
+
+export async function configureDropbox(accessToken: string, uploadPath: string) {
+  return postJson('/api/cloud/config/dropbox', { accessToken, uploadPath });
+}
+
+export async function configureGoogleDrive(refreshToken: string, clientId: string, clientSecret: string, folderId: string) {
+  return postJson('/api/cloud/config/google', { refreshToken, clientId, clientSecret, folderId });
+}
+
+export async function testDropbox() {
+  return postJson('/api/cloud/test/dropbox', {});
+}
+
+export async function testGoogleDrive() {
+  return postJson('/api/cloud/test/google', {});
+}
+
+export async function cloudDropboxFiles(): Promise<CloudFile[]> {
+  const data = await getJson<{ files?: CloudFile[] }>('/api/cloud/files/dropbox');
+  return data.files ?? [];
+}
+
+export async function cloudGoogleFiles(): Promise<CloudFile[]> {
+  const data = await getJson<{ files?: CloudFile[] }>('/api/cloud/files/google');
+  return data.files ?? [];
+}
+
+export async function uploadBackupToDropbox(backupName: string) {
+  return postJson(`/api/cloud/upload/dropbox/${encodeURIComponent(backupName)}`, {});
+}
+
+export async function uploadBackupToGoogleDrive(backupName: string) {
+  return postJson(`/api/cloud/upload/google/${encodeURIComponent(backupName)}`, {});
+}
+
+export async function deleteDropboxFile(filePath: string) {
+  return del(`/api/cloud/files/dropbox/${encodeURIComponent(filePath)}`);
+}
+
+export async function deleteGoogleDriveFile(fileId: string) {
+  return del(`/api/cloud/files/google/${encodeURIComponent(fileId)}`);
+}
+
+// --- Commands / logs ---------------------------------------------------------
+
+export async function runCommand(command: string) {
+  return postJson('/api/commands/execute', { command });
+}
+
+/** Recent join/leave/chat/command activity, shaped to match LogEntry[]. */
+export async function logs(): Promise<LogEntry[]> {
+  const data = await getJson<{ events?: { type: string; message?: string; timestamp: number }[] }>('/api/game/events');
+  const events = data.events ?? [];
+
+  // Types with a LogEntry equivalent — anything else (e.g. block.break) has no matching
+  // LogEntryType and is dropped here, same as MinecraftApiService.php's logs().
+  const typeMap: Record<string, LogEntry['type']> = {
+    'player.join': 'join',
+    'player.leave': 'leave',
+    'player.chat': 'chat',
+    'player.command': 'command',
+  };
+
+  const entries: LogEntry[] = [];
+  for (const e of events) {
+    const type = typeMap[e.type];
+    if (!type) continue;
+
+    const message = e.message ?? '';
+    // Every message the mod generates for these types starts with the player's name (e.g.
+    // "Steve joined the game", "Steve: hi", "Steve ran: /tp").
+    const username = message.includes(' ') ? message.slice(0, message.indexOf(' ')) : message;
+
+    entries.push({
+      timestamp: Math.round((e.timestamp ?? 0) / 1000),
+      type,
+      username: username || '',
+      message,
+    });
+  }
+
+  return entries;
 }

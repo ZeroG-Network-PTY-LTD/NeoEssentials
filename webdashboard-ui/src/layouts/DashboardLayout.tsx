@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, UserCog, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, UserCog, DatabaseBackup, Terminal, ScrollText, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -43,6 +43,9 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     { label: 'Kits', href: '/kits', icon: Package },
     { label: 'Holograms', href: '/holograms', icon: Sparkles },
     { label: 'Discord', href: '/discord', icon: MessageCircle },
+    { label: 'Backups', href: '/backups', icon: DatabaseBackup },
+    { label: 'Commands', href: '/commands', icon: Terminal },
+    { label: 'Logs', href: '/logs', icon: ScrollText },
     // Mod dashboard account management is admin-only, same gate as the external
     // dashboard's copy of this page.
     ...(isAdmin ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),
