@@ -34,11 +34,18 @@ public class PlayerEndpoint implements HttpHandler {
     }
     
     /**
-     * Convert username to UUID (must be called from server thread)
+     * Convert username to UUID (must be called from server thread). Falls back to the
+     * profile cache for offline players — without this, profile/stats/inventory/xp/
+     * location all silently 404'd for anyone not currently online, even though the
+     * underlying collector methods already support reading offline player data.
      */
     private UUID usernameToUuid(String username) {
         ServerPlayer player = server.getPlayerList().getPlayerByName(username);
-        return player != null ? player.getUUID() : null;
+        if (player != null) return player.getUUID();
+
+        var cache = server.getProfileCache();
+        if (cache == null) return null;
+        return cache.get(username).map(com.mojang.authlib.GameProfile::getId).orElse(null);
     }
     
     @Override

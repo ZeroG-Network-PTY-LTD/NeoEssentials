@@ -28,6 +28,12 @@ import type {
   PermissionUser,
   PermissionUserLookupResult,
   PermissionNodeCategory,
+  BanEntry,
+  MuteEntry,
+  KickEntry,
+  WarnEntry,
+  NoteEntry,
+  PlayerInventory,
 } from '../types';
 
 /**
@@ -61,8 +67,11 @@ async function putJson<T = Record<string, unknown>>(path: string, body: unknown 
   return data;
 }
 
-async function del<T = Record<string, unknown>>(path: string): Promise<T> {
-  const res = await mcFetch(path, { method: 'DELETE' });
+async function del<T = Record<string, unknown>>(path: string, body?: unknown): Promise<T> {
+  const res = await mcFetch(path, {
+    method: 'DELETE',
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
   return data;
@@ -134,6 +143,10 @@ export async function lookupPlayer(username: string): Promise<PlayerLookupResult
   return getJson(`/api/player/lookup/${encodeURIComponent(username)}`);
 }
 
+export async function getBalance(username: string): Promise<{ balance: string }> {
+  return getJson(`/api/economy/${encodeURIComponent(username)}`);
+}
+
 export async function homes(username: string): Promise<Home[]> {
   const data = await getJson<{ homes?: Home[] }>(`/api/player/homes/${encodeURIComponent(username)}`);
   return data.homes ?? [];
@@ -162,6 +175,64 @@ export async function mutePlayer(username: string, duration?: string) {
     targetName: username,
     duration: duration ? Number(duration) : null,
   });
+}
+
+export type Gamemode = 'survival' | 'creative' | 'adventure' | 'spectator';
+
+export async function setGamemode(username: string, gamemode: Gamemode) {
+  return postJson(`/api/player/gamemode/${encodeURIComponent(username)}`, { gamemode });
+}
+
+export async function getInventory(username: string): Promise<PlayerInventory> {
+  return getJson(`/api/player/inventory/${encodeURIComponent(username)}`);
+}
+
+// --- Moderation history (per-player) ----------------------------------------
+// Bans are keyed by UUID on the mod side; mutes/kicks/warns/notes by username.
+
+export async function banHistory(uuid: string): Promise<BanEntry[]> {
+  const data = await getJson<{ bans?: BanEntry[] }>(`/api/moderation/bans/${encodeURIComponent(uuid)}`);
+  return data.bans ?? [];
+}
+
+export async function unban(uuid: string) {
+  return del(`/api/moderation/ban/${encodeURIComponent(uuid)}`);
+}
+
+export async function muteHistory(username: string): Promise<MuteEntry[]> {
+  const data = await getJson<{ mutes?: MuteEntry[] }>(`/api/moderation/mutes/${encodeURIComponent(username)}`);
+  return data.mutes ?? [];
+}
+
+export async function unmute(username: string) {
+  return del(`/api/moderation/mute/${encodeURIComponent(username)}`);
+}
+
+export async function kickHistory(username: string): Promise<KickEntry[]> {
+  const data = await getJson<{ kicks?: KickEntry[] }>(`/api/moderation/kicks/${encodeURIComponent(username)}`);
+  return data.kicks ?? [];
+}
+
+export async function warnsForPlayer(username: string): Promise<WarnEntry[]> {
+  const data = await getJson<{ warns?: WarnEntry[] }>(`/api/moderation/warns/${encodeURIComponent(username)}`);
+  return data.warns ?? [];
+}
+
+export async function removeWarn(warnId: string, targetName: string) {
+  return del(`/api/moderation/warn/${encodeURIComponent(warnId)}`, { targetName });
+}
+
+export async function notesForPlayer(username: string): Promise<NoteEntry[]> {
+  const data = await getJson<{ notes?: NoteEntry[] }>(`/api/moderation/notes/${encodeURIComponent(username)}`);
+  return data.notes ?? [];
+}
+
+export async function createNote(targetName: string, text: string) {
+  return postJson('/api/moderation/note', { targetName, text });
+}
+
+export async function removeNote(noteId: string, targetName: string) {
+  return del(`/api/moderation/note/${encodeURIComponent(noteId)}`, { targetName });
 }
 
 // --- Economy ---------------------------------------------------------------

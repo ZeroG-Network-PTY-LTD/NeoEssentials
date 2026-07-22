@@ -6,6 +6,21 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.9 — 2026-07-22
+
+### ✨ Built-In Dashboard: Full Per-Player Control Page
+
+- The built-in dashboard's Players page now has a full control page for each
+  player — game mode, permission group and individual permissions, economy
+  (give/take/set balance), inventory, and full moderation history (bans, mutes,
+  kicks, warnings, staff notes) all in one place.
+- Player lookups now show balance and permission group for offline players too,
+  not just online ones.
+- Fixed a bug where several player-info API endpoints didn't work for offline
+  players even though they were supposed to.
+
+---
+
 ## 1.0.4+build.8 — 2026-07-22
 
 ### ✨ Built-In Dashboard: Now Feature-Complete
