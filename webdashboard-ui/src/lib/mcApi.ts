@@ -23,6 +23,11 @@ import type {
   CloudConfig,
   CloudFile,
   LogEntry,
+  PermissionOverview,
+  PermissionGroup,
+  PermissionUser,
+  PermissionUserLookupResult,
+  PermissionNodeCategory,
 } from '../types';
 
 /**
@@ -437,4 +442,109 @@ export async function logs(): Promise<LogEntry[]> {
   }
 
   return entries;
+}
+
+// --- Permissions (GET is open to any logged-in account; every write requires
+// ADMIN on the mod side) ------------------------------------------------------
+
+export async function permissionOverview(): Promise<PermissionOverview> {
+  return getJson('/api/permissions/overview');
+}
+
+export async function permissionGroups(): Promise<PermissionGroup[]> {
+  const data = await getJson<{ groups?: PermissionGroup[] }>('/api/permissions/groups');
+  return data.groups ?? [];
+}
+
+export async function permissionUsers(): Promise<PermissionUser[]> {
+  const data = await getJson<{ users?: PermissionUser[] }>('/api/permissions/users');
+  return data.users ?? [];
+}
+
+export async function permissionUserLookup(username: string): Promise<PermissionUserLookupResult> {
+  return getJson(`/api/permissions/user/${encodeURIComponent(username)}`);
+}
+
+export async function permissionAliases(): Promise<Record<string, string>> {
+  const data = await getJson<{ aliases?: Record<string, string> }>('/api/permissions/aliases');
+  return data.aliases ?? {};
+}
+
+export async function permissionNodeCatalog(): Promise<PermissionNodeCategory[]> {
+  const data = await getJson<{ categories?: PermissionNodeCategory[] }>('/api/permissions/permissions/all');
+  return data.categories ?? [];
+}
+
+export async function reloadPermissions() {
+  return postJson('/api/permissions/reload', {});
+}
+
+export async function createPermissionGroup(
+  name: string,
+  prefix = '',
+  suffix = '',
+  isDefault = false,
+  priority?: number,
+  inherits: string[] = [],
+) {
+  return postJson('/api/permissions/group/create', { name, prefix, suffix, isDefault, priority, inherits });
+}
+
+/** $data may include prefix/suffix/priority/inherits (full replace)/isDefault. */
+export async function updatePermissionGroup(name: string, data: Record<string, unknown>) {
+  return putJson(`/api/permissions/group/${encodeURIComponent(name)}/update`, data);
+}
+
+export async function renamePermissionGroup(name: string, newName: string) {
+  return postJson(`/api/permissions/group/${encodeURIComponent(name)}/rename`, { newName });
+}
+
+export async function deletePermissionGroup(name: string) {
+  return del(`/api/permissions/group/${encodeURIComponent(name)}`);
+}
+
+export async function addGroupPermission(group: string, permission: string) {
+  return postJson(`/api/permissions/group/${encodeURIComponent(group)}/permission/add`, { permission });
+}
+
+export async function removeGroupPermission(group: string, permission: string) {
+  return del(`/api/permissions/group/${encodeURIComponent(group)}/permission/remove/${encodeURIComponent(permission)}`);
+}
+
+export async function setUserGroup(username: string, group: string) {
+  return postJson(`/api/permissions/user/${encodeURIComponent(username)}/group/set`, { group });
+}
+
+export async function addUserPermission(username: string, permission: string) {
+  return postJson(`/api/permissions/user/${encodeURIComponent(username)}/permission/add`, { permission });
+}
+
+export async function removeUserPermission(username: string, permission: string) {
+  return del(`/api/permissions/user/${encodeURIComponent(username)}/permission/remove/${encodeURIComponent(permission)}`);
+}
+
+export async function addPermissionAlias(alias: string, canonical: string) {
+  return postJson('/api/permissions/aliases', { alias, canonical });
+}
+
+export async function removePermissionAlias(alias: string) {
+  return del(`/api/permissions/aliases/${encodeURIComponent(alias)}`);
+}
+
+// --- Public moderation lookup (no session required on either side — the mod's
+// /api/public/moderation/* routes are registered without the Bearer-token
+// check, so these deliberately use plain fetch(), not mcFetch()/the session
+// machinery above) ------------------------------------------------------------
+
+export async function publicLookup<T = Record<string, unknown>>(username: string): Promise<T> {
+  const res = await fetch(`/api/public/moderation/lookup/${encodeURIComponent(username)}`);
+  if (!res.ok) throw new Error(`Lookup failed (${res.status}).`);
+  return res.json();
+}
+
+export async function publicRecent<T = Record<string, unknown>>(): Promise<T[]> {
+  const res = await fetch('/api/public/moderation/recent');
+  if (!res.ok) throw new Error(`Request failed (${res.status}).`);
+  const data = await res.json();
+  return data.recent ?? [];
 }

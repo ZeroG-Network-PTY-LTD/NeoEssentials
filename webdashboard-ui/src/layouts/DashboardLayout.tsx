@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, UserCog, DatabaseBackup, Terminal, ScrollText, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     { label: 'Kits', href: '/kits', icon: Package },
     { label: 'Holograms', href: '/holograms', icon: Sparkles },
     { label: 'Discord', href: '/discord', icon: MessageCircle },
+    { label: 'Permissions', href: '/permissions', icon: ShieldCheck },
     { label: 'Backups', href: '/backups', icon: DatabaseBackup },
     { label: 'Commands', href: '/commands', icon: Terminal },
     { label: 'Logs', href: '/logs', icon: ScrollText },
@@ -106,6 +107,16 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
             );
           })}
         </nav>
+
+        <div className="px-2.5 py-2 border-t border-[var(--mc-border)] flex flex-col gap-0.5">
+          <Link
+            to="/lookup"
+            className="flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-[8px] text-[13px] text-[var(--mc-text-secondary)] hover:bg-[var(--mc-bg-surface-raised)] hover:text-[var(--mc-text-primary)] transition-colors"
+          >
+            <Search size={16} strokeWidth={1.75} />
+            Player Lookup
+          </Link>
+        </div>
 
         <div className="px-4 py-3 border-t border-[var(--mc-border)]">
           <span

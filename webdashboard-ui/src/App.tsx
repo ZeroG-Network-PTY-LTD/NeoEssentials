@@ -13,6 +13,8 @@ import Users from './pages/Users';
 import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
+import Permissions from './pages/Permissions';
+import PublicLookup from './pages/PublicLookup';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
@@ -117,8 +119,16 @@ export default function App() {
               </RequireAuth>
             }
           />
-          {/* Every other page (Permissions, PublicLookup) lands here until a later pass ports
-              it — matches the approved plan's MVP-first scope, not a bug. */}
+          <Route
+            path="/permissions"
+            element={
+              <RequireAuth>
+                <Permissions />
+              </RequireAuth>
+            }
+          />
+          {/* No auth guard — mirrors the mod's own PUBLIC /api/public/moderation/* routes. */}
+          <Route path="/lookup" element={<PublicLookup />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ToastProvider>
