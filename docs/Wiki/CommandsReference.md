@@ -1,9 +1,17 @@
 # NeoEssentials — Complete Commands Reference
 
-> **Last Updated:** 2026-04-24 · **Version:** 1.0.2.6
-> All commands are prefixed with `/`. Permission nodes follow `neoessentials.<node>` pattern.  
+> **Last Updated:** 2026-07-23 (Web Dashboard section only — see note below) · **Version:** 1.0.4+build.16
+> All commands are prefixed with `/`. Permission nodes generally follow a `neoessentials.<node>`
+> pattern, but **not always** — as of build.16, `/help <command>` in-game shows each command's
+> real permission node, which is the authoritative source if this table and `/help` disagree.  
 > `🔒` = op-only by default · `✅` = available to all players by default  
 > Square brackets `[x]` = optional · Angle brackets `<x>` = required · `|` = or
+>
+> ⚠️ **This page predates v1.0.4 and was last fully verified 2026-04-24.** Only the
+> [Web Dashboard](#web-dashboard) section has been re-verified against the current codebase (as
+> of build.16). Every other section may have stale syntax/permission columns — a full re-audit of
+> all ~200 commands against their actual `.requires()` checks is planned but not done yet;
+> `/help <command>` in-game is the reliable source in the meantime.
 
 ---
 
@@ -431,8 +439,14 @@ See [Moderation System](ModerationSystem) for full details on history/audit trai
 
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/dashboard` | `/dashboard start\|stop\|restart\|status\|info` | `neoessentials.dashboard` | 🔒 | Manage the web dashboard server |
-| `/dashboardregister` | `/dashboardregister [username] [password]` | `neoessentials.dashboard.register` | ✅ (if permitted) | Register a web dashboard account in-game |
+| `/dashboard` | `/dashboard start\|stop\|restart\|status\|url\|pair "<url>" <code>\|unpair` | `neoessentials.admin.dashboard` | 🔒 | Manage the web dashboard's REST API/WebSocket server |
+| `/dashboardregister` | `/dashboardregister start\|complete <username> <password>\|discord\|status` | `neoessentials.dashboard.access` | 🔒 | Register a web dashboard account in-game |
+| `/apikey` | `/apikey create <label> [role]\|list\|revoke <id>` | `neoessentials.dashboard.apikeys` | 🔒 | Manage long-lived API keys for external dashboard integrations |
+| `/linkaccount` | `/linkaccount <code>` | none | ✅ | Link your Minecraft account to an existing dashboard account, using a code from that account's Settings page |
+
+See [Web Dashboard](WebDashboard) for the full picture of these four command trees, including
+`webDashboard.roleSync` (automatic dashboard-role sync from real in-game permissions) and Minecraft
+account linking from the dashboard's own Settings page.
 
 ---
 

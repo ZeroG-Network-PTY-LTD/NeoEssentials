@@ -1,9 +1,8 @@
 # Dashboard Connectivity — Internal vs. External Hosting
 
 > Covers connecting a separately-hosted dashboard app (e.g. `NeoEssentials-Dashboard`, the
-> Laravel app) to the mod's built-in API, diagnosing "the connection isn't establishing", and
-> the new `webDashboard.mode` config option. Also serves as the porting checklist for applying
-> all of this to the `mc-26.1-port` / `Dev-Build-26.x.x` branch.
+> Laravel app) to the mod's built-in API, diagnosing "the connection isn't establishing", and the
+> `webDashboard.mode` config option (`"external"` vs. the mod's own bundled `"internal"` UI).
 
 ---
 
@@ -18,13 +17,18 @@ production setups, failing) to serve its own bundled UI — every boot logged
 `Dashboard resources NOT found - /webdashboard/index.html is null!` even on servers that only
 ever use an external dashboard app and never load `http://<server>:8080/` directly.
 
-### New config: `config.json` → `webDashboard.mode`
+### Config: `config.json` → `webDashboard.mode`
 
 | Value | Behavior |
 |---|---|
-| `"internal"` (default) | Serves the bundled UI at `/` **and** the API at `/api/*` — use this if you only ever open `http://<server>:8080` directly in a browser. |
-| `"external"` | Serves **only** `/api/*`. The `/` static-file route is never registered — no more misleading "resources NOT found" log line, and the port stops trying to be a website at all. Use this when a separate app (Laravel `NeoEssentials-Dashboard`, or anything else) is the *only* thing that ever talks to this port. |
-| `"both"` | Explicit alias for `"internal"` — same behavior, for config clarity when you deliberately use the built-in UI *and* point an external app at the same API. |
+| `"external"` (default) | Serves **only** `/api/*`. The `/` static-file route is never registered. Use this when a separate app (Laravel `NeoEssentials-Dashboard`) is the *only* thing that ever talks to this port — the shipped config template sets this explicitly. |
+| `"internal"` | Serves the mod's own bundled dashboard UI at `/` **and** the API at `/api/*` — no separate app to install. As of build.13 this bundled UI is feature-complete (all 13 pages, matching the external app) — use this if you'd rather not run/maintain a separate Laravel process. |
+| `"both"` | Explicit alias for `"internal"` — same behavior, for config clarity when you deliberately use the built-in UI *and* point an external app at the same API at the same time. |
+
+Switching to `"internal"`/`"both"` requires the mod's Gradle build to have bundled the dashboard
+UI assets (`webdashboard-ui/` → `build/generated/dashboardUiResources/`, wired into
+`processResources` — this happens automatically for anyone building from source; official
+released jars already include it).
 
 Requires a restart to take effect (same as every other config toggle — see the "reload doesn't
 add/remove commands" limitation documented elsewhere).
@@ -49,19 +53,15 @@ curl http://<mod-server-ip>:8080/api/ping
 
 ---
 
-## Root cause found this session (already fixed, but worth documenting)
+## Historical root cause (already fixed, worth knowing about if you're on an old build)
 
-While investigating, we found the most likely explanation for "the connection isn't
-establishing": **`webDashboard.autoStart` was `false`**, and **`/dashboard start` (the in-game
-command to start it manually) was dead code** — the class existed and compiled, but was never
-actually registered with the command dispatcher (see the git history around
-"Wire up /dashboard and /dashboardregister — they were never registered"). Combined, this meant
-the dashboard's HTTP server may simply never have been running at all — no amount of correct
-`MC_API_URL`/service-account config on the Laravel side would help, because there was nothing
-listening on the port in the first place.
-
-**Both are now fixed** (as of this session): `/dashboard start`/`stop`/`status`/`restart` work,
-and `webDashboard.mode` lets you make the "API-only, no UI" intent explicit instead of accidental.
+The most common reason "the connection isn't establishing" used to come up at all: **`/dashboard
+start`/`stop`/`status`/`restart` were dead code** — the class existed and compiled, but was never
+actually registered with the command dispatcher, so they were literally unknown commands. Combined
+with `webDashboard.autoStart: false`, this meant the dashboard's HTTP server could simply never be
+running at all, with no in-game way to diagnose or fix it — no amount of correct `MC_API_URL`/
+service-account config on the external dashboard's side would help, since nothing was listening on
+the port in the first place. Fixed long since; only relevant if you're troubleshooting a very old build.
 
 **Action item for anyone hitting this:** check `/dashboard status` in-game (after restarting to
 pick up the fix) — if it says stopped, either set `autoStart: true` or run `/dashboard start`.
@@ -122,50 +122,21 @@ Work through these in order — each rules out one layer:
 
 ---
 
-## Porting this to `mc-26.1-port` / `Dev-Build-26.x.x`
+## Keeping `mc-26.1-port` in sync
 
-The 26.x branch was forked before all of this session's dashboard/moderation/storage work
-landed on `Dev-Builds`, and (per the branch's own changelog "Known gap" notes) has been getting
-individual fixes cherry-picked over in batches. This connectivity work should be ported the same
-way: **cherry-pick, don't re-implement from scratch** — these changes are pure Java/config, with
-no Minecraft-version-sensitive API surface, so a direct cherry-pick should apply cleanly or with
-only trivial conflicts (same pattern as the earlier storage-abstraction port, which needed only
-~8 small manual conflict resolutions across ~3000 lines changed).
+`mc-26.1-port` (targeting Minecraft 26.1.2) is a parallel branch kept in sync with `Dev-Builds`
+(1.21.1) by cherry-picking every feature commit across as it lands — including all of the
+dashboard/connectivity work described on this page. Both branches share the same `build_number.txt`
+value and changelog entry numbers for anything shipped on both. Everything described on this page
+(the `webDashboard.mode` config, `/api/ping`, the dashboard security/account-linking features)
+is already live on both branches as of build.16 — this isn't a pending-port item.
 
-### What to port (in dependency order)
-
-1. **Prerequisite, if not already ported:** the `/dashboard` and `/dashboardregister` command
-   registration fix (`NeoEssentials.java` wiring `DashboardCommand.register()` /
-   `DashboardRegisterCommand.register()`) — the mode/connectivity work above is much harder to
-   test/use without this, since `/dashboard status`/`start` are how you diagnose step 1 above.
-2. `ConfigManager.java`: `isDashboardInternalUiEnabled()` getter + the `isWebDashboardEnabled()`
-   double-key fix (`modules.webDashboardEnabled` AND `webDashboard.enabled`) if not already
-   ported — the mode getter follows the exact same JSON-path-reading pattern.
-3. `config.json`: the `webDashboard.mode` key + its explanatory comment, and the
-   `EXPECTED_CONFIG_VERSIONS` bump (check the 26.x branch's own current `MAIN_CONFIG` version
-   number first — do NOT reuse `30` verbatim if the branch has diverged further, bump from
-   whatever its actual current value is).
-4. `DashboardAPI.java`: the `isDashboardInternalUiEnabled()` early-return branch in
-   `registerEndpoints()` (skips static-file serving + resource-check log spam in external mode),
-   and the new `GET /api/ping` context registration.
-
-### Expect these to need manual attention (not auto-mergeable)
-
-- If the 26.x branch's `DashboardAPI.java` has diverged in its `registerEndpoints()` method
-  (e.g. different route lists, different log-line formatting per the branch's own changes),
-  the early-return block and `/api/ping` registration may need to be re-positioned rather than
-  applying as a clean patch — read the actual current method body on that branch before pasting.
-- Verify the 26.x branch's own `config.json` — confirm it doesn't already have an unrelated
-  `webDashboard.mode`-shaped key from independent work on that branch before adding this one.
-
-### Not port-specific
-
-Everything above is plain Java (`HttpExchange`/`HttpServer`, no `net.minecraft.*` types touched)
-and JSON config — none of it should be affected by the 1.21.1 → 26.1.2 API differences that have
-tripped up other ports this session (e.g. `GameProfile`/`getProfileCache()` →
-`NameAndId`/`server.services().nameToIdCache()`, `ClickType` → `ContainerInput`). Should be a
-low-risk, mechanical port once the prerequisite (`/dashboard` command wiring) is confirmed to be
-in place on that branch.
+Since this connectivity layer is plain Java (`HttpExchange`/`HttpServer`, no `net.minecraft.*`
+types touched) and JSON config, it's historically been a low-risk, mechanical cherry-pick with no
+exposure to the Minecraft-version API differences that trip up other ports (e.g.
+`GameProfile`/`getProfileCache()` → `NameAndId`/`server.services().nameToIdCache()`,
+`ClickType` → `ContainerInput`) — worth knowing if you're deciding how to port a *future* change
+here yourself.
 
 ---
 
