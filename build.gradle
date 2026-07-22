@@ -16,19 +16,20 @@ tasks.named('wrapper', Wrapper).configure {
 
 // Build number management
 //
-// build_number.txt is a single on-disk counter shared by every branch checked out in
-// this working directory (it's gitignored, not branch-specific). Previously it was
-// incremented unconditionally at configuration time, i.e. on every single Gradle
-// invocation — including a bare `compileJava` sanity-check with no intent to actually
-// package anything. That meant running N verification compiles on one branch before
-// switching to the other threw the two branches' "build.N" numbers out of sync with
-// each other for what's conceptually the same paired release, purely as a side effect
-// of how many times each branch happened to be compile-checked during development.
+// build_number.txt IS tracked in git — one copy per branch (Dev-Builds and mc-26.1-port
+// each have their own committed value). It is NOT auto-synced between them: CI reads
+// whatever is committed at build time and does not bump or push anything back (see
+// .github/workflows/build-and-release.yml — a per-branch CI auto-bump used to exist here
+// and was removed specifically because it let the two branches' numbers drift apart with
+// nothing to resync them). The build number is a deliberate value, bumped once and applied
+// identically to build_number.txt on BOTH branches as part of the same commit/cherry-pick
+// that ships a change — never bumped independently on just one side.
 //
-// Fixed: the counter now only increments (and is only persisted to disk) when a real
-// packaging task — `jar`, `assemble`, or `build` — is actually part of this invocation's
-// task graph. A plain `compileJava`/`test`/IDE-sync invocation reads the current value
-// without bumping it, so those no longer perturb the shared counter at all.
+// The increment below is purely a local-dev convenience (so `./gradlew build` locally
+// still shows an incrementing number while testing) — it only fires for a real packaging
+// task (`jar`/`assemble`/`build`), never for a bare `compileJava`/`test`/IDE-sync. Always
+// `git checkout -- build_number.txt` after a local test build before committing anything,
+// so a local bump never accidentally becomes the "real" shared value.
 def buildNumberFile = file('build_number.txt')
 def buildNumber = buildNumberFile.exists() ? buildNumberFile.text.trim().toInteger() : 0
 
