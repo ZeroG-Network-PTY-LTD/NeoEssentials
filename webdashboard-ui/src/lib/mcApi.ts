@@ -1,5 +1,5 @@
 import { mcFetch } from './auth';
-import type { McPlayer, OfflinePlayer, PlayerLookupResult, ServerStatus, Home } from '../types';
+import type { McPlayer, OfflinePlayer, PlayerLookupResult, ServerStatus, Home, Warp, LeaderboardEntry, Kit, KitStats } from '../types';
 
 /**
  * The mod's own REST API contract, anti-corruption layer for the internal dashboard —
@@ -119,4 +119,55 @@ export async function mutePlayer(username: string, duration?: string) {
     targetName: username,
     duration: duration ? Number(duration) : null,
   });
+}
+
+// --- Economy ---------------------------------------------------------------
+
+export async function economyLeaderboard(): Promise<LeaderboardEntry[]> {
+  const data = await getJson<{ topPlayers?: { uuid: string; name: string; balance: number | string }[] }>('/api/stats/economy');
+  const top = data.topPlayers ?? [];
+  return top.map((e) => ({ uuid: e.uuid, username: e.name, balance: Number(e.balance) }));
+}
+
+/** $identifier may be a username or a raw UUID — the mod accepts either. */
+export async function economyAdjust(identifier: string, action: 'give' | 'take' | 'set', amount: number) {
+  return postJson(`/api/economy/${encodeURIComponent(identifier)}`, { action, amount });
+}
+
+// --- Warps -------------------------------------------------------------------
+
+export async function warps(): Promise<Warp[]> {
+  const data = await getJson<{ warps?: { name: string; x: number; y: number; z: number; world?: string; createdBy?: string }[] }>('/api/warps');
+  return (data.warps ?? []).map((w) => ({
+    name: w.name,
+    x: w.x,
+    y: w.y,
+    z: w.z,
+    dimension: w.world ?? 'minecraft:overworld',
+    createdBy: w.createdBy ?? 'Unknown',
+  }));
+}
+
+export async function createWarp(name: string, location: { world: string; x: number; y: number; z: number }) {
+  return postJson('/api/warps', { name, ...location });
+}
+
+export async function deleteWarp(name: string) {
+  const res = await mcFetch(`/api/warps/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
+  }
+  return res.json().catch(() => ({}));
+}
+
+// --- Kits (read-only — the mod has no create/update/delete routes for kits) --
+
+export async function kits(): Promise<Kit[]> {
+  const data = await getJson<{ kits?: Kit[] }>('/api/kits/list');
+  return data.kits ?? [];
+}
+
+export async function kitStats(): Promise<KitStats> {
+  return getJson('/api/kits/stats');
 }

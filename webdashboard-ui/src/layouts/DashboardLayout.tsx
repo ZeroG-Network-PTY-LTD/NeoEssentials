@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -38,6 +38,9 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
   const nav = [
     { label: 'Overview', href: '/', icon: LayoutGrid },
     { label: 'Players', href: '/players', icon: Users },
+    { label: 'Economy', href: '/economy', icon: Coins },
+    { label: 'Warps', href: '/warps', icon: MapPin },
+    { label: 'Kits', href: '/kits', icon: Package },
   ];
 
   const handleLogout = () => {
