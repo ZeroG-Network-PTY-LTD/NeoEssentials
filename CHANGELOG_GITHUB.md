@@ -12,6 +12,19 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.8] — 2026-07-22
+
+### ✨ Internal Dashboard: Backups, Commands, and Logs Pages
+
+- Continues the internal bundled dashboard (`webDashboard.mode: "internal"`/
+  `"both"`) with three more pages: Backups (create/restore/delete/download,
+  plus Dropbox/Google Drive cloud upload config), Commands (run a console
+  command directly), and Logs (recent join/leave/chat/command activity).
+- Still not there yet: Permissions, public player lookup — coming in further
+  follow-up passes.
+
+---
+
 ## [1.0.4-mc26.1.2+build.7] — 2026-07-22
 
 ### ✨ Internal Dashboard: Holograms, Discord, and Users Pages
