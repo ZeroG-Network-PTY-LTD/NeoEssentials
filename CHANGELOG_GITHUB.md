@@ -11,6 +11,29 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.14] — 2026-07-22
+
+### ✨ Economy Tab: Overview Stats, Distribution Chart, Player Lookup + Bug Fix
+
+- Both dashboards' Economy tab now shows total wealth, account count, and
+  average/starting balance at a glance, plus a balance-distribution histogram
+  (the mod already computed all of this via `/api/stats/economy` — the tab
+  just never displayed it).
+- The "Adjust balance" form now has a **Look up** button that shows the
+  target's avatar, online status, and current balance before you commit to
+  give/take/set — no more adjusting a balance blind by typing a name/UUID.
+  Leaderboard entries and a successful lookup both link to that player's
+  full profile page.
+- **Fixed:** `/api/stats/economy` used `BigDecimal.longValueExact()` to
+  bucket balances for the distribution histogram — that throws
+  `ArithmeticException: Rounding necessary` for any balance with cents (i.e.
+  almost every real balance), silently dropping the `distribution` field
+  from the response and returning a stray `"error"` key alongside the
+  otherwise-valid data. Now uses `longValue()` (which truncates instead of
+  throwing) — the histogram only needs the whole-dollar bucket anyway.
+
+---
+
 ## [1.0.4+build.13] — 2026-07-22
 
 ### ✨ Player Profile Page: Phase 4 (Final) — Sudo, Ptime/Pweather, Clear Inventory

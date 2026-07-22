@@ -197,7 +197,11 @@ public class StatsEndpoint implements HttpHandler {
         int[] counts = new int[bracketLabels.length];
 
         for (BigDecimal b : balances.values()) {
-            long v = b.longValueExact();
+            // longValueExact() throws ArithmeticException ("Rounding necessary") for any balance
+            // with a fractional part (i.e. almost every real balance, since cents are normal) —
+            // this bracket histogram only needs the whole-dollar bucket, so longValue() (which
+            // truncates instead of throwing) is correct here.
+            long v = b.longValue();
             for (int i = brackets.length - 1; i >= 0; i--) {
                 if (v >= brackets[i]) { counts[i]++; break; }
             }

@@ -6,6 +6,19 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.14 — 2026-07-22
+
+### ✨ Economy Tab: Overview Stats + Distribution Chart, Plus a Real Bug Fix
+
+- Both dashboards' Economy tab now shows total wealth, account count,
+  average/starting balance, and a balance-distribution chart at a glance.
+- Adjusting a balance now shows a live lookup preview (avatar, online
+  status, current balance) before you commit — no more adjusting blind.
+- Fixed: the distribution chart's data was silently failing to compute for
+  any balance with cents (i.e. almost all of them) — now works correctly.
+
+---
+
 ## 1.0.4+build.13 — 2026-07-22
 
 ### ✨ Per-Player Control Page: Now Feature-Complete
