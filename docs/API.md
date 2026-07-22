@@ -90,6 +90,15 @@ audit-log attribution).
 | GET | `/api/auth/validate` | AUTH | — | Confirms the token is still good; returns the user object. |
 | GET | `/api/auth/session` | — | — | Same as validate but reads the session from cookie, not header. |
 | POST | `/api/auth/change-password` | AUTH | `{"oldPassword","newPassword"}` | Self-service password change. |
+| POST | `/api/auth/link-minecraft/start` | AUTH\* | `{"username"}` (API-key callers only) | Generates a short code; the player types `/linkaccount <code>` in-game to complete the link. Fails if this account already has one. |
+| GET | `/api/auth/link-minecraft/status` | AUTH\* | — (`?username=` for API-key callers) | Returns `{"linked","mcUuid","mcUsername"}` for the resolved user. |
+| POST | `/api/auth/unlink-minecraft` | AUTH\* | `{"username"}` (API-key callers only) | Self-service — clears the resolved user's linked Minecraft account, no code needed. |
+| GET | `/api/auth/discord-status` | AUTH\* | — (`?username=` for API-key callers) | Whether the resolved user's linked Minecraft account is also linked to Discord via whichever companion bot (SDLink etc.) is installed — read-only, this mod never performs Discord OAuth2 itself. |
+
+\* These four accept **either** a same-origin session cookie (used by the bundled internal
+dashboard — always acts on the calling user, no `username` needed) **or** a valid API key Bearer
+token plus an explicit `username` (used by the external dashboard, which has no mod-side session
+of its own — it passes its own logged-in user's `mod_username`).
 | GET/POST/PUT/DELETE | `/api/auth/users*` | ADMIN | — | Manage dashboard user accounts (separate from Minecraft players and from API keys). |
 
 ### Rate limiting

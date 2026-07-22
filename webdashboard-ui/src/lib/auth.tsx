@@ -5,6 +5,8 @@ const TOKEN_KEY = 'ne_session_token';
 export interface AuthUser {
   username: string;
   role: 'ADMIN' | 'OPERATOR' | 'MODERATOR' | 'VIEWER' | string;
+  mcUuid?: string | null;
+  mcUsername?: string | null;
 }
 
 interface AuthContextValue {

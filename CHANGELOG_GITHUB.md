@@ -11,6 +11,28 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.17] — 2026-07-22
+
+### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)
+
+- Both dashboards' sidebar now shows your actual Minecraft skin avatar (once
+  linked — see below) instead of a generic icon.
+- New: a Settings/Profile page on the internal dashboard (previously missing
+  entirely — the gear icon just said "not yet ported"), with password
+  change, Minecraft account linking, and a read-only Discord status. The
+  external dashboard's existing Profile page gains the same Minecraft
+  account linking section.
+- **New capability on both dashboards:** any dashboard account — however it
+  was created — can now link a Minecraft account itself via a short in-game
+  code (`/linkaccount <code>`), instead of needing to already have Discord
+  linked in-game first. Self-service unlink too.
+- Discord status is shown read-only on the internal dashboard (resolved via
+  the server's own Discord bot integration) — a full browser "Connect
+  Discord" button for the internal dashboard is a larger follow-up, not in
+  this pass.
+
+---
+
 ## [1.0.4+build.16] — 2026-07-22
 
 ### ✨ New Brand Logo on the Internal Dashboard

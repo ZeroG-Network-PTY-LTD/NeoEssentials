@@ -6,6 +6,18 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.17 — 2026-07-22
+
+### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)
+
+- Sidebar now shows your real Minecraft avatar once linked, on both dashboards.
+- New Settings/Profile page on the internal dashboard (password change,
+  Minecraft account linking, Discord status).
+- Any dashboard account can now link a Minecraft account itself via a short
+  in-game code (`/linkaccount <code>`) — no Discord required.
+
+---
+
 ## 1.0.4+build.16 — 2026-07-22
 
 ### ✨ New Brand Logo on the Internal Dashboard

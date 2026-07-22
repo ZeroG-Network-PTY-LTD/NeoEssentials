@@ -15,6 +15,7 @@ import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
 import Permissions from './pages/Permissions';
+import Settings from './pages/Settings';
 import PublicLookup from './pages/PublicLookup';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -133,6 +134,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Permissions />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <Settings />
               </RequireAuth>
             }
           />

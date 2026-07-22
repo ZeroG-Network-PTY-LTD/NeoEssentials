@@ -23,6 +23,11 @@ public class User {
      *  manual admin action — lets that task tell "should I downgrade this" apart from "an admin
      *  deliberately chose this role, leave it alone" without a separate lookup table. */
     private boolean roleSyncManaged;
+    /** The Minecraft account this dashboard user has linked (via /linkaccount or the mod's
+     *  existing in-game registration flow), or null if none. Both are always set/cleared
+     *  together — see {@link MinecraftAccountLinkManager}. */
+    private String mcUuid;
+    private String mcUsername;
     private final Set<String> permissions;
 
     public enum Role {
@@ -97,7 +102,9 @@ public class User {
         json.addProperty("lockoutUntil", lockoutUntil);
         json.addProperty("requiresPasswordChange", requiresPasswordChange);
         json.addProperty("isTempPassword", isTempPassword);
-        
+        json.addProperty("mcUuid", mcUuid);
+        json.addProperty("mcUsername", mcUsername);
+
         com.google.gson.JsonArray permsArray = new com.google.gson.JsonArray();
         for (String perm : permissions) {
             permsArray.add(perm);
@@ -122,6 +129,8 @@ public class User {
     public boolean requiresPasswordChange() { return requiresPasswordChange; }
     public boolean isTempPassword() { return isTempPassword; }
     public boolean isRoleSyncManaged() { return roleSyncManaged; }
+    public String getMcUuid() { return mcUuid; }
+    public String getMcUsername() { return mcUsername; }
     public Set<String> getPermissions() { return new HashSet<>(permissions); }
 
     // Setters
@@ -136,4 +145,6 @@ public class User {
     public void setRequiresPasswordChange(boolean requiresPasswordChange) { this.requiresPasswordChange = requiresPasswordChange; }
     public void setTempPassword(boolean isTempPassword) { this.isTempPassword = isTempPassword; }
     public void setRoleSyncManaged(boolean roleSyncManaged) { this.roleSyncManaged = roleSyncManaged; }
+    public void setMcUuid(String mcUuid) { this.mcUuid = mcUuid; }
+    public void setMcUsername(String mcUsername) { this.mcUsername = mcUsername; }
 }
