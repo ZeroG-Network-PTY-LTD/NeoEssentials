@@ -6,6 +6,19 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.16 — 2026-07-23
+
+### 🐛 /help Now Shows the Real Permission for Every Command
+
+- `/help <command>` used to guess every command's permission node from its
+  name, which was wrong for ~160 commands (e.g. `/apikey` actually needs
+  `neoessentials.dashboard.apikeys`, most moderation/teleport/economy/item
+  commands use a namespaced node). Fixed — `/help` now shows and checks the
+  real permission for every command, so it's actually reliable for figuring
+  out what to grant someone.
+
+---
+
 ## 1.0.4+build.15 — 2026-07-22
 
 ### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)

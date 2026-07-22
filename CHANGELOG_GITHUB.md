@@ -11,6 +11,25 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.16] — 2026-07-23
+
+### 🐛 /help Now Shows the Real Permission for Every Command
+
+- `/help <command>` used to guess every command's permission as
+  `neoessentials.<commandname>` — wrong for roughly 160 commands whose real
+  permission node is different (e.g. `/apikey` actually requires
+  `neoessentials.dashboard.apikeys`, not `neoessentials.apikey`; most
+  moderation/teleport/economy/item commands use a namespaced node like
+  `neoessentials.moderation.ban`, not a flat one). An admin following
+  `/help`'s own displayed permission to grant someone access would grant the
+  wrong node and it just wouldn't work.
+- Every command now carries its real permission alongside its registration,
+  and `/help` displays and permission-gates against that instead of guessing.
+  Commands with no permission requirement at all now correctly show "none —
+  open to everyone" instead of a made-up node.
+
+---
+
 ## [1.0.4+build.15] — 2026-07-22
 
 ### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)
