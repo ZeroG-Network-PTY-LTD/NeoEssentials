@@ -187,6 +187,36 @@ export async function getInventory(username: string): Promise<PlayerInventory> {
   return getJson(`/api/player/inventory/${encodeURIComponent(username)}`);
 }
 
+// --- Player state toggles (online players only) -----------------------------
+
+export async function setFly(username: string, enable?: boolean) {
+  return postJson<{ success: boolean; enabled: boolean }>(`/api/player/fly/${encodeURIComponent(username)}`, enable === undefined ? {} : { enable });
+}
+
+export async function setGod(username: string, enable?: boolean) {
+  return postJson<{ success: boolean; enabled: boolean }>(`/api/player/god/${encodeURIComponent(username)}`, enable === undefined ? {} : { enable });
+}
+
+export async function feedPlayer(username: string) {
+  return postJson(`/api/player/feed/${encodeURIComponent(username)}`, {});
+}
+
+export async function extinguishPlayer(username: string) {
+  return postJson(`/api/player/extinguish/${encodeURIComponent(username)}`, {});
+}
+
+export async function setSpeed(username: string, type: 'walk' | 'fly', speed: number) {
+  return postJson(`/api/player/speed/${encodeURIComponent(username)}`, { type, speed });
+}
+
+export async function setNickname(username: string, nickname: string | null) {
+  return postJson(`/api/player/nickname/${encodeURIComponent(username)}`, { nickname });
+}
+
+export async function teleportToPlayer(username: string, targetUsername: string) {
+  return postJson(`/api/player/teleport/${encodeURIComponent(username)}`, { targetUsername });
+}
+
 // --- Moderation history (per-player) ----------------------------------------
 // Bans are keyed by UUID on the mod side; mutes/kicks/warns/notes by username.
 

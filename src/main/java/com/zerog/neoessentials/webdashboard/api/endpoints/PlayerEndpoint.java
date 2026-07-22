@@ -70,6 +70,24 @@ public class PlayerEndpoint implements HttpHandler {
                 } else if (path.matches("/api/player/heal/.*")) {
                     String username = path.substring("/api/player/heal/".length());
                     handleHeal(exchange, username);
+                } else if (path.matches("/api/player/fly/.*")) {
+                    String username = path.substring("/api/player/fly/".length());
+                    handleFly(exchange, username);
+                } else if (path.matches("/api/player/god/.*")) {
+                    String username = path.substring("/api/player/god/".length());
+                    handleGod(exchange, username);
+                } else if (path.matches("/api/player/feed/.*")) {
+                    String username = path.substring("/api/player/feed/".length());
+                    handleFeed(exchange, username);
+                } else if (path.matches("/api/player/extinguish/.*")) {
+                    String username = path.substring("/api/player/extinguish/".length());
+                    handleExtinguish(exchange, username);
+                } else if (path.matches("/api/player/speed/.*")) {
+                    String username = path.substring("/api/player/speed/".length());
+                    handleSpeed(exchange, username);
+                } else if (path.matches("/api/player/nickname/.*")) {
+                    String username = path.substring("/api/player/nickname/".length());
+                    handleNickname(exchange, username);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
                 }
@@ -374,6 +392,253 @@ public class PlayerEndpoint implements HttpHandler {
             return resp;
         }, server);
 
+        JsonObject result;
+        try {
+            result = future.get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            result = new JsonObject();
+            result.addProperty("success", false);
+            result.addProperty("error", "Timeout or server error: " + e.getMessage());
+        }
+        int status = result.has("success") && result.get("success").getAsBoolean() ? 200 : 400;
+        sendResponse(exchange, status, result.toString());
+    }
+
+    // ── POST /api/player/fly/{username} ───────────────────────────────────────
+    // Body (optional): {"enable": true|false} — omit to toggle current state.
+
+    private void handleFly(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        Boolean enable = readOptionalBoolean(exchange, "enable");
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                boolean newState = com.zerog.neoessentials.util.commands.PlayerStateCommands.setFly(player, enable);
+                resp.addProperty("success", true);
+                resp.addProperty("enabled", newState);
+                resp.addProperty("message", username + "'s flight is now " + (newState ? "enabled" : "disabled"));
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/god/{username} ───────────────────────────────────────
+    // Body (optional): {"enable": true|false} — omit to toggle current state.
+
+    private void handleGod(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        Boolean enable = readOptionalBoolean(exchange, "enable");
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                boolean newState = com.zerog.neoessentials.util.commands.PlayerStateCommands.setGod(player, enable);
+                resp.addProperty("success", true);
+                resp.addProperty("enabled", newState);
+                resp.addProperty("message", username + "'s god mode is now " + (newState ? "enabled" : "disabled"));
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/feed/{username} ──────────────────────────────────────
+
+    private void handleFeed(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                com.zerog.neoessentials.util.commands.PlayerStateCommands.feedPlayer(player);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " fed");
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/extinguish/{username} ────────────────────────────────
+
+    private void handleExtinguish(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                com.zerog.neoessentials.util.commands.PlayerStateCommands.extinguishPlayer(player);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " extinguished");
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/speed/{username} ─────────────────────────────────────
+    // Body: {"type": "walk"|"fly", "speed": 0-10}
+
+    private void handleSpeed(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        boolean fly;
+        float speed;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            fly = body.has("type") && "fly".equalsIgnoreCase(body.get("type").getAsString());
+            speed = body.has("speed") ? body.get("speed").getAsFloat() : 1f;
+            speed = Math.max(0f, Math.min(10f, speed));
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        final boolean finalFly = fly;
+        final float finalSpeed = speed;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                com.zerog.neoessentials.util.commands.PlayerStateCommands.setSpeed(player, finalFly, finalSpeed);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + "'s " + (finalFly ? "fly" : "walk") + " speed set to " + finalSpeed);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/nickname/{username} ──────────────────────────────────
+    // Body: {"nickname": "..."} — omit/blank/"reset"/"off" clears the nickname.
+
+    private void handleNickname(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String nickname = null;
+        try {
+            if (!bodyJson.isBlank()) {
+                JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+                if (body.has("nickname") && !body.get("nickname").isJsonNull()) {
+                    nickname = body.get("nickname").getAsString();
+                }
+            }
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        final String finalNickname = nickname;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                String error = com.zerog.neoessentials.util.commands.NickCommand.setNicknameAdmin(player, finalNickname);
+                if (error != null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", error);
+                } else {
+                    resp.addProperty("success", true);
+                    resp.addProperty("message", "Nickname updated for " + username);
+                }
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    /** Reads an optional boolean field from the request body; returns null if absent/blank/invalid. */
+    private Boolean readOptionalBoolean(HttpExchange exchange, String field) throws IOException {
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (bodyJson.isBlank()) return null;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            return body.has(field) && !body.get(field).isJsonNull() ? body.get(field).getAsBoolean() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Waits on a future built the same way every handler above builds it, and sends the result. */
+    private void sendFutureResult(HttpExchange exchange, CompletableFuture<JsonObject> future) throws IOException {
         JsonObject result;
         try {
             result = future.get(8, TimeUnit.SECONDS);

@@ -11,6 +11,26 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.10] — 2026-07-22
+
+### ✨ Player Profile Page: Phase 1 — State Toggles, Nickname, Teleport
+
+- First of several planned passes bringing more of the mod's ~172 commands to the
+  per-player dashboard control page (`/players/player/<username>`). This pass covers
+  the commands with the biggest day-to-day admin value:
+  - **Fly** and **god mode** toggles
+  - **Feed** and **extinguish** (separate from the existing heal action)
+  - **Walk/fly speed** (0–10 scale, same as `/speed`)
+  - **Nickname** set/clear (same as `/setnick`)
+  - **Teleport to another online player** (the mod's teleport endpoint already
+    supported this — just wasn't wired into any UI yet)
+- All of the above require the target player to be online, same as their `/command`
+  equivalents — the dashboard now says so plainly instead of a bare error.
+- Next passes: freeze/vanish/jail, item & fun commands (give, effect, lightning,
+  spawnmob), and inventory/ender chest editing.
+
+---
+
 ## [1.0.4+build.9] — 2026-07-22
 
 ### ✨ Internal Dashboard: Player Management Overhaul + a Full Per-Player Control Page

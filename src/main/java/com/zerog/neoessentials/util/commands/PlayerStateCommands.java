@@ -159,6 +159,56 @@ public class PlayerStateCommands {
         return godMode.getOrDefault(uuid, false);
     }
 
+    // ── Dashboard-facing wrappers ─────────────────────────────────────────────
+    // Same state changes as the /fly, /god, /feed, /speed, /ext commands, just driven
+    // by a target ServerPlayer directly instead of a CommandSourceStack — the dashboard
+    // has no in-game command source to reply through.
+
+    /** Sets flight ability on/off for {@code target}. Returns the new state. */
+    public static boolean setFly(ServerPlayer target, Boolean enable) {
+        boolean newState = enable != null ? enable : !target.getAbilities().mayfly;
+        target.getAbilities().mayfly = newState;
+        if (!newState) target.getAbilities().flying = false;
+        target.onUpdateAbilities();
+        target.fallDistance = 0f;
+        return newState;
+    }
+
+    /** Sets god mode on/off for {@code target}. Returns the new state. */
+    public static boolean setGod(ServerPlayer target, Boolean enable) {
+        boolean cur = godMode.getOrDefault(target.getUUID(), false);
+        boolean newState = enable != null ? enable : !cur;
+        godMode.put(target.getUUID(), newState);
+        if (newState) {
+            target.setHealth(target.getMaxHealth());
+            target.getFoodData().setFoodLevel(20);
+        }
+        return newState;
+    }
+
+    /** Restores hunger/saturation for {@code target}. */
+    public static void feedPlayer(ServerPlayer target) {
+        target.getFoodData().setFoodLevel(20);
+        target.getFoodData().setSaturation(20f);
+    }
+
+    /** Extinguishes any fire on {@code target}. */
+    public static void extinguishPlayer(ServerPlayer target) {
+        target.clearFire();
+    }
+
+    /** Sets walk or fly speed (0-10 scale, same mapping as {@code /speed}) for {@code target}. */
+    public static void setSpeed(ServerPlayer target, boolean fly, float speed) {
+        float mcSpeed = Math.min(speed / 10f, 1.0f);
+        if (fly) {
+            target.getAbilities().setFlyingSpeed(mcSpeed);
+            target.onUpdateAbilities();
+        } else {
+            var attr = target.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (attr != null) attr.setBaseValue(mcSpeed);
+        }
+    }
+
     /** Called on player quit to clean up god/fly state. */
     public static void onPlayerQuit(UUID uuid) {
         godMode.remove(uuid);
