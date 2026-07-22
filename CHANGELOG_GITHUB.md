@@ -12,6 +12,28 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.13] — 2026-07-22
+
+### ✨ Player Profile Page: Phase 4 (Final) — Sudo, Ptime/Pweather, Clear Inventory
+
+- Fourth and final planned pass on the per-player dashboard control page. Adds:
+  - **Sudo** — run a command (or send a chat message) as the player
+  - **Per-player time/weather** (`/ptime`, `/pweather`) — set or reset, with the
+    current override shown
+  - **Clear inventory** (main + armor + offhand)
+- Deliberately **not** ported: `/invseeedit` and `/enderchestedit`. Both are
+  fundamentally a live in-game GUI menu opened for a physical viewer player —
+  there's no equivalent for a browser tab with no in-game client. A real
+  slot-by-slot inventory editor for the dashboard would be a separate,
+  much larger feature (drag/drop UI, item picker, NBT editing) rather than a
+  wrapper around the existing command, so it's out of scope here.
+- This completes the 4-phase player-profile-page effort: game mode, permission
+  group + individual overrides, economy, moderation history, freeze/vanish/jail,
+  item/fun commands, and now sudo/ptime/pweather/clear-inventory — all on one
+  page per player at `/players/player/<username>`.
+
+---
+
 ## [1.0.4-mc26.1.2+build.12] — 2026-07-22
 
 ### ✨ Player Profile Page: Phase 3 — Items & Fun Commands

@@ -106,6 +106,18 @@ public class PlayerEndpoint implements HttpHandler {
                 } else if (path.matches("/api/player/spawnmob/.*")) {
                     String username = path.substring("/api/player/spawnmob/".length());
                     handleSpawnMob(exchange, username);
+                } else if (path.matches("/api/player/sudo/.*")) {
+                    String username = path.substring("/api/player/sudo/".length());
+                    handleSudo(exchange, username);
+                } else if (path.matches("/api/player/clearinventory/.*")) {
+                    String username = path.substring("/api/player/clearinventory/".length());
+                    handleClearInventory(exchange, username);
+                } else if (path.matches("/api/player/ptime/.*")) {
+                    String username = path.substring("/api/player/ptime/".length());
+                    handleSetPtime(exchange, username);
+                } else if (path.matches("/api/player/pweather/.*")) {
+                    String username = path.substring("/api/player/pweather/".length());
+                    handleSetPweather(exchange, username);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
                 }
@@ -980,6 +992,175 @@ public class PlayerEndpoint implements HttpHandler {
         sendFutureResult(exchange, future);
     }
 
+    // ── POST /api/player/sudo/{username} ──────────────────────────────────────
+    // Body: {"command": "say hi", "isChat": false}
+
+    private void handleSudo(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String command;
+        boolean isChat;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            command = body.has("command") ? body.get("command").getAsString() : "";
+            isChat = body.has("isChat") && body.get("isChat").getAsBoolean();
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        if (command.isBlank()) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Missing 'command'\"}");
+            return;
+        }
+        final String finalCommand = command;
+        final boolean finalIsChat = isChat;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                String error = com.zerog.neoessentials.util.commands.PlayerStateCommands.runSudoAdmin(player, finalCommand, finalIsChat);
+                if (error != null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", error);
+                } else {
+                    resp.addProperty("success", true);
+                    resp.addProperty("message", "Ran on " + username + ": " + finalCommand);
+                }
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/clearinventory/{username} ────────────────────────────
+
+    private void handleClearInventory(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                int[] cleared = com.zerog.neoessentials.items.commands.ClearInventoryCommand.clear(player);
+                resp.addProperty("success", true);
+                resp.addProperty("message", "Cleared " + cleared[0] + " main, " + cleared[1] + " armor, " + cleared[2] + " offhand item(s) from " + username);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/ptime/{username} ─────────────────────────────────────
+    // Body: {"ticks": 6000} — omit/null resets to real world time.
+
+    private void handleSetPtime(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        Long ticks = null;
+        try {
+            if (!bodyJson.isBlank()) {
+                JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+                if (body.has("ticks") && !body.get("ticks").isJsonNull()) ticks = body.get("ticks").getAsLong();
+            }
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        final Long finalTicks = ticks;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                com.zerog.neoessentials.util.commands.UtilityCommands.setPtime(player, finalTicks);
+                resp.addProperty("success", true);
+                resp.addProperty("message", finalTicks == null ? "Reset " + username + "'s ptime" : "Set " + username + "'s ptime to " + finalTicks);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/pweather/{username} ──────────────────────────────────
+    // Body: {"type": "sun"|"storm"} — omit/null resets to server weather.
+
+    private void handleSetPweather(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String type = null;
+        try {
+            if (!bodyJson.isBlank()) {
+                JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+                if (body.has("type") && !body.get("type").isJsonNull()) type = body.get("type").getAsString();
+            }
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        final String finalType = type;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                com.zerog.neoessentials.util.commands.UtilityCommands.setPweather(player, finalType);
+                resp.addProperty("success", true);
+                resp.addProperty("message", finalType == null ? "Reset " + username + "'s weather" : "Set " + username + "'s weather to " + finalType);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
     /** Reads an optional boolean field from the request body; returns null if absent/blank/invalid. */
     private Boolean readOptionalBoolean(HttpExchange exchange, String field) throws IOException {
         String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -1096,12 +1277,24 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/lookup/.*")) {
                 String username = path.substring("/api/player/lookup/".length());
                 response = playerCollector.lookupPlayer(username);
+            } else if (path.matches("/api/player/ptime/.*")) {
+                String username = path.substring("/api/player/ptime/".length());
+                UUID uuid = usernameToUuid(username);
+                response = new JsonObject();
+                Long ticks = uuid != null ? com.zerog.neoessentials.util.commands.UtilityCommands.getPtime(uuid) : null;
+                if (ticks != null) response.addProperty("ticks", ticks); else response.add("ticks", com.google.gson.JsonNull.INSTANCE);
+            } else if (path.matches("/api/player/pweather/.*")) {
+                String username = path.substring("/api/player/pweather/".length());
+                UUID uuid = usernameToUuid(username);
+                response = new JsonObject();
+                String type = uuid != null ? com.zerog.neoessentials.util.commands.UtilityCommands.getPweather(uuid) : null;
+                if (type != null) response.addProperty("type", type); else response.add("type", com.google.gson.JsonNull.INSTANCE);
             } else {
                 response = new JsonObject();
                 response.addProperty("error", "Endpoint not found");
                 return response;
             }
-            
+
             return response;
     }
     

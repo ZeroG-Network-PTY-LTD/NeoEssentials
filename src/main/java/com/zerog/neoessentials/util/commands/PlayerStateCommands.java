@@ -209,6 +209,25 @@ public class PlayerStateCommands {
         }
     }
 
+    /**
+     * Forces {@code target} to run a command (or chat, if {@code isChat}), same as {@code /sudo}
+     * — just driven by the dashboard instead of a CommandSourceStack. Respects
+     * {@code neoessentials.sudo.exempt} the same way the command does. Returns an error message,
+     * or {@code null} on success.
+     */
+    public static String runSudoAdmin(ServerPlayer target, String command, boolean isChat) {
+        if (PermissionAPI.hasPermission(target.getUUID(), "neoessentials.sudo.exempt")) {
+            return target.getName().getString() + " is exempt from /sudo.";
+        }
+        if (isChat) {
+            sudoChat(target, command);
+        } else {
+            String payload = command.startsWith("/") ? command.substring(1) : command;
+            target.level().getServer().getCommands().performPrefixedCommand(target.createCommandSourceStack(), payload);
+        }
+        return null;
+    }
+
     /** Called on player quit to clean up god/fly state. */
     public static void onPlayerQuit(UUID uuid) {
         godMode.remove(uuid);
