@@ -4,6 +4,9 @@ import { ToastProvider } from './lib/toast';
 import Login from './pages/Login';
 import Overview from './pages/Overview';
 import Players from './pages/Players';
+import Economy from './pages/Economy';
+import Warps from './pages/Warps';
+import Kits from './pages/Kits';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
@@ -36,9 +39,33 @@ export default function App() {
               </RequireAuth>
             }
           />
-          {/* Every other page (Economy, Warps, Kits, Holograms, Discord, Permissions, Backups,
-              Commands, Logs, Users, PublicLookup) lands here until a later pass ports it —
-              matches the approved plan's MVP-first scope, not a bug. */}
+          <Route
+            path="/economy"
+            element={
+              <RequireAuth>
+                <Economy />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/warps"
+            element={
+              <RequireAuth>
+                <Warps />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/kits"
+            element={
+              <RequireAuth>
+                <Kits />
+              </RequireAuth>
+            }
+          />
+          {/* Every other page (Holograms, Discord, Permissions, Backups, Commands, Logs, Users,
+              PublicLookup) lands here until a later pass ports it — matches the approved plan's
+              MVP-first scope, not a bug. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ToastProvider>
