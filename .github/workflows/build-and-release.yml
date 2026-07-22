@@ -35,66 +35,25 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # The build number used for this release's tag/name is whatever is committed in
+      # build_number.txt AT THIS COMMIT — captured before the build runs. Deliberately NOT
+      # read from the file after ./gradlew build: Gradle's own local-dev convenience bump
+      # (build.gradle's taskGraph.whenReady hook, still handy for solo local testing) would
+      # otherwise increment it inside this ephemeral runner checkout, and if that bumped
+      # value got used for the tag, this workflow would need to commit it back — which is
+      # exactly the per-branch-independent auto-bump that made Dev-Builds and mc-26.1-port's
+      # build numbers drift apart in the first place (each branch's CI run bumped its own
+      # copy on its own schedule, with nothing keeping the two in sync).
+      #
+      # Build numbers are now a deliberate, manually-set value: bumped once, applied
+      # identically to both branches' build_number.txt in the same commit/cherry-pick that
+      # ships the change. CI just reads and publishes that number — it does not own it.
+      - name: Read build number
+        id: build_number
+        run: echo "value=$(cat build_number.txt)" >> "$GITHUB_OUTPUT"
+
       - name: Build jar
         run: ./gradlew build -x test --console=plain
-
-      # build_number.txt is tracked in git (not gitignored) so this counter survives across
-      # both local dev builds and CI runs instead of each fresh CI checkout starting from 0 —
-      # that mismatch used to make every CI build report "build.1" regardless of how far along
-      # local builds had gotten. Gradle already incremented it during the build above; this
-      # just commits that new value back so the next build (local or CI) continues from it.
-      #
-      # Pushes with the default GITHUB_TOKEN (needed for the "Publish branch release" step
-      # below) get rejected by this repo's branch-protection ruleset, which requires either a
-      # PR or a bypass actor — GitHub Actions isn't one, but "Deploy keys" already is. So this
-      # step pushes over SSH using a repo deploy key (BUILD_NUMBER_DEPLOY_KEY, write access)
-      # instead of the checkout's token. Deploy-key pushes don't re-trigger this workflow's
-      # `push` event either (same as GITHUB_TOKEN), so this still can't cause a build loop.
-      #
-      # continue-on-error + the two no-op-when-missing checks: this push can still fail on its
-      # own (secret not configured, key revoked, etc.) and that must NOT skip the actual jar
-      # release below — a build-number sync hiccup is far less important than publishing the
-      # build.
-      - name: Commit updated build number
-        continue-on-error: true
-        env:
-          BUILD_NUMBER_DEPLOY_KEY: ${{ secrets.BUILD_NUMBER_DEPLOY_KEY }}
-        run: |
-          if git diff --quiet -- build_number.txt; then
-            echo "build_number.txt unchanged, nothing to commit."
-            exit 0
-          fi
-          if [ -z "$BUILD_NUMBER_DEPLOY_KEY" ]; then
-            echo "BUILD_NUMBER_DEPLOY_KEY not set — skipping build-number push-back."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add build_number.txt
-          git commit -m "chore: bump build number to $(cat build_number.txt) [skip ci]"
-          # Discard anything else left unstaged (e.g. the earlier `chmod +x gradlew` step flips
-          # a tracked file's executable bit, which Linux runners report as a mode-only diff
-          # unlike core.fileMode=false setups) — `git rebase` below refuses to run with ANY
-          # unstaged changes present, even ones unrelated to build_number.txt.
-          git checkout -- .
-
-          mkdir -p ~/.ssh
-          echo "$BUILD_NUMBER_DEPLOY_KEY" > ~/.ssh/build_number_deploy_key
-          chmod 600 ~/.ssh/build_number_deploy_key
-          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-
-          export GIT_SSH_COMMAND="ssh -i ~/.ssh/build_number_deploy_key -o IdentitiesOnly=yes"
-          git remote set-url origin "git@github.com:${{ github.repository }}.git"
-          # actions/checkout's shallow clone (fetch-depth 1) doesn't have enough history for git
-          # to confirm this push is a fast-forward once the remote URL changes to SSH, so it
-          # gets rejected with "fetch first" even with nothing genuinely new on the remote.
-          # Fetching just this branch and rebasing our one bump commit onto it first fixes that
-          # AND correctly handles the rare case where something else really did land in the
-          # meantime.
-          git fetch origin "${{ github.ref_name }}"
-          git rebase "origin/${{ github.ref_name }}"
-          git push origin HEAD:${{ github.ref_name }}
 
       - name: Locate built jar
         id: jar
@@ -102,7 +61,6 @@ jobs:
           jar_path=$(ls -t build/libs/*.jar | head -n 1)
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
-          echo "build_number=$(cat build_number.txt)" >> "$GITHUB_OUTPUT"
 
       # One release PER BUILD now (unique tag = branch + build number), instead of one release
       # per branch that gets overwritten every push. The old scheme reused the same tag
@@ -113,8 +71,8 @@ jobs:
       - name: Publish build release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.ref_name }}-${{ steps.jar.outputs.build_number }}
-          name: "${{ github.ref_name }} — build ${{ steps.jar.outputs.build_number }}"
+          tag_name: build-${{ github.ref_name }}-${{ steps.build_number.outputs.value }}
+          name: "${{ github.ref_name }} — build ${{ steps.build_number.outputs.value }}"
           body: |
             Automated build from commit ${{ github.sha }} on `${{ github.ref_name }}`.
           target_commitish: ${{ github.sha }}
