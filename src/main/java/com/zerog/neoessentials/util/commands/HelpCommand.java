@@ -102,12 +102,15 @@ public class HelpCommand {
             .filter(cmd -> {
                 // Console can see everything; for players check admin or generic perm
                 if (uuid == null) return true;
-                String perm = "neoessentials." + cmd.getName().toLowerCase();
                 // Admin can see all
                 if (PermissionAPI.hasPermission(uuid, "neoessentials.admin")) return true;
+                if (PermissionAPI.hasPermission(uuid, "neoessentials.*")) return true;
+                // A command explicitly marked as requiring nothing (registerCommandWithPermission(...,
+                // "", ...)) is always visible — matches its actual .requires() (or lack thereof).
+                if (cmd.hasPermissionOverride() && cmd.getPermissionNodeOverride().isEmpty()) return true;
+                String perm = resolvePermissionNode(cmd);
                 // Try the command-specific permission; if not explicitly denied, show it
-                return PermissionAPI.hasPermission(uuid, perm)
-                    || PermissionAPI.hasPermission(uuid, "neoessentials.*");
+                return PermissionAPI.hasPermission(uuid, perm);
             })
             .sorted(Comparator.comparing(CommandRegistry.CommandInfo::getName))
             .toList();
@@ -169,13 +172,29 @@ public class HelpCommand {
             "commands.neoessentials.help.detail_header", cmd.getName()), false);
         String desc = getLocalizedDescription(cmd);
         src.sendSuccess(() -> Component.literal("§7" + desc), false);
+        String permDisplay = cmd.hasPermissionOverride() && cmd.getPermissionNodeOverride().isEmpty()
+            ? "none — open to everyone"
+            : resolvePermissionNode(cmd);
         src.sendSuccess(() -> MessageUtil.component(
-            "commands.neoessentials.help.detail_permission", "neoessentials." + cmd.getName()), false);
+            "commands.neoessentials.help.detail_permission", permDisplay), false);
         List<String> aliases = cmd.getAliases();
         if (aliases != null && !aliases.isEmpty()) {
             src.sendSuccess(() -> MessageUtil.component(
                 "commands.neoessentials.help.detail_aliases", String.join("§7, §e", aliases)), false);
         }
+    }
+
+    /**
+     * The permission node to check/display for a command: its explicit override if one was
+     * registered via {@link CommandRegistry#registerCommandWithPermission}, else the legacy
+     * {@code "neoessentials." + name} guess (correct for most simple commands, but not all —
+     * see that method's own doc for why an explicit override is sometimes needed).
+     */
+    private static String resolvePermissionNode(CommandRegistry.CommandInfo cmd) {
+        if (cmd.hasPermissionOverride()) {
+            return cmd.getPermissionNodeOverride();
+        }
+        return "neoessentials." + cmd.getName().toLowerCase();
     }
 
     /**
