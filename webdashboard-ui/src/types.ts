@@ -105,6 +105,24 @@ export interface PlayerInventory {
   error?: string;
 }
 
+export interface FreezeEntry {
+  playerName: string;
+  playerId: string;
+  reason: string;
+  frozenBy: string;
+  freezeTime: number;
+}
+
+export interface JailEntry {
+  playerName: string;
+  playerId: string;
+  reason: string;
+  jailedBy: string;
+  jailTime: number;
+  expireAt: number;
+  jailName: string;
+}
+
 export interface ServerStatus {
   online: boolean;
   tps: number;

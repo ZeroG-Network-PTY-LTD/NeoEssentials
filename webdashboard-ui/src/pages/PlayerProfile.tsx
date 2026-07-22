@@ -38,6 +38,9 @@ import {
   Gauge,
   Tag,
   Navigation,
+  Snowflake,
+  EyeOff,
+  Lock,
 } from 'lucide-react';
 
 export default function PlayerProfile() {
@@ -58,6 +61,12 @@ export default function PlayerProfile() {
   const [kicks, setKicks] = useState<KickEntry[]>([]);
   const [warns, setWarns] = useState<WarnEntry[]>([]);
   const [notes, setNotes] = useState<NoteEntry[]>([]);
+
+  const [frozen, setFrozen] = useState(false);
+  const [vanished, setVanished] = useState(false);
+  const [jailed, setJailed] = useState(false);
+  const [jails, setJails] = useState<string[]>([]);
+  const [jailChoice, setJailChoice] = useState('');
 
   const [newPermission, setNewPermission] = useState('');
   const [newNote, setNewNote] = useState('');
@@ -82,7 +91,7 @@ export default function PlayerProfile() {
         return;
       }
       const uuid = result.uuid;
-      const [bal, perm, grp, inv, banList, muteList, kickList, warnList, noteList] = await Promise.allSettled([
+      const [bal, perm, grp, inv, banList, muteList, kickList, warnList, noteList, freeze, vanish, jail, jailList] = await Promise.allSettled([
         mcApi.getBalance(username),
         mcApi.permissionUserLookup(username),
         mcApi.permissionGroups(),
@@ -92,6 +101,10 @@ export default function PlayerProfile() {
         mcApi.kickHistory(username),
         mcApi.warnsForPlayer(username),
         mcApi.notesForPlayer(username),
+        mcApi.freezeStatus(username),
+        mcApi.vanishStatus(username),
+        mcApi.jailStatus(username),
+        mcApi.jailLocations(),
       ]);
       if (bal.status === 'fulfilled') setBalance(bal.value.balance);
       if (perm.status === 'fulfilled') setPermInfo(perm.value);
@@ -102,6 +115,10 @@ export default function PlayerProfile() {
       if (kickList.status === 'fulfilled') setKicks(kickList.value);
       if (warnList.status === 'fulfilled') setWarns(warnList.value);
       if (noteList.status === 'fulfilled') setNotes(noteList.value);
+      if (freeze.status === 'fulfilled') setFrozen(freeze.value.frozen);
+      if (vanish.status === 'fulfilled') setVanished(vanish.value.vanished);
+      if (jail.status === 'fulfilled') setJailed(jail.value.jailed);
+      if (jailList.status === 'fulfilled') setJails(jailList.value);
       setLoading(false);
     });
   };
@@ -158,6 +175,25 @@ export default function PlayerProfile() {
     const target = teleportTarget.trim();
     if (!target) return;
     runAction(`Teleported to ${target}.`, () => mcApi.teleportToPlayer(username, target), () => setTeleportTarget(''));
+  };
+
+  const toggleFreeze = () =>
+    frozen
+      ? runAction('Unfrozen.', () => mcApi.unfreezePlayer(username), () => setFrozen(false))
+      : runAction('Frozen.', () => mcApi.freezePlayer(username), () => setFrozen(true));
+
+  const toggleVanish = () =>
+    vanished
+      ? runAction('Unvanished.', () => mcApi.unvanishPlayer(username), () => setVanished(false))
+      : runAction('Vanished.', () => mcApi.vanishPlayer(username), () => setVanished(true));
+
+  const toggleJail = () => {
+    if (jailed) {
+      runAction('Unjailed.', () => mcApi.unjailPlayer(username), () => setJailed(false));
+    } else {
+      if (!jailChoice) return;
+      runAction(`Jailed in '${jailChoice}'.`, () => mcApi.jailPlayer(username, jailChoice), () => setJailed(true));
+    }
   };
 
   const addPermission = (e: FormEvent) => {
@@ -457,6 +493,46 @@ export default function PlayerProfile() {
               Teleport
             </button>
           </form>
+        </Card>
+
+        <Card title="Freeze, vanish & jail" icon={Lock} padded>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <button disabled={busy} onClick={toggleFreeze} className={`flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border transition-colors disabled:opacity-50 ${frozen ? 'border-[var(--mc-cyan-400)] text-[var(--mc-cyan-400)]' : 'border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)]'}`}>
+              <Snowflake size={12} /> {frozen ? 'Unfreeze' : 'Freeze'}
+            </button>
+            <button disabled={busy || !lookup.online} onClick={toggleVanish} className={`flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border transition-colors disabled:opacity-50 ${vanished ? 'border-[var(--mc-purple-400)] text-[var(--mc-purple-400)]' : 'border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)]'}`}>
+              <EyeOff size={12} /> {vanished ? 'Unvanish' : 'Vanish'}
+            </button>
+            {frozen && <Badge variant="cyan">frozen</Badge>}
+            {vanished && <Badge variant="purple">vanished</Badge>}
+            {jailed && <Badge variant="ember">jailed</Badge>}
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Lock size={13} />
+            Jail
+          </div>
+          {jailed ? (
+            <button disabled={busy} onClick={toggleJail} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Release from jail
+            </button>
+          ) : (
+            <div className="flex gap-1.5">
+              <select
+                value={jailChoice}
+                onChange={(e) => setJailChoice(e.target.value)}
+                className="flex-1 text-[13px] px-2.5 py-1.5 rounded-[6px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] outline-none focus:border-[var(--mc-cyan-400)]"
+              >
+                <option value="" disabled>{jails.length === 0 ? 'No jails set up' : 'Select a jail'}</option>
+                {jails.map((j) => (
+                  <option key={j} value={j}>{j}</option>
+                ))}
+              </select>
+              <button disabled={busy || !jailChoice} onClick={toggleJail} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+                Jail
+              </button>
+            </div>
+          )}
         </Card>
 
         <Card title="Economy" icon={Coins} padded>

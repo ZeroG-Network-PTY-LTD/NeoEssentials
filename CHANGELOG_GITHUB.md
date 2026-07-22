@@ -11,6 +11,26 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.11] — 2026-07-22
+
+### ✨ Player Profile Page: Phase 2 — Freeze, Vanish, Jail
+
+- Second pass on the per-player dashboard control page. Adds:
+  - **Freeze/unfreeze** — works even for offline players (matches `/freeze`'s own
+    UUID-keyed behavior; takes effect immediately if/when they're online).
+  - **Vanish/unvanish** — vanish requires the player to be online (same as
+    `/vanish`), unvanish works regardless.
+  - **Jail/unjail** — a dropdown of the server's actual configured jail
+    locations, since jailing requires picking one.
+- New moderation REST routes backing all of the above (`/api/moderation/freeze`,
+  `/vanish`, `/jail`, plus `/jails` to list configured jail locations) — GET
+  routes open to any logged-in account, mutations admin-only, same convention
+  as every other moderation route.
+- Next pass: item & fun commands (give, effect, lightning, spawnmob), then
+  inventory/ender chest editing.
+
+---
+
 ## [1.0.4+build.10] — 2026-07-22
 
 ### ✨ Player Profile Page: Phase 1 — State Toggles, Nickname, Teleport
