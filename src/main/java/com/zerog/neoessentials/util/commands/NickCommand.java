@@ -443,6 +443,34 @@ public class NickCommand {
     public static String getNickname(UUID playerId) {
         return NICKNAMES.get(playerId);
     }
+
+    /**
+     * Set a player's nickname from a non-command caller (the dashboard) — same validation
+     * and tab-list broadcast as {@code /setnick}, just without a CommandSourceStack to reply
+     * through. Returns a human-readable error message, or {@code null} on success.
+     */
+    public static String setNicknameAdmin(ServerPlayer target, String nickname) {
+        if (nickname == null || nickname.isBlank() || nickname.equalsIgnoreCase("off") || nickname.equalsIgnoreCase("reset")) {
+            return resetNicknameAdmin(target);
+        }
+        if (isInvalidNickname(nickname)) return "Invalid nickname format.";
+        String withoutColors = removeColorCodes(nickname);
+        if (withoutColors.length() > 16 || withoutColors.length() < 3) return "Nickname must be 3-16 characters (excluding color codes).";
+        if (isNicknameTaken(nickname, target.getUUID())) return "That nickname is already taken.";
+
+        NICKNAMES.put(target.getUUID(), nickname);
+        saveNicknameData();
+        updatePlayerDisplayName(target);
+        return null;
+    }
+
+    /** Reset a player's nickname from a non-command caller (the dashboard). Always succeeds. */
+    public static String resetNicknameAdmin(ServerPlayer target) {
+        NICKNAMES.remove(target.getUUID());
+        saveNicknameData();
+        updatePlayerDisplayName(target);
+        return null;
+    }
     
     /**
      * Get player's display name (nickname or real name)

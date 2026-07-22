@@ -31,6 +31,13 @@ import {
   Shield,
   Plus,
   X,
+  Feather,
+  Sparkles,
+  Utensils,
+  Flame,
+  Gauge,
+  Tag,
+  Navigation,
 } from 'lucide-react';
 
 export default function PlayerProfile() {
@@ -56,6 +63,13 @@ export default function PlayerProfile() {
   const [newNote, setNewNote] = useState('');
   const [economyAmount, setEconomyAmount] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const [flyEnabled, setFlyEnabled] = useState<boolean | null>(null);
+  const [godEnabled, setGodEnabled] = useState<boolean | null>(null);
+  const [speedValue, setSpeedValue] = useState('5');
+  const [speedType, setSpeedType] = useState<'walk' | 'fly'>('walk');
+  const [nicknameInput, setNicknameInput] = useState('');
+  const [teleportTarget, setTeleportTarget] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -114,6 +128,37 @@ export default function PlayerProfile() {
 
   const changeGamemode = (gamemode: Gamemode) =>
     runAction(`Game mode set to ${gamemode}.`, () => mcApi.setGamemode(username, gamemode));
+
+  const toggleFly = (enable: boolean) =>
+    runAction(`Flight ${enable ? 'enabled' : 'disabled'}.`, () => mcApi.setFly(username, enable), () => setFlyEnabled(enable));
+
+  const toggleGod = (enable: boolean) =>
+    runAction(`God mode ${enable ? 'enabled' : 'disabled'}.`, () => mcApi.setGod(username, enable), () => setGodEnabled(enable));
+
+  const doFeed = () => runAction('Fed.', () => mcApi.feedPlayer(username));
+
+  const doExtinguish = () => runAction('Extinguished.', () => mcApi.extinguishPlayer(username));
+
+  const applySpeed = () => {
+    const speed = Number(speedValue);
+    if (!Number.isFinite(speed) || speed < 0 || speed > 10) return;
+    runAction(`${speedType === 'fly' ? 'Fly' : 'Walk'} speed set to ${speed}.`, () => mcApi.setSpeed(username, speedType, speed));
+  };
+
+  const applyNickname = (e: FormEvent) => {
+    e.preventDefault();
+    runAction('Nickname updated.', () => mcApi.setNickname(username, nicknameInput.trim() || null));
+  };
+
+  const clearNickname = () =>
+    runAction('Nickname cleared.', () => mcApi.setNickname(username, null), () => setNicknameInput(''));
+
+  const doTeleport = (e: FormEvent) => {
+    e.preventDefault();
+    const target = teleportTarget.trim();
+    if (!target) return;
+    runAction(`Teleported to ${target}.`, () => mcApi.teleportToPlayer(username, target), () => setTeleportTarget(''));
+  };
 
   const addPermission = (e: FormEvent) => {
     e.preventDefault();
@@ -323,6 +368,95 @@ export default function PlayerProfile() {
               <option key={g.name} value={g.name}>{g.name}</option>
             ))}
           </select>
+        </Card>
+
+        <Card title="Player state" icon={Sparkles} padded>
+          {!lookup.online && (
+            <div className="text-[12px] text-[var(--mc-text-muted)] mb-3">
+              {lookup.username} is offline — these controls only work while online.
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button disabled={busy || !lookup.online} onClick={() => toggleFly(true)} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              <Feather size={12} /> Fly on
+            </button>
+            <button disabled={busy || !lookup.online} onClick={() => toggleFly(false)} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Fly off
+            </button>
+            <button disabled={busy || !lookup.online} onClick={() => toggleGod(true)} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              <Shield size={12} /> God on
+            </button>
+            <button disabled={busy || !lookup.online} onClick={() => toggleGod(false)} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              God off
+            </button>
+            <button disabled={busy || !lookup.online} onClick={doFeed} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              <Utensils size={12} /> Feed
+            </button>
+            <button disabled={busy || !lookup.online} onClick={doExtinguish} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              <Flame size={12} /> Extinguish
+            </button>
+            {flyEnabled !== null && <Badge variant={flyEnabled ? 'moss' : 'neutral'}>fly: {flyEnabled ? 'on' : 'off'}</Badge>}
+            {godEnabled !== null && <Badge variant={godEnabled ? 'moss' : 'neutral'}>god: {godEnabled ? 'on' : 'off'}</Badge>}
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Gauge size={13} />
+            Speed (0-10)
+          </div>
+          <div className="flex gap-1.5 mb-3">
+            <select
+              value={speedType}
+              onChange={(e) => setSpeedType(e.target.value as 'walk' | 'fly')}
+              className="text-[13px] px-2 py-1.5 rounded-[6px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] outline-none focus:border-[var(--mc-cyan-400)]"
+            >
+              <option value="walk">Walk</option>
+              <option value="fly">Fly</option>
+            </select>
+            <input
+              type="number" min="0" max="10" step="0.5"
+              value={speedValue}
+              onChange={(e) => setSpeedValue(e.target.value)}
+              className="w-20 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button disabled={busy || !lookup.online} onClick={applySpeed} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Set
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Tag size={13} />
+            Nickname
+          </div>
+          <form onSubmit={applyNickname} className="flex gap-1.5 mb-3">
+            <input
+              value={nicknameInput}
+              onChange={(e) => setNicknameInput(e.target.value)}
+              placeholder="New nickname"
+              className="flex-1 text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Set
+            </button>
+            <button type="button" disabled={busy} onClick={clearNickname} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Clear
+            </button>
+          </form>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Navigation size={13} />
+            Teleport to another online player
+          </div>
+          <form onSubmit={doTeleport} className="flex gap-1.5">
+            <input
+              value={teleportTarget}
+              onChange={(e) => setTeleportTarget(e.target.value)}
+              placeholder="Target username"
+              className="flex-1 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy || !lookup.online} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Teleport
+            </button>
+          </form>
         </Card>
 
         <Card title="Economy" icon={Coins} padded>
