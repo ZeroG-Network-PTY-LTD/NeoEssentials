@@ -12,6 +12,18 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.6] — 2026-07-22
+
+### ✨ Internal Dashboard: Economy, Warps, and Kits Pages
+
+- Continues build.5's internal bundled dashboard (`webDashboard.mode: "internal"`/
+  `"both"`) with three more pages: Economy (leaderboard + give/take/set balance),
+  Warps (list/create/delete), and Kits (read-only list + stats).
+- Still not there yet: Holograms, Discord, Permissions, Backups, Commands, Logs,
+  Users, public player lookup — coming in further follow-up passes.
+
+---
+
 ## [1.0.4-mc26.1.2+build.5] — 2026-07-22
 
 ### ✨ A Real Internal Dashboard (`webDashboard.mode: "internal"`)
