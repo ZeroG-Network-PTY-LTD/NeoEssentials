@@ -6,6 +6,21 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.15 — 2026-07-22
+
+### ✨ Dashboard Security: Copyable Keys, Encrypted Tokens, Permission-Driven Role Sync
+
+- `/apikey create` tokens are now click-to-copy in chat instead of plain text.
+- The paired external dashboard's auth token is now encrypted at rest in
+  `config.json` instead of stored in plaintext (existing values migrate
+  automatically, no action needed).
+- New opt-in setting `webDashboard.roleSync`: automatically grants/revokes a
+  linked player's dashboard admin role based on their real in-game permission
+  node or group — no more manually running `/apikey create` every time an
+  admin's status changes. Off by default.
+
+---
+
 ## 1.0.4+build.14 — 2026-07-22
 
 ### ✨ Economy Tab: Overview Stats + Distribution Chart, Plus a Real Bug Fix

@@ -1599,13 +1599,28 @@ public class ConfigManager {
         }
     }
 
+    /** Fields whose stored value is a real credential, not just an identifier/URL. */
+    private static final java.util.Set<String> ENCRYPTED_EXTERNAL_DASHBOARD_FIELDS = java.util.Set.of("token");
+
     private static String getExternalDashboardField(String field) {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("webDashboard")) {
             JsonObject dashboard = config.getAsJsonObject("webDashboard");
             if (dashboard.has("externalDashboard")) {
                 JsonObject external = dashboard.getAsJsonObject("externalDashboard");
-                if (external.has(field)) return external.get(field).getAsString();
+                if (external.has(field)) {
+                    String stored = external.get(field).getAsString();
+                    if (!ENCRYPTED_EXTERNAL_DASHBOARD_FIELDS.contains(field)) return stored;
+
+                    String decrypted = com.zerog.neoessentials.webdashboard.security.ConfigSecretCipher.decrypt(stored);
+                    if (decrypted != null) return decrypted;
+
+                    // Leftover plaintext from before encryption was added — use it once, then
+                    // transparently migrate it to an encrypted value so it isn't re-read as
+                    // plaintext next time.
+                    setExternalDashboardField(field, stored);
+                    return stored;
+                }
             }
         }
         return "";
@@ -1616,10 +1631,70 @@ public class ConfigManager {
         JsonObject config = instance.getConfig(MAIN_CONFIG);
         JsonObject dashboard = config.has("webDashboard") ? config.getAsJsonObject("webDashboard") : new JsonObject();
         JsonObject external = dashboard.has("externalDashboard") ? dashboard.getAsJsonObject("externalDashboard") : new JsonObject();
-        external.addProperty(field, value);
+        String toStore = ENCRYPTED_EXTERNAL_DASHBOARD_FIELDS.contains(field)
+            ? com.zerog.neoessentials.webdashboard.security.ConfigSecretCipher.encrypt(value)
+            : value;
+        external.addProperty(field, toStore);
         dashboard.add("externalDashboard", external);
         config.add("webDashboard", dashboard);
         instance.saveConfig(MAIN_CONFIG, config);
+    }
+
+    /**
+     * Whether the permission-driven dashboard role-sync task ({@code webDashboard.roleSync.enabled})
+     * is turned on. Off by default — this reconciles a dashboard account's role against the
+     * player's actual in-game permission/group, so it should be an explicit opt-in rather than
+     * something that silently starts changing dashboard roles on upgrade.
+     */
+    public static boolean isRoleSyncEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("roleSync")) {
+                JsonObject roleSync = dashboard.getAsJsonObject("roleSync");
+                if (roleSync.has("enabled")) return roleSync.get("enabled").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /** How often ({@code webDashboard.roleSync.intervalSeconds}) the periodic reconciliation sweep runs. Default 300s. */
+    public static int getRoleSyncIntervalSeconds() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("roleSync")) {
+                JsonObject roleSync = dashboard.getAsJsonObject("roleSync");
+                if (roleSync.has("intervalSeconds")) return roleSync.get("intervalSeconds").getAsInt();
+            }
+        }
+        return 300;
+    }
+
+    /** Permission node ({@code webDashboard.roleSync.adminPermission}) that grants ADMIN dashboard role. Empty = not checked. */
+    public static String getRoleSyncAdminPermission() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("roleSync")) {
+                JsonObject roleSync = dashboard.getAsJsonObject("roleSync");
+                if (roleSync.has("adminPermission")) return roleSync.get("adminPermission").getAsString();
+            }
+        }
+        return "neoessentials.admin.dashboard";
+    }
+
+    /** Permission group name ({@code webDashboard.roleSync.adminGroup}) that grants ADMIN dashboard role. Empty = not checked. */
+    public static String getRoleSyncAdminGroup() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("roleSync")) {
+                JsonObject roleSync = dashboard.getAsJsonObject("roleSync");
+                if (roleSync.has("adminGroup")) return roleSync.get("adminGroup").getAsString();
+            }
+        }
+        return "admin";
     }
 
     /**

@@ -19,6 +19,10 @@ public class User {
     private long lockoutUntil;
     private boolean requiresPasswordChange;
     private boolean isTempPassword;
+    /** True if {@link #role} was last set by the permission-driven role-sync task rather than a
+     *  manual admin action — lets that task tell "should I downgrade this" apart from "an admin
+     *  deliberately chose this role, leave it alone" without a separate lookup table. */
+    private boolean roleSyncManaged;
     private final Set<String> permissions;
 
     public enum Role {
@@ -117,6 +121,7 @@ public class User {
     public long getLockoutUntil() { return lockoutUntil; }
     public boolean requiresPasswordChange() { return requiresPasswordChange; }
     public boolean isTempPassword() { return isTempPassword; }
+    public boolean isRoleSyncManaged() { return roleSyncManaged; }
     public Set<String> getPermissions() { return new HashSet<>(permissions); }
 
     // Setters
@@ -130,4 +135,5 @@ public class User {
     public void setLockoutUntil(long lockoutUntil) { this.lockoutUntil = lockoutUntil; }
     public void setRequiresPasswordChange(boolean requiresPasswordChange) { this.requiresPasswordChange = requiresPasswordChange; }
     public void setTempPassword(boolean isTempPassword) { this.isTempPassword = isTempPassword; }
+    public void setRoleSyncManaged(boolean roleSyncManaged) { this.roleSyncManaged = roleSyncManaged; }
 }

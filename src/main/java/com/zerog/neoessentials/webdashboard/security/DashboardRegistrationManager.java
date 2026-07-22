@@ -83,6 +83,14 @@ public class DashboardRegistrationManager {
     }
 
     /**
+     * All linked registrations — used by {@link PermissionRoleSyncTask} to know which players
+     * actually have a dashboard account to keep in sync (it never auto-creates one).
+     */
+    public java.util.Collection<DashboardAccountRegistration> getAllRegistrations() {
+        return java.util.List.copyOf(registrations.values());
+    }
+
+    /**
      * Start registration process for a player
      * Returns a registration token that must be used within 5 minutes
      */

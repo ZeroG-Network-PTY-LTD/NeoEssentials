@@ -146,7 +146,29 @@ public class ChatComponentUtil {
         
         return component;
     }
-    
+
+    /**
+     * Create a click-to-copy component for an arbitrary secret (API key/token), styled and
+     * labeled distinctly from {@link #createPermissionComponent(String)} so it's visually clear
+     * this is sensitive, one-time-shown material rather than a permission node.
+     * @param label What this value is, shown in the hover tooltip (e.g. "API key")
+     * @param value The raw secret to copy
+     * @return Component that copies {@code value} to clipboard when clicked
+     */
+    public static Component createCopyableSecret(String label, String value) {
+        String hoverText = String.format("%s\nClick to copy to clipboard", label);
+
+        MutableComponent component = Component.literal(value);
+        component.setStyle(Style.EMPTY
+            .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.COPY_TO_CLIPBOARD, value))
+            .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT, Component.literal(hoverText)))
+            .withColor(ChatFormatting.GOLD)
+            .withUnderlined(true)
+        );
+
+        return component;
+    }
+
     /**
      * Parse color codes in text and return a colored component.
      * Supports: §/& color codes (0-9, a-f), format codes (k-o, r), and hex (&#RRGGBB)
