@@ -88,6 +88,24 @@ public class PlayerEndpoint implements HttpHandler {
                 } else if (path.matches("/api/player/nickname/.*")) {
                     String username = path.substring("/api/player/nickname/".length());
                     handleNickname(exchange, username);
+                } else if (path.matches("/api/player/give/.*")) {
+                    String username = path.substring("/api/player/give/".length());
+                    handleGive(exchange, username);
+                } else if (path.matches("/api/player/burn/.*")) {
+                    String username = path.substring("/api/player/burn/".length());
+                    handleBurn(exchange, username);
+                } else if (path.matches("/api/player/kill/.*")) {
+                    String username = path.substring("/api/player/kill/".length());
+                    handleKill(exchange, username);
+                } else if (path.matches("/api/player/effect/.*")) {
+                    String username = path.substring("/api/player/effect/".length());
+                    handleEffect(exchange, username);
+                } else if (path.matches("/api/player/lightning/.*")) {
+                    String username = path.substring("/api/player/lightning/".length());
+                    handleLightning(exchange, username);
+                } else if (path.matches("/api/player/spawnmob/.*")) {
+                    String username = path.substring("/api/player/spawnmob/".length());
+                    handleSpawnMob(exchange, username);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Endpoint not found\"}");
                 }
@@ -615,6 +633,323 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("success", true);
                     resp.addProperty("message", "Nickname updated for " + username);
                 }
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/give/{username} ──────────────────────────────────────
+    // Body: {"item": "minecraft:diamond_sword", "amount": 1}
+
+    private void handleGive(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String itemId;
+        int amount;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            itemId = body.has("item") ? body.get("item").getAsString() : "";
+            amount = body.has("amount") ? Math.max(1, Math.min(3456, body.get("amount").getAsInt())) : 1;
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        if (itemId.isBlank()) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Missing 'item'\"}");
+            return;
+        }
+        final String finalItemId = itemId;
+        final int finalAmount = amount;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                net.minecraft.world.item.ItemStack stack = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(finalItemId);
+                if (stack == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Unknown item: " + finalItemId);
+                    return resp;
+                }
+                int remaining = finalAmount;
+                int maxStack = stack.getMaxStackSize();
+                while (remaining > 0) {
+                    int give = Math.min(remaining, maxStack);
+                    net.minecraft.world.item.ItemStack toGive = stack.copyWithCount(give);
+                    if (!player.getInventory().add(toGive)) {
+                        player.drop(toGive, false);
+                    }
+                    remaining -= give;
+                }
+                resp.addProperty("success", true);
+                resp.addProperty("message", "Gave " + finalAmount + "x " + finalItemId + " to " + username);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/burn/{username} ──────────────────────────────────────
+    // Body (optional): {"seconds": 10}
+
+    private void handleBurn(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        int seconds = 10;
+        try {
+            if (!bodyJson.isBlank()) {
+                JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+                if (body.has("seconds")) seconds = Math.max(1, Math.min(600, body.get("seconds").getAsInt()));
+            }
+        } catch (Exception ignored) {}
+        final int finalSeconds = seconds;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                player.setRemainingFireTicks(finalSeconds * 20);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " set on fire for " + finalSeconds + "s");
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/kill/{username} ──────────────────────────────────────
+
+    private void handleKill(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                player.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
+                resp.addProperty("success", true);
+                resp.addProperty("message", username + " killed");
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/effect/{username} ────────────────────────────────────
+    // Body: {"clear": true} OR {"effect": "speed", "duration": 30, "amplifier": 0}
+
+    private void handleEffect(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        JsonObject body;
+        try {
+            body = JsonParser.parseString(bodyJson).getAsJsonObject();
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        final boolean clear = body.has("clear") && body.get("clear").getAsBoolean();
+        final String effectId = body.has("effect") ? body.get("effect").getAsString() : null;
+        final int duration = body.has("duration") ? Math.max(1, body.get("duration").getAsInt()) : 30;
+        final int amplifier = body.has("amplifier") ? Math.max(0, Math.min(255, body.get("amplifier").getAsInt())) : 0;
+
+        if (!clear && (effectId == null || effectId.isBlank())) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Body must contain 'clear':true or an 'effect'\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                if (clear) {
+                    player.removeAllEffects();
+                    resp.addProperty("success", true);
+                    resp.addProperty("message", "Cleared all effects on " + username);
+                    return resp;
+                }
+                String id = effectId.contains(":") ? effectId : "minecraft:" + effectId;
+                net.minecraft.resources.ResourceLocation loc = net.minecraft.resources.ResourceLocation.tryParse(id);
+                var effectHolder = loc != null ? net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(loc) : null;
+                if (effectHolder == null) {
+                    effectHolder = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.entrySet().stream()
+                        .filter(e -> e.getKey().location().getPath().equals(effectId.toLowerCase()))
+                        .map(java.util.Map.Entry::getValue)
+                        .findFirst().orElse(null);
+                }
+                if (effectHolder == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Unknown effect: " + effectId);
+                    return resp;
+                }
+                player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.core.Holder.direct(effectHolder), duration * 20, amplifier, false, true));
+                resp.addProperty("success", true);
+                resp.addProperty("message", "Applied " + effectId + " (amp " + amplifier + ", " + duration + "s) to " + username);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/lightning/{username} ─────────────────────────────────
+    // Strikes lightning at the player's current position.
+
+    private void handleLightning(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                var level = com.zerog.neoessentials.util.LevelCompat.of(player);
+                net.minecraft.world.entity.LightningBolt bolt =
+                    com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, level);
+                if (bolt != null) {
+                    bolt.moveTo(player.getX(), player.getY(), player.getZ());
+                    level.addFreshEntity(bolt);
+                }
+                resp.addProperty("success", true);
+                resp.addProperty("message", "Lightning struck " + username);
+            } catch (Exception e) {
+                resp.addProperty("success", false);
+                resp.addProperty("error", e.getMessage());
+            }
+            return resp;
+        }, server);
+
+        sendFutureResult(exchange, future);
+    }
+
+    // ── POST /api/player/spawnmob/{username} ──────────────────────────────────
+    // Body: {"mob": "zombie", "amount": 1} — spawned at the player's current location.
+
+    @SuppressWarnings("deprecation")
+    private void handleSpawnMob(HttpExchange exchange, String username) throws IOException {
+        if (!isAdmin(exchange)) {
+            sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+            return;
+        }
+        String bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String mobId;
+        int amount;
+        try {
+            JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
+            mobId = body.has("mob") ? body.get("mob").getAsString() : "";
+            amount = body.has("amount") ? Math.max(1, Math.min(100, body.get("amount").getAsInt())) : 1;
+        } catch (Exception e) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
+            return;
+        }
+        if (mobId.isBlank()) {
+            sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Missing 'mob'\"}");
+            return;
+        }
+        final String finalMobId = mobId;
+        final int finalAmount = amount;
+
+        CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
+            JsonObject resp = new JsonObject();
+            try {
+                ServerPlayer player = server.getPlayerList().getPlayerByName(username);
+                if (player == null) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Player '" + username + "' is not online");
+                    return resp;
+                }
+                String id = finalMobId.contains(":") ? finalMobId : "minecraft:" + finalMobId;
+                net.minecraft.resources.ResourceLocation loc = net.minecraft.resources.ResourceLocation.tryParse(id);
+                var typeOpt = loc != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(loc)
+                    : java.util.Optional.<net.minecraft.world.entity.EntityType<?>>empty();
+                if (typeOpt.isEmpty()) {
+                    typeOpt = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.entrySet().stream()
+                        .filter(e -> e.getKey().location().getPath().equals(finalMobId.toLowerCase()))
+                        .<net.minecraft.world.entity.EntityType<?>>map(java.util.Map.Entry::getValue)
+                        .findFirst();
+                }
+                if (typeOpt.isEmpty()) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", "Unknown mob: " + finalMobId);
+                    return resp;
+                }
+                var entityType = typeOpt.get();
+                var level = com.zerog.neoessentials.util.LevelCompat.of(player);
+                int spawned = 0;
+                for (int i = 0; i < finalAmount; i++) {
+                    var entity = com.zerog.neoessentials.util.EntityTypeCompat.create(entityType, level);
+                    if (entity == null) break;
+                    entity.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0f);
+                    if (entity instanceof net.minecraft.world.entity.Mob mob) {
+                        mob.finalizeSpawn(level, level.getCurrentDifficultyAt(player.blockPosition()),
+                            net.minecraft.world.entity.MobSpawnType.COMMAND, null);
+                    }
+                    level.addFreshEntity(entity);
+                    spawned++;
+                }
+                resp.addProperty("success", true);
+                resp.addProperty("message", "Spawned " + spawned + "x " + finalMobId + " at " + username);
             } catch (Exception e) {
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());

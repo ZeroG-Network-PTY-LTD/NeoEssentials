@@ -11,6 +11,24 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.12] — 2026-07-22
+
+### ✨ Player Profile Page: Phase 3 — Items & Fun Commands
+
+- Third pass on the per-player dashboard control page. Adds:
+  - **Give item** (by registry ID, e.g. `minecraft:diamond_sword`)
+  - **Potion effects** — apply by effect ID with duration/amplifier, or clear all
+  - **Spawn mob** at the player's location
+  - **Burn** (set on fire for N seconds), **lightning strike**, and **kill**
+- All online-players-only, same as their `/command` equivalents (`/give`,
+  `/effect`, `/spawnmob`, `/burn`, `/lightning`, `/kill`).
+- Deliberately skipped `/skull` — it gives the *executor* a player-head item, not
+  something that acts on the target player, so it doesn't fit this page's model.
+- Next (and last planned) pass: inventory/ender chest editing, plus `/sudo`,
+  `/clearinventory`, `/ptime`, `/pweather`.
+
+---
+
 ## [1.0.4+build.11] — 2026-07-22
 
 ### ✨ Player Profile Page: Phase 2 — Freeze, Vanish, Jail
