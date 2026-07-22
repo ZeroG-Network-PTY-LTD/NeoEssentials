@@ -312,14 +312,16 @@ def npmExecutable = org.gradle.internal.os.OperatingSystem.current().isWindows()
 tasks.register("installDashboardUI", Exec) {
     onlyIf { dashboardUiDir.exists() }
     workingDir dashboardUiDir
-    // `npm ci` broke CI (Linux runners): the lockfile was generated on a Windows dev machine,
-    // and npm has a long-standing bug (npmjs/cli#4828) where a lockfile's optional platform
-    // binaries (Rollup's native addon here) don't reliably include every OS's variant, so `npm
-    // ci`'s strict lockfile-only install skipped @rollup/rollup-linux-x64-gnu entirely and
-    // `vite build` crashed on a missing native module. `npm install` re-resolves optional deps
-    // for whatever OS actually runs it instead of trusting the lockfile's platform snapshot.
-    commandLine npmExecutable, 'install'
-    inputs.file(file("$dashboardUiDir/package.json"))
+    // package-lock.json must include every platform's optional native binaries (Rollup's
+    // native addon is the one that bit us — npmjs/cli#4828: a lockfile generated on one OS can
+    // end up missing another OS's optional-dependency package entry entirely, and neither `npm
+    // ci` nor `npm install` will fetch a binary that isn't in the lock at all). Fixed by
+    // deleting node_modules + package-lock.json and reinstalling fresh so npm regenerates the
+    // full platform matrix — verify with `grep '"node_modules/@rollup/rollup-linux-x64-gnu"'
+    // package-lock.json` after any future dependency change made from Windows. `npm ci` is
+    // back since the lockfile is correct again; it's the right choice for CI reproducibility.
+    commandLine npmExecutable, 'ci'
+    inputs.file(file("$dashboardUiDir/package-lock.json"))
     outputs.dir(file("$dashboardUiDir/node_modules"))
 }
 
