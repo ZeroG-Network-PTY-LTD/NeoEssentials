@@ -6,7 +6,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.17 — 2026-07-22
+## 1.0.4+build.15 — 2026-07-22
 
 ### ✨ Account Settings Page + Minecraft Account Linking (Both Dashboards)
 
@@ -18,7 +18,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.16 — 2026-07-22
+## 1.0.4+build.14 — 2026-07-22
 
 ### ✨ New Brand Logo on the Internal Dashboard
 
@@ -28,7 +28,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.15 — 2026-07-22
+## 1.0.4+build.13 — 2026-07-22
 
 ### ✨ Dashboard Security: Copyable Keys, Encrypted Tokens, Permission-Driven Role Sync
 
@@ -43,7 +43,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.14 — 2026-07-22
+## 1.0.4+build.12 — 2026-07-22
 
 ### ✨ Economy Tab: Overview Stats + Distribution Chart, Plus a Real Bug Fix
 
@@ -56,7 +56,10 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.13 — 2026-07-22
+## 1.0.4+build.13-pre-fix — 2026-07-22
+
+> Shipped as build.13 at the time — after a cross-branch build-number-drift fix
+> reset the counter, that number now belongs to a later, different entry above.
 
 ### ✨ Per-Player Control Page: Now Feature-Complete
 
