@@ -12,6 +12,22 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.7] — 2026-07-22
+
+### ✨ Internal Dashboard: Holograms, Discord, and Users Pages
+
+- Continues the internal bundled dashboard (`webDashboard.mode: "internal"`/
+  `"both"`) with three more pages: Holograms (full CRUD), Discord (bridge
+  status, account-linking config, recent events), and Users (the mod's own
+  dashboard-account management).
+- Fixed along the way: creating/editing a hologram through the dashboard was
+  silently rejected by the mod (a body-shape mismatch on the `lines` field) —
+  now works correctly.
+- Still not there yet: Permissions, Backups, Commands, Logs, public player
+  lookup — coming in further follow-up passes.
+
+---
+
 ## [1.0.4-mc26.1.2+build.6] — 2026-07-22
 
 ### ✨ Internal Dashboard: Economy, Warps, and Kits Pages
