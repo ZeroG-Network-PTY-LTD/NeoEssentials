@@ -148,6 +148,27 @@ export interface LeaderboardEntry {
   balance: number;
 }
 
+export interface EconomyDistributionBucket {
+  label: string;
+  count: number;
+}
+
+/**
+ * Matches /api/stats/economy — topPlayers/distribution are populated on the happy path, but the
+ * endpoint's try/catch can still emit a partial object plus an "error" field if something in the
+ * later part of its computation throws, so treat both as possibly absent.
+ */
+export interface EconomyStats {
+  totalWealth: string;
+  accountCount: number;
+  currencySymbol: string;
+  startingBalance: number;
+  averageBalance: string;
+  topPlayers?: LeaderboardEntry[];
+  distribution?: EconomyDistributionBucket[];
+  error?: string;
+}
+
 export type LogEntryType = 'join' | 'leave' | 'command' | 'chat';
 
 export interface LogEntry {

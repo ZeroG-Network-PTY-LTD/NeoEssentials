@@ -7,6 +7,7 @@ import type {
   Home,
   Warp,
   LeaderboardEntry,
+  EconomyStats,
   Kit,
   KitStats,
   Hologram,
@@ -370,6 +371,10 @@ export async function economyLeaderboard(): Promise<LeaderboardEntry[]> {
   const data = await getJson<{ topPlayers?: { uuid: string; name: string; balance: number | string }[] }>('/api/stats/economy');
   const top = data.topPlayers ?? [];
   return top.map((e) => ({ uuid: e.uuid, username: e.name, balance: Number(e.balance) }));
+}
+
+export async function economyStats(): Promise<EconomyStats> {
+  return getJson('/api/stats/economy');
 }
 
 /** $identifier may be a username or a raw UUID — the mod accepts either. */
