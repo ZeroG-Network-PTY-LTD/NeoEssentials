@@ -363,6 +363,23 @@
       "keyId": ""
     },
 
+    // Keeps a linked player's dashboard role (see /dashboardregister) in sync with their real
+    // in-game permission status — grants ADMIN when they gain the configured permission/group,
+    // revokes it again when they lose it. Off by default. Only ever adjusts roles it granted
+    // itself — a role you set manually (e.g. /apikey create <label> OPERATOR) is never touched.
+    "roleSync": {
+      "enabled": false,
+      // How often (seconds) the reconciliation sweep runs, in addition to an immediate check
+      // whenever a linked player joins.
+      "intervalSeconds": 300,
+      // A player with this permission node is granted the dashboard ADMIN role. Leave empty to
+      // not check by permission node.
+      "adminPermission": "neoessentials.admin.dashboard",
+      // A player in this permission group is granted the dashboard ADMIN role. Leave empty to
+      // not check by group. Checked in addition to (OR) adminPermission.
+      "adminGroup": "admin"
+    },
+
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)
       "requireAuthentication": true,

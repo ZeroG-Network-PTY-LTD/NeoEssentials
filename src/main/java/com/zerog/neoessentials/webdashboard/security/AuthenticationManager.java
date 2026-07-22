@@ -258,19 +258,31 @@ public class AuthenticationManager {
     }
     
     /**
-     * Update user role
+     * Update user role — a manual/admin-initiated change. Clears {@code roleSyncManaged} so the
+     * permission-driven role-sync task ({@link PermissionRoleSyncTask}) never overwrites a role
+     * an admin deliberately chose.
      */
     public void updateUserRole(String userId, User.Role newRole) {
+        updateUserRole(userId, newRole, false);
+    }
+
+    /**
+     * @param syncManaged true if this change comes from {@link PermissionRoleSyncTask} rather
+     *                    than a manual admin action — marks the row so the task knows it's safe
+     *                    to later downgrade without clobbering a deliberate manual override.
+     */
+    public void updateUserRole(String userId, User.Role newRole, boolean syncManaged) {
         User user = users.get(userId);
         if (user == null) {
             throw new IllegalArgumentException("User not found");
         }
-        
+
         User.Role oldRole = user.getRole();
         user.setRole(newRole);
+        user.setRoleSyncManaged(syncManaged);
         saveUsers();
 
-        logAuditEvent("ROLE_CHANGED", user.getUsername(), "system",
+        logAuditEvent("ROLE_CHANGED", user.getUsername(), syncManaged ? "permission-sync" : "system",
             "Role changed from " + oldRole + " to " + newRole);
         DashboardUserSyncWebhook.notify("user_updated", user);
     }
@@ -551,6 +563,9 @@ public class AuthenticationManager {
             if (userJson.has("isTempPassword")) {
                 user.setTempPassword(userJson.get("isTempPassword").getAsBoolean());
             }
+            if (userJson.has("roleSyncManaged")) {
+                user.setRoleSyncManaged(userJson.get("roleSyncManaged").getAsBoolean());
+            }
             // Login history / lockout state — previously never persisted, so it
             // silently reset to "never logged in" / "not locked out" on every
             // server restart instead of surviving across reboots.
@@ -597,6 +612,7 @@ public class AuthenticationManager {
         userJson.addProperty("createdAt", user.getCreatedAt());
         userJson.addProperty("requiresPasswordChange", user.requiresPasswordChange());
         userJson.addProperty("isTempPassword", user.isTempPassword());
+        userJson.addProperty("roleSyncManaged", user.isRoleSyncManaged());
         userJson.addProperty("lastLoginAt", user.getLastLoginAt());
         userJson.addProperty("lastLoginIp", user.getLastLoginIp());
         userJson.addProperty("failedLoginAttempts", user.getFailedLoginAttempts());

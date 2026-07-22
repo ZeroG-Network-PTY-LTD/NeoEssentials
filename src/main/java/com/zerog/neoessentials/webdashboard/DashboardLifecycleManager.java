@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.webdashboard;
 
 import com.zerog.neoessentials.webdashboard.data.DataCollector;
+import com.zerog.neoessentials.webdashboard.security.PermissionRoleSyncTask;
 import com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer;
 import com.zerog.neoessentials.util.motd.MotdManager;
 import net.minecraft.server.MinecraftServer;
@@ -26,7 +27,11 @@ public class DashboardLifecycleManager {
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        
+        // Independent of the HTTP/WebSocket dashboard servers below — this only reconciles
+        // dashboard-account roles against in-game permissions, and no-ops internally if
+        // webDashboard.roleSync.enabled is false.
+        PermissionRoleSyncTask.start();
+
         if (!ConfigManager.isWebDashboardEnabled()) {
             LOGGER.info("Dashboard is disabled in configuration");
             return;
@@ -78,6 +83,7 @@ public class DashboardLifecycleManager {
      */
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+        PermissionRoleSyncTask.stop();
         try {
             if (DashboardAPI.getInstance().isRunning()) {
                 LOGGER.info("Server stopping - shutting down Dashboard...");

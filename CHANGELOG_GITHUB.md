@@ -12,6 +12,31 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.15] — 2026-07-22
+
+### ✨ Dashboard Security: Copyable Keys, Encrypted Token Storage, Permission-Driven Role Sync
+
+- `/apikey create` now prints the token as a click-to-copy chat component instead
+  of plain text — click it to copy straight to your clipboard.
+- The Bearer token stored for a paired external dashboard
+  (`webDashboard.externalDashboard.token`) is now encrypted at rest in
+  `config.json` instead of stored in plaintext. Existing plaintext values are
+  transparently migrated to encrypted form the next time they're read — no
+  action needed. (This mirrors the encrypted-at-rest storage the external
+  Laravel dashboard already used for its own copy of the same token.)
+- New opt-in feature: **permission-driven dashboard role sync**
+  (`webDashboard.roleSync` in `config.json`, off by default). When enabled, a
+  player who's linked a dashboard account via `/dashboardregister` automatically
+  gets the dashboard `ADMIN` role the moment they have a configured in-game
+  permission node or belong to a configured permission group — and loses it
+  again the moment they don't, with no manual `/apikey create`/API call needed.
+  Runs an immediate check on join plus a periodic sweep (default every 5
+  minutes) so it also catches permission changes made outside the mod (e.g. a
+  direct LuckPerms edit). A role you set manually is never touched by this —
+  it only ever adjusts a role it granted itself.
+
+---
+
 ## [1.0.4-mc26.1.2+build.14] — 2026-07-22
 
 ### ✨ Economy Tab: Overview Stats, Distribution Chart, Player Lookup + Bug Fix

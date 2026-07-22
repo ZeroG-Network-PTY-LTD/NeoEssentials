@@ -3,6 +3,7 @@ package com.zerog.neoessentials.webdashboard.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.util.ChatComponentUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
 import com.zerog.neoessentials.webdashboard.security.User;
@@ -60,7 +61,7 @@ public class ApiKeyCommand {
 
         source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aAPI key '" + label + "' created (role: " + role + ")."), false);
         source.sendSuccess(() -> Component.literal("§7Token (copy this now — it will §cnever be shown again§7):"), false);
-        source.sendSuccess(() -> Component.literal("§f" + token), false);
+        source.sendSuccess(() -> ChatComponentUtil.createCopyableSecret("API key '" + label + "'", token), false);
         source.sendSuccess(() -> Component.literal("§7Give this to the external dashboard's server config, never to a browser/frontend."), false);
         return 1;
     }
