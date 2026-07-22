@@ -736,6 +736,29 @@ export async function removePermissionAlias(alias: string) {
   return del(`/api/permissions/aliases/${encodeURIComponent(alias)}`);
 }
 
+// --- Account settings (the logged-in dashboard user's own password, linked Minecraft
+// account, and Discord status — see docs/API.md's /api/auth/* table) -------------------
+
+export async function changePassword(oldPassword: string, newPassword: string) {
+  return postJson('/api/auth/change-password', { oldPassword, newPassword });
+}
+
+export async function linkMinecraftStart(): Promise<{ code: string; expiresAt: number }> {
+  return postJson('/api/auth/link-minecraft/start');
+}
+
+export async function linkMinecraftStatus(): Promise<{ linked: boolean; mcUuid?: string; mcUsername?: string }> {
+  return getJson('/api/auth/link-minecraft/status');
+}
+
+export async function unlinkMinecraft() {
+  return postJson('/api/auth/unlink-minecraft');
+}
+
+export async function accountDiscordStatus(): Promise<{ linked: boolean; discordUsername?: string }> {
+  return getJson('/api/auth/discord-status');
+}
+
 // --- Public moderation lookup (no session required on either side — the mod's
 // /api/public/moderation/* routes are registered without the Bearer-token
 // check, so these deliberately use plain fetch(), not mcFetch()/the session

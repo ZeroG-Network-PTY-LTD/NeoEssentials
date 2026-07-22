@@ -288,6 +288,48 @@ public class AuthenticationManager {
     }
     
     /**
+     * Links a Minecraft account to a dashboard user — called by {@link MinecraftAccountLinkManager}
+     * once its code-based verification succeeds. Same webhook-notify pattern as
+     * {@link #updateUserRole}, so the paired external dashboard picks up the link for free.
+     */
+    public void setMinecraftLink(String userId, String mcUuid, String mcUsername) {
+        User user = users.get(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        user.setMcUuid(mcUuid);
+        user.setMcUsername(mcUsername);
+        saveUsers();
+
+        logAuditEvent("MC_ACCOUNT_LINKED", user.getUsername(), "system", "Linked to Minecraft account " + mcUsername);
+        DashboardUserSyncWebhook.notify("user_updated", user);
+    }
+
+    /** Self-service unlink — no code/verification needed to remove an existing link. */
+    public void clearMinecraftLink(String userId) {
+        User user = users.get(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        user.setMcUuid(null);
+        user.setMcUsername(null);
+        saveUsers();
+
+        logAuditEvent("MC_ACCOUNT_UNLINKED", user.getUsername(), "system", "Minecraft account link removed");
+        DashboardUserSyncWebhook.notify("user_updated", user);
+    }
+
+    /** Finds the dashboard user (if any) already linked to a given Minecraft UUID. */
+    public User getUserByMcUuid(String mcUuid) {
+        return users.values().stream()
+            .filter(u -> mcUuid.equalsIgnoreCase(u.getMcUuid()))
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
      * Enable/disable user account
      */
     public void setUserEnabled(String userId, boolean enabled) {
@@ -566,6 +608,12 @@ public class AuthenticationManager {
             if (userJson.has("roleSyncManaged")) {
                 user.setRoleSyncManaged(userJson.get("roleSyncManaged").getAsBoolean());
             }
+            if (userJson.has("mcUuid") && !userJson.get("mcUuid").isJsonNull()) {
+                user.setMcUuid(userJson.get("mcUuid").getAsString());
+            }
+            if (userJson.has("mcUsername") && !userJson.get("mcUsername").isJsonNull()) {
+                user.setMcUsername(userJson.get("mcUsername").getAsString());
+            }
             // Login history / lockout state — previously never persisted, so it
             // silently reset to "never logged in" / "not locked out" on every
             // server restart instead of surviving across reboots.
@@ -613,6 +661,8 @@ public class AuthenticationManager {
         userJson.addProperty("requiresPasswordChange", user.requiresPasswordChange());
         userJson.addProperty("isTempPassword", user.isTempPassword());
         userJson.addProperty("roleSyncManaged", user.isRoleSyncManaged());
+        userJson.addProperty("mcUuid", user.getMcUuid());
+        userJson.addProperty("mcUsername", user.getMcUsername());
         userJson.addProperty("lastLoginAt", user.getLastLoginAt());
         userJson.addProperty("lastLoginIp", user.getLastLoginIp());
         userJson.addProperty("failedLoginAttempts", user.getFailedLoginAttempts());

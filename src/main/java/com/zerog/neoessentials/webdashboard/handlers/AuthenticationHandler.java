@@ -73,6 +73,14 @@ public class AuthenticationHandler implements HttpHandler {
                 handleGetCurrentSession(exchange);
             } else if ("POST".equals(method) && path.endsWith("/change-password")) {
                 handleChangePassword(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/link-minecraft/start")) {
+                handleLinkMinecraftStart(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/link-minecraft/status")) {
+                handleLinkMinecraftStatus(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/unlink-minecraft")) {
+                handleUnlinkMinecraft(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/discord-status")) {
+                handleAccountDiscordStatus(exchange);
             } else {
                 sendJsonResponse(exchange, 400, createErrorResponse("Invalid endpoint"));
             }
@@ -145,6 +153,153 @@ public class AuthenticationHandler implements HttpHandler {
         }
     }
     
+    /**
+     * Resolves the dashboard-username "owner key" these four Minecraft-link/Discord-status
+     * endpoints act on — deliberately a plain username string, not a resolved mod {@link User},
+     * since the external Laravel dashboard has its own separate user accounts that may have no
+     * corresponding mod-side dashboard account at all (see
+     * {@link com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager}'s class
+     * doc). Two distinct callers use this:
+     * <ul>
+     *   <li>The bundled internal dashboard (same-origin SPA): resolves via the session cookie,
+     *       exactly like {@link #handleChangePassword} — always acts on the calling user, key
+     *       is that user's own username.</li>
+     *   <li>The external Laravel dashboard (server-to-server): authenticates with its paired
+     *       API key (Bearer {@code neo_...}, see {@link com.zerog.neoessentials.webdashboard.security.ApiKeyManager})
+     *       and must pass the target username explicitly ({@code usernameParam}) — its own
+     *       Laravel user's {@code mod_username}, which may or may not match a real mod
+     *       dashboard account.</li>
+     * </ul>
+     * Writes the error response itself and returns null on any failure.
+     */
+    private String resolveOwnerKey(HttpExchange exchange, String usernameParam) throws IOException {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        String bearer = (authHeader != null && authHeader.startsWith("Bearer ")) ? authHeader.substring(7) : null;
+
+        if (bearer != null && com.zerog.neoessentials.webdashboard.security.ApiKeyManager.getInstance().validate(bearer) != null) {
+            if (usernameParam == null || usernameParam.isBlank()) {
+                sendJsonResponse(exchange, 400, createErrorResponse("Missing username — required when authenticating with an API key."));
+                return null;
+            }
+            return usernameParam;
+        }
+
+        String sessionId = getSessionIdFromCookie(exchange);
+        if (sessionId == null) {
+            sendJsonResponse(exchange, 401, createErrorResponse("No active session"));
+            return null;
+        }
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+        Session session = authManager.validateSession(sessionId);
+        if (session == null) {
+            sendJsonResponse(exchange, 401, createErrorResponse("Invalid or expired session"));
+            return null;
+        }
+        User user = authManager.getUser(session.getUserId());
+        if (user == null) {
+            sendJsonResponse(exchange, 404, createErrorResponse("User not found"));
+            return null;
+        }
+        return user.getUsername();
+    }
+
+    private String queryParam(HttpExchange exchange, String name) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null) return null;
+        for (String param : query.split("&")) {
+            if (param.startsWith(name + "=")) {
+                return java.net.URLDecoder.decode(param.substring(name.length() + 1), StandardCharsets.UTF_8);
+            }
+        }
+        return null;
+    }
+
+    /** POST /api/auth/link-minecraft/start — generates a code for /linkaccount <code> in-game. */
+    private void handleLinkMinecraftStart(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = requestBody != null && !requestBody.isBlank() ? GSON.fromJson(requestBody, JsonObject.class) : new JsonObject();
+        String usernameParam = request.has("username") ? request.get("username").getAsString() : null;
+
+        String ownerKey = resolveOwnerKey(exchange, usernameParam);
+        if (ownerKey == null) return;
+
+        com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager linkManager =
+            com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager.getInstance();
+        String code = linkManager.startLink(ownerKey);
+        if (code == null) {
+            sendJsonResponse(exchange, 400, createErrorResponse("This account already has a linked Minecraft account — unlink it first."));
+            return;
+        }
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("code", code);
+        response.addProperty("expiresAt", linkManager.peekExpiry(code));
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /** GET /api/auth/link-minecraft/status — polled by the Settings page while a code is showing. */
+    private void handleLinkMinecraftStatus(HttpExchange exchange) throws IOException {
+        String ownerKey = resolveOwnerKey(exchange, queryParam(exchange, "username"));
+        if (ownerKey == null) return;
+
+        com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager linkManager =
+            com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager.getInstance();
+        String mcUuid = linkManager.getLinkedUuid(ownerKey);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("linked", mcUuid != null);
+        response.addProperty("mcUuid", mcUuid);
+        response.addProperty("mcUsername", linkManager.getLinkedUsername(ownerKey));
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /** POST /api/auth/unlink-minecraft — self-service, no code needed. */
+    private void handleUnlinkMinecraft(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = requestBody != null && !requestBody.isBlank() ? GSON.fromJson(requestBody, JsonObject.class) : new JsonObject();
+        String usernameParam = request.has("username") ? request.get("username").getAsString() : null;
+
+        String ownerKey = resolveOwnerKey(exchange, usernameParam);
+        if (ownerKey == null) return;
+
+        com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager.getInstance().unlink(ownerKey);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * GET /api/auth/discord-status — is the resolved owner's linked Minecraft account (if any)
+     * also linked to Discord via whichever companion bot is installed? Purely informational —
+     * this mod never performs Discord OAuth2 itself (see DiscordAuthProvider).
+     */
+    private void handleAccountDiscordStatus(HttpExchange exchange) throws IOException {
+        String ownerKey = resolveOwnerKey(exchange, queryParam(exchange, "username"));
+        if (ownerKey == null) return;
+
+        String mcUuid = com.zerog.neoessentials.webdashboard.security.MinecraftAccountLinkManager.getInstance().getLinkedUuid(ownerKey);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+
+        if (mcUuid == null) {
+            response.addProperty("linked", false);
+            sendJsonResponse(exchange, 200, response);
+            return;
+        }
+
+        DiscordUser discordUser = DiscordAuthProvider.getInstance().getLinkedAccountByUuid(UUID.fromString(mcUuid));
+        boolean linked = discordUser != null && discordUser.isLinked();
+        response.addProperty("linked", linked);
+        if (linked) {
+            response.addProperty("discordUsername", discordUser.getDiscordUsername());
+        }
+        sendJsonResponse(exchange, 200, response);
+    }
+
     /**
      * POST /api/auth/login
      * Body:

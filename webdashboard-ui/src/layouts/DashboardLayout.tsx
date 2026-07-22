@@ -126,21 +126,30 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         </div>
 
         <div className="border-t border-[var(--mc-border)] p-3 flex items-center gap-3">
-          <span className="group flex items-center gap-2.5 min-w-0 flex-1">
-            <span className="h-8 w-8 rounded-[8px] shrink-0 bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] flex items-center justify-center">
-              <UserRound size={16} className="text-[var(--mc-text-muted)]" />
-            </span>
+          <Link to="/settings" className="group flex items-center gap-2.5 min-w-0 flex-1">
+            {user?.mcUuid ? (
+              <img
+                src={`https://mc-heads.net/avatar/${user.mcUuid}/32`}
+                alt=""
+                className="h-8 w-8 rounded-[8px] shrink-0 [image-rendering:pixelated] border border-[var(--mc-border-strong)] transition-shadow group-hover:shadow-[0_0_0_2px_var(--mc-cyan-500)]"
+              />
+            ) : (
+              <span className="h-8 w-8 rounded-[8px] shrink-0 bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] flex items-center justify-center transition-shadow group-hover:shadow-[0_0_0_2px_var(--mc-cyan-500)]">
+                <UserRound size={16} className="text-[var(--mc-text-muted)]" />
+              </span>
+            )}
             <span className="min-w-0">
               <span className="block text-[13px] font-medium truncate">{user?.username}</span>
               <span className="block text-[11px] text-[var(--mc-text-muted)] capitalize">{user?.role?.toLowerCase()}</span>
             </span>
-          </span>
-          <span
-            title="Account settings (not yet ported)"
-            className="p-1.5 rounded-[var(--radius)] text-[var(--mc-text-muted)] opacity-40"
+          </Link>
+          <Link
+            to="/settings"
+            title="Account settings"
+            className="p-1.5 rounded-[var(--radius)] text-[var(--mc-text-muted)] hover:text-[var(--mc-text-primary)] hover:bg-[var(--mc-bg-surface-raised)] transition-colors"
           >
             <Settings size={16} strokeWidth={1.75} />
-          </span>
+          </Link>
           <button
             type="button"
             title="Log out"
