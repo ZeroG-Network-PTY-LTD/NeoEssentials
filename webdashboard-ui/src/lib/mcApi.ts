@@ -262,6 +262,36 @@ export async function unjailPlayer(username: string) {
   return del(`/api/moderation/jail/${encodeURIComponent(username)}`);
 }
 
+// --- Item / fun commands (online players only) -------------------------------
+
+export async function giveItem(username: string, item: string, amount = 1) {
+  return postJson(`/api/player/give/${encodeURIComponent(username)}`, { item, amount });
+}
+
+export async function burnPlayer(username: string, seconds = 10) {
+  return postJson(`/api/player/burn/${encodeURIComponent(username)}`, { seconds });
+}
+
+export async function killPlayer(username: string) {
+  return postJson(`/api/player/kill/${encodeURIComponent(username)}`, {});
+}
+
+export async function applyEffect(username: string, effect: string, duration = 30, amplifier = 0) {
+  return postJson(`/api/player/effect/${encodeURIComponent(username)}`, { effect, duration, amplifier });
+}
+
+export async function clearEffects(username: string) {
+  return postJson(`/api/player/effect/${encodeURIComponent(username)}`, { clear: true });
+}
+
+export async function strikeLightning(username: string) {
+  return postJson(`/api/player/lightning/${encodeURIComponent(username)}`, {});
+}
+
+export async function spawnMob(username: string, mob: string, amount = 1) {
+  return postJson(`/api/player/spawnmob/${encodeURIComponent(username)}`, { mob, amount });
+}
+
 // --- Moderation history (per-player) ----------------------------------------
 // Bans are keyed by UUID on the mod side; mutes/kicks/warns/notes by username.
 

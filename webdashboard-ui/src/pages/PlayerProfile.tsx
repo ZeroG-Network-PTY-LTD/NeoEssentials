@@ -41,6 +41,10 @@ import {
   Snowflake,
   EyeOff,
   Lock,
+  Package,
+  Skull,
+  Zap,
+  Bug,
 } from 'lucide-react';
 
 export default function PlayerProfile() {
@@ -67,6 +71,15 @@ export default function PlayerProfile() {
   const [jailed, setJailed] = useState(false);
   const [jails, setJails] = useState<string[]>([]);
   const [jailChoice, setJailChoice] = useState('');
+
+  const [giveItemId, setGiveItemId] = useState('');
+  const [giveAmount, setGiveAmount] = useState('1');
+  const [burnSeconds, setBurnSeconds] = useState('10');
+  const [effectId, setEffectId] = useState('');
+  const [effectDuration, setEffectDuration] = useState('30');
+  const [effectAmplifier, setEffectAmplifier] = useState('0');
+  const [mobId, setMobId] = useState('');
+  const [mobAmount, setMobAmount] = useState('1');
 
   const [newPermission, setNewPermission] = useState('');
   const [newNote, setNewNote] = useState('');
@@ -194,6 +207,43 @@ export default function PlayerProfile() {
       if (!jailChoice) return;
       runAction(`Jailed in '${jailChoice}'.`, () => mcApi.jailPlayer(username, jailChoice), () => setJailed(true));
     }
+  };
+
+  const doGive = (e: FormEvent) => {
+    e.preventDefault();
+    const item = giveItemId.trim();
+    const amount = Number(giveAmount);
+    if (!item || !Number.isFinite(amount) || amount < 1) return;
+    runAction(`Gave ${amount}x ${item}.`, () => mcApi.giveItem(username, item, amount), () => setGiveItemId(''));
+  };
+
+  const doBurn = () => {
+    const seconds = Number(burnSeconds);
+    if (!Number.isFinite(seconds) || seconds < 1) return;
+    runAction(`Set on fire for ${seconds}s.`, () => mcApi.burnPlayer(username, seconds));
+  };
+
+  const doKill = () => runAction('Killed.', () => mcApi.killPlayer(username));
+
+  const doApplyEffect = (e: FormEvent) => {
+    e.preventDefault();
+    const effect = effectId.trim();
+    const duration = Number(effectDuration);
+    const amplifier = Number(effectAmplifier);
+    if (!effect || !Number.isFinite(duration) || duration < 1 || !Number.isFinite(amplifier) || amplifier < 0) return;
+    runAction(`Applied ${effect}.`, () => mcApi.applyEffect(username, effect, duration, amplifier), () => setEffectId(''));
+  };
+
+  const doClearEffects = () => runAction('Effects cleared.', () => mcApi.clearEffects(username));
+
+  const doLightning = () => runAction('Lightning struck.', () => mcApi.strikeLightning(username));
+
+  const doSpawnMob = (e: FormEvent) => {
+    e.preventDefault();
+    const mob = mobId.trim();
+    const amount = Number(mobAmount);
+    if (!mob || !Number.isFinite(amount) || amount < 1) return;
+    runAction(`Spawned ${amount}x ${mob}.`, () => mcApi.spawnMob(username, mob, amount), () => setMobId(''));
   };
 
   const addPermission = (e: FormEvent) => {
@@ -533,6 +583,108 @@ export default function PlayerProfile() {
               </button>
             </div>
           )}
+        </Card>
+
+        <Card title="Items & fun" icon={Zap} padded>
+          {!lookup.online && (
+            <div className="text-[12px] text-[var(--mc-text-muted)] mb-3">
+              {lookup.username} is offline — these controls only work while online.
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Package size={13} />
+            Give item
+          </div>
+          <form onSubmit={doGive} className="flex gap-1.5 mb-3">
+            <input
+              value={giveItemId}
+              onChange={(e) => setGiveItemId(e.target.value)}
+              placeholder="minecraft:diamond_sword"
+              className="flex-1 font-data text-[12px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <input
+              type="number" min="1" max="3456"
+              value={giveAmount}
+              onChange={(e) => setGiveAmount(e.target.value)}
+              className="w-16 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy || !lookup.online} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Give
+            </button>
+          </form>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Bug size={13} />
+            Potion effect
+          </div>
+          <form onSubmit={doApplyEffect} className="flex gap-1.5 mb-1.5">
+            <input
+              value={effectId}
+              onChange={(e) => setEffectId(e.target.value)}
+              placeholder="speed"
+              className="flex-1 font-data text-[12px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <input
+              type="number" min="1" placeholder="sec"
+              value={effectDuration}
+              onChange={(e) => setEffectDuration(e.target.value)}
+              className="w-16 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <input
+              type="number" min="0" max="255" placeholder="amp"
+              value={effectAmplifier}
+              onChange={(e) => setEffectAmplifier(e.target.value)}
+              className="w-16 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy || !lookup.online} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Apply
+            </button>
+          </form>
+          <button disabled={busy || !lookup.online} onClick={doClearEffects} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors mb-3">
+            Clear all effects
+          </button>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Skull size={13} />
+            Spawn mob
+          </div>
+          <form onSubmit={doSpawnMob} className="flex gap-1.5 mb-3">
+            <input
+              value={mobId}
+              onChange={(e) => setMobId(e.target.value)}
+              placeholder="zombie"
+              className="flex-1 font-data text-[12px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <input
+              type="number" min="1" max="100"
+              value={mobAmount}
+              onChange={(e) => setMobAmount(e.target.value)}
+              className="w-16 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy || !lookup.online} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Spawn
+            </button>
+          </form>
+
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number" min="1" max="600"
+                value={burnSeconds}
+                onChange={(e) => setBurnSeconds(e.target.value)}
+                className="w-16 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+              />
+              <button disabled={busy || !lookup.online} onClick={doBurn} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+                <Flame size={12} /> Burn (sec)
+              </button>
+            </div>
+            <button disabled={busy || !lookup.online} onClick={doLightning} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              <Zap size={12} /> Lightning
+            </button>
+            <button disabled={busy || !lookup.online} onClick={doKill} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-ember-400)] text-[var(--mc-ember-500)] hover:bg-[var(--mc-ember-50)] disabled:opacity-50 transition-colors">
+              <Skull size={12} /> Kill
+            </button>
+          </div>
         </Card>
 
         <Card title="Economy" icon={Coins} padded>
