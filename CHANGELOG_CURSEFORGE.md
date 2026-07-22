@@ -8,6 +8,16 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.16 — 2026-07-22
+
+### ✨ New Brand Logo on the Internal Dashboard
+
+- The internal dashboard now shows the real NeoEssentials shield logo instead
+  of a generic placeholder icon, everywhere: sidebar, login, public lookup
+  page, and browser tab favicon.
+
+---
+
 ## 1.0.4-mc26.1.2+build.15 — 2026-07-22
 
 ### ✨ Dashboard Security: Copyable Keys, Encrypted Tokens, Permission-Driven Role Sync

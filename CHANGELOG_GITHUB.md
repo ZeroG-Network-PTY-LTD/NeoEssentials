@@ -12,6 +12,17 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.16] — 2026-07-22
+
+### ✨ New Brand Logo on the Internal Dashboard
+
+- The internal dashboard's generic gradient-badge/compass-icon placeholder is
+  now the real NeoEssentials shield logo, everywhere it appears: sidebar
+  header, login screen, public player-lookup page, and the browser tab
+  favicon.
+
+---
+
 ## [1.0.4-mc26.1.2+build.15] — 2026-07-22
 
 ### ✨ Dashboard Security: Copyable Keys, Encrypted Token Storage, Permission-Driven Role Sync

@@ -69,12 +69,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         }`}
       >
         <div className="px-5 py-5 border-b border-[var(--mc-border)] flex items-center gap-2.5">
-          <span className="h-8 w-8 rounded-[9px] shrink-0 bg-gradient-to-br from-[var(--mc-cyan-500)] to-[var(--mc-purple-500)] shadow-[0_0_16px_-2px_rgba(56,198,224,0.45)] flex items-center justify-center">
-            <svg className="h-4.5 w-4.5 text-[#0a0d16]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2 3 6.5v11L12 22l9-4.5v-11L12 2Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
-              <path d="M3 6.5 12 11l9-4.5M12 11v11" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
-            </svg>
-          </span>
+          <img src="/logo.png" alt="" className="h-8 w-8 shrink-0 object-contain" />
           <div className="min-w-0 flex-1">
             <div className="font-display text-[15px] font-semibold tracking-tight">NeoEssentials</div>
             <div className="text-[11px] text-[var(--mc-text-muted)] font-data mt-0.5">internal dashboard</div>
