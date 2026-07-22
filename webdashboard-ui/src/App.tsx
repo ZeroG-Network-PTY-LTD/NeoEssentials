@@ -7,6 +7,9 @@ import Players from './pages/Players';
 import Economy from './pages/Economy';
 import Warps from './pages/Warps';
 import Kits from './pages/Kits';
+import Holograms from './pages/Holograms';
+import Discord from './pages/Discord';
+import Users from './pages/Users';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
@@ -63,9 +66,33 @@ export default function App() {
               </RequireAuth>
             }
           />
-          {/* Every other page (Holograms, Discord, Permissions, Backups, Commands, Logs, Users,
-              PublicLookup) lands here until a later pass ports it — matches the approved plan's
-              MVP-first scope, not a bug. */}
+          <Route
+            path="/holograms"
+            element={
+              <RequireAuth>
+                <Holograms />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/discord"
+            element={
+              <RequireAuth>
+                <Discord />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <RequireAuth>
+                <Users />
+              </RequireAuth>
+            }
+          />
+          {/* Every other page (Permissions, Backups, Commands, Logs, PublicLookup) lands here
+              until a later pass ports it — matches the approved plan's MVP-first scope, not a
+              bug. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ToastProvider>

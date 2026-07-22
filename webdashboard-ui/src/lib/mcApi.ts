@@ -1,5 +1,23 @@
 import { mcFetch } from './auth';
-import type { McPlayer, OfflinePlayer, PlayerLookupResult, ServerStatus, Home, Warp, LeaderboardEntry, Kit, KitStats } from '../types';
+import type {
+  McPlayer,
+  OfflinePlayer,
+  PlayerLookupResult,
+  ServerStatus,
+  Home,
+  Warp,
+  LeaderboardEntry,
+  Kit,
+  KitStats,
+  Hologram,
+  HologramStats,
+  DiscordStatus,
+  DiscordEvent,
+  DiscordAuthConfig,
+  ModUser,
+  ModUserSession,
+  ModUserRole,
+} from '../types';
 
 /**
  * The mod's own REST API contract, anti-corruption layer for the internal dashboard —
@@ -20,6 +38,20 @@ async function getJson<T = Record<string, unknown>>(path: string): Promise<T> {
 
 async function postJson<T = Record<string, unknown>>(path: string, body: unknown = {}): Promise<T> {
   const res = await mcFetch(path, { method: 'POST', body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
+  return data;
+}
+
+async function putJson<T = Record<string, unknown>>(path: string, body: unknown = {}): Promise<T> {
+  const res = await mcFetch(path, { method: 'PUT', body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
+  return data;
+}
+
+async function del<T = Record<string, unknown>>(path: string): Promise<T> {
+  const res = await mcFetch(path, { method: 'DELETE' });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
   return data;
@@ -153,12 +185,7 @@ export async function createWarp(name: string, location: { world: string; x: num
 }
 
 export async function deleteWarp(name: string) {
-  const res = await mcFetch(`/api/warps/${encodeURIComponent(name)}`, { method: 'DELETE' });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message ?? data.error ?? `Mod API returned an error (${res.status}).`);
-  }
-  return res.json().catch(() => ({}));
+  return del(`/api/warps/${encodeURIComponent(name)}`);
 }
 
 // --- Kits (read-only — the mod has no create/update/delete routes for kits) --
@@ -170,4 +197,102 @@ export async function kits(): Promise<Kit[]> {
 
 export async function kitStats(): Promise<KitStats> {
   return getJson('/api/kits/stats');
+}
+
+// --- Holograms (full CRUD, no admin gate on the mod side) -------------------
+
+export async function holograms(): Promise<Hologram[]> {
+  const data = await getJson<{ holograms?: Hologram[] }>('/api/holograms/list');
+  return data.holograms ?? [];
+}
+
+export async function hologramStats(): Promise<HologramStats> {
+  return getJson('/api/holograms/stats');
+}
+
+export async function createHologram(hologram: Record<string, unknown>) {
+  return postJson('/api/holograms/create', hologram);
+}
+
+export async function updateHologram(id: string, hologram: Record<string, unknown>) {
+  return putJson(`/api/holograms/${encodeURIComponent(id)}`, hologram);
+}
+
+export async function deleteHologram(id: string) {
+  return del(`/api/holograms/${encodeURIComponent(id)}`);
+}
+
+export async function toggleHologramVisibility(id: string) {
+  return postJson(`/api/holograms/${encodeURIComponent(id)}/visible`, {});
+}
+
+// --- Discord (status/events readable by any logged-in account; clearing
+// events, sending a test message, and auth-config are admin-only) -----------
+
+export async function discordStatus(): Promise<DiscordStatus> {
+  return getJson('/api/discord/status');
+}
+
+export async function discordEvents(limit = 50): Promise<DiscordEvent[]> {
+  const data = await getJson<{ events?: DiscordEvent[] }>(`/api/discord/events?limit=${limit}`);
+  return data.events ?? [];
+}
+
+export async function clearDiscordEvents() {
+  return del('/api/discord/events');
+}
+
+export async function sendDiscordTestMessage(channel: string, message: string) {
+  return postJson('/api/discord/test', { channel, message });
+}
+
+export async function discordAuthConfig(): Promise<DiscordAuthConfig> {
+  return getJson('/api/discord/auth-config');
+}
+
+export async function updateDiscordAuthConfig(config: Partial<DiscordAuthConfig>) {
+  return postJson('/api/discord/auth-config', config);
+}
+
+// --- Mod dashboard accounts (UserManagementEndpoint — entirely admin-only on
+// the mod side; distinct from any accounts the internal dashboard's own
+// AuthenticationManager already handles for login) ---------------------------
+
+export async function modUsers(): Promise<ModUser[]> {
+  const data = await getJson<{ users?: ModUser[] }>('/api/users/list');
+  return data.users ?? [];
+}
+
+export async function modUserSessions(): Promise<ModUserSession[]> {
+  const data = await getJson<{ sessions?: ModUserSession[] }>('/api/users/sessions');
+  return data.sessions ?? [];
+}
+
+export async function createModUser(username: string, password: string, email: string, role: ModUserRole) {
+  return postJson('/api/users/create', { username, password, email, role });
+}
+
+export async function setModUserRole(id: string, role: ModUserRole) {
+  return postJson(`/api/users/${encodeURIComponent(id)}/role`, { role });
+}
+
+/** Omit password to have the mod generate and return a temp one. */
+export async function setModUserPassword(id: string, password = '') {
+  return postJson(`/api/users/${encodeURIComponent(id)}/password`, { password });
+}
+
+export async function enableModUser(id: string) {
+  return postJson(`/api/users/${encodeURIComponent(id)}/enable`, {});
+}
+
+export async function disableModUser(id: string) {
+  return postJson(`/api/users/${encodeURIComponent(id)}/disable`, {});
+}
+
+export async function deleteModUser(id: string) {
+  return del(`/api/users/${encodeURIComponent(id)}`);
+}
+
+export async function revokeModUserSession(sessionId: string) {
+  return del(`/api/users/sessions/${encodeURIComponent(sessionId)}`);
 }
