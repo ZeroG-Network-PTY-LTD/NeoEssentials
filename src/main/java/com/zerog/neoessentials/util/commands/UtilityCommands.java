@@ -193,6 +193,43 @@ public class UtilityCommands {
             net.minecraft.network.protocol.game.ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, level));
     }
 
+    // ── Dashboard-facing wrappers ─────────────────────────────────────────────
+    // Same state changes as /ptime and /pweather, just driven by a target ServerPlayer
+    // directly instead of a CommandSourceStack.
+
+    /** Current ptime override for {@code uuid}, or null if using real world time. */
+    public static Long getPtime(UUID uuid) {
+        Long t = playerTimes.get(uuid);
+        return (t != null && t >= 0) ? t : null;
+    }
+
+    /** Sets (or, if {@code ticks} is null, resets) {@code target}'s ptime override. */
+    public static void setPtime(ServerPlayer target, Long ticks) {
+        if (ticks == null || ticks < 0) {
+            playerTimes.remove(target.getUUID());
+            sendTimePacket(target, com.zerog.neoessentials.util.LevelCompat.of(target).getDayTime(), false);
+        } else {
+            playerTimes.put(target.getUUID(), ticks);
+            sendTimePacket(target, ticks, true);
+        }
+    }
+
+    /** Current pweather override for {@code uuid} ("sun"/"storm"), or null if using server weather. */
+    public static String getPweather(UUID uuid) {
+        return playerWeather.get(uuid);
+    }
+
+    /** Sets (or, if {@code type} is null, resets) {@code target}'s pweather override. */
+    public static void setPweather(ServerPlayer target, String type) {
+        if (type == null) {
+            playerWeather.remove(target.getUUID());
+            sendWeatherPacket(target, com.zerog.neoessentials.util.LevelCompat.of(target).isRaining());
+        } else {
+            playerWeather.put(target.getUUID(), type);
+            sendWeatherPacket(target, "storm".equals(type));
+        }
+    }
+
     /** Called on player join — restore their ptime/pweather. */
     public static void onPlayerJoin(ServerPlayer player) {
         Long t = playerTimes.get(player.getUUID());

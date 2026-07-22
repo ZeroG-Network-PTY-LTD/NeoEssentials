@@ -292,6 +292,30 @@ export async function spawnMob(username: string, mob: string, amount = 1) {
   return postJson(`/api/player/spawnmob/${encodeURIComponent(username)}`, { mob, amount });
 }
 
+export async function runSudo(username: string, command: string, isChat = false) {
+  return postJson(`/api/player/sudo/${encodeURIComponent(username)}`, { command, isChat });
+}
+
+export async function clearInventory(username: string) {
+  return postJson(`/api/player/clearinventory/${encodeURIComponent(username)}`, {});
+}
+
+export async function getPtime(username: string): Promise<{ ticks: number | null }> {
+  return getJson(`/api/player/ptime/${encodeURIComponent(username)}`);
+}
+
+export async function setPtime(username: string, ticks: number | null) {
+  return postJson(`/api/player/ptime/${encodeURIComponent(username)}`, { ticks });
+}
+
+export async function getPweather(username: string): Promise<{ type: string | null }> {
+  return getJson(`/api/player/pweather/${encodeURIComponent(username)}`);
+}
+
+export async function setPweather(username: string, type: string | null) {
+  return postJson(`/api/player/pweather/${encodeURIComponent(username)}`, { type });
+}
+
 // --- Moderation history (per-player) ----------------------------------------
 // Bans are keyed by UUID on the mod side; mutes/kicks/warns/notes by username.
 

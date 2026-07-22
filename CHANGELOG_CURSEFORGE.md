@@ -6,6 +6,20 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.13 — 2026-07-22
+
+### ✨ Per-Player Control Page: Now Feature-Complete
+
+- The built-in dashboard's per-player control page now covers just about every
+  admin action you'd otherwise type as a command: heal/kick/ban/mute, game
+  mode, permission group and overrides, economy, freeze/vanish/jail, give
+  item/potion effects/spawn mob/burn/lightning/kill, sudo, per-player time and
+  weather, and clear inventory — plus full moderation history in one place.
+- Not included: live inventory/ender-chest editing (those are in-game GUI
+  menus with no browser equivalent).
+
+---
+
 ## 1.0.4+build.9 — 2026-07-22
 
 ### ✨ Built-In Dashboard: Full Per-Player Control Page

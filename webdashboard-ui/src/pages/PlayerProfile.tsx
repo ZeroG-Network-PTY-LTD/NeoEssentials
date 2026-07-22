@@ -45,6 +45,9 @@ import {
   Skull,
   Zap,
   Bug,
+  Terminal,
+  CloudSun,
+  Trash2,
 } from 'lucide-react';
 
 export default function PlayerProfile() {
@@ -81,6 +84,12 @@ export default function PlayerProfile() {
   const [mobId, setMobId] = useState('');
   const [mobAmount, setMobAmount] = useState('1');
 
+  const [sudoCommand, setSudoCommand] = useState('');
+  const [sudoIsChat, setSudoIsChat] = useState(false);
+  const [ptime, setPtimeState] = useState<number | null>(null);
+  const [ptimeInput, setPtimeInput] = useState('6000');
+  const [pweather, setPweatherState] = useState<string | null>(null);
+
   const [newPermission, setNewPermission] = useState('');
   const [newNote, setNewNote] = useState('');
   const [economyAmount, setEconomyAmount] = useState('');
@@ -104,7 +113,7 @@ export default function PlayerProfile() {
         return;
       }
       const uuid = result.uuid;
-      const [bal, perm, grp, inv, banList, muteList, kickList, warnList, noteList, freeze, vanish, jail, jailList] = await Promise.allSettled([
+      const [bal, perm, grp, inv, banList, muteList, kickList, warnList, noteList, freeze, vanish, jail, jailList, ptimeRes, pweatherRes] = await Promise.allSettled([
         mcApi.getBalance(username),
         mcApi.permissionUserLookup(username),
         mcApi.permissionGroups(),
@@ -118,6 +127,8 @@ export default function PlayerProfile() {
         mcApi.vanishStatus(username),
         mcApi.jailStatus(username),
         mcApi.jailLocations(),
+        mcApi.getPtime(username),
+        mcApi.getPweather(username),
       ]);
       if (bal.status === 'fulfilled') setBalance(bal.value.balance);
       if (perm.status === 'fulfilled') setPermInfo(perm.value);
@@ -132,6 +143,8 @@ export default function PlayerProfile() {
       if (vanish.status === 'fulfilled') setVanished(vanish.value.vanished);
       if (jail.status === 'fulfilled') setJailed(jail.value.jailed);
       if (jailList.status === 'fulfilled') setJails(jailList.value);
+      if (ptimeRes.status === 'fulfilled') setPtimeState(ptimeRes.value.ticks);
+      if (pweatherRes.status === 'fulfilled') setPweatherState(pweatherRes.value.type);
       setLoading(false);
     });
   };
@@ -245,6 +258,28 @@ export default function PlayerProfile() {
     if (!mob || !Number.isFinite(amount) || amount < 1) return;
     runAction(`Spawned ${amount}x ${mob}.`, () => mcApi.spawnMob(username, mob, amount), () => setMobId(''));
   };
+
+  const doSudo = (e: FormEvent) => {
+    e.preventDefault();
+    const command = sudoCommand.trim();
+    if (!command) return;
+    runAction(`Ran on ${username}.`, () => mcApi.runSudo(username, command, sudoIsChat), () => setSudoCommand(''));
+  };
+
+  const doClearInventory = () => runAction('Inventory cleared.', () => mcApi.clearInventory(username));
+
+  const applyPtime = () => {
+    const ticks = Number(ptimeInput);
+    if (!Number.isFinite(ticks) || ticks < 0) return;
+    runAction(`Ptime set to ${ticks}.`, () => mcApi.setPtime(username, ticks), () => setPtimeState(ticks));
+  };
+
+  const resetPtime = () => runAction('Ptime reset.', () => mcApi.setPtime(username, null), () => setPtimeState(null));
+
+  const applyPweather = (type: string) =>
+    runAction(`Pweather set to ${type}.`, () => mcApi.setPweather(username, type), () => setPweatherState(type));
+
+  const resetPweather = () => runAction('Pweather reset.', () => mcApi.setPweather(username, null), () => setPweatherState(null));
 
   const addPermission = (e: FormEvent) => {
     e.preventDefault();
@@ -685,6 +720,69 @@ export default function PlayerProfile() {
               <Skull size={12} /> Kill
             </button>
           </div>
+        </Card>
+
+        <Card title="Admin tools" icon={Terminal} padded>
+          {!lookup.online && (
+            <div className="text-[12px] text-[var(--mc-text-muted)] mb-3">
+              {lookup.username} is offline — these controls only work while online.
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <Terminal size={13} />
+            Sudo (run as player)
+          </div>
+          <form onSubmit={doSudo} className="flex gap-1.5 mb-1.5">
+            <input
+              value={sudoCommand}
+              onChange={(e) => setSudoCommand(e.target.value)}
+              placeholder={sudoIsChat ? 'chat message' : 'command (no leading /)'}
+              className="flex-1 font-data text-[12px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button type="submit" disabled={busy || !lookup.online} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Run
+            </button>
+          </form>
+          <label className="flex items-center gap-1.5 text-[11px] text-[var(--mc-text-muted)] mb-3">
+            <input type="checkbox" checked={sudoIsChat} onChange={(e) => setSudoIsChat(e.target.checked)} />
+            Send as chat message instead of a command
+          </label>
+
+          <div className="flex items-center gap-2 text-[11px] text-[var(--mc-text-muted)] mb-1.5">
+            <CloudSun size={13} />
+            Per-player time & weather
+          </div>
+          <div className="flex gap-1.5 mb-1.5">
+            <input
+              type="number" min="0"
+              value={ptimeInput}
+              onChange={(e) => setPtimeInput(e.target.value)}
+              className="w-24 font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[6px] px-2.5 py-1.5 outline-none focus:border-[var(--mc-cyan-400)]"
+            />
+            <button disabled={busy || !lookup.online} onClick={applyPtime} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Set ptime
+            </button>
+            <button disabled={busy || !lookup.online || ptime === null} onClick={resetPtime} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Reset
+            </button>
+            {ptime !== null && <Badge variant="cyan">ptime: {ptime}</Badge>}
+          </div>
+          <div className="flex gap-1.5 mb-3">
+            <button disabled={busy || !lookup.online} onClick={() => applyPweather('sun')} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Sun
+            </button>
+            <button disabled={busy || !lookup.online} onClick={() => applyPweather('storm')} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Storm
+            </button>
+            <button disabled={busy || !lookup.online || pweather === null} onClick={resetPweather} className="text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors">
+              Reset
+            </button>
+            {pweather !== null && <Badge variant="cyan">pweather: {pweather}</Badge>}
+          </div>
+
+          <button disabled={busy || !lookup.online} onClick={doClearInventory} className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-ember-400)] text-[var(--mc-ember-500)] hover:bg-[var(--mc-ember-50)] disabled:opacity-50 transition-colors">
+            <Trash2 size={12} /> Clear inventory
+          </button>
         </Card>
 
         <Card title="Economy" icon={Coins} padded>

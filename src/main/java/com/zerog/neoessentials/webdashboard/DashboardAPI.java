@@ -441,7 +441,7 @@ public class DashboardAPI {
         LOGGER.info("API endpoints registered:");
         LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
         LOGGER.info("  - /api/textures/* (item, block textures from server resource packs)");
-        LOGGER.info("  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online, fly, god, feed, extinguish, speed, nickname, give, burn, kill, effect, lightning, spawnmob) [AUTH REQUIRED]");
+        LOGGER.info("  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online, fly, god, feed, extinguish, speed, nickname, give, burn, kill, effect, lightning, spawnmob, sudo, clearinventory, ptime, pweather) [AUTH REQUIRED]");
         LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history, assets) [AUTH REQUIRED]");
         LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
         LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
