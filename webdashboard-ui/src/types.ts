@@ -32,6 +32,79 @@ export interface PlayerLookupResult {
   lastSeen?: string;
 }
 
+export interface BanEntry {
+  id: string;
+  playerName: string;
+  playerId: string;
+  reason: string;
+  bannedBy: string;
+  banTime: number;
+  expireTime: number;
+  permanent: boolean;
+  evidence?: string;
+  active: boolean;
+}
+
+export interface MuteEntry {
+  id: string;
+  target: string;
+  reason: string | null;
+  mutedBy: string;
+  muteTime: number;
+  expireTime: number;
+  permanent: boolean;
+  active: boolean;
+  unmutedBy?: string;
+  unmutedAt?: number;
+}
+
+export interface KickEntry {
+  id: string;
+  playerName: string;
+  playerId: string | null;
+  reason: string;
+  kickedBy: string;
+  kickTime: number;
+}
+
+export interface WarnEntry {
+  id: string;
+  targetId: string | null;
+  targetName: string;
+  warnedById: string | null;
+  warnedBy: string;
+  reason: string;
+  timestamp: number;
+}
+
+export interface NoteEntry {
+  id: string;
+  targetName: string;
+  authorId: string | null;
+  authorName: string;
+  text: string;
+  timestamp: number;
+}
+
+export interface InventoryItem {
+  id?: string;
+  count?: number;
+  displayName?: string;
+  slot?: number;
+  namespace?: string;
+  path?: string;
+  type?: string;
+  modded?: boolean;
+  enchanted?: boolean;
+}
+
+export interface PlayerInventory {
+  main?: InventoryItem[];
+  armor?: InventoryItem[];
+  offhand?: InventoryItem[];
+  error?: string;
+}
+
 export interface ServerStatus {
   online: boolean;
   tps: number;

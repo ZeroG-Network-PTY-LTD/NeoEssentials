@@ -4,6 +4,7 @@ import { ToastProvider } from './lib/toast';
 import Login from './pages/Login';
 import Overview from './pages/Overview';
 import Players from './pages/Players';
+import PlayerProfile from './pages/PlayerProfile';
 import Economy from './pages/Economy';
 import Warps from './pages/Warps';
 import Kits from './pages/Kits';
@@ -44,6 +45,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Players />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/players/player/:username"
+            element={
+              <RequireAuth>
+                <PlayerProfile />
               </RequireAuth>
             }
           />

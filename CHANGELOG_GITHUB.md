@@ -14,6 +14,36 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ## [1.0.4-mc26.1.2+build.9] — 2026-07-22
 
+### ✨ Internal Dashboard: Player Management Overhaul + a Full Per-Player Control Page
+
+- Players page "More" panel gained two controls that were already possible via the
+  mod's API but never wired into the UI: **game mode** (survival/creative/adventure/
+  spectator) and **permission group** re-assignment.
+- The "Look up a player" result now shows balance, permission group, and UUID for
+  **every** lookup — online or offline — plus live health/position/playtime when the
+  player's online.
+- New: a full per-player control page at `/players/player/<username>`, linked from
+  both the "More" panel and the lookup result. One page per player with:
+  - Quick actions (heal, kick, mute/unmute, ban, game mode)
+  - Permission group + individual permission node overrides (add/remove)
+  - Economy (balance, give/take/set)
+  - Inventory (works for offline players too now, see fix below)
+  - Full moderation history — bans (with unban), mutes, kicks, warnings (with
+    remove), and admin notes (add/remove)
+- **Fixed:** `/api/player/profile`, `/stats`, `/achievements`, `/inventory`, `/status`,
+  `/health`, `/xp`, and `/location` all silently 404'd for any player who wasn't
+  *currently* online, even though the underlying data collectors already supported
+  reading offline player data from disk — the username→UUID lookup just never
+  checked the offline profile cache. Fixed once, benefits every one of those
+  endpoints.
+- Also cleaned up the `/dashboard status` chat output: the header/footer separator
+  lines used two different characters (`─` vs `═`) and were long enough to wrap
+  awkwardly in a normal-width chat window — now one consistent, shorter line.
+
+---
+
+## [1.0.4-mc26.1.2+build.8] — 2026-07-22
+
 ### ✨ Internal Dashboard: Complete — Permissions and Public Lookup
 
 - Finishes the internal bundled dashboard (`webDashboard.mode: "internal"`/
