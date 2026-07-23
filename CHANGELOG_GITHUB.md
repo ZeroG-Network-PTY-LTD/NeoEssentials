@@ -11,6 +11,21 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.19] — 2026-07-23
+
+### ✨ Internal Dashboard: Permissions Page Now Matches External (Collapsible Rows, Categorized Pills)
+
+- Ported the external dashboard's Permissions page redesign into the internal (mod-bundled) one:
+  groups and online users now collapse to a compact summary (name, default/group badge,
+  permission count) by default instead of showing every inline edit field and every permission
+  node at once — click a row to expand it for the full editor.
+- Permission-node pills are now clustered under the mod's own permission catalog categories
+  (falling back to "Other" for anything not in the catalog) instead of one long wrapped line of
+  raw strings, with each node's description shown as a tooltip.
+- Both dashboards' Permissions pages are now visually and functionally identical.
+
+---
+
 ## [1.0.4+build.18] — 2026-07-23
 
 ### ✨ Player Warps Are Now Visible on Both Dashboards (Warps Page, Phase 1)

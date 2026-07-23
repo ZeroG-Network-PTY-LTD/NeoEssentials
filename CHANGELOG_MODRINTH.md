@@ -6,6 +6,15 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.19 — 2026-07-23
+
+### ✨ Internal Dashboard Permissions Page Redesign
+
+- Groups and online users now collapse to a compact row by default — click to expand for the
+  full editor. Permission nodes are grouped by category instead of one long list.
+
+---
+
 ## 1.0.4+build.18 — 2026-07-23
 
 ### ✨ See Player-Created Warps on Both Dashboards
