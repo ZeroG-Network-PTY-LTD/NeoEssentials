@@ -78,7 +78,7 @@
 | `/tpahere` | `/tpahere <player>` | `neoessentials.teleport.request.tpahere` | ✅ | Request a player teleport to you |
 | `/tpaccept` | `/tpaccept` | `neoessentials.teleport.request.accept` | ✅ | Accept a pending teleport request |
 | `/tpdeny` | `/tpdeny` | `neoessentials.teleport.request.deny` | ✅ | Deny a pending teleport request |
-| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.request.cancel` | ✅ | Cancel your outgoing teleport request (registered command literal is `tpcancel`, not `tpacancel` as older docs claimed) |
+| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.request.cancel` | ✅ | Cancel your outgoing teleport request (the `/help` registry previously listed this as `tpacancel`, a name mismatch with the real `tpcancel` literal — fixed) |
 
 ### Random Teleport
 | Command | Syntax | Permission | Default | Description |

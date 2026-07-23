@@ -775,7 +775,7 @@ public class NeoEssentials {
         registry.registerCommandWithPermission("tpahere", "Request a player to teleport to you", "neoessentials.teleport.request.tpahere");
         registry.registerCommandWithPermission("tpaccept", "Accept a teleport request", "neoessentials.teleport.request.accept");
         registry.registerCommandWithPermission("tpdeny", "Deny a teleport request", "neoessentials.teleport.request.deny");
-        registry.registerCommandWithPermission("tpacancel", "Cancel your teleport request", "neoessentials.teleport.request.cancel");
+        registry.registerCommandWithPermission("tpcancel", "Cancel your teleport request", "neoessentials.teleport.request.cancel");
         com.zerog.neoessentials.teleportation.TeleportRequests.TeleportRequestCommands.register(dispatcher);
         
         // Register admin teleportation commands

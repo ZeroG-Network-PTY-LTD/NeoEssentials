@@ -1,5 +1,5 @@
 {
-    "_langVersion":  "22",
+    "_langVersion":  "23",
     "_comment_general":  "=== General ===",
     "_comment_economy":  "=== Economy System ===",
     "commands.neoessentials.balance":  "Balance: {0}{1}",

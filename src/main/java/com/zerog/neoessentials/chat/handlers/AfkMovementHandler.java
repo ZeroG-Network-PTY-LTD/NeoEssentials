@@ -141,8 +141,11 @@ public class AfkMovementHandler {
         boolean rotationChanged = rotationDiff > ROTATION_THRESHOLD;
 
         if (positionChanged || rotationChanged) {
-            // Update AFK status
-            AfkManager.getInstance().updateActivity(uuid);
+            // Update AFK status (respecting the enableActivityTracking/trackMovement config toggles)
+            AfkManager afkManager = AfkManager.getInstance();
+            if (afkManager.isEnableActivityTracking() && afkManager.isTrackMovement()) {
+                afkManager.updateActivity(uuid);
+            }
 
             // Update stored position
             lastPositions.put(uuid, new PlayerPosition(currentPosition, currentYaw, currentPitch));

@@ -8,6 +8,18 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.17 — 2026-07-23
+
+### 🐛 AFK Now Actually Respects Its Own Settings
+
+- The AFK config options for what counts as activity (movement, chat, commands, interactions)
+  weren't being enforced — everything always reset your AFK timer no matter how you had them set,
+  and chat specifically never reset it at all. Both are now fixed.
+- Small `/help` fix: `/tpcancel` now shows up correctly (it was previously mislabeled).
+- Cleaned up a few leftover admin permission nodes that looked like they did something but didn't.
+
+---
+
 ## 1.0.4-mc26.1.2+build.16 — 2026-07-23
 
 ### 🐛 /help Now Shows the Real Permission for Every Command

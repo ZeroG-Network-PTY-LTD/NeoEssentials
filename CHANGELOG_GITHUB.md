@@ -12,6 +12,24 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.17] — 2026-07-23
+
+### 🐛 AFK Activity Tracking Now Actually Respects Its Own Config, Plus Cleanup From the Wiki Audit
+
+- The `afk.enableActivityTracking`/`trackMovement`/`trackChat`/`trackCommands`/`trackInteractions`
+  config toggles were being parsed but silently ignored — movement, commands, and block/item
+  interactions always reset the AFK timer no matter what you set them to. Chat was worse: it never
+  reset the AFK timer at all, regardless of `trackChat`. All five toggles are now actually enforced,
+  and sending a genuine (non-muted, non-frozen) chat message correctly counts as activity.
+- Fixed a `/help` registry mismatch found during the recent wiki audit: `/tpcancel`'s entry was
+  registered under the wrong name (`tpacancel`), so `/help tpcancel` showed nothing and `/help
+  tpacancel` showed a command that doesn't exist. Now shows correctly under its real name.
+- Removed a handful of permission nodes (`neoessentials.kits.admin.*`, `neoessentials.chat.unmute`,
+  `neoessentials.chat.mutelist`, `neoessentials.moderation.jail.timed`) that were registered and
+  visible in `/permissions list`/`search` but never actually checked by anything — granting them did
+  nothing. The commands they looked like they gated (kit admin actions, `/unmute`, `/mutelist`,
+  `/jailfor`) already work off other, real nodes documented on the wiki.
+
 ## [1.0.4-mc26.1.2+build.16] — 2026-07-23
 
 ### 🐛 /help Now Shows the Real Permission for Every Command

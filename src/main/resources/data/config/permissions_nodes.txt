@@ -153,15 +153,8 @@ neoessentials.teleport.back.bypass.warmup - Bypass /back warmup delay (default: 
 neoessentials.kits.use - Use kit system (default: true)
 neoessentials.kits.list - List available kits (default: true)
 neoessentials.kits.nocooldown - Bypass kit cooldowns (default: false)
-neoessentials.kits.admin - Kit administration (default: false)
-neoessentials.kits.admin.create - Create kits (default: false)
-neoessentials.kits.admin.delete - Delete kits (default: false)
-neoessentials.kits.admin.list - List all kits (admin) (default: false)
 neoessentials.kits.preview - Preview kits (default: true)
 neoessentials.kits.cooldown - View kit cooldowns (default: true)
-neoessentials.kits.admin.edit - Edit kits (default: false)
-neoessentials.kits.admin.give - Give kits to players (default: false)
-neoessentials.kits.admin.reset - Reset kit cooldowns (default: false)
 
 ### Dynamic Kit Permissions (created per kit)
 # neoessentials.kits.<kitname> - Use specific kit (e.g., neoessentials.kits.starter)
@@ -204,9 +197,7 @@ neoessentials.chat.ignore - Ignore players (default: true)
 neoessentials.chat.unignore - Unignore players (default: true)
 neoessentials.chat.msgtoggle - Toggle message acceptance (default: true)
 neoessentials.chat.socialspy - Use social spy (default: false)
-neoessentials.chat.mute - Mute players (default: false)
-neoessentials.chat.unmute - Unmute players (default: false)
-neoessentials.chat.mutelist - View mute list (default: false)
+neoessentials.chat.mute - Mute, unmute, and view the mute list (default: false)
 neoessentials.chat.exempt - Exempt from muting (default: false)
 neoessentials.chat.channel - Use chat channels (default: true)
 neoessentials.chat.channel.global - Use global chat channel (default: true)
@@ -356,15 +347,10 @@ neoessentials.permissions.* - All permission system permissions
 # - neoessentials.economy.admin
 # - neoessentials.item.*
 # - neoessentials.chat.mute
-# - neoessentials.chat.unmute
-# - neoessentials.chat.mutelist
 # - neoessentials.chat.socialspy
 # - neoessentials.afk.exempt
 # - neoessentials.permissions.reload
 # - neoessentials.permissions.list
-# - neoessentials.kits.admin.create
-# - neoessentials.kits.admin.delete
-# - neoessentials.kits.admin.list
 # - neoessentials.teleport.admin.tp
 # - neoessentials.teleport.admin.tphere
 # - neoessentials.teleport.admin.tppos
