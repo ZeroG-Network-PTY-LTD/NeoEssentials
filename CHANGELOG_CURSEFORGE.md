@@ -6,6 +6,15 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.20 — 2026-07-23
+
+### 🐛 Fix: Visiting the Warps Page Could Show "API Unreachable"
+
+- The Player Warps tab could hang under real player load instead of loading, which made the
+  dashboard think the whole connection was down. Fixed.
+
+---
+
 ## 1.0.4+build.19 — 2026-07-23
 
 ### ✨ Internal Dashboard Permissions Page Redesign

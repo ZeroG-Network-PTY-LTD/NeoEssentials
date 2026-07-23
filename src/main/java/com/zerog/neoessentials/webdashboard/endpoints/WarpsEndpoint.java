@@ -20,6 +20,10 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Dashboard API endpoint for public and player warp management.
@@ -85,7 +89,24 @@ public class WarpsEndpoint implements HttpHandler {
 
             if (isPlayerWarpsPath) {
                 switch (method) {
-                    case "GET"    -> response = handlePlayerWarpsGet(path);
+                    // GET resolves player names via server.getProfileCache()/getPlayerList(),
+                    // which (like every other endpoint touching MinecraftServer state — see
+                    // ServerEndpoint's docblock) must run on the main server thread, not this
+                    // HTTP worker thread. Off-thread access can silently hang under real
+                    // concurrent player activity (no exception, no response ever sent) rather
+                    // than throwing — a 10s timeout here turns that into a clean error instead
+                    // of an indefinitely stuck connection.
+                    case "GET" -> {
+                        String finalPath = path;
+                        try {
+                            response = CompletableFuture.supplyAsync(() -> handlePlayerWarpsGet(finalPath), server)
+                                .get(10, TimeUnit.SECONDS);
+                        } catch (TimeoutException e) {
+                            response = error("Timed out resolving player warps — server may be overloaded");
+                        } catch (ExecutionException e) {
+                            throw (e.getCause() instanceof Exception ex) ? ex : e;
+                        }
+                    }
                     case "DELETE" -> response = handlePlayerWarpsDelete(path);
                     default       -> { response = error("Method not allowed"); statusCode = 405; }
                 }
