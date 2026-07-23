@@ -40,13 +40,12 @@ The AFK system automatically marks players as AFK after a configurable period of
 | `autoSave` | `true` | Periodically save AFK state to disk |
 | `saveInterval` | `60` | Auto-save interval in seconds |
 
-> **Known issue:** `enableActivityTracking`, `trackMovement`, `trackChat`, `trackCommands`, and
-> `trackInteractions` are parsed from config into `AfkManager` but are not currently read by any
-> activity handler — movement, commands, and block/item interactions always reset the AFK timer
-> regardless of these settings. Chat messages specifically **do not** reset the AFK timer at all
-> right now (no handler wires chat sending to `AfkManager.updateActivity()`), so `trackChat` has
-> no effect either way. Only `excludedCommands`, `movementThreshold`, and `rotationThreshold` are
-> actually enforced.
+`enableActivityTracking` is a master switch — set it to `false` and none of `trackMovement`/
+`trackChat`/`trackCommands`/`trackInteractions` reset the AFK timer regardless of their own value.
+Each of the four sub-toggles independently gates its own activity source (movement ticks, chat
+messages, command execution, block/item interactions). A genuine, non-muted, non-frozen chat
+message now resets the AFK timer when `trackChat` is enabled (previously chat never reset the
+timer at all, regardless of this setting — fixed alongside the rest of this audit).
 
 ---
 

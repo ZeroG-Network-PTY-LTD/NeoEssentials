@@ -618,8 +618,6 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.kits.<kitname>` | — | **Dynamic** — access to specific kit | |
 | `neoessentials.kits.<kitname>.nocooldown` | — | **Dynamic** — bypass cooldown for specific kit | |
 
-> **Dead/unused registered nodes:** `neoessentials.kits.admin`, `.admin.create`, `.admin.delete`, and `.admin.list` are registered in `PermissionRegistry` (so they show up in `/permissions list`/`search`) but there is **no `/kit admin` command and nothing checks them** — kit creation/deletion/listing are gated by the plain `neoessentials.kits.create` / `.delete` / `.list` nodes documented above instead.
-
 ---
 
 ### Player State & Admin Tools
@@ -821,7 +819,8 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.chat.mute.exempt` |  op-only | Exempt from being muted | |
 | `neoessentials.chat.ignore.exempt` |  op-only | Exempt from being ignored | |
 
-> **Dead/unused registered nodes:** `neoessentials.chat.unmute` and `neoessentials.chat.mutelist` are registered in `PermissionRegistry` (so they appear in `/permissions list`/`search`) but are **not checked anywhere** — `/unmute` and `/mutelist` both enforce `neoessentials.chat.mute`, same as `/mute`. Granting `chat.unmute` or `chat.mutelist` alone does nothing.
+> `/mute`, `/unmute`, and `/mutelist` all enforce the same `neoessentials.chat.mute` node — there is
+> no separate `chat.unmute`/`chat.mutelist` node to grant.
 
 #### Formatting & Colours
 | Node | Default | Description |
@@ -907,7 +906,8 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.moderation.notify` |  op-only | Receive moderation action notifications | |
 | `neoessentials.moderation.notifications` |  op-only | Receive moderation event broadcasts | |
 
-> **Dead/unused registered node:** `neoessentials.moderation.jail.timed` is registered in `PermissionRegistry` (appears in `/permissions list`/`search`) but is **not actually checked anywhere** — both `/jail` and `/jailfor` enforce the plain `neoessentials.moderation.jail` node. Don't rely on `jail.timed` to gate timed jails separately from indefinite ones.
+> Both `/jail` and `/jailfor` enforce the same `neoessentials.moderation.jail` node — there is no
+> separate node to gate timed jails apart from indefinite ones.
 
 ---
 

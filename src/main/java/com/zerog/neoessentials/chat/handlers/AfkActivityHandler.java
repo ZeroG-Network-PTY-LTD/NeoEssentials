@@ -85,13 +85,18 @@ public class AfkActivityHandler {
     private static void recordActivity(ServerPlayer player, String activityType) {
         if (player == null) return;
 
+        AfkManager afkManager = AfkManager.getInstance();
+        if (!afkManager.isEnableActivityTracking() || !afkManager.isTrackInteractions()) {
+            return;
+        }
+
         UUID uuid = player.getUUID();
         ActivityPattern pattern = activityPatterns.computeIfAbsent(uuid, k -> new ActivityPattern());
         pattern.recordActivity(activityType);
 
         // Only update AFK status if not suspicious
         if (!pattern.isSuspicious()) {
-            AfkManager.getInstance().updateActivity(uuid);
+            afkManager.updateActivity(uuid);
             com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Activity tracked for {}: {} (score: {})",
                 player.getName().getString(), activityType, pattern.getSuspiciousScore());
         } else {

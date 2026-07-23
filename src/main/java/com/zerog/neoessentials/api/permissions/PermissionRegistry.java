@@ -476,11 +476,7 @@ public class PermissionRegistry {
         register("neoessentials.kit.others", "Give a kit to another player (/kit <name> <player>)", PermissionCategory.KITS, false);
         register("neoessentials.kitreset", "Reset own kit cooldown", PermissionCategory.KITS, false);
         register("neoessentials.kitreset.others", "Reset another player's kit cooldown", PermissionCategory.KITS, false);
-        register("neoessentials.kits.admin", "Kit administration", PermissionCategory.KITS, false);
-        register("neoessentials.kits.admin.create", "Create kits", PermissionCategory.KITS, false);
-        register("neoessentials.kits.admin.delete", "Delete kits", PermissionCategory.KITS, false);
-        register("neoessentials.kits.admin.list", "List all kits (admin)", PermissionCategory.KITS, false);
-        
+
         // Individual kit permissions (will be added dynamically)
         // These follow the pattern: neoessentials.kits.<kitname>
         // Cooldown exemption can also be per-kit: neoessentials.kits.<kitname>.nocooldown
@@ -509,9 +505,7 @@ public class PermissionRegistry {
         register("neoessentials.chat.msgtoggle", "Toggle message acceptance", PermissionCategory.CHAT, true);
         register("neoessentials.chat.msgtoggle.bypass", "Message players who have toggled off message receipt", PermissionCategory.CHAT, false);
         register("neoessentials.chat.socialspy", "Use social spy", PermissionCategory.CHAT, false);
-        register("neoessentials.chat.mute", "Mute players", PermissionCategory.CHAT, false);
-        register("neoessentials.chat.unmute", "Unmute players", PermissionCategory.CHAT, false);
-        register("neoessentials.chat.mutelist", "View mute list", PermissionCategory.CHAT, false);
+        register("neoessentials.chat.mute", "Mute, unmute, and view the mute list (/mute, /unmute, /mutelist)", PermissionCategory.CHAT, false);
         register("neoessentials.chat.exempt", "Exempt from muting", PermissionCategory.CHAT, false);
         
         // Chat formatting and colors
@@ -595,8 +589,7 @@ public class PermissionRegistry {
         register("neoessentials.moderation.freezeall", "Freeze all players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.unfreezeall", "Unfreeze all players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.freezelist", "View frozen players list", PermissionCategory.MODERATION, false);
-        register("neoessentials.moderation.jail", "Jail players", PermissionCategory.MODERATION, false);
-        register("neoessentials.moderation.jail.timed", "Jail players for a set duration (/jailfor)", PermissionCategory.MODERATION, false);
+        register("neoessentials.moderation.jail", "Jail players, indefinitely or for a set duration (/jail, /jailfor)", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.unjail", "Unjail players", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.setjail", "Create jail locations", PermissionCategory.MODERATION, false);
         register("neoessentials.moderation.deljail", "Delete jail locations", PermissionCategory.MODERATION, false);

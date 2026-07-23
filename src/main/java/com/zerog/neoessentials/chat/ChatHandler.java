@@ -93,6 +93,12 @@ public class ChatHandler {
             // Use filtered message (may be modified by caps filter)
             String processedMessage = filterResult.filteredMessage != null ? filterResult.filteredMessage : rawMessage;
 
+            // A genuine, unblocked chat message counts as activity for the AFK system
+            AfkManager afkManager = AfkManager.getInstance();
+            if (afkManager.isEnableActivityTracking() && afkManager.isTrackChat()) {
+                afkManager.updateActivity(player.getUUID());
+            }
+
             // Enforce playerChatPermissions: block chat if player lacks any required permission
             ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
             if (chatManager != null) {
