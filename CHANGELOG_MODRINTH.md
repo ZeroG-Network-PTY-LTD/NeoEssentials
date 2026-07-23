@@ -8,6 +8,16 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.18 — 2026-07-23
+
+### ✨ See Player-Created Warps on Both Dashboards
+
+- Both dashboards' Warps page now has a "Player Warps" tab, so admins can finally see every
+  player's own `/pwarp` warps (and clean one up if needed) instead of only the shared server
+  warps.
+
+---
+
 ## 1.0.4-mc26.1.2+build.17 — 2026-07-23
 
 ### 🐛 AFK Now Actually Respects Its Own Settings

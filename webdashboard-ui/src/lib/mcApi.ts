@@ -404,6 +404,31 @@ export async function deleteWarp(name: string) {
   return del(`/api/warps/${encodeURIComponent(name)}`);
 }
 
+export interface PlayerWarpEntry {
+  name: string;
+  world: string;
+  x: number;
+  y: number;
+  z: number;
+  timestamp: number;
+}
+
+export interface PlayerWarpGroup {
+  uuid: string;
+  name: string;
+  warpCount: number;
+  warps: PlayerWarpEntry[];
+}
+
+export async function playerWarps(): Promise<PlayerWarpGroup[]> {
+  const data = await getJson<{ players?: PlayerWarpGroup[] }>('/api/warps/players');
+  return data.players ?? [];
+}
+
+export async function deletePlayerWarp(uuid: string, warpName: string) {
+  return del(`/api/warps/players/${uuid}/${encodeURIComponent(warpName)}`);
+}
+
 // --- Kits (read-only — the mod has no create/update/delete routes for kits) --
 
 export async function kits(): Promise<Kit[]> {

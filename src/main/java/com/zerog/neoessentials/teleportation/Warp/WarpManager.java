@@ -293,6 +293,39 @@ public class WarpManager {
         return new ArrayList<>(warps.keySet());
     }
 
+    /**
+     * All players' warps, keyed by owner UUID. For dashboard/REST use — unlike
+     * {@link #teleportToPlayerWarp} / {@link #listPlayerWarps}, this doesn't require an
+     * online {@link ServerPlayer} caller.
+     */
+    public Map<UUID, Map<String, TeleportLocation>> getAllPlayerWarps() {
+        return Collections.unmodifiableMap(playerWarps);
+    }
+
+    /**
+     * One player's warps by raw UUID, without requiring them to be online. For dashboard/REST use.
+     */
+    public Map<String, TeleportLocation> getPlayerWarpsRaw(UUID playerId) {
+        Map<String, TeleportLocation> warps = playerWarps.get(playerId);
+        return warps == null ? Collections.emptyMap() : Collections.unmodifiableMap(warps);
+    }
+
+    /**
+     * Admin/dashboard deletion of another player's warp by raw UUID — no {@link ServerPlayer}
+     * required, so no in-game messaging (unlike {@link #deletePlayerWarp}).
+     */
+    public boolean deletePlayerWarpByAdmin(UUID playerId, String warpName) {
+        Map<String, TeleportLocation> warps = playerWarps.get(playerId);
+        if (warps == null) return false;
+
+        String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
+        TeleportLocation removed = warps.remove(normalizedName);
+        if (removed == null) return false;
+
+        savePlayerWarps();
+        LOGGER.info("Admin deleted player warp '{}' for {}", warpName, playerId);
+        return true;
+    }
 
     /**
      * Teleport to another player's warp (admin only)
