@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.18 — 2026-07-23
+
+### ✨ See Player-Created Warps on Both Dashboards
+
+- Both dashboards' Warps page now has a "Player Warps" tab, so admins can finally see every
+  player's own `/pwarp` warps (and clean one up if needed) instead of only the shared server
+  warps.
+
+---
+
 ## 1.0.4+build.17 — 2026-07-23
 
 ### 🐛 AFK Now Actually Respects Its Own Settings

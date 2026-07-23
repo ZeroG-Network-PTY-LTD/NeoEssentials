@@ -11,6 +11,28 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.18] — 2026-07-23
+
+### ✨ Player Warps Are Now Visible on Both Dashboards (Warps Page, Phase 1)
+
+- The mod has always supported player-created warps (`/pwarp`, `/setpwarp`, `/delpwarp`,
+  `/pwarps`), but neither dashboard could see or manage a single one of them — there was no REST
+  endpoint for them at all. The Warps page on both dashboards now has a "Player Warps" tab
+  alongside the existing server-warps view, listing every player who's created a warp, expandable
+  to their individual warps (name, world, coordinates, created date) with an admin delete button
+  per warp.
+- New REST endpoints on `WarpsEndpoint`: `GET /api/warps/players` (every player's warps),
+  `GET /api/warps/players/{uuid}` (one player's warps), `DELETE /api/warps/players/{uuid}/{name}`
+  (admin cleanup). Unlike the existing server-warp `GET /api/warps`, **all three require admin,
+  including the GET routes** — player warps are personal, not public, so listing every player's
+  private warp locations needs the same gate as deleting them.
+- Read/delete only in this pass — dashboards don't create a warp on a player's behalf, matching
+  the in-game model where only the owning player can `/setpwarp` their own.
+- This is Phase 1 of a planned three-phase Warps page expansion (player warps → stats/overview →
+  search/yaw-pitch/edit-in-place CRUD polish).
+
+---
+
 ## [1.0.4+build.17] — 2026-07-23
 
 ### 🐛 AFK Activity Tracking Now Actually Respects Its Own Config, Plus Cleanup From the Wiki Audit

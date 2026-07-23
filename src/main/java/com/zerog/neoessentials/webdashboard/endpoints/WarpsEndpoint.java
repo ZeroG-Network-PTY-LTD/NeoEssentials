@@ -9,6 +9,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.Warp.WarpManager;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.players.GameProfileCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,21 +18,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * Dashboard API endpoint for public warp management.
+ * Dashboard API endpoint for public and player warp management.
  *
  * <pre>
- * GET    /api/warps          – list all warps (name + location)
- * GET    /api/warps/{name}   – get a single warp's location
- * POST   /api/warps          – create a warp  { "name": "...", "world": "...", "x", "y", "z", "yaw"?, "pitch"? }
- * DELETE /api/warps/{name}   – delete a warp
+ * GET    /api/warps                        – list all server warps (name + location)
+ * GET    /api/warps/{name}                 – get a single server warp's location
+ * POST   /api/warps                        – create a server warp  { "name": "...", "world": "...", "x", "y", "z", "yaw"?, "pitch"? }
+ * DELETE /api/warps/{name}                 – delete a server warp
+ * GET    /api/warps/players                – list every player's warps (admin only)
+ * GET    /api/warps/players/{uuid}         – one player's warps (admin only)
+ * DELETE /api/warps/players/{uuid}/{name}  – delete one player's warp (admin only)
  * </pre>
  */
 @SuppressWarnings("unused") // Used by DashboardAPI
 public class WarpsEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(WarpsEndpoint.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+
+    private final MinecraftServer server;
+
+    public WarpsEndpoint(MinecraftServer server) {
+        this.server = server;
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -46,9 +59,22 @@ public class WarpsEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/warps", "");
         if (path.isEmpty()) path = "/";
 
-        // Creating/deleting warps requires ADMIN, matching every other config-writing endpoint
-        // group. Reads stay open to any authenticated caller.
-        if (!"GET".equals(method) && !Boolean.TRUE.equals(exchange.getAttribute("auth-admin"))) {
+        boolean isAdmin = Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
+        boolean isPlayerWarpsPath = path.equals("/players") || path.startsWith("/players/");
+
+        // Creating/deleting server warps requires ADMIN, matching every other config-writing
+        // endpoint group; server-warp reads stay open to any authenticated caller since server
+        // warps are meant to be publicly discoverable (that's the point of /warps in-game).
+        //
+        // Player warps are personal, not public, so — unlike server warps — EVERY player-warp
+        // route requires admin, including GET: listing every player's private warp locations
+        // needs the same gate as deleting them.
+        if (isPlayerWarpsPath) {
+            if (!isAdmin) {
+                sendResponse(exchange, 403, error("Admin access required"));
+                return;
+            }
+        } else if (!"GET".equals(method) && !isAdmin) {
             sendResponse(exchange, 403, error("Admin access required"));
             return;
         }
@@ -56,6 +82,19 @@ public class WarpsEndpoint implements HttpHandler {
         try {
             JsonObject response;
             int statusCode = 200;
+
+            if (isPlayerWarpsPath) {
+                switch (method) {
+                    case "GET"    -> response = handlePlayerWarpsGet(path);
+                    case "DELETE" -> response = handlePlayerWarpsDelete(path);
+                    default       -> { response = error("Method not allowed"); statusCode = 405; }
+                }
+                if (statusCode == 200 && response.has("success") && !response.get("success").getAsBoolean()) {
+                    statusCode = 400;
+                }
+                sendResponse(exchange, statusCode, response);
+                return;
+            }
 
             switch (method) {
                 case "GET"    -> response = handleGet(path);
@@ -103,6 +142,103 @@ public class WarpsEndpoint implements HttpHandler {
         obj.addProperty("success", true);
         obj.addProperty("name", name);
         return obj;
+    }
+
+    // ── Player warps (GET) ──────────────────────────────────────────────────────
+
+    private JsonObject handlePlayerWarpsGet(String path) {
+        WarpManager manager = WarpManager.getInstance();
+        // path is "/players", "/players/", or "/players/{uuid}"
+        String remainder = path.replaceFirst("^/players/?", "").replaceAll("^/|/$", "");
+
+        if (remainder.isEmpty()) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("success", true);
+            JsonArray playersArr = new JsonArray();
+            int totalWarps = 0;
+            for (Map.Entry<UUID, Map<String, TeleportLocation>> entry : manager.getAllPlayerWarps().entrySet()) {
+                Map<String, TeleportLocation> warps = entry.getValue();
+                if (warps.isEmpty()) continue;
+                playersArr.add(playerWarpGroupJson(entry.getKey(), warps));
+                totalWarps += warps.size();
+            }
+            obj.add("players", playersArr);
+            obj.addProperty("totalPlayers", playersArr.size());
+            obj.addProperty("totalWarps", totalWarps);
+            return obj;
+        }
+
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(remainder);
+        } catch (IllegalArgumentException e) {
+            return error("Invalid UUID: " + remainder);
+        }
+
+        Map<String, TeleportLocation> warps = manager.getPlayerWarpsRaw(uuid);
+        if (warps.isEmpty()) return error("No warps found for player " + uuid);
+
+        JsonObject obj = playerWarpGroupJson(uuid, warps);
+        obj.addProperty("success", true);
+        return obj;
+    }
+
+    private JsonObject playerWarpGroupJson(UUID uuid, Map<String, TeleportLocation> warps) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("uuid", uuid.toString());
+        obj.addProperty("name", resolveUsername(uuid));
+        JsonArray warpsArr = new JsonArray();
+        for (Map.Entry<String, TeleportLocation> w : warps.entrySet()) {
+            JsonObject wj = w.getValue().toJson();
+            wj.addProperty("name", w.getKey());
+            warpsArr.add(wj);
+        }
+        obj.add("warps", warpsArr);
+        obj.addProperty("warpCount", warpsArr.size());
+        return obj;
+    }
+
+    // ── Player warps (DELETE) ───────────────────────────────────────────────────
+
+    private JsonObject handlePlayerWarpsDelete(String path) {
+        // path is "/players/{uuid}/{name}"
+        String remainder = path.replaceFirst("^/players/?", "").replaceAll("^/|/$", "");
+        int slash = remainder.indexOf('/');
+        if (slash < 0) return error("Path must be /api/warps/players/{uuid}/{name}");
+
+        String uuidStr = remainder.substring(0, slash);
+        String warpName = remainder.substring(slash + 1);
+        if (warpName.isEmpty()) return error("Path must be /api/warps/players/{uuid}/{name}");
+
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(uuidStr);
+        } catch (IllegalArgumentException e) {
+            return error("Invalid UUID: " + uuidStr);
+        }
+
+        boolean removed = WarpManager.getInstance().deletePlayerWarpByAdmin(uuid, warpName);
+        if (!removed) return error("Warp '" + warpName + "' not found for player " + uuid);
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("success", true);
+        obj.addProperty("message", "Warp '" + warpName + "' deleted for player " + uuid);
+        return obj;
+    }
+
+    private String resolveUsername(UUID uuid) {
+        if (server != null) {
+            try {
+                GameProfileCache cache = server.getProfileCache();
+                if (cache != null) {
+                    var opt = cache.get(uuid);
+                    if (opt.isPresent() && opt.get().getName() != null) return opt.get().getName();
+                }
+            } catch (Exception ignored) {}
+            var player = server.getPlayerList().getPlayer(uuid);
+            if (player != null) return player.getName().getString();
+        }
+        return uuid.toString().substring(0, 8) + "…";
     }
 
     // ── POST ───────────────────────────────────────────────────────────────────

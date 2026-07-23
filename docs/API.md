@@ -894,14 +894,20 @@ Response: `{"success":true,"id":"welcome"}`. GET list/get returns the same field
 
 **Handler:** `WarpsEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/WarpsEndpoint.java`
 
-**GET = AUTH; POST/DELETE = ADMIN.** `{name}` is a warp name.
+**Server warps: GET = AUTH; POST/DELETE = ADMIN.** `{name}` is a warp name.
+**Player warps (`/players` sub-path): every route is ADMIN, including GET** — unlike server
+warps, player-created warps are personal, not public, so listing them needs the same gate as
+deleting them.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/warps` | AUTH | List all warps |
-| GET | `/api/warps/{name}` | AUTH | One warp |
-| POST | `/api/warps` | AUTH | Create a warp |
-| DELETE | `/api/warps/{name}` | AUTH | Delete a warp |
+| GET | `/api/warps` | AUTH | List all server warps |
+| GET | `/api/warps/{name}` | AUTH | One server warp |
+| POST | `/api/warps` | ADMIN | Create a server warp |
+| DELETE | `/api/warps/{name}` | ADMIN | Delete a server warp |
+| GET | `/api/warps/players` | ADMIN | List every player's warps (`/pwarp`) |
+| GET | `/api/warps/players/{uuid}` | ADMIN | One player's warps |
+| DELETE | `/api/warps/players/{uuid}/{name}` | ADMIN | Delete one player's warp |
 
 **POST `/api/warps`** — `{"name":"spawn","world":"minecraft:overworld","x":0.5,"y":64,"z":0.5,"yaw":0,"pitch":0}` (yaw/pitch optional, default 0). Response: `{"success":true,"message":"Warp 'spawn' created"}`.
 
@@ -912,6 +918,21 @@ Response: `{"success":true,"id":"welcome"}`. GET list/get returns the same field
     "timestamp":1700000000000,"createdBy":"Dashboard","name":"spawn"}] }
 ```
 (The per-warp object is `TeleportLocation.toJson()` — note the field is `world`, plus `createdBy`/`timestamp` — with `name` added.)
+
+**GET `/api/warps/players`** — every player who has ≥1 player warp, with their warps inline:
+```json
+{ "success":true,"totalPlayers":1,"totalWarps":2,
+  "players":[{"uuid":"165050d9-86e2-3846-9415-a9ba682ff149","name":"MrWhiteFlamesYT","warpCount":2,
+    "warps":[{"world":"minecraft:overworld","x":10.0,"y":70.0,"z":-4.0,"yaw":0.0,"pitch":0.0,
+      "timestamp":1700000000000,"createdBy":"MrWhiteFlamesYT","name":"base"}, ...]}] }
+```
+`GET /api/warps/players/{uuid}` returns the same per-player shape (`uuid`, `name`, `warpCount`,
+`warps`) for a single player; 400 with an `error` if that UUID has no warps. `name` is resolved via
+the server's profile cache, falling back to the online player list, then a truncated UUID if
+neither has it.
+
+**DELETE `/api/warps/players/{uuid}/{name}`** — admin cleanup of a single player warp. Response:
+`{"success":true,"message":"Warp '<name>' deleted for player <uuid>"}`.
 
 ---
 

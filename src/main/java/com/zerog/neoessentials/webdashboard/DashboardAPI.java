@@ -412,7 +412,7 @@ public class DashboardAPI {
             withAuth(new com.zerog.neoessentials.webdashboard.endpoints.PublicModerationEndpoint(server), false));
         apiServer.createContext("/api/kits",        withAuth(new KitsEndpoint()));
         apiServer.createContext("/api/holograms",   withAuth(new HologramEndpoint()));
-        apiServer.createContext("/api/warps",       withAuth(new com.zerog.neoessentials.webdashboard.endpoints.WarpsEndpoint()));
+        apiServer.createContext("/api/warps",       withAuth(new com.zerog.neoessentials.webdashboard.endpoints.WarpsEndpoint(server)));
         apiServer.createContext("/api/commands",    withAuth(new com.zerog.neoessentials.webdashboard.handlers.CommandExecutionHandler()));
         apiServer.createContext("/api/economy",     withAuth(new com.zerog.neoessentials.webdashboard.endpoints.EconomyEndpoint(server)));
         statsEndpoint = new StatsEndpoint(server);
