@@ -315,7 +315,11 @@ tasks.register("installDashboardUI", Exec) {
     // full platform matrix — verify with `grep '"node_modules/@rollup/rollup-linux-x64-gnu"'
     // package-lock.json` after any future dependency change made from Windows. `npm ci` is
     // back since the lockfile is correct again; it's the right choice for CI reproducibility.
-    commandLine npmExecutable, 'ci'
+    // --legacy-peer-deps: @universemc/react-palette declares a peer on react@^17, but this
+    // project is on react@^18 (same mismatch the external dashboard's own build script already
+    // works around the same way — see its bin/build-installer.ps1). Works fine in practice;
+    // the peer range is just stale upstream.
+    commandLine npmExecutable, 'ci', '--legacy-peer-deps'
     inputs.file(file("$dashboardUiDir/package-lock.json"))
     outputs.dir(file("$dashboardUiDir/node_modules"))
 }
