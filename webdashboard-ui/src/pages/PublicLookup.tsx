@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
+import PlayerRender from '../components/PlayerRender';
 import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert } from 'lucide-react';
 
 /**
@@ -161,7 +162,10 @@ export default function PublicLookup() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <h2 className="font-display text-lg font-semibold">{result.playerName}</h2>
+                  <div className="flex items-center gap-4">
+                    <PlayerRender uuid={result.playerId} size={160} />
+                    <h2 className="font-display text-lg font-semibold">{result.playerName}</h2>
+                  </div>
 
                   <SectionCard icon={ShieldBan} title="Bans" count={result.bans.length}>
                     {result.bans.map((b) => (

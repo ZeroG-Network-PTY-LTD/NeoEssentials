@@ -121,3 +121,14 @@ body {
   40% { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
+
+/* Animated gradient blob behind PlayerRender's 3D character render. */
+.animate-player-gradient {
+  background-size: 400% 400%;
+  animation: player-gradient-shift 5s ease infinite;
+}
+@keyframes player-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

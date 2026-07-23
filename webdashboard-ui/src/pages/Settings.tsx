@@ -3,6 +3,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import Card from '../components/Dashboard/Card';
 import PageHeading from '../components/Dashboard/PageHeading';
 import Badge from '../components/Dashboard/Badge';
+import PlayerRender from '../components/PlayerRender';
 import { useToast } from '../lib/toast';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
@@ -160,12 +161,8 @@ export default function SettingsPage() {
 
         <Card title="Minecraft account" icon={Gamepad2} accent="moss" padded>
           {mcUuid ? (
-            <div className="flex items-center gap-3">
-              <img
-                src={`https://mc-heads.net/avatar/${mcUuid}/40`}
-                alt=""
-                className="h-10 w-10 rounded-[8px] shrink-0 [image-rendering:pixelated] border border-[var(--mc-border-strong)]"
-              />
+            <div className="flex items-center gap-4">
+              <PlayerRender uuid={mcUuid} size={110} />
               <div className="flex-1">
                 <div className="text-[13px] font-medium">{mcUsername}</div>
                 <Badge variant="moss" dot>Linked</Badge>
