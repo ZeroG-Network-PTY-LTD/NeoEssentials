@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import Card from '../components/Dashboard/Card';
 import PageHeading from '../components/Dashboard/PageHeading';
 import Badge from '../components/Dashboard/Badge';
+import PlayerRender from '../components/PlayerRender';
 import { useToast } from '../lib/toast';
 import * as mcApi from '../lib/mcApi';
 import type { Gamemode } from '../lib/mcApi';
@@ -386,12 +387,8 @@ export default function PlayerProfile() {
         }
       />
 
-      <div className="flex items-center gap-3 mb-6">
-        <img
-          src={`https://mc-heads.net/avatar/${lookup.uuid}/48`}
-          alt=""
-          className="h-11 w-11 rounded-[9px] [image-rendering:pixelated] border border-[var(--mc-border-strong)]"
-        />
+      <div className="flex items-center gap-4 mb-6">
+        <PlayerRender uuid={lookup.uuid} size={140} />
         <div>
           <div className="font-display text-[16px] font-semibold flex items-center gap-2">
             {lookup.username}

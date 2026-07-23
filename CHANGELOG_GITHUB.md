@@ -11,6 +11,19 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.21] — 2026-07-23
+
+### ✨ Internal Dashboard: 3D Player Renders (Matches External)
+
+- Ported the external dashboard's 3D character renders into the internal one: the Player Profile
+  page hero, the Settings page's linked-Minecraft-account row, and the Public Lookup page (which
+  previously had no avatar at all) now show a full-body vzge.me render with a drop shadow and an
+  animated gradient blob behind it, colors extracted live from the player's skin
+  (`@universemc/react-palette`), replacing the old flat mc-heads.net face crops. Shared
+  `PlayerRender` component instead of duplicated `<img>` tags.
+
+---
+
 ## [1.0.4+build.20] — 2026-07-23
 
 ### 🐛 Fix: `/api/warps/players` Could Silently Hang the Dashboard's API Connection

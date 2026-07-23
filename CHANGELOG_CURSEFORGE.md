@@ -6,6 +6,15 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.21 — 2026-07-23
+
+### ✨ Internal Dashboard: 3D Player Renders
+
+- Player Profile, Settings, and Public Lookup now show a full 3D character render with a glowing
+  color-matched background instead of a flat face icon.
+
+---
+
 ## 1.0.4+build.20 — 2026-07-23
 
 ### 🐛 Fix: Visiting the Warps Page Could Show "API Unreachable"
