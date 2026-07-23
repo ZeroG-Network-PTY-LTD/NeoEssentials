@@ -1,6 +1,6 @@
 # Kit Management
 
-> **Version:** 1.0.2.6 · **Config:** `kits.json`, `config.json` → `kits` section
+> **Version:** 1.0.4+build.16 · **Last verified:** 2026-07-23 · **Config:** `kits.json`, `config.json` → `kits` section
 
 ---
 
@@ -94,7 +94,8 @@ There is no `commands` field — kits only grant items, they do not run server c
 | `kitAutoEquip` | `false` | Auto-equip armour from kits into empty armour slots |
 | `maxKitsPerPlayer` | `-1` | Max simultaneous active cooldowns (`-1`/any non-positive = unlimited) |
 | `allowKitOverride` | `false` | Allow `neoessentials.kits.override` bypass |
-| `newPlayerKit.kitName` | *(none)* | Kit name to auto-give on first join (nested under `kits.newPlayerKit`, not a flat key) |
+| `newPlayerKit.enabled` | `false` | Enable/disable giving a kit automatically on first join (nested under `kits.newPlayerKit`, not a flat key) |
+| `newPlayerKit.kitName` | *(none)* | Kit name to auto-give on first join when `newPlayerKit.enabled` is `true` (nested under `kits.newPlayerKit`, not a flat key) |
 | `logKitUsage` | `true` | Log kit claims to console |
 | `pastebinCreatekit` | `false` | If enabled, `/createkit` uploads the kit JSON instead of saving it locally |
 | `commandCosts.<command>` | `0` | Economy cost to run a given kit command (e.g. `createkit`, `kit`, `delkit`, `listkits`) |

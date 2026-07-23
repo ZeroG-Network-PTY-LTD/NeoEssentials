@@ -61,6 +61,13 @@ Note: `modules.economyEnabled` (in `config.json`) is the master on/off switch �
 | `/sell` | `/sell hand\|inventory\|all\|<item> [qty]` | `neoessentials.sell` (+ `neoessentials.sell.hand` / `neoessentials.sell.bulk`) | Sell items for money |
 | `/payconfirmtoggle` | `/payconfirmtoggle` | `neoessentials.payconfirmtoggle` | Toggle payment confirmation prompts (registered by the item/misc commands module, not the economy module) |
 
+> **`/pt` name collision:** `/pt` is *also* registered separately as the Powertool system's
+> shorthand (`/pt list`, `/pt remove`, …, permission `neoessentials.item.powertool` — see the
+> Items/Powertool docs). Because Brigadier merges same-named literal nodes registered on the same
+> dispatcher, bare `/pt` still runs paytoggle (its `.executes()` was registered first and is kept),
+> but `/pt list` / `/pt remove` run the Powertool subcommands, not anything paytoggle-related.
+> Don't assume `/pt <subcommand>` is part of the paytoggle command.
+
 ### Admin Commands
 
 | Command | Syntax | Permission | Description |

@@ -32,6 +32,13 @@ Bans, mutes, kicks, warnings, notes, and reports are backed by a single canonica
 
 Every ban (player and IP) is stored with a unique ID, an `active` flag, optional `evidence`, and — once lifted — who unbanned it and when (`unbannedBy` / `unbannedAt`). Expired temp-bans are archived the same way (auto-marked inactive, no "unbanned by" staff member). Unbanning and re-banning a player never destroys their prior ban records; they remain queryable as history via the dashboard's `/api/moderation/bans/{uuid}` and `/api/moderation/ipbans` routes (see [Web Dashboard](WebDashboard)).
 
+### Moderation History
+
+| Command | Syntax | Permission | Description |
+|---|---|---|---|
+| `/modhistory` | `/modhistory <player>` | `neoessentials.moderation.history` | View a player's full moderation history — bans, mutes, kicks, and warns — in one summary |
+| `/history` | alias for `/modhistory` | same | Alias |
+
 ---
 
 ## Kicks
@@ -71,12 +78,22 @@ Jail teleports the player to a set jail location and blocks movement, interactio
 | `/jail` | `/jail <player> <jail> [reason]` | `neoessentials.moderation.jail` | Jail a player indefinitely |
 | `/jailfor` | `/jailfor <player> <jail> <duration> [reason]` | `neoessentials.moderation.jail` | Jail for a set duration (same permission as `/jail`) |
 | `/unjail` | `/unjail <player>` | `neoessentials.moderation.unjail` | Release a player from jail |
-| `/setjail` | `/setjail <name>` | `neoessentials.moderation.setjail` | Set a jail location at your position |
+| `/setjail` | `/setjail <name>` (auto-detect shape) · `/setjail <name> sphere <radius>` · `/setjail <name> cuboid` | `neoessentials.moderation.setjail` | Create a jail location — see [Jail Region Shapes](#jail-region-shapes) below |
 | `/deljail` | `/deljail <name>` | `neoessentials.moderation.setjail` | Delete a jail location (same permission as `/setjail`) |
+| `/jailwand` | `/jailwand` | `neoessentials.jail.wand` | Give yourself the jail-region selection wand |
 | `/jaillist` | `/jaillist` | `neoessentials.moderation.jaillist` | List all jail locations |
 | `/jailinfo` | `/jailinfo [name]` | `neoessentials.moderation.jailinfo` | Show info for one jail, or all jails if no name given |
 | `/jails` | alias for `/jaillist` | same | Alias |
 | `/togglejail` | `/togglejail <player>` | `neoessentials.moderation.jail` | Toggle jail on/off for a player |
+
+### Jail Region Shapes
+
+A jail location can be either a **sphere** (radius around a point) or a **cuboid** (two-corner box):
+
+- `/setjail <name>` — auto-detects: uses a wand or WorldEdit cuboid selection if one is active, otherwise falls back to a sphere at your current position using `moderation.jailSettings.defaultSphereRadius`.
+- `/setjail <name> sphere <radius>` — explicit sphere at your current position.
+- `/setjail <name> cuboid` — cuboid from the current wand/WorldEdit selection.
+- `/jailwand` gives an item (configurable via `moderation.jailSettings.wandItem`) — right-click sets corner 1, left-click sets corner 2, then run `/setjail <name> cuboid`.
 
 ### Jail Enforcement
 
@@ -249,15 +266,25 @@ Settings are nested under per-feature sub-objects, not flat keys directly under 
 
 | Key | Default | Description |
 |---|---|---|
+| `enableVanishSystem` | — | Enable/disable the vanish system |
 | `preventInteraction` | `true` | Block interactions while vanished |
 | `broadcastToStaffVanish` | `false` | Announce vanish toggles to staff |
-| (also: broadcast-to-all and log-vanish-actions toggles) | | |
+| `BroadcastToAllVanish` | — | Announce vanish toggles to all players (note the config's mixed-case key) |
+| `hideFromTabList` | — | Hide vanished players from the tab list |
+| `vanishOnJoin` | — | Re-apply vanish if a vanished player logs back in |
+| `logVanishActions` | — | Log vanish/unvanish to console |
 
 ### `moderation.jailSettings`
 
-| Key | Description |
-|---|---|
-| `defaultJailReason` | Reason used for `/jail` when none is given |
+| Key | Default | Description |
+|---|---|---|
+| `defaultJailReason` | — | Reason used for `/jail` when none is given |
+| `logJailActions` | — | Log jail/unjail to console |
+| `preventJailEscape` | — | Block movement out of the jail region |
+| `jailMessageFormat` | — | Message template shown to the jailed player |
+| `wandItem` | — | Item ID used as the jail-region selection wand (given by `/jailwand`) |
+| `defaultSphereRadius` | — | Radius used by `/setjail <name>` auto-detect and `/setjail <name> sphere` when no explicit radius is given |
+| `maxJailsBeforeTempBan` | — | Number of times a player can be jailed before an automatic temp-ban escalation |
 
 ---
 
