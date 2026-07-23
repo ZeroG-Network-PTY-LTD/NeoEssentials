@@ -8,6 +8,15 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.20 — 2026-07-23
+
+### 🐛 Fix: Visiting the Warps Page Could Show "API Unreachable"
+
+- The Player Warps tab could hang under real player load instead of loading, which made the
+  dashboard think the whole connection was down. Fixed.
+
+---
+
 ## 1.0.4-mc26.1.2+build.19 — 2026-07-23
 
 ### ✨ Internal Dashboard Permissions Page Redesign

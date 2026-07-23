@@ -12,6 +12,23 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.20] — 2026-07-23
+
+### 🐛 Fix: `/api/warps/players` Could Silently Hang the Dashboard's API Connection
+
+- The new player-warps endpoint (build.18) resolved player names via
+  `server.getProfileCache()`/`server.getPlayerList()` directly from the HTTP handler thread,
+  instead of scheduling that work onto the main server thread like every other endpoint that
+  touches `MinecraftServer` state (see `ServerEndpoint`'s documented convention). On a live
+  server with real concurrent player activity, this could hang indefinitely with no exception
+  and no response ever sent — which the external dashboard's client then reported as a general
+  "API unreachable" connection failure (not just an error on the Warps page), since a stuck
+  request never gets the chance to mark the connection healthy again.
+- Now wrapped in the same `CompletableFuture` + 10s timeout pattern used elsewhere, so a slow or
+  blocked main thread returns a clean timeout error instead of hanging the connection.
+
+---
+
 ## [1.0.4-mc26.1.2+build.19] — 2026-07-23
 
 ### ✨ Internal Dashboard: Permissions Page Now Matches External (Collapsible Rows, Categorized Pills)
