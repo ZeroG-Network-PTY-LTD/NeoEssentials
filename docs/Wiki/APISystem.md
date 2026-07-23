@@ -35,6 +35,10 @@ Short-form aliases (legacy, no prefix) are also supported in most contexts.
 | `{neoessentials_group}` | `{group}` | Primary permission group name |
 | `{neoessentials_balance}` | `{balance}` | Economy balance (raw number) |
 | `{neoessentials_balance_formatted}` | — | Economy balance (formatted string) |
+| `{neoessentials_balance_raw}` | — | Economy balance as a plain number with no trailing zeros |
+| `{neoessentials_currency_symbol}` | — | Configured currency symbol (e.g. `$`) |
+| `{neoessentials_baltop_rank}` | — | Player's rank on the `/baltop` leaderboard (`"N/A"` if unavailable) |
+| `{neoessentials_pay_toggle}` | — | `"enabled"`/`"disabled"` — whether the player currently accepts `/pay` payments |
 | `{neoessentials_world}` | `{world}` | Current dimension name |
 | `{neoessentials_x}` | `{x}` | Player X coordinate |
 | `{neoessentials_y}` | `{y}` | Player Y coordinate |

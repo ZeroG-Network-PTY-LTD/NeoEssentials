@@ -1,6 +1,6 @@
 # Item Management
 
-> **Version:** 1.0.2.6
+> **Version:** 1.0.4+build.16 · **Last verified:** 2026-07-23
 
 ---
 
@@ -27,7 +27,9 @@ Item management commands for repair, disposal, enchanting, inventory management,
 |---|---|---|---|
 | `/clearinventory` | `/clearinventory [player]` | `neoessentials.item.clearinventory` | Clear inventory |
 | `/ci` | alias | same | Alias |
-| `/ciconfirmtoggle` | `/ciconfirmtoggle` | same | Toggle confirmation prompt for `/ci` |
+| `/clearinv` | alias | same | Alias |
+| `/ciconfirmtoggle` | `/ciconfirmtoggle` | `neoessentials.ciconfirmtoggle` | Toggle confirmation prompt for `/ci` (own dedicated node, distinct from `neoessentials.item.clearinventory`) |
+| `/clearinventoryconfirmtoggle` | alias | same | Alias |
 | `/invsee` | `/invsee <player>` | `neoessentials.invsee` | View a player's inventory (read-only) |
 | `/inv` | alias | same | Alias |
 | `/invseeedit` | `/invseeedit <player>` | `neoessentials.invsee.edit` | View and **edit** a player's inventory |
@@ -57,8 +59,13 @@ Item management commands for repair, disposal, enchanting, inventory management,
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/enchant` | `/enchant <enchantment> [level]` | `neoessentials.item.enchant` | Enchant held item |
-| `/potion` | `/potion <add\|remove\|clear> <effect> [duration] [amp]` | `neoessentials.potion` | Edit potion effects on held potion |
+| `/enchant` | `/enchant <enchantment> [level]` | `neoessentials.item.enchant` | Enchant held item (overrides vanilla `/enchant`) |
+| `/enchant <player> <enchantment> [level]` | `/enchant <player> <enchantment> [level]` | `neoessentials.item.enchant.others` | Enchant another player's held item |
+| `/ench` | alias for `/enchant` | same | Alias |
+| `/enchanthand` | `/enchanthand <enchantment> [level]` | `neoessentials.item.enchant` | Hand-only enchant command, gated independently of `/enchant` (its own config toggle) |
+| `/potion` | `/potion add <effect> [duration] [amp]` · `/potion clear` | `neoessentials.potion` | Edit potion effects on held potion (no `remove` subcommand — use `clear` to remove all) |
+
+`neoessentials.item.enchant.unsafe` allows enchant levels/combinations beyond vanilla limits; `neoessentials.item.enchant.any` allows enchanting item types the enchantment wouldn't normally apply to. Both are checked internally by `/enchant` — they aren't separate commands.
 
 ### Powertool
 
@@ -67,11 +74,13 @@ Item management commands for repair, disposal, enchanting, inventory management,
 | `/powertool` | `/powertool <command>` | `neoessentials.item.powertool` | Bind a command to held item type |
 | `/powertool remove` | `/powertool remove` | same | Remove powertool from held item |
 | `/powertool list` | `/powertool list` | same | List all your powertool bindings |
-| `/ptool` | alias | same | Alias |
-| `/powertooltoggle` | `/powertooltoggle` | `neoessentials.item.powertool` | Toggle all powertools on/off |
+| `/ptool` | alias | same | Alias (full command tree, not just an alias name) |
+| `/powertooltoggle` | `/powertooltoggle` | *(none — open to any player)* | Toggle all powertools on/off |
 | `/ptt` | alias | same | Alias |
-| `/powertoollist` | `/powertoollist` | `neoessentials.item.powertool` | List active powertool bindings |
+| `/powertoollist` | `/powertoollist` | `neoessentials.powertoollist` | List active powertool bindings |
 | `/ptlist` | alias | same | Alias |
+
+> **Note:** `/powertooltoggle` and `/ptt` have no dedicated permission node — any player who can run commands can toggle their own powertools on/off. `/powertoollist`/`/ptlist` use a separate `neoessentials.powertoollist` node, distinct from `neoessentials.item.powertool` (which gates binding/removing/listing via the `/powertool` command itself).
 
 **How powertools work:**
 - Bindings are stored by **item type** (not slot) — the command travels with the item regardless of which inventory slot it's in

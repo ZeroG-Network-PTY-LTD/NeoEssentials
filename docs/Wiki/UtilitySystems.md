@@ -1,6 +1,6 @@
 # Utility Systems
 
-> **Version:** 1.0.2.6+build.26
+> **Version:** 1.0.4+build.16
 
 ---
 
@@ -108,18 +108,17 @@ Use `&` color codes in MOTD messages (e.g. `&aGreen text &cRed text`). They are 
 
 ### Profiles
 
-Profiles are stored in `config/neoessentials/motd_data.json`. Example:
+Profiles are persisted through the pluggable **DataStore** backend (JSON by default — see
+[Storage Backend](Storage)), across two collections:
 
-```json
-{
-  "activeProfile": "default",
-  "rotation": { "enabled": false, "intervalMinutes": 60, "currentIndex": 0 },
-  "profiles": {
-    "default": { "motd": "§aWelcome to the server!", "author": "Admin", "timestamp": "01/01/2026 12:00" },
-    "event":   { "motd": "§6Special event is running!", "author": "Admin", "timestamp": "01/01/2026 12:00" }
-  }
-}
-```
+- `motd_profiles` — one record per profile, keyed by profile name, holding `motd`/`author`/`timestamp`
+- `motd_meta` — a single `"settings"` record holding `activeProfile`, `rotationEnabled`,
+  `rotationIntervalMinutes`, and `rotationCurrentIndex`
+
+> **Legacy file:** `config/neoessentials/motd_data.json` (both the multi-profile layout and
+> the older single-MOTD-at-root layout) is only read once, automatically, to migrate its
+> contents into the DataStore collections above the first time the profile collection is
+> empty — it is never written to again afterward.
 
 ### Dashboard API
 
@@ -320,8 +319,8 @@ Shows Y-coordinate information including depth below sea level and height above 
 | `/bc`, `/announce` | aliases | same | Aliases |
 | `/broadcastworld` | `/broadcastworld <message>` | `neoessentials.broadcastworld` | Broadcast to current world only |
 | `/bcastworld` | alias | same | Alias |
-| `/time` | `/time [set\|add] <value\|day\|night…>` | `neoessentials.time` | Get/set server time |
-| `/day`, `/night` | shortcuts | same | Shortcuts |
+| `/time` | `/time [set\|add] <value\|day\|night…>` | `neoessentials.time` (view) / `neoessentials.time.set` (set/add) | Get/set server time |
+| `/day`, `/night` | shortcuts | `neoessentials.time.set` | Shortcuts (use the set-time permission, not `neoessentials.time`) |
 | `/weather` | `/weather <sun\|storm\|thunder> [dur]` | `neoessentials.weather` | Set server weather |
 | `/sun`, `/storm`, `/thunder` | shortcuts | same | Shortcuts |
 | `/sudo` | `/sudo <player> <command>` | `neoessentials.sudo` | Run a command as another player |

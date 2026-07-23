@@ -370,10 +370,10 @@ Players must have the appropriate permissions to use color/formatting in their o
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
 | `/msg` | `/msg <player> <message>` | `neoessentials.chat.msg` | Send a private message |
-| `/tell`, `/whisper`, `/w`, `/m` | aliases | same | Aliases |
+| `/message`, `/tell`, `/whisper`, `/w` | aliases | same | Aliases (there is no `/m` alias) |
 | `/reply` | `/reply <message>` | `neoessentials.chat.reply` | Reply to last private message |
 | `/r` | alias | same | Alias |
-| `/msgtoggle` | `/msgtoggle [on\|off]` | `neoessentials.msgtoggle` | Toggle receiving private messages |
+| `/msgtoggle` | `/msgtoggle [on\|off]` | `neoessentials.chat.msgtoggle` | Toggle receiving private messages |
 | `/rtoggle` | `/rtoggle [on\|off]` | `neoessentials.rtoggle` | Toggle receiving replies |
 | `/socialspy` | `/socialspy [on\|off]` | `neoessentials.chat.socialspy` | Spy on all private messages |
 
@@ -382,8 +382,13 @@ Players must have the appropriate permissions to use color/formatting in their o
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
 | `/ignore` | `/ignore <player>` | `neoessentials.chat.ignore` | Ignore a player's messages |
+| `/block` | alias | same | Alias for `/ignore` |
 | `/unignore` | `/unignore <player>` | `neoessentials.chat.ignore` | Unignore a player |
-| `/ignorelist` | `/ignorelist` | `neoessentials.chat.ignore` | List ignored players |
+
+> **No `/ignorelist` command exists.** There is no registered command to list your currently
+> ignored players (`IgnoreManager.getIgnoreList()` exists internally but nothing in the command
+> layer exposes it). Treat any reference to `/ignorelist` as stale/unverified until such a command
+> is actually added.
 
 > A player holding `neoessentials.chat.ignore.exempt` cannot be ignored. A player holding
 > `neoessentials.chat.mute.exempt` cannot be muted with `/mute`.

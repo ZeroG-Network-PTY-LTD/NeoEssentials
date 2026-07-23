@@ -1,6 +1,7 @@
 # NeoEssentials — Localization System
 
-> **Added / overhauled in build.62 · Language config setting added in build.187**
+> **Version:** 1.0.4+build.16 · **Last verified:** 2026-07-23
+> Added / overhauled in build.62 · Language config setting added in build.187 (build numbers below build.16 predate the NeoForge 26.1 port's build-counter reset)
 
 ---
 
@@ -20,7 +21,13 @@ All tooling is exposed through the `/language` in-game command (OP level 4).
 
 ## Choosing the Active Language
 
-Set the server language in `config.json` under the `localization` section:
+**In-game (recommended):** `/language set <code>` (or the bare shortcut `/language <code>`) validates the code against the currently deployed language files, writes it to `config.json`, and reloads translations immediately — no restart or separate reload step needed.
+
+```
+/language set fr_fr
+```
+
+**Manually:** Set the server language in `config.json` under the `localization` section:
 
 ```json
 "localization": {
@@ -28,7 +35,7 @@ Set the server language in `config.json` under the `localization` section:
 }
 ```
 
-Reload in-game: `/neoessentials reload`
+Reload in-game after a manual edit: `/neoessentials reload`
 
 **Available built-in language codes:**
 
@@ -55,7 +62,7 @@ Reload in-game: `/neoessentials reload`
 | `neoessentials/languages/custom/<language>.json` | Active language file — auto-deployed from JAR when first selected, auto-merged on updates (e.g. `fr_fr.json` when `"language": "fr_fr"`) |
 | `neoessentials/languages/custom/en_us.json` | Fallback English file (always present) |
 | `neoessentials/languages/custom/<code>.json` | Any additional custom / community language files |
-| `neoessentials/languages/overrides.json` | Admin message overrides — take top priority over everything else |
+| `neoessentials/languages/overrides.json` | **Legacy** admin message overrides file — only consulted for a one-time migration into the DataStore on first boot (see note below) |
 | `neoessentials/languages/templates/<code>_template.json` | Auto-generated templates for translators |
 
 ---
@@ -65,7 +72,7 @@ Reload in-game: `/neoessentials reload`
 ### Startup / Boot
 
 1. `ConfigManager.getServerLanguage()` reads `localization.language` from `config.json` (default: `en_us`).
-2. `MessageUtil.loadTranslations()` runs and resolves the configured language code.
+2. `MessageUtil.loadTranslations()` (private, called internally on startup) resolves the configured language code. `MessageUtil.reloadTranslations()` (public) is the equivalent used by `/language reload` / `/language set` / `/neoessentials reload`.
 3. The language file is looked for at `neoessentials/languages/custom/<code>.json`.
 4. If not found (first run), it is deployed from the JAR's bundled `<code>.json`.
 5. If the `fr_fr` (or other) JAR file does not cover 100% of keys, missing keys are filled from `en_us` as fallback.
@@ -100,14 +107,16 @@ Each language file contains a `_langVersion` metadata key:
 
 ```json
 {
-  "_langVersion": "16",
+  "_langVersion": "23",
   ...
 }
 ```
 
 `MessageUtil.java` maintains a constant `CURRENT_LANG_VERSION`. On startup, if the deployed file's version is lower, new keys are merged automatically. The file version is then bumped to the current value and saved.
 
-**Current version: 16** (as of build.187)
+**Current version: 23** (`MessageUtil.CURRENT_LANG_VERSION`, verified 2026-07-23 against source)
+
+> Note: the shipped `src/main/resources/data/lang/en_us.json` currently has `_langVersion: "22"` baked in — one behind the `CURRENT_LANG_VERSION` constant. This is a real (if minor) drift in the repo, not a doc error; the merge-on-mismatch logic in [Startup / Boot](#startup--boot) means deployed files still get corrected at runtime.
 
 When you add new translation keys to `en_us.json`, increment `_langVersion` by 1 in both:
 - `src/main/resources/data/lang/en_us.json` (the `_langVersion` value)
@@ -127,6 +136,8 @@ All subcommands require OP level 4.
 | `/language reload` | Reload all language files and overrides from disk |
 | `/language stats` | Show statistics (loaded languages, missing keys tracked, overrides) |
 | `/language info` | Show full command reference |
+| `/language set <code>` | Set the active server language and reload translations immediately |
+| `/language <code>` | Shortcut for `/language set <code>` |
 
 ### Templates & Missing Keys
 
@@ -160,7 +171,9 @@ Run /language regenerate fr_fr to update the file from JAR.
 
 ### Admin Overrides
 
-Override any message key permanently. Overrides are saved to `overrides.json` and survive reloads.
+Override any message key permanently. Overrides are persisted through the active **DataStore** (see [Storage Backend](Storage)) as a single document — with the default `json` backend that's `neoessentials/store/language_overrides.json`; with `sqlite`/`mysql` it's a table in the configured database. Overrides survive reloads.
+
+> **Storage note:** `neoessentials/languages/overrides.json` (the old flat file) is now only read for a **one-time legacy migration** — if the DataStore has no override document yet and `storage.autoMigrate` is enabled, any overrides found in that file are imported once and the DataStore becomes authoritative from then on.
 
 | Command | Description |
 |---------|-------------|
@@ -284,10 +297,10 @@ Component info    = MessageUtil.info("commands.neoessentials.home.list_header", 
 | Message shows raw key (e.g. `commands.neoessentials.xyz`) | The key is missing from `en_us.json`. Add it and bump `_langVersion`. |
 | Message shows human-readable fallback instead of proper text | Same as above — key is missing. The humanizer is a safety net, not the final output. |
 | Bundled language file not updating | Run `/language regenerate <code>`. |
-| Override not showing in-game | Run `/language override reload` or `/language reload` after editing `overrides.json` manually. |
+| Override not showing in-game | Run `/language override reload` or `/language reload`. Overrides live in the DataStore now — use `/language override set/get/remove` rather than hand-editing `overrides.json` (which is legacy-import-only). |
 | Language file corrupted | Delete it and run `/language regenerate <code>` to redeploy from JAR. |
 | Language falls back to English for some messages | That key isn't translated in the language file yet. Run `/language validate <code>` to see missing keys. |
 
 ---
 
-*Last updated: build.190 — 2026-05-25*
+*Last updated: 1.0.4+build.16 — 2026-07-23*

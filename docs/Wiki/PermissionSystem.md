@@ -319,9 +319,11 @@ Conditions are persisted under `"conditions"` in the same JSON files as regular 
 
 The alias system maps **short or legacy node names** to their canonical NeoEssentials equivalents. Aliases are resolved transparently **before every permission check** — neither the player nor the admin needs to know whether a legacy name was used.
 
-### Configuration file
+### Storage
 
-`config/neoessentials/permission_aliases.json`
+> **Storage note:** As of the DataStore migration, aliases are persisted through the active **DataStore** (see [Storage Backend](Storage)) in a `permission_aliases` collection — one record per alias, each holding `alias` and `target` fields. With the default `json` backend this lives at `neoessentials/store/permission_aliases.json`; with `sqlite`/`mysql` it's a table in the configured database.
+>
+> `config/neoessentials/permission_aliases.json` is now only consulted for a **one-time legacy migration**: if the `permission_aliases` collection is empty on startup, any aliases found in that file are imported and the collection becomes the source of truth from then on. Editing the legacy file after that point has no effect.
 
 ```json
 {
@@ -333,9 +335,9 @@ The alias system maps **short or legacy node names** to their canonical NeoEssen
 }
 ```
 
-- The file is **loaded on start and reload** (`/permissions reload`).
-- Missing file → no aliases active (silently ignored).
-- Changes are applied instantly after a `/permissions reload`.
+- Aliases are loaded from the DataStore on start and on `/permissions reload`.
+- Empty collection (and no legacy file to migrate) → no aliases active (silently ignored).
+- Changes made via the API or `/permissions` commands are written straight to the DataStore.
 - Aliases are **one-directional** (alias → canonical). The canonical node itself is never affected.
 
 ### Registering aliases via API
@@ -613,12 +615,10 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.kits.create` |  op-only | Create a kit from inventory | `/createkit` |
 | `neoessentials.kits.delete` |  op-only | Delete a kit | `/delkit` |
 | `neoessentials.kits.override` |  op-only | Override all kit restrictions | |
-| `neoessentials.kits.admin` |  op-only | Kit administration (parent) | `/kit admin` |
-| `neoessentials.kits.admin.create` |  op-only | Admin kit creation | |
-| `neoessentials.kits.admin.delete` |  op-only | Admin kit deletion | |
-| `neoessentials.kits.admin.list` |  op-only | List all kits (admin) | |
 | `neoessentials.kits.<kitname>` | — | **Dynamic** — access to specific kit | |
 | `neoessentials.kits.<kitname>.nocooldown` | — | **Dynamic** — bypass cooldown for specific kit | |
+
+> **Dead/unused registered nodes:** `neoessentials.kits.admin`, `.admin.create`, `.admin.delete`, and `.admin.list` are registered in `PermissionRegistry` (so they show up in `/permissions list`/`search`) but there is **no `/kit admin` command and nothing checks them** — kit creation/deletion/listing are gated by the plain `neoessentials.kits.create` / `.delete` / `.list` nodes documented above instead.
 
 ---
 
@@ -817,11 +817,11 @@ These are **registered automatically** when a kit is created via `/createkit`.
 #### Moderation Chat
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.chat.mute` |  op-only | Mute a player | `/mute` |
-| `neoessentials.chat.unmute` |  op-only | Unmute a player | `/unmute` |
-| `neoessentials.chat.mutelist` |  op-only | View muted players | `/mutelist` |
+| `neoessentials.chat.mute` |  op-only | Mute, unmute, and view muted players — `/mute`, `/unmute`, and `/mutelist` all share this single node | `/mute`, `/unmute`, `/mutelist` |
 | `neoessentials.chat.mute.exempt` |  op-only | Exempt from being muted | |
 | `neoessentials.chat.ignore.exempt` |  op-only | Exempt from being ignored | |
+
+> **Dead/unused registered nodes:** `neoessentials.chat.unmute` and `neoessentials.chat.mutelist` are registered in `PermissionRegistry` (so they appear in `/permissions list`/`search`) but are **not checked anywhere** — `/unmute` and `/mutelist` both enforce `neoessentials.chat.mute`, same as `/mute`. Granting `chat.unmute` or `chat.mutelist` alone does nothing.
 
 #### Formatting & Colours
 | Node | Default | Description |
@@ -863,6 +863,7 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.moderation.banip` |  op-only | Ban an IP address | `/banip` |
 | `neoessentials.moderation.banlist` |  op-only | View the ban list | `/banlist` |
 | `neoessentials.moderation.tempban` |  op-only | Temporarily ban a player | `/tempban` |
+| `neoessentials.moderation.tempbanip` |  op-only | Temporarily ban an IP address | `/tempbanip` |
 | `neoessentials.moderation.unban` |  op-only | Unban a player | `/unban` |
 | `neoessentials.moderation.unbanip` |  op-only | Unban an IP address | `/unbanip` |
 | **Kicking** | | | |
@@ -875,20 +876,38 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.moderation.unfreezeall` |  op-only | Unfreeze all players | `/unfreezeall` |
 | `neoessentials.moderation.freezelist` |  op-only | List frozen players | `/freezelist` |
 | **Jailing** | | | |
-| `neoessentials.moderation.jail` |  op-only | Jail a player | `/jail` |
+| `neoessentials.moderation.jail` |  op-only | Jail a player (both indefinite and timed — `/jailfor` shares this node) | `/jail`, `/jailfor`, `/togglejail` |
 | `neoessentials.moderation.unjail` |  op-only | Unjail a player | `/unjail` |
-| `neoessentials.moderation.setjail` |  op-only | Create a jail location | `/setjail` |
-| `neoessentials.moderation.jaillist` |  op-only | List jailed players | `/jaillist` |
+| `neoessentials.moderation.setjail` |  op-only | Create or delete a jail location | `/setjail`, `/deljail` |
+| `neoessentials.moderation.jaillist` |  op-only | List jail locations | `/jaillist`, `/jails` |
 | `neoessentials.moderation.jailinfo` |  op-only | View jail info | `/jailinfo` |
+| `neoessentials.jail.wand` |  op-only | Get the jail-region selection wand (right-click = corner 1, left-click = corner 2) | `/jailwand` |
+| `neoessentials.jail.allow-break` |  op-only | Break blocks while jailed | (enforcement, no command) |
+| `neoessentials.jail.allow-place` |  op-only | Place blocks while jailed | (enforcement, no command) |
+| `neoessentials.jail.allow-interact` |  op-only | Interact with blocks/items while jailed | (enforcement, no command) |
+| `neoessentials.jail.allow-attack` |  op-only | Attack entities while jailed | (enforcement, no command) |
 | **Vanish** | | | |
 | `neoessentials.moderation.vanish` |  op-only | Vanish yourself | `/vanish` |
 | `neoessentials.moderation.vanish.others` |  op-only | Vanish another player | `/vanish <player>` |
 | `neoessentials.moderation.seevanished` |  op-only | See vanished players | |
 | `neoessentials.vanish.see` |  op-only | See vanished players (alias) | |
 | `neoessentials.moderation.vanishlist` |  op-only | List vanished players | `/vanishlist` |
+| **Warnings** | | | |
+| `neoessentials.moderation.warn` |  op-only | Issue, clear, or remove warnings | `/warn`, `/clearwarnings`, `/removewarn` |
+| `neoessentials.moderation.warnings` |  op-only | View a player's warnings | `/warnings` |
+| **Staff Notes** | | | |
+| `neoessentials.moderation.note` |  op-only | Add or remove staff notes | `/note`, `/removenote` |
+| `neoessentials.moderation.notes` |  op-only | View a player's staff notes | `/notes` |
+| **Player Reports** | | | |
+| `neoessentials.moderation.report` | ✅ default | Submit a player report | `/report` |
+| `neoessentials.moderation.reports` |  op-only | View and resolve the report queue | `/reports`, `/reviewreport` |
+| **History** | | | |
+| `neoessentials.moderation.history` |  op-only | View a player's full moderation history (bans/mutes/kicks/warns) | `/modhistory`, `/history` |
 | **Notifications** | | | |
 | `neoessentials.moderation.notify` |  op-only | Receive moderation action notifications | |
 | `neoessentials.moderation.notifications` |  op-only | Receive moderation event broadcasts | |
+
+> **Dead/unused registered node:** `neoessentials.moderation.jail.timed` is registered in `PermissionRegistry` (appears in `/permissions list`/`search`) but is **not actually checked anywhere** — both `/jail` and `/jailfor` enforce the plain `neoessentials.moderation.jail` node. Don't rely on `jail.timed` to gate timed jails separately from indefinite ones.
 
 ---
 
@@ -953,8 +972,8 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.afk` | ✅ default | Use the AFK system | `/afk` |
 | `neoessentials.afk.exempt` |  op-only | Exempt from AFK kick | |
 | `neoessentials.suicide` | ✅ default | Use the suicide command | `/suicide` |
-| `neoessentials.gamemode` |  op-only | Change own gamemode | `/gm`, `/gmc`, `/gms` |
-| `neoessentials.gamemode.others` |  op-only | Change another player's gamemode | `/gm <player>` |
+| `neoessentials.gamemode` |  op-only | Change own gamemode | `/gamemode`, `/gmc`, `/gms`, `/gmsp`, `/gma` |
+| `neoessentials.gamemode.others` |  op-only | Change another player's gamemode | `/gamemode <mode> <player>` |
 
 ---
 
@@ -1368,8 +1387,8 @@ admins know exactly what to grant.
 | `/kit` | `neoessentials.kits.use` | ✅ |
 | `/kit <name>` | `neoessentials.kits.use` + `neoessentials.kits.<kitname>` | ✅ |
 | `/kit <name> <player>` | `neoessentials.kit.others` |  |
-| `/kitcreate` | `neoessentials.kits.admin.create` |  |
-| `/kitdelete` | `neoessentials.kits.admin.delete` |  |
+| `/createkit` | `neoessentials.kits.create` |  |
+| `/delkit` | `neoessentials.kits.delete` |  |
 | `/kitreset` | `neoessentials.kitreset` |  |
 | `/kitreset <player>` | `neoessentials.kitreset.others` |  |
 
@@ -1391,7 +1410,7 @@ admins know exactly what to grant.
 | `/banip` | `neoessentials.moderation.banip` |  |
 | `/tempban` | `neoessentials.moderation.tempban` |  |
 | `/jail` | `neoessentials.moderation.jail` |  |
-| `/jailfor` | `neoessentials.moderation.jail.timed` |  |
+| `/jailfor` | `neoessentials.moderation.jail` (same node as `/jail`) |  |
 | `/vanish` | `neoessentials.moderation.vanish` |  |
 | `/vanish <player>` | `neoessentials.moderation.vanish.others` |  |
 

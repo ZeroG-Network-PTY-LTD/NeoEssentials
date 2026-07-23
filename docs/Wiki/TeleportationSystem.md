@@ -1,6 +1,6 @@
 # Teleportation System
 
-> **Version:** 1.0.2.6+build.38 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
+> **Version:** 1.0.4+build.16 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
 
 ---
 
@@ -133,11 +133,11 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/tpa` | `/tpa <player>` | `neoessentials.teleport.tpa` | Request to TP to a player |
-| `/tpahere` | `/tpahere <player>` | `neoessentials.teleport.tpahere` | Request player TP to you |
-| `/tpaccept` | `/tpaccept` | `neoessentials.teleport.tpaccept` | Accept incoming request |
-| `/tpdeny` | `/tpdeny` | `neoessentials.teleport.tpdeny` | Deny incoming request |
-| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.tpacancel` | Cancel your outgoing request |
+| `/tpa` | `/tpa <player>` | `neoessentials.teleport.request.tpa` | Request to TP to a player |
+| `/tpahere` | `/tpahere <player>` | `neoessentials.teleport.request.tpahere` | Request player TP to you |
+| `/tpaccept` | `/tpaccept` | `neoessentials.teleport.request.accept` | Accept incoming request |
+| `/tpdeny` | `/tpdeny` | `neoessentials.teleport.request.deny` | Deny incoming request |
+| `/tpcancel` | `/tpcancel` | `neoessentials.teleport.request.cancel` | Cancel your outgoing request |
 | `/tptoggle` | `/tptoggle [on\|off]` | `neoessentials.tptoggle` | Toggle accepting TP requests |
 | `/tpauto` | `/tpauto [on\|off]` | `neoessentials.tpauto` | Auto-accept all incoming TPA requests |
 | `/tpaall` | `/tpaall [player]` | `neoessentials.tpaall` | Send TPA-here to all online players |
@@ -172,10 +172,10 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/tp` | `/tp <player>` or `/tp <x y z>` | `neoessentials.teleport.admin.tp` | Teleport to player or coords |
-| `/tphere` | `/tphere <player>` | `neoessentials.teleport.admin.tphere` | Bring player to you |
+| `/tp` | `/tp <player>` or `/tp <x y z>` | `neoessentials.teleport.tp` | Teleport to player or coords |
+| `/tphere` | `/tphere <player>` | `neoessentials.teleport.tphere` | Bring player to you |
 | `/tpall` | `/tpall` | `neoessentials.teleport.admin.tpall` | Bring all players to you |
-| `/tppos` | `/tppos <x> <y> <z>` | `neoessentials.teleport.admin.tppos` | Teleport to exact coordinates |
+| `/tppos` | `/tppos <x> <y> <z>` | `neoessentials.teleport.tppos` | Teleport to exact coordinates |
 | `/tpo` | `/tpo <player>` | `neoessentials.teleport.tpo` | TP to player, bypasses tptoggle |
 | `/tpohere` | `/tpohere <player>` | `neoessentials.teleport.tpohere` | Bring player, bypasses tptoggle |
 | `/tpoffline` | `/tpoffline <player>` | `neoessentials.teleport.tpoffline` | TP to offline player's last position |
@@ -189,20 +189,29 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 |---|---|---|---|
 | `/back` | `/back` | `neoessentials.teleport.back` | Return to previous location |
 | `/top` | `/top` | `neoessentials.teleport.top` | Teleport to highest block above you |
-| `/jump` | `/jump` | `neoessentials.teleport.jump` | Teleport to block you're looking at |
+| `/jump` | `/jump` | `neoessentials.teleport.jump` | Jump through walls (short-range teleport in the direction you're facing) |
+| `/jumpto` | `/jumpto` | `neoessentials.teleport.jumpto` | Teleport to the block you're looking at |
 | `/bottom` | `/bottom` | `neoessentials.bottom` | Teleport to bottom of world at your X/Z |
 
 ---
 
 ## Data Files
 
-| File | Contents |
+All teleportation data is persisted through the pluggable **DataStore** backend (JSON by
+default — see [Storage Backend](Storage)), not dedicated bespoke files:
+
+| Collection | Contents |
 |---|---|
-| `neoessentials/playerdata/homes/<uuid>.json` | Per-player named home locations (current format) |
-| `neoessentials/homes.json` | Legacy single-file home storage — only read for one-time migration to the per-player format |
-| `neoessentials/warps.json` | Server warp locations |
-| `playerwarps.json` | Player-created warp locations |
-| `neoessentials/spawn.json` | Spawn location (coordinates & world) |
+| `playerdata_homes` | Per-player named home locations (one record per player, id = UUID) |
+| `playerdata_back_locations` | Per-player `/back` return location |
+| `warps` | Server warp locations |
+| `player_warps` | Player-created warp locations |
+| `spawn` | Spawn location (coordinates & world) |
+
+> **Legacy files:** `neoessentials/playerdata/homes/<uuid>.json`, `neoessentials/homes.json`,
+> `neoessentials/warps.json`, `playerwarps.json`, and `neoessentials/spawn.json` are the
+> pre-DataStore on-disk formats. They are only read once, automatically, to migrate their
+> contents into the DataStore collections above — they are never written to again afterward.
 
 ---
 

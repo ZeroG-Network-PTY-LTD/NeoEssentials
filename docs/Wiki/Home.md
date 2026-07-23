@@ -1,6 +1,6 @@
 # NeoEssentials Wiki
 
-Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1.
+Welcome to the official documentation hub for **NeoEssentials v1.0.4** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1.
 
 ---
 
@@ -41,10 +41,10 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.2.6** — a c
    - `teleportation.json` — homes, warps, spawn, TPA
    - `moderation.json` — ban, jail, freeze, kick
    - `tablist.json` — tablist header/footer/formatting
-   - `security.json` — input validation, `allowUnsafeCommands` (powertool filter), XSS protection
-   - `economy.json` — player balances (runtime data)
-   - `permissions.json` — groups and permission nodes
-   - `kits.json` — kit definitions
+   - `security.json` — input validation, `allowUnsafeCommands` (command safety checks), command length limits
+   - Player balances, permission groups/users, and kit definitions are **not** flat config files —
+     they're persisted through the pluggable Storage Backend (JSON/YAML/SQLite/MySQL) instead;
+     see [Storage Backend](Storage)
    - `webDashboard` port/auth/UI settings currently live only in the monolithic `config.json` (not migrated to a split file — see [Split Config System](SplitConfigs))
    - See [Split Config System](SplitConfigs) for the complete reference
 4. Assign permissions to players/groups via `/permissions` or LuckPerms/FTBRanks
@@ -69,4 +69,4 @@ All optional — NeoEssentials runs fully standalone without any of them.
 
 ---
 
-*NeoEssentials v1.0.2.6 · Minecraft 1.21.1 · NeoForge 21.1.179+ · build.190*
+*NeoEssentials v1.0.4 · Minecraft 1.21.1 · NeoForge 21.1.179+ · build.16*

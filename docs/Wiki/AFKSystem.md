@@ -40,6 +40,14 @@ The AFK system automatically marks players as AFK after a configurable period of
 | `autoSave` | `true` | Periodically save AFK state to disk |
 | `saveInterval` | `60` | Auto-save interval in seconds |
 
+> **Known issue:** `enableActivityTracking`, `trackMovement`, `trackChat`, `trackCommands`, and
+> `trackInteractions` are parsed from config into `AfkManager` but are not currently read by any
+> activity handler — movement, commands, and block/item interactions always reset the AFK timer
+> regardless of these settings. Chat messages specifically **do not** reset the AFK timer at all
+> right now (no handler wires chat sending to `AfkManager.updateActivity()`), so `trackChat` has
+> no effect either way. Only `excludedCommands`, `movementThreshold`, and `rotationThreshold` are
+> actually enforced.
+
 ---
 
 ## Commands
@@ -73,7 +81,7 @@ The AFK system automatically marks players as AFK after a configurable period of
 
 ## Anti-Spam Filter
 
-The activity tracker has a built-in repetitive-action filter. If the same action type occurs more than 30 times in 60 seconds the score increases — at 300+ the action no longer resets the timer, preventing AFK farms via automated clicking. The score decays naturally once the window expires.
+The activity tracker (`AfkActivityHandler`, covering block/item right-click, left-click-attack, and item-toss events) has a built-in repetitive-action filter. If the same action type occurs more than 30 times within a rolling 60-second window, the suspicion score increases by 10 per occurrence over that threshold; once the score exceeds 300 that action stops resetting the AFK timer, preventing AFK farms via automated clicking. The score decays by 5 the next time that action type recurs after a 5-minute gap (it does not decay purely from the 60-second window elapsing).
 
 ---
 
