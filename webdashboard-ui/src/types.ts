@@ -407,6 +407,7 @@ export interface CloudStatus {
   providers: {
     dropbox: CloudProviderStatus;
     googleDrive: CloudProviderStatus;
+    oneDrive: CloudProviderStatus;
   };
 }
 
@@ -421,6 +422,7 @@ export interface CloudFile {
 export interface CloudConfig {
   dropbox: { configured: boolean; tokenMasked: string; uploadPath: string };
   googleDrive: { configured: boolean; clientId: string; folderId: string; refreshTokenMasked: string };
+  oneDrive: { configured: boolean; clientId: string; uploadPath: string; refreshTokenMasked: string };
 }
 
 /**

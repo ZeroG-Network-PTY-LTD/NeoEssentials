@@ -633,6 +633,27 @@ export async function deleteGoogleDriveFile(fileId: string) {
   return del(`/api/cloud/files/google/${encodeURIComponent(fileId)}`);
 }
 
+export async function configureOneDrive(refreshToken: string, clientId: string, clientSecret: string, uploadPath: string) {
+  return postJson('/api/cloud/config/onedrive', { refreshToken, clientId, clientSecret, uploadPath });
+}
+
+export async function testOneDrive() {
+  return postJson('/api/cloud/test/onedrive', {});
+}
+
+export async function cloudOneDriveFiles(): Promise<CloudFile[]> {
+  const data = await getJson<{ files?: CloudFile[] }>('/api/cloud/files/onedrive');
+  return data.files ?? [];
+}
+
+export async function uploadBackupToOneDrive(backupName: string) {
+  return postJson(`/api/cloud/upload/onedrive/${encodeURIComponent(backupName)}`, {});
+}
+
+export async function deleteOneDriveFile(itemId: string) {
+  return del(`/api/cloud/files/onedrive/${encodeURIComponent(itemId)}`);
+}
+
 // --- Commands / logs ---------------------------------------------------------
 
 export async function runCommand(command: string) {

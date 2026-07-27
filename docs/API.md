@@ -633,32 +633,46 @@ Read routes AUTH; mutating/config-write routes ADMIN. This mod never performs Di
 
 **Handler:** `CloudStorageEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/CloudStorageEndpoint.java`
 
-`/status`, `/config` (GET), and file-listing GETs are AUTH; **all config-writes, tests, uploads, deletes are ADMIN.** Two providers: `dropbox`, `google`.
+`/status`, `/config` (GET), and file-listing GETs are AUTH; **all config-writes, tests, uploads, deletes are ADMIN.** Three providers: `dropbox`, `google`, `onedrive`.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/cloud/status` | AUTH | Both providers' config + quota |
+| GET | `/api/cloud/status` | AUTH | All three providers' config + quota |
 | GET | `/api/cloud/config` | AUTH | Masked config |
 | GET | `/api/cloud/files/dropbox` | AUTH | List Dropbox files |
 | GET | `/api/cloud/files/google` | AUTH | List Google Drive files |
+| GET | `/api/cloud/files/onedrive` | AUTH | List OneDrive files |
 | POST | `/api/cloud/config/dropbox` | ADMIN | Save Dropbox token/path |
 | POST | `/api/cloud/config/google` | ADMIN | Save Google OAuth creds |
+| POST | `/api/cloud/config/onedrive` | ADMIN | Save OneDrive OAuth creds |
 | POST | `/api/cloud/test/dropbox` | ADMIN | Test Dropbox connection |
 | POST | `/api/cloud/test/google` | ADMIN | Test Google connection |
+| POST | `/api/cloud/test/onedrive` | ADMIN | Test OneDrive connection |
 | POST | `/api/cloud/upload/dropbox/{backupId}` | ADMIN | Upload a backup zip to Dropbox |
 | POST | `/api/cloud/upload/google/{backupId}` | ADMIN | Upload a backup zip to Google |
+| POST | `/api/cloud/upload/onedrive/{backupId}` | ADMIN | Upload a backup zip to OneDrive |
 | DELETE | `/api/cloud/files/dropbox/{path}` | ADMIN | Delete Dropbox file (URL-encoded path) |
 | DELETE | `/api/cloud/files/google/{fileId}` | ADMIN | Delete Google file by ID |
+| DELETE | `/api/cloud/files/onedrive/{itemId}` | ADMIN | Delete OneDrive file by item ID |
 
 **POST `/api/cloud/config/dropbox`** — `{"accessToken":"...","uploadPath":"/NeoEssentials-Backups"}`.
 **POST `/api/cloud/config/google`** — `{"refreshToken":"...","clientId":"...","clientSecret":"...","folderId":"..."}`.
-**`{backupId}`** resolves to `<backupId>.zip` under the backup dir (sanitised). **Dropbox delete** takes a URL-encoded file *path*; **Google delete** takes a file *ID*.
+**POST `/api/cloud/config/onedrive`** — `{"refreshToken":"...","clientId":"...","clientSecret":"...","uploadPath":"/NeoEssentials-Backups"}`.
+Like Google Drive, OneDrive is an OAuth2 refresh-token flow — this mod never performs the OAuth
+consent itself; the admin registers an Azure/Entra app, obtains a refresh token themselves, and
+pastes it in. Unlike Google's opaque `folderId`, OneDrive addresses its folder by plain **path**
+(Microsoft Graph supports path-based addressing), so no folder-ID lookup step is needed.
+**`{backupId}`** resolves to `<backupId>.zip` under the backup dir (sanitised). **Dropbox delete**
+takes a URL-encoded file *path*; **Google** and **OneDrive delete** take a file/item *ID*.
+Uploads to OneDrive use a Graph upload session (chunked PUTs) rather than a single request —
+Graph's simple upload endpoint caps out at 4MB, too small for most real backup zips.
 
 **GET `/api/cloud/status`**:
 ```json
 { "success":true, "providers":{
   "dropbox":{"configured":true,"uploadPath":"/NeoEssentials-Backups","tokenMasked":"sl.****","quotaUsedMB":120,"quotaTotalMB":2048,"connected":true},
-  "googleDrive":{"configured":false,"folderId":"","clientId":""} } }
+  "googleDrive":{"configured":false,"folderId":"","clientId":""},
+  "oneDrive":{"configured":false,"uploadPath":"/NeoEssentials-Backups","clientId":""} } }
 ```
 
 ---

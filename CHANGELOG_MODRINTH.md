@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.22 — 2026-07-27
+
+### ✨ You Can Now Back Up to Microsoft OneDrive Too
+
+- Added OneDrive as a third backup destination, alongside Dropbox and Google Drive. If you've got a
+  lot of free space sitting on a personal OneDrive, you can now send your server backups there
+  straight from the dashboard.
+
+---
+
 ## 1.0.4+build.21 — 2026-07-23
 
 ### ✨ Internal Dashboard: 3D Player Renders
