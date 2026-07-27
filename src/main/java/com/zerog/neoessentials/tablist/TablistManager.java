@@ -411,7 +411,6 @@ public class TablistManager {
         try {
             String prefix = getPermissionPrefix(player, server);
             String suffix = getPermissionSuffix(player, server);
-            String group  = getPermissionGroup(player);
 
             // Append AFK suffix to the team suffix when AFK
             String effectiveSuffix = suffix;
@@ -421,16 +420,33 @@ public class TablistManager {
 
             // BTLP-style: encode group weight (or, with groupSections on, the exact column-grid
             // slot) into the team name for client-side sort order.
+            //
+            // A scoreboard team's prefix/suffix is ONE shared value applied to every member —
+            // there is no per-player variant. Naming the team purely after the group (e.g.
+            // "ne_default") therefore puts every player in that group on the same team object,
+            // so if any two of them ever resolve to different actual text (a per-player nametag
+            // override, differing AFK state, a per-user permission grant layered on top of the
+            // group, etc.), whichever player's update runs last on a given tick silently
+            // overwrites what every OTHER member of that team displays — which is exactly what
+            // made a fresh login look like it "reset" everyone else's suffix to the new player's
+            // (new connections are appended to the end of getPlayerList(), so they're typically
+            // processed last in updateAll()'s loop). Folding a hash of the actually-resolved
+            // prefix+suffix into the team key means players who'd show identical text still
+            // safely share one team (harmless, and fewer packets), but anyone whose resolved
+            // text differs gets their own team instead of clobbering someone else's.
             String rawTeamName;
             String columnKey = TablistLayout.getInstance().getColumnTeamKey(player.getUUID());
             if (columnKey != null) {
                 rawTeamName = columnKey;
-            } else if (TablistLayout.getInstance().isSortByGroupWeight()) {
-                int weight = getGroupWeight(player);
-                int sortKey = 9999 - Math.min(weight, 9999);
-                rawTeamName = String.format("ne_%04d_%s", sortKey, group);
             } else {
-                rawTeamName = "ne_" + group;
+                int contentTag = Objects.hash(prefix, effectiveSuffix) & 0xFFFFFF;
+                if (TablistLayout.getInstance().isSortByGroupWeight()) {
+                    int weight = getGroupWeight(player);
+                    int sortKey = 9999 - Math.min(weight, 9999);
+                    rawTeamName = String.format("ne_%04d_%06x", sortKey, contentTag);
+                } else {
+                    rawTeamName = String.format("ne_%06x", contentTag);
+                }
             }
             String teamName = rawTeamName.length() > 16 ? rawTeamName.substring(0, 16) : rawTeamName;
 

@@ -8,6 +8,17 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.23 — 2026-07-27
+
+### 🐛 Fix: Logging In Could Change Everyone Else's Tab Suffix
+
+- If two players in the same rank ever ended up with slightly different tab-list suffixes (an
+  AFK tag, a per-player override, etc.), a new player logging in could make everyone else's
+  suffix suddenly switch to match the new player's. Fixed — everyone's own suffix now displays
+  correctly no matter who else logs in.
+
+---
+
 ## 1.0.4-mc26.1.2+build.22 — 2026-07-27
 
 ### ✨ You Can Now Back Up to Microsoft OneDrive Too
