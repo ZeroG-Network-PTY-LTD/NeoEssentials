@@ -12,6 +12,26 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.22] — 2026-07-27
+
+### ✨ Cloud Backups: Microsoft OneDrive Support
+
+- Added OneDrive as a third cloud backup provider alongside Dropbox and Google Drive, on both
+  dashboards. Same paste-a-refresh-token setup flow as Google Drive (admin registers an Azure/Entra
+  app, obtains a refresh token via Microsoft's authorize+token endpoints, pastes clientId/clientSecret/
+  refreshToken/uploadPath into the Backups page) — no in-app OAuth consent flow.
+- Folder addressing uses a plain path string (default `/NeoEssentials-Backups`, like Dropbox's
+  `uploadPath`) rather than an opaque folder ID, since Microsoft Graph supports path-based addressing
+  directly.
+- Uploads use Graph's upload-session + chunked-PUT flow (`createUploadSession`, then byte-range PUTs
+  in 320 KiB-aligned chunks) instead of a single request, since Graph's simple upload endpoint caps
+  out at 4MB — too small for most backup zips.
+- New routes: `POST /api/cloud/config/onedrive`, `POST /api/cloud/test/onedrive`,
+  `GET /api/cloud/files/onedrive`, `POST /api/cloud/upload/onedrive/{id}`,
+  `DELETE /api/cloud/files/onedrive/{id}` (delete is ID-based, matching Google Drive's contract).
+
+---
+
 ## [1.0.4-mc26.1.2+build.21] — 2026-07-23
 
 ### ✨ Internal Dashboard: 3D Player Renders (Matches External)

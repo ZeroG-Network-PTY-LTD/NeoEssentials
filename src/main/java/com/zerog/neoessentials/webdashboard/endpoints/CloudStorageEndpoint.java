@@ -21,14 +21,19 @@ import java.util.List;
  *   GET    /api/cloud/config               – return current (masked) config
  *   POST   /api/cloud/config/dropbox       – save Dropbox access-token & path [ADMIN]
  *   POST   /api/cloud/config/google        – save Google Drive OAuth2 credentials [ADMIN]
+ *   POST   /api/cloud/config/onedrive      – save OneDrive OAuth2 credentials [ADMIN]
  *   POST   /api/cloud/test/dropbox         – test Dropbox connection [ADMIN]
  *   POST   /api/cloud/test/google          – test Google Drive connection [ADMIN]
+ *   POST   /api/cloud/test/onedrive        – test OneDrive connection [ADMIN]
  *   GET    /api/cloud/files/dropbox        – list Dropbox files
  *   GET    /api/cloud/files/google         – list Google Drive files
+ *   GET    /api/cloud/files/onedrive       – list OneDrive files
  *   POST   /api/cloud/upload/dropbox/{id}  – upload backup to Dropbox [ADMIN]
  *   POST   /api/cloud/upload/google/{id}   – upload backup to Google Drive [ADMIN]
+ *   POST   /api/cloud/upload/onedrive/{id} – upload backup to OneDrive [ADMIN]
  *   DELETE /api/cloud/files/dropbox/{path} – delete Dropbox file [ADMIN]
  *   DELETE /api/cloud/files/google/{id}    – delete Google Drive file [ADMIN]
+ *   DELETE /api/cloud/files/onedrive/{id}  – delete OneDrive file [ADMIN]
  */
 public class CloudStorageEndpoint implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(CloudStorageEndpoint.class);
@@ -58,28 +63,42 @@ public class CloudStorageEndpoint implements HttpHandler {
             } else if ("POST".equals(method) && path.endsWith("/config/google")) {
                 requireAdmin(exchange);
                 handleConfigGoogle(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/config/onedrive")) {
+                requireAdmin(exchange);
+                handleConfigOneDrive(exchange);
             } else if ("POST".equals(method) && path.endsWith("/test/dropbox")) {
                 requireAdmin(exchange);
                 handleTestDropbox(exchange);
             } else if ("POST".equals(method) && path.endsWith("/test/google")) {
                 requireAdmin(exchange);
                 handleTestGoogle(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/test/onedrive")) {
+                requireAdmin(exchange);
+                handleTestOneDrive(exchange);
             } else if ("GET".equals(method) && path.endsWith("/files/dropbox")) {
                 handleListDropbox(exchange);
             } else if ("GET".equals(method) && path.endsWith("/files/google")) {
                 handleListGoogle(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/files/onedrive")) {
+                handleListOneDrive(exchange);
             } else if ("POST".equals(method) && path.contains("/upload/dropbox/")) {
                 requireAdmin(exchange);
                 handleUploadDropbox(exchange, path);
             } else if ("POST".equals(method) && path.contains("/upload/google/")) {
                 requireAdmin(exchange);
                 handleUploadGoogle(exchange, path);
+            } else if ("POST".equals(method) && path.contains("/upload/onedrive/")) {
+                requireAdmin(exchange);
+                handleUploadOneDrive(exchange, path);
             } else if ("DELETE".equals(method) && path.contains("/files/dropbox/")) {
                 requireAdmin(exchange);
                 handleDeleteDropbox(exchange, path);
             } else if ("DELETE".equals(method) && path.contains("/files/google/")) {
                 requireAdmin(exchange);
                 handleDeleteGoogle(exchange, path);
+            } else if ("DELETE".equals(method) && path.contains("/files/onedrive/")) {
+                requireAdmin(exchange);
+                handleDeleteOneDrive(exchange, path);
             } else {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown cloud endpoint\"}");
             }
@@ -143,6 +162,28 @@ public class CloudStorageEndpoint implements HttpHandler {
                 sb.append(",\"connected\":false,\"error\":\"").append(esc(e.getMessage())).append("\"");
             }
         }
+        sb.append("},");
+
+        // OneDrive
+        sb.append("\"oneDrive\":{");
+        sb.append("\"configured\":").append(csm.isOneDriveConfigured()).append(",");
+        sb.append("\"uploadPath\":\"").append(esc(csm.getOneDrivePath())).append("\",");
+        sb.append("\"clientId\":\"").append(esc(csm.getOneDriveClientId())).append("\"");
+        if (csm.isOneDriveConfigured()) {
+            try {
+                JsonObject quota = csm.getOneDriveQuota();
+                if (quota != null && quota.has("storageQuota")) {
+                    JsonObject q = quota.getAsJsonObject("storageQuota");
+                    long limit  = q.has("limit")   ? q.get("limit").getAsLong()  : 0L;
+                    long usage  = q.has("usage")   ? q.get("usage").getAsLong()  : 0L;
+                    sb.append(",\"quotaUsedMB\":").append(usage / 1048576L);
+                    sb.append(",\"quotaTotalMB\":").append(limit / 1048576L);
+                    sb.append(",\"connected\":true");
+                }
+            } catch (Exception e) {
+                sb.append(",\"connected\":false,\"error\":\"").append(esc(e.getMessage())).append("\"");
+            }
+        }
         sb.append("}");
 
         sb.append("}}");
@@ -160,7 +201,11 @@ public class CloudStorageEndpoint implements HttpHandler {
             + "\"googleDrive\":{\"configured\":" + csm.isGoogleDriveConfigured() + ","
             + "\"clientId\":\"" + esc(csm.getGoogleClientId()) + "\","
             + "\"folderId\":\"" + esc(csm.getGoogleFolderId()) + "\","
-            + "\"refreshTokenMasked\":\"" + esc(csm.getGoogleRefreshMasked()) + "\"}"
+            + "\"refreshTokenMasked\":\"" + esc(csm.getGoogleRefreshMasked()) + "\"},"
+            + "\"oneDrive\":{\"configured\":" + csm.isOneDriveConfigured() + ","
+            + "\"clientId\":\"" + esc(csm.getOneDriveClientId()) + "\","
+            + "\"uploadPath\":\"" + esc(csm.getOneDrivePath()) + "\","
+            + "\"refreshTokenMasked\":\"" + esc(csm.getOneDriveTokenMasked()) + "\"}"
             + "}";
         sendJson(exchange, 200, body);
     }
@@ -187,6 +232,19 @@ public class CloudStorageEndpoint implements HttpHandler {
         sendJson(exchange, 200, json(true, "Google Drive configuration saved"));
     }
 
+    private void handleConfigOneDrive(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        CloudStorageManager csm = CloudStorageManager.getInstance();
+        csm.setOneDriveCredentials(
+            body.has("refreshToken")  ? body.get("refreshToken").getAsString()  : "",
+            body.has("clientId")      ? body.get("clientId").getAsString()      : "",
+            body.has("clientSecret")  ? body.get("clientSecret").getAsString()  : "",
+            body.has("uploadPath")    ? body.get("uploadPath").getAsString()     : ""
+        );
+        csm.saveConfig();
+        sendJson(exchange, 200, json(true, "OneDrive configuration saved"));
+    }
+
     // ── Test connections ───────────────────────────────────────────────────────
 
     private void handleTestDropbox(HttpExchange exchange) throws Exception {
@@ -199,6 +257,13 @@ public class CloudStorageEndpoint implements HttpHandler {
     private void handleTestGoogle(HttpExchange exchange) throws Exception {
         JsonObject quota = CloudStorageManager.getInstance().getGoogleDriveQuota();
         String resp = "{\"success\":true,\"message\":\"Google Drive connection successful\","
+            + "\"quota\":" + quota.toString() + "}";
+        sendJson(exchange, 200, resp);
+    }
+
+    private void handleTestOneDrive(HttpExchange exchange) throws Exception {
+        JsonObject quota = CloudStorageManager.getInstance().getOneDriveQuota();
+        String resp = "{\"success\":true,\"message\":\"OneDrive connection successful\","
             + "\"quota\":" + quota.toString() + "}";
         sendJson(exchange, 200, resp);
     }
@@ -218,6 +283,17 @@ public class CloudStorageEndpoint implements HttpHandler {
 
     private void handleListGoogle(HttpExchange exchange) throws Exception {
         List<JsonObject> files = CloudStorageManager.getInstance().listGoogleDriveFiles();
+        StringBuilder sb = new StringBuilder("{\"success\":true,\"count\":").append(files.size()).append(",\"files\":[");
+        for (int i = 0; i < files.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append(files.get(i).toString());
+        }
+        sb.append("]}");
+        sendJson(exchange, 200, sb.toString());
+    }
+
+    private void handleListOneDrive(HttpExchange exchange) throws Exception {
+        List<JsonObject> files = CloudStorageManager.getInstance().listOneDriveFiles();
         StringBuilder sb = new StringBuilder("{\"success\":true,\"count\":").append(files.size()).append(",\"files\":[");
         for (int i = 0; i < files.size(); i++) {
             if (i > 0) sb.append(",");
@@ -249,6 +325,16 @@ public class CloudStorageEndpoint implements HttpHandler {
             + "\"file\":" + meta.toString() + "}");
     }
 
+    private void handleUploadOneDrive(HttpExchange exchange, String path) throws Exception {
+        String backupId = lastSegment(path, "/upload/onedrive/");
+        Path zipFile   = resolveBackupFile(backupId);
+        String fileName = backupId + ".zip";
+
+        JsonObject meta = CloudStorageManager.getInstance().uploadToOneDrive(zipFile, fileName);
+        sendJson(exchange, 200, "{\"success\":true,\"message\":\"Uploaded to OneDrive successfully\","
+            + "\"file\":" + meta.toString() + "}");
+    }
+
     // ── Delete ─────────────────────────────────────────────────────────────────
 
     private void handleDeleteDropbox(HttpExchange exchange, String path) throws Exception {
@@ -264,6 +350,12 @@ public class CloudStorageEndpoint implements HttpHandler {
         String fileId = path.substring(path.lastIndexOf('/') + 1);
         CloudStorageManager.getInstance().deleteFromGoogleDrive(fileId);
         sendJson(exchange, 200, json(true, "Deleted from Google Drive: " + fileId));
+    }
+
+    private void handleDeleteOneDrive(HttpExchange exchange, String path) throws Exception {
+        String itemId = path.substring(path.lastIndexOf('/') + 1);
+        CloudStorageManager.getInstance().deleteFromOneDrive(itemId);
+        sendJson(exchange, 200, json(true, "Deleted from OneDrive: " + itemId));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

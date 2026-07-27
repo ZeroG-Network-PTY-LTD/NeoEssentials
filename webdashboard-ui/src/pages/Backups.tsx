@@ -23,6 +23,7 @@ export default function Backups() {
   const [cloudConfigState, setCloudConfigState] = useState<CloudConfig | null>(null);
   const [dropboxFiles, setDropboxFiles] = useState<CloudFile[]>([]);
   const [googleFiles, setGoogleFiles] = useState<CloudFile[]>([]);
+  const [oneDriveFiles, setOneDriveFiles] = useState<CloudFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [targets, setTargets] = useState<string[]>([]);
   const [backupName, setBackupName] = useState('');
@@ -33,6 +34,10 @@ export default function Backups() {
   const [googleClientSecret, setGoogleClientSecret] = useState('');
   const [googleRefreshToken, setGoogleRefreshToken] = useState('');
   const [googleFolderId, setGoogleFolderId] = useState('');
+  const [oneDriveClientId, setOneDriveClientId] = useState('');
+  const [oneDriveClientSecret, setOneDriveClientSecret] = useState('');
+  const [oneDriveRefreshToken, setOneDriveRefreshToken] = useState('');
+  const [oneDrivePath, setOneDrivePath] = useState('/NeoEssentials-Backups');
 
   const refresh = () => {
     const promises: [Promise<BackupStatus>, Promise<BackupSnapshot[]>, Promise<CloudStatus | null>, Promise<CloudConfig | null>] = [
@@ -53,6 +58,7 @@ export default function Backups() {
     if (isAdmin) {
       mcApi.cloudDropboxFiles().then(setDropboxFiles);
       mcApi.cloudGoogleFiles().then(setGoogleFiles);
+      mcApi.cloudOneDriveFiles().then(setOneDriveFiles);
     }
   };
 
@@ -145,6 +151,28 @@ export default function Backups() {
     }
   };
 
+  const saveOneDrive = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await mcApi.configureOneDrive(oneDriveRefreshToken, oneDriveClientId, oneDriveClientSecret, oneDrivePath);
+      showToast('Saved OneDrive config.');
+      setOneDriveRefreshToken('');
+      setOneDriveClientSecret('');
+      refresh();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Save failed.', true);
+    }
+  };
+
+  const testOneDrive = async () => {
+    try {
+      await mcApi.testOneDrive();
+      showToast('OneDrive connection OK.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Test failed.', true);
+    }
+  };
+
   const uploadDropbox = async (name: string) => {
     try {
       await mcApi.uploadBackupToDropbox(name);
@@ -158,6 +186,15 @@ export default function Backups() {
     try {
       await mcApi.uploadBackupToGoogleDrive(name);
       showToast(`Uploaded '${name}' to Google Drive.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Upload failed.', true);
+    }
+  };
+
+  const uploadOneDrive = async (name: string) => {
+    try {
+      await mcApi.uploadBackupToOneDrive(name);
+      showToast(`Uploaded '${name}' to OneDrive.`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Upload failed.', true);
     }
@@ -177,6 +214,16 @@ export default function Backups() {
     if (!confirm('Delete this file from Google Drive?')) return;
     try {
       await mcApi.deleteGoogleDriveFile(id);
+      refresh();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Delete failed.', true);
+    }
+  };
+
+  const deleteOneDriveFile = async (id: string) => {
+    if (!confirm('Delete this file from OneDrive?')) return;
+    try {
+      await mcApi.deleteOneDriveFile(id);
       refresh();
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Delete failed.', true);
@@ -238,6 +285,15 @@ export default function Backups() {
                         Drive
                       </button>
                     )}
+                    {cloudStatusState?.providers.oneDrive.configured && (
+                      <button
+                        onClick={() => uploadOneDrive(s.name)}
+                        className="flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-[var(--radius)] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] transition-colors hover:bg-[var(--mc-bg-surface)]"
+                      >
+                        <CloudUpload size={12} strokeWidth={2} />
+                        OneDrive
+                      </button>
+                    )}
                     <button
                       onClick={() => restore(s.name)}
                       className="flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-[var(--radius)] bg-[var(--mc-moss-500)] text-white transition-colors hover:bg-[var(--mc-moss-600,var(--mc-moss-500))]"
@@ -292,7 +348,7 @@ export default function Backups() {
       </div>
 
       {isAdmin && cloudConfigState && (
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-3 gap-5">
           <Card title="Dropbox" icon={Cloud} accent="cyan" padded>
             <div className="flex flex-col gap-3">
               <Badge variant={cloudConfigState.dropbox.configured ? 'moss' : 'neutral'} className="w-fit">
@@ -383,6 +439,62 @@ export default function Backups() {
                     <div key={f.id ?? f.name} className="flex items-center text-[12px] font-data rounded-[6px] px-2 py-1 transition-colors hover:bg-[var(--mc-bg-surface-raised)]">
                       <span className="flex-1 truncate">{f.name}</span>
                       <button onClick={() => deleteGoogleFile((f.id as string) ?? '')} className="text-[var(--mc-ember-500)] transition-colors hover:text-[var(--mc-ember-400)]">
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card title="OneDrive" icon={Cloud} accent="moss" padded>
+            <div className="flex flex-col gap-3">
+              <Badge variant={cloudConfigState.oneDrive.configured ? 'moss' : 'neutral'} className="w-fit">
+                {cloudConfigState.oneDrive.configured ? `Configured (${cloudConfigState.oneDrive.uploadPath})` : 'Not configured'}
+              </Badge>
+              <form onSubmit={saveOneDrive} className="flex flex-col gap-2">
+                <input
+                  placeholder="Client ID"
+                  value={oneDriveClientId}
+                  onChange={(e) => setOneDriveClientId(e.target.value)}
+                  className="font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)]"
+                />
+                <input
+                  type="password"
+                  placeholder="Client secret"
+                  value={oneDriveClientSecret}
+                  onChange={(e) => setOneDriveClientSecret(e.target.value)}
+                  className="font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)]"
+                />
+                <input
+                  type="password"
+                  placeholder="Refresh token"
+                  value={oneDriveRefreshToken}
+                  onChange={(e) => setOneDriveRefreshToken(e.target.value)}
+                  className="font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)]"
+                />
+                <input
+                  placeholder="Upload path"
+                  value={oneDrivePath}
+                  onChange={(e) => setOneDrivePath(e.target.value)}
+                  className="font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)]"
+                />
+                <div className="flex gap-2">
+                  <button type="submit" className="btn-pop text-[13px] px-3 py-1.5 rounded-[var(--radius)] bg-[var(--mc-cyan-500)] text-[#0a1620] font-medium transition-colors hover:bg-[var(--mc-cyan-400)]">
+                    Save
+                  </button>
+                  <button type="button" onClick={testOneDrive} className="text-[13px] px-3 py-1.5 rounded-[var(--radius)] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] transition-colors hover:bg-[var(--mc-bg-surface)]">
+                    Test
+                  </button>
+                </div>
+              </form>
+              {oneDriveFiles.length > 0 && (
+                <div className="flex flex-col gap-1 mt-1">
+                  {oneDriveFiles.map((f) => (
+                    <div key={f.id ?? f.name} className="flex items-center text-[12px] font-data rounded-[6px] px-2 py-1 transition-colors hover:bg-[var(--mc-bg-surface-raised)]">
+                      <span className="flex-1 truncate">{f.name}</span>
+                      <button onClick={() => deleteOneDriveFile((f.id as string) ?? '')} className="text-[var(--mc-ember-500)] transition-colors hover:text-[var(--mc-ember-400)]">
                         Delete
                       </button>
                     </div>
