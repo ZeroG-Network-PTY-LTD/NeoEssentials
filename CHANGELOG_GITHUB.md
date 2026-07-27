@@ -12,6 +12,29 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.24] — 2026-07-27
+
+### ✨ Click a Player's Name in Chat to Open Their Dashboard Profile
+
+- Player names in chat (when `chat.clickablePlayerNames` is on) now carry a small clickable
+  " ↗" link icon that opens the player's public, no-login moderation-lookup profile
+  (`/lookup?player=<name>`) in a browser — works whether the dashboard is run in
+  `webDashboard.mode` `"external"` or `"internal"`/`"both"`.
+- New config: `webDashboard.publicUrl` — the admin-set public-facing base URL for the mod's
+  own bundled ("internal"/"both") dashboard, since the mod can't reliably auto-detect this
+  behind NAT/port-forwarding/reverse proxies. In `"external"` mode, the already-paired
+  `webDashboard.externalDashboard.url` (set via `/dashboard pair`) is reused instead — no new
+  setup needed there. New `chat.showProfileLinkInChat` toggle (default on); silently does
+  nothing if neither URL is configured.
+- New `ConfigManager.getPlayerProfileUrl(username)` centralizes the URL-building logic
+  (prefers the paired external dashboard URL, falls back to the internal `publicUrl`).
+- Fixed the internal (bundled React) dashboard's `/lookup` page to actually read a
+  `?player=` query-string parameter and run the lookup immediately on load — it previously
+  ignored the parameter entirely and only searched via the on-page form. The external
+  (Laravel) dashboard's `/lookup` route already supported this server-side.
+
+---
+
 ## [1.0.4-mc26.1.2+build.23] — 2026-07-27
 
 ### 🐛 Fix: Logging In Could Change Everyone Else's Tab-List Suffix

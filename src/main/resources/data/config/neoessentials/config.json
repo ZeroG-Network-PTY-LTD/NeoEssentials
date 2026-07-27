@@ -342,22 +342,29 @@
     //               route is not registered at all (default). Use this if you run
     //               a separate dashboard app (e.g. NeoEssentials-Dashboard, a
     //               Laravel app) that talks to this API from outside.
-    //  "internal" — serve the mod's own bundled dashboard UI at "/" AND the REST API
-    //               under "/api/*". NOTE: no built-in UI currently ships with the
-    //               mod — only use this once you've placed a built dashboard at
-    //               src/main/resources/webdashboard/index.html yourself, otherwise
-    //               requests to "/" will fail.
+    //  "internal" — serve the mod's own bundled dashboard UI (webdashboard-ui) at "/"
+    //               AND the REST API under "/api/*".
     //  "both"     — serve both (same as "internal", kept as an explicit alias for
     //               clarity when you intentionally use the built-in UI AND point an
     //               external app at the same API).
     "mode": "external",
+
+    // Public-facing base URL for the mod's OWN bundled dashboard (mode "internal"/"both"),
+    // e.g. "http://your.server.ip:8080" or "https://mc.example.com" if reverse-proxied.
+    // The mod cannot reliably auto-detect this — it may sit behind NAT/port-forwarding or a
+    // proxy, so bindAddress/port alone aren't enough to build a browser-usable link. Leave
+    // empty to disable features that need a public dashboard link (e.g. the in-chat
+    // "view profile" link on player names) when running in "internal" mode. Not needed at
+    // all in "external" mode — externalDashboard.url below is used instead.
+    "publicUrl": "",
 
     // Populated automatically by running `/dashboard pair <dashboardUrl> <code>` in-game/
     // console (get the code from the dashboard's own Configuration page) — never hand-type
     // these. Once paired, url/token push a notification (Authorization: Bearer <token>)
     // whenever a dashboard_user is created/updated/deleted here, so the external dashboard
     // can mirror the change into its own user table automatically. Empty/absent = not
-    // paired yet. Use /dashboard unpair to clear.
+    // paired yet. Use /dashboard unpair to clear. This URL is also reused to build the
+    // in-chat "view profile" link on player names when running in "external" mode.
     "externalDashboard": {
       "url": "",
       "token": "",
@@ -832,6 +839,12 @@
     "enableChatEnhancements": true,
     // Make player names in chat clickable (hover for stats, click to message)
     "clickablePlayerNames": true,
+    // Append a small clickable link icon after clickable player names in chat that opens
+    // their public dashboard profile (/lookup?player=<name>) in a browser. Requires
+    // clickablePlayerNames above AND a resolvable dashboard URL — webDashboard.externalDashboard.url
+    // (set via /dashboard pair) in "external" mode, or webDashboard.publicUrl in "internal" mode.
+    // Silently has no effect if neither URL is configured.
+    "showProfileLinkInChat": true,
     // Automatically linkify URLs in chat
     "autoLinkUrls": true,
     // Allow [item] placeholder to show the held item in chat

@@ -732,6 +732,24 @@ public class ChatFormatter {
                 ((MutableComponent) MessageUtil.component("commands.neoessentials.chat.click_to_message_icon", player.getName().getString()))
                     .withStyle(ChatFormatting.GRAY)))
         );
+
+        // A Style can only carry one ClickEvent, and the name itself already carries the
+        // SUGGEST_COMMAND "/msg" action above — so the "view profile" link is a separate,
+        // adjacent component (a small icon) rather than replacing that behavior.
+        if (isProfileLinkInChatEnabled()) {
+            String profileUrl = com.zerog.neoessentials.config.ConfigManager.getPlayerProfileUrl(player.getName().getString());
+            if (profileUrl != null) {
+                MutableComponent linkIcon = Component.literal(" ↗").withStyle(style -> style
+                    .withColor(ChatFormatting.BLUE)
+                    .withClickEvent(com.zerog.neoessentials.util.ClickEventCompat.create(ClickEvent.Action.OPEN_URL, profileUrl))
+                    .withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
+                        ((MutableComponent) MessageUtil.component("commands.neoessentials.chat.click_to_view_profile", player.getName().getString()))
+                            .withStyle(ChatFormatting.GRAY)))
+                );
+                comp.append(linkIcon);
+            }
+        }
+
         return comp;
     }
 
@@ -883,6 +901,22 @@ public class ChatFormatter {
             var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
             if (chatConfig.has("clickablePlayerNames")) {
                 return chatConfig.get("clickablePlayerNames").getAsBoolean();
+            }
+        } catch (Exception ignored) {
+            // Default to enabled on any error
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the in-chat "view profile" link icon is enabled.
+     * Config key: chat.showProfileLinkInChat
+     */
+    private static boolean isProfileLinkInChatEnabled() {
+        try {
+            var chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("chat");
+            if (chatConfig.has("showProfileLinkInChat")) {
+                return chatConfig.get("showProfileLinkInChat").getAsBoolean();
             }
         } catch (Exception ignored) {
             // Default to enabled on any error
