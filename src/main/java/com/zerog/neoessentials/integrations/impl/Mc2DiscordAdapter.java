@@ -59,9 +59,39 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
         if (!isReady()) return;
         try {
             String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
-            MessageManager.sendChatMessage(cleanMessage, player.getName().getString(), avatarFor(player)).subscribe();
+            if (discordChannelId != null && !discordChannelId.isBlank()) {
+                // Same rationale as SDLinkAdapter's equivalent fix: sendChatMessage() always
+                // posts wherever Mc2Discord's OWN config routes chat, ignoring this parameter
+                // entirely. Route directly to the configured channel instead, or a channel
+                // NeoEssentials intends to be distinct (e.g. a private staff channel) would
+                // silently end up wherever Mc2Discord's default chat channel is instead.
+                sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
+            } else {
+                MessageManager.sendChatMessage(cleanMessage, player.getName().getString(), avatarFor(player)).subscribe();
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to relay chat message via Mc2Discord: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean sendToChannel(String channelId, String message) {
+        if (!isReady()) return false;
+        try {
+            // createPlainTextMessage's 3rd parameter (Possible<String>) is NOT a channel/target
+            // override — verified by reading the compiled method body — passing it non-absent
+            // instead re-runs the message through Mc2Discord's OWN discord_chat_format template
+            // (meant for console/system-style broadcasts with a synthetic zero-UUID "player").
+            // Possible.absent() sends the message text completely unmodified to the given
+            // channel via the underlying Discord4J client, which is what we want here.
+            fr.denisd3d.mc2discord.shadow.discord4j.common.util.Snowflake snowflake =
+                fr.denisd3d.mc2discord.shadow.discord4j.common.util.Snowflake.of(channelId);
+            MessageManager.createPlainTextMessage(snowflake, message,
+                fr.denisd3d.mc2discord.shadow.discord4j.discordjson.possible.Possible.absent(), false).subscribe();
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to send message to Discord channel {} via Mc2Discord: {}", channelId, e.getMessage());
+            return false;
         }
     }
 

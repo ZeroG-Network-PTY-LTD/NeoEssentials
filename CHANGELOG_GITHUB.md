@@ -11,6 +11,33 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.27] — 2026-07-27
+
+### 🐛 Same Discord Channel-Routing Fix Extended to Mc2Discord and DCIntegration
+
+- Following the SDLink fix in build.26, `Mc2DiscordAdapter#onPlayerChat` had the identical bug —
+  a configured `discord.channelId` was silently ignored, always posting via Mc2Discord's own
+  default chat-relay routing instead. Now routes directly to the configured channel via
+  `MessageManager.createPlainTextMessage(...)` (verified against Mc2Discord's compiled bytecode:
+  its 3rd `Possible<String>` parameter is NOT a channel/target override — passing it non-absent
+  instead re-runs the message through Mc2Discord's own `discord_chat_format` template meant for
+  console-style broadcasts; `Possible.absent()` sends the text unmodified, which is what's used
+  here).
+- `DCIntegrationAdapter` previously implemented no chat relay at all (by design — it relays chat
+  entirely through its own vanilla-level mixins with no event NeoEssentials can hook into cleanly
+  for the default case). `onPlayerChat` now activates *only* when a channel has a specific
+  `discord.channelId` configured, sending directly via `JDA#getTextChannelById(...)` — additive,
+  not duplicative, since a blank `channelId` still does nothing (unchanged), avoiding a
+  double-post against DCIntegration's own native relay.
+- Both fixes are based on reading each mod's compiled public API directly — neither Mc2Discord nor
+  DCIntegration is installed in this dev environment, so unlike SDLink's fix, these were **not**
+  live-tested against a running instance.
+- Documented both mods' Discord-interoperability caveats (their own native "relay everything"
+  behavior can still duplicate/leak messages the same way SDLink's did) on the
+  [Chat Channels wiki page](docs/Wiki/ChatChannels.md#discord-interoperability-avoiding-duplicate--leaked-messages).
+
+---
+
 ## [1.0.4+build.26] — 2026-07-27
 
 ### ✨ New `{channel}` Placeholder, Plus Real Fixes to Discord Chat Relay
