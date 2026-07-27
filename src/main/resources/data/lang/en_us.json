@@ -1936,6 +1936,7 @@
     "commands.neoessentials.chat.fallback_format": "{0}: {1}",
     "commands.neoessentials.chat.click_to_message": "Click to message {0}",
     "commands.neoessentials.chat.click_to_message_icon": "✉ Click to message {0}",
+    "commands.neoessentials.chat.click_to_view_profile": "↗ View {0}'s dashboard profile",
     "commands.neoessentials.kits.starter_kit_received": "You have received a starter kit!",
     "commands.neoessentials.tablist.preview_active": "§aPreviewing your tablist header/footer.",
     "commands.neoessentials.tablist.info": "§6§lNeoEssentials Tablist (BTLP-style) §8—\n§7Status: §{0}  §7Mode: §e{1}\n§7Header frames: §e{2} §7| Footer frames: §e{3}\n§7Refresh: §e{4}§7t §8| §7Sort by group: §e{5}\n§7Columns: §e{6} §8| §7PlayersByServer: §e{7}\n§7Fake entries: §e{8}  §7Hide vanished: §e{9}\n§7Proxy: §{10}{11}\n§7Group overrides: {12}\n§7Config: §fconfig/neoessentials/tablist.json",

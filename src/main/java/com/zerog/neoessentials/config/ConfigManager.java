@@ -1748,6 +1748,45 @@ public class ConfigManager {
         return "http://localhost:" + getWebDashboardPort();
     }
 
+    /**
+     * Admin-configured public-facing base URL for the mod's OWN bundled dashboard
+     * (webDashboard.publicUrl) — e.g. {@code http://your.server.ip:8080}. Unlike
+     * {@link #getWebDashboardUrl()}, this is meant to actually be reachable by players'
+     * browsers, not just the server operator's own machine; there is no way to auto-detect
+     * it reliably (NAT/port-forwarding/reverse proxies), so it must be hand-set. Empty/absent
+     * if not configured.
+     */
+    public static String getWebDashboardPublicUrl() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("publicUrl")) {
+                String val = dashboard.get("publicUrl").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val.trim();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Builds a public, no-login "view profile" URL for {@code username} (the moderation-lookup
+     * page at {@code /lookup?player=<name>}, on whichever dashboard is actually reachable),
+     * or {@code null} if no dashboard base URL is configured. Prefers the paired external
+     * dashboard's URL ({@link #getExternalDashboardUrl()}, set via {@code /dashboard pair})
+     * since that's reachable by definition once paired; falls back to the admin-set
+     * {@link #getWebDashboardPublicUrl()} for the mod's own bundled ("internal"/"both") UI.
+     */
+    public static String getPlayerProfileUrl(String username) {
+        String base = getExternalDashboardUrl();
+        if (base == null || base.isEmpty()) {
+            base = getWebDashboardPublicUrl();
+        }
+        if (base == null || base.isEmpty()) return null;
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        String encodedName = java.net.URLEncoder.encode(username, java.nio.charset.StandardCharsets.UTF_8);
+        return base + "/lookup?player=" + encodedName;
+    }
+
     // ── Storage backend (storage.*) ──────────────────────────────────────────
 
     /** Returns storage.type — "json" (default), "yaml", "sqlite", or "mysql". */

@@ -6,6 +6,20 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.24 — 2026-07-27
+
+### ✨ Click a Player's Name in Chat to Open Their Dashboard Profile
+
+- Player names in chat now show a small clickable link icon that opens that player's public
+  profile (bans/mutes/kicks/warnings) on your dashboard, right in a browser. Works whether
+  you use the external (Laravel) dashboard or the mod's own built-in one.
+- If you use the built-in dashboard, set the new `webDashboard.publicUrl` config to your
+  server's public address so the link actually works for players (e.g.
+  `http://your.server.ip:8090`). If you use the external dashboard, nothing extra to set up —
+  it already knows its own address.
+
+---
+
 ## 1.0.4+build.23 — 2026-07-27
 
 ### 🐛 Fix: Logging In Could Change Everyone Else's Tab Suffix

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 import PlayerRender from '../components/PlayerRender';
@@ -95,14 +95,11 @@ function SectionCard({ icon: Icon, title, count, children }: { icon: typeof Shie
 
 export default function PublicLookup() {
   const { token } = useAuth();
-  const [name, setName] = useState('');
+  const [searchParams] = useSearchParams();
+  const [name, setName] = useState(() => searchParams.get('player') ?? '');
   const [query, setQuery] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
   const [recent, setRecent] = useState<RecentEntry[]>([]);
-
-  useEffect(() => {
-    mcApi.publicRecent<RecentEntry>().then(setRecent);
-  }, []);
 
   const runLookup = async (playerName: string) => {
     const q = playerName.trim();
@@ -114,6 +111,15 @@ export default function PublicLookup() {
       setResult(null);
     }
   };
+
+  useEffect(() => {
+    mcApi.publicRecent<RecentEntry>().then(setRecent);
+    // Deep-linked from in-game (e.g. the chat "view profile" click) as /lookup?player=<name> —
+    // run the lookup immediately instead of requiring the player to re-type the name.
+    const initial = searchParams.get('player');
+    if (initial && initial.trim()) runLookup(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
