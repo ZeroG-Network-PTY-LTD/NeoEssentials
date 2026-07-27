@@ -11,6 +11,27 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.23] — 2026-07-27
+
+### 🐛 Fix: Logging In Could Change Everyone Else's Tab-List Suffix
+
+- `TablistManager#updatePlayerTeam` assigned a player's scoreboard team purely from their
+  permission group (and optionally weight) — e.g. every "default"-group player shared one team
+  named `ne_default`. A scoreboard team's prefix/suffix is one value shared by every member, so
+  if any two players in that "same" team ever resolved to different actual text (a per-player
+  nametag override, differing AFK state, a per-user permission grant layered on top of the
+  group, etc.), whichever player's update ran last on a given tick silently overwrote what every
+  OTHER member of that team displayed. New connections are appended to the end of
+  `getPlayerList()`, so they're typically processed last — making a fresh login look like it
+  reset everyone else's suffix to the new player's.
+- Fixed by folding a hash of each player's actually-resolved prefix+suffix into the team key, so
+  only players who'd show identical text ever share a team — anyone whose resolved text differs
+  now gets their own team instead of clobbering someone else's. Existing sort behavior (by group
+  weight) is unaffected; only the previously-shared "same group, different actual suffix" case
+  changes.
+
+---
+
 ## [1.0.4+build.22] — 2026-07-27
 
 ### ✨ Cloud Backups: Microsoft OneDrive Support
