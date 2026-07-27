@@ -114,6 +114,29 @@ of what `channelId` said. That part is now fixed; the "SDLink's own native relay
 elsewhere" part above is a separate, unavoidable interoperability issue that only the
 `playerMessages = false` fix resolves.
 
+**Mc2Discord** has the same class of channel-routing fix applied (a configured `discord.channelId`
+is now honored instead of silently ignored). Mc2Discord's own core purpose is also "relay chat to
+Discord automatically," so the same double-post risk for a channel using a blank `channelId`
+almost certainly applies — check Mc2Discord's own config for a way to disable its automatic relay
+for channels NeoEssentials already handles explicitly, the same way `playerMessages = false` does
+for SDLink. NeoEssentials does not currently ship a startup diagnostic for Mc2Discord's config the
+way it does for SDLink's.
+
+**DCIntegration** works differently: it relays chat entirely through its own vanilla-level mixins,
+with no supported hook for NeoEssentials to intercept or suppress. Because of that,
+`onPlayerChat` only ever acts for a DCIntegration setup when a channel has a specific
+`discord.channelId` configured — a channel left blank gets **no** explicit relay from
+NeoEssentials at all (trusting DCIntegration's own native relay to handle it, avoiding a
+duplicate). This means a channel with a real `channelId` set (e.g. a private staff channel) is
+correctly posted there by NeoEssentials, but DCIntegration's own native relay may *also* still
+post that same message to its own configured channel (`general.botChannel` /
+`advanced.chatOutputChannelID`) regardless, since it has no concept of NeoEssentials channels
+either — check DCIntegration's own config if you see a private channel still leaking elsewhere.
+
+> Mc2Discord's and DCIntegration's channel-routing fixes are based on reading their compiled
+> public API directly, not live-tested against a running instance of either mod (unlike SDLink,
+> which was verified live) — if you hit anything unexpected with either, please report it.
+
 ---
 
 ## Permissions

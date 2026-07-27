@@ -8,6 +8,19 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.27 — 2026-07-27
+
+### 🐛 Same Discord Fix Extended to Mc2Discord and DCIntegration
+
+- If you use Mc2Discord instead of Simple Discord Link, it had the same channel-privacy bug fixed
+  last update — a configured private channel ID was being ignored. Fixed the same way.
+- DCIntegration now also supports sending a specific NeoEssentials chat channel (like staff) to
+  its own dedicated Discord channel, which wasn't possible before at all.
+- Neither of these was tested against a live Mc2Discord/DCIntegration setup (unlike the earlier
+  Simple Discord Link fix) — please report anything unexpected.
+
+---
+
 ## 1.0.4-mc26.1.2+build.26 — 2026-07-27
 
 ### ✨ New Chat Channel Placeholder, Plus Discord Relay Fixes
