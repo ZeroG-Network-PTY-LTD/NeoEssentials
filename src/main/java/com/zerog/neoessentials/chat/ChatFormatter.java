@@ -384,6 +384,9 @@ public class ChatFormatter {
         if (text.contains("{max}")) {
             text = text.replace("{max}", String.valueOf(server.getMaxPlayers()));
         }
+        if (text.contains("{channel}")) {
+            text = text.replace("{channel}", ChatHandler.getEffectiveChannel(player.getUUID()));
+        }
         if (text.contains("{rank_weight}")) {
             int weight = com.zerog.neoessentials.tablist.TablistManager.getInstance().getGroupWeight(player);
             text = text.replace("{rank_weight}", String.valueOf(weight));

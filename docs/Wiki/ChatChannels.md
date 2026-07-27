@@ -30,11 +30,14 @@ Each channel entry (keyed by an arbitrary name, e.g. `"local"`, `"global"`, `"st
 | `prefix` | If a chat message starts with this literal prefix, it's routed to this channel for that one message (e.g. typing `!hello` in the default config routes to `global`) |
 | `default` | If `true`, this channel is used when a player hasn't explicitly switched channels and their message has no matching prefix |
 | `discord.enabled` | Relay messages sent in this channel to Discord |
-| `discord.channelId` | Discord channel ID to relay to (blank = default/fallback Discord channel) |
+| `discord.channelId` | Discord channel ID to relay to (blank = the Discord bridge mod's own default/fallback chat channel). When set, the message is sent as a plain `PlayerName: message` line directly to that channel — it does **not** get the sender-avatar/embed styling a blank `channelId` gets, since posting to an arbitrary channel by ID and posting via the bridge mod's own styled "chat message" type are two different capabilities the bridge mod's API exposes. See [Discord Interoperability](#discord-interoperability-avoiding-duplicate--leaked-messages) below before relying on this for a channel meant to be private. |
 
 There is no `type` or `format` key, and no `discord.relayFromDiscord` — the current implementation only relays Minecraft chat **to** Discord, not the reverse.
 
 Switching channels with `/<command>` persists until changed again (`ChatHandler.setPlayerChannel`); running `/<command> <message>` switches and sends that one message immediately.
+
+Use `{channel}` / `{neoessentials_channel}` in a `chat-format` template to show which channel a
+message was sent in — see [Chat Format Placeholders](ChatSystem#chat-format-placeholders).
 
 ---
 
@@ -75,6 +78,41 @@ This is (trimmed from) the actual shipped default in `config.json`:
 ```
 
 With this config, typing `@hi` sends `hi` to the staff channel for that message only, `!hi` sends it to global, and plain unprefixed chat goes to `local` (the `default: true` channel) unless the player has run `/staff` or `/g` to switch persistently.
+
+---
+
+## Discord Interoperability (Avoiding Duplicate / Leaked Messages)
+
+If you're seeing chat messages posted to Discord **twice**, or a channel you configured as
+private (e.g. `staff`) still showing up in your server's default/public Discord channel, this is
+almost always caused by running NeoEssentials' own per-channel Discord relay **at the same time
+as** the Discord bridge mod's (Simple Discord Link, Mc2Discord, DCIntegration) own independent,
+built-in "relay every chat message" feature — two completely separate systems both deciding to
+post the same message.
+
+**For Simple Discord Link specifically:** its own `config/simple-discord-link/simple-discord-link.toml`
+has a `[chat] playerMessages` setting (`true` by default) that relays **every** Minecraft chat
+message to its own single configured `chatChannelID`, completely independent of and unaware of
+NeoEssentials' `chat.channels.*.discord` settings. With both active:
+- Any channel using `discord.channelId: ""` (the default/fallback case — this is `global`'s and
+  `staff`'s shipped default) gets posted to Discord twice: once by NeoEssentials' own relay, once
+  by SDLink's native relay.
+- A channel you intend to keep private, like `staff`, still gets relayed **in full** by SDLink's
+  native relay regardless of whatever NeoEssentials' own settings say — SDLink's blanket relay has
+  no concept of NeoEssentials' channels at all, so there is nothing NeoEssentials can configure to
+  stop it from its side.
+
+**Fix:** set `playerMessages = false` under `[chat]` in SDLink's own config file and restart, so
+NeoEssentials' own per-channel relay is the *only* one active. NeoEssentials logs a startup
+warning if it detects `playerMessages = true` while SDLink is loaded, specifically to catch this.
+
+If you configure a real `discord.channelId` for a channel (e.g. a dedicated private staff
+channel), NeoEssentials will route that specific message there correctly — this was a genuine bug
+prior to the fix that shipped alongside this documentation, where a configured `channelId` was
+silently ignored and every relayed message always went to SDLink's own default channel regardless
+of what `channelId` said. That part is now fixed; the "SDLink's own native relay still leaks it
+elsewhere" part above is a separate, unavoidable interoperability issue that only the
+`playerMessages = false` fix resolves.
 
 ---
 

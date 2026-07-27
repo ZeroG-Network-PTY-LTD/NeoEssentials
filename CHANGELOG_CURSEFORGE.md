@@ -8,6 +8,22 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.26 — 2026-07-27
+
+### ✨ New Chat Channel Placeholder, Plus Discord Relay Fixes
+
+- New `{channel}` placeholder — shows which chat channel (local/global/staff/etc.) a message was
+  sent in.
+- Fixed: a private staff Discord channel you configured could still leak messages to your
+  server's default Discord channel, because the Simple Discord Link integration was silently
+  ignoring the specific channel ID you set. It now actually goes to the right channel.
+- If you're seeing Discord messages posted twice, that's a separate issue caused by Simple
+  Discord Link having its own built-in "relay every chat message" feature running at the same
+  time as NeoEssentials' own relay — NeoEssentials now warns you about this on startup and tells
+  you exactly which setting to turn off in Simple Discord Link's own config.
+
+---
+
 ## 1.0.4-mc26.1.2+build.25 — 2026-07-27
 
 ### 🐛 Fix: Chat Status Icons (AFK/Vanished/Muted) Weren't Showing
