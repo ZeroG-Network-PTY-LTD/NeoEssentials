@@ -67,6 +67,21 @@ public class ChatFormatter {
                 LOGGER.debug("After normalization: {}", normalizedTemplate);
             }
 
+            // Phase 3: Apply badges and icons to template.
+            // MUST run before the clickable-name marker injection below — BadgeManager's
+            // "before_name"/"after_name" icon-position logic works by string-replacing the
+            // literal {neoessentials_username}/{neoessentials_displayname} tokens, and once
+            // those tokens are replaced with §HNAME§/§HDNAME§ markers, that replace() call
+            // silently finds nothing to match. Since chat.clickablePlayerNames defaults to
+            // true and statusIcons' default iconPosition is "after_name", this ordering used
+            // to make AFK/vanished/muted status icons a no-op by default for anyone using
+            // clickable names — rank badges only survived because their default position
+            // (before_prefix) never touches the username token in the first place.
+            normalizedTemplate = BadgeManager.getInstance().applyBadgesAndIcons(player, normalizedTemplate);
+            if (debugEnabled) {
+                LOGGER.debug("After badges/icons: {}", normalizedTemplate);
+            }
+
             // Inject clickable player-name markers when both features are enabled.
             // We substitute the placeholder with an internal §HNAME§/§HDNAME§ marker
             // so that buildComponentFromMarkup() can create proper hover+click Components.
@@ -82,12 +97,6 @@ public class ChatFormatter {
                 normalizedTemplate = normalizedTemplate
                     .replace("{neoessentials_username}", "§HNAME§" + uname + "§/HNAME§")
                     .replace("{neoessentials_displayname}", "§HDNAME§" + dname + "§/HDNAME§");
-            }
-
-            // Phase 3: Apply badges and icons to template
-            normalizedTemplate = BadgeManager.getInstance().applyBadgesAndIcons(player, normalizedTemplate);
-            if (debugEnabled) {
-                LOGGER.debug("After badges/icons: {}", normalizedTemplate);
             }
 
             // Restrict colors in message BEFORE inserting into template

@@ -12,6 +12,29 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.25] — 2026-07-27
+
+### 🐛 Fix: Chat Status Icons (AFK/Vanished/Muted) Silently Not Showing By Default
+
+- `ChatFormatter#formatMessage` injected the clickable-player-name markers (`§HNAME§`/`§HDNAME§`,
+  used for the click-to-message and click-to-view-profile features) BEFORE
+  `BadgeManager#applyBadgesAndIcons` ran. Since that marker injection replaces the literal
+  `{neoessentials_username}`/`{neoessentials_displayname}` tokens, and `applyBadgesAndIcons`'s
+  `before_name`/`after_name` icon-position logic works by string-replacing those exact tokens,
+  the tokens were already gone by the time it ran — making its replace() calls silent no-ops.
+  Since `chat.clickablePlayerNames` defaults to `true` and `badges.statusIcons.iconPosition`
+  defaults to `"after_name"`, this made AFK/vanished/muted status icons a no-op out of the box
+  for any server using clickable names (rank badges only survived because their default
+  position, `before_prefix`, never touches the username token in the first place).
+- Fixed by reordering: badges/status icons are now applied to the raw template first, and the
+  clickable-name markers are injected afterward.
+- Documented the whole `chat.badges` config block (rank badges + status icons) on the
+  [Chat System wiki page](docs/Wiki/ChatSystem.md#rank-badges--status-icons) for the first
+  time, including a callout that `statusIcons.streaming` is present in config but not currently
+  checked by anything (no "streaming" player status exists in the mod yet).
+
+---
+
 ## [1.0.4-mc26.1.2+build.24] — 2026-07-27
 
 ### ✨ Click a Player's Name in Chat to Open Their Dashboard Profile

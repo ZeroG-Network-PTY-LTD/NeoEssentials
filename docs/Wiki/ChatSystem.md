@@ -343,6 +343,49 @@ Make text clickable in chat:
 
 ---
 
+## Rank Badges & Status Icons
+
+Config: `config.json` → `chat.badges`. Independent of `richText`/`enableChatEnhancements` — badges
+and status icons are inserted directly into the format template text, not the `<tag>` rich-text
+system.
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `true` | Master switch for both rank badges and status icons |
+| `badgePosition` | `"before_prefix"` | Where the rank badge is inserted: `before_prefix` \| `after_prefix` \| `before_name` \| `after_name` |
+| `rankBadges` | *(per-group emoji map)* | Emoji/text badge shown for each permission group (looked up by the player's primary group, lowercased). A group with no entry (or an empty string) gets no badge |
+| `useCustomImages` | `false` | Use a PNG badge image (`config/neoessentials/badges/<rank>.png`) instead of the emoji from `rankBadges`, delivered via a resource pack — see `customImageSize`/`customImagePath`/`autoSendResourcePack`/`requireResourcePack`/`resourcePackUrl`/`resourcePackPrompt` below it in config.json |
+| `statusIcons.enabled` | `true` | Show AFK/vanished/muted status icons in chat |
+| `statusIcons.iconPosition` | `"after_name"` | Where the status icon is inserted: `before_name` \| `after_name` \| `after_message` |
+| `statusIcons.afk` | *(empty)* | Icon/text shown when the sender is AFK |
+| `statusIcons.vanished` | *(empty)* | Icon/text shown when the sender is vanished (`/vanish`) |
+| `statusIcons.muted` | *(empty)* | Icon/text shown when the sender is muted |
+| `statusIcons.streaming` | *(empty)* | **Present in config but not currently checked by anything** — there's no "streaming" player status anywhere in the mod yet, so this key is a no-op regardless of value. Left as a placeholder for a future feature rather than removed. |
+
+> **Set the actual icon text yourself.** Every `rankBadges`/`statusIcons` entry ships empty by
+> default (except `rankBadges.admin`, which defaults to `⭐`) — pick your own emoji or `&`-coded
+> text, e.g. `"vanished": "&7[Vanished]"`.
+
+`badgePosition`/`iconPosition` work by inserting text next to the `{neoessentials_prefix}` /
+`{neoessentials_username}`/`{neoessentials_name}`/`{neoessentials_displayname}` tokens in your
+`chat-format` template — so a position that targets a token your template doesn't actually use
+(e.g. `after_name` when your format only has `{neoessentials_displayname}`, never
+`{neoessentials_username}`) won't show anything. `after_message` always works regardless of which
+name token your template uses, since it just appends to the very end of the formatted line.
+
+**Example — a visible vanished icon:**
+```json
+"badges": {
+  "statusIcons": {
+    "enabled": true,
+    "iconPosition": "after_name",
+    "vanished": "&7[Vanished]"
+  }
+}
+```
+
+---
+
 ## Player Message Colour Permissions
 
 Players must have the appropriate permissions to use color/formatting in their own chat *messages*:

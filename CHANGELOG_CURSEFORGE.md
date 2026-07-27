@@ -8,6 +8,16 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.25 — 2026-07-27
+
+### 🐛 Fix: Chat Status Icons (AFK/Vanished/Muted) Weren't Showing
+
+- If you set an icon for AFK/vanished/muted players in `chat.badges.statusIcons`, it silently
+  never appeared in chat with the default settings. Fixed — set your icon text and it'll show
+  up now. Rank badges weren't affected by this.
+
+---
+
 ## 1.0.4-mc26.1.2+build.24 — 2026-07-27
 
 ### ✨ Click a Player's Name in Chat to Open Their Dashboard Profile
