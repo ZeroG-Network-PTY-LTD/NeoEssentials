@@ -43,7 +43,10 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("prefix");
         placeholders.add("suffix");
         placeholders.add("group");
-        
+
+        // Chat channel placeholder
+        placeholders.add("channel");
+
         // Location placeholders
         placeholders.add("world");
         placeholders.add("x");
@@ -134,6 +137,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 case "prefix" -> getPlayerPrefix(player);
                 case "suffix" -> getPlayerSuffix(player);
                 case "group" -> getPlayerGroup(player);
+                case "channel" -> player != null ? getPlayerChannel(player) : null;
                 
                 // Location
                 case "world" -> player != null ? getWorldName(player) : null;
@@ -283,6 +287,21 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         }
     }
     
+    /**
+     * Get the chat channel the player is currently in (persistent state, or the configured
+     * default channel, or "global" — see {@link com.zerog.neoessentials.chat.ChatHandler#getEffectiveChannel}).
+     */
+    @Nullable
+    private String getPlayerChannel(@Nullable ServerPlayer player) {
+        if (player == null) return null;
+        try {
+            return com.zerog.neoessentials.chat.ChatHandler.getEffectiveChannel(player.getUUID());
+        } catch (Exception e) {
+            LOGGER.debug("Error getting channel for player {}: {}", player.getName().getString(), e.getMessage());
+            return "global";
+        }
+    }
+
     /**
      * Get the name of the world the player is in.
      */

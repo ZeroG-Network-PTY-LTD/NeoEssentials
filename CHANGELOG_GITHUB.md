@@ -11,6 +11,36 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.26] — 2026-07-27
+
+### ✨ New `{channel}` Placeholder, Plus Real Fixes to Discord Chat Relay
+
+- New `{channel}` / `{neoessentials_channel}` placeholder — resolves to the chat channel a
+  message was sent in (`local`, `global`, `staff`, or any custom key from `chat.channels`).
+  Usable in `chat-format` templates and anywhere else `{neoessentials_*}` placeholders work.
+- **Fixed a real bug**: `SDLinkAdapter#onPlayerChat` completely ignored the per-channel
+  `discord.channelId` NeoEssentials computed for a message — every relayed message always went
+  wherever Simple Discord Link's OWN `messageDestinations.chat` config pointed, regardless of
+  what channel-specific Discord ID was configured. A private staff channel with a real
+  `channelId` set would still leak to SDLink's default chat channel. Now routes directly to the
+  configured channel via SDLink's `sendToChannel` API when one is set (plain-text message,
+  since SDLink's rich author-embed builder has no channel-override API), falling back to the
+  previous default-channel behavior only when `channelId` is left blank.
+- **Investigated and diagnosed the double-post issue**: Simple Discord Link has its own
+  independent, config-driven "relay every chat message" feature (`chat.playerMessages` in its
+  own `simple-discord-link.toml`, `true` by default) that operates completely separately from
+  NeoEssentials' `chat.channels.*.discord` relay. Running both means every message NeoEssentials
+  also explicitly relays gets posted twice, and a channel NeoEssentials treats as private (e.g.
+  staff) still gets relayed in full by SDLink's own blanket relay — NeoEssentials has no way to
+  suppress that from its side. **This is a configuration conflict, not fixable in NeoEssentials'
+  own code** — NeoEssentials now logs a startup WARNING when it detects `playerMessages = true`
+  while SDLink is loaded, pointing at the exact setting to disable. Verified live against a real
+  SDLink instance in this dev environment — the warning fires correctly.
+- Documented all of the above on the [Chat Channels wiki page](docs/Wiki/ChatChannels.md#discord-interoperability-avoiding-duplicate--leaked-messages),
+  including a full explanation of the interaction and the fix.
+
+---
+
 ## [1.0.4+build.25] — 2026-07-27
 
 ### 🐛 Fix: Chat Status Icons (AFK/Vanished/Muted) Silently Not Showing By Default

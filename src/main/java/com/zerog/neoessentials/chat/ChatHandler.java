@@ -56,6 +56,42 @@ public class ChatHandler {
         playerChannelMap.remove(playerUUID);
     }
 
+    /**
+     * Resolves a player's current PERSISTENT channel — their explicitly-set channel state if
+     * any, else the configured default channel, else {@code "global"}. Deliberately does NOT
+     * consider a per-message prefix override (e.g. typing {@code !hello} to send one message to
+     * global without switching state) — that only applies to the message it was typed on, not
+     * to "what channel is this player in" as a general, ongoing question. Used by the
+     * {@code {neoessentials_channel}}/{@code {channel}} placeholders and anywhere else that
+     * needs a player's channel outside the context of an actual chat message.
+     */
+    public static String getEffectiveChannel(java.util.UUID playerUUID) {
+        String channel = playerChannelMap.get(playerUUID);
+        if (channel != null) return channel;
+
+        try {
+            com.google.gson.JsonObject mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            com.google.gson.JsonObject chatConfig = mainConfig.has("chat") ? mainConfig.getAsJsonObject("chat") : null;
+            com.google.gson.JsonObject channelsConfig = (chatConfig != null && chatConfig.has("channels"))
+                ? chatConfig.getAsJsonObject("channels") : null;
+            boolean channelsEnabled = channelsConfig == null
+                || !channelsConfig.has("enabled") || channelsConfig.get("enabled").getAsBoolean();
+
+            if (channelsConfig != null && channelsEnabled) {
+                for (String ch : channelsConfig.keySet()) {
+                    if (ch.equals("enabled") || ch.endsWith("-description")) continue;
+                    com.google.gson.JsonObject chObj = channelsConfig.getAsJsonObject(ch);
+                    if (chObj.has("enabled") && chObj.get("enabled").getAsBoolean()
+                        && chObj.has("default") && chObj.get("default").getAsBoolean()) {
+                        return ch;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return "global";
+    }
+
     @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {
         try {
@@ -174,24 +210,12 @@ public class ChatHandler {
                     }
                 }
             }
-            // If not by prefix, check per-player channel state
+            // If not by prefix, fall back to the player's persistent channel state, then the
+            // configured default channel, then "global" — see getEffectiveChannel() for the
+            // shared logic (also used by the {neoessentials_channel} placeholder).
             if (channel == null) {
-                channel = playerChannelMap.getOrDefault(player.getUUID(), null);
+                channel = getEffectiveChannel(player.getUUID());
             }
-            // If still not set, use default (local if enabled, else global)
-            if (channel == null && channelsConfig != null) {
-                for (String ch : channelsConfig.keySet()) {
-                    // Skip metadata fields
-                    if (ch.equals("enabled") || ch.endsWith("-description")) continue;
-
-                    com.google.gson.JsonObject chObj = channelsConfig.getAsJsonObject(ch);
-                    if (chObj.has("enabled") && chObj.get("enabled").getAsBoolean() && chObj.has("default") && chObj.get("default").getAsBoolean()) {
-                        channel = ch;
-                        break;
-                    }
-                }
-            }
-            if (channel == null) channel = "global"; // fallback
 
             // Get group and world for per-group/world chat format
             String group = null;

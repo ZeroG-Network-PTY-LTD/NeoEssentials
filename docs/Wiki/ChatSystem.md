@@ -86,6 +86,7 @@ A channel with neither `radius` nor `permission` behaves as global chat. `chat.c
 | `{neoessentials_suffix}` | Alias for `{suffix}` |
 | `{neoessentials_username}` | Alias for `{name}` |
 | `{neoessentials_displayname}` | Alias for `{displayname}` |
+| `{neoessentials_channel}` | The channel this message is being sent in (`local`, `global`, `staff`, or any custom channel key from `chat.channels`) |
 | `{MESSAGE}` | Alias for `{message}` (case-insensitive) |
 
 ### Tablist-Style Short Tokens
@@ -102,6 +103,7 @@ own ping.
 | `{tps}` | Server TPS — auto-coloured green (≥19) / yellow (≥15) / red (<15) |
 | `{online}` | Online player count (vanish-aware, from the sender's permission level) |
 | `{max}` | Server max player slots |
+| `{channel}` | Short alias for `{neoessentials_channel}` — the channel this message is being sent in |
 | `{rank_weight}` | Sender's numeric permission group weight/priority |
 | `{network_online}` | Total players on the proxy network (requires `tablist.proxy.enabled`; falls back to local `{online}` otherwise) |
 | `{current_server}` | Proxy server name the sender is on (falls back to `tablist.proxy.serverLabel` if proxy is off) |

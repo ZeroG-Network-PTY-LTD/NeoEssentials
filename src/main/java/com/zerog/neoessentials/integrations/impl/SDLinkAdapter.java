@@ -38,10 +38,55 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         loaded = ModList.get().isLoaded("sdlink");
         if (loaded) {
             LOGGER.info("Simple Discord Link mod detected, integration enabled.");
+            warnIfNativeChatRelayConflicts();
         } else {
             LOGGER.debug("Simple Discord Link mod not found, integration disabled.");
         }
         return loaded;
+    }
+
+    /**
+     * SDLink has its own independent, config-driven "relay every chat message to Discord"
+     * feature ({@code chat.playerMessages} in its own config file) — completely separate from,
+     * and unaware of, NeoEssentials' per-channel {@code chat.channels.<name>.discord} relay.
+     * Running both at once means every message NeoEssentials also explicitly relays gets
+     * posted to Discord TWICE, and — since SDLink's native relay has no concept of
+     * NeoEssentials' chat channels — a channel NeoEssentials treats as private (e.g. a staff
+     * channel) still gets relayed in full by SDLink's own blanket relay regardless. NeoEssentials
+     * has no way to suppress that from its side, so the only real fix is disabling SDLink's own
+     * relay and letting NeoEssentials be the single source of truth. This is a read-only,
+     * best-effort text scan (not a full TOML parse) purely to surface an actionable warning —
+     * never mind it and never write to SDLink's config file if the scan fails for any reason.
+     */
+    private void warnIfNativeChatRelayConflicts() {
+        try {
+            java.nio.file.Path cfg = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get()
+                .resolve("config").resolve("simple-discord-link").resolve("simple-discord-link.toml");
+            if (!java.nio.file.Files.exists(cfg)) return;
+
+            boolean inChatSection = false;
+            for (String line : java.nio.file.Files.readAllLines(cfg)) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                    inChatSection = trimmed.equalsIgnoreCase("[chat]");
+                    continue;
+                }
+                if (inChatSection && trimmed.matches("(?i)playerMessages\\s*=\\s*true.*")) {
+                    LOGGER.warn("Simple Discord Link's own 'chat.playerMessages' is enabled in " +
+                        "config/simple-discord-link/simple-discord-link.toml. That makes SDLink relay " +
+                        "EVERY Minecraft chat message to its own configured Discord channel on its own, " +
+                        "entirely independent of NeoEssentials' chat.channels.*.discord relay. With both " +
+                        "active, every relayed message posts to Discord twice, and a NeoEssentials channel " +
+                        "you intend to keep private (e.g. a staff channel) will still be relayed in full by " +
+                        "SDLink's own blanket relay regardless of NeoEssentials' settings. Set " +
+                        "'playerMessages = false' under [chat] in that file and restart to let " +
+                        "NeoEssentials' own per-channel Discord relay be the only one active.");
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not check Simple Discord Link's config for a conflicting native chat relay: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -59,7 +104,22 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         if (!isReady()) return;
         try {
             String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
-            send(MessageType.CHAT, authorFor(player), cleanMessage);
+            if (discordChannelId != null && !discordChannelId.isBlank()) {
+                // A specific Discord channel was configured for this NeoEssentials chat channel
+                // (e.g. a private staff channel). SDLink's DiscordMessageBuilder has no API to
+                // target an arbitrary channel — MessageType.CHAT always posts wherever SDLink's
+                // OWN messageDestinations.chat config says, ignoring this parameter entirely.
+                // Route directly via sendToChannel() instead, or the configured channel would be
+                // silently discarded and the message would always land in SDLink's single default
+                // chat channel regardless of how private it was meant to be. This loses the rich
+                // author/avatar embed styling send() below gets from SDLink itself, since that
+                // styling is only available through the type-routed builder — a plain but
+                // correctly-targeted message is the higher priority for a channel meant to be
+                // private in the first place.
+                sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
+            } else {
+                send(MessageType.CHAT, authorFor(player), cleanMessage);
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to relay chat message via SDLink: {}", e.getMessage());
         }
