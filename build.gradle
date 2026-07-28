@@ -30,12 +30,21 @@ tasks.named('wrapper', Wrapper).configure {
 // task (`jar`/`assemble`/`build`), never for a bare `compileJava`/`test`/IDE-sync. Always
 // `git checkout -- build_number.txt` after a local test build before committing anything,
 // so a local bump never accidentally becomes the "real" shared value.
+//
+// Skipped entirely in CI (GitHub Actions sets CI=true): the release workflow reads
+// build_number.txt BEFORE running `./gradlew build` to name the release tag — it deliberately
+// does NOT read the post-build value back, precisely to avoid needing to commit a bump from an
+// ephemeral runner (see build-and-release.yml). But this increment fires regardless of who
+// reads the file, and it's what sets project.version — so without this CI check, every CI
+// build's jar FILENAME would always be exactly 1 higher than the release tag/committed number
+// it ships under, forever, no matter how many times the committed number is hand-synced.
+def isCI = System.getenv("CI") != null
 def buildNumberFile = file('build_number.txt')
 def buildNumber = buildNumberFile.exists() ? buildNumberFile.text.trim().toInteger() : 0
 
 gradle.taskGraph.whenReady { graph ->
     boolean isPackagingBuild = graph.allTasks.any { t -> t.name in ['jar', 'assemble', 'build'] }
-    if (isPackagingBuild) {
+    if (isPackagingBuild && !isCI) {
         buildNumber++
         buildNumberFile.text = buildNumber.toString()
         project.version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
