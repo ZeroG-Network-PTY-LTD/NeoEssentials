@@ -297,13 +297,43 @@ public class ChatHandler {
                 if (channelObj != null && channelObj.has("permission")) {
                     requiredPermission = channelObj.get("permission").getAsString();
                 }
-                
+
+                // Check if channel is team-based (FTB Teams or similar — see TeamManager)
+                boolean isTeamBased = channelObj != null && channelObj.has("teamBased")
+                        && channelObj.get("teamBased").getAsBoolean();
+
                 var server = player.getServer();
                 @SuppressWarnings("ConstantConditions") // Defensive null check
                 var playerList = server != null ? server.getPlayerList() : null;
-                
+
                 if (playerList != null) {
-                    if (hasRadius) {
+                    if (isTeamBased) {
+                        // Team channel — only reaches players on the sender's team (FTB Teams
+                        // or another registered TeamProviderAdapter). Not combined with radius;
+                        // "permission" (if set) additionally gates who may receive it.
+                        com.zerog.neoessentials.teams.TeamManager teamManager =
+                            com.zerog.neoessentials.teams.TeamManager.getInstance();
+                        String senderTeamId = teamManager.getTeamId(player.getUUID());
+
+                        if (senderTeamId == null) {
+                            String errorKey = teamManager.isAnyProviderAvailable()
+                                ? "commands.neoessentials.channel.no_team"
+                                : "commands.neoessentials.channel.no_team_provider";
+                            player.sendSystemMessage(MessageUtil.error(errorKey));
+                        } else {
+                            for (ServerPlayer target : playerList.getPlayers()) {
+                                if (requiredPermission != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), requiredPermission)) {
+                                    continue;
+                                }
+                                if (senderTeamId.equals(teamManager.getTeamId(target.getUUID()))) {
+                                    target.sendSystemMessage(formattedMessage);
+                                }
+                            }
+                            if (isConsoleLoggingEnabled()) {
+                                LOGGER.info("[{}] (team) <{}> {}", channel, playerName, message);
+                            }
+                        }
+                    } else if (hasRadius) {
                         // Proximity-based channel (local, whisper, shout, etc.)
                         var playerPos = player.position();
                         @SuppressWarnings("resource") // Level is not closeable, warning is false positive

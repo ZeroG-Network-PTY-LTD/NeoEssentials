@@ -11,6 +11,34 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.33] — 2026-07-28
+
+### ✨ Team Chat Channel (FTB Teams)
+
+- New `teamBased: true` per-channel flag scopes a chat channel to the sender's team instead of
+  a radius or permission node — only online players on the same FTB Teams team as the sender
+  receive the message. Shipped with a `team` example channel in `config.json`
+  (`_configVersion` 37, auto-merged into existing installs).
+- Team membership resolves via a new `TeamManager`/`TeamProviderAdapter` layer
+  (`com.zerog.neoessentials.teams`), currently backed by `FtbTeamsAdapter` for **FTB Teams**.
+  Resolved entirely through reflection (`ModList.isLoaded("ftbteams")` + `Class.forName`, no
+  compile-time dependency) — same approach as `FtbRanksAdapter` — so the class carries zero risk
+  of the classloading crash category found in build.27/28 (see that entry below): a class that
+  never imports the external mod's types can always be loaded even when the mod is absent.
+- Without FTB Teams (or another supported team mod) installed, sending in the channel gets a
+  clear "no team mod installed" error instead of silently doing nothing or crashing; if the mod
+  is installed but the sender isn't on a team, a separate error explains that instead.
+- `permission` can be combined with `teamBased` to additionally gate which teammates receive the
+  message.
+- Adding another team mod (Towns and Nations, SimpleTeams, etc.) is a matter of implementing
+  `TeamProviderAdapter` and registering it in `TeamManager` — no channel-routing changes needed.
+  Documented on the [Chat Channels wiki page](docs/Wiki/ChatChannels.md#team-channel-ftb-teams-or-similar).
+- Live-verified in this dev environment: config version-merge added the new `team` channel key
+  cleanly (`merged to version 37`), server started with zero exceptions and `FtbTeamsAdapter`
+  correctly silent (FTB Teams isn't installed here) rather than erroring.
+
+---
+
 ## [1.0.4+build.32] — 2026-07-28
 
 ### ✨ Chat Channel `displayName`, Plus a Real Reliability Fix

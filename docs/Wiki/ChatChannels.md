@@ -9,8 +9,9 @@
 Chat channels allow messages to be scoped to a specific audience — local proximity, a permission-gated group, or global. Each channel is a freeform entry under `chat.channels` with its own command, aliases, and behavior; there is **no explicit "type" field** — a channel's behavior is inferred purely from which optional keys it defines:
 
 - Has a `radius` key → proximity-based (only players within that many blocks, same dimension, receive the message)
-- Has a `permission` key (and no `radius`) → permission-gated (only players holding that permission receive the message, and it can also gate a Discord relay)
-- Neither key → treated as a plain global broadcast channel
+- Has `teamBased: true` → only reaches players on the sender's FTB Teams (or similar supported mod) team — see [Team Channel](#team-channel-ftb-teams-or-similar) below
+- Has a `permission` key (and no `radius`/`teamBased`) → permission-gated (only players holding that permission receive the message, and it can also gate a Discord relay)
+- None of the above → treated as a plain global broadcast channel
 
 ---
 
@@ -26,7 +27,8 @@ Each channel entry (keyed by an arbitrary name, e.g. `"local"`, `"global"`, `"st
 | `command` | Primary command to switch to (and optionally speak directly in) this channel |
 | `aliases` | List of additional command aliases |
 | `radius` | If present, makes this a proximity/local channel (block radius, same dimension) |
-| `permission` | If present, only players with this permission receive messages sent to the channel; also gates the Discord relay for this channel |
+| `teamBased` | If `true`, only reaches players on the sender's team (FTB Teams or another supported team mod). See [Team Channel](#team-channel-ftb-teams-or-similar). |
+| `permission` | If present, only players with this permission receive messages sent to the channel; also gates the Discord relay for this channel. Combined with `teamBased`, it additionally restricts who among the sender's teammates receives the message. |
 | `prefix` | If a chat message starts with this literal prefix, it's routed to this channel for that one message (e.g. typing `!hello` in the default config routes to `global`) |
 | `default` | If `true`, this channel is used when a player hasn't explicitly switched channels and their message has no matching prefix |
 | `displayName` | Optional styled text shown wherever the `{channel}`/`{neoessentials_channel}` placeholder is used (see [Chat Format Placeholders](ChatSystem#chat-format-placeholders)), e.g. `"&d⚙ Staff"`. Falls back to the raw channel key if unset. See below for why this exists as a separate field. |
@@ -75,6 +77,38 @@ Switching channels with `/<command>` persists until changed again (`ChatHandler.
 
 Use `{channel}` / `{neoessentials_channel}` in a `chat-format` template to show which channel a
 message was sent in — see [Chat Format Placeholders](ChatSystem#chat-format-placeholders).
+
+### Team Channel (FTB Teams or similar)
+
+Set `"teamBased": true` on a channel to scope it to the sender's team instead of a radius or
+permission node — only players on the same team as the sender receive the message:
+
+```json
+"team": {
+  "enabled": true,
+  "command": "team",
+  "aliases": ["t", "teamchat"],
+  "displayName": "&a⛨ Team",
+  "teamBased": true,
+  "discord": { "enabled": false, "channelId": "" }
+}
+```
+
+Team membership is resolved via `TeamManager` (`com.zerog.neoessentials.teams`), which currently
+has one provider, `FtbTeamsAdapter` for **FTB Teams** — detected via `ModList.isLoaded("ftbteams")`
+and talked to entirely through reflection (no compile-time dependency), so it's safe to have this
+channel configured even on packs without FTB Teams installed:
+
+- No supported team mod installed → sending in the channel replies with an error saying so
+  (`commands.neoessentials.channel.no_team_provider`), nothing is broadcast.
+- Team mod installed but the sender isn't on a team → a different error
+  (`commands.neoessentials.channel.no_team`), nothing is broadcast.
+- Team mod installed and the sender is on a team → message reaches only online teammates (and,
+  if `permission` is also set, only the teammates who also hold that permission).
+
+Adding support for another team mod (Towns and Nations, SimpleTeams, etc.) means implementing
+`TeamProviderAdapter` and registering it in `TeamManager` — the channel config and routing logic
+don't need to change.
 
 ---
 

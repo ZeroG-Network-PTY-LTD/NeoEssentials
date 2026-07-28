@@ -1403,7 +1403,10 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 36);          // v36 — added top-level discordEmbedTemplate section: customizes
+        put(MAIN_CONFIG, 37);          // v37 — added chat.channels.team (teamBased:true example channel)
+                                       //        for FTB Teams/similar mod team chat, plus the
+                                       //        "teamBased" per-channel flag it demonstrates
+        // v36 — added top-level discordEmbedTemplate section: customizes
                                        //        the rich Discord embed built for chat.channels.*.discord
                                        //        channel-routed messages (currently SDLink only)
         // v35 — removed moderation.generalSettings.seeVanishedPermission;
