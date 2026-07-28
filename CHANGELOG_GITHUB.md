@@ -12,6 +12,28 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.29] — 2026-07-28
+
+### 🐛 SDLink Channel-Routed Chat Now Gets a Real Embed, Plus a Latent Crash Fix
+
+- Reported live: after routing `global` chat to a specific SDLink Discord channel, messages
+  arrived as a plain `PlayerName: message` text line instead of SDLink's usual styled chat
+  embed (author name + skin avatar). SDLink's `DiscordMessageBuilder` has no channel-override
+  API, so channel-routed messages now build the same look manually via JDA's own `EmbedBuilder`
+  (author name + `mc-heads.net` avatar) instead of settling for a plain text line.
+- While fixing this, found and fixed a **latent crash risk** in `SDLinkAdapter`'s pre-existing
+  `sendToChannel` — it referenced SDLink's shaded JDA channel types directly inside the adapter
+  class itself, the exact same category of bug that crashed a server in build.28 for
+  `DCIntegrationAdapter`. Isolated into a nested `JdaBridge` class using the same pattern, so a
+  pack that somehow loads `SDLinkAdapter` without SDLink actually present can no longer crash on
+  startup. (This one hadn't been reported — found proactively while addressing the embed request.)
+- Verified via `javap` against the compiled bytecode that `SDLinkAdapter`'s own constant pool is
+  now clean of the shaded JDA types, same verification method used for the build.28 fix.
+- Mc2Discord's channel-routed messages remain plain text for now (no embed path built for it
+  yet) — documented on the [Chat Channels wiki page](docs/Wiki/ChatChannels.md#discord-interoperability-avoiding-duplicate--leaked-messages).
+
+---
+
 ## [1.0.4-mc26.1.2+build.28] — 2026-07-28
 
 ### 🐛 Critical Fix: Server Crash on Startup (`NoClassDefFoundError`) From the build.27 Discord Fixes
