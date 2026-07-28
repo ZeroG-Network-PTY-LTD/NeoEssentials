@@ -78,6 +78,29 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
+            return Discord4jChannelSender.send(channelId, message);
+        } catch (Throwable e) {
+            // Catches Errors too — see Discord4jChannelSender's Javadoc for why a missing/
+            // incompatible Discord4J on the classpath surfaces as a LinkageError here.
+            LOGGER.error("Failed to send message to Discord channel {} via Mc2Discord: {}", channelId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Isolates every direct reference to Discord4J's {@code Snowflake}/{@code Possible} types in
+     * a class of its own, only ever loaded — triggering classloading/verification of those
+     * types — the moment {@link #send} actually runs, by which point {@link #isReady()} has
+     * already confirmed Mc2Discord is genuinely present. See
+     * {@link DCIntegrationAdapter.JdaChannelSender}'s Javadoc for the full rationale: the JVM's
+     * bytecode verifier resolves every type referenced in a method's StackMapTable at class-LOAD
+     * time, not lazily on first invocation, regardless of any {@code ModList.isLoaded()} guard in
+     * the SAME class — a lesson learned the hard way when the equivalent un-isolated code in
+     * {@code DCIntegrationAdapter} crashed an entire server at startup on a pack without
+     * DCIntegration installed.
+     */
+    private static final class Discord4jChannelSender {
+        static boolean send(String channelId, String message) {
             // createPlainTextMessage's 3rd parameter (Possible<String>) is NOT a channel/target
             // override — verified by reading the compiled method body — passing it non-absent
             // instead re-runs the message through Mc2Discord's OWN discord_chat_format template
@@ -89,9 +112,6 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
             MessageManager.createPlainTextMessage(snowflake, message,
                 fr.denisd3d.mc2discord.shadow.discord4j.discordjson.possible.Possible.absent(), false).subscribe();
             return true;
-        } catch (Exception e) {
-            LOGGER.error("Failed to send message to Discord channel {} via Mc2Discord: {}", channelId, e.getMessage());
-            return false;
         }
     }
 
