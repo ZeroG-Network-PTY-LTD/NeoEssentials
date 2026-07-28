@@ -8,7 +8,7 @@ migration history) is not carried over.
 
 ---
 
-## 1.0.4-mc26.1.2+build.35 — 2026-07-28
+## 1.0.4-mc26.1.2+build.36 — 2026-07-28
 
 ### ✨ Point the "View Profile" Chat Link at Your Own Website
 
