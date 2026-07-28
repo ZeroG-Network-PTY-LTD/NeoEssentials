@@ -6,7 +6,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.31 — 2026-07-28
+## 1.0.4+build.32 — 2026-07-28
 
 ### ✨ Give a Chat Channel a Styled Name, Plus a Reliability Fix
 

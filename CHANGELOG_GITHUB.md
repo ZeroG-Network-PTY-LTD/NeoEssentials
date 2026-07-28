@@ -11,7 +11,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.4+build.31] — 2026-07-28
+## [1.0.4+build.32] — 2026-07-28
 
 ### ✨ Chat Channel `displayName`, Plus a Real Reliability Fix
 
