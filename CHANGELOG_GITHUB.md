@@ -12,6 +12,28 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.31] — 2026-07-28
+
+### ✨ Chat Channel `displayName`, Plus a Real Reliability Fix
+
+- A user tried using color codes/emoji directly as a chat channel's JSON key (e.g.
+  `"&#8A2BE2⚙"`) to get a styled channel name. That key doubles as the internal identifier used
+  for prefix routing, the `discord.channelId` lookup, and — when `command` isn't set — the actual
+  registered slash-command literal, so this both couldn't work as a real command and, worse,
+  silently broke registration for every channel listed after it in the file (see below).
+- New optional `displayName` field per channel — shown wherever `{channel}`/
+  `{neoessentials_channel}` is used, completely independent of the channel's safe internal key.
+  E.g. `"staff": { ..., "displayName": "&d⚙ Staff" }`.
+- **Fixed a real reliability bug** in `ChannelCommands#register`: every channel's command was
+  registered inside one shared try/catch around the whole loop — a single malformed channel
+  (bad `command` literal, missing `command` falling back to an invalid channel key, etc.) threw
+  and silently aborted registration for every channel processed afterward, not just the broken
+  one. Each channel now registers in its own try/catch, logging an error and skipping just that
+  channel on failure.
+- Documented both on the [Chat Channels wiki page](docs/Wiki/ChatChannels.md#the-channel-key-must-stay-a-plain-simple-string).
+
+---
+
 ## [1.0.4-mc26.1.2+build.30] — 2026-07-28
 
 ### ✨ Customizable Discord Embed Template (`discordEmbedTemplate`)

@@ -92,6 +92,39 @@ public class ChatHandler {
         return "global";
     }
 
+    /**
+     * Resolves the styled text to show for a channel via {@code {channel}}/
+     * {@code {neoessentials_channel}} — {@code chat.channels.<channelKey>.displayName} if set,
+     * else the raw channel key itself (the previous, only behavior).
+     *
+     * <p>The channel key itself (e.g. {@code "local"}) MUST stay a plain, simple string — it
+     * doubles as the internal identifier used for prefix routing, the {@code chat.channels.*.discord}
+     * lookup, and — when no {@code command} field is set — the actual registered slash-command
+     * literal (see {@code ChannelCommands#register}, which registers every channel's command in
+     * one shared try/catch; an invalid literal there throws and silently aborts registration for
+     * every channel processed afterward, not just the broken one). {@code displayName} exists so
+     * a channel can still show up as something like {@code "&d⚙ Custom"} in chat without putting
+     * that text in the key.
+     */
+    public static String getChannelDisplayName(String channelKey) {
+        if (channelKey == null) return "";
+        try {
+            com.google.gson.JsonObject mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance()
+                .getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            com.google.gson.JsonObject chatConfig = mainConfig.has("chat") ? mainConfig.getAsJsonObject("chat") : null;
+            com.google.gson.JsonObject channelsConfig = (chatConfig != null && chatConfig.has("channels"))
+                ? chatConfig.getAsJsonObject("channels") : null;
+            if (channelsConfig != null && channelsConfig.has(channelKey)) {
+                com.google.gson.JsonObject chObj = channelsConfig.getAsJsonObject(channelKey);
+                if (chObj.has("displayName")) {
+                    String displayName = chObj.get("displayName").getAsString();
+                    if (!displayName.isEmpty()) return displayName;
+                }
+            }
+        } catch (Exception ignored) {}
+        return channelKey;
+    }
+
     @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {
         try {

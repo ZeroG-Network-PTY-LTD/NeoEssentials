@@ -86,7 +86,7 @@ A channel with neither `radius` nor `permission` behaves as global chat. `chat.c
 | `{neoessentials_suffix}` | Alias for `{suffix}` |
 | `{neoessentials_username}` | Alias for `{name}` |
 | `{neoessentials_displayname}` | Alias for `{displayname}` |
-| `{neoessentials_channel}` | The channel this message is being sent in (`local`, `global`, `staff`, or any custom channel key from `chat.channels`) |
+| `{neoessentials_channel}` | The channel this message is being sent in — that channel's `displayName` if set (see [Chat Channels](ChatChannels)), else the raw channel key (`local`, `global`, `staff`, or any custom channel key from `chat.channels`) |
 | `{MESSAGE}` | Alias for `{message}` (case-insensitive) |
 
 ### Tablist-Style Short Tokens
