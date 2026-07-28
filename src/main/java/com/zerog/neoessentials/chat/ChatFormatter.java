@@ -749,7 +749,7 @@ public class ChatFormatter {
         // SUGGEST_COMMAND "/msg" action above — so the "view profile" link is a separate,
         // adjacent component (a small icon) rather than replacing that behavior.
         if (isProfileLinkInChatEnabled()) {
-            String profileUrl = com.zerog.neoessentials.config.ConfigManager.getPlayerProfileUrl(player.getName().getString());
+            String profileUrl = com.zerog.neoessentials.config.ConfigManager.getPlayerProfileUrl(player.getName().getString(), player.getUUID());
             if (profileUrl != null) {
                 MutableComponent linkIcon = Component.literal(" ↗").withStyle(style -> style
                     .withColor(ChatFormatting.BLUE)

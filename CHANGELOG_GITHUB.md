@@ -12,6 +12,25 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.34] — 2026-07-28
+
+### ✨ Custom Profile URL Template for the In-Chat "View Profile" Link
+
+- New `webDashboard.customProfileUrlTemplate` config option lets you point the in-chat "view
+  profile" link (the small `↗` icon next to player names, added build.24) at your own website
+  instead of either NeoEssentials dashboard — a stats page, forum profile, custom fan site,
+  whatever. Supports `{player}` (URL-encoded username) and `{uuid}` placeholders, e.g.
+  `"https://myserver.com/players/{player}"`.
+- Takes priority over the paired external dashboard / `webDashboard.publicUrl` when set; leave
+  it empty (the default) to keep the existing dashboard-based behavior.
+- `ConfigManager.getPlayerProfileUrl` gained a `(username, uuid)` overload so the template can
+  resolve `{uuid}`; the old single-arg overload still works and just passes `null` for it.
+- Bumped `_configVersion` to 38 so existing installs get the new (empty-by-default) field
+  merged in automatically. Documented on the
+  [Web Dashboard wiki page](docs/Wiki/WebDashboard.md#in-chat-view-profile-link).
+
+---
+
 ## [1.0.4-mc26.1.2+build.33] — 2026-07-28
 
 ### ✨ Team Chat Channel (FTB Teams)

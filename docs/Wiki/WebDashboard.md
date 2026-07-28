@@ -281,6 +281,24 @@ The dashboard's moderation endpoints are backed directly by the same manager cla
 
 All routes require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
 
+### In-Chat "View Profile" Link
+
+Player names in chat show a small clickable `↗` icon that opens that player's public lookup
+page in a browser. By default this points at whichever NeoEssentials dashboard is actually
+reachable — the paired external (Laravel) dashboard if you've run `/dashboard pair`, else the
+mod's own bundled UI via `webDashboard.publicUrl`.
+
+If you have your own website instead (a stats page, forum profile, custom fan site), set
+`webDashboard.customProfileUrlTemplate` to point the link there instead — it takes priority over
+both of the above when set:
+
+```json
+"customProfileUrlTemplate": "https://myserver.com/players/{player}"
+```
+
+Supports `{player}` (URL-encoded username) and `{uuid}` placeholders. Leave empty (the default)
+to keep using one of the two dashboards.
+
 ---
 
 ## Commands
