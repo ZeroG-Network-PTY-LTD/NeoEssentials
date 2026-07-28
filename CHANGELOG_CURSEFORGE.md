@@ -8,7 +8,7 @@ migration history) is not carried over.
 
 ---
 
-## 1.0.4-mc26.1.2+build.31 — 2026-07-28
+## 1.0.4-mc26.1.2+build.32 — 2026-07-28
 
 ### ✨ Give a Chat Channel a Styled Name, Plus a Reliability Fix
 

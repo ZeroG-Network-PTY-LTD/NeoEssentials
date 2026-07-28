@@ -12,7 +12,7 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
-## [1.0.4-mc26.1.2+build.31] — 2026-07-28
+## [1.0.4-mc26.1.2+build.32] — 2026-07-28
 
 ### ✨ Chat Channel `displayName`, Plus a Real Reliability Fix
 
