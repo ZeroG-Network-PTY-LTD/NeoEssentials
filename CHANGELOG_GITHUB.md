@@ -12,6 +12,28 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.37] — 2026-07-28
+
+### ✨ Internal Dashboard: Player Management Moved Onto the Public Lookup Page
+
+- Matches the same restructuring just shipped on the external (Laravel) dashboard: the full
+  single-player "Staff tools" panel (heal/kick/ban/mute, fly/god/speed, freeze/vanish/jail,
+  give/effect/spawn/burn, sudo/ptime/pweather, economy, permissions, inventory, notes) no longer
+  lives on its own `/players/player/:username` page — it's now mounted directly on `/lookup` as
+  a "Staff tools" section, shown only to signed-in dashboard users (same gate the old page had —
+  `RequireAuth`, no finer-grained permission existed on either side of this change).
+- `PlayerManagementPanel.tsx` is a near-verbatim extraction of the former standalone
+  `PlayerProfile.tsx` page's body into a reusable component — same state, same API calls, same
+  action handlers, just without the page-shell wrapper (`DashboardLayout`/`PageHeading`/back
+  link) and the duplicate player-avatar header (`PublicLookup.tsx` already renders one above it).
+- `Players.tsx`/`Economy.tsx`'s "Full profile →" links now point at `/lookup?player=<name>`
+  instead of the removed standalone page.
+- Live-verified in this dev environment: `npm run build` (type-check + Vite build) succeeds,
+  dev server starts cleanly with the new UI bundle, dashboard auto-starts, and both `/` and
+  `/lookup` serve `200` from the mod's own HTTP server.
+
+---
+
 ## [1.0.4-mc26.1.2+build.36] — 2026-07-28
 
 ### ✨ Custom Profile URL Template for the In-Chat "View Profile" Link

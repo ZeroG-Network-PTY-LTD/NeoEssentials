@@ -361,7 +361,7 @@ export default function Players() {
                   </div>
 
                   <Link
-                    to={`/players/player/${encodeURIComponent(lookupResult.username ?? lookupQuery ?? '')}`}
+                    to={`/lookup?player=${encodeURIComponent(lookupResult.username ?? lookupQuery ?? '')}`}
                     className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-[var(--mc-cyan-400)] hover:underline"
                   >
                     Full profile →
@@ -464,7 +464,7 @@ export default function Players() {
                 Ban
               </button>
               <Link
-                to={`/players/player/${encodeURIComponent(selected.username)}`}
+                to={`/lookup?player=${encodeURIComponent(selected.username)}`}
                 className="mt-1 flex items-center justify-center gap-2 text-[13px] px-3 py-2 rounded-[var(--radius)] bg-[var(--mc-cyan-500)] text-[#0a1620] font-medium hover:bg-[var(--mc-cyan-400)] text-left transition-colors"
               >
                 <UserCog size={14} />

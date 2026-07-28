@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 import PlayerRender from '../components/PlayerRender';
+import PlayerManagementPanel from '../components/PlayerManagementPanel';
 import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert } from 'lucide-react';
 
 /**
@@ -11,6 +12,13 @@ import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert } from 'lucide-react'
  * Bearer-token check), so it isn't wrapped in <RequireAuth> in App.tsx, and mcApi.publicLookup/
  * publicRecent() use plain fetch() rather than the session-carrying mcFetch(). The Inertia
  * `query`/`result`/`recent` props (set once per page load) became a client-side search + fetch.
+ *
+ * The former standalone /players/player/:username page (PlayerProfile.tsx) has since been
+ * merged in here as PlayerManagementPanel, mounted below when a signed-in dashboard user
+ * looks up a player — see the external dashboard's equivalent PublicLookup.tsx change for the
+ * same restructuring. Gated on `token` (any signed-in role), matching the gate the standalone
+ * page itself previously had (RequireAuth, no finer-grained per-permission check existed on
+ * either side of this before or after the merge).
  */
 
 interface PunishmentBase {
@@ -128,7 +136,7 @@ export default function PublicLookup() {
 
   return (
     <div className="min-h-screen bg-[var(--mc-bg-base)] text-[var(--mc-text-primary)]">
-      <div className="mx-auto max-w-3xl px-6">
+      <div className="mx-auto max-w-5xl px-6">
         <header className="flex items-center justify-between py-8">
           <Link to="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="" className="h-7 w-7 object-contain" />
@@ -172,6 +180,12 @@ export default function PublicLookup() {
                     <PlayerRender uuid={result.playerId} size={160} />
                     <h2 className="font-display text-lg font-semibold">{result.playerName}</h2>
                   </div>
+
+                  {token && (
+                    <div className="rounded-[var(--radius-lg)] border border-[var(--mc-purple-400)] bg-[var(--mc-bg-surface)] p-5">
+                      <PlayerManagementPanel username={result.playerName} />
+                    </div>
+                  )}
 
                   <SectionCard icon={ShieldBan} title="Bans" count={result.bans.length}>
                     {result.bans.map((b) => (
