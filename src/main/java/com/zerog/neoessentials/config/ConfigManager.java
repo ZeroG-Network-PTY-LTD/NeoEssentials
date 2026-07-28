@@ -1403,7 +1403,10 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 35);          // v35 — removed moderation.generalSettings.seeVanishedPermission;
+        put(MAIN_CONFIG, 36);          // v36 — added top-level discordEmbedTemplate section: customizes
+                                       //        the rich Discord embed built for chat.channels.*.discord
+                                       //        channel-routed messages (currently SDLink only)
+        // v35 — removed moderation.generalSettings.seeVanishedPermission;
                                        //        vanish now uses dedicated neoessentials.vanish.
                                        //        interact/.build/.hurt permission nodes instead of
                                        //        reusing the "can see vanished players" node

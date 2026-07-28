@@ -6,6 +6,19 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.30 — 2026-07-28
+
+### ✨ Customize the Discord Chat Embed Yourself
+
+- New `discordEmbedTemplate` config option lets you customize the look of the Discord embed for
+  channel-routed chat messages (Simple Discord Link only, for now) — author name, avatar, message
+  text, side-bar color, footer, and timestamp are all configurable, with placeholders for player
+  name, message, and channel.
+- If you use split config files, this new setting lives in its own file under a new `templates/`
+  folder instead of cluttering `chat.json`.
+
+---
+
 ## 1.0.4+build.29 — 2026-07-28
 
 ### 🐛 SDLink Channel-Routed Chat Now Looks Right Again

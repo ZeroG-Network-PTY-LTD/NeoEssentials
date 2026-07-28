@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 35,
+  "_configVersion": 36,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -1092,5 +1092,33 @@
     "useCustomServerFullMessage": false,
     // Hide join/quit messages when online count exceeds this value (-1 = always show)
     "hideJoinQuitMessagesAbove": -1
+  },
+
+  /* ----------------------------------------------------------------
+     Discord embed template — customizes the rich embed built for chat
+     messages routed to a specific chat.channels.<name>.discord.channelId
+     (currently only the Simple Discord Link integration builds a real
+     embed; other bridge mods still send a plain text line). Only used
+     when a channel actually has a channelId configured — see chat.channels.
+  ---------------------------------------------------------------- */
+  "discordEmbedTemplate": {
+    // Master switch. false = fall back to a plain "PlayerName: message" line.
+    "enabled": true,
+    // Placeholders available in every field below:
+    //   {player}  - the sender's username
+    //   {uuid}    - the sender's UUID (for building an avatar URL yourself)
+    //   {message} - the chat message content
+    //   {channel} - the NeoEssentials chat channel name (e.g. "global")
+    "authorName": "{player}",
+    "authorIconUrl": "https://mc-heads.net/avatar/{uuid}",
+    "description": "{message}",
+    // Hex color for the embed's side bar, e.g. "#5865F2" (Discord blurple). Leave empty ("")
+    // for Discord's default embed color.
+    "color": "#5865F2",
+    // Optional footer text/icon. Leave both empty to omit the footer entirely.
+    "footerText": "",
+    "footerIconUrl": "",
+    // Show the current time as the embed's timestamp
+    "showTimestamp": false
   }
 }

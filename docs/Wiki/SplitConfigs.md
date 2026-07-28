@@ -27,6 +27,13 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 | `afk.json` | `afk` (AFK timeout, kick, broadcast messages) |
 | `security.json` | `security` (input validation, unsafe commands) |
 | `tablist.json` | `tablist` (header, footer, player row format, animation) |
+| `templates/discord_embed.json` | `discordEmbedTemplate` (Discord chat-embed styling — see [Chat Channels](ChatChannels#discord-interoperability-avoiding-duplicate--leaked-messages)) |
+
+> **Note — `templates/discord_embed.json` is the one split file that lives in a subdirectory.**
+> Every other split file sits directly in `config/neoessentials/`; this one lives in its own
+> `config/neoessentials/templates/` folder instead. The folder is created automatically the
+> first time this file is generated (fresh install, `/neoe config split`, or `/neoe config
+> repair`) — no manual setup needed.
 
 > **Note:** `kits.json` historically held **kit definitions** (the actual kit contents as a JSON
 > array). It's now a **legacy file** — kit definitions are persisted through the pluggable
@@ -93,6 +100,7 @@ Files:
   ✔ afk.json           — afk
   ✔ security.json      — security
   ✔ tablist.json       — tablist
+  ✔ templates/discord_embed.json — discordEmbedTemplate
 ✔ All files present and valid.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

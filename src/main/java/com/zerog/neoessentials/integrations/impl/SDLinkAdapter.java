@@ -110,9 +110,21 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 // target an arbitrary channel — MessageType.CHAT always posts wherever SDLink's
                 // OWN messageDestinations.chat config says, ignoring this parameter entirely.
                 // Build the same author+avatar look manually via JDA's own EmbedBuilder instead
-                // of settling for an unstyled "PlayerName: message" line — see JdaBridge's
-                // Javadoc for why this needs its own isolated helper class.
-                JdaBridge.sendChatEmbed(discordChannelId, player.getName().getString(), player.getUUID(), cleanMessage);
+                // of settling for an unstyled "PlayerName: message" line — customizable via the
+                // top-level discordEmbedTemplate config section (see readEmbedTemplate()).
+                EmbedTemplate template = readEmbedTemplate();
+                if (template.enabled) {
+                    JdaBridge.sendTemplatedEmbed(discordChannelId,
+                        template.resolve(template.authorName, player, channel, cleanMessage),
+                        template.resolve(template.authorIconUrl, player, channel, cleanMessage),
+                        template.resolve(template.description, player, channel, cleanMessage),
+                        template.color,
+                        template.resolve(template.footerText, player, channel, cleanMessage),
+                        template.footerIconUrl,
+                        template.showTimestamp);
+                } else {
+                    JdaBridge.sendPlain(discordChannelId, player.getName().getString() + ": " + cleanMessage);
+                }
             } else {
                 send(MessageType.CHAT, authorFor(player), cleanMessage);
             }
@@ -121,6 +133,51 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             // on the classpath surfaces as a LinkageError here, not a plain Exception.
             LOGGER.error("Failed to relay chat message via SDLink: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Plain data holder for the {@code discordEmbedTemplate} config section (top-level in
+     * {@code config.json}, or its own {@code templates/discord_embed.json} split file — see
+     * {@code ConfigSplitter.FILE_SECTIONS_MAP}). Deliberately holds only {@link String}/
+     * {@code boolean} fields — no JDA/Discord4J types — so reading config never risks the
+     * classloading issue {@link JdaBridge} exists to avoid.
+     */
+    private static final class EmbedTemplate {
+        boolean enabled = true;
+        String authorName = "{player}";
+        String authorIconUrl = "https://mc-heads.net/avatar/{uuid}";
+        String description = "{message}";
+        String color = "#5865F2";
+        String footerText = "";
+        String footerIconUrl = "";
+        boolean showTimestamp = false;
+
+        String resolve(String template, ServerPlayer player, String channel, String message) {
+            if (template == null) return "";
+            return template
+                .replace("{player}", player.getName().getString())
+                .replace("{uuid}", player.getUUID().toString())
+                .replace("{message}", message)
+                .replace("{channel}", channel != null ? channel : "");
+        }
+    }
+
+    private static EmbedTemplate readEmbedTemplate() {
+        EmbedTemplate t = new EmbedTemplate();
+        try {
+            var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfig("discordEmbedTemplate");
+            if (cfg.has("enabled")) t.enabled = cfg.get("enabled").getAsBoolean();
+            if (cfg.has("authorName")) t.authorName = cfg.get("authorName").getAsString();
+            if (cfg.has("authorIconUrl")) t.authorIconUrl = cfg.get("authorIconUrl").getAsString();
+            if (cfg.has("description")) t.description = cfg.get("description").getAsString();
+            if (cfg.has("color")) t.color = cfg.get("color").getAsString();
+            if (cfg.has("footerText")) t.footerText = cfg.get("footerText").getAsString();
+            if (cfg.has("footerIconUrl")) t.footerIconUrl = cfg.get("footerIconUrl").getAsString();
+            if (cfg.has("showTimestamp")) t.showTimestamp = cfg.get("showTimestamp").getAsBoolean();
+        } catch (Exception ignored) {
+            // Config missing/malformed — fall back to the built-in defaults above.
+        }
+        return t;
     }
 
     @Override
@@ -280,21 +337,41 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
         /**
          * Rich-embed send for an actual player chat message — recreates SDLink's own chat-message
-         * look (author name + avatar) manually via JDA's EmbedBuilder, since posting to an
-         * arbitrary channel by ID bypasses SDLink's own MessageType.CHAT builder entirely (that
-         * builder has no channel-override API — see {@link #onPlayerChat} for the full rationale).
+         * look manually via JDA's EmbedBuilder, since posting to an arbitrary channel by ID
+         * bypasses SDLink's own MessageType.CHAT builder entirely (that builder has no
+         * channel-override API — see {@link #onPlayerChat} for the full rationale). Every field
+         * is already fully resolved (placeholders substituted) by the caller — this method only
+         * touches the JDA embed API itself, keeping the risky types confined here.
          */
-        static boolean sendChatEmbed(String channelId, String playerName, java.util.UUID playerUuid, String message) {
+        static boolean sendTemplatedEmbed(String channelId, String authorName, String authorIconUrl,
+                                           String description, String colorHex, String footerText,
+                                           String footerIconUrl, boolean showTimestamp) {
             var channel = BotController.INSTANCE.getJDA().getTextChannelById(channelId);
             if (channel == null) {
                 LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
                 return false;
             }
-            var embed = new com.hypherionmc.sdlink.shaded.dv8tion.jda.api.EmbedBuilder()
-                .setAuthor(playerName, null, "https://mc-heads.net/avatar/" + playerUuid)
-                .setDescription(message)
-                .build();
-            channel.sendMessageEmbeds(embed).queue();
+            var builder = new com.hypherionmc.sdlink.shaded.dv8tion.jda.api.EmbedBuilder();
+            if (authorName != null && !authorName.isBlank()) {
+                builder.setAuthor(authorName, null, (authorIconUrl != null && !authorIconUrl.isBlank()) ? authorIconUrl : null);
+            }
+            if (description != null && !description.isBlank()) {
+                builder.setDescription(description);
+            }
+            if (colorHex != null && !colorHex.isBlank()) {
+                try {
+                    builder.setColor(java.awt.Color.decode(colorHex));
+                } catch (NumberFormatException e) {
+                    LOGGER.debug("Invalid discordEmbedTemplate.color '{}': {}", colorHex, e.getMessage());
+                }
+            }
+            if (footerText != null && !footerText.isBlank()) {
+                builder.setFooter(footerText, (footerIconUrl != null && !footerIconUrl.isBlank()) ? footerIconUrl : null);
+            }
+            if (showTimestamp) {
+                builder.setTimestamp(java.time.Instant.now());
+            }
+            channel.sendMessageEmbeds(builder.build()).queue();
             return true;
         }
     }
