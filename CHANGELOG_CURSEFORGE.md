@@ -6,7 +6,7 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
-## 1.0.4+build.34 — 2026-07-28
+## 1.0.4+build.35 — 2026-07-28
 
 ### ✨ Point the "View Profile" Chat Link at Your Own Website
 

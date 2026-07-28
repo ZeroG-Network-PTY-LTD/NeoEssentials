@@ -11,7 +11,7 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
-## [1.0.4+build.34] — 2026-07-28
+## [1.0.4+build.35] — 2026-07-28
 
 ### ✨ Custom Profile URL Template for the In-Chat "View Profile" Link
 
