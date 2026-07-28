@@ -109,18 +109,16 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 // (e.g. a private staff channel). SDLink's DiscordMessageBuilder has no API to
                 // target an arbitrary channel — MessageType.CHAT always posts wherever SDLink's
                 // OWN messageDestinations.chat config says, ignoring this parameter entirely.
-                // Route directly via sendToChannel() instead, or the configured channel would be
-                // silently discarded and the message would always land in SDLink's single default
-                // chat channel regardless of how private it was meant to be. This loses the rich
-                // author/avatar embed styling send() below gets from SDLink itself, since that
-                // styling is only available through the type-routed builder — a plain but
-                // correctly-targeted message is the higher priority for a channel meant to be
-                // private in the first place.
-                sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
+                // Build the same author+avatar look manually via JDA's own EmbedBuilder instead
+                // of settling for an unstyled "PlayerName: message" line — see JdaBridge's
+                // Javadoc for why this needs its own isolated helper class.
+                JdaBridge.sendChatEmbed(discordChannelId, player.getName().getString(), player.getUUID(), cleanMessage);
             } else {
                 send(MessageType.CHAT, authorFor(player), cleanMessage);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches Errors too — see JdaBridge's Javadoc for why a missing/incompatible JDA
+            // on the classpath surfaces as a LinkageError here, not a plain Exception.
             LOGGER.error("Failed to relay chat message via SDLink: {}", e.getMessage());
         }
     }
@@ -236,15 +234,8 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
-            var jda = BotController.INSTANCE.getJDA();
-            var channel = jda.getTextChannelById(channelId);
-            if (channel == null) {
-                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
-                return false;
-            }
-            channel.sendMessage(message).queue();
-            return true;
-        } catch (Exception e) {
+            return JdaBridge.sendPlain(channelId, message);
+        } catch (Throwable e) {
             LOGGER.error("Failed to send message to Discord channel {} via SDLink: {}", channelId, e.getMessage());
             return false;
         }
@@ -256,6 +247,56 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             .message(message)
             .build()
             .sendMessage();
+    }
+
+    /**
+     * Isolates every direct reference to SDLink's shaded JDA channel/embed types
+     * ({@code com.hypherionmc.sdlink.shaded.dv8tion.jda.*}) in a class of its own. This class is
+     * only ever loaded — triggering classloading/verification of those types — the moment one
+     * of its methods is actually invoked, by which point {@link #isReady()} has already
+     * confirmed SDLink is genuinely present and its bot connection is up.
+     *
+     * <p>This split is required, not just tidy: the JVM's bytecode verifier resolves every type
+     * mentioned in a method's StackMapTable at class-LOAD time (as part of linking), not lazily
+     * on first invocation — and this happens regardless of any {@code ModList.isLoaded()} guard
+     * inside the SAME class, since the guard is only checked once the method actually runs, long
+     * after the class (and everything it references) was already required to resolve. This
+     * class previously referenced these shaded types directly inside {@code SDLinkAdapter}
+     * itself, which would have crashed the entire server on startup on any pack without SDLink
+     * installed — exactly what happened with the equivalent un-isolated code in
+     * {@code DCIntegrationAdapter} (see its {@code JdaChannelSender} for the full incident).
+     */
+    private static final class JdaBridge {
+        /** Plain-text send — used by the dashboard's generic "send test message" feature. */
+        static boolean sendPlain(String channelId, String message) {
+            var channel = BotController.INSTANCE.getJDA().getTextChannelById(channelId);
+            if (channel == null) {
+                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                return false;
+            }
+            channel.sendMessage(message).queue();
+            return true;
+        }
+
+        /**
+         * Rich-embed send for an actual player chat message — recreates SDLink's own chat-message
+         * look (author name + avatar) manually via JDA's EmbedBuilder, since posting to an
+         * arbitrary channel by ID bypasses SDLink's own MessageType.CHAT builder entirely (that
+         * builder has no channel-override API — see {@link #onPlayerChat} for the full rationale).
+         */
+        static boolean sendChatEmbed(String channelId, String playerName, java.util.UUID playerUuid, String message) {
+            var channel = BotController.INSTANCE.getJDA().getTextChannelById(channelId);
+            if (channel == null) {
+                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                return false;
+            }
+            var embed = new com.hypherionmc.sdlink.shaded.dv8tion.jda.api.EmbedBuilder()
+                .setAuthor(playerName, null, "https://mc-heads.net/avatar/" + playerUuid)
+                .setDescription(message)
+                .build();
+            channel.sendMessageEmbeds(embed).queue();
+            return true;
+        }
     }
 
     @Override

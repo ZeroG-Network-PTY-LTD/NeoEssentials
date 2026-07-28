@@ -30,7 +30,7 @@ Each channel entry (keyed by an arbitrary name, e.g. `"local"`, `"global"`, `"st
 | `prefix` | If a chat message starts with this literal prefix, it's routed to this channel for that one message (e.g. typing `!hello` in the default config routes to `global`) |
 | `default` | If `true`, this channel is used when a player hasn't explicitly switched channels and their message has no matching prefix |
 | `discord.enabled` | Relay messages sent in this channel to Discord |
-| `discord.channelId` | Discord channel ID to relay to (blank = the Discord bridge mod's own default/fallback chat channel). When set, the message is sent as a plain `PlayerName: message` line directly to that channel — it does **not** get the sender-avatar/embed styling a blank `channelId` gets, since posting to an arbitrary channel by ID and posting via the bridge mod's own styled "chat message" type are two different capabilities the bridge mod's API exposes. See [Discord Interoperability](#discord-interoperability-avoiding-duplicate--leaked-messages) below before relying on this for a channel meant to be private. |
+| `discord.channelId` | Discord channel ID to relay to (blank = the Discord bridge mod's own default/fallback chat channel). See [Discord Interoperability](#discord-interoperability-avoiding-duplicate--leaked-messages) below before relying on this for a channel meant to be private. |
 
 There is no `type` or `format` key, and no `discord.relayFromDiscord` — the current implementation only relays Minecraft chat **to** Discord, not the reverse.
 
@@ -112,15 +112,20 @@ prior to the fix that shipped alongside this documentation, where a configured `
 silently ignored and every relayed message always went to SDLink's own default channel regardless
 of what `channelId` said. That part is now fixed; the "SDLink's own native relay still leaks it
 elsewhere" part above is a separate, unavoidable interoperability issue that only the
-`playerMessages = false` fix resolves.
+`playerMessages = false` fix resolves. For SDLink specifically, a channel-routed message is sent
+as a proper Discord embed (player name + skin avatar), built manually via JDA's own embed API to
+match SDLink's own chat-message look — SDLink's `DiscordMessageBuilder` has no channel-override
+capability, so this recreates that same visual style rather than settling for a plain text line.
 
 **Mc2Discord** has the same class of channel-routing fix applied (a configured `discord.channelId`
-is now honored instead of silently ignored). Mc2Discord's own core purpose is also "relay chat to
-Discord automatically," so the same double-post risk for a channel using a blank `channelId`
-almost certainly applies — check Mc2Discord's own config for a way to disable its automatic relay
-for channels NeoEssentials already handles explicitly, the same way `playerMessages = false` does
-for SDLink. NeoEssentials does not currently ship a startup diagnostic for Mc2Discord's config the
-way it does for SDLink's.
+is now honored instead of silently ignored). Unlike SDLink's channel-routed messages, Mc2Discord's
+are sent as a plain `PlayerName: message` text line rather than a styled embed — no rich-embed
+send path currently exists for it. Mc2Discord's own core purpose is also "relay chat to Discord
+automatically," so the same double-post risk for a channel using a blank `channelId` almost
+certainly applies — check Mc2Discord's own config for a way to disable its automatic relay for
+channels NeoEssentials already handles explicitly, the same way `playerMessages = false` does for
+SDLink. NeoEssentials does not currently ship a startup diagnostic for Mc2Discord's config the way
+it does for SDLink's.
 
 **DCIntegration** works differently: it relays chat entirely through its own vanilla-level mixins,
 with no supported hook for NeoEssentials to intercept or suppress. Because of that,

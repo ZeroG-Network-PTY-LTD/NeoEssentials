@@ -6,6 +6,17 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.29 — 2026-07-28
+
+### 🐛 SDLink Channel-Routed Chat Now Looks Right Again
+
+- If you set a specific Discord channel for one of your chat channels, messages were showing up
+  as plain text instead of Simple Discord Link's usual nicely-styled message with your avatar.
+  Fixed — it now looks the same as before.
+- Also fixed a hidden crash risk in the same area, found while working on this.
+
+---
+
 ## 1.0.4+build.28 — 2026-07-28
 
 ### 🐛 Critical Fix: build.27 Could Crash Your Whole Server on Startup
