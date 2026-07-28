@@ -8,6 +8,17 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.33 — 2026-07-28
+
+### ✨ New: Team Chat Channel (FTB Teams)
+
+- Added a `team` chat channel — if you're playing a modpack with FTB Teams, chatting in it only
+  reaches your own teammates, no radius or permission setup needed.
+- If FTB Teams isn't installed, or you're not on a team yet, you'll get a clear message telling
+  you why instead of the message just silently vanishing.
+
+---
+
 ## 1.0.4-mc26.1.2+build.32 — 2026-07-28
 
 ### ✨ Give a Chat Channel a Styled Name, Plus a Reliability Fix

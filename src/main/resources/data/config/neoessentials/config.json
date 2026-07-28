@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 36,
+  "_configVersion": 37,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -1008,9 +1008,26 @@
      * chat-format above), completely independent of the safe internal key. E.g.:
      *   "staff": { ..., "displayName": "&d⚙ Staff" }
      * then use {channel} in chat-format: "&8[{channel}&8]&r {neoessentials_username}: {MESSAGE}"
+     *
+     * Want a channel that only reaches your FTB Teams (or similar) teammates? Set
+     * "teamBased": true instead of "radius"/"permission" — see the "team" example below.
+     * Requires FTB Teams (or another supported team mod) to be installed; without one, the
+     * channel just tells players it isn't available.
      */
     "channels": {
       "enabled": true,
+      "team": {
+        "enabled": true,
+        "command": "team",
+        "aliases": ["t", "teamchat"],
+        "displayName": "&a⛨ Team",
+        "teamBased": true,
+        "default": false,
+        "discord": {
+          "enabled": false,
+          "channelId": ""
+        }
+      },
       "local": {
         "enabled": true,
         "radius": 100,

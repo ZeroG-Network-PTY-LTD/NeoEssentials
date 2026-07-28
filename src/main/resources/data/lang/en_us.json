@@ -1057,6 +1057,8 @@
     "_comment_general_additions":  "=== General / Misc Additions ===",
     "neoessentials.error.no_server":  "§cThis command requires a server context and cannot be run from here.",
     "commands.neoessentials.channel.error":  "§cAn error occurred while switching chat channels.",
+    "commands.neoessentials.channel.no_team":  "§cYou're not currently in a team (FTB Teams or a similar supported mod), so you can't use the team chat channel.",
+    "commands.neoessentials.channel.no_team_provider":  "§cNo team mod (e.g. FTB Teams) is installed on this server, so the team chat channel isn't available.",
     "commands.neoessentials.command.player_only":  "§cThis command can only be used by players.",
     "commands.neoessentials.error.player_only":  "§cThis command can only be used by players.",
     "commands.neoessentials.near.server_error":  "§cAn internal error occurred while searching for nearby players.",
