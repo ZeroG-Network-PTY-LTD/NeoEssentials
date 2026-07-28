@@ -71,7 +71,9 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
         try {
             String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
             sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Catches Errors too — see JdaChannelSender's Javadoc for why a missing/incompatible
+            // JDA on the classpath surfaces as a LinkageError here, not a plain Exception.
             LOGGER.error("Failed to relay chat message via DCIntegration: {}", e.getMessage());
         }
     }
@@ -80,6 +82,34 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
+            return JdaChannelSender.send(channelId, message);
+        } catch (Throwable e) {
+            LOGGER.error("Failed to send message to Discord channel {} via DCIntegration: {}", channelId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Isolates every direct reference to JDA's channel-hierarchy types (GuildMessageChannel /
+     * TextChannel / MessageChannel) in a class of its own. This class is only ever loaded —
+     * triggering classloading/verification of those types — the moment {@link #send} is
+     * actually invoked, by which point {@link #isReady()} has already confirmed DCIntegration
+     * (and therefore its JDA) is genuinely present and version-compatible.
+     *
+     * <p>This split is required, not just tidy: the JVM's bytecode verifier resolves every type
+     * mentioned in a method's StackMapTable at class-LOAD time (as part of linking), not lazily
+     * on first invocation — and this happens regardless of any {@code ModList.isLoaded()} guard
+     * inside the SAME class, since the guard is only checked once the method actually runs, long
+     * after the class (and everything it references) was already required to resolve. Before
+     * this split, simply constructing {@code new DCIntegrationAdapter()} in
+     * {@code ChatIntegrationManager.initialize()} — which happens unconditionally on every
+     * server start — crashed the entire server with a {@code NoClassDefFoundError} on any pack
+     * where DCIntegration isn't installed (or an older/incompatible JDA elsewhere on the
+     * classpath lacks this newer channel-type package), because DCIntegrationAdapter itself
+     * used to reference these types directly.
+     */
+    private static final class JdaChannelSender {
+        static boolean send(String channelId, String message) {
             var channel = DiscordIntegration.INSTANCE.getJDA().getTextChannelById(channelId);
             if (channel == null) {
                 LOGGER.warn("DCIntegration: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
@@ -87,9 +117,6 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
             }
             DiscordIntegration.INSTANCE.sendMessage(message, channel);
             return true;
-        } catch (Exception e) {
-            LOGGER.error("Failed to send message to Discord channel {} via DCIntegration: {}", channelId, e.getMessage());
-            return false;
         }
     }
 

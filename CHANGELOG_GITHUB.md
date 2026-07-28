@@ -12,6 +12,37 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.28] — 2026-07-28
+
+### 🐛 Critical Fix: Server Crash on Startup (`NoClassDefFoundError`) From the build.27 Discord Fixes
+
+- The Mc2Discord/DCIntegration channel-routing fixes shipped in build.27 crashed the ENTIRE
+  server on startup with `NoClassDefFoundError: net/dv8tion/jda/api/entities/channel/middleman/MessageChannel`
+  — reported live from a real server running that build.
+- Root cause: the JVM's bytecode verifier resolves every type referenced in a class's method
+  bodies (via StackMapTable frames) at class-LOAD time, not lazily on first invocation — and this
+  happens regardless of any `ModList.isLoaded()` runtime guard inside that SAME class, since the
+  guard is only checked once the method actually executes, long after the class (and everything
+  it references) was already required to resolve. `DCIntegrationAdapter`'s new `sendToChannel`/
+  `onPlayerChat` referenced JDA's `MessageChannel`/`TextChannel` types directly, and since
+  `new DCIntegrationAdapter()` is constructed unconditionally in `ChatIntegrationManager.initialize()`
+  on every server start, simply loading that class now required those types to be resolvable —
+  which they weren't on a pack without a fully JDA-5.x-compatible DCIntegration setup — crashing
+  server startup entirely.
+- Fixed by isolating every direct reference to the risky external types (JDA's channel hierarchy
+  in `DCIntegrationAdapter`, Discord4J's `Snowflake`/`Possible` in `Mc2DiscordAdapter`) into
+  separate nested classes (`JdaChannelSender`/`Discord4jChannelSender`) that are only ever loaded
+  — triggering classloading/verification of those types — at the moment a channel-specific
+  message is actually sent, by which point `isReady()` has already confirmed the companion mod
+  is genuinely present. Verified via `javap` against the compiled bytecode that the outer adapter
+  classes' constant pools are now completely clean of the risky types.
+- This is a general lesson for any future optional-dependency integration in this codebase:
+  never reference a compileOnly dependency's types directly in a class that gets constructed
+  unconditionally — isolate them in a class that's only loaded after a readiness check has
+  already passed.
+
+---
+
 ## [1.0.4-mc26.1.2+build.27] — 2026-07-27
 
 ### 🐛 Same Discord Channel-Routing Fix Extended to Mc2Discord and DCIntegration

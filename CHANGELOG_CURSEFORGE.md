@@ -8,6 +8,16 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.28 — 2026-07-28
+
+### 🐛 Critical Fix: build.27 Could Crash Your Whole Server on Startup
+
+- If you updated to build.27, some server setups would crash immediately on startup with a
+  `NoClassDefFoundError`. This was caused by the Mc2Discord/DCIntegration fixes in that update.
+  Fully fixed now — please update immediately if you're on build.27.
+
+---
+
 ## 1.0.4-mc26.1.2+build.27 — 2026-07-27
 
 ### 🐛 Same Discord Fix Extended to Mc2Discord and DCIntegration
