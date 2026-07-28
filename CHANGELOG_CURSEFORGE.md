@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.36 — 2026-07-28
+
+### ✨ Internal Dashboard: Player Tools Moved to the Lookup Page
+
+- The full player-management panel (heal, kick, ban, mute, teleport, permissions, inventory,
+  notes, and more) used to be its own page. It's now shown right on the Player Lookup page for
+  signed-in staff, so there's one less click to get there.
+
+---
+
 ## 1.0.4+build.35 — 2026-07-28
 
 ### ✨ Point the "View Profile" Chat Link at Your Own Website

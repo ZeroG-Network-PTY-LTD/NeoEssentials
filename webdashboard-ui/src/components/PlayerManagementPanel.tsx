@@ -1,10 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import DashboardLayout from '../layouts/DashboardLayout';
-import Card from '../components/Dashboard/Card';
-import PageHeading from '../components/Dashboard/PageHeading';
-import Badge from '../components/Dashboard/Badge';
-import PlayerRender from '../components/PlayerRender';
+import Card from './Dashboard/Card';
+import Badge from './Dashboard/Badge';
 import { useToast } from '../lib/toast';
 import * as mcApi from '../lib/mcApi';
 import type { Gamemode } from '../lib/mcApi';
@@ -20,13 +16,11 @@ import type {
   WarnEntry,
 } from '../types';
 import {
-  ArrowLeft,
   Gamepad2,
   UserCog,
   Coins,
   ShieldBan,
   VolumeX,
-  LogOut,
   StickyNote,
   Backpack,
   Shield,
@@ -49,10 +43,21 @@ import {
   Terminal,
   CloudSun,
   Trash2,
+  ShieldCheck,
 } from 'lucide-react';
 
-export default function PlayerProfile() {
-  const { username = '' } = useParams<{ username: string }>();
+interface Props {
+  username: string;
+}
+
+/**
+ * Full single-player staff-tools panel — mounted on the public /lookup page (see
+ * PublicLookup.tsx) for any authenticated dashboard user, instead of living on its own
+ * page. Ported near-verbatim from the former standalone PlayerProfile.tsx page; self-
+ * sufficient (does its own `lookup` call for online-status — the public lookup page's own
+ * result has no online/lastSeen field).
+ */
+export default function PlayerManagementPanel({ username }: Props) {
   const { showToast } = useToast();
 
   const [lookup, setLookup] = useState<PlayerLookupResult | null>(null);
@@ -341,24 +346,14 @@ export default function PlayerProfile() {
     );
 
   if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="text-[13px] text-[var(--mc-text-muted)]">Loading…</div>
-      </DashboardLayout>
-    );
+    return <div className="text-[13px] text-[var(--mc-text-muted)]">Loading staff tools…</div>;
   }
 
   if (notFound || !lookup) {
     return (
-      <DashboardLayout>
-        <PageHeading title={username} icon={UserCog} />
-        <div className="text-[13px] text-[var(--mc-ember-500)]">
-          {lookup?.message ?? `Could not find a player named '${username}'.`}
-        </div>
-        <Link to="/players" className="mt-3 inline-block text-[13px] text-[var(--mc-cyan-400)]">
-          <ArrowLeft size={13} className="inline -mt-0.5 mr-1" /> Back to players
-        </Link>
-      </DashboardLayout>
+      <div className="text-[13px] text-[var(--mc-ember-500)]">
+        {lookup?.message ?? `Could not find a player named '${username}'.`}
+      </div>
     );
   }
 
@@ -371,38 +366,15 @@ export default function PlayerProfile() {
   ];
 
   return (
-    <DashboardLayout>
-      <PageHeading
-        title={lookup.username ?? username}
-        icon={UserCog}
-        subtitle="Full single-player control — moderation history, economy, permissions, and inventory."
-        action={
-          <Link
-            to="/players"
-            className="flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] transition-colors"
-          >
-            <ArrowLeft size={13} />
-            Back to players
-          </Link>
-        }
-      />
-
-      <div className="flex items-center gap-4 mb-6">
-        <PlayerRender uuid={lookup.uuid} size={140} />
-        <div>
-          <div className="font-display text-[16px] font-semibold flex items-center gap-2">
-            {lookup.username}
-            <Badge variant={lookup.online ? 'moss' : 'neutral'} dot={lookup.online}>
-              {lookup.online ? 'online' : 'offline'}
-            </Badge>
-            {activeBans.length > 0 && <Badge variant="ember">banned</Badge>}
-            {activeMutes.length > 0 && <Badge variant="purple">muted</Badge>}
-          </div>
-          <div className="font-data text-[12px] text-[var(--mc-text-muted)]">
-            {lookup.uuid}
-            {!lookup.online && lookup.lastSeen && ` · Last seen ${lookup.lastSeen}`}
-          </div>
-        </div>
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <ShieldCheck size={16} className="text-[var(--mc-purple-400)]" />
+        <h2 className="font-display text-[15px] font-semibold">Staff tools</h2>
+        <Badge variant={lookup.online ? 'moss' : 'neutral'} dot={lookup.online}>
+          {lookup.online ? 'online' : 'offline'}
+        </Badge>
+        {activeBans.length > 0 && <Badge variant="ember">banned</Badge>}
+        {activeMutes.length > 0 && <Badge variant="purple">muted</Badge>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -422,7 +394,7 @@ export default function PlayerProfile() {
               }
               className="flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-[6px] border border-[var(--mc-border-strong)] hover:bg-[var(--mc-bg-surface-raised)] disabled:opacity-50 transition-colors"
             >
-              <LogOut size={12} /> Kick
+              Kick
             </button>
             {activeMutes.length > 0 ? (
               <button
@@ -917,6 +889,6 @@ export default function PlayerProfile() {
           </div>
         </Card>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
