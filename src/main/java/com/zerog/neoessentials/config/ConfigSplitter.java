@@ -25,7 +25,13 @@ import java.util.*;
  *   afk.json          — AFK system settings
  *   security.json     — security and validation settings
  *   tablist.json      — tablist display settings
+ *   templates/discord_embed.json — discordEmbedTemplate (Discord chat-embed styling)
  * </pre>
+ *
+ * <p>{@code templates/discord_embed.json} is the one split file that lives in a subdirectory
+ * rather than directly under {@code config/neoessentials/} — {@link #writeJsonFile} creates
+ * that subdirectory on demand, since {@link #ensureConfigDir()} only guarantees the top-level
+ * config directory exists.
  *
  * <p>Splitting is activated by the presence of a {@code .split_configs} marker file
  * in the {@code config/neoessentials/} directory.
@@ -51,6 +57,7 @@ public class ConfigSplitter {
         put("moderation",    "moderation.json");
         put("chat",          "chat.json");
         put("tablist",       "tablist.json");
+        put("discordEmbedTemplate", "templates/discord_embed.json");
     }};
 
     /**
@@ -67,6 +74,7 @@ public class ConfigSplitter {
         put("afk.json",           Collections.singletonList("afk"));
         put("security.json",      Collections.singletonList("security"));
         put("tablist.json",       Collections.singletonList("tablist"));
+        put("templates/discord_embed.json", Collections.singletonList("discordEmbedTemplate"));
     }};
 
     // Version for each split config file
@@ -80,6 +88,7 @@ public class ConfigSplitter {
         put("afk.json",           2);  // v2  — invulnerableWhenAfk option
         put("security.json",      1);
         put("tablist.json",       1);
+        put("templates/discord_embed.json", 1);
     }};
 
     /**
@@ -765,9 +774,16 @@ public class ConfigSplitter {
         }
     }
 
-    /** Write a JsonObject to a file (pretty-printed). */
+    /** Write a JsonObject to a file (pretty-printed). Creates the file's parent directory
+     * first — most split files sit directly in {@link ResourceUtil#CONFIG_DIR}, already
+     * covered by {@link #ensureConfigDir()}, but {@code templates/discord_embed.json} needs
+     * its own {@code templates/} subdirectory created on demand. */
     private static void writeJsonFile(File f, JsonObject obj) throws IOException {
         ensureConfigDir();
+        File parent = f.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            LOGGER.warn("Could not create directory: {}", parent.getAbsolutePath());
+        }
         try (FileWriter w = new FileWriter(f, StandardCharsets.UTF_8)) {
             GSON.toJson(obj, w);
         }

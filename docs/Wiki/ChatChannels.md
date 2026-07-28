@@ -138,6 +138,49 @@ post that same message to its own configured channel (`general.botChannel` /
 `advanced.chatOutputChannelID`) regardless, since it has no concept of NeoEssentials channels
 either — check DCIntegration's own config if you see a private channel still leaking elsewhere.
 
+### Customizing the SDLink Embed (`discordEmbedTemplate`)
+
+The rich embed SDLink builds for a channel-routed message is fully customizable via a top-level
+`discordEmbedTemplate` section in `config.json` (or its own `templates/discord_embed.json` split
+file — see [Split Configs](SplitConfigs)):
+
+```json
+"discordEmbedTemplate": {
+  "enabled": true,
+  "authorName": "{player}",
+  "authorIconUrl": "https://mc-heads.net/avatar/{uuid}",
+  "description": "{message}",
+  "color": "#5865F2",
+  "footerText": "",
+  "footerIconUrl": "",
+  "showTimestamp": false
+}
+```
+
+| Key | Description |
+|---|---|
+| `enabled` | `true` = build the rich embed described below. `false` = fall back to a plain `PlayerName: message` line instead. |
+| `authorName` | Text shown as the embed author (top-left, bold) |
+| `authorIconUrl` | Small icon shown next to the author name — defaults to the sender's Minecraft skin avatar |
+| `description` | The embed's main body text |
+| `color` | Hex color for the embed's left-side bar, e.g. `"#5865F2"` (Discord blurple). Leave `""` for Discord's default. |
+| `footerText` / `footerIconUrl` | Optional footer row. Leave both empty (`""`) to omit the footer entirely. |
+| `showTimestamp` | Adds the current time to the embed's footer area |
+
+Every text field (`authorName`, `authorIconUrl`, `description`, `footerText`) supports these
+placeholders:
+
+| Placeholder | Value |
+|---|---|
+| `{player}` | The sender's Minecraft username |
+| `{uuid}` | The sender's UUID (handy for building a custom avatar URL) |
+| `{message}` | The chat message content |
+| `{channel}` | The NeoEssentials chat channel name (`local`, `global`, `staff`, etc.) |
+
+This customization is currently **SDLink-specific** — Mc2Discord's and DCIntegration's
+channel-routed messages are always plain text, since neither has a rich-embed send path built
+yet (see above).
+
 > Mc2Discord's and DCIntegration's channel-routing fixes are based on reading their compiled
 > public API directly, not live-tested against a running instance of either mod (unlike SDLink,
 > which was verified live) — if you hit anything unexpected with either, please report it.

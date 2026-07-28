@@ -12,6 +12,32 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.30] — 2026-07-28
+
+### ✨ Customizable Discord Embed Template (`discordEmbedTemplate`)
+
+- New top-level `discordEmbedTemplate` config section customizes the rich embed SDLink builds
+  for a channel-routed chat message (see build.29): `authorName`, `authorIconUrl`, `description`,
+  `color`, `footerText`, `footerIconUrl`, `showTimestamp`, plus an `enabled` master switch that
+  falls back to a plain text line when off. Every text field supports `{player}`, `{uuid}`,
+  `{message}`, and `{channel}` placeholders.
+- **Split-config support**: this section lives in its own `templates/discord_embed.json` file
+  when split configs are active — the first split file to live in a subdirectory rather than
+  directly under `config/neoessentials/`. `ConfigSplitter#writeJsonFile` now creates a target
+  file's parent directory on demand (previously only guaranteed the top-level config directory
+  existed), so the `templates/` folder is created automatically on first generation.
+- Bumped `config.json` to `_configVersion` 36 so existing installs get the new section merged in
+  automatically (existing values are never overwritten, per the standard version-merge behavior).
+- Live-verified end-to-end in this dev environment: monolithic version-merge (`Config file
+  config.json merged to version 36`), `/neoe config split` correctly generating
+  `templates/discord_embed.json` with the right content, and `/neoe config status`/`validate`
+  recognizing the new file without any special-casing needed.
+- `SDLinkAdapter`'s new config-reading code (`EmbedTemplate`/`readEmbedTemplate`) is a plain data
+  holder with no JDA/Discord4J type references, keeping the classloading-safety guarantee from
+  the build.28/29 fixes intact — only `JdaBridge` touches the actual embed API.
+
+---
+
 ## [1.0.4-mc26.1.2+build.29] — 2026-07-28
 
 ### 🐛 SDLink Channel-Routed Chat Now Gets a Real Embed, Plus a Latent Crash Fix
