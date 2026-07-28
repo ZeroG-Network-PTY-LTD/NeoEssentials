@@ -288,14 +288,18 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     }
     
     /**
-     * Get the chat channel the player is currently in (persistent state, or the configured
-     * default channel, or "global" — see {@link com.zerog.neoessentials.chat.ChatHandler#getEffectiveChannel}).
+     * Get the styled channel text to show for the player's current channel (persistent state, or
+     * the configured default channel, or "global" — see
+     * {@link com.zerog.neoessentials.chat.ChatHandler#getEffectiveChannel}), resolved through
+     * {@link com.zerog.neoessentials.chat.ChatHandler#getChannelDisplayName} so a channel's
+     * optional {@code displayName} (e.g. a colored icon) is used instead of the raw channel key.
      */
     @Nullable
     private String getPlayerChannel(@Nullable ServerPlayer player) {
         if (player == null) return null;
         try {
-            return com.zerog.neoessentials.chat.ChatHandler.getEffectiveChannel(player.getUUID());
+            String channelKey = com.zerog.neoessentials.chat.ChatHandler.getEffectiveChannel(player.getUUID());
+            return com.zerog.neoessentials.chat.ChatHandler.getChannelDisplayName(channelKey);
         } catch (Exception e) {
             LOGGER.debug("Error getting channel for player {}: {}", player.getName().getString(), e.getMessage());
             return "global";

@@ -29,10 +29,47 @@ Each channel entry (keyed by an arbitrary name, e.g. `"local"`, `"global"`, `"st
 | `permission` | If present, only players with this permission receive messages sent to the channel; also gates the Discord relay for this channel |
 | `prefix` | If a chat message starts with this literal prefix, it's routed to this channel for that one message (e.g. typing `!hello` in the default config routes to `global`) |
 | `default` | If `true`, this channel is used when a player hasn't explicitly switched channels and their message has no matching prefix |
+| `displayName` | Optional styled text shown wherever the `{channel}`/`{neoessentials_channel}` placeholder is used (see [Chat Format Placeholders](ChatSystem#chat-format-placeholders)), e.g. `"&d⚙ Staff"`. Falls back to the raw channel key if unset. See below for why this exists as a separate field. |
 | `discord.enabled` | Relay messages sent in this channel to Discord |
 | `discord.channelId` | Discord channel ID to relay to (blank = the Discord bridge mod's own default/fallback chat channel). See [Discord Interoperability](#discord-interoperability-avoiding-duplicate--leaked-messages) below before relying on this for a channel meant to be private. |
 
 There is no `type` or `format` key, and no `discord.relayFromDiscord` — the current implementation only relays Minecraft chat **to** Discord, not the reverse.
+
+### The channel key must stay a plain, simple string
+
+The key you give a channel (`"local"`, `"staff"`, etc.) is not just a label — it's the internal
+identifier used for prefix routing, the `discord.channelId` lookup, and — when `command` isn't
+set — the actual slash-command literal Brigadier registers for that channel
+(`ChannelCommands#register`). **Don't put color codes, emoji, or other special characters in the
+key itself** — a command literal Brigadier can't parse will fail to register (and no player could
+ever type it anyway even if it somehow registered). Each channel now registers in its own
+try/catch, so one broken channel only skips itself and logs an error — it no longer silently
+aborts registration for every channel listed after it in the file (a real bug prior to this).
+
+If you want a **styled/colored** channel name, use `displayName` instead — it's shown via
+`{channel}` in your `chat-format`, completely independent of the safe internal key:
+
+```json
+"staff": {
+  "enabled": true,
+  "command": "staff",
+  "aliases": ["mod", "admin", "s"],
+  "prefix": "@",
+  "permission": "neoessentials.chat.staff",
+  "displayName": "&d⚙ Staff",
+  "discord": { "enabled": true, "channelId": "" }
+}
+```
+
+```json
+"chat-format": {
+  "default": "&8[{channel}&8]&r {neoessentials_prefix}{neoessentials_username}{neoessentials_suffix}: {MESSAGE}"
+}
+```
+
+Typing in the staff channel now shows something like `[⚙ Staff] PlayerName: message`, with the
+gear icon and "Staff" rendered in the color you chose — while the channel's actual identifier
+(`staff`) stays a safe, working command name behind the scenes.
 
 Switching channels with `/<command>` persists until changed again (`ChatHandler.setPlayerChannel`); running `/<command> <message>` switches and sends that one message immediately.
 

@@ -6,6 +6,17 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.31 — 2026-07-28
+
+### ✨ Give a Chat Channel a Styled Name, Plus a Reliability Fix
+
+- New `displayName` option per chat channel — lets you show a colored/custom name (e.g.
+  "&d⚙ Staff") for a channel in chat, without touching its actual internal name.
+- Fixed a bug where a broken chat channel setting could silently stop OTHER channels' commands
+  from working too. Each channel is now handled independently.
+
+---
+
 ## 1.0.4+build.30 — 2026-07-28
 
 ### ✨ Customize the Discord Chat Embed Yourself

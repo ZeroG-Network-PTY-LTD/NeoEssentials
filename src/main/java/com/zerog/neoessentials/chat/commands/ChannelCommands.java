@@ -66,24 +66,36 @@ public class ChannelCommands {
                     continue;
                 }
 
-                // Get command name
-                String command = channelObj.has("command") ? channelObj.get("command").getAsString() : channelName;
+                // Each channel is registered in its own try/catch — a single malformed channel
+                // (e.g. a "command" literal Brigadier rejects, most commonly caused by putting
+                // color codes/special characters directly in the channel's JSON key instead of
+                // giving it an explicit "command") must not abort registration for every OTHER
+                // channel that comes after it in the file. This used to be one shared try/catch
+                // around the whole loop, so one bad channel silently broke everyone else's too.
+                try {
+                    // Get command name
+                    String command = channelObj.has("command") ? channelObj.get("command").getAsString() : channelName;
 
-                // Get permission if specified
-                String permission = channelObj.has("permission") ? channelObj.get("permission").getAsString() : null;
+                    // Get permission if specified
+                    String permission = channelObj.has("permission") ? channelObj.get("permission").getAsString() : null;
 
-                // Register main command
-                registerChannelCommand(dispatcher, command, channelName, permission);
-                registeredCount++;
+                    // Register main command
+                    registerChannelCommand(dispatcher, command, channelName, permission);
+                    registeredCount++;
 
-                // Register aliases
-                if (channelObj.has("aliases") && channelObj.get("aliases").isJsonArray()) {
-                    var aliases = channelObj.getAsJsonArray("aliases");
-                    for (var aliasElement : aliases) {
-                        String alias = aliasElement.getAsString();
-                        registerChannelCommand(dispatcher, alias, channelName, permission);
-                        registeredCount++;
+                    // Register aliases
+                    if (channelObj.has("aliases") && channelObj.get("aliases").isJsonArray()) {
+                        var aliases = channelObj.getAsJsonArray("aliases");
+                        for (var aliasElement : aliases) {
+                            String alias = aliasElement.getAsString();
+                            registerChannelCommand(dispatcher, alias, channelName, permission);
+                            registeredCount++;
+                        }
                     }
+                } catch (Exception e) {
+                    LOGGER.error("Failed to register command for channel '{}' — check its 'command' field " +
+                        "for invalid characters (color codes/emoji aren't valid command names). " +
+                        "Other channels are unaffected. Error: {}", channelName, e.getMessage());
                 }
             }
 

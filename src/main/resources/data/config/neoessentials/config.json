@@ -993,9 +993,21 @@
 
     /* Chat channels.
      * Set "enabled" to false to disable all channels and use plain global chat.
-     * Per-channel flags: enabled, command, aliases, prefix, default, discord bridge.
+     * Per-channel flags: enabled, command, aliases, prefix, default, discord bridge, displayName.
      * For proximity-only servers: keep local.enabled=true, global.enabled=false.
      * For global-only servers: set channels.enabled=false OR local.enabled=false.
+     *
+     * The key you give a channel here (e.g. "local", "staff") MUST stay a plain, simple string —
+     * it's the internal identifier used for prefix routing, the discord.channelId lookup, and —
+     * when "command" isn't set — the actual slash-command literal players type. Don't put color
+     * codes/emoji/special characters in the KEY itself; a broken command literal there can abort
+     * registration for every channel listed after it in this file.
+     *
+     * Want a styled/colored channel name instead? Use the optional "displayName" field — it's
+     * shown wherever the {channel}/{neoessentials_channel} chat placeholder is used (see
+     * chat-format above), completely independent of the safe internal key. E.g.:
+     *   "staff": { ..., "displayName": "&d⚙ Staff" }
+     * then use {channel} in chat-format: "&8[{channel}&8]&r {neoessentials_username}: {MESSAGE}"
      */
     "channels": {
       "enabled": true,
