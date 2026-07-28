@@ -1403,7 +1403,10 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 37);          // v37 — added chat.channels.team (teamBased:true example channel)
+        put(MAIN_CONFIG, 38);          // v38 — added webDashboard.customProfileUrlTemplate: point the
+                                       //        in-chat "view profile" link at a server's own site
+                                       //        instead of either NeoEssentials dashboard
+        // v37 — added chat.channels.team (teamBased:true example channel)
                                        //        for FTB Teams/similar mod team chat, plus the
                                        //        "teamBased" per-channel flag it demonstrates
         // v36 — added top-level discordEmbedTemplate section: customizes
@@ -1775,14 +1778,49 @@ public class ConfigManager {
     }
 
     /**
-     * Builds a public, no-login "view profile" URL for {@code username} (the moderation-lookup
-     * page at {@code /lookup?player=<name>}, on whichever dashboard is actually reachable),
-     * or {@code null} if no dashboard base URL is configured. Prefers the paired external
-     * dashboard's URL ({@link #getExternalDashboardUrl()}, set via {@code /dashboard pair})
-     * since that's reachable by definition once paired; falls back to the admin-set
-     * {@link #getWebDashboardPublicUrl()} for the mod's own bundled ("internal"/"both") UI.
+     * Admin-set URL template pointing at a server's OWN external site instead of either
+     * NeoEssentials dashboard (webDashboard.customProfileUrlTemplate) — e.g.
+     * {@code https://myserver.com/players/{player}}. Supports {@code {player}} (URL-encoded
+     * username) and {@code {uuid}} placeholders. Empty/absent if not configured.
      */
+    public static String getCustomProfileUrlTemplate() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("customProfileUrlTemplate")) {
+                String val = dashboard.get("customProfileUrlTemplate").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val.trim();
+            }
+        }
+        return "";
+    }
+
+    /** @see #getPlayerProfileUrl(String, java.util.UUID) */
     public static String getPlayerProfileUrl(String username) {
+        return getPlayerProfileUrl(username, null);
+    }
+
+    /**
+     * Builds a public, no-login "view profile" URL for {@code username}, or {@code null} if
+     * nothing is configured. Resolution order:
+     * <ol>
+     *   <li>{@link #getCustomProfileUrlTemplate()} — a server's own site, if set. Full control
+     *       over the URL shape via {@code {player}}/{@code {uuid}} placeholders.</li>
+     *   <li>The paired external dashboard's URL ({@link #getExternalDashboardUrl()}, set via
+     *       {@code /dashboard pair}) — reachable by definition once paired.</li>
+     *   <li>The admin-set {@link #getWebDashboardPublicUrl()}, for the mod's own bundled
+     *       ("internal"/"both") UI — both build the same {@code /lookup?player=<name>} path.</li>
+     * </ol>
+     */
+    public static String getPlayerProfileUrl(String username, java.util.UUID uuid) {
+        String template = getCustomProfileUrlTemplate();
+        if (!template.isEmpty()) {
+            String encodedName = java.net.URLEncoder.encode(username, java.nio.charset.StandardCharsets.UTF_8);
+            return template
+                .replace("{player}", encodedName)
+                .replace("{uuid}", uuid != null ? uuid.toString() : "");
+        }
+
         String base = getExternalDashboardUrl();
         if (base == null || base.isEmpty()) {
             base = getWebDashboardPublicUrl();

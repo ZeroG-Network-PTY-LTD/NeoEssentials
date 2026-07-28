@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.34 — 2026-07-28
+
+### ✨ Point the "View Profile" Chat Link at Your Own Website
+
+- The small clickable icon next to player names in chat (added build.24) can now point at your
+  own website instead of the built-in dashboard — set `webDashboard.customProfileUrlTemplate` to
+  something like `"https://myserver.com/players/{player}"` and it'll use that instead.
+
+---
+
 ## 1.0.4+build.33 — 2026-07-28
 
 ### ✨ New: Team Chat Channel (FTB Teams)

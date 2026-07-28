@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 37,
+  "_configVersion": 38,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -357,6 +357,13 @@
     // "view profile" link on player names) when running in "internal" mode. Not needed at
     // all in "external" mode — externalDashboard.url below is used instead.
     "publicUrl": "",
+
+    // Point the in-chat "view profile" link at your OWN external site instead of either
+    // NeoEssentials dashboard — full control over the URL shape. Supports {player} (URL-encoded
+    // username) and {uuid} placeholders, e.g. "https://myserver.com/players/{player}". Takes
+    // priority over externalDashboard.url/publicUrl above when set. Leave empty to use one of
+    // those instead.
+    "customProfileUrlTemplate": "",
 
     // Populated automatically by running `/dashboard pair <dashboardUrl> <code>` in-game/
     // console (get the code from the dashboard's own Configuration page) — never hand-type
