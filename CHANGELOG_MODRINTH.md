@@ -6,6 +6,15 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.37 — 2026-07-29
+
+### 🐛 Fix: Channel Prefix Messages Showing the Wrong Channel Name
+
+- Using a channel prefix (like `!` or `@`) to send a single message to a different channel now
+  correctly shows that channel's name in the message, instead of showing your normal channel.
+
+---
+
 ## 1.0.4+build.36 — 2026-07-28
 
 ### ✨ Internal Dashboard: Player Tools Moved to the Lookup Page
