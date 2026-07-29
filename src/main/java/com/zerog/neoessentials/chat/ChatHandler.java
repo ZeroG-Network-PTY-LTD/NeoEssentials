@@ -280,7 +280,7 @@ public class ChatHandler {
                 // Cancel the original event to apply custom formatting
                 event.setCanceled(true);
                 // Format the message using our custom formatter
-                Component formattedMessage = ChatFormatter.formatMessage(chatFormat, player, message);
+                Component formattedMessage = ChatFormatter.formatMessage(chatFormat, player, message, channel);
                 // Route message based on channel
                 // Get channel config for dynamic routing
                 JsonObject channelObj = null;

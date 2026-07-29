@@ -12,6 +12,22 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.38] — 2026-07-29
+
+### 🐛 Fix: `{channel}` Placeholder Not Reflecting Prefix-Based Channel Overrides
+
+- Typing a channel prefix (e.g. `!hello` or `@hello`) to send a one-off message to a different
+  channel without switching your persistent channel was already routing and permission-gating
+  the message correctly — but the `{channel}` placeholder in `chat-format` still displayed your
+  persistent channel instead of the channel the message actually went to, since
+  `ChatFormatter.formatMessage` resolved `{channel}` independently via
+  `ChatHandler.getEffectiveChannel` rather than the channel the prefix match had already picked.
+- `ChatFormatter.formatMessage` now accepts the actually-resolved channel for the message being
+  formatted and uses it for `{channel}`, falling back to the persistent-channel lookup only when
+  none is supplied.
+
+---
+
 ## [1.0.4-mc26.1.2+build.37] — 2026-07-28
 
 ### ✨ Internal Dashboard: Player Management Moved Onto the Public Lookup Page

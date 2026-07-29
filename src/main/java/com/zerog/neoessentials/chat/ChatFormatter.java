@@ -51,6 +51,19 @@ public class ChatFormatter {
      * Formats a chat message using the provided template and player context.
      */
     public static Component formatMessage(String template, ServerPlayer player, String message) {
+        return formatMessage(template, player, message, null);
+    }
+
+    /**
+     * Formats a chat message using the provided template and player context.
+     *
+     * @param resolvedChannel the channel THIS message actually routed to (may differ from the
+     *                        player's persistent channel state due to a one-off prefix override,
+     *                        e.g. typing {@code @text} to hit staff without switching channels) —
+     *                        used to resolve {@code {channel}}. Pass {@code null} to fall back to
+     *                        {@link ChatHandler#getEffectiveChannel} (the player's persistent channel).
+     */
+    public static Component formatMessage(String template, ServerPlayer player, String message, String resolvedChannel) {
         try {
             boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
 
@@ -119,7 +132,7 @@ public class ChatFormatter {
 
             // Tablist-style short-form tokens ({tps}, {online}, {animation:name}, etc.) that
             // have no {neoessentials_*} equivalent — lets tablist/hologram snippets be reused in chat.
-            formatted = resolveShortPlaceholders(formatted, player);
+            formatted = resolveShortPlaceholders(formatted, player, resolvedChannel);
             formatted = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(formatted);
             if (debugEnabled) {
                 LOGGER.info("After short-form placeholders/animations: [{}]", formatted);
@@ -364,7 +377,7 @@ public class ChatFormatter {
      * (prefix/suffix/group/balance/ping/world/x/y/z/level/health/afk/time/server_name)
      * are intentionally NOT duplicated here — this only fills the gap.
      */
-    private static String resolveShortPlaceholders(String text, ServerPlayer player) {
+    private static String resolveShortPlaceholders(String text, ServerPlayer player, String resolvedChannel) {
         if (text.indexOf('{') < 0) return text;
         net.minecraft.server.MinecraftServer server = player.level().getServer();
         if (server == null) return text;
@@ -385,7 +398,8 @@ public class ChatFormatter {
             text = text.replace("{max}", String.valueOf(server.getMaxPlayers()));
         }
         if (text.contains("{channel}")) {
-            text = text.replace("{channel}", ChatHandler.getChannelDisplayName(ChatHandler.getEffectiveChannel(player.getUUID())));
+            String channel = resolvedChannel != null ? resolvedChannel : ChatHandler.getEffectiveChannel(player.getUUID());
+            text = text.replace("{channel}", ChatHandler.getChannelDisplayName(channel));
         }
         if (text.contains("{rank_weight}")) {
             int weight = com.zerog.neoessentials.tablist.TablistManager.getInstance().getGroupWeight(player);
