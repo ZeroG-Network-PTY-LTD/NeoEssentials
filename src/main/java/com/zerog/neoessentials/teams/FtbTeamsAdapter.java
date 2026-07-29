@@ -57,11 +57,13 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 return;
             }
 
-            // Strategy 1: api().getManager().getTeamForPlayerID(UUID)
+            // Strategy 1/2 (fast path): the two exact signatures known from past FTB Teams
+            // versions. Kept first since they're cheap and avoid the broader scan below.
             try {
                 Object manager = apiClass.getMethod("getManager").invoke(apiInstance);
                 if (manager != null) {
                     Method m = manager.getClass().getMethod("getTeamForPlayerID", UUID.class);
+                    m.setAccessible(true);
                     resolvedMethod = m;
                     resolvedInstance = manager;
                     LOGGER.info("FTB Teams adapter: strategy 1 — manager.getTeamForPlayerID(UUID)");
@@ -69,28 +71,89 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 }
             } catch (Exception ignored) {}
 
-            // Strategy 2: api().getTeamForPlayerID(UUID) directly on the API instance
             try {
                 Method m = apiClass.getMethod("getTeamForPlayerID", UUID.class);
+                m.setAccessible(true);
                 resolvedMethod = m;
                 resolvedInstance = apiInstance;
                 LOGGER.info("FTB Teams adapter: strategy 2 — api().getTeamForPlayerID(UUID)");
                 return;
             } catch (NoSuchMethodException ignored) {}
 
+            // Strategy 3 (auto-discovery): neither exact signature matched — FTB Teams' public
+            // API has shifted method/accessor names across versions before (e.g. getManager() vs
+            // manager()). Instead of hardcoding yet another guess, scan every object reachable
+            // from the API instance for a single-UUID-arg method whose name reads like a
+            // player-to-team lookup. setAccessible(true) also sidesteps a real reflection trap:
+            // getManager() commonly returns an instance of a package-private impl class, and a
+            // Method resolved from that concrete class (rather than its public interface) throws
+            // IllegalAccessException on invoke() even though the method itself is public.
+            java.util.List<Object> targets = new java.util.ArrayList<>();
+            targets.add(apiInstance);
+            for (Method m : apiClass.getMethods()) {
+                if (m.getParameterCount() == 0 && (m.getName().toLowerCase().contains("manager")
+                        || m.getReturnType().getSimpleName().toLowerCase().contains("manager"))) {
+                    try {
+                        Object val = m.invoke(apiInstance);
+                        if (val != null) targets.add(val);
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            for (Object target : targets) {
+                Method found = findTeamLookupMethod(target.getClass());
+                if (found != null) {
+                    found.setAccessible(true);
+                    resolvedMethod = found;
+                    resolvedInstance = target;
+                    LOGGER.info("FTB Teams adapter: strategy 3 (auto-discovered) — {}.{}(UUID)",
+                            target.getClass().getSimpleName(), found.getName());
+                    return;
+                }
+            }
+
             LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
             LOGGER.warn("║  FTB TEAMS API NOT RESOLVED                                   ║");
             LOGGER.warn("║  Version {} did not match any known API signature.   ║",
                     padRight(detectedVersion, 24));
             LOGGER.warn("║  The team chat channel will not work until this is resolved.  ║");
-            LOGGER.warn("║  Please report this at the NeoEssentials issue tracker.       ║");
+            LOGGER.warn("║  Please report this at the NeoEssentials issue tracker, along ║");
+            LOGGER.warn("║  with the method list logged just below.                      ║");
             LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            for (Object target : targets) dumpCandidateMethods(target);
 
         } catch (ClassNotFoundException e) {
             LOGGER.debug("FTB Teams API class not found — mod may not be installed");
         } catch (Exception e) {
             LOGGER.warn("FTB Teams adapter init failed: {}", e.getMessage());
         }
+    }
+
+    /** Finds a public, single-{@link UUID}-arg method whose name reads like a player→team lookup. */
+    private Method findTeamLookupMethod(Class<?> clazz) {
+        Method best = null;
+        for (Method m : clazz.getMethods()) {
+            if (m.getParameterCount() != 1 || m.getParameterTypes()[0] != UUID.class) continue;
+            String name = m.getName().toLowerCase();
+            if (name.contains("team") && (name.contains("player") || name.contains("id"))) {
+                if (best == null || name.contains("player")) best = m;
+            }
+        }
+        return best;
+    }
+
+    /** Logs every public single-UUID-arg method on a candidate target, for precise follow-up if auto-discovery still misses. */
+    private void dumpCandidateMethods(Object target) {
+        StringBuilder sb = new StringBuilder("FTB Teams adapter: public UUID-arg methods on ")
+                .append(target.getClass().getName()).append(": ");
+        boolean any = false;
+        for (Method m : target.getClass().getMethods()) {
+            if (m.getParameterCount() == 1 && m.getParameterTypes()[0] == UUID.class) {
+                sb.append(m.getName()).append("() ");
+                any = true;
+            }
+        }
+        LOGGER.warn(any ? sb.toString() : sb.append("(none)").toString());
     }
 
     @Override
