@@ -12,6 +12,31 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.40] — 2026-07-29
+
+### 🐛 Team Chat Channel: FTB Teams API Resolution Was Failing on Some Versions
+
+- A live report on FTB Teams 2101.1.10 showed the team channel silently non-functional even
+  though FTB Teams was installed: `FtbTeamsAdapter`'s two hardcoded reflection strategies
+  (`api().getManager().getTeamForPlayerID(UUID)` / `api().getTeamForPlayerID(UUID)`) both failed
+  to resolve, logging the "FTB TEAMS API NOT RESOLVED" warning at startup.
+- Added a third, auto-discovery strategy: instead of one more hardcoded guess, it now scans every
+  object reachable from `FTBTeamsAPI.api()` (the API instance itself, plus anything returned by a
+  zero-arg "manager"-ish method — covers both `getManager()` and a bare `manager()` accessor) for
+  a public single-`UUID`-arg method whose name reads like a player→team lookup.
+- Also fixed a real reflection trap along the way: `getManager()` commonly returns an instance of
+  a package-private implementation class, so a `Method` resolved from `manager.getClass()` can
+  throw `IllegalAccessException` on `invoke()` even though the method itself is public.
+  `setAccessible(true)` on every resolved method sidesteps this.
+- If the API still can't be resolved on some future FTB Teams version, startup now also logs
+  every public single-UUID-arg method found on each candidate object, so a fix can be shipped
+  precisely instead of guessed again.
+- Not verified against FTB Teams 2101.1.10 directly in this dev environment (it isn't installed
+  here) — please update and check your server log for either a successful "strategy N" resolution
+  line or the diagnostic method dump, and report back if it's still not resolving.
+
+---
+
 ## [1.0.4-mc26.1.2+build.39] — 2026-07-29
 
 ### ✨ Playtime, First-Joined, and Gamemode Added to Player-Info API Responses

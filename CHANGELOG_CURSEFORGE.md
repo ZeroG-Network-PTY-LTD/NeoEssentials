@@ -8,6 +8,18 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.40 — 2026-07-29
+
+### 🐛 Attempted Fix: Team Chat Not Working on Some FTB Teams Versions
+
+- If the `team` chat channel wasn't working for you even with FTB Teams installed, this update
+  makes NeoEssentials try harder to find the right FTB Teams hook automatically instead of only
+  checking two fixed possibilities. If it still doesn't work after updating, check your server
+  log at startup for an "FTB TEAMS API NOT RESOLVED" message and report it — it now also logs
+  extra detail that'll help pin down the exact fix.
+
+---
+
 ## 1.0.4-mc26.1.2+build.39 — 2026-07-29
 
 ### ✨ More Player Info Available to Dashboard Integrations
