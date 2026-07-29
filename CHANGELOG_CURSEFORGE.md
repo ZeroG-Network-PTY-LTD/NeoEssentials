@@ -8,6 +8,15 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.39 — 2026-07-29
+
+### ✨ More Player Info Available to Dashboard Integrations
+
+- Player lookups (both from the dashboard and its API) now also report total playtime, when the
+  player first joined, and their current gamemode.
+
+---
+
 ## 1.0.4-mc26.1.2+build.38 — 2026-07-29
 
 ### 🐛 Fix: Channel Prefix Messages Showing the Wrong Channel Name
