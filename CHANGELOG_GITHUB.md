@@ -11,6 +11,23 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.38] — 2026-07-29
+
+### ✨ Playtime, First-Joined, and Gamemode Added to Player-Info API Responses
+
+- `GET /api/player/online` and `GET /api/player/lookup/{username}` now include
+  `playtimeMinutes` (from vanilla's `Stats.PLAY_TIME`, works for offline players too by reading
+  their stats file directly), `firstJoined` (epoch millis, approximated from the playerdata
+  file's filesystem creation time — `null` if unknown), and `gamemode` (uppercase
+  `SURVIVAL`/`CREATIVE`/`ADVENTURE`/`SPECTATOR`, alongside the pre-existing lowercase `gameMode`
+  field) for every player in the response — online or offline. No new endpoint needed since the
+  external dashboard integration already consumes these two.
+- Documented on the [API reference](docs/API.md#/api/player), including a correction to the
+  `/api/player/online` example response, which had drifted from the actual (flat, not
+  `online`/`offline`-nested) JSON shape.
+
+---
+
 ## [1.0.4+build.37] — 2026-07-29
 
 ### 🐛 Fix: `{channel}` Placeholder Not Reflecting Prefix-Based Channel Overrides

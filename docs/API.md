@@ -230,17 +230,22 @@ Response: `{"success":true,"message":"Notch teleported to 100.0, 64.0, -200.0"}`
 
 **POST `/api/player/kick/{username}`** — body `{"reason":"..."}` (optional). Kick is also recorded in KickManager so it shows in `/api/moderation/kicks`. Response: `{"success":true,"message":"Notch was kicked: ..."}`. Player-not-online returns 400.
 
-**GET `/api/player/online`** — returns two arrays:
+**GET `/api/player/online`** — returns two arrays (real response shape):
 ```json
 {
-  "online": { "count": 1, "players": [
+  "players": [
     { "uuid":"...", "username":"Notch", "displayName":"Notch", "ping":42,
-      "gameMode":"survival", "health":20.0, "maxHealth":20.0, "foodLevel":20,
-      "experienceLevel":30, "x":10.5,"y":64.0,"z":-3.2,
-      "dimension":"minecraft:overworld", "operator":true } ] },
-  "offline": { ... }
+      "gameMode":"survival", "gamemode":"SURVIVAL", "health":20.0, "maxHealth":20.0,
+      "foodLevel":20, "experienceLevel":30, "x":10.5,"y":64.0,"z":-3.2,
+      "dimension":"minecraft:overworld", "operator":true,
+      "playtimeMinutes":1234, "firstJoined":1700000000000 } ],
+  "offlinePlayers": [
+    { "uuid":"...", "username":"Steve", "lastSeen":"2 hours ago",
+      "playtimeMinutes":567, "firstJoined":1690000000000, "gamemode":"SURVIVAL" } ],
+  "count": 1, "offlineCount": 1, "max": 20
 }
 ```
+`gameMode` (camelCase, lowercase value) is the original field; `gamemode` (lowercase key, uppercase enum-style value: `SURVIVAL`/`CREATIVE`/`ADVENTURE`/`SPECTATOR`) was added alongside it for consumers that want the raw `GameType` name. `playtimeMinutes` comes from vanilla's `Stats.PLAY_TIME` (works offline too, via each player's stats file). `firstJoined` is epoch millis approximated from the playerdata file's filesystem creation time (`null` if unknown — e.g. brand-new player who hasn't saved yet, or a filesystem/backup-restore that doesn't preserve creation time). `offlinePlayers` is capped at the 50 most recent player-data files.
 
 **GET `/api/player/homes/{username}`**:
 ```json
@@ -250,6 +255,17 @@ Response: `{"success":true,"message":"Notch teleported to 100.0, 64.0, -200.0"}`
 ```
 
 **GET `/api/player/profile/{username}`** (online): `{"uuid","username","displayName","online":true,"gameMode","operator"}`.
+
+**GET `/api/player/lookup/{username}`** — works online or offline, or for a real account that's
+never joined this server (resolves via Mojang's API in that last case):
+```json
+{ "uuid":"...", "username":"Notch", "online":true, "gamemode":"SURVIVAL",
+  "playtimeMinutes":1234, "firstJoined":1700000000000, "success":true }
+```
+Offline adds `"lastSeen"` (a human-relative string, e.g. `"2 hours ago"`, or `"Never joined this
+server"`) instead of a live `gamemode` reading from the entity — `gamemode` for an offline player
+is read from their playerdata NBT instead. `playtimeMinutes`/`firstJoined` follow the same rules
+as `/api/player/online` above (`firstJoined` is `null` if unknown).
 
 ---
 

@@ -363,7 +363,72 @@ public class PlayerDataCollector {
         }
         return null;
     }
-    
+
+    /**
+     * Total playtime in minutes, from vanilla's {@code Stats.PLAY_TIME} — works for online
+     * players directly, and for offline players by reading their stats file (persists across
+     * restarts/relogs regardless of whether NeoEssentials was tracking them).
+     */
+    public int getPlaytimeMinutes(UUID playerUuid) {
+        ServerPlayer online = server.getPlayerList().getPlayer(playerUuid);
+        int ticks = online != null
+            ? online.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME))
+            : readOfflinePlayTimeTicks(playerUuid);
+        return ticks / 20 / 60;
+    }
+
+    private int readOfflinePlayTimeTicks(UUID playerUuid) {
+        try {
+            java.nio.file.Path statsFile = server.getWorldPath(new net.minecraft.world.level.storage.LevelResource("stats"))
+                .resolve(playerUuid + ".json");
+            if (!java.nio.file.Files.exists(statsFile)) return 0;
+            JsonObject root = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(statsFile)).getAsJsonObject();
+            JsonObject stats = root.has("stats") ? root.getAsJsonObject("stats") : null;
+            JsonObject custom = stats != null && stats.has("minecraft:custom") ? stats.getAsJsonObject("minecraft:custom") : null;
+            if (custom != null && custom.has("minecraft:play_time")) {
+                return custom.get("minecraft:play_time").getAsInt();
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not read offline playtime stat for {}: {}", playerUuid, e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Epoch millis of the player's first join, approximated via their playerdata file's
+     * filesystem creation time — that file is written once on first join and only ever
+     * modified (never recreated) afterward, so its birth time is a good stand-in for a real
+     * "first joined" record without needing a dedicated event-tracked history. Returns
+     * {@code null} if unknown (no playerdata file yet, or the filesystem doesn't report
+     * creation time — notably, restoring a backup via plain file copy can reset this on some
+     * filesystems, e.g. Windows NTFS).
+     */
+    public Long getFirstJoinedMillis(UUID playerUuid) {
+        try {
+            java.nio.file.Path playerDataFile = server.overworld().getServer()
+                .getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR)
+                .resolve(playerUuid + ".dat");
+            if (!java.nio.file.Files.exists(playerDataFile)) return null;
+            var attrs = java.nio.file.Files.readAttributes(playerDataFile, java.nio.file.attribute.BasicFileAttributes.class);
+            long creationMillis = attrs.creationTime().toMillis();
+            return creationMillis > 0 ? creationMillis : null;
+        } catch (Exception e) {
+            LOGGER.debug("Could not read first-joined time for {}: {}", playerUuid, e.getMessage());
+            return null;
+        }
+    }
+
+    /** Uppercase gamemode name (SURVIVAL/CREATIVE/ADVENTURE/SPECTATOR) from a playerdata NBT tag's {@code playerGameType} field. */
+    private String gameTypeNameFromNbt(CompoundTag playerData) {
+        int id = playerData.getInt("playerGameType");
+        return switch (id) {
+            case 1 -> "CREATIVE";
+            case 2 -> "ADVENTURE";
+            case 3 -> "SPECTATOR";
+            default -> "SURVIVAL";
+        };
+    }
+
     /**
      * Parse inventory data from NBT
      */
@@ -725,6 +790,7 @@ public class PlayerDataCollector {
             playerObj.addProperty("displayName", player.getDisplayName().getString());
             playerObj.addProperty("ping", player.connection.latency());
             playerObj.addProperty("gameMode", player.gameMode.getGameModeForPlayer().getName());
+            playerObj.addProperty("gamemode", player.gameMode.getGameModeForPlayer().name());
             playerObj.addProperty("health", player.getHealth());
             playerObj.addProperty("foodLevel", player.getFoodData().getFoodLevel());
             playerObj.addProperty("experienceLevel", player.experienceLevel);
@@ -734,6 +800,10 @@ public class PlayerDataCollector {
             playerObj.addProperty("dimension", player.level().dimension().location().toString());
             playerObj.addProperty("operator", player.hasPermissions(4));
             playerObj.addProperty("maxHealth", player.getMaxHealth());
+            playerObj.addProperty("playtimeMinutes", getPlaytimeMinutes(player.getUUID()));
+            Long onlineFirstJoined = getFirstJoinedMillis(player.getUUID());
+            if (onlineFirstJoined != null) playerObj.addProperty("firstJoined", onlineFirstJoined);
+            else playerObj.add("firstJoined", com.google.gson.JsonNull.INSTANCE);
             onlinePlayers.add(playerObj);
             onlineUsernames.add(player.getName().getString());
         });
@@ -814,6 +884,20 @@ public class PlayerDataCollector {
                                         playerObj.addProperty("lastSeen", "Unknown");
                                     }
 
+                                    playerObj.addProperty("playtimeMinutes", getPlaytimeMinutes(uuid));
+                                    Long offlineFirstJoined = getFirstJoinedMillis(uuid);
+                                    if (offlineFirstJoined != null) playerObj.addProperty("firstJoined", offlineFirstJoined);
+                                    else playerObj.add("firstJoined", com.google.gson.JsonNull.INSTANCE);
+
+                                    String gamemodeName = "SURVIVAL";
+                                    try {
+                                        CompoundTag nbtForGamemode = NbtIo.readCompressed(path, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                                        if (nbtForGamemode != null) gamemodeName = gameTypeNameFromNbt(nbtForGamemode);
+                                    } catch (Exception e) {
+                                        LOGGER.debug("Could not read gamemode from NBT for {}: {}", uuid, e.getMessage());
+                                    }
+                                    playerObj.addProperty("gamemode", gamemodeName);
+
                                     offlinePlayers.add(playerObj);
                                 }
                             }
@@ -882,6 +966,14 @@ public class PlayerDataCollector {
         response.addProperty("uuid", uuid.toString());
         response.addProperty("username", resolvedName);
         response.addProperty("online", online != null);
+        response.addProperty("playtimeMinutes", getPlaytimeMinutes(uuid));
+        Long lookupFirstJoined = getFirstJoinedMillis(uuid);
+        if (lookupFirstJoined != null) response.addProperty("firstJoined", lookupFirstJoined);
+        else response.add("firstJoined", com.google.gson.JsonNull.INSTANCE);
+
+        if (online != null) {
+            response.addProperty("gamemode", online.gameMode.getGameModeForPlayer().name());
+        }
 
         if (online == null) {
             try {
@@ -891,6 +983,8 @@ public class PlayerDataCollector {
                 if (java.nio.file.Files.exists(playerDataFile)) {
                     long lastModified = java.nio.file.Files.getLastModifiedTime(playerDataFile).toMillis();
                     response.addProperty("lastSeen", formatLastSeenTimestamp(lastModified));
+                    CompoundTag playerData = loadOfflinePlayerData(uuid);
+                    response.addProperty("gamemode", playerData != null ? gameTypeNameFromNbt(playerData) : "SURVIVAL");
                 } else {
                     response.addProperty("lastSeen", "Never joined this server");
                 }
