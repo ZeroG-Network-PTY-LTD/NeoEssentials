@@ -12,6 +12,23 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.41] — 2026-07-31
+
+### 🐛 Team Chat Channel: Deeper FTB Teams API Diagnostics (Still Not Resolving)
+
+- A live report on FTB Teams 2101.1.10 showed the build.39 auto-discovery still not finding a
+  team lookup method — the diagnostic dump showed `FTBTeamsAPIImpl` itself exposes no direct
+  single-`UUID`-arg method, and no "manager"-named accessor was found either, so the real
+  registry/manager chain on this version has a different shape than anything guessed so far.
+- Replaced the narrow diagnostic (which only listed UUID-arg methods) with a full dump: every
+  public method on the API instance itself, plus one level deep into whatever every zero-arg
+  accessor on it returns — this will show the real accessor path directly instead of requiring
+  another guess-and-check round.
+- Team chat is still not expected to work on FTB Teams 2101.1.10 until this new log output is
+  reviewed and the adapter is updated with the real method name it reveals.
+
+---
+
 ## [1.0.4-mc26.1.2+build.40] — 2026-07-29
 
 ### 🐛 Team Chat Channel: FTB Teams API Resolution Was Failing on Some Versions

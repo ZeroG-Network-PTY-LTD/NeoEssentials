@@ -120,7 +120,21 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
             LOGGER.warn("║  Please report this at the NeoEssentials issue tracker, along ║");
             LOGGER.warn("║  with the method list logged just below.                      ║");
             LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
-            for (Object target : targets) dumpCandidateMethods(target);
+
+            // Deep dump: every public method on the API instance itself, PLUS one level deep
+            // into whatever every zero-arg accessor on it returns — the earlier "manager"-name
+            // guess found nothing, so this dumps everything rather than guessing again what the
+            // real accessor/registry chain is called on this version.
+            dumpAllMethods("api instance (" + apiInstance.getClass().getName() + ")", apiInstance);
+            for (Method m : apiClass.getMethods()) {
+                if (m.getParameterCount() != 0 || m.getReturnType() == void.class || m.getReturnType().isPrimitive()) continue;
+                try {
+                    Object val = m.invoke(apiInstance);
+                    if (val != null && val != apiInstance) {
+                        dumpAllMethods("api." + m.getName() + "() -> " + val.getClass().getName(), val);
+                    }
+                } catch (Exception ignored) {}
+            }
 
         } catch (ClassNotFoundException e) {
             LOGGER.debug("FTB Teams API class not found — mod may not be installed");
@@ -142,18 +156,22 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
         return best;
     }
 
-    /** Logs every public single-UUID-arg method on a candidate target, for precise follow-up if auto-discovery still misses. */
-    private void dumpCandidateMethods(Object target) {
-        StringBuilder sb = new StringBuilder("FTB Teams adapter: public UUID-arg methods on ")
-                .append(target.getClass().getName()).append(": ");
+    /** Logs every public, non-Object method declared on a candidate target's class, for diagnosing an unresolved API. */
+    private void dumpAllMethods(String label, Object target) {
+        StringBuilder sb = new StringBuilder("FTB Teams adapter diagnostic — ").append(label).append(": ");
         boolean any = false;
         for (Method m : target.getClass().getMethods()) {
-            if (m.getParameterCount() == 1 && m.getParameterTypes()[0] == UUID.class) {
-                sb.append(m.getName()).append("() ");
-                any = true;
+            if (m.getDeclaringClass() == Object.class) continue;
+            sb.append(m.getName()).append("(");
+            Class<?>[] params = m.getParameterTypes();
+            for (int i = 0; i < params.length; i++) {
+                if (i > 0) sb.append(",");
+                sb.append(params[i].getSimpleName());
             }
+            sb.append(")->").append(m.getReturnType().getSimpleName()).append("  ");
+            any = true;
         }
-        LOGGER.warn(any ? sb.toString() : sb.append("(none)").toString());
+        LOGGER.warn(any ? sb.toString() : sb.append("(no non-Object public methods)").toString());
     }
 
     @Override
