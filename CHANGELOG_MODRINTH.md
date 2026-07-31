@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.41 — 2026-07-31
+
+### 🐛 Team Chat: Found the Real Bug (FTB Teams Versions)
+
+- Found the actual cause of team chat not resolving on some FTB Teams versions: NeoEssentials
+  was checking the wrong internal class for the right method. Should be properly fixed now for
+  FTB Teams 2101.1.10 — if it's still not working after this update, please report it again.
+
+---
+
 ## 1.0.4+build.40 — 2026-07-31
 
 ### 🐛 Team Chat: Still Investigating on Some FTB Teams Versions

@@ -57,10 +57,17 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 return;
             }
 
-            // Strategy 1/2 (fast path): the two exact signatures known from past FTB Teams
-            // versions. Kept first since they're cheap and avoid the broader scan below.
+            // IMPORTANT: use the CONCRETE runtime class (apiInstance.getClass()), not the
+            // FTBTeamsAPI interface Class object. Diagnostics on 2101.1.10 showed
+            // FTBTeamsAPIImpl (the enum singleton behind FTBTeamsAPI.api()) declares getManager()
+            // itself, but that method is NOT part of the public FTBTeamsAPI interface contract —
+            // apiClass.getMethods() (the interface) doesn't see it at all, which is why every
+            // earlier strategy keyed off apiClass silently found nothing.
+            Class<?> implClass = apiInstance.getClass();
+
+            // Strategy 1/2 (fast path): exact signatures seen on past FTB Teams versions.
             try {
-                Object manager = apiClass.getMethod("getManager").invoke(apiInstance);
+                Object manager = implClass.getMethod("getManager").invoke(apiInstance);
                 if (manager != null) {
                     Method m = manager.getClass().getMethod("getTeamForPlayerID", UUID.class);
                     m.setAccessible(true);
@@ -72,7 +79,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
             } catch (Exception ignored) {}
 
             try {
-                Method m = apiClass.getMethod("getTeamForPlayerID", UUID.class);
+                Method m = implClass.getMethod("getTeamForPlayerID", UUID.class);
                 m.setAccessible(true);
                 resolvedMethod = m;
                 resolvedInstance = apiInstance;
@@ -80,17 +87,16 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 return;
             } catch (NoSuchMethodException ignored) {}
 
-            // Strategy 3 (auto-discovery): neither exact signature matched — FTB Teams' public
-            // API has shifted method/accessor names across versions before (e.g. getManager() vs
-            // manager()). Instead of hardcoding yet another guess, scan every object reachable
-            // from the API instance for a single-UUID-arg method whose name reads like a
-            // player-to-team lookup. setAccessible(true) also sidesteps a real reflection trap:
-            // getManager() commonly returns an instance of a package-private impl class, and a
-            // Method resolved from that concrete class (rather than its public interface) throws
+            // Strategy 3 (auto-discovery): scan every object reachable from the API instance
+            // (via implClass, not apiClass — see note above) for a single-UUID-arg method whose
+            // name reads like a player-to-team lookup. setAccessible(true) also sidesteps a real
+            // reflection trap: getManager() commonly returns an instance of a package-private
+            // impl class, and a Method resolved from that concrete class can throw
             // IllegalAccessException on invoke() even though the method itself is public.
             java.util.List<Object> targets = new java.util.ArrayList<>();
             targets.add(apiInstance);
-            for (Method m : apiClass.getMethods()) {
+            for (Method m : implClass.getMethods()) {
+                if (m.getDeclaringClass() == Object.class) continue;
                 if (m.getParameterCount() == 0 && (m.getName().toLowerCase().contains("manager")
                         || m.getReturnType().getSimpleName().toLowerCase().contains("manager"))) {
                     try {
@@ -122,15 +128,21 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
             LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
 
             // Deep dump: every public method on the API instance itself, PLUS one level deep
-            // into whatever every zero-arg accessor on it returns — the earlier "manager"-name
-            // guess found nothing, so this dumps everything rather than guessing again what the
-            // real accessor/registry chain is called on this version.
-            dumpAllMethods("api instance (" + apiInstance.getClass().getName() + ")", apiInstance);
-            for (Method m : apiClass.getMethods()) {
+            // into whatever every zero-arg accessor on it (via implClass) returns — including
+            // any "manager" object already collected into targets above, so its real method
+            // names (e.g. TeamManagerImpl's actual player-lookup method) are visible even if
+            // strategy 3's name-pattern match missed it.
+            for (Object target : targets) {
+                dumpAllMethods(target == apiInstance
+                        ? "api instance (" + target.getClass().getName() + ")"
+                        : "resolved sub-object (" + target.getClass().getName() + ")", target);
+            }
+            for (Method m : implClass.getMethods()) {
+                if (m.getDeclaringClass() == Object.class) continue;
                 if (m.getParameterCount() != 0 || m.getReturnType() == void.class || m.getReturnType().isPrimitive()) continue;
                 try {
                     Object val = m.invoke(apiInstance);
-                    if (val != null && val != apiInstance) {
+                    if (val != null && val != apiInstance && !targets.contains(val)) {
                         dumpAllMethods("api." + m.getName() + "() -> " + val.getClass().getName(), val);
                     }
                 } catch (Exception ignored) {}
