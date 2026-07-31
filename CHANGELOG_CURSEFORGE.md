@@ -6,6 +6,16 @@ Starting from **v1.0.4** — earlier history (v1.0.3.x and before) is not carrie
 
 ---
 
+## 1.0.4+build.40 — 2026-07-31
+
+### 🐛 Team Chat: Still Investigating on Some FTB Teams Versions
+
+- The previous attempt to fix team chat still isn't resolving on FTB Teams 2101.1.10. This update
+  logs a lot more detail at startup to help pin down the exact fix — team chat isn't expected to
+  work yet on that version, but the next update should have it.
+
+---
+
 ## 1.0.4+build.39 — 2026-07-29
 
 ### 🐛 Attempted Fix: Team Chat Not Working on Some FTB Teams Versions
