@@ -12,6 +12,30 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.42] — 2026-07-31
+
+### 🐛 Team Chat Channel: Found the Real Root Cause of the FTB Teams Resolution Failure
+
+- The deep diagnostic dump from build.40 revealed the actual bug: every previous strategy
+  resolved methods against `Class.forName("dev.ftb.mods.ftbteams.api.FTBTeamsAPI")` — the public
+  API **interface** — but on FTB Teams 2101.1.10, `getManager()` is declared directly on the
+  concrete `FTBTeamsAPIImpl` enum singleton behind `FTBTeamsAPI.api()`, and is **not** part of
+  the public interface's method contract at all. `FTBTeamsAPI.class.getMethods()` genuinely
+  never saw it, no matter what name pattern was tried, which is why strategies 1–3 all silently
+  found nothing every time.
+- `FtbTeamsAdapter` now resolves every method against the API instance's actual runtime class
+  (`apiInstance.getClass()`) instead of the interface `Class` object obtained via
+  `Class.forName`, both for the fast-path `getManager()`/`getTeamForPlayerID` attempts and the
+  auto-discovery scan. The interface is still used only for the initial static `api()` call.
+- If `getManager()` resolves but the returned manager still has no matching player→team lookup
+  method, startup now also dumps that manager object's own method list (previously only the API
+  instance itself was dumped), so the actual accessor name is visible without another guess.
+- Not verified against FTB Teams 2101.1.10 directly in this dev environment — please update and
+  check your log for a "strategy N" resolution line; if it's still unresolved, the new dump
+  should include the real manager class's methods this time.
+
+---
+
 ## [1.0.4-mc26.1.2+build.41] — 2026-07-31
 
 ### 🐛 Team Chat Channel: Deeper FTB Teams API Diagnostics (Still Not Resolving)
