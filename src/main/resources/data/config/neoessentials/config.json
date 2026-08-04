@@ -836,10 +836,10 @@
 
 
     "chat-format": {
-      "default": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
-      "group:admin": "&c[Admin] {neoessentials_username}: {MESSAGE}",
-      "group:mod": "&2[Mod] {neoessentials_username}: {MESSAGE}",
-      "world:creative": "&b[C] {neoessentials_username}: {MESSAGE}"
+      "default": "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}",
+      "group:admin": "&c[Admin] {neoessentials_displayname}: {MESSAGE}",
+      "group:mod": "&2[Mod] {neoessentials_displayname}: {MESSAGE}",
+      "world:creative": "&b[C] {neoessentials_displayname}: {MESSAGE}"
     },
 
     // Enable Phase 2 enhancements: clickable names, mentions, URL linking, [item] display

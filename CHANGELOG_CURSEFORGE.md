@@ -8,6 +8,18 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.43 — 2026-08-04
+
+### 🐛 Nicknames Now Show Up in Chat by Default
+
+- Fixed the default chat format so `/nick` and `/setnick` nicknames actually show up in your
+  chat messages, not just the tab list. `/setnick` was working the whole time — the default
+  chat line just wasn't set up to display it.
+- If you already edited your config before, just swap `{neoessentials_username}` for
+  `{neoessentials_displayname}` in your chat format setting, then reload.
+
+---
+
 ## 1.0.4-mc26.1.2+build.42 — 2026-07-31
 
 ### 🐛 Team Chat: Found the Real Bug (FTB Teams Versions)
