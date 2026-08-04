@@ -11,6 +11,27 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.42] — 2026-08-04
+
+### 🐛 Nicknames Never Actually Showed Up in Chat by Default
+
+- Root cause: the shipped default `chat.chat-format` templates (`default`, `group:admin`,
+  `group:mod`, `world:creative`) all used `{neoessentials_username}` — which, by design, always
+  resolves to the real game-profile name, not the active nickname, since it's meant for
+  admin/lookup contexts. `/setnick` and `/setnick <player>` were working correctly the whole
+  time (tab list, hover text, and `{neoessentials_displayname}` all reflected the nickname
+  immediately) — the chat line itself just never referenced the placeholder that shows it.
+- Not a LuckPerms conflict; LuckPerms only feeds `{neoessentials_prefix}`/`{neoessentials_suffix}`
+  here and never touches the username/displayname placeholders.
+- Changed all four default `chat-format` templates to use `{neoessentials_displayname}` instead,
+  so nicknames show up in chat out of the box on fresh installs.
+- **If you already have a `config/neoessentials/config.json` from before this update**, this
+  default change won't retroactively apply to your file — manually swap
+  `{neoessentials_username}` for `{neoessentials_displayname}` in your `chat.chat-format` block,
+  then `/neoessentials reload`.
+
+---
+
 ## [1.0.4+build.41] — 2026-07-31
 
 ### 🐛 Team Chat Channel: Found the Real Root Cause of the FTB Teams Resolution Failure
