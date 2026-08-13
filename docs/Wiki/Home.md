@@ -27,6 +27,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.4** — a com
 | [Localization System](LocalizationSystem) | Server language selection, custom translations, language override commands |
 | [Storage Backend](Storage) | Pluggable JSON/YAML/SQLite/MySQL storage covering the whole mod |
 | [Dashboard Connectivity](DashboardConnectivity) | Internal vs. external dashboard hosting, `webDashboard.mode`, connection troubleshooting |
+| [Logging System](Logging) | Per-subsystem `normal`/`debug` logging toggles, categories, `logs/debug.log` |
 
 ---
 
@@ -35,7 +36,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.4** — a com
 1. Drop `neoessentials-<version>.jar` into your server's `mods/` folder
 2. Start the server — config files are auto-generated in `config/neoessentials/`
 3. Key config files (split config mode — recommended):
-   - `main.json` — modules, logging, localization, permissions, kits settings, economy settings
+   - `main.json` — modules, logging (see [Logging System](Logging)), localization, permissions, kits settings, economy settings
    - `commands.json` — enable/disable individual commands
    - `chat.json` — chat formatting, channels, anti-spam
    - `teleportation.json` — homes, warps, spawn, TPA
