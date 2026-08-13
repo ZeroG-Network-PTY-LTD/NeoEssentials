@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.data.PlayerDataCollector;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -53,7 +55,7 @@ public class PlayerEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.debug("PlayerEndpoint handling request: {} {}", method, path);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "PlayerEndpoint handling request: {} {}", method, path);
 
         try {
             // Route POST requests
@@ -133,10 +135,10 @@ public class PlayerEndpoint implements HttpHandler {
             // Execute data collection on server thread for thread safety
             CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    LOGGER.debug("Collecting player data for endpoint: {}", path);
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Collecting player data for endpoint: {}", path);
                     return getResponse(path);
                 } catch (Exception e) {
-                    LOGGER.error("Error collecting player data for path: {}", path, e);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting player data for path: {}", path, e);
                     JsonObject error = new JsonObject();
                     error.addProperty("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
                     return error;
@@ -147,13 +149,13 @@ public class PlayerEndpoint implements HttpHandler {
             JsonObject response;
             try {
                 response = future.get(10, TimeUnit.SECONDS);
-                LOGGER.debug("Player data collected successfully for: {}", path);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Player data collected successfully for: {}", path);
             } catch (java.util.concurrent.TimeoutException e) {
-                LOGGER.error("Timeout waiting for player data collection: {}", path);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout waiting for player data collection: {}", path);
                 response = new JsonObject();
                 response.addProperty("error", "Request timeout - server may be overloaded");
             } catch (java.util.concurrent.ExecutionException e) {
-                LOGGER.error("Execution error during player data collection: {}", path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Execution error during player data collection: {}", path, e);
                 response = new JsonObject();
                 response.addProperty("error", "Internal server error: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
             }
@@ -173,31 +175,31 @@ public class PlayerEndpoint implements HttpHandler {
             // IOException often means client disconnected - don't try to send error response
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             if (errorMsg.contains("stream is closed") || errorMsg.contains("Broken pipe") || errorMsg.contains("Connection reset")) {
-                LOGGER.warn("Client disconnected during request: {} {} - {}", method, path, errorMsg);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Client disconnected during request: {} {} - {}", method, path, errorMsg);
             } else {
-                LOGGER.error("IOException handling request: {} {}", method, path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "IOException handling request: {} {}", method, path, e);
                 try {
                     String errorResponse = String.format("{\"error\":\"IO Error: %s\"}", errorMsg);
                     sendResponse(exchange, 500, errorResponse);
                 } catch (IOException e2) {
-                    LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Unexpected error handling request: {} {}", method, path, e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Unexpected error handling request: {} {}", method, path, e);
             try {
                 String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error";
                 String errorResponse = String.format("{\"error\":\"%s\"}", errorMsg);
                 sendResponse(exchange, 500, errorResponse);
             } catch (IOException e2) {
-                LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
             }
         } finally {
             // Safely close exchange - don't log error if already closed
             try {
                 exchange.close();
             } catch (Exception e) {
-                // Ignore - exchange may already be closed
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Exchange already closed: {}", e.getMessage());
             }
         }
     }
@@ -215,6 +217,7 @@ public class PlayerEndpoint implements HttpHandler {
             JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
             reason = body.has("reason") ? body.get("reason").getAsString() : "Kicked by dashboard admin";
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid kick request body for {}, using default reason: {}", username, e.getMessage());
             reason = "Kicked by dashboard admin";
         }
         final String finalReason = reason;
@@ -237,6 +240,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " was kicked: " + finalReason);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -247,6 +251,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             result = future.get(8, TimeUnit.SECONDS);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or server error waiting for player action on {}: {}", username, e.getMessage(), e);
             result = new JsonObject();
             result.addProperty("success", false);
             result.addProperty("error", "Timeout or server error: " + e.getMessage());
@@ -275,6 +280,7 @@ public class PlayerEndpoint implements HttpHandler {
                 default           -> GameType.SURVIVAL;
             };
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid gamemode request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body or gamemode\"}");
             return;
         }
@@ -293,6 +299,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + "'s game mode is now " + finalMode.getName());
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -303,6 +310,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             result = future.get(8, TimeUnit.SECONDS);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or server error waiting for player action on {}: {}", username, e.getMessage(), e);
             result = new JsonObject();
             result.addProperty("success", false);
             result.addProperty("error", "Timeout or server error: " + e.getMessage());
@@ -324,6 +332,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             body = JsonParser.parseString(bodyJson).getAsJsonObject();
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid teleport request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid JSON body\"}");
             return;
         }
@@ -374,6 +383,7 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("error", "Body must contain 'targetUsername' or 'x'/'y'/'z'");
                 }
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -384,6 +394,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             result = future.get(8, TimeUnit.SECONDS);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or server error waiting for player action on {}: {}", username, e.getMessage(), e);
             result = new JsonObject();
             result.addProperty("success", false);
             result.addProperty("error", "Timeout or server error: " + e.getMessage());
@@ -416,6 +427,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " healed and fed");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -426,6 +438,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             result = future.get(8, TimeUnit.SECONDS);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or server error waiting for player action on {}: {}", username, e.getMessage(), e);
             result = new JsonObject();
             result.addProperty("success", false);
             result.addProperty("error", "Timeout or server error: " + e.getMessage());
@@ -458,6 +471,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("enabled", newState);
                 resp.addProperty("message", username + "'s flight is now " + (newState ? "enabled" : "disabled"));
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -491,6 +505,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("enabled", newState);
                 resp.addProperty("message", username + "'s god mode is now " + (newState ? "enabled" : "disabled"));
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -521,6 +536,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " fed");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -551,6 +567,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " extinguished");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -577,6 +594,7 @@ public class PlayerEndpoint implements HttpHandler {
             speed = body.has("speed") ? body.get("speed").getAsFloat() : 1f;
             speed = Math.max(0f, Math.min(10f, speed));
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid speed request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -596,6 +614,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + "'s " + (finalFly ? "fly" : "walk") + " speed set to " + finalSpeed);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -623,6 +642,7 @@ public class PlayerEndpoint implements HttpHandler {
                 }
             }
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid nickname request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -646,6 +666,7 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("message", "Nickname updated for " + username);
                 }
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -671,6 +692,7 @@ public class PlayerEndpoint implements HttpHandler {
             itemId = body.has("item") ? body.get("item").getAsString() : "";
             amount = body.has("amount") ? Math.max(1, Math.min(3456, body.get("amount").getAsInt())) : 1;
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid give request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -709,6 +731,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Gave " + finalAmount + "x " + finalItemId + " to " + username);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -733,7 +756,9 @@ public class PlayerEndpoint implements HttpHandler {
                 JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
                 if (body.has("seconds")) seconds = Math.max(1, Math.min(600, body.get("seconds").getAsInt()));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid 'seconds' in burn request body, using default: {}", e.getMessage());
+        }
         final int finalSeconds = seconds;
 
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
@@ -749,6 +774,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " set on fire for " + finalSeconds + "s");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -779,6 +805,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", username + " killed");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -801,6 +828,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             body = JsonParser.parseString(bodyJson).getAsJsonObject();
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid effect request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -848,6 +876,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Applied " + effectId + " (amp " + amplifier + ", " + duration + "s) to " + username);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -885,6 +914,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Lightning struck " + username);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -911,6 +941,7 @@ public class PlayerEndpoint implements HttpHandler {
             mobId = body.has("mob") ? body.get("mob").getAsString() : "";
             amount = body.has("amount") ? Math.max(1, Math.min(100, body.get("amount").getAsInt())) : 1;
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid spawnmob request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -963,6 +994,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Spawned " + spawned + "x " + finalMobId + " at " + username);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -988,6 +1020,7 @@ public class PlayerEndpoint implements HttpHandler {
             command = body.has("command") ? body.get("command").getAsString() : "";
             isChat = body.has("isChat") && body.get("isChat").getAsBoolean();
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid sudo request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -1016,6 +1049,7 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("message", "Ran on " + username + ": " + finalCommand);
                 }
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -1046,6 +1080,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Cleared " + cleared[0] + " main, " + cleared[1] + " armor, " + cleared[2] + " offhand item(s) from " + username);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -1071,6 +1106,7 @@ public class PlayerEndpoint implements HttpHandler {
                 if (body.has("ticks") && !body.get("ticks").isJsonNull()) ticks = body.get("ticks").getAsLong();
             }
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid ptime request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -1089,6 +1125,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", finalTicks == null ? "Reset " + username + "'s ptime" : "Set " + username + "'s ptime to " + finalTicks);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -1114,6 +1151,7 @@ public class PlayerEndpoint implements HttpHandler {
                 if (body.has("type") && !body.get("type").isJsonNull()) type = body.get("type").getAsString();
             }
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid pweather request body for {}: {}", username, e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid body\"}");
             return;
         }
@@ -1132,6 +1170,7 @@ public class PlayerEndpoint implements HttpHandler {
                 resp.addProperty("success", true);
                 resp.addProperty("message", finalType == null ? "Reset " + username + "'s weather" : "Set " + username + "'s weather to " + finalType);
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Player action failed for {}: {}", username, e.getMessage(), e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -1149,6 +1188,7 @@ public class PlayerEndpoint implements HttpHandler {
             JsonObject body = JsonParser.parseString(bodyJson).getAsJsonObject();
             return body.has(field) && !body.get(field).isJsonNull() ? body.get(field).getAsBoolean() : null;
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not parse optional boolean field '{}': {}", field, e.getMessage());
             return null;
         }
     }
@@ -1159,6 +1199,7 @@ public class PlayerEndpoint implements HttpHandler {
         try {
             result = future.get(8, TimeUnit.SECONDS);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or server error waiting for player action: {}", e.getMessage(), e);
             result = new JsonObject();
             result.addProperty("success", false);
             result.addProperty("error", "Timeout or server error: " + e.getMessage());

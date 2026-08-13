@@ -2,6 +2,8 @@ package com.zerog.neoessentials.teleportation.Misc;
 
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -193,7 +195,7 @@ public class MiscTeleportManager {
         backLocationTimestamps.put(playerId, System.currentTimeMillis());
         persistLocations(playerId);
 
-        LOGGER.debug("Saved back location for {}: {}", 
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Saved back location for {}: {}",
                     player.getName().getString(), backLocation);
     }
     
@@ -234,6 +236,7 @@ public class MiscTeleportManager {
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportBack request: player={}", player.getName().getString());
         // Load from disk if not in memory (survives server restarts)
         TeleportLocation deathLocation = loadDeathLocation(playerId);
         TeleportLocation backLocation  = loadBackLocation(playerId);
@@ -252,6 +255,7 @@ public class MiscTeleportManager {
             targetLocation = backLocation;
             usedDeath = false;
         } else {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportBack: {} has no back or death location", player.getName().getString());
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_back_location"));
             return false;
         }
@@ -315,7 +319,7 @@ public class MiscTeleportManager {
                         deathLocationTimestamps.getOrDefault(playerId, 0L));
                     backLocations.put(playerId, currentLocation);
                     backLocationTimestamps.put(playerId, interveningTs - 1);
-                    LOGGER.debug("Player {} had an intervening teleport during /back warmup; undo-back stored with prior-timestamp.",
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} had an intervening teleport during /back warmup; undo-back stored with prior-timestamp.",
                         player.getName().getString());
                 }
 
@@ -353,10 +357,12 @@ public class MiscTeleportManager {
      */
     public boolean teleportToDeathLocation(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToDeathLocation request: player={}", player.getName().getString());
+
         // Load from disk if not in memory (survives server restarts)
         TeleportLocation deathLocation = loadDeathLocation(playerId);
         if (deathLocation == null) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToDeathLocation: {} has no death location", player.getName().getString());
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_death_location"));
             return false;
         }
@@ -400,7 +406,7 @@ public class MiscTeleportManager {
         deathLocationTimestamps.remove(playerId);
         dataStore.delete(playerId);
         
-        LOGGER.debug("Cleared back locations for {}", player.getName().getString());
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Cleared back locations for {}", player.getName().getString());
     }
     
     /**
@@ -443,7 +449,7 @@ public class MiscTeleportManager {
      * Handle player disconnect - no-op since data is persisted to disk
      */
     public void onPlayerDisconnect(ServerPlayer player) {
-        LOGGER.debug("Player {} disconnected; back/death locations are persisted to disk.", player.getName().getString());
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} disconnected; back/death locations are persisted to disk.", player.getName().getString());
     }
     
     /**
@@ -538,6 +544,7 @@ public class MiscTeleportManager {
      * Teleport player to the highest solid block at their current position
      */
     public boolean teleportToTop(ServerPlayer player) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToTop request: player={}", player.getName().getString());
         // Save current location as back location
         saveBackLocation(player);
         

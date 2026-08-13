@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.permissions;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,8 +101,9 @@ public class PermissionAuditLogger {
                 w.write(line);
                 w.newLine();
             }
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Audit log entry written: {}", line);
         } catch (IOException e) {
-            LOGGER.warn("Failed to write to permissions audit log: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to write to permissions audit log: {}", e.getMessage(), e);
         }
     }
 
@@ -116,6 +119,7 @@ public class PermissionAuditLogger {
             return com.zerog.neoessentials.config.ConfigManager.getInstance()
                     .isPermissionAuditEnabled();
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "ConfigManager not ready when checking audit-log enabled state, defaulting to enabled", e);
             return true; // default on if ConfigManager not yet ready
         }
     }

@@ -7,7 +7,8 @@ import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
-import com.zerog.neoessentials.util.ChatDebugUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +186,7 @@ public class MuteManager {
         entry.expireTime = durationMillis > 0 ? System.currentTimeMillis() + durationMillis : 0L;
         mutedPlayers.put(entry.target, entry);
         persist(PLAYER_COLLECTION, entry);
-        ChatDebugUtil.debug("Muted player %s (expire=%d). Active mutes: %d", targetName, entry.expireTime, mutedPlayers.size());
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Muted player {} (expire={}). Active mutes: {}", targetName, entry.expireTime, mutedPlayers.size());
     }
 
     /** Unmute a player with no reversal attribution recorded. */
@@ -203,7 +204,7 @@ public class MuteManager {
             muteHistory.add(removed);
             persist(PLAYER_COLLECTION, removed);
         }
-        ChatDebugUtil.debug("Unmuted player %s. Active mutes: %d", targetName, mutedPlayers.size());
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Unmuted player {}. Active mutes: {}", targetName, mutedPlayers.size());
     }
 
     public static boolean isMuted(ServerPlayer player) {

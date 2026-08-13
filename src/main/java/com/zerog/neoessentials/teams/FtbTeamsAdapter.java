@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.teams;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +78,9 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                     LOGGER.info("FTB Teams adapter: strategy 1 — manager.getTeamForPlayerID(UUID)");
                     return;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 1 failed: {}", e.getMessage());
+            }
 
             try {
                 Method m = implClass.getMethod("getTeamForPlayerID", UUID.class);
@@ -85,7 +89,9 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 resolvedInstance = apiInstance;
                 LOGGER.info("FTB Teams adapter: strategy 2 — api().getTeamForPlayerID(UUID)");
                 return;
-            } catch (NoSuchMethodException ignored) {}
+            } catch (NoSuchMethodException e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 2 not applicable: {}", e.getMessage());
+            }
 
             // Strategy 3 (auto-discovery): scan every object reachable from the API instance
             // (via implClass, not apiClass — see note above) for a single-UUID-arg method whose
@@ -102,7 +108,9 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                     try {
                         Object val = m.invoke(apiInstance);
                         if (val != null) targets.add(val);
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: candidate accessor {} failed: {}", m.getName(), e.getMessage());
+                    }
                 }
             }
 
@@ -145,7 +153,9 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                     if (val != null && val != apiInstance && !targets.contains(val)) {
                         dumpAllMethods("api." + m.getName() + "() -> " + val.getClass().getName(), val);
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter diagnostic: accessor {} failed: {}", m.getName(), e.getMessage());
+                }
             }
 
         } catch (ClassNotFoundException e) {
@@ -227,11 +237,15 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
         try {
             Object id = team.getClass().getMethod("getId").invoke(team);
             if (id != null) return id.toString();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: team.getId() unavailable: {}", e.getMessage());
+        }
         try {
             Object shortName = team.getClass().getMethod("getShortName").invoke(team);
             if (shortName != null) return shortName.toString();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: team.getShortName() unavailable: {}", e.getMessage());
+        }
         return team.toString();
     }
 

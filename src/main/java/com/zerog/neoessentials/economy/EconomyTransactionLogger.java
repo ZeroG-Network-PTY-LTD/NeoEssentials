@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.economy;
-import com.zerog.neoessentials.util.DebugUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -10,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class EconomyTransactionLogger {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EconomyTransactionLogger.class);
     private static final String LOG_FILE = "logs/neoessentials/transactions.log";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -33,7 +37,7 @@ public class EconomyTransactionLogger {
                     writer.write(entry);
                 }
             } catch (IOException e) {
-                DebugUtil.debugStackTrace(e);
+                NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to write transaction log entry to " + LOG_FILE, e);
             }
         });
     }

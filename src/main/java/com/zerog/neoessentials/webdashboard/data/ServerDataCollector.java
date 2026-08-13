@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.data;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -255,6 +257,7 @@ public class ServerDataCollector {
             try {
                 status.addProperty("wsPort", ConfigManager.getInstance().getWebDashboardWebSocketPort());
             } catch (Exception e2) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read configured WebSocket port, using default", e2);
                 status.addProperty("wsPort", 8081);
             }
 

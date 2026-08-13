@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,7 @@ public class DiscordAuthConfig {
             JsonObject root = configManager.getConfig(CONFIG_NAME);
             
             if (root == null) {
-                LOGGER.warn("Failed to load Discord auth config from ConfigManager, using defaults");
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to load Discord auth config from ConfigManager, using defaults");
                 return config;
             }
             
@@ -83,7 +85,7 @@ public class DiscordAuthConfig {
                 try {
                     config.defaultRole = User.Role.valueOf(root.get("defaultRole").getAsString().toUpperCase());
                 } catch (IllegalArgumentException e) {
-                    LOGGER.warn("Invalid defaultRole in config, using VIEWER: {}", root.get("defaultRole").getAsString());
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid defaultRole in config, using VIEWER: {}", root.get("defaultRole").getAsString());
                     config.defaultRole = User.Role.VIEWER;
                 }
             }
@@ -162,11 +164,11 @@ public class DiscordAuthConfig {
                 }
             }
 
-            LOGGER.info("Discord auth config loaded successfully. Enabled: {}, Permission Sync: {}",
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord auth config loaded successfully. Enabled: {}, Permission Sync: {}",
                 config.enabled, config.permissionSyncEnabled);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to load Discord auth config: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to load Discord auth config", e);
         }
         
         return config;
@@ -192,7 +194,7 @@ public class DiscordAuthConfig {
         try {
             return User.Role.valueOf(mapped);
         } catch (IllegalArgumentException e) {
-            LOGGER.warn("Invalid role mapping for Discord role ID '{}': {}", discordRoleId, mapped);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid role mapping for Discord role ID '{}': {}", discordRoleId, mapped);
             return defaultRole;
         }
     }

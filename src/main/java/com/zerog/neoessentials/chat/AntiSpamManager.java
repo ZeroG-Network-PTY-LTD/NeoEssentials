@@ -3,6 +3,8 @@ package com.zerog.neoessentials.chat;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,13 +119,14 @@ public class AntiSpamManager {
 
             if (!tracker.allowMessage()) {
                 String action = config.get("action").getAsString();
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Spam filter triggered for {} (action={})", player.getGameProfile().getName(), action);
                 if ("block".equals(action)) {
                     return new FilterResult(false, null, "§cYou are sending messages too quickly! Please slow down.");
                 }
             }
 
         } catch (Exception e) {
-            LOGGER.error("Error checking spam filter: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking spam filter for " + player.getGameProfile().getName(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -156,6 +159,7 @@ public class AntiSpamManager {
 
                 if (lastTime != null && (currentTime - lastTime) < (cooldown * 1000L)) {
                     String action = config.get("action").getAsString();
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Repeat filter triggered for {} (action={})", player.getGameProfile().getName(), action);
                     if ("block".equals(action)) {
                         long remainingSeconds = cooldown - ((currentTime - lastTime) / 1000);
                         return new FilterResult(false, null,
@@ -164,7 +168,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error checking repeat filter: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking repeat filter for " + player.getGameProfile().getName(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -197,6 +201,7 @@ public class AntiSpamManager {
             // Check if message contains URLs
             Matcher matcher = URL_PATTERN.matcher(message);
             if (matcher.find()) {
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Link detected in message from {} (action={})", player.getGameProfile().getName(), action);
                 // Block all links
                 if ("block".equals(action)) {
                     return new FilterResult(false, null, "§cLinks are not allowed in chat!");
@@ -217,12 +222,13 @@ public class AntiSpamManager {
                     }
 
                     if (!allowed) {
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Link '{}' from {} not in whitelist, blocking", url, player.getGameProfile().getName());
                         return new FilterResult(false, null, "§cOnly whitelisted links are allowed in chat!");
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error checking link filter: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking link filter for " + player.getGameProfile().getName(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -274,6 +280,7 @@ public class AntiSpamManager {
 
             if (capsPercentage > maxPercentage) {
                 String action = config.get("action").getAsString();
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Caps filter triggered for {} ({}% caps, action={})", player.getGameProfile().getName(), capsPercentage, action);
 
                 if ("lowercase".equals(action)) {
                     // Convert to lowercase
@@ -288,7 +295,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error checking caps filter: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking caps filter for " + player.getGameProfile().getName(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -303,7 +310,7 @@ public class AntiSpamManager {
                 return chatConfig.getAsJsonObject("antiSpam").get("enabled").getAsBoolean();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading antiSpam.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -318,7 +325,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading antiSpam.spamFilter.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -333,7 +340,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading antiSpam.repeatFilter.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -348,7 +355,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading antiSpam.linkFilter.enabled, defaulting to false", e);
         }
         return false;
     }
@@ -363,7 +370,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading antiSpam.capsFilter.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -373,6 +380,7 @@ public class AntiSpamManager {
         try {
             return parent.getAsJsonObject(key);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading JSON object for key '" + key + "'", e);
             return null;
         }
     }
@@ -406,7 +414,9 @@ public class AntiSpamManager {
         if (filterConfig != null && filterConfig.has("bypassPermission")) {
             try {
                 return filterConfig.get("bypassPermission").getAsString();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading bypassPermission, using fallback '" + fallback + "'", e);
+            }
         }
         return fallback;
     }

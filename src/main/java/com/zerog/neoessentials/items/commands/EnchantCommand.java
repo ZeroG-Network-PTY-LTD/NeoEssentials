@@ -4,6 +4,8 @@ package com.zerog.neoessentials.items.commands;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.InputValidator;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
@@ -212,7 +214,7 @@ public class EnchantCommand {
         try {
             levelTemp = IntegerArgumentType.getInteger(ctx, "level");
         } catch (IllegalArgumentException ignored) {
-            // Use default level 1
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "No 'level' argument provided for /enchant — defaulting to level 1");
         }
         
         // Check if unsafe enchantments are allowed (or if player has override permission)

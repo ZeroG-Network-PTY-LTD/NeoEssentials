@@ -7,6 +7,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.commands.CommandSourceStack;
@@ -172,6 +174,9 @@ public class SellCommand {
             return 0;
         }
         if (total.signum() > 0) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                "executeSellAll: player={} sold {} item type(s) from inventory, crediting total={}",
+                player.getName().getString(), typesSold, total);
             EconomyManager.getInstance().addBalance(player.getUUID(), total);
             LOGGER.info("Player {} sold inventory for {}{}", player.getName().getString(),
                 WorthCommand.getCurrencySymbol(), WorthCommand.format(total));
@@ -233,6 +238,9 @@ public class SellCommand {
         }
         int available = countInInventory(player, template, allowNamed);
         int toSell = Math.min(qty, available);
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+            "doSell: player={} item={} requestedQty={} availableQty={} unitPrice={}",
+            player.getName().getString(), WorthManager.getItemId(template), qty, available, price);
         if (toSell <= 0) {
             boolean anyNamedBlocked = !allowNamed && countInInventory(player, template, true) > available;
             source.sendFailure(MessageUtil.error(anyNamedBlocked
@@ -255,6 +263,8 @@ public class SellCommand {
         String itemId = WorthManager.getItemId(template);
         removeFromInventory(player, template, toSell, allowNamed);
         BigDecimal earned = price.multiply(multiplier).multiply(BigDecimal.valueOf(toSell));
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+            "doSell: player={} removed {}x {} from inventory, crediting earned={}", player.getName().getString(), toSell, itemId, earned);
         EconomyManager.getInstance().addBalance(player.getUUID(), earned);
         LOGGER.info("Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
             toSell, itemId,

@@ -2,7 +2,8 @@ package com.zerog.neoessentials.chat;
 
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.util.MessageUtil;
-import com.zerog.neoessentials.util.ChatDebugUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -134,7 +135,7 @@ public class ChatHandler {
 
             // Check if player is muted
             boolean isMuted = MuteManager.isMuted(player);
-            ChatDebugUtil.debug("ChatHandler - Checking mute for %s, result: %s", playerName, isMuted);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "ChatHandler - Checking mute for {}, result: {}", playerName, isMuted);
             if (isMuted) {
                 event.setCanceled(true);
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.chat.muted"));

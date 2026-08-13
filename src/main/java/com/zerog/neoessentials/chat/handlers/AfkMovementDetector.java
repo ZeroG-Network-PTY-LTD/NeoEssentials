@@ -5,6 +5,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +52,7 @@ public class AfkMovementDetector {
                 checkPlayerMovement(player);
             }
         } catch (Exception e) {
-            LOGGER.error("Error checking player movement", e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking player movement", e);
         }
     }
     
@@ -67,7 +69,7 @@ public class AfkMovementDetector {
         // Skip this check if rotation is invalid (prevents NaN errors)
         if (Float.isNaN(yaw) || Float.isInfinite(yaw) ||
             Float.isNaN(pitch) || Float.isInfinite(pitch)) {
-            LOGGER.debug("Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
                 player.getName().getString());
             return;
         }
@@ -95,7 +97,7 @@ public class AfkMovementDetector {
                 AfkManager afkManager = AfkManager.getInstance();
                 if (afkManager.isEnableActivityTracking() && afkManager.isTrackMovement()) {
                     afkManager.updateActivity(playerId);
-                    LOGGER.debug("Movement activity tracked for {}: distance={}, rotation={} (threshold={})",
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Movement activity tracked for {}: distance={}, rotation={} (threshold={})",
                         player.getName().getString(), distanceMoved, rotationChanged, rotationThreshold);
                 }
             }
@@ -112,7 +114,7 @@ public class AfkMovementDetector {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             lastPositions.remove(player.getUUID());
-            LOGGER.debug("Cleaned up movement tracking for player: {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Cleaned up movement tracking for player: {}", player.getName().getString());
         }
     }
     
@@ -127,7 +129,7 @@ public class AfkMovementDetector {
                 player.getYRot(), player.getXRot()
             );
             lastPositions.put(player.getUUID(), currentPos);
-            LOGGER.debug("Initialized movement tracking for player: {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Initialized movement tracking for player: {}", player.getName().getString());
         }
     }
     

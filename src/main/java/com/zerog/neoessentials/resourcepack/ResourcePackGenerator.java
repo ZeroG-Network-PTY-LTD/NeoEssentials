@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,7 +264,7 @@ public class ResourcePackGenerator {
                             try {
                                 Files.delete(path);
                             } catch (IOException e) {
-                                // Ignore
+                                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to delete temp path {}", path, e);
                             }
                         });
                 }
@@ -285,7 +287,7 @@ public class ResourcePackGenerator {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.customImagePath config — using default", e);
         }
         return Paths.get("config/neoessentials/badges");
     }
@@ -303,7 +305,7 @@ public class ResourcePackGenerator {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.customImageSize config — using default", e);
         }
         return 16;
     }

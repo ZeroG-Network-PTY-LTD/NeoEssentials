@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.hologram.*;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
@@ -40,6 +42,8 @@ public class HologramEndpoint implements HttpHandler {
         }
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "HologramEndpoint request: {} {}", method, path);
 
         // Creating/updating/deleting/spawning holograms requires ADMIN, matching every other
         // config-writing endpoint group. Reads stay open to any authenticated caller.
@@ -115,6 +119,7 @@ public class HologramEndpoint implements HttpHandler {
         }
         if (data.entityUUIDs == null) data.entityUUIDs = new java.util.ArrayList<>();
         HologramManager.getInstance().registerHologram(data);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Hologram created: id='{}' world='{}'", data.id, data.world);
         ServerLevel level = findLevel(data.world);
         if (level != null) executeOnMain(() -> HologramRenderer.spawn(data, level));
         sendJson(ex, 200, "{\"success\":true,\"id\":\"" + esc(data.id) + "\"}");
@@ -137,6 +142,7 @@ public class HologramEndpoint implements HttpHandler {
     private void handleDelete(HttpExchange ex, String id) throws IOException {
         HologramData data = HologramManager.getInstance().removeHologram(id);
         if (data == null) { sendJson(ex, 404, "{\"success\":false,\"error\":\"Not found\"}"); return; }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Hologram deleted: id='{}'", id);
         ServerLevel level = findLevel(data.world);
         if (level != null) executeOnMain(() -> HologramRenderer.despawn(data, level));
         sendJson(ex, 200, "{\"success\":true}");
@@ -205,14 +211,18 @@ public class HologramEndpoint implements HttpHandler {
             for (ServerLevel level : server.getAllLevels()) {
                 if (HologramRenderer.dimensionKey(level).equals(dimensionKey)) return level;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve level for dimension '{}'", dimensionKey, e);
+        }
         return null;
     }
     private void executeOnMain(Runnable r) {
         try {
             var server = ServerLifecycleHooks.getCurrentServer();
             if (server != null) server.execute(r);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to schedule hologram action on main thread", e);
+        }
     }
     private String readBody(HttpExchange ex) throws IOException {
         try (InputStream is = ex.getRequestBody();

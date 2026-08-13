@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.AuthenticationManager;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
@@ -85,7 +87,7 @@ public class AuthenticationHandler implements HttpHandler {
                 sendJsonResponse(exchange, 400, createErrorResponse("Invalid endpoint"));
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling authentication request", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error handling authentication request", e);
             sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
         }
     }
@@ -135,13 +137,11 @@ public class AuthenticationHandler implements HttpHandler {
             user.setTempPassword(false);
             authManager.saveUsers();
             // Debug logging for user and session state after password change
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Password changed for user '{}': requiresPasswordChange={}, isTempPassword={}",
-                    user.getUsername(), user.requiresPasswordChange(), user.isTempPassword());
-                Session sessionObj = authManager.validateSession(sessionId);
-                LOGGER.debug("Session state after password change: sessionId={}, active={}, requiresPasswordChange={}",
-                    sessionId, sessionObj != null ? sessionObj.isActive() : "null", sessionObj != null ? sessionObj.requiresPasswordChange() : "null");
-            }
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Password changed for user '{}': requiresPasswordChange={}, isTempPassword={}",
+                user.getUsername(), user.requiresPasswordChange(), user.isTempPassword());
+            Session sessionObj = authManager.validateSession(sessionId);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session state after password change for '{}': active={}, requiresPasswordChange={}",
+                user.getUsername(), sessionObj != null ? sessionObj.isActive() : "null", sessionObj != null ? sessionObj.requiresPasswordChange() : "null");
             // Invalidate the current session after password change
             authManager.logout(sessionId);
             JsonObject response = new JsonObject();
@@ -328,7 +328,7 @@ public class AuthenticationHandler implements HttpHandler {
         // LEGACY: Check if this is permission-based (Minecraft) authentication (DEPRECATED)
         // This requires the player to be online, use registration-based auth instead
         if (request.has("type") && "minecraft".equals(request.get("type").getAsString())) {
-            LOGGER.warn("Legacy Minecraft auth used by {}, this method is deprecated - use registration-based auth instead", username);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Legacy Minecraft auth used by {}, this method is deprecated - use registration-based auth instead", username);
             Session session = handleMinecraftAuth(username, ipAddress, userAgent);
 
             if (session == null) {
@@ -363,15 +363,14 @@ public class AuthenticationHandler implements HttpHandler {
         String password = request.get("password").getAsString();
 
         Session session = authManager.authenticate(username, password, ipAddress, userAgent);
-        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-            if (session != null) {
-                LOGGER.debug("Session created for user '{}': sessionId={}, requiresPasswordChange={}",
-                    username, session.getSessionId(), session.requiresPasswordChange());
-            } else {
-                LOGGER.debug("Login failed for user '{}': no session created", username);
-            }
+        if (session != null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session created for user '{}': requiresPasswordChange={}",
+                username, session.requiresPasswordChange());
+        } else {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Login failed for user '{}': no session created", username);
         }
-        
+
+
         if (session == null) {
             sendJsonResponse(exchange, 401, createErrorResponse("Invalid credentials or account locked"));
             return;
@@ -406,7 +405,7 @@ public class AuthenticationHandler implements HttpHandler {
             // Get server instance from DashboardAPI
             net.minecraft.server.MinecraftServer server = com.zerog.neoessentials.webdashboard.DashboardAPI.getInstance().getServer();
             if (server == null) {
-                LOGGER.error("Cannot authenticate: Server instance not available");
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot authenticate: Server instance not available");
                 return null;
             }
 
@@ -417,7 +416,7 @@ public class AuthenticationHandler implements HttpHandler {
             com.mojang.authlib.GameProfile profile = server.getProfileCache().get(minecraftUsername).orElse(null);
             if (profile != null) {
                 playerUuid = profile.getId();
-                LOGGER.debug("Found player UUID from server profile cache: {}", playerUuid);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Found player UUID from server profile cache: {}", playerUuid);
             }
 
             // 2. Try to get from internal permission system (might have offline data)
@@ -432,7 +431,7 @@ public class AuthenticationHandler implements HttpHandler {
                         var cachedProfile = server.getProfileCache().get(permUser.getUuid()).orElse(null);
                         if (cachedProfile != null && cachedProfile.getName().equalsIgnoreCase(minecraftUsername)) {
                             playerUuid = permUser.getUuid();
-                            LOGGER.debug("Found player UUID from permission system: {}", playerUuid);
+                            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Found player UUID from permission system: {}", playerUuid);
                             break;
                         }
                     }
@@ -452,29 +451,29 @@ public class AuthenticationHandler implements HttpHandler {
 
                         if (lpUser != null) {
                             playerUuid = lpUser.getUniqueId();
-                            LOGGER.debug("Found player UUID from LuckPerms: {}", playerUuid);
+                            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Found player UUID from LuckPerms: {}", playerUuid);
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("Could not get UUID from LuckPerms: {}", e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not get UUID from LuckPerms: {}", e.getMessage());
                 }
             }
 
             // 4. Try Mojang API as last resort (requires internet connection)
             if (playerUuid == null) {
                 try {
-                    LOGGER.info("Attempting to fetch UUID from Mojang API for username: {}", minecraftUsername);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Attempting to fetch UUID from Mojang API for username: {}", minecraftUsername);
                     playerUuid = fetchUuidFromMojangAPI(minecraftUsername);
                     if (playerUuid != null) {
-                        LOGGER.info("Retrieved UUID from Mojang API: {}", playerUuid);
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Retrieved UUID from Mojang API: {}", playerUuid);
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to fetch UUID from Mojang API: {}", e.getMessage());
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to fetch UUID from Mojang API: {}", e.getMessage());
                 }
             }
 
             if (playerUuid == null) {
-                LOGGER.warn("Could not find UUID for player: {} - They may have never joined the server and are not in any permission system", minecraftUsername);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Could not find UUID for player: {} - They may have never joined the server and are not in any permission system", minecraftUsername);
                 return null;
             }
 
@@ -483,7 +482,7 @@ public class AuthenticationHandler implements HttpHandler {
                 playerUuid, "neoessentials.dashboard.access");
 
             if (!hasAccess) {
-                LOGGER.warn("Player {} (UUID: {}) does not have dashboard access permission", minecraftUsername, playerUuid);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Player {} (UUID: {}) does not have dashboard access permission", minecraftUsername, playerUuid);
                 return null;
             }
 
@@ -506,24 +505,24 @@ public class AuthenticationHandler implements HttpHandler {
                 // Use a random password since Minecraft auth doesn't use passwords
                 String randomPassword = UUID.randomUUID().toString();
                 user = authManager.createUser(minecraftUsername, randomPassword, playerUuid.toString() + "@minecraft", role);
-                LOGGER.info("Auto-created dashboard user for Minecraft player: {} (UUID: {}, Role: {})", minecraftUsername, playerUuid, role);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Auto-created dashboard user for Minecraft player: {} (UUID: {}, Role: {})", minecraftUsername, playerUuid, role);
             } else {
                 // Update existing user's role if permissions changed
                 if (user.getRole() != role) {
                     user.setRole(role);
                     authManager.saveUsers();
-                    LOGGER.info("Updated dashboard role for {} (UUID: {}): {}", minecraftUsername, playerUuid, role);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Updated dashboard role for {} (UUID: {}): {}", minecraftUsername, playerUuid, role);
                 }
             }
 
             // Create session
             Session session = authManager.createSession(user.getId(), ipAddress, userAgent);
-            LOGGER.info("Minecraft player {} (UUID: {}) authenticated to dashboard with role: {} (Offline-capable)", minecraftUsername, playerUuid, role);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft player {} (UUID: {}) authenticated to dashboard with role: {} (Offline-capable)", minecraftUsername, playerUuid, role);
 
             return session;
 
         } catch (Exception e) {
-            LOGGER.error("Error during Minecraft authentication for {}: {}", minecraftUsername, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during Minecraft authentication for " + minecraftUsername, e);
             return null;
         }
     }
@@ -587,14 +586,14 @@ public class AuthenticationHandler implements HttpHandler {
 
                 return UUID.fromString(formattedUuid);
             } else if (responseCode == 204 || responseCode == 404) {
-                LOGGER.debug("Player '{}' not found in Mojang database", username);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Player '{}' not found in Mojang database", username);
                 return null;
             } else {
-                LOGGER.warn("Mojang API returned unexpected status code: {}", responseCode);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Mojang API returned unexpected status code: {}", responseCode);
                 return null;
             }
         } catch (Exception e) {
-            LOGGER.debug("Error fetching UUID from Mojang API: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Error fetching UUID from Mojang API: {}", e.getMessage());
             return null;
         }
     }
@@ -655,16 +654,16 @@ public class AuthenticationHandler implements HttpHandler {
         // Check if user is blacklisted
         if (discordConfig.isBlacklisted(discordUser.getDiscordId())) {
             sendJsonResponse(exchange, 403, createErrorResponse("Access denied"));
-            LOGGER.warn("Blacklisted Discord user attempted login: {} ({})", 
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Blacklisted Discord user attempted login: {} ({})",
                 discordUser.getDiscordUsername(), discordUser.getDiscordId());
             return;
         }
-        
+
         // Check whitelist (if configured)
         if (!discordConfig.passesWhitelist(discordUser.getDiscordRoles())) {
             sendJsonResponse(exchange, 403, createErrorResponse(
                 "You do not have the required Discord role to access the dashboard"));
-            LOGGER.warn("Discord user without required role attempted login: {} (roles: {})", 
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Discord user without required role attempted login: {} (roles: {})",
                 discordUser.getDiscordUsername(), discordUser.getDiscordRoles());
             return;
         }
@@ -690,13 +689,13 @@ public class AuthenticationHandler implements HttpHandler {
                 UUID.randomUUID().toString(), // Random password (won't be used)
                 email, dashboardRole);
             
-            LOGGER.info("Auto-created dashboard user from Discord: {} with role {}", 
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Auto-created dashboard user from Discord: {} with role {}",
                 minecraftUsername, dashboardRole);
         } else {
             // Always update existing user's role to match Discord role
             if (dashboardRole.ordinal() != user.getRole().ordinal()) {
                 user.setRole(dashboardRole);
-                LOGGER.info("Updated user {} role to {} based on Discord roles", 
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Updated user {} role to {} based on Discord roles",
                     minecraftUsername, dashboardRole);
             }
         }
@@ -724,7 +723,7 @@ public class AuthenticationHandler implements HttpHandler {
         
         response.add("user", userJson);
         
-        LOGGER.info("Discord authentication successful: {} (Discord: {}, Role: {})", 
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord authentication successful: {} (Discord: {}, Role: {})",
             minecraftUsername, discordUser.getDiscordUsername(), dashboardRole);
         
         // Set session cookie
@@ -974,15 +973,11 @@ public class AuthenticationHandler implements HttpHandler {
      */
     private void handleGetCurrentSession(HttpExchange exchange) throws IOException {
         // Debug logging for session cookie
-        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-            String cookieHeader = exchange.getRequestHeaders().getFirst("Cookie");
-            LOGGER.debug("handleGetCurrentSession: Raw Cookie header: {}", cookieHeader);
-        }
+        String cookieHeader = exchange.getRequestHeaders().getFirst("Cookie");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "handleGetCurrentSession: Cookie header present: {}", cookieHeader != null);
         String sessionId = getSessionIdFromCookie(exchange);
-        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-            LOGGER.debug("handleGetCurrentSession: Extracted sessionId: {}", sessionId);
-        }
-        
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "handleGetCurrentSession: sessionId present: {}", sessionId != null);
+
         // Try to get session ID from cookie
         if (sessionId == null) {
             sendJsonResponse(exchange, 401, createErrorResponse("No active session"));

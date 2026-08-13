@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
@@ -75,6 +77,8 @@ public class KickManager {
         KickEntry entry = new KickEntry(playerName, playerId, reason, kickedBy);
         kicks.add(entry);
         store.put(COLLECTION, entry.id, toJson(entry));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Recorded kick: player={} ({}) reason={} by={}",
+            playerName, playerId, reason, kickedBy);
     }
 
     /** Kick history for a player by UUID, newest first. */

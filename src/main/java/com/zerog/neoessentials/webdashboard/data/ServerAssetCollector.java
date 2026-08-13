@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -69,7 +71,7 @@ public class ServerAssetCollector {
                         itemData.addProperty("modName", modContainer.get().getModInfo().getDisplayName());
                     }
                 } catch (Exception e) {
-                    // Mod not found, skip
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not resolve mod name for namespace: {}", itemId.getNamespace(), e);
                 }
             }
 

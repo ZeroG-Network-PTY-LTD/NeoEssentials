@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
 import net.neoforged.fml.ModList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,22 +44,22 @@ public final class AdapterCompatibilityChecker {
      *                      if none was found.
      */
     public static void generateReport(ExternalPermissionAdapter activeAdapter) {
-        LOGGER.info("╔══════════════════════════════════════════════════════════════════════╗");
-        LOGGER.info("║        NeoEssentials — External Permissions Compatibility Report      ║");
-        LOGGER.info("╠══════════════════════════════════════════════════════════════════════╣");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════════════╗");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║        NeoEssentials — External Permissions Compatibility Report      ║");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"╠══════════════════════════════════════════════════════════════════════╣");
 
         if (activeAdapter == null) {
-            LOGGER.info("║  Active adapter  : NONE (using internal NeoEssentials permissions)    ║");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║  Active adapter  : NONE (using internal NeoEssentials permissions)    ║");
         } else {
             String adapterLine = String.format("%-32s v%-18s",
                     activeAdapter.getName(), activeAdapter.getVersion());
-            LOGGER.info("║  Active adapter  : {}  ║", padRight(adapterLine, 54));
-            LOGGER.info("║  Health status   : {}  ║",
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║  Active adapter  : {}  ║", padRight(adapterLine, 54));
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║  Health status   : {}  ║",
                     padRight(activeAdapter.isHealthy() ? "✓ HEALTHY" : "✗ UNHEALTHY — fallback active", 54));
         }
 
-        LOGGER.info("╠══════════════════════════════════════════════════════════════════════╣");
-        LOGGER.info("║  Installed permission mods:                                          ║");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"╠══════════════════════════════════════════════════════════════════════╣");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║  Installed permission mods:                                          ║");
 
         boolean anyWarn = false;
         for (Map.Entry<String, String> entry : LAST_TESTED.entrySet()) {
@@ -75,22 +77,22 @@ public final class AdapterCompatibilityChecker {
             String row = String.format("  %-14s  detected: %-14s  last tested: %-10s  %s",
                     modId, detected, lastTested, status);
             if (compatible) {
-                LOGGER.info("║  {}  ║", padRight(row, 68));
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"║  {}  ║", padRight(row, 68));
             } else {
-                LOGGER.warn("║  {}  ║", padRight(row, 68));
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  {}  ║", padRight(row, 68));
                 anyWarn = true;
             }
         }
 
         if (anyWarn) {
-            LOGGER.warn("╠══════════════════════════════════════════════════════════════════════╣");
-            LOGGER.warn("║  ⚠  One or more permission mods are newer than last-tested versions.  ║");
-            LOGGER.warn("║     Permissions should still work — NeoEssentials probes APIs via     ║");
-            LOGGER.warn("║     reflection and will fall back to the internal system if needed.    ║");
-            LOGGER.warn("║     If you see issues, please open a GitHub issue with your mod list.  ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╠══════════════════════════════════════════════════════════════════════╣");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  ⚠  One or more permission mods are newer than last-tested versions.  ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║     Permissions should still work — NeoEssentials probes APIs via     ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║     reflection and will fall back to the internal system if needed.    ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║     If you see issues, please open a GitHub issue with your mod list.  ║");
         }
 
-        LOGGER.info("╚══════════════════════════════════════════════════════════════════════╝");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════════════╝");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -120,6 +122,7 @@ public final class AdapterCompatibilityChecker {
             }
             return true; // identical up to compared segments
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not compare versions '{}' vs '{}', assuming compatible", detected, lastTested, e);
             return true; // can't parse — assume compatible to avoid noise
         }
     }
@@ -128,6 +131,7 @@ public final class AdapterCompatibilityChecker {
         try {
             return Integer.parseInt(s.replaceAll("[^0-9]", ""));
         } catch (NumberFormatException e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not parse version segment '{}', defaulting to 0", s);
             return 0;
         }
     }

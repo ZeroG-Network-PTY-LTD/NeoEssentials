@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.security;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -49,11 +51,11 @@ public class DiscordSyncEventHandler {
             }
             
             String playerName = player.getName().getString();
-            LOGGER.debug("Starting Discord permission sync for player '{}'", playerName);
-            
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting Discord permission sync for player '{}'", playerName);
+
             // Sync permissions
             DiscordPermissionSync.SyncResult result = syncService.syncPlayerPermissions(player);
-            
+
             if (result.isSuccess() && result.getPermissionsGranted() > 0) {
                 // Notify player that permissions were synced
                 player.sendSystemMessage(
@@ -62,19 +64,18 @@ public class DiscordSyncEventHandler {
                         .append(Component.literal(MessageUtil.localize("commands.neoessentials.discord.sync_success_message"))
                             .withStyle(ChatFormatting.GRAY))
                 );
-                
-                LOGGER.info("Discord permission sync completed for '{}': {}", playerName, result.getMessage());
+
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync completed for '{}': {}", playerName, result.getMessage());
             } else if (!result.isSuccess()) {
                 // Log failure but don't bother the player unless it's important
-                LOGGER.debug("Discord permission sync skipped for '{}': {}", playerName, result.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync skipped for '{}': {}", playerName, result.getMessage());
             }
-            
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.warn("Discord permission sync interrupted for player '{}'", player.getName().getString());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync interrupted for player '{}'", player.getName().getString());
         } catch (Exception e) {
-            LOGGER.error("Error during Discord permission sync for player '{}': {}", 
-                player.getName().getString(), e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during Discord permission sync for player '" + player.getName().getString() + "'", e);
         }
     }
 }

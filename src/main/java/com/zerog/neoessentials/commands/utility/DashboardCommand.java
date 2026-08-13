@@ -12,6 +12,8 @@ import com.zerog.neoessentials.webdashboard.DashboardLifecycleManager;
 import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
 import com.zerog.neoessentials.webdashboard.security.User;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -75,6 +77,7 @@ public class DashboardCommand {
                 .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
                 .executes(DashboardCommand::unpair))
         );
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Registered /dashboard command");
     }
 
     // ── Dashboard pairing (mutual handshake with an external dashboard) ────────
@@ -131,10 +134,11 @@ public class DashboardCommand {
 
             source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aPaired with dashboard at " + normalizedUrl + "."), false);
             source.sendSuccess(() -> Component.literal("§7Both directions are now connected — the dashboard can control this server, and this server can push account-sync events to it."), false);
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Dashboard pairing completed with {}", normalizedUrl);
             return 1;
         } catch (Exception e) {
             if (keyId != null) ApiKeyManager.getInstance().revoke(keyId);
-            LOGGER.warn("Dashboard pairing failed: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.COMMANDS, "Dashboard pairing failed", e);
             source.sendFailure(Component.literal("§cCould not reach the dashboard at " + normalizedUrl + " — " + e.getMessage()));
             return 0;
         }

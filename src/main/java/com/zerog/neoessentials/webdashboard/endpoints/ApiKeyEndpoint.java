@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
 import com.zerog.neoessentials.webdashboard.security.User;
 import org.slf4j.Logger;
@@ -48,6 +50,8 @@ public class ApiKeyEndpoint implements HttpHandler {
 
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "ApiKeyEndpoint request: {} {}", method, path);
 
         try {
             if ("GET".equals(method) && path.equals("/api/apikeys")) {
@@ -94,12 +98,15 @@ public class ApiKeyEndpoint implements HttpHandler {
             try {
                 role = User.Role.valueOf(data.get("role").getAsString().toUpperCase());
             } catch (IllegalArgumentException e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rejected API key creation: invalid role '{}'", data.get("role").getAsString());
                 sendJson(exchange, 400, "{\"success\":false,\"error\":\"Invalid role — expected ADMIN, OPERATOR, MODERATOR, or VIEWER\"}");
                 return;
             }
         }
 
         String token = ApiKeyManager.getInstance().createKey(label, role);
+        // Never log the token value itself — only the non-secret label/role.
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key created: label='{}' role={}", label, role);
 
         JsonObject response = new JsonObject();
         response.addProperty("success", true);
@@ -110,6 +117,7 @@ public class ApiKeyEndpoint implements HttpHandler {
 
     private void handleRevoke(HttpExchange exchange, String id) throws IOException {
         boolean removed = ApiKeyManager.getInstance().revoke(id);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key revoke id={} removed={}", id, removed);
         if (removed) {
             sendJson(exchange, 200, "{\"success\":true,\"message\":\"API key revoked\"}");
         } else {

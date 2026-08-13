@@ -6,6 +6,8 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.chat.MuteManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.*;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -89,6 +91,8 @@ public class ModerationEndpoint implements HttpHandler {
 
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "ModerationEndpoint request: {} {}", method, path);
 
         try {
             if ("GET".equals(method) && path.endsWith("/overview")) {
@@ -231,7 +235,9 @@ public class ModerationEndpoint implements HttpHandler {
         int jailedCount = 0;
         try {
             jailedCount = JailManager.getInstance().getAllJailedPlayers().size();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to fetch jailed player count for overview", e);
+        }
 
         JsonObject resp = new JsonObject();
         resp.addProperty("success", true);
@@ -302,6 +308,7 @@ public class ModerationEndpoint implements HttpHandler {
             sendJson(exchange, 409, json(false, "Player is already banned, or bans are disabled in config"));
             return;
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Ban created for player '{}' by '{}'", playerName, bannedBy);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Ban created\",\"playerId\":\"" + esc(playerId.toString()) + "\"}");
     }
 
@@ -311,6 +318,7 @@ public class ModerationEndpoint implements HttpHandler {
         catch (Exception e) { sendJson(exchange, 400, json(false, "Invalid UUID: " + uuidStr)); return; }
 
         boolean removed = BanManager.getInstance().unbanPlayer(playerId, executorName(exchange));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unban request for playerId={} removed={}", playerId, removed);
         sendJson(exchange, 200, json(removed, removed ? "Ban removed" : "Ban not found: " + uuidStr));
     }
 
@@ -365,11 +373,13 @@ public class ModerationEndpoint implements HttpHandler {
             sendJson(exchange, 409, json(false, "IP is already banned, or IP bans are disabled in config"));
             return;
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP ban created by '{}'", bannedBy);
         sendJson(exchange, 200, json(true, "IP ban created"));
     }
 
     private void handleRemoveIPBan(HttpExchange exchange, String ip) throws IOException {
         boolean removed = BanManager.getInstance().unbanIP(URLDecoder.decode(ip, StandardCharsets.UTF_8), executorName(exchange));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP unban request removed={}", removed);
         sendJson(exchange, 200, json(removed, removed ? "IP ban removed" : "IP ban not found: " + ip));
     }
 
@@ -436,11 +446,13 @@ public class ModerationEndpoint implements HttpHandler {
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : null;
         long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
         MuteManager.mute(targetName, reason, executorName(exchange), durationSeconds * 1000L);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Mute created for player '{}'", targetName);
         sendJson(exchange, 200, json(true, targetName + " muted"));
     }
 
     private void handleRemoveMute(HttpExchange exchange, String targetName) throws IOException {
         MuteManager.unmute(targetName, executorName(exchange));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unmute request for player '{}'", targetName);
         sendJson(exchange, 200, json(true, targetName + " unmuted"));
     }
 
@@ -478,11 +490,13 @@ public class ModerationEndpoint implements HttpHandler {
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : null;
         long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
         MuteManager.muteIP(ip, reason, executorName(exchange), durationSeconds * 1000L);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP mute created");
         sendJson(exchange, 200, json(true, ip + " muted"));
     }
 
     private void handleRemoveIPMute(HttpExchange exchange, String ip) throws IOException {
         MuteManager.unmuteIP(URLDecoder.decode(ip, StandardCharsets.UTF_8), executorName(exchange));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP unmute request");
         sendJson(exchange, 200, json(true, ip + " unmuted"));
     }
 
@@ -565,6 +579,7 @@ public class ModerationEndpoint implements HttpHandler {
         UUID uuid = wm.findUUIDByName(targetName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + targetName)); return; }
         boolean removed = wm.removeWarn(uuid, warnId);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Warn removal for player '{}' warnId={} removed={}", targetName, warnId, removed);
         sendJson(exchange, 200, json(removed, removed ? "Warning removed" : "Warning not found"));
     }
 
@@ -608,6 +623,7 @@ public class ModerationEndpoint implements HttpHandler {
 
         String authorName = executorName(exchange);
         NoteEntry entry = NoteManager.getInstance().addNote(targetId, targetName, null, authorName, text);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Note added for player '{}'", targetName);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Note added\",\"noteId\":\"" + esc(entry.getId()) + "\"}");
     }
 
@@ -617,6 +633,7 @@ public class ModerationEndpoint implements HttpHandler {
         UUID uuid = NoteManager.getInstance().findUUIDByName(targetName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + targetName)); return; }
         boolean removed = NoteManager.getInstance().removeNote(uuid, noteId);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Note removal for player '{}' noteId={} removed={}", targetName, noteId, removed);
         sendJson(exchange, 200, json(removed, removed ? "Note removed" : "Note not found"));
     }
 
@@ -650,6 +667,7 @@ public class ModerationEndpoint implements HttpHandler {
 
         String reviewerName = executorName(exchange);
         boolean success = ReportManager.getInstance().reviewReport(id, status, null, reviewerName, notes);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Report {} reviewed by '{}' status={} success={}", id, reviewerName, status, success);
         sendJson(exchange, 200, json(success, success ? "Report updated" : "Report not found: " + id));
     }
 
@@ -710,6 +728,7 @@ public class ModerationEndpoint implements HttpHandler {
             return;
         }
         boolean success = FreezeManager.getInstance().freezePlayer(targetName, targetId, reason, executorName(exchange));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Freeze request for player '{}' success={}", targetName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " frozen" : "Player is already frozen"));
     }
 
@@ -717,6 +736,7 @@ public class ModerationEndpoint implements HttpHandler {
         UUID uuid = resolvePlayerId(playerName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
         boolean removed = FreezeManager.getInstance().unfreezePlayer(uuid);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unfreeze request for player '{}' removed={}", playerName, removed);
         sendJson(exchange, 200, json(removed, removed ? playerName + " unfrozen" : "Player was not frozen"));
     }
 
@@ -765,6 +785,7 @@ public class ModerationEndpoint implements HttpHandler {
             return;
         }
         boolean success = VanishManager.getInstance().vanishPlayer(target.getUUID(), targetName, executorName(exchange), false);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Vanish request for player '{}' success={}", targetName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " vanished" : "Player is already vanished"));
     }
 
@@ -772,6 +793,7 @@ public class ModerationEndpoint implements HttpHandler {
         UUID uuid = resolvePlayerId(playerName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
         boolean removed = VanishManager.getInstance().unvanishPlayer(uuid);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unvanish request for player '{}' removed={}", playerName, removed);
         sendJson(exchange, 200, json(removed, removed ? playerName + " unvanished" : "Player was not vanished"));
     }
 
@@ -814,6 +836,7 @@ public class ModerationEndpoint implements HttpHandler {
             return;
         }
         boolean success = jailManager.jailPlayer(targetName, targetId, reason, executorName(exchange), jailName, durationSeconds * 1000L);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Jail request for player '{}' jail='{}' success={}", targetName, jailName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " jailed" : "Player is already jailed"));
     }
 
@@ -821,6 +844,7 @@ public class ModerationEndpoint implements HttpHandler {
         UUID uuid = resolvePlayerId(playerName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
         boolean removed = JailManager.getInstance().unjailPlayer(uuid);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unjail request for player '{}' removed={}", playerName, removed);
         sendJson(exchange, 200, json(removed, removed ? playerName + " unjailed" : "Player was not jailed"));
     }
 
@@ -849,7 +873,9 @@ public class ModerationEndpoint implements HttpHandler {
                 var profile = cache.get(playerName);
                 if (profile.isPresent()) return profile.get().getId();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve player id for '{}'", playerName, e);
+        }
         return null;
     }
 

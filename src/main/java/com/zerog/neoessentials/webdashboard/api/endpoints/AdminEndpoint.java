@@ -5,6 +5,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
@@ -39,7 +41,7 @@ public class AdminEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
 
-        LOGGER.info("AdminEndpoint handling request: {} {}", method, path);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "AdminEndpoint handling request: {} {}", method, path);
 
         try {
             // Every action here can halt/restart the server, reload config, or broadcast as
@@ -70,16 +72,16 @@ public class AdminEndpoint implements HttpHandler {
             try {
                 sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin access required\"}");
             } catch (IOException ex) {
-                LOGGER.error("Failed to send error response", ex);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to send error response", ex);
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling admin request: {} {}", method, path, e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error handling admin request: {} {}", method, path, e);
             try {
                 String errorResponse = String.format("{\"success\":false,\"error\":\"Internal error: %s\"}",
                     e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
                 sendResponse(exchange, 500, errorResponse);
             } catch (IOException ex) {
-                LOGGER.error("Failed to send error response", ex);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to send error response", ex);
             }
         }
     }
@@ -109,7 +111,7 @@ public class AdminEndpoint implements HttpHandler {
      * POST /api/admin/restart - Restart the server
      */
     private void handleRestart(HttpExchange exchange) throws IOException {
-        LOGGER.warn("Server restart requested via dashboard");
+        NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Server restart requested via dashboard");
 
         // Execute restart on server thread
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
@@ -121,7 +123,7 @@ public class AdminEndpoint implements HttpHandler {
                     player.sendSystemMessage(MessageUtil.component("commands.neoessentials.admin.server_restarting"));
                 });
 
-                LOGGER.info("Broadcasting restart message and scheduling restart in 5 seconds");
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcasting restart message and scheduling restart in 5 seconds");
 
                 // Schedule restart in 5 seconds
                 new Thread(() -> {
@@ -129,18 +131,18 @@ public class AdminEndpoint implements HttpHandler {
                         Thread.sleep(5000);
 
                         // Save all worlds
-                        LOGGER.info("Saving all worlds before restart...");
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before restart...");
                         server.saveAllChunks(true, true, true);
 
                         // Stop server
-                        LOGGER.info("Stopping server for restart...");
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server for restart...");
                         server.halt(false);
 
                         // Note: Actual restart depends on how the server is launched
                         // Most server wrappers detect shutdown and restart automatically
 
                     } catch (InterruptedException e) {
-                        LOGGER.error("Restart interrupted", e);
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Restart interrupted", e);
                         Thread.currentThread().interrupt();
                     }
                 }, "Dashboard-Restart").start();
@@ -150,7 +152,7 @@ public class AdminEndpoint implements HttpHandler {
                 return response;
 
             } catch (Exception e) {
-                LOGGER.error("Error initiating restart", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error initiating restart", e);
                 JsonObject error = new JsonObject();
                 error.addProperty("success", false);
                 error.addProperty("error", "Failed to restart: " + e.getMessage());
@@ -162,7 +164,7 @@ public class AdminEndpoint implements HttpHandler {
             JsonObject response = future.get(2, TimeUnit.SECONDS);
             sendResponse(exchange, 200, response.toString());
         } catch (Exception e) {
-            LOGGER.error("Timeout or error getting restart response", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or error getting restart response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Restart request timeout\"}");
         }
     }
@@ -171,7 +173,7 @@ public class AdminEndpoint implements HttpHandler {
      * POST /api/admin/stop - Stop the server
      */
     private void handleStop(HttpExchange exchange) throws IOException {
-        LOGGER.warn("Server stop requested via dashboard");
+        NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Server stop requested via dashboard");
 
         // Execute stop on server thread
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
@@ -183,7 +185,7 @@ public class AdminEndpoint implements HttpHandler {
                     player.sendSystemMessage(MessageUtil.component("commands.neoessentials.admin.server_shutting_down"));
                 });
 
-                LOGGER.info("Broadcasting shutdown message and scheduling stop in 5 seconds");
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcasting shutdown message and scheduling stop in 5 seconds");
 
                 // Schedule stop in 5 seconds
                 new Thread(() -> {
@@ -191,15 +193,15 @@ public class AdminEndpoint implements HttpHandler {
                         Thread.sleep(5000);
 
                         // Save all worlds
-                        LOGGER.info("Saving all worlds before shutdown...");
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before shutdown...");
                         server.saveAllChunks(true, true, true);
 
                         // Stop server
-                        LOGGER.info("Stopping server...");
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server...");
                         server.halt(false);
 
                     } catch (InterruptedException e) {
-                        LOGGER.error("Stop interrupted", e);
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Stop interrupted", e);
                         Thread.currentThread().interrupt();
                     }
                 }, "Dashboard-Stop").start();
@@ -209,7 +211,7 @@ public class AdminEndpoint implements HttpHandler {
                 return response;
 
             } catch (Exception e) {
-                LOGGER.error("Error initiating stop", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error initiating stop", e);
                 JsonObject error = new JsonObject();
                 error.addProperty("success", false);
                 error.addProperty("error", "Failed to stop: " + e.getMessage());
@@ -221,7 +223,7 @@ public class AdminEndpoint implements HttpHandler {
             JsonObject response = future.get(2, TimeUnit.SECONDS);
             sendResponse(exchange, 200, response.toString());
         } catch (Exception e) {
-            LOGGER.error("Timeout or error getting stop response", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or error getting stop response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Stop request timeout\"}");
         }
     }
@@ -230,7 +232,7 @@ public class AdminEndpoint implements HttpHandler {
      * POST /api/admin/reload - Reload all configs
      */
     private void handleReload(HttpExchange exchange) throws IOException {
-        LOGGER.info("Config reload requested via dashboard");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Config reload requested via dashboard");
 
         // Execute reload on server thread
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
@@ -244,11 +246,11 @@ public class AdminEndpoint implements HttpHandler {
                 totalCount++;
                 try {
                     ConfigManager.loadAll();
-                    LOGGER.info("✓ Configuration files reloaded");
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "✓ Configuration files reloaded");
                     details.append("Configuration files: OK\n");
                     successCount++;
                 } catch (Exception e) {
-                    LOGGER.error("✗ Failed to reload configuration files: {}", e.getMessage(), e);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "✗ Failed to reload configuration files: {}", e.getMessage(), e);
                     details.append("Configuration files: FAILED (").append(e.getMessage()).append(")\n");
                 }
 
@@ -256,11 +258,11 @@ public class AdminEndpoint implements HttpHandler {
                 totalCount++;
                 try {
                     com.zerog.neoessentials.util.MessageUtil.reloadTranslations();
-                    LOGGER.info("✓ Translations reloaded");
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "✓ Translations reloaded");
                     details.append("Translations: OK\n");
                     successCount++;
                 } catch (Exception e) {
-                    LOGGER.error("✗ Failed to reload translations: {}", e.getMessage(), e);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "✗ Failed to reload translations: {}", e.getMessage(), e);
                     details.append("Translations: FAILED (").append(e.getMessage()).append(")\n");
                 }
 
@@ -268,11 +270,11 @@ public class AdminEndpoint implements HttpHandler {
                 totalCount++;
                 try {
                     com.zerog.neoessentials.api.permissions.PermissionAPI.reload();
-                    LOGGER.info("✓ Permission system reloaded");
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "✓ Permission system reloaded");
                     details.append("Permissions: OK\n");
                     successCount++;
                 } catch (Exception e) {
-                    LOGGER.error("✗ Failed to reload permissions: {}", e.getMessage(), e);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "✗ Failed to reload permissions: {}", e.getMessage(), e);
                     details.append("Permissions: FAILED (").append(e.getMessage()).append(")\n");
                 }
 
@@ -284,11 +286,11 @@ public class AdminEndpoint implements HttpHandler {
                 response.addProperty("message", String.format("Reload completed: %d/%d systems reloaded successfully", successCount, totalCount));
                 response.addProperty("details", details.toString());
 
-                LOGGER.info("Dashboard reload completed: {}/{} systems", successCount, totalCount);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard reload completed: {}/{} systems", successCount, totalCount);
                 return response;
 
             } catch (Exception e) {
-                LOGGER.error("Error executing reload", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error executing reload", e);
                 JsonObject error = new JsonObject();
                 error.addProperty("success", false);
                 error.addProperty("error", "Failed to reload: " + e.getMessage());
@@ -300,7 +302,7 @@ public class AdminEndpoint implements HttpHandler {
             JsonObject response = future.get(30, TimeUnit.SECONDS);
             sendResponse(exchange, 200, response.toString());
         } catch (Exception e) {
-            LOGGER.error("Timeout or error getting reload response", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or error getting reload response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Reload request timeout\"}");
         }
     }
@@ -314,6 +316,7 @@ public class AdminEndpoint implements HttpHandler {
         try {
             bodyJson = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read broadcast request body: {}", e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Could not read request body\"}");
             return;
         }
@@ -327,6 +330,7 @@ public class AdminEndpoint implements HttpHandler {
             }
             message = body.get("message").getAsString();
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid broadcast request body: {}", e.getMessage());
             sendResponse(exchange, 400, "{\"success\":false,\"error\":\"Invalid JSON body\"}");
             return;
         }
@@ -344,11 +348,12 @@ public class AdminEndpoint implements HttpHandler {
                 int count = server.getPlayerList().getPlayers().size();
                 server.getPlayerList().getPlayers().forEach(p ->
                     p.sendSystemMessage(net.minecraft.network.chat.Component.literal(finalMessage)));
-                LOGGER.info("[Dashboard Broadcast] {}: {}", finalSender, finalMessage);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Dashboard Broadcast] {}: {}", finalSender, finalMessage);
                 resp.addProperty("success", true);
                 resp.addProperty("recipients", count);
                 resp.addProperty("message", "Message sent to " + count + " player(s)");
             } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error sending dashboard broadcast", e);
                 resp.addProperty("success", false);
                 resp.addProperty("error", e.getMessage());
             }
@@ -360,6 +365,7 @@ public class AdminEndpoint implements HttpHandler {
             int code = result.has("success") && result.get("success").getAsBoolean() ? 200 : 500;
             sendResponse(exchange, code, result.toString());
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or error getting broadcast response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Timeout\"}");
         }
     }
@@ -368,7 +374,7 @@ public class AdminEndpoint implements HttpHandler {
      * POST /api/admin/save - Save all worlds
      */
     private void handleSaveAll(HttpExchange exchange) throws IOException {
-        LOGGER.info("Save all requested via dashboard");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Save all requested via dashboard");
 
         // Execute save on server thread
         CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
@@ -381,17 +387,17 @@ public class AdminEndpoint implements HttpHandler {
                 if (saved) {
                     response.addProperty("success", true);
                     response.addProperty("message", "All worlds saved successfully");
-                    LOGGER.info("Dashboard save-all completed successfully");
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard save-all completed successfully");
                 } else {
                     response.addProperty("success", false);
                     response.addProperty("error", "Save operation returned false");
-                    LOGGER.warn("Dashboard save-all returned false");
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard save-all returned false");
                 }
 
                 return response;
 
             } catch (Exception e) {
-                LOGGER.error("Error executing save-all", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error executing save-all", e);
                 JsonObject error = new JsonObject();
                 error.addProperty("success", false);
                 error.addProperty("error", "Failed to save: " + e.getMessage());
@@ -403,7 +409,7 @@ public class AdminEndpoint implements HttpHandler {
             JsonObject response = future.get(30, TimeUnit.SECONDS);
             sendResponse(exchange, 200, response.toString());
         } catch (Exception e) {
-            LOGGER.error("Timeout or error getting save response", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout or error getting save response", e);
             sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Save request timeout\"}");
         }
     }

@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,7 @@ public class CommandRegistry {
             this.aliases.put(alias.toLowerCase(), name.toLowerCase());
         }
 
-        LOGGER.debug("Registered command: {} with {} aliases", name, aliases.length);
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Registered command: {} with {} aliases", name, aliases.length);
     }
 
     /**
@@ -70,7 +72,7 @@ public class CommandRegistry {
             this.aliases.put(alias.toLowerCase(), name.toLowerCase());
         }
 
-        LOGGER.debug("Registered command: {} with {} aliases (permission override: {})", name, aliases.length, permissionNode);
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Registered command: {} with {} aliases (permission override: {})", name, aliases.length, permissionNode);
     }
 
     /**
@@ -152,7 +154,9 @@ public class CommandRegistry {
             var parseResults = dispatcher.parse("/" + key, null);
             return parseResults.getContext().getCommand() != null;
         } catch (Exception e) {
-            LOGGER.debug("Command '{}' not found in dispatcher: {}", key, e.getMessage());
+            // Expected: a command that's in our registry but fails to parse against the live
+            // Brigadier dispatcher (e.g. registration failed silently, or a stale entry).
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Command '" + key + "' not found in dispatcher", e);
             return false;
         }
     }
@@ -173,7 +177,7 @@ public class CommandRegistry {
     public void clear() {
         commands.clear();
         aliases.clear();
-        LOGGER.debug("Command registry cleared");
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Command registry cleared");
     }
     
     /**

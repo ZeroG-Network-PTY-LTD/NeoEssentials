@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.backup.BackupManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,8 @@ public class BackupEndpoint implements HttpHandler {
         String method = exchange.getRequestMethod();
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "BackupEndpoint request: {} {}", method, path);
+
         try {
             if (path.endsWith("/status") && "GET".equals(method)) {
                 handleStatus(exchange);
@@ -64,8 +68,10 @@ public class BackupEndpoint implements HttpHandler {
                 respond(exchange, 404, "{\"error\":\"Not found\"}");
             }
         } catch (SecurityException e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "BackupEndpoint denied non-admin request: {} {}", method, path);
             respond(exchange, 403, "{\"error\":\"Admin access required\"}");
         } catch (IllegalArgumentException e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "BackupEndpoint bad request: {} {}: {}", method, path, e.getMessage());
             respond(exchange, 400, json("error", e.getMessage()));
         } catch (IOException e) {
             LOGGER.error("[BackupEndpoint] Error handling {} {}: {}", method, path, e.getMessage(), e);
@@ -147,6 +153,7 @@ public class BackupEndpoint implements HttpHandler {
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Missing 'name' parameter");
 
         boolean deleted = BackupManager.getInstance().deleteSnapshot(name);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Snapshot delete '{}' deleted={}", name, deleted);
         JsonObject result = new JsonObject();
         result.addProperty("success", deleted);
         result.addProperty("name",    name);

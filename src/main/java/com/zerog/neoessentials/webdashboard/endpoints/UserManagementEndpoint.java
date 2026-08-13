@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.AuthenticationManager;
 import com.zerog.neoessentials.webdashboard.security.Session;
 import com.zerog.neoessentials.webdashboard.security.User;
@@ -53,6 +55,8 @@ public class UserManagementEndpoint implements HttpHandler {
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "UserManagementEndpoint request: {} {}", method, path);
+
         try {
             if ("GET".equals(method) && path.endsWith("/list")) {
                 handleList(exchange);
@@ -78,6 +82,7 @@ public class UserManagementEndpoint implements HttpHandler {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown user management endpoint\"}");
             }
         } catch (IllegalArgumentException e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "UserManagementEndpoint bad request: {} {}: {}", method, path, e.getMessage());
             sendJson(exchange, 400, json(false, e.getMessage()));
         } catch (Exception e) {
             LOGGER.error("Error in UserManagementEndpoint", e);
@@ -135,9 +140,10 @@ public class UserManagementEndpoint implements HttpHandler {
         try { role = User.Role.valueOf(roleStr.toUpperCase()); }
         catch (Exception e) { role = User.Role.VIEWER; }
 
+        // Never log the raw password.
         User created = AuthenticationManager.getInstance().createUser(username, password, email, role);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"User created\",\"user\":" + created.toJson() + "}");
-        LOGGER.info("Dashboard user created: {} ({})", username, role);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard user created: {} ({})", username, role);
     }
 
     // ── Sync (idempotent create-or-update) ──────────────────────────────────────
@@ -182,7 +188,7 @@ public class UserManagementEndpoint implements HttpHandler {
 
         sendJson(exchange, created ? 201 : 200,
             "{\"success\":true,\"created\":" + created + ",\"user\":" + result.toJson() + "}");
-        LOGGER.info("Dashboard user synced from external source: {} ({}, created={})", username, role, created);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard user synced from external source: {} ({}, created={})", username, role, created);
     }
 
     // ── Set role ───────────────────────────────────────────────────────────────
@@ -195,21 +201,25 @@ public class UserManagementEndpoint implements HttpHandler {
         catch (Exception e) { throw new IllegalArgumentException("Invalid role: " + roleStr); }
 
         AuthenticationManager.getInstance().updateUserRole(userId, role);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Role updated for userId={} to {}", userId, role);
         sendJson(exchange, 200, json(true, "Role updated to " + role));
     }
 
     // ── Set password ───────────────────────────────────────────────────────────
 
     private void handleSetPassword(HttpExchange exchange, String userId) throws Exception {
+        // Never log the raw password value — only that a change occurred.
         JsonObject body = readBody(exchange);
         if (body.has("password") && !body.get("password").getAsString().isEmpty()) {
             AuthenticationManager.getInstance().updatePassword(userId, body.get("password").getAsString());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Password updated for userId={}", userId);
             sendJson(exchange, 200, json(true, "Password updated"));
         } else {
             // Generate temp password
             User user = AuthenticationManager.getInstance().getUser(userId);
             if (user == null) throw new IllegalArgumentException("User not found");
             String temp = AuthenticationManager.getInstance().generateTempPassword(user.getUsername());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Temporary password generated for userId={}", userId);
             sendJson(exchange, 200, "{\"success\":true,\"message\":\"Temporary password generated\",\"tempPassword\":\"" + esc(temp) + "\"}");
         }
     }
@@ -218,6 +228,7 @@ public class UserManagementEndpoint implements HttpHandler {
 
     private void handleSetEnabled(HttpExchange exchange, String userId, boolean enabled) throws IOException {
         AuthenticationManager.getInstance().setUserEnabled(userId, enabled);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "User {} {}", userId, enabled ? "enabled" : "disabled");
         sendJson(exchange, 200, json(true, "User " + (enabled ? "enabled" : "disabled")));
     }
 
@@ -232,13 +243,16 @@ public class UserManagementEndpoint implements HttpHandler {
             return;
         }
         AuthenticationManager.getInstance().deleteUser(userId);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "User deleted: userId={}", userId);
         sendJson(exchange, 200, json(true, "User deleted"));
     }
 
     // ── Revoke session ─────────────────────────────────────────────────────────
 
     private void handleRevokeSession(HttpExchange exchange, String sessionId) throws IOException {
+        // Session IDs are secrets — never logged in raw form.
         AuthenticationManager.getInstance().logout(sessionId);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session revoked via dashboard");
         sendJson(exchange, 200, json(true, "Session revoked"));
     }
 

@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.teleportation;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ public class CombatTracker {
     public static void markInCombat(ServerPlayer player) {
         long endTime = System.currentTimeMillis() + COMBAT_TIMEOUT_MS;
         combatEndTimestamps.put(player.getUUID(), endTime);
-        LOGGER.debug("Player {} marked in combat until {}", player.getName().getString(), endTime);
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} marked in combat until {}", player.getName().getString(), endTime);
     }
 
     /**
@@ -67,7 +69,7 @@ public class CombatTracker {
      */
     public static void clearCombat(ServerPlayer player) {
         combatEndTimestamps.remove(player.getUUID());
-        LOGGER.debug("Cleared combat status for player {}", player.getName().getString());
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Cleared combat status for player {}", player.getName().getString());
     }
 
     /**

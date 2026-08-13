@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.teleportation;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.PlayerDataStore;
 import com.zerog.neoessentials.util.PlayerDataMigration;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -183,10 +185,8 @@ public class HomeManager {
 
         // Always check config for safety at runtime
         boolean requireSafe = com.zerog.neoessentials.config.ConfigManager.getInstance().isHomeTeleportSafetyEnabled();
-        boolean debug = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
-        if (debug) {
-            LOGGER.info("[DEBUG] Home set safety: {} (from config)", requireSafe);
-        }
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "setHome request: player={} homeName={} requireSafe={}",
+            player.getName().getString(), homeName, requireSafe);
 
         // Enforce set home cooldown - atomic check (skip if player has bypass permission)
         boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.cooldown")
@@ -228,11 +228,11 @@ public class HomeManager {
                 TeleportLocation safeLocation = location.findSafeLocation();
                 if (safeLocation == null) {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe_location"));
-                    if (debug) LOGGER.info("[DEBUG] Unsafe sethome location for '{}', set blocked.", homeName);
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Unsafe sethome location for '{}', set blocked.", homeName);
                     return false;
                 }
                 location = safeLocation;
-                if (debug) LOGGER.info("[DEBUG] Sethome '{}' moved to safe location.", homeName);
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Sethome '{}' moved to safe location.", homeName);
             }
         }
         // If safety is not required, allow teleportation to unsafe locations
@@ -417,11 +417,11 @@ public class HomeManager {
         UUID playerId = player.getUUID();
         // Always check config for safety at runtime
         boolean requireSafe = com.zerog.neoessentials.config.ConfigManager.getInstance().isHomeTeleportSafetyEnabled();
-        boolean debug = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
-        if (debug) {
-            LOGGER.info("[DEBUG] Home teleport safety: {} (from config)", requireSafe);
-        }
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToHome request: player={} homeName={} requireSafe={}",
+            player.getName().getString(), homeName, requireSafe);
         if (home == null) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToHome: player {} has no home named '{}'",
+                player.getName().getString(), homeName);
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return;
         }
@@ -451,7 +451,7 @@ public class HomeManager {
         if (homeLevel != null) {
             net.minecraft.core.BlockPos homeBlockPos = new net.minecraft.core.BlockPos(
                 (int) home.getX(), (int) home.getY(), (int) home.getZ());
-            if (debug) LOGGER.info("[DEBUG] Pre-loading 3×3 chunk grid around ({},{}) for home teleport to '{}'.",
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Pre-loading 3x3 chunk grid around ({},{}) for home teleport to '{}'.",
                 homeBlockPos.getX() >> 4, homeBlockPos.getZ() >> 4, homeName);
             TeleportUtil.preloadChunksForTeleport(homeLevel, homeBlockPos);
         }
@@ -462,7 +462,7 @@ public class HomeManager {
                 TeleportLocation safeLocation = home.findSafeLocation();
                 if (safeLocation == null) {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe", homeName));
-                    if (debug) LOGGER.info("[DEBUG] Unsafe home location for '{}', teleport blocked.", homeName);
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Unsafe home location for '{}', teleport blocked.", homeName);
                     return;
                 }
                 // Update home to safe location atomically
@@ -474,11 +474,11 @@ public class HomeManager {
                 savePlayerHomes(playerId);
                 home = safeLocation;
                 player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
-                if (debug) LOGGER.info("[DEBUG] Home '{}' moved to safe location.", homeName);
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Home '{}' moved to safe location.", homeName);
             }
         } else {
             // If safety is not required, allow teleportation to unsafe locations
-            if (debug) LOGGER.info("[DEBUG] Home teleport safety is disabled. Teleporting to potentially unsafe location for '{}'.", homeName);
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Home teleport safety is disabled. Teleporting to potentially unsafe location for '{}'.", homeName);
         }
         // Save current location for /back command
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
@@ -508,6 +508,8 @@ public class HomeManager {
         TeleportUtil.teleportPlayer(player, finalHome, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.success", homeName));
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} successfully teleported to home '{}' at {}",
+                    player.getName().getString(), homeName, finalHome.getLocationString());
                 // Log home teleport if enabled in config
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
                     LOGGER.info("Player {} teleported to home '{}'", player.getName().getString(), homeName);

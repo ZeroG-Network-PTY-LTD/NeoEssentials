@@ -5,6 +5,8 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ public class TeleportEndpoint implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "TeleportEndpoint request: {} {}", method, path);
         try {
             if (path.equals("/api/teleport/settings")) {
                 if ("GET".equals(method)) {
@@ -281,7 +284,7 @@ public class TeleportEndpoint implements HttpHandler {
 
             // Save updated config
             cfg.saveConfig(ConfigManager.MAIN_CONFIG, config);
-            LOGGER.info("Teleport settings updated via dashboard");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Teleport settings updated via dashboard");
 
             // Reload all teleport managers so changes take effect immediately
             reloadTeleportManagers();
@@ -305,7 +308,9 @@ public class TeleportEndpoint implements HttpHandler {
                 int val = source.get(key).getAsInt();
                 val = Math.max(min, Math.min(max, val));
                 target.addProperty(key, val);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Ignoring non-numeric value for teleport setting '{}'", key, e);
+            }
         }
     }
 
@@ -313,7 +318,9 @@ public class TeleportEndpoint implements HttpHandler {
         if (source.has(key)) {
             try {
                 target.addProperty(key, source.get(key).getAsBoolean());
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Ignoring non-boolean value for teleport setting '{}'", key, e);
+            }
         }
     }
 

@@ -12,6 +12,10 @@ import com.zerog.neoessentials.shop.csv.ShopCsvSerializer;
 import com.zerog.neoessentials.shop.entity.ShopEntityData;
 import com.zerog.neoessentials.shop.entity.ShopEntityManager;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +37,7 @@ import java.util.Collection;
  */
 public class ShopEndpoint implements HttpHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopEndpoint.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     @Override
@@ -56,6 +61,7 @@ public class ShopEndpoint implements HttpHandler {
             else if (path.endsWith("/price")   && "PUT".equalsIgnoreCase(method))      { handleSetPrice(exchange); }
             else { respond(exchange, 404, "{\"error\":\"Not found\"}"); }
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Error handling shop dashboard request for {}", path, e);
             respond(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
@@ -67,8 +73,8 @@ public class ShopEndpoint implements HttpHandler {
         int    page   = 1, size = 50;
         if (query != null) {
             for (String p : query.split("&")) {
-                if (p.startsWith("page="))  try { page = Integer.parseInt(p.substring(5)); } catch (Exception ignored) {}
-                if (p.startsWith("size="))  try { size = Integer.parseInt(p.substring(5)); } catch (Exception ignored) {}
+                if (p.startsWith("page="))  try { page = Integer.parseInt(p.substring(5)); } catch (Exception e) { NeoLog.debug(LOGGER, LogCategory.GENERAL, "Invalid page query param: {}", p, e); }
+                if (p.startsWith("size="))  try { size = Integer.parseInt(p.substring(5)); } catch (Exception e) { NeoLog.debug(LOGGER, LogCategory.GENERAL, "Invalid size query param: {}", p, e); }
             }
         }
 

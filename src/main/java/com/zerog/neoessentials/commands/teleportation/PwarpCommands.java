@@ -4,12 +4,16 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.Warp.WarpManager;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Commands for player warps:
@@ -19,6 +23,7 @@ import net.minecraft.server.level.ServerPlayer;
  * - /pwarps - List your player warps
  */
 public class PwarpCommands {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PwarpCommands.class);
     private static final String PERMISSION_PWARP = "neoessentials.teleport.pwarp";
     private static final String PERMISSION_SETPWARP = "neoessentials.teleport.pwarp.create";
     private static final String PERMISSION_DELPWARP = "neoessentials.teleport.pwarp.delete";
@@ -69,6 +74,7 @@ public class PwarpCommands {
                 .executes(PwarpCommands::executePwarps)
             );
         }
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Player warp command family registered");
     }
 
     private static int executePwarp(CommandContext<CommandSourceStack> context) {

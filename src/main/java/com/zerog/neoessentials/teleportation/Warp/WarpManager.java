@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -723,8 +725,11 @@ public class WarpManager {
      */
     public void teleportToWarp(ServerPlayer player, String warpName) {
         TeleportLocation warp = getWarp(warpName);
-        
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp request: player={} warpName={}",
+            player.getName().getString(), warpName);
+
         if (warp == null) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: warp '{}' not found", warpName);
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.not_found", warpName));
             return;
         }
@@ -740,6 +745,7 @@ public class WarpManager {
                 long elapsed = (now - lastUse) / 1000L;
                 if (elapsed < warpUseCooldown) {
                     long wait = warpUseCooldown - elapsed;
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: player {} blocked by use cooldown, {}s remaining", player.getName().getString(), wait);
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.cooldown", wait));
                     return;
                 }
@@ -754,6 +760,7 @@ public class WarpManager {
             if (fromLoc.getWorldName().equals(warp.getWorldName())) {
                 double dist = fromLoc.distanceTo(warp);
                 if (dist > maxDistance) {
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: player {} blocked, distance {} exceeds max {}", player.getName().getString(), dist, maxDistance);
                     player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.teleport.warp.distance_exceeded", maxDistance));
                     return;
                 }
@@ -780,16 +787,18 @@ public class WarpManager {
         if (requireSafe && !warp.isSafe()) {
             TeleportLocation safeLocation = warp.findSafeLocation();
             if (safeLocation == null) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: warp '{}' is unsafe and no safe location found, teleport blocked", warpName);
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.unsafe", warpName));
                 return;
             }
-            
+
             // Update warp to safe location
             String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
             warps.put(normalizedName, safeLocation);
             saveWarps();
             warp = safeLocation;
-            
+
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: warp '{}' moved to safe location {}", warpName, safeLocation.getLocationString());
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.warp.moved_to_safety", warpName));
         }
         
@@ -821,6 +830,8 @@ public class WarpManager {
         TeleportUtil.teleportPlayer(player, finalWarp, delayTicks, false).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.success", warpName));
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} successfully teleported to warp '{}' at {}",
+                    player.getName().getString(), warpName, finalWarp.getLocationString());
                 LOGGER.info("Player {} teleported to warp '{}'", player.getName().getString(), warpName);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.failed", warpName, result.getMessage()));

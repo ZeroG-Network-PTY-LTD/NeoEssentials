@@ -7,11 +7,15 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.hologram.*;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,6 +50,7 @@ import java.util.List;
  *   reload
  */
 public class HologramCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HologramCommand.class);
     private static final String PERM = "neoessentials.hologram.admin";
 
     /** Tab-completion for an existing hologram's id. Not used on `create`, which types a new id. */
@@ -337,6 +342,7 @@ public class HologramCommand {
             if (level != null) HologramRenderer.spawn(data, level);
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.hologram.created", id, fmt(x), fmt(y), fmt(z), data.world), true);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to create hologram '{}'", id, e);
             src.sendFailure(MessageUtil.component("commands.neoessentials.hologram.error_generic", e.getMessage()));
         }
         return 1;
@@ -817,6 +823,7 @@ public class HologramCommand {
                 argb = (int) Long.parseLong(hex, 16);
             }
         } catch (NumberFormatException ex) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Invalid hologram background color value '{}'", colorStr, ex);
             src.sendFailure(MessageUtil.component("commands.neoessentials.hologram.background_invalid_value", colorStr));
             return 0;
         }
@@ -843,6 +850,7 @@ public class HologramCommand {
             com.zerog.neoessentials.hologram.integration.ShopHologramManager.retagAllShopHolograms();
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.hologram.reload_success", HologramManager.getInstance().getAllHolograms().size()), true);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to reload holograms", e);
             src.sendFailure(MessageUtil.component("commands.neoessentials.hologram.reload_failed", e.getMessage()));
         }
         return 1;
@@ -856,7 +864,10 @@ public class HologramCommand {
                     PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*");
             }
             return true; // console
-        } catch (Exception e) { return true; }
+        } catch (Exception e) {
+            NeoLog.warn(LOGGER, LogCategory.GENERAL, "Hologram permission check failed — defaulting to allowed: {}", e.getMessage());
+            return true;
+        }
     }
     private static String resolveWorld(CommandSourceStack src, String worldArg) {
         if (worldArg != null && !worldArg.isEmpty()) {
@@ -871,14 +882,18 @@ public class HologramCommand {
             for (ServerLevel level : src.getServer().getAllLevels()) {
                 if (HologramRenderer.dimensionKey(level).equals(dimensionKey)) return level;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve level for dimension '{}'", dimensionKey, e);
+        }
         return null;
     }
     private static void respawn(CommandSourceStack src, HologramData data) {
         try {
             ServerLevel level = getLevel(src, data.world);
             if (level != null) HologramRenderer.spawn(data, level);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to respawn hologram '{}'", data.id, e);
+        }
     }
     private static String fmt(double v) {
         return String.format("%.1f", v);

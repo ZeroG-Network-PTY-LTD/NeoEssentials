@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.teleportation;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -65,11 +67,15 @@ public class TeleportUtil {
                                                                   int delayTicks, boolean findSafe) {
         CompletableFuture<TeleportResult> future = new CompletableFuture<>();
 
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer request: player={} target={} delayTicks={} findSafe={}",
+            player.getName().getString(), location == null ? "null" : location.getLocationString(), delayTicks, findSafe);
+
         // Enforce combat check if enabled in config
         com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
         boolean allowTeleportInCombat = configManager.isAllowTeleportInCombatEnabled();
         if (!allowTeleportInCombat && com.zerog.neoessentials.teleportation.CombatTracker.isInCombat(player)) {
             int remainingTime = com.zerog.neoessentials.teleportation.CombatTracker.getRemainingCombatTime(player);
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: {} blocked, in combat ({}s remaining)", player.getName().getString(), remainingTime);
             future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.combat_cooldown", remainingTime)));
             return future;
         }
@@ -79,6 +85,7 @@ public class TeleportUtil {
         // the single chokepoint essentially all of those commands route through, so checking
         // here closes that escape route everywhere at once.
         if (!com.zerog.neoessentials.moderation.FreezeManager.getInstance().canPlayerMove(player)) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: {} blocked, player is frozen", player.getName().getString());
             future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.frozen")));
             return future;
         }
@@ -91,6 +98,7 @@ public class TeleportUtil {
         // gap for every OTHER path through this same chokepoint at once.
         if (com.zerog.neoessentials.moderation.JailManager.isJailSystemEnabled()
                 && com.zerog.neoessentials.moderation.JailManager.getInstance().isPlayerJailed(player.getUUID())) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: {} blocked, player is jailed", player.getName().getString());
             future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.jail.prevent_escape")));
             return future;
         }
@@ -110,6 +118,8 @@ public class TeleportUtil {
                     for (Object region : regions) {
                         String regionName = (String) region.getClass().getMethod("getName").invoke(region);
                         if (protectedAreas.contains(regionName)) {
+                            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: {} blocked, destination is in protected area '{}'",
+                                player.getName().getString(), regionName);
                             future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.protected_area", regionName)));
                             return future;
                         }
@@ -117,6 +127,7 @@ public class TeleportUtil {
                 }
             } catch (ClassNotFoundException e) {
                 // YAWP not installed, skip region check
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: YAWP not installed, skipping protected-area check", e);
             } catch (Exception e) {
                 LOGGER.error("Error checking YAWP protected areas: {}", e.getMessage(), e);
             }
@@ -130,6 +141,8 @@ public class TeleportUtil {
             if (fromLoc.getWorldName().equals(location.getWorldName())) {
                 double dist = fromLoc.distanceTo(location);
                 if (dist > maxDistance) {
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: {} blocked, distance {} exceeds max {}",
+                        player.getName().getString(), dist, maxDistance);
                     future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.max_distance_exceeded", maxDistance)));
                     return future;
                 }
@@ -161,6 +174,7 @@ public class TeleportUtil {
         // Find safe location if requested (surrounding chunks are now loaded)
         TeleportLocation finalLocation = location;
         if (findSafe && !location.isSafe()) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayer: destination unsafe, searching for safe landing near {}", location.getLocationString());
             finalLocation = location.findSafeLocation();
             if (finalLocation == null) {
                 String worldName = location.getWorldName();
@@ -242,7 +256,7 @@ public class TeleportUtil {
             // Use 1.5 block threshold to avoid false positives from network lag or small position shifts
             if (cancelOnMovement && player.position().distanceTo(originalPos) > 1.5) {
                 double distance = player.position().distanceTo(originalPos);
-                LOGGER.debug("Teleport cancelled for {} - moved {} blocks (threshold: 1.5)",
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Teleport cancelled for {} - moved {} blocks (threshold: 1.5)",
                     player.getName().getString(), String.format("%.2f", distance));
                 future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.cancelled_moved")));
                 return;
@@ -360,7 +374,7 @@ public class TeleportUtil {
                 playTeleportSound(targetLevel, location.getX(), location.getY(), location.getZ());
             }
 
-            LOGGER.debug("Teleported {} to {}", player.getName().getString(), location.getLocationString());
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Teleported {} to {}", player.getName().getString(), location.getLocationString());
             future.complete(TeleportResult.success(MessageUtil.localize("commands.neoessentials.teleport.util.teleported_to", location.getLocationString())));
 
         } catch (Exception e) {
@@ -409,7 +423,7 @@ public class TeleportUtil {
                     }
                 }
                 if (!level.isLoaded(cp.getWorldPosition())) {
-                    LOGGER.debug("Force-loading chunk ({},{}) in {} for teleport",
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Force-loading chunk ({},{}) in {} for teleport",
                         cp.x, cp.z, level.dimension().location());
                     // getChunk() with FULL status loads the chunk synchronously.
                     level.getChunk(cp.x, cp.z);

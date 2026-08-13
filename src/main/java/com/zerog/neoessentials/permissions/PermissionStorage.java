@@ -16,6 +16,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +85,8 @@ public class PermissionStorage {
                 store.delete(USER_COLLECTION, existingId);
             }
         }
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Saved permission state: {} group(s), {} user(s)",
+                currentGroupNames.size(), currentUserIds.size());
     }
 
     public static void load(PermissionManager manager) throws IOException {
@@ -105,6 +109,8 @@ public class PermissionStorage {
         for (JsonObject u : store.getAll(USER_COLLECTION).values()) {
             manager.addUser(userFromJson(u));
         }
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Loaded permission state: {} group(s), {} user(s)",
+                manager.getGroups().size(), manager.getUsers().size());
     }
 
     // ── JSON conversion ─────────────────────────────────────────────────────────
@@ -312,11 +318,11 @@ public class PermissionStorage {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to migrate legacy permission files: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to migrate legacy permission files: {}", e.getMessage(), e);
         }
 
         if (migratedGroups > 0 || migratedUsers > 0) {
-            LOGGER.info("PermissionStorage: migrated {} group(s) and {} user(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "PermissionStorage: migrated {} group(s) and {} user(s) from legacy files into the '{}' storage backend.",
                 migratedGroups, migratedUsers, StorageManager.getInstance().getActiveType());
         }
     }

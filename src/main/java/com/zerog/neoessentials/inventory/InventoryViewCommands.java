@@ -5,6 +5,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -182,7 +184,9 @@ public class InventoryViewCommands {
                     if (profile.isPresent()) return profile.get().getName();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve name for {}", uuid, e);
+        }
         return uuid.toString();
     }
 
@@ -193,6 +197,7 @@ public class InventoryViewCommands {
         try {
             return ConfigManager.getInstance().isCommandEnabled(command);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to check isCommandEnabled for '{}' — defaulting to enabled", command, e);
             return true;
         }
     }

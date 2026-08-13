@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.api.endpoints;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.data.ServerDataCollector;
 import com.zerog.neoessentials.webdashboard.data.ServerAssetCollector;
 import net.minecraft.server.MinecraftServer;
@@ -36,7 +38,7 @@ public class ServerEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.info("ServerEndpoint handling request: {} {}", method, path);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "ServerEndpoint handling request: {} {}", method, path);
         
         try {
             // Only allow GET requests
@@ -48,7 +50,7 @@ public class ServerEndpoint implements HttpHandler {
             // Execute data collection on server thread for thread safety
             CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    LOGGER.info("Collecting data for endpoint: {}", path);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Collecting data for endpoint: {}", path);
                     // Parse path to determine which endpoint
                     if (path.startsWith("/api/server/assets/")) {
                         // Get specific namespace assets
@@ -71,7 +73,7 @@ public class ServerEndpoint implements HttpHandler {
                         }
                     };
                 } catch (Exception e) {
-                    LOGGER.error("Error collecting server data for path: {}", path, e);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting server data for path: {}", path, e);
                     JsonObject error = new JsonObject();
                     error.addProperty("error", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
                     return error;
@@ -82,13 +84,13 @@ public class ServerEndpoint implements HttpHandler {
             JsonObject response;
             try {
                 response = future.get(10, TimeUnit.SECONDS);
-                LOGGER.info("Data collected successfully for: {}", path);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Data collected successfully for: {}", path);
             } catch (java.util.concurrent.TimeoutException e) {
-                LOGGER.error("Timeout waiting for data collection: {}", path);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Timeout waiting for data collection: {}", path);
                 response = new JsonObject();
                 response.addProperty("error", "Request timeout - server may be overloaded");
             } catch (java.util.concurrent.ExecutionException e) {
-                LOGGER.error("Execution error during data collection: {}", path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Execution error during data collection: {}", path, e);
                 response = new JsonObject();
                 response.addProperty("error", "Internal server error: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
             }
@@ -103,31 +105,31 @@ public class ServerEndpoint implements HttpHandler {
             // IOException often means client disconnected - don't try to send error response
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             if (errorMsg.contains("stream is closed") || errorMsg.contains("Broken pipe") || errorMsg.contains("Connection reset")) {
-                LOGGER.warn("Client disconnected during request: {} {} - {}", method, path, errorMsg);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Client disconnected during request: {} {} - {}", method, path, errorMsg);
             } else {
-                LOGGER.error("IOException handling request: {} {}", method, path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "IOException handling request: {} {}", method, path, e);
                 try {
                     String errorResponse = String.format("{\"error\":\"IO Error: %s\"}", errorMsg);
                     sendResponse(exchange, 500, errorResponse);
                 } catch (IOException e2) {
-                    LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Unexpected error handling request: {} {}", method, path, e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Unexpected error handling request: {} {}", method, path, e);
             try {
                 String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error";
                 String errorResponse = String.format("{\"error\":\"%s\"}", errorMsg);
                 sendResponse(exchange, 500, errorResponse);
             } catch (IOException e2) {
-                LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
             }
         } finally {
             // Safely close exchange - don't log error if already closed
             try {
                 exchange.close();
             } catch (Exception e) {
-                // Ignore - exchange may already be closed
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Exchange already closed: {}", e.getMessage());
             }
         }
     }

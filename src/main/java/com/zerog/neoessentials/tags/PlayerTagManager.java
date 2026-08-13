@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.tags;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +127,7 @@ public class PlayerTagManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read aboveHeadTagsEnabled config — defaulting to false", e);
         }
         return false;
     }

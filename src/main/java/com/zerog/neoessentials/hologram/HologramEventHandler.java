@@ -1,4 +1,6 @@
 package com.zerog.neoessentials.hologram;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -54,6 +56,8 @@ public class HologramEventHandler {
     public static void onServerStopping(ServerStoppingEvent event) {
         try {
             HologramScheduler.stop();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error stopping hologram scheduler on server shutdown: {}", e.getMessage());
+        }
     }
 }

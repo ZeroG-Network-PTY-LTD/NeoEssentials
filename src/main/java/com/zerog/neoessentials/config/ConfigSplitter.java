@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.config;
 
 import com.google.gson.*;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +81,10 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          1);
+        put("main.json",          2);  // v2 — replaced logging.enableDebugLogging with
+                                        //       logging.categories.<name>.{normal,debug}
+                                        //       per-subsystem toggles (see
+                                        //       ConfigManager.migrateLoggingCategories)
         put("commands.json",      1);
         put("chat.json",          2);  // v2 — chat-format/formatTemplates defaults patched to use
                                         //       {neoessentials_displayname} instead of
@@ -118,7 +123,7 @@ public class ConfigSplitter {
     public static void ensureSplitConfigsUpToDate() {
         if (!isSplittingEnabled()) return;
 
-        LOGGER.debug("Checking split config files…");
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Checking split config files…");
 
         // Load the on-disk config.json (may be a stub) as a possible source for sections.
         // Primary fallback is always the JAR's config.json.
@@ -133,6 +138,7 @@ public class ConfigSplitter {
             File splitFile        = ResourceUtil.getConfigFile(fileName);
 
             if (!splitFile.exists()) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config '{}' not found on disk - will attempt to generate it", fileName);
                 LOGGER.warn("Split config '{}' is missing. Attempting to regenerate…", fileName);
                 boolean created = generateSplitFile(splitFile, fileName, sections, diskConfig, jarConfig);
                 if (!created) {
@@ -156,7 +162,7 @@ public class ConfigSplitter {
             }
         }
 
-        LOGGER.debug("Split config check complete.");
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config check complete.");
     }
 
     // ── Migration ─────────────────────────────────────────────────────────────
@@ -168,6 +174,7 @@ public class ConfigSplitter {
      * @return {@code true} on success
      */
     public static boolean migrateToSplitConfigs() {
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "migrateToSplitConfigs() invoked - switching from monolithic config.json to split config mode");
         try {
             File configFile = ResourceUtil.getConfigFile("config.json");
             JsonObject source;
@@ -208,7 +215,7 @@ public class ConfigSplitter {
 
                 // Skip if already exists (avoid overwriting user edits during partial migration)
                 if (targetFile.exists()) {
-                    LOGGER.debug("  Skipping {} — already exists", fileName);
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "  Skipping {} — already exists", fileName);
                     continue;
                 }
 
@@ -413,6 +420,12 @@ public class ConfigSplitter {
      * Merge all split config files into one virtual JsonObject for ConfigManager.
      */
     public static JsonObject mergeSplitConfigs() {
+        // NOTE: must use plain LOGGER here, not NeoLog — this method is called from
+        // ConfigManager.getConfig(MAIN_CONFIG) BEFORE that call caches its result, and
+        // NeoLog's category gating (isCategoryDebugEnabled -> getLoggingCategoryEntry)
+        // calls getConfig(MAIN_CONFIG) again regardless of category, causing infinite
+        // recursion / StackOverflowError on every startup in split-config mode.
+        LOGGER.debug("Merging {} split config file(s) into a virtual config view", FILE_SECTIONS_MAP.size());
         JsonObject merged = new JsonObject();
         merged.addProperty("_configVersion", CURRENT_MAIN_VERSION);
         merged.addProperty("_configVersion_comment",
@@ -458,6 +471,7 @@ public class ConfigSplitter {
      * monolithic {@code config.json}.
      */
     public static void saveMergedConfigToSplitFiles(JsonObject merged) {
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Persisting merged config view back out across {} split file(s)", FILE_SECTIONS_MAP.size());
         for (Map.Entry<String, List<String>> entry : FILE_SECTIONS_MAP.entrySet()) {
             String fileName = entry.getKey();
             List<String> sections = entry.getValue();
@@ -488,7 +502,10 @@ public class ConfigSplitter {
     private static boolean shouldNotifyAdmins = false;
 
     public static void checkAndPromptMigration() {
-        if (isSplittingEnabled()) return;
+        if (isSplittingEnabled()) {
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config mode already active - skipping monolithic-config migration prompt");
+            return;
+        }
 
         File configFile = ResourceUtil.getConfigFile("config.json");
         if (configFile.exists()) {
@@ -603,9 +620,10 @@ public class ConfigSplitter {
 
         int current = onDisk.has("_configVersion") ? onDisk.get("_configVersion").getAsInt() : 0;
         if (current >= expectedVersion) {
-            LOGGER.debug("Split config {} is up to date (v{})", fileName, current);
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config {} is up to date (v{})", fileName, current);
             return;
         }
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config {} is outdated: on-disk v{} < expected v{} - migration/merge required", fileName, current, expectedVersion);
 
         LOGGER.warn("Split config '{}' is outdated (v{} < v{}). Merging new keys…",
                     fileName, current, expectedVersion);
@@ -619,6 +637,13 @@ public class ConfigSplitter {
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             LOGGER.warn("Could not create backup for {}: {}", fileName, e.getMessage());
+        }
+
+        // Migrate logging.enableDebugLogging -> logging.categories.* BEFORE the section merge
+        // below, which would otherwise fill logging.categories with plain defaults first and
+        // make the migration think it already ran.
+        if ("main.json".equals(fileName) && ConfigManager.migrateLoggingCategories(onDisk)) {
+            LOGGER.info("Split config 'main.json': migrated logging.enableDebugLogging into per-category logging.categories.*.");
         }
 
         // Get the JAR sections for this file
@@ -675,7 +700,7 @@ public class ConfigSplitter {
         for (String key : toRemove) {
             obj.remove(key);
             changed = true;
-            LOGGER.debug("  - Removed legacy comment key '{}' from split config", key);
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "  - Removed legacy comment key '{}' from split config", key);
         }
         return changed;
     }

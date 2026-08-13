@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.webdashboard.analytics;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,11 +61,13 @@ public class WebSocketEventBroadcaster {
             pulse.addProperty("playersMax",   server.getMaxPlayers());
             pulse.addProperty("uptimeMs",     ManagementFactory.getRuntimeMXBean().getUptime());
             ws.broadcast("stats", pulse);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcast stats pulse to {} client(s)", ws.getClientCount());
 
         } catch (IllegalStateException e) {
-            // WebSocket server not running yet — silently ignore
+            // WebSocket server not running yet — expected/recoverable
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Skipped stats pulse — WebSocket server not running yet", e);
         } catch (Throwable e) {
-            LOGGER.debug("[WSBroadcast] Stats pulse error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Stats pulse error: {}", e.getMessage());
         }
     }
 
@@ -79,7 +83,10 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", name + " joined the server");
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Throwable ignored) {}
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcast event: player_join ({})", name);
+        } catch (Throwable e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to broadcast player_join event", e);
+        }
     }
 
     // ── Player leave ─────────────────────────────────────────────────────────
@@ -94,7 +101,10 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", name + " left the server");
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Throwable ignored) {}
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcast event: player_leave ({})", name);
+        } catch (Throwable e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to broadcast player_leave event", e);
+        }
     }
 
     // ── Server chat ───────────────────────────────────────────────────────────
@@ -120,7 +130,10 @@ public class WebSocketEventBroadcaster {
             evt.addProperty("player",  name);
             evt.addProperty("message", "<" + name + "> " + text);
             DashboardWebSocketServer.getInstance().broadcast("events", evt);
-        } catch (Throwable ignored) {}
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcast event: chat ({})", name);
+        } catch (Throwable e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to broadcast chat event", e);
+        }
     }
 
     // ── Player death ─────────────────────────────────────────────────────────
@@ -142,7 +155,10 @@ public class WebSocketEventBroadcaster {
             msg.addProperty("player",  name);
             msg.addProperty("message", deathMsg);
             DashboardWebSocketServer.getInstance().broadcast("events", msg);
-        } catch (Throwable ignored) {}
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcast event: death ({})", name);
+        } catch (Throwable e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to broadcast death event", e);
+        }
     }
 }
 

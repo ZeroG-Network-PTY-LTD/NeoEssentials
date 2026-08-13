@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.integrations.impl;
 
 import com.zerog.neoessentials.integrations.ChatIntegrationAdapter;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import de.erdbeerbaerlp.dcintegration.common.DiscordIntegration;
 import de.erdbeerbaerlp.dcintegration.common.storage.linking.LinkManager;
 import de.erdbeerbaerlp.dcintegration.common.storage.linking.PlayerLink;
@@ -48,9 +50,9 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public boolean initialize() {
         loaded = ModList.get().isLoaded("dcintegration");
         if (loaded) {
-            LOGGER.info("DCIntegration mod detected, integration enabled.");
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "DCIntegration mod detected, integration enabled.");
         } else {
-            LOGGER.debug("DCIntegration mod not found, integration disabled.");
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration mod not found, integration disabled.");
         }
         return loaded;
     }
@@ -70,11 +72,13 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
         if (!isReady() || discordChannelId == null || discordChannelId.isBlank()) return;
         try {
             String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration: relaying chat from '{}' in channel '{}' to Discord channel '{}'",
+                player.getName().getString(), channel, discordChannelId);
             sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
         } catch (Throwable e) {
             // Catches Errors too — see JdaChannelSender's Javadoc for why a missing/incompatible
             // JDA on the classpath surfaces as a LinkageError here, not a plain Exception.
-            LOGGER.error("Failed to relay chat message via DCIntegration: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay chat message via DCIntegration", e);
         }
     }
 
@@ -82,9 +86,12 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
-            return JdaChannelSender.send(channelId, message);
+            boolean sent = JdaChannelSender.send(channelId, message);
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration: send to Discord channel '{}' {}",
+                channelId, sent ? "succeeded" : "failed (channel not found)");
+            return sent;
         } catch (Throwable e) {
-            LOGGER.error("Failed to send message to Discord channel {} via DCIntegration: {}", channelId, e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to send message to Discord channel " + channelId + " via DCIntegration", e);
             return false;
         }
     }
@@ -112,7 +119,7 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
         static boolean send(String channelId, String message) {
             var channel = DiscordIntegration.INSTANCE.getJDA().getTextChannelById(channelId);
             if (channel == null) {
-                LOGGER.warn("DCIntegration: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                NeoLog.warn(LOGGER, LogCategory.DISCORD, "DCIntegration: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
                 return false;
             }
             DiscordIntegration.INSTANCE.sendMessage(message, channel);
@@ -127,7 +134,7 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
             PlayerLink link = LinkManager.getLink(null, minecraftUuid);
             return link != null ? Optional.of(link.discordID) : Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("DCIntegration linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
             return Optional.empty();
         }
     }
@@ -139,13 +146,13 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
             PlayerLink link = LinkManager.getLink(discordId, null);
             return link != null ? Optional.of(UUID.fromString(link.mcPlayerUUID)) : Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("DCIntegration reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration reverse-account lookup failed for {}: {}", discordId, e.getMessage());
             return Optional.empty();
         }
     }
 
     @Override
     public void shutdown() {
-        LOGGER.info("DCIntegration integration shut down.");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "DCIntegration integration shut down.");
     }
 }

@@ -2,6 +2,8 @@ package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +65,7 @@ public class BadgeManager {
             if (isCustomImagesEnabled() && hasCustomBadgeImage(groupLower)) {
                 // Custom badge exists - for now, show a marker
                 // In future, this will integrate with resource pack system
-                LOGGER.debug("Custom badge image found for rank: {}", groupLower);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Custom badge image found for rank: {}", groupLower);
             }
 
             // Use emoji badges from config (fallback or primary depending on setup)
@@ -73,12 +75,14 @@ public class BadgeManager {
                 if (badges.has("rankBadges")) {
                     var rankBadges = badges.getAsJsonObject("rankBadges");
                     if (rankBadges.has(groupLower)) {
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved rank badge for group '{}'", groupLower);
                         return rankBadges.get(groupLower).getAsString() + " ";
                     }
                 }
             }
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "No rank badge configured for group '{}'", groupLower);
         } catch (Exception e) {
-            LOGGER.debug("Error getting rank badge: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting rank badge for player " + player.getGameProfile().getName(), e);
         }
 
         return "";
@@ -97,7 +101,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.useCustomImages, defaulting to false", e);
         }
         return false;
     }
@@ -138,9 +142,10 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting status icons: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting status icons for player " + player.getGameProfile().getName(), e);
         }
 
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved status icons for {}: '{}'", player.getGameProfile().getName(), icons);
         return !icons.isEmpty() ? icons + " " : "";
     }
 
@@ -202,7 +207,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error applying badges and icons: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error applying badges and icons for player " + player.getGameProfile().getName(), e);
         }
 
         return result;
@@ -223,11 +228,11 @@ public class BadgeManager {
             // Create directory if it doesn't exist
             if (!badgeDir.exists()) {
                 if (!badgeDir.mkdirs()) {
-                    LOGGER.error("Failed to create badge directory at: {}", badgeDir.getAbsolutePath());
+                    NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to create badge directory at: {}", badgeDir.getAbsolutePath());
                     customImagesLoaded = true;
                     return;
                 }
-                LOGGER.info("Created custom badge images directory at: {}", badgeDir.getAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Created custom badge images directory at: {}", badgeDir.getAbsolutePath());
                 createReadmeFile(badgeDir);
                 customImagesLoaded = true;
                 return;
@@ -237,25 +242,25 @@ public class BadgeManager {
             File[] imageFiles = badgeDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
 
             if (imageFiles == null || imageFiles.length == 0) {
-                LOGGER.warn("No badge images found in {}. Place PNG files named after ranks (e.g., admin.png, vip.png)", badgePath);
+                NeoLog.warn(LOGGER, LogCategory.CHAT, "No badge images found in {}. Place PNG files named after ranks (e.g., admin.png, vip.png)", badgePath);
                 createReadmeFile(badgeDir);
                 customImagesLoaded = true;
                 return;
             }
 
-            LOGGER.info("Found {} custom badge images in {}", imageFiles.length, badgePath);
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Found {} custom badge images in {}", imageFiles.length, badgePath);
 
             for (File imageFile : imageFiles) {
                 String rankName = imageFile.getName().replace(".png", "").toLowerCase();
                 customBadgeFiles.put(rankName, imageFile);
-                LOGGER.debug("Registered custom badge image for rank: {}", rankName);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Registered custom badge image for rank: {}", rankName);
             }
 
-            LOGGER.info("Successfully registered {} custom badge images", customBadgeFiles.size());
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Successfully registered {} custom badge images", customBadgeFiles.size());
             customImagesLoaded = true;
 
         } catch (Exception e) {
-            LOGGER.error("Error loading custom badge images: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error loading custom badge images", e);
         }
     }
 
@@ -326,10 +331,10 @@ public class BadgeManager {
                     """;
 
                 Files.writeString(readmeFile.toPath(), readme);
-                LOGGER.info("Created README.txt in badges directory");
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Created README.txt in badges directory");
             }
         } catch (Exception e) {
-            LOGGER.warn("Failed to create README file: {}", e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to create README file: {}", e.getMessage());
         }
     }
 
@@ -346,7 +351,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.customImagePath, using default path", e);
         }
         return "config/neoessentials/badges";
     }
@@ -371,7 +376,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -386,7 +391,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.statusIcons.enabled, defaulting to true", e);
         }
         return true;
     }
@@ -398,7 +403,7 @@ public class BadgeManager {
                 return chatConfig.getAsJsonObject("badges").get("badgePosition").getAsString();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.badgePosition, defaulting to 'before_prefix'", e);
         }
         return "before_prefix";
     }
@@ -413,7 +418,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading badges.statusIcons.iconPosition, defaulting to 'after_name'", e);
         }
         return "after_name";
     }
@@ -429,7 +434,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting primary group: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting primary group for player " + player.getGameProfile().getName(), e);
         }
         return "default";
     }
@@ -439,6 +444,7 @@ public class BadgeManager {
             var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
             return afkManager.isAfk(player);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking AFK status for player " + player.getGameProfile().getName(), e);
             return false;
         }
     }
@@ -448,6 +454,7 @@ public class BadgeManager {
             var vanishManager = com.zerog.neoessentials.moderation.VanishManager.getInstance();
             return vanishManager.isPlayerVanished(player.getUUID());
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking vanish status for player " + player.getGameProfile().getName(), e);
             return false;
         }
     }
@@ -456,6 +463,7 @@ public class BadgeManager {
         try {
             return com.zerog.neoessentials.chat.MuteManager.isMuted(player);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking mute status for player " + player.getGameProfile().getName(), e);
             return false;
         }
     }

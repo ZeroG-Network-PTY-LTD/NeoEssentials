@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.auctionhouse;
 
 import com.google.gson.JsonElement;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,7 +72,7 @@ public final class AuctionHouseManager {
         expiredItems.clear();
         expiredItems.addAll(db.loadAllExpired());
 
-        LOGGER.info("[AuctionHouse] Loaded {} active listing(s) and {} expired item(s).",
+        NeoLog.info(LOGGER, LogCategory.AUCTION_HOUSE, "[AuctionHouse] Loaded {} active listing(s) and {} expired item(s).",
                 activeListings.size(), expiredItems.size());
 
         // Register server-tick listener
@@ -87,9 +89,12 @@ public final class AuctionHouseManager {
     public void shutdown() {
         try {
             NeoForge.EVENT_BUS.unregister(this);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // Expected/recoverable — e.g. shutdown called before initialize() registered the listener.
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "Could not unregister auction house tick listener (likely never registered)", e);
+        }
         AuctionDB.getInstance().shutdown();
-        LOGGER.info("[AuctionHouse] Shutdown complete.");
+        NeoLog.info(LOGGER, LogCategory.AUCTION_HOUSE, "[AuctionHouse] Shutdown complete.");
     }
 
     // ── Server tick ───────────────────────────────────────────────────────────
@@ -128,6 +133,8 @@ public final class AuctionHouseManager {
 
         // Check per-player listing cap
         if (countActiveForPlayer(seller.getStringUUID()) >= cfg.getMaxItemsPerPlayer()) {
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "sellItem: {} is at their listing cap ({}), refusing new listing",
+                    seller.getName().getString(), cfg.getMaxItemsPerPlayer());
             return -2; // sentinel: at limit
         }
 
@@ -140,10 +147,12 @@ public final class AuctionHouseManager {
                 nbtJson = json.toString();
             }
         } catch (Exception e) {
-            LOGGER.warn("[AuctionHouse] Could not serialize components for {}: {}", itemKey, e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Could not serialize components for " + itemKey, e);
         }
 
         long duration = cfg.getAuctionSecondsDuration();
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "sellItem: {} listing {}x{} for {} (duration {}s)",
+                seller.getName().getString(), stack.getCount(), itemKey, price, duration);
         int id = AuctionDB.getInstance().addItem(
                 seller.getStringUUID(), seller.getName().getString(),
                 nbtJson, itemKey, stack.getCount(), price, duration);
@@ -153,6 +162,9 @@ public final class AuctionHouseManager {
                     seller.getName().getString(), nbtJson, itemKey,
                     stack.getCount(), price, duration);
             activeListings.add(ai);
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "sellItem: listing {} created for {} by {}", id, itemKey, seller.getName().getString());
+        } else {
+            NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "sellItem: failed to persist listing for {} by {}", itemKey, seller.getName().getString());
         }
         return id;
     }
@@ -173,6 +185,8 @@ public final class AuctionHouseManager {
         AuctionDB.getInstance().removeActive(item.getId());
         // Return item to seller
         giveOrDrop(seller, item.getItemStack().copy());
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "cancelListing: listing {} ({}) cancelled by {}",
+                item.getId(), item.getItemKey(), seller.getName().getString());
         return true;
     }
 
@@ -189,18 +203,25 @@ public final class AuctionHouseManager {
         // the listing was still active — duplicating the item and paying the seller twice.
         if (!activeListings.remove(item)) return false;
 
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: {} attempting to buy listing {} ({}) for {}",
+                buyer.getName().getString(), item.getId(), item.getItemKey(), item.getPrice());
+
         // Economy check — use EconomyAPI
         java.math.BigDecimal price = java.math.BigDecimal.valueOf(item.getPrice());
         java.math.BigDecimal balance = com.zerog.neoessentials.api.EconomyAPI.getBalance(buyer.getUUID());
         if (balance.compareTo(price) < 0) {
             // Not yet committed to a purchase — restore the listing so it isn't silently lost.
             activeListings.add(item);
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: {} has insufficient funds for listing {} (balance {} < price {})",
+                    buyer.getName().getString(), item.getId(), balance, price);
             return false;
         }
 
         boolean withdrawn = com.zerog.neoessentials.api.EconomyAPI.withdraw(buyer.getUUID(), price);
         if (!withdrawn) {
             activeListings.add(item);
+            NeoLog.warn(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: withdrawal failed for {} on listing {} despite sufficient balance",
+                    buyer.getName().getString(), item.getId());
             return false;
         }
 
@@ -210,12 +231,17 @@ public final class AuctionHouseManager {
         try {
             java.util.UUID sellerUuid = java.util.UUID.fromString(item.getUuid());
             com.zerog.neoessentials.api.EconomyAPI.deposit(sellerUuid, price);
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: paid seller {} ({}) {} for listing {}",
+                    item.getOwner(), item.getUuid(), price, item.getId());
         } catch (Exception e) {
-            LOGGER.warn("[AuctionHouse] Could not credit seller {}: {}", item.getUuid(), e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Could not credit seller " + item.getUuid() + " for listing " + item.getId(), e);
         }
 
         // Give item to buyer
         giveOrDrop(buyer, item.getItemStack().copy());
+
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: listing {} ({}) purchased by {} for {}",
+                item.getId(), item.getItemKey(), buyer.getName().getString(), price);
 
         return true;
     }
@@ -231,6 +257,8 @@ public final class AuctionHouseManager {
         if (!expiredItems.remove(item)) return false;
         AuctionDB.getInstance().removeExpired(item.getId());
         giveOrDrop(player, item.getItemStack().copy());
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "collectExpired: {} collected expired listing {} ({})",
+                player.getName().getString(), item.getId(), item.getItemKey());
         return true;
     }
 
@@ -274,6 +302,8 @@ public final class AuctionHouseManager {
         activeListings.remove(item);
         expiredItems.add(item);
         AuctionDB.getInstance().expireItem(item);
+        NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "expireItemInternal: listing {} ({}) owned by {} expired uncollected",
+                item.getId(), item.getItemKey(), item.getOwner());
     }
 
     /**

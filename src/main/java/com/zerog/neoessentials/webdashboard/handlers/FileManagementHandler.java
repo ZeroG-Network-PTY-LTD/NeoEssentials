@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.cloud.CloudProviderManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -59,6 +61,8 @@ public class FileManagementHandler implements HttpHandler {
         
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "FileManagementHandler handling request: {} {}", method, path);
 
         try {
             // Every action here reads or mutates real files on disk (server config, world
@@ -126,10 +130,10 @@ public class FileManagementHandler implements HttpHandler {
                     sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
             }
         } catch (SecurityException e) {
-            LOGGER.warn("Security violation attempt: {}", e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Security violation attempt: {}", e.getMessage());
             sendJsonResponse(exchange, 403, createErrorResponse("Access denied"));
         } catch (Exception e) {
-            LOGGER.error("Error handling file management request", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error handling file management request", e);
             sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
         }
     }
@@ -181,7 +185,7 @@ public class FileManagementHandler implements HttpHandler {
                     
                     items.add(item);
                 } catch (IOException e) {
-                    LOGGER.warn("Error reading file attributes: {}", path, e);
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Error reading file attributes: {}", path, e);
                 }
             });
         }
@@ -283,7 +287,8 @@ public class FileManagementHandler implements HttpHandler {
         
         // Create backup before writing
         Path backupPath = createBackup(targetPath);
-        
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Writing file: {} (backup: {})", pathParam, backupPath);
+
         try {
             Files.writeString(targetPath, content, StandardCharsets.UTF_8);
             
@@ -295,7 +300,7 @@ public class FileManagementHandler implements HttpHandler {
             
             sendJsonResponse(exchange, 200, response);
         } catch (IOException e) {
-            LOGGER.error("Error writing file", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error writing file", e);
             sendJsonResponse(exchange, 500, createErrorResponse("Failed to write file: " + e.getMessage()));
         }
     }
@@ -325,6 +330,7 @@ public class FileManagementHandler implements HttpHandler {
             return;
         }
         
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Creating {}: {}", type, pathParam);
         if ("directory".equals(type)) {
             Files.createDirectories(targetPath);
         } else if ("file".equals(type)) {
@@ -376,6 +382,7 @@ public class FileManagementHandler implements HttpHandler {
         }
         
         byte[] decodedContent = Base64.getDecoder().decode(base64Content);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Uploading file: {} ({} bytes)", pathParam, decodedContent.length);
         Files.write(targetPath, decodedContent);
         
         JsonObject response = new JsonObject();
@@ -405,7 +412,8 @@ public class FileManagementHandler implements HttpHandler {
         
         // Create backup before deleting
         Path backupPath = createBackup(targetPath);
-        
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Deleting path: {} (backup: {})", pathParam, backupPath);
+
         if (Files.isDirectory(targetPath)) {
             // Delete directory recursively
             deleteDirectory(targetPath);
@@ -475,6 +483,7 @@ public class FileManagementHandler implements HttpHandler {
         if (targetPath.getParent() != null) {
             Files.createDirectories(targetPath.getParent());
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Restoring {} from backup {}", targetPath, backupPath);
         Files.copy(backupPath, targetPath, StandardCopyOption.REPLACE_EXISTING);
         JsonObject response = new JsonObject();
         response.addProperty("success", true);
@@ -666,7 +675,7 @@ public class FileManagementHandler implements HttpHandler {
 
             response.addProperty("success", true);
         } catch (Exception e) {
-            LOGGER.error("Error collecting server statistics: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting server statistics: {}", e.getMessage(), e);
             response.addProperty("success", false);
             response.addProperty("error", e.getMessage());
         }
@@ -720,7 +729,7 @@ public class FileManagementHandler implements HttpHandler {
                 response.add("player", buildPlayerStatsObject(player));
             }
         } catch (Exception e) {
-            LOGGER.error("Error collecting player statistics: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting player statistics: {}", e.getMessage(), e);
             response.addProperty("success", false);
             response.addProperty("error", e.getMessage());
         }
@@ -745,7 +754,8 @@ public class FileManagementHandler implements HttpHandler {
         try {
             int playTicks = p.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME));
             obj.addProperty("playTimeSeconds", playTicks / 20);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read play time for {}: {}", p.getName().getString(), e.getMessage());
             obj.addProperty("playTimeSeconds", 0);
         }
         // Economy balance
@@ -753,7 +763,8 @@ public class FileManagementHandler implements HttpHandler {
             java.math.BigDecimal bal = com.zerog.neoessentials.economy.managers.EconomyManager
                 .getInstance().getBalance(p.getUUID());
             obj.addProperty("balance", bal.doubleValue());
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read balance for {}: {}", p.getName().getString(), e.getMessage());
             obj.addProperty("balance", 0.0);
         }
         return obj;
@@ -773,7 +784,9 @@ public class FileManagementHandler implements HttpHandler {
                 for (String param : query.split("&")) {
                     String[] kv = param.split("=", 2);
                     if (kv.length == 2 && "limit".equals(kv[0])) {
-                        try { limit = Integer.parseInt(kv[1]); } catch (NumberFormatException ignored) {}
+                        try { limit = Integer.parseInt(kv[1]); } catch (NumberFormatException e) {
+                            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid 'limit' param '{}', using default", kv[1]);
+                        }
                     }
                 }
             }
@@ -797,7 +810,7 @@ public class FileManagementHandler implements HttpHandler {
             response.addProperty("total", entries.size());
             response.add("log", entries);
         } catch (Exception e) {
-            LOGGER.error("Error reading user activity log: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error reading user activity log: {}", e.getMessage(), e);
             response.addProperty("success", false);
             response.addProperty("error", e.getMessage());
         }
@@ -826,6 +839,7 @@ public class FileManagementHandler implements HttpHandler {
                     Path allowedNormalized = allowedPath.normalize().toAbsolutePath();
                     return normalized.startsWith(allowedNormalized);
                 } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not resolve allowed path {}: {}", allowedPath, e.getMessage());
                     return false;
                 }
             });

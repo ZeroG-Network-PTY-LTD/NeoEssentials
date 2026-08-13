@@ -8,6 +8,8 @@ import com.zerog.neoessentials.chat.ChatHandler;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +26,7 @@ public class ChannelCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if chat module is enabled
         if (!ConfigManager.isChatEnabled()) {
-            LOGGER.debug("Chat module is disabled, skipping channel command registration");
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Chat module is disabled, skipping channel command registration");
             return;
         }
 
@@ -35,7 +37,7 @@ public class ChannelCommands {
             JsonObject channelsConfig = chatConfig != null && chatConfig.has("channels") ? chatConfig.getAsJsonObject("channels") : null;
 
             if (channelsConfig == null) {
-                LOGGER.warn("No channels configuration found, skipping channel command registration");
+                NeoLog.warn(LOGGER, LogCategory.CHAT, "No channels configuration found, skipping channel command registration");
                 return;
             }
 
@@ -46,7 +48,7 @@ public class ChannelCommands {
             }
 
             if (!channelsEnabled) {
-                LOGGER.info("Chat channels system is disabled, skipping channel command registration");
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Chat channels system is disabled, skipping channel command registration");
                 return;
             }
 
@@ -62,7 +64,7 @@ public class ChannelCommands {
 
                 // Check if channel is enabled
                 if (channelObj.has("enabled") && !channelObj.get("enabled").getAsBoolean()) {
-                    LOGGER.debug("Channel '{}' is disabled, skipping command registration", channelName);
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' is disabled, skipping command registration", channelName);
                     continue;
                 }
 
@@ -93,16 +95,16 @@ public class ChannelCommands {
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Failed to register command for channel '{}' — check its 'command' field " +
+                    NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to register command for channel '" + channelName + "' — check its 'command' field " +
                         "for invalid characters (color codes/emoji aren't valid command names). " +
-                        "Other channels are unaffected. Error: {}", channelName, e.getMessage());
+                        "Other channels are unaffected.", e);
                 }
             }
 
-            LOGGER.info("Registered {} channel commands", registeredCount);
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Registered {} channel commands", registeredCount);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to register channel commands: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to register channel commands", e);
         }
     }
 
@@ -158,11 +160,11 @@ public class ChannelCommands {
             // Send confirmation
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.channel.switched", channelName), false);
 
-            LOGGER.debug("Player {} switched to channel: {}", player.getName().getString(), channelName);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Player {} switched to channel: {}", player.getName().getString(), channelName);
             return 1;
 
         } catch (Exception e) {
-            LOGGER.error("Error switching channel: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error switching channel", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.channel.error"));
             return 0;
         }

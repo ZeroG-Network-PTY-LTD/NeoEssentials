@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.chat;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collections;
@@ -93,16 +95,16 @@ public class ChatManager {
                 }
                 this.defaultChatFormat = def != null ? def : "{neoessentials_displayname}: {MESSAGE}";
                 this.chatFormatMap = map;
-                LOGGER.info("Loaded chat-format (object): default=[{}], map size={}", this.defaultChatFormat, map.size());
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Loaded chat-format (object): default=[{}], map size={}", this.defaultChatFormat, map.size());
             } else {
                 this.defaultChatFormat = chatConfig.get("chat-format").getAsString();
                 this.chatFormatMap = java.util.Collections.emptyMap();
-                LOGGER.info("Loaded chat-format (string): [{}]", this.defaultChatFormat);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Loaded chat-format (string): [{}]", this.defaultChatFormat);
             }
         } else {
             this.defaultChatFormat = "{neoessentials_displayname}: {MESSAGE}";
             this.chatFormatMap = java.util.Collections.emptyMap();
-            LOGGER.info("No chat-format in config, using default: [{}]", this.defaultChatFormat);
+            NeoLog.info(LOGGER, LogCategory.CHAT, "No chat-format in config, using default: [{}]", this.defaultChatFormat);
         }
         this.commandsConfig = commandsConfig;
     }
@@ -181,32 +183,43 @@ public class ChatManager {
                     if (templates.has("templates")) {
                         com.google.gson.JsonObject templateMap = templates.getAsJsonObject("templates");
                         if (templateMap.has(activeTemplate)) {
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Using format template '{}' for group={}, world={}", activeTemplate, group, world);
                             return templateMap.get(activeTemplate).getAsString();
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            // Ignore, fall through to normal format selection
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking format templates, falling back to normal format selection", e);
         }
 
         // Normal format selection
         // Try group+world
         if (group != null && world != null) {
             String key = "group:" + group.toLowerCase() + ":world:" + world.toLowerCase();
-            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+            if (chatFormatMap.containsKey(key)) {
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved chat format via group+world key '{}'", key);
+                return chatFormatMap.get(key);
+            }
         }
         // Try group
         if (group != null) {
             String key = "group:" + group.toLowerCase();
-            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+            if (chatFormatMap.containsKey(key)) {
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved chat format via group key '{}'", key);
+                return chatFormatMap.get(key);
+            }
         }
         // Try world
         if (world != null) {
             String key = "world:" + world.toLowerCase();
-            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+            if (chatFormatMap.containsKey(key)) {
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved chat format via world key '{}'", key);
+                return chatFormatMap.get(key);
+            }
         }
         // Fallback
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "No specific chat format match for group={}, world={}; using default format", group, world);
         return defaultChatFormat;
     }
 

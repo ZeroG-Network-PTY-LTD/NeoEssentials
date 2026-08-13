@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.auth;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +45,11 @@ public class AuthenticationManager {
      * lockouts, session creation, and audit logging.
      */
     public AuthResult authenticate(String username, String password) {
-        LOGGER.debug("Authentication attempt for user: {}", username);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication attempt for user: {}", username);
         try {
             Session session = real().authenticate(username, password, "dashboard", "DashboardAPI");
             if (session == null) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication failed for user: {} (invalid credentials or account locked)", username);
                 return AuthResult.failure("Invalid credentials or account locked");
             }
             // Wrap into legacy AuthResult
@@ -57,9 +60,10 @@ public class AuthenticationManager {
                 session.getSessionId(), legacyUser, session.getSessionId(),
                 System.currentTimeMillis() + 24 * 60 * 60 * 1000L, "dashboard"
             );
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication succeeded for user: {}", username);
             return AuthResult.success(session.getSessionId(), session.getSessionId(), authSession);
         } catch (Exception e) {
-            LOGGER.error("Error during authentication for {}: {}", username, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during authentication for " + username, e);
             return AuthResult.failure("Authentication error");
         }
     }
@@ -70,16 +74,20 @@ public class AuthenticationManager {
     public AuthSession validateToken(String token) {
         try {
             Session session = real().validateSession(token);
-            if (session == null) return null;
+            if (session == null) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Token validation failed: session not found or expired");
+                return null;
+            }
             com.zerog.neoessentials.webdashboard.auth.User legacyUser = new com.zerog.neoessentials.webdashboard.auth.User(
                 java.util.UUID.randomUUID(), session.getUsername());
             legacyUser.addPermission("dashboard.*");
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Token validated for user: {}", session.getUsername());
             return new AuthSession(
                 session.getSessionId(), legacyUser, session.getSessionId(),
                 System.currentTimeMillis() + 24 * 60 * 60 * 1000L, "dashboard"
             );
         } catch (Exception e) {
-            LOGGER.error("Error validating token: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error validating token", e);
             return null;
         }
     }
@@ -91,9 +99,10 @@ public class AuthenticationManager {
     public String refreshToken(String refreshToken) {
         try {
             Session session = real().validateSession(refreshToken);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Token refresh {}", session != null ? "succeeded" : "failed");
             return session != null ? session.getSessionId() : null;
         } catch (Exception e) {
-            LOGGER.error("Error refreshing token: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error refreshing token", e);
             return null;
         }
     }
@@ -102,11 +111,11 @@ public class AuthenticationManager {
      * Logout and invalidate session.
      */
     public void logout(String token) {
-        LOGGER.debug("Logout request for token");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Logout request for token");
         try {
             real().logout(token);
         } catch (Exception e) {
-            LOGGER.error("Error during logout: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during logout", e);
         }
     }
 
@@ -116,9 +125,11 @@ public class AuthenticationManager {
     public boolean hasPermission(AuthSession session, String permission) {
         if (session == null) return false;
         try {
-            return real().hasPermission(session.getSessionId(), permission);
+            boolean allowed = real().hasPermission(session.getSessionId(), permission);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission check '{}' for user {} -> {}", permission, session.getUser() != null ? session.getUser().getUsername() : "unknown", allowed);
+            return allowed;
         } catch (Exception e) {
-            LOGGER.error("Error checking permission: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error checking permission", e);
             return false;
         }
     }

@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.HomeManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -59,10 +61,7 @@ public class HomeCommands {
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             HomeManager homeManager = HomeManager.getInstance();
             java.util.List<String> homeNames = homeManager.getHomeNames(player);
-            // Debug logging for home suggestions
-            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-                System.out.println("[DEBUG] Home suggestions for " + player.getName().getString() + ": " + homeNames);
-            }
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Home suggestions for {}: {}", player.getName().getString(), homeNames);
             return SharedSuggestionProvider.suggest(homeNames, builder);
         }
         return builder.buildFuture();
@@ -93,6 +92,7 @@ public class HomeCommands {
                 registerRenameHomeCommand(dispatcher);
             }
         }
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Home command family registered (teleportation enabled: {})", config.isTeleportationEnabled());
     }
     
     /**
@@ -102,15 +102,15 @@ public class HomeCommands {
     private static void detectHomeCommandConflicts() {
         for (String modId : CONFLICTING_HOME_MODS) {
             if (ModList.get().isLoaded(modId)) {
-                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
-                LOGGER.warn("║  HOME COMMAND CONFLICT DETECTED                              ║");
-                LOGGER.warn("║  Mod '{}' also registers /home, /sethome and              ║", padRight(modId, 18));
-                LOGGER.warn("║  related commands. NeoEssentials will register its own       ║");
-                LOGGER.warn("║  home commands; short aliases (/h) will be skipped to        ║");
-                LOGGER.warn("║  avoid Brigadier node-merge issues.                          ║");
-                LOGGER.warn("║  To avoid conflicts, disable that mod's home commands or     ║");
-                LOGGER.warn("║  disable NeoEssentials teleportation in its config.          ║");
-                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "╔══════════════════════════════════════════════════════════════╗");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  HOME COMMAND CONFLICT DETECTED                              ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  Mod '{}' also registers /home, /sethome and              ║", padRight(modId, 18));
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  related commands. NeoEssentials will register its own       ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  home commands; short aliases (/h) will be skipped to        ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  avoid Brigadier node-merge issues.                          ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  To avoid conflicts, disable that mod's home commands or     ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "║  disable NeoEssentials teleportation in its config.          ║");
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "╚══════════════════════════════════════════════════════════════╝");
             }
         }
     }
@@ -150,7 +150,7 @@ public class HomeCommands {
         if (!hasConflictingHomeMod() && !isCommandRegistered(dispatcher, "h")) {
             registerHomeCommandWithName(dispatcher, "h");
         } else if (hasConflictingHomeMod()) {
-            LOGGER.info("Skipping /h alias for /home — conflicting mod detected");
+            NeoLog.info(LOGGER, LogCategory.COMMANDS, "Skipping /h alias for /home — conflicting mod detected");
         }
     }
     

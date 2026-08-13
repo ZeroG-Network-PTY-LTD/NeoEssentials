@@ -1,8 +1,12 @@
 package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,6 +15,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class EconomyLeaderboard {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EconomyLeaderboard.class);
+
     /**
      * Get the top N players by balance.
      * @param topN Number of top players to return
@@ -60,7 +66,10 @@ public class EconomyLeaderboard {
                         displayName = profile.get().getName();
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "formatLeaderboard: failed to resolve player name for " + entry.getKey() + ", falling back to UUID", ignored);
+            }
             lines.add(MessageUtil.localize("commands.neoessentials.economy.leaderboard_entry",
                 rank++, displayName, entry.getValue().toPlainString()));
         }

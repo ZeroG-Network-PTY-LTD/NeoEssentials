@@ -6,6 +6,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.chat.MuteManager;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.*;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -66,6 +68,8 @@ public class PublicModerationEndpoint implements HttpHandler {
 
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "PublicModerationEndpoint request: {} {}", method, path);
 
         try {
             if ("GET".equals(method) && path.contains("/lookup/")) {
@@ -230,7 +234,9 @@ public class PublicModerationEndpoint implements HttpHandler {
                 var profile = cache.get(playerName);
                 if (profile.isPresent()) return profile.get().getId();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve player id for '{}'", playerName, e);
+        }
         return null;
     }
 

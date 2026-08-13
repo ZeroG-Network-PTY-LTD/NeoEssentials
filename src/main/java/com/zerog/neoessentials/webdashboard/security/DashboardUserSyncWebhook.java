@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.security;
 
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,11 @@ public class DashboardUserSyncWebhook {
     public static void notify(String event, User user) {
         String url = ConfigManager.getExternalDashboardUrl();
         String token = ConfigManager.getExternalDashboardToken();
-        if (url == null || url.isBlank() || token == null || token.isBlank()) return; // not paired — the common case
+        if (url == null || url.isBlank() || token == null || token.isBlank()) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Skipping user-sync webhook for event '{}': dashboard not paired", event);
+            return; // not paired — the common case
+        }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dispatching user-sync webhook '{}' for user {}", event, user.getUsername());
 
         JsonObject payload = new JsonObject();
         payload.addProperty("event", event);
@@ -62,10 +68,10 @@ public class DashboardUserSyncWebhook {
 
                 HttpResponse<Void> response = CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
                 if (response.statusCode() >= 400) {
-                    LOGGER.warn("User-sync webhook returned {} for event '{}' (user: {})", response.statusCode(), event, user.getUsername());
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "User-sync webhook returned {} for event '{}' (user: {})", response.statusCode(), event, user.getUsername());
                 }
             } catch (Exception e) {
-                LOGGER.warn("User-sync webhook unreachable for event '{}' (user: {}): {}", event, user.getUsername(), e.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "User-sync webhook unreachable for event '{}' (user: {}): {}", event, user.getUsername(), e.getMessage());
             }
         });
     }

@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.server.level.ServerPlayer;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,10 +57,10 @@ public class IgnoreManager {
                     ignoreMap.put(entry.getKey(), ignored);
                 }
             } catch (Exception e) {
-                LOGGER.warn("Failed to load ignore data for {}: {}", entry.getKey(), e.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to load ignore data for {}: {}", entry.getKey(), e.getMessage());
             }
         }
-        LOGGER.debug("IgnoreManager: loaded ignore data for {} player(s).", ignoreMap.size());
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "IgnoreManager: loaded ignore data for {} player(s).", ignoreMap.size());
     }
 
     /** Persists a single player's ignore set as one record — {@code id} = player name (lowercase). */
@@ -92,15 +94,15 @@ public class IgnoreManager {
                     store.put(COLLECTION, entry.getKey(), record);
                     migrated++;
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to migrate legacy ignore entry {}: {}", entry.getKey(), e.getMessage());
+                    NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to migrate legacy ignore entry {}: {}", entry.getKey(), e.getMessage());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to migrate legacy ignore_lists.json: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to migrate legacy ignore_lists.json", e);
         }
 
         if (migrated > 0) {
-            LOGGER.info("IgnoreManager: migrated {} ignore-list record(s) from legacy ignore_lists.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.CHAT, "IgnoreManager: migrated {} ignore-list record(s) from legacy ignore_lists.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -112,6 +114,7 @@ public class IgnoreManager {
         Set<String> ignored = ignoreMap.computeIfAbsent(playerName, k -> ConcurrentHashMap.newKeySet());
         ignored.add(targetName.toLowerCase());
         persist(playerName, ignored);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "{} is now ignoring {} ({} total ignored)", playerName, targetName.toLowerCase(), ignored.size());
     }
 
     public static void unignore(ServerPlayer player, String targetName) {
@@ -125,6 +128,7 @@ public class IgnoreManager {
             } else {
                 persist(playerName, ignored);
             }
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "{} is no longer ignoring {}", playerName, targetName.toLowerCase());
         }
     }
 

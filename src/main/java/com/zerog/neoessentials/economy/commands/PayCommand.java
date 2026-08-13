@@ -5,9 +5,13 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PayCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PayCommand.class);
     private static final Map<UUID, Long> payCooldowns = new ConcurrentHashMap<>();
     private static long getPayCooldownMs() {
         return com.zerog.neoessentials.config.ConfigManager.getPayCooldownSeconds() * 1000L;
@@ -186,12 +191,20 @@ public class PayCommand {
         java.math.BigDecimal fee = amount.multiply(java.math.BigDecimal.valueOf(taxPercent / 100.0));
         java.math.BigDecimal netAmount = amount.subtract(fee);
 
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+            "pay: sender={} recipient={} amount={} taxPercent={} fee={} netAmount={}",
+            sender.getUUID(), finalRecipientUUID, amount, taxPercent, fee, netAmount);
+
         boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(
             sender.getUUID(), finalRecipientUUID, amount, taxPercent);
         if (!success) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                "pay: transaction failed (insufficient funds) sender={} amount={}", sender.getUUID(), amount);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.insufficient_funds"));
             return 0;
         }
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "pay: transaction committed sender={} recipient={} netAmount={}",
+            sender.getUUID(), finalRecipientUUID, netAmount);
 
         String currency = EconomyManager.getInstance().getCurrencySymbol();
         // amount keeps whatever scale the parsed input had (e.g. "1000.0"), while fee/netAmount

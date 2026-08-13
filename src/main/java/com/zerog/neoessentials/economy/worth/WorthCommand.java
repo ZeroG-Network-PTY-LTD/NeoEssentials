@@ -5,10 +5,14 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.world.item.ItemStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 
@@ -21,6 +25,7 @@ import java.math.BigDecimal;
  * - /worth <mod:item> [amt]   → full namespaced id supported via greedyString
  */
 public class WorthCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorthCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isEconomyEnabled()) return;
@@ -51,7 +56,10 @@ public class WorthCommand {
                             int amt = Integer.parseInt(parts[parts.length - 1]);
                             String itemPart = String.join(" ", java.util.Arrays.copyOf(parts, parts.length - 1));
                             return executeWorthItem(ctx, itemPart, amt);
-                        } catch (NumberFormatException ignored) {}
+                        } catch (NumberFormatException ignored) {
+                            NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                                "/worth: trailing token in '" + raw + "' is not a valid amount, treating whole string as item name", ignored);
+                        }
                     }
                     return executeWorthItem(ctx, raw, 1);
                 })
@@ -115,7 +123,9 @@ public class WorthCommand {
                 var eco = cfg.getAsJsonObject("economy");
                 if (eco.has("currencySymbol")) return eco.get("currencySymbol").getAsString();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "getCurrencySymbol: failed to read config, falling back to '$'", ignored);
+        }
         return "$";
     }
 

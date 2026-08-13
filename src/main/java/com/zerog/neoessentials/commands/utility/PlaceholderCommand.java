@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.api.PlaceholderManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
@@ -150,8 +152,9 @@ public class PlaceholderCommand {
         ServerPlayer player = null;
         try {
             player = src.getPlayerOrException();
-        } catch (Exception ignored) {
-            // console — no player context
+        } catch (Exception e) {
+            // Expected when run from console — no player context to resolve player-specific placeholders against.
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "No player context for /placeholder test (likely run from console)", e);
         }
 
         final ServerPlayer resolvePlayer = player;
@@ -159,7 +162,7 @@ public class PlaceholderCommand {
         try {
             resolved = pm.setPlaceholders(resolvePlayer, text);
         } catch (Exception e) {
-            LOGGER.warn("Error resolving test placeholder '{}': {}", text, e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.COMMANDS, "Error resolving test placeholder '{}': {}", text, e.getMessage(), e);
             resolved = MessageUtil.localize("commands.neoessentials.placeholder.test_error", e.getMessage());
         }
 

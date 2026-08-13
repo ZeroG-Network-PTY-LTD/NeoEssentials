@@ -1,6 +1,10 @@
 package com.zerog.neoessentials.webdashboard.security;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -9,6 +13,7 @@ import java.util.UUID;
  * Supports both standalone and Discord-linked registrations
  */
 public class DashboardAccountRegistration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardAccountRegistration.class);
     private final UUID minecraftUuid;
     private final String minecraftUsername;
     private final String dashboardUsername;
@@ -94,6 +99,7 @@ public class DashboardAccountRegistration {
 
             return reg;
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to parse stored dashboard account registration", e);
             return null;
         }
     }

@@ -25,6 +25,8 @@ import com.zerog.neoessentials.webdashboard.handlers.AuthHandler;
 import com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler;
 import com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler;
 import com.zerog.neoessentials.docs.DocumentationHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,12 +114,12 @@ public class DashboardAPI {
      */
     public void start() {
         if (running) {
-            LOGGER.warn("Dashboard API is already running");
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard API is already running");
             return;
         }
         
         if (server == null) {
-            LOGGER.error("Cannot start Dashboard API: MinecraftServer not set");
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot start Dashboard API: MinecraftServer not set");
             return;
         }
         
@@ -126,7 +128,7 @@ public class DashboardAPI {
             int port = getPort();
             String bindAddress = getBindAddress();
 
-            LOGGER.info("Starting Dashboard API on {}:{}", bindAddress, port);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Starting Dashboard API on {}:{}", bindAddress, port);
 
             // Create HTTP server with automatic fallback for bind address issues
             InetSocketAddress address;
@@ -135,29 +137,29 @@ public class DashboardAPI {
                 apiServer = HttpServer.create(address, 0);
             } catch (java.net.BindException e) {
                 // If binding to the configured address fails, try fallback
-                LOGGER.warn("Cannot bind to {}:{}. Error: {}", bindAddress, port, e.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot bind to {}:{}. Error: {}", bindAddress, port, e.getMessage());
 
                 if (!"0.0.0.0".equals(bindAddress)) {
-                    LOGGER.info("Attempting fallback to 0.0.0.0:{} (all interfaces)...", port);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Attempting fallback to 0.0.0.0:{} (all interfaces)...", port);
                     try {
                         address = new InetSocketAddress("0.0.0.0", port);
                         apiServer = HttpServer.create(address, 0);
-                        LOGGER.info("Successfully bound to fallback address 0.0.0.0:{}", port);
+                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Successfully bound to fallback address 0.0.0.0:{}", port);
                         bindAddress = "0.0.0.0"; // Update for logging below
                     } catch (java.net.BindException e2) {
-                        LOGGER.error("Fallback also failed! Port {} may be in use or system doesn't support network binding.", port);
-                        LOGGER.error("Possible solutions:");
-                        LOGGER.error("  1. Change the port in config/neoessentials/config.json → webDashboard.port");
-                        LOGGER.error("  2. Check if another application is using port {}", port);
-                        LOGGER.error("  3. Verify your server's network configuration");
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Fallback also failed! Port {} may be in use or system doesn't support network binding.", port);
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Possible solutions:");
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  1. Change the port in config/neoessentials/config.json → webDashboard.port");
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  2. Check if another application is using port {}", port);
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  3. Verify your server's network configuration");
                         throw e2;
                     }
                 } else {
-                    LOGGER.error("Cannot bind to any interface on port {}!", port);
-                    LOGGER.error("Possible solutions:");
-                    LOGGER.error("  1. Change the port in config/neoessentials/config.json → webDashboard.port");
-                    LOGGER.error("  2. Check if another application is using port {}", port);
-                    LOGGER.error("  3. Verify your server's firewall and network settings");
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot bind to any interface on port {}!", port);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Possible solutions:");
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  1. Change the port in config/neoessentials/config.json → webDashboard.port");
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  2. Check if another application is using port {}", port);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "  3. Verify your server's firewall and network settings");
                     throw e;
                 }
             }
@@ -177,12 +179,12 @@ public class DashboardAPI {
             ConfigManager config = ConfigManager.getInstance();
             String dashboardUrl = config.getWebDashboardUrl();
 
-            LOGGER.info("Dashboard API started successfully on {}:{}", bindAddress, port);
-            LOGGER.info("Access the dashboard at: {}", dashboardUrl);
-            LOGGER.info("API Endpoints available at: {}/api/", dashboardUrl);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard API started successfully on {}:{}", bindAddress, port);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Access the dashboard at: {}", dashboardUrl);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "API Endpoints available at: {}/api/", dashboardUrl);
 
         } catch (IOException e) {
-            LOGGER.error("Failed to start Dashboard API server", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start Dashboard API server", e);
             running = false;
         }
     }
@@ -196,7 +198,7 @@ public class DashboardAPI {
         }
         
         try {
-            LOGGER.info("Stopping Dashboard API server...");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping Dashboard API server...");
 
             // Shutdown stats sampler thread
             if (statsEndpoint != null) {
@@ -212,24 +214,24 @@ public class DashboardAPI {
                 executor.shutdown();
                 try {
                     if (!executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
-                        LOGGER.warn("Dashboard executor did not terminate gracefully, forcing shutdown...");
+                        NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard executor did not terminate gracefully, forcing shutdown...");
                         executor.shutdownNow();
                         // Wait a bit more for tasks to respond to being cancelled
                         if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
-                            LOGGER.error("Dashboard executor did not terminate after forced shutdown");
+                            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard executor did not terminate after forced shutdown");
                         }
                     }
                 } catch (InterruptedException e) {
-                    LOGGER.warn("Interrupted while waiting for Dashboard executor shutdown");
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Interrupted while waiting for Dashboard executor shutdown");
                     executor.shutdownNow();
                     Thread.currentThread().interrupt();
                 }
             }
 
             running = false;
-            LOGGER.info("Dashboard API stopped successfully");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard API stopped successfully");
         } catch (Exception e) {
-            LOGGER.error("Error stopping Dashboard API", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error stopping Dashboard API", e);
         }
     }
     
@@ -252,6 +254,9 @@ public class DashboardAPI {
     private HttpHandler withAuth(HttpHandler handler, boolean requireAuth) {
         return exchange -> {
             try {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dispatching request: {} {}",
+                    exchange.getRequestMethod(), exchange.getRequestURI().getPath());
+
                 ConfigManager cfg = ConfigManager.getInstance();
 
                 // ── CORS preflight bypass ─────────────────────────────────────
@@ -287,7 +292,7 @@ public class DashboardAPI {
                         exchange.getResponseHeaders().set("Retry-After", "60");
                         exchange.sendResponseHeaders(429, bytes.length);
                         try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
-                        LOGGER.debug("Rate limit exceeded for IP {} ({}/{})", ip, reqCount, maxReq);
+                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rate limit exceeded for IP {} ({}/{})", ip, reqCount, maxReq);
                         return;
                     }
                 }
@@ -315,7 +320,7 @@ public class DashboardAPI {
                                 authAdmin = newSession.getRole() == com.zerog.neoessentials.webdashboard.security.User.Role.ADMIN;
                             }
                         } catch (Exception e) {
-                            LOGGER.debug("AuthenticationManager session check failed: {}", e.getMessage());
+                            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "AuthenticationManager session check failed: {}", e.getMessage());
                         }
 
                         // Fallback: try legacy AuthHandler token (for existing Minecraft auth sessions)
@@ -342,7 +347,7 @@ public class DashboardAPI {
                     }
 
                     if (!authenticated) {
-                        LOGGER.debug("Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
+                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unauthorized API request to {} - token: {}", exchange.getRequestURI(), token == null ? "null" : "invalid");
                         String response = "{\"success\":false,\"error\":\"Unauthorized - Please login first\"}";
                         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                         exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -354,13 +359,13 @@ public class DashboardAPI {
 
                     exchange.setAttribute("auth-username", authUsername);
                     exchange.setAttribute("auth-admin", authAdmin);
-                    LOGGER.debug("Authenticated API request to {} by {}", exchange.getRequestURI(), authUsername);
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authenticated API request to {} by {}", exchange.getRequestURI(), authUsername);
                 }
 
                 handler.handle(exchange);
 
             } catch (Exception e) {
-                LOGGER.error("Error in auth middleware for {}", exchange.getRequestURI(), e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error in auth middleware for {}", exchange.getRequestURI(), e);
                 try {
                     if (!exchange.getResponseHeaders().containsKey("Content-Type")) {
                         String errorResponse = "{\"success\":false,\"error\":\"Authentication error: " + e.getMessage() + "\"}";
@@ -371,7 +376,7 @@ public class DashboardAPI {
                         try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
                     }
                 } catch (Exception ex) {
-                    LOGGER.error("Failed to send error response", ex);
+                    NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to send error response", ex);
                 }
             }
         };
@@ -438,30 +443,30 @@ public class DashboardAPI {
             try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
         });
 
-        LOGGER.info("API endpoints registered:");
-        LOGGER.info("  - /api/auth/* (login, logout, validate, discord)");
-        LOGGER.info("  - /api/textures/* (item, block textures from server resource packs)");
-        LOGGER.info("  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online, fly, god, feed, extinguish, speed, nickname, give, burn, kill, effect, lightning, spawnmob, sudo, clearinventory, ptime, pweather) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/server/* (profile, performance, worlds, players, entities, memory, history, assets) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/admin/* (restart, stop, reload, save, broadcast) [AUTH REQUIRED - ADMIN ONLY]");
-        LOGGER.info("  - /api/files/* (browse, read, write, create, upload, delete, backup, restore, cloud) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/permissions/* (overview, groups, users, manage) [AUTH REQUIRED - ADMIN ONLY]");
-        LOGGER.info("  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
-        LOGGER.info("  - /api/placeholders/* (list, resolve, stats) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/shops/* (list, stats, npc, csv/export, csv/import, price) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/backup/*       (status, list, create, restore, download, delete) [ADMIN]");
-        LOGGER.info("  - /api/discord/*      (status, events, test) [AUTH]");
-        LOGGER.info("  - /api/cloud/*        (status, config, test, files, upload, delete) [ADMIN]");
-        LOGGER.info("  - /api/users/*        (list, sessions, create, role, password, enable, disable, delete) [ADMIN]");
-        LOGGER.info("  - /api/moderation/*   (overview, bans, warns, ban, unban) [AUTH/ADMIN]");
-        LOGGER.info("  - /api/kits/*         (list, stats, {name}) [AUTH]");
-        LOGGER.info("  - /api/holograms/*    (list, stats, create, get, update, delete, spawn, despawn, visible) [ADMIN]");
-        LOGGER.info("  - /api/stats/* (overview, economy, activity, performance) [AUTH REQUIRED]");
-        LOGGER.info("  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "API endpoints registered:");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/auth/* (login, logout, validate, discord)");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/textures/* (item, block textures from server resource packs)");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/player/* (profile, stats, achievements, inventory, status, health, xp, location, homes, online, fly, god, feed, extinguish, speed, nickname, give, burn, kill, effect, lightning, spawnmob, sudo, clearinventory, ptime, pweather) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/server/* (profile, performance, worlds, players, entities, memory, history, assets) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/game/* (statistics, events, activity, blocks) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/logging/* (requests, errors, performance) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/admin/* (restart, stop, reload, save, broadcast) [AUTH REQUIRED - ADMIN ONLY]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/files/* (browse, read, write, create, upload, delete, backup, restore, cloud) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/permissions/* (overview, groups, users, manage) [AUTH REQUIRED - ADMIN ONLY]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/motd/* (overview, profiles, active, rotation, broadcast) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/rules/* (list, add, edit, delete, reload) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/teleport/* (settings GET/PUT) [AUTH REQUIRED - ADMIN ONLY]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/placeholders/* (list, resolve, stats) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/shops/* (list, stats, npc, csv/export, csv/import, price) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/backup/*       (status, list, create, restore, download, delete) [ADMIN]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/discord/*      (status, events, test) [AUTH]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/cloud/*        (status, config, test, files, upload, delete) [ADMIN]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/users/*        (list, sessions, create, role, password, enable, disable, delete) [ADMIN]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/moderation/*   (overview, bans, warns, ban, unban) [AUTH/ADMIN]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/kits/*         (list, stats, {name}) [AUTH]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/holograms/*    (list, stats, create, get, update, delete, spawn, despawn, visible) [ADMIN]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/stats/* (overview, economy, activity, performance) [AUTH REQUIRED]");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - /api/docs/* (sections, api, tutorials, faq, videos, search) [PUBLIC]");
 
         if (!ConfigManager.isDashboardInternalUiEnabled()) {
             // webDashboard.mode: "external" — only the REST API above is served. Register a
@@ -469,7 +474,7 @@ public class DashboardAPI {
             // instead of a raw connection reset, but skip the bundled-UI resource check and
             // static-file catch-all entirely (no point warning about missing UI resources
             // when this server intentionally never serves them).
-            LOGGER.info("webDashboard.mode is 'external' — REST API only, bundled dashboard UI not served at \"/\".");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "webDashboard.mode is 'external' — REST API only, bundled dashboard UI not served at \"/\".");
             apiServer.createContext("/", exchange -> {
                 String body = "{\"success\":true,\"mode\":\"external\",\"message\":"
                     + "\"NeoEssentials dashboard API — this server does not serve a UI. "
@@ -486,19 +491,19 @@ public class DashboardAPI {
         // Check if dashboard resources are available
         try (java.io.InputStream testStream = getClass().getResourceAsStream("/webdashboard/index.html")) {
             if (testStream != null) {
-                LOGGER.info("Dashboard resources verified - index.html found");
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard resources verified - index.html found");
             } else {
-                LOGGER.error("Dashboard resources NOT found - /webdashboard/index.html is null!");
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard resources NOT found - /webdashboard/index.html is null!");
             }
         } catch (Exception e) {
-            LOGGER.error("Error checking dashboard resources", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error checking dashboard resources", e);
         }
 
         // Serve static frontend files (catch-all, must be registered last)
         apiServer.createContext("/", exchange -> {
             String path = exchange.getRequestURI().getPath();
             
-            LOGGER.debug("Serving static file: {}", path);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Serving static file: {}", path);
             
             // Default to index.html
             if (path.equals("/") || path.equals("/index.html")) {
@@ -530,11 +535,11 @@ public class DashboardAPI {
                         sendStatic404(exchange, path);
                         return;
                     }
-                    LOGGER.debug("SPA fallback: serving index.html for client-side route {}", path);
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "SPA fallback: serving index.html for client-side route {}", path);
                     serveStaticBytes(exchange, "/index.html", fallback.readAllBytes());
                 }
             } catch (Exception e) {
-                LOGGER.error("Error serving file: {}", path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error serving file: {}", path, e);
                 String response = "500 Internal Server Error: " + e.getMessage();
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "text/plain");
@@ -547,7 +552,7 @@ public class DashboardAPI {
             }
         });
         
-        LOGGER.info("Static file serving enabled for frontend");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Static file serving enabled for frontend");
     }
 
     /**
@@ -561,7 +566,7 @@ public class DashboardAPI {
         String ifNoneMatch = exchange.getRequestHeaders().getFirst("If-None-Match");
         if (etag.equals(ifNoneMatch)) {
             exchange.sendResponseHeaders(304, -1);
-            LOGGER.debug("Served 304 Not Modified for: {} (ETag: {})", servedPath, etag);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Served 304 Not Modified for: {} (ETag: {})", servedPath, etag);
             return;
         }
 
@@ -579,12 +584,12 @@ public class DashboardAPI {
             os.write(bytes);
         }
 
-        LOGGER.debug("Successfully served: {} ({} bytes, ETag: {})", servedPath, bytes.length, etag);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Successfully served: {} ({} bytes, ETag: {})", servedPath, bytes.length, etag);
     }
 
     /** Writes a genuine 404 for a missing static asset (not a client-side SPA route). */
     private void sendStatic404(HttpExchange exchange, String path) throws IOException {
-        LOGGER.warn("File not found: {}", path);
+        NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "File not found: {}", path);
         String response = "404 Not Found: " + path;
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "text/plain");
@@ -622,7 +627,7 @@ public class DashboardAPI {
                 return new String(in.readAllBytes(), StandardCharsets.UTF_8).trim();
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not read build number: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read build number: {}", e.getMessage());
         }
         return "unknown";
     }

@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.server.level.ServerPlayer;
@@ -410,21 +412,29 @@ public class KitManager {
         // If allowKitOverride is enabled and player has override permission, skip all restrictions
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAllowKitOverrideEnabled() &&
             com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.override")) {
+            NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility bypassed via override permission: player={} kit={}",
+                player.getName().getString(), kitName);
             return new KitUsageResult(true, MessageUtil.localize("commands.neoessentials.kits.util.usable_override"));
         }
 
         Kit kit = getKit(kitName);
         if (kit == null) {
+            NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=kit not found",
+                player.getName().getString(), kitName);
             return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.not_found"));
         }
 
         if (!kit.isEnabled()) {
+            NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=kit disabled",
+                player.getName().getString(), kitName);
             return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.disabled"));
         }
 
         // Check permission
         if (kit.getPermission() != null) {
             if (!PermissionAPI.hasPermission(player.getUUID(), kit.getPermission())) {
+                NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=missing permission '{}'",
+                    player.getName().getString(), kitName, kit.getPermission());
                 return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.no_permission"));
             }
         }
@@ -433,6 +443,8 @@ public class KitManager {
         if (!isCooldownExempt(player, kitName)) {
             long remainingCooldown = getRemainingCooldown(player.getUUID(), kitName);
             if (remainingCooldown > 0) {
+                NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=on cooldown ({} ms remaining)",
+                    player.getName().getString(), kitName, remainingCooldown);
                 return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.on_cooldown", formatTime(remainingCooldown)));
             }
         }
@@ -441,6 +453,8 @@ public class KitManager {
         if (kit.getMaxUses() > 0) {
             int usageCount = getUsageCount(player.getUUID(), kitName);
             if (usageCount >= kit.getMaxUses()) {
+                NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=max uses reached ({}/{})",
+                    player.getName().getString(), kitName, usageCount, kit.getMaxUses());
                 return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.max_uses_reached"));
             }
         }
@@ -468,10 +482,13 @@ public class KitManager {
                 }
             }
             if (!alreadyOnCooldown && activeCooldowns >= maxKits) {
+                NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility denied: player={} kit={} reason=max kits on cooldown ({}/{})",
+                    player.getName().getString(), kitName, activeCooldowns, maxKits);
                 return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.max_kits_on_cooldown", maxKits));
             }
         }
 
+        NeoLog.debug(LOGGER, LogCategory.KITS, "Kit eligibility check passed: player={} kit={}", player.getName().getString(), kitName);
         return new KitUsageResult(true, MessageUtil.localize("commands.neoessentials.kits.util.usable"));
     }
     
@@ -479,7 +496,10 @@ public class KitManager {
      * Gives a kit to a player.
      */
     public KitUsageResult giveKit(ServerPlayer player, String kitName) {
+        NeoLog.debug(LOGGER, LogCategory.KITS, "Kit claim requested: player={} kit={}", player.getName().getString(), kitName);
         if (!claimsInProgress.add(player.getUUID())) {
+            NeoLog.debug(LOGGER, LogCategory.KITS, "Kit claim rejected: player={} kit={} reason=claim already in progress",
+                player.getName().getString(), kitName);
             return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.claim_in_progress"));
         }
         try {
@@ -629,11 +649,14 @@ public class KitManager {
             if (com.zerog.neoessentials.config.ConfigManager.isLogKitUsageEnabled()) {
                 LOGGER.info("Player {} used kit {}", player.getName().getString(), kitName);
             }
+            NeoLog.debug(LOGGER, LogCategory.KITS,
+                "Kit granted: player={} kit={} itemsGiven={} itemsDropped={} itemsDenied={}",
+                player.getName().getString(), kitName, itemsGiven.size(), itemsDropped.size(), deniedItems.size());
             return new KitUsageResult(true, result);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to give kit '{}' to player {}: {}",
-                        kitName, player.getName().getString(), e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.KITS,
+                "Failed to give kit '" + kitName + "' to player " + player.getName().getString(), e);
             return new KitUsageResult(false, MessageUtil.localize("commands.neoessentials.kits.util.give_error"));
         }
     }

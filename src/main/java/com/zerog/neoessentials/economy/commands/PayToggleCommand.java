@@ -2,6 +2,8 @@ package com.zerog.neoessentials.economy.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.economy.managers.PayToggleManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,13 +35,14 @@ public class PayToggleCommand {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             java.util.UUID uuid = player.getUUID();
             
-            LOGGER.debug("PayToggle command executed by player: {}", player.getName().getString());
-            
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "PayToggle command executed by player: {}", player.getName().getString());
+
             boolean current = PayToggleManager.getInstance().getPayToggle(uuid);
             boolean newState = !current;
             PayToggleManager.getInstance().setPayToggle(uuid, newState);
-            
-            LOGGER.debug("PayToggle state changed from {} to {} for player {}", current, newState, player.getName().getString());
+
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "PayToggle state changed from {} to {} for player {}",
+                current, newState, player.getName().getString());
             
             if (newState) {
                 ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.paytoggle.enabled"), false);

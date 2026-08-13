@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,12 +73,12 @@ public class PlayerChatFormatManager {
                     UUID uuid = UUID.fromString(entry.getKey());
                     playerFormats.put(uuid, entry.getValue().get("format").getAsString());
                 } catch (Exception e) {
-                    LOGGER.warn("Skipping malformed entry '{}' in chat_formats storage", entry.getKey());
+                    NeoLog.warn(LOGGER, LogCategory.CHAT, "Skipping malformed entry '{}' in chat_formats storage", entry.getKey());
                 }
             }
-            LOGGER.info("Loaded {} per-player chat format override(s)", playerFormats.size());
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Loaded {} per-player chat format override(s)", playerFormats.size());
         } catch (Exception e) {
-            LOGGER.error("Failed to load chat format overrides: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to load chat format overrides", e);
         }
     }
 
@@ -101,16 +103,16 @@ public class PlayerChatFormatManager {
                     record.addProperty("format", data.get(key).getAsString());
                     store.put(COLLECTION, uuid.toString(), record);
                     migrated++;
-                } catch (IllegalArgumentException ignored) {
-                    LOGGER.warn("Skipping malformed UUID key '{}' in legacy player_chat_formats.json", key);
+                } catch (IllegalArgumentException e) {
+                    NeoLog.warn(LOGGER, LogCategory.CHAT, "Skipping malformed UUID key '{}' in legacy player_chat_formats.json", key);
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to migrate legacy player_chat_formats.json: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to migrate legacy player_chat_formats.json", e);
         }
 
         if (migrated > 0) {
-            LOGGER.info("PlayerChatFormatManager: migrated {} chat format override(s) from legacy player_chat_formats.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.CHAT, "PlayerChatFormatManager: migrated {} chat format override(s) from legacy player_chat_formats.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -135,6 +137,7 @@ public class PlayerChatFormatManager {
         JsonObject record = new JsonObject();
         record.addProperty("format", format);
         store.put(COLLECTION, playerUUID.toString(), record);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "Set per-player chat format override for {}: [{}]", playerUUID, format);
     }
 
     /**

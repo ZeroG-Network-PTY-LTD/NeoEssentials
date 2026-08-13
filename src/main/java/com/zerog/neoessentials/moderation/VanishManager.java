@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Pair;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
@@ -129,6 +131,8 @@ public class VanishManager {
         int vanishPriority = getPlayerPriority(playerId);
         vanishedPlayers.put(playerId, vanishPriority);
         store.put(COLLECTION, playerId.toString(), toJson(playerId, vanishPriority));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying vanish: player={} ({}) by={} self={} priority={}",
+            playerName, playerId, vanishedBy, selfVanish, vanishPriority);
 
         // Hide player from others
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -179,6 +183,7 @@ public class VanishManager {
             return false; // Not vanished
         }
         store.delete(COLLECTION, playerId.toString());
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Removing vanish for player {}", playerId);
 
         // Show player to others
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();

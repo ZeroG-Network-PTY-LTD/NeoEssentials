@@ -3,13 +3,17 @@ package com.zerog.neoessentials.chat;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import com.zerog.neoessentials.util.ChatDebugUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tracks the last player who messaged each player for /reply functionality.
  * Includes cleanup functionality for offline players.
  */
 public class LastMessageManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LastMessageManager.class);
     private static final Map<String, String> lastMessagerMap = new ConcurrentHashMap<>();
 
     /**
@@ -20,8 +24,8 @@ public class LastMessageManager {
         String recipientName = recipient.getName().getString().toLowerCase();
         String senderName = sender.getName().getString().toLowerCase();
         lastMessagerMap.put(recipientName, senderName);
-        ChatDebugUtil.debug("LastMessageManager - Stored: %s -> %s, Map size: %d", recipientName, senderName, lastMessagerMap.size());
-        ChatDebugUtil.debug("LastMessageManager - Current map: %s", lastMessagerMap);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Stored: {} -> {}, Map size: {}", recipientName, senderName, lastMessagerMap.size());
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Current map: {}", lastMessagerMap);
     }
 
     /**
@@ -29,31 +33,31 @@ public class LastMessageManager {
      */
     public static ServerPlayer getLastMessager(ServerPlayer player) {
         if (player == null || player.getServer() == null) {
-            ChatDebugUtil.debug("LastMessageManager - getLastMessager called with null player or server");
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - getLastMessager called with null player or server");
             return null;
         }
         
         String playerName = player.getName().getString().toLowerCase();
         String lastMessagerName = lastMessagerMap.get(playerName);
-        ChatDebugUtil.debug("LastMessageManager - Looking up: %s -> %s", playerName, lastMessagerName);
-        ChatDebugUtil.debug("LastMessageManager - Current map: %s", lastMessagerMap);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Looking up: {} -> {}", playerName, lastMessagerName);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Current map: {}", lastMessagerMap);
         
         if (lastMessagerName == null || lastMessagerName.isEmpty()) {
-            ChatDebugUtil.debug("LastMessageManager - No last messager found for %s", playerName);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - No last messager found for {}", playerName);
             return null;
         }
         
         // Use more efficient player lookup by name
         ServerPlayer target = player.getServer().getPlayerList().getPlayerByName(lastMessagerName);
-        ChatDebugUtil.debug("LastMessageManager - Player lookup for %s: %s", lastMessagerName, (target != null ? "found" : "not found"));
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Player lookup for {}: {}", lastMessagerName, (target != null ? "found" : "not found"));
         
         if (target != null && target.connection != null) {
-            ChatDebugUtil.debug("LastMessageManager - Returning valid target: %s", target.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Returning valid target: {}", target.getName().getString());
             return target;
         }
         
         // Player not found online or disconnected - clean up the entry
-        ChatDebugUtil.debug("LastMessageManager - Cleaning up offline player: %s", lastMessagerName);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "LastMessageManager - Cleaning up offline player: {}", lastMessagerName);
         lastMessagerMap.remove(playerName);
         return null;
     }

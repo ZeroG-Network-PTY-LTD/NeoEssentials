@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.security;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +61,7 @@ public final class ConfigSecretCipher {
             buffer.put(iv).put(ciphertext);
             return Base64.getEncoder().encodeToString(buffer.array());
         } catch (Exception e) {
-            LOGGER.error("Failed to encrypt dashboard secret — storing nothing rather than plaintext", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to encrypt dashboard secret — storing nothing rather than plaintext", e);
             return "";
         }
     }
@@ -88,6 +90,7 @@ public final class ConfigSecretCipher {
         } catch (Exception e) {
             // Not a value we encrypted (bad base64, wrong tag, etc.) — let the caller treat it
             // as plaintext instead of hard-failing.
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Stored value did not decrypt as a dashboard secret — treating as plaintext", e);
             return null;
         }
     }
@@ -109,7 +112,7 @@ public final class ConfigSecretCipher {
         Files.writeString(keyPath, Base64.getEncoder().encodeToString(keyBytes));
         restrictToOwnerOnly(keyPath);
 
-        LOGGER.info("Generated a new dashboard secret-encryption key at {} — back this up or " +
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Generated a new dashboard secret-encryption key at {} — back this up or " +
             "existing encrypted config values (e.g. the paired dashboard's token) become unreadable.", keyPath);
 
         cachedKey = new SecretKeySpec(keyBytes, "AES");
@@ -126,8 +129,9 @@ public final class ConfigSecretCipher {
             // No portable equivalent on Windows via NIO without JNA/ACL APIs — filesystem ACLs
             // there are left at the OS default (which for a non-shared config dir already
             // restricts access to the machine's own users).
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // Best-effort only — never block key creation on permission tightening.
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not restrict dashboard key file permissions", e);
         }
     }
 }

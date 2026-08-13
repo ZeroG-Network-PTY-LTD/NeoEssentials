@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.api.PlaceholderManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -49,6 +51,8 @@ public class PlaceholderEndpoint implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String method = exchange.getRequestMethod();
         String path   = exchange.getRequestURI().getPath();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "PlaceholderEndpoint request: {} {}", method, path);
 
         try {
             if (!"GET".equalsIgnoreCase(method)) {
@@ -112,6 +116,7 @@ public class PlaceholderEndpoint implements HttpHandler {
         }
 
         String resolved = pm.setPlaceholders(target, text);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Resolved placeholders for player='{}'", playerName);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("success", true);

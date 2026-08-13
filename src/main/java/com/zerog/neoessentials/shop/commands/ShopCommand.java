@@ -14,6 +14,8 @@ import com.zerog.neoessentials.shop.handlers.ShopSignHandler;
 import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -35,6 +37,7 @@ import java.util.UUID;
  * /chestshop (alias /cshop, /shop) — admin and player shop management commands.
  */
 public class ShopCommand {
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(ShopCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isShopModuleEnabled()) {
@@ -637,7 +640,9 @@ public class ShopCommand {
                     return java.nio.file.Paths.get(shopCfg.get("csvImportPath").getAsString());
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read shop.csvImportPath config — using default", e);
+        }
         return ResourceUtil.getConfigPath("shop_prices.csv");
     }
 
@@ -649,7 +654,9 @@ public class ShopCommand {
                 var shopCfg = cfg.getAsJsonObject("shop");
                 if (shopCfg.has("maxShopsPerPlayer")) return shopCfg.get("maxShopsPerPlayer").getAsInt();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read shop.maxShopsPerPlayer config — using default", e);
+        }
         return 10;
     }
 

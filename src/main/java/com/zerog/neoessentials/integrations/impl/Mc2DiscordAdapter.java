@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.integrations.impl;
 
 import com.zerog.neoessentials.integrations.ChatIntegrationAdapter;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import fr.denisd3d.mc2discord.core.Mc2Discord;
 import fr.denisd3d.mc2discord.core.MessageManager;
 import fr.denisd3d.mc2discord.core.storage.LinkedPlayerEntry;
@@ -35,9 +37,9 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public boolean initialize() {
         loaded = ModList.get().isLoaded("mc2discord");
         if (loaded) {
-            LOGGER.info("Mc2Discord mod detected, integration enabled.");
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "Mc2Discord mod detected, integration enabled.");
         } else {
-            LOGGER.debug("Mc2Discord mod not found, integration disabled.");
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord mod not found, integration disabled.");
         }
         return loaded;
     }
@@ -65,12 +67,16 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
                 // entirely. Route directly to the configured channel instead, or a channel
                 // NeoEssentials intends to be distinct (e.g. a private staff channel) would
                 // silently end up wherever Mc2Discord's default chat channel is instead.
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord: relaying chat from '{}' directly to Discord channel '{}'",
+                    player.getName().getString(), discordChannelId);
                 sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);
             } else {
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord: relaying chat from '{}' via default chat route",
+                    player.getName().getString());
                 MessageManager.sendChatMessage(cleanMessage, player.getName().getString(), avatarFor(player)).subscribe();
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to relay chat message via Mc2Discord: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay chat message via Mc2Discord", e);
         }
     }
 
@@ -78,11 +84,14 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
-            return Discord4jChannelSender.send(channelId, message);
+            boolean sent = Discord4jChannelSender.send(channelId, message);
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord: send to Discord channel '{}' {}",
+                channelId, sent ? "succeeded" : "failed");
+            return sent;
         } catch (Throwable e) {
             // Catches Errors too — see Discord4jChannelSender's Javadoc for why a missing/
             // incompatible Discord4J on the classpath surfaces as a LinkageError here.
-            LOGGER.error("Failed to send message to Discord channel {} via Mc2Discord: {}", channelId, e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to send message to Discord channel " + channelId + " via Mc2Discord", e);
             return false;
         }
     }
@@ -121,7 +130,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
         try {
             MessageManager.sendInfoMessage("join", player.getName().getString() + " joined the server").subscribe();
         } catch (Exception e) {
-            LOGGER.error("Failed to relay join event via Mc2Discord: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay join event via Mc2Discord", e);
         }
     }
 
@@ -131,7 +140,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
         try {
             MessageManager.sendInfoMessage("leave", player.getName().getString() + " left the server").subscribe();
         } catch (Exception e) {
-            LOGGER.error("Failed to relay quit event via Mc2Discord: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay quit event via Mc2Discord", e);
         }
     }
 
@@ -142,7 +151,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
             MessageManager.sendInfoMessage("advancement",
                 player.getName().getString() + " earned the advancement " + advancementName).subscribe();
         } catch (Exception e) {
-            LOGGER.error("Failed to relay advancement event via Mc2Discord: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay advancement event via Mc2Discord", e);
         }
     }
 
@@ -155,7 +164,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
                 String.format("%s has been %s%s", player.getName().getString(), action,
                     reason != null && !reason.isEmpty() ? " (Reason: " + reason + ")" : "")).subscribe();
         } catch (Exception e) {
-            LOGGER.error("Failed to relay mute event via Mc2Discord: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay mute event via Mc2Discord", e);
         }
     }
 
@@ -166,7 +175,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
             LinkedPlayerEntry entry = Mc2Discord.INSTANCE.linkedPlayerList.get(minecraftUuid);
             return entry != null ? Optional.of(entry.getDiscordId().asString()) : Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("Mc2Discord linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
             return Optional.empty();
         }
     }
@@ -182,7 +191,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
             }
             return Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("Mc2Discord reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord reverse-account lookup failed for {}: {}", discordId, e.getMessage());
             return Optional.empty();
         }
     }
@@ -193,6 +202,6 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
 
     @Override
     public void shutdown() {
-        LOGGER.info("Mc2Discord integration shut down.");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "Mc2Discord integration shut down.");
     }
 }

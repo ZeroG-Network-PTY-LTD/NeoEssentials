@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.chat.handlers;
 
 // Sleep events not available in this NeoForge version
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,6 @@ public class AfkSleepHandler {
     
     // Placeholder method for sleep integration
     public static void initialize() {
-        LOGGER.info("AFK sleep handler initialized (sleep events disabled for compatibility)");
+        NeoLog.info(LOGGER, LogCategory.CHAT, "AFK sleep handler initialized (sleep events disabled for compatibility)");
     }
 }

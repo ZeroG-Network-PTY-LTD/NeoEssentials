@@ -2,6 +2,8 @@ package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,15 +68,13 @@ public class SocialSpyManager {
                 if (messaging != null && messaging.has("socialspyFormat")) {
                     String fmt = messaging.get("socialspyFormat").getAsString();
                     if (fmt != null && !fmt.isBlank()) {
-                        if (MessageUtil.isDebugMode()) {
-                            LOGGER.debug("[SocialSpy] Using config-based format: '{}'", fmt);
-                        }
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "[SocialSpy] Using config-based format: '{}'", fmt);
                         return fmt;
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("[SocialSpy] Could not read format from config, using lang fallback: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "[SocialSpy] Could not read format from config, using lang fallback", e);
         }
 
         // Convert the positional lang key ({0}, {1}, {2}) → named vars by supplying
@@ -94,7 +94,7 @@ public class SocialSpyManager {
             // If the placeholder wasn't resolved (still contains braces) use raw name
             return (display != null && !display.contains("{")) ? display : player.getName().getString();
         } catch (Exception e) {
-            LOGGER.debug("[SocialSpy] Failed to resolve displayname for {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "[SocialSpy] Failed to resolve displayname for " + player.getName().getString(), e);
             return player.getName().getString();
         }
     }
@@ -105,6 +105,7 @@ public class SocialSpyManager {
         // Exempt check — senders with this permission are not monitored
         if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                 sender.getUUID(), "neoessentials.chat.socialspy.exempt")) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "[SocialSpy] {} is exempt from socialspy monitoring, skipping broadcast", sender.getName().getString());
             return;
         }
 
@@ -120,9 +121,7 @@ public class SocialSpyManager {
 
         String formatted = MessageUtil.resolveTemplate(sender, format, vars);
 
-        if (MessageUtil.isDebugMode()) {
-            LOGGER.info("[SocialSpy] format='{}' → resolved='{}'", format, formatted);
-        }
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "[SocialSpy] format='{}' -> resolved='{}'", format, formatted);
 
         // Broadcast to all players with SocialSpy active
         for (ServerPlayer spy : sender.getServer().getPlayerList().getPlayers()) {

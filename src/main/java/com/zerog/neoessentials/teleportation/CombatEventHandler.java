@@ -8,6 +8,8 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +29,7 @@ public class CombatEventHandler {
     public static void onAttackEntity(AttackEntityEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             CombatTracker.markInCombat(player);
-            LOGGER.debug("Player {} entered combat by attacking {}",
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} entered combat by attacking {}",
                 player.getName().getString(),
                 event.getTarget().getName().getString());
         }
@@ -49,7 +51,7 @@ public class CombatEventHandler {
             // Only mark if not already in combat to avoid spam
             if (!CombatTracker.isInCombat(player)) {
                 CombatTracker.markInCombat(player);
-                LOGGER.debug("Player {} entered combat by receiving damage from {}",
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} entered combat by receiving damage from {}",
                     player.getName().getString(),
                     source.getEntity().getName().getString());
             }
@@ -63,7 +65,7 @@ public class CombatEventHandler {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             CombatTracker.clearCombat(player);
-            LOGGER.debug("Cleared combat status for logging out player {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Cleared combat status for logging out player {}", player.getName().getString());
         }
     }
 }

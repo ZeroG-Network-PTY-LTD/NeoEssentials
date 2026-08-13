@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.inventory;
 
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +95,7 @@ public class InventoryAuditLogger {
             }
         } catch (Exception e) {
             // ConfigManager not yet ready — default on
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Could not read inventoryAuditLog config setting — defaulting to enabled", e);
         }
         return true;
     }

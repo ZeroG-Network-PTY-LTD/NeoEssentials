@@ -1,17 +1,22 @@
 package com.zerog.neoessentials.teleportation;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a teleportation location with world, position, and rotation data
  */
 public class TeleportLocation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeleportLocation.class);
     private final String worldName;
     private final double x;
     private final double y;
@@ -90,10 +95,11 @@ public class TeleportLocation {
                 )
             );
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "getLevel() failed to resolve world '{}': {}", worldName, e.getMessage());
             return null;
         }
     }
-    
+
     /**
      * Check if this location is safe for teleportation.
      * A location is safe when:
@@ -331,6 +337,7 @@ public class TeleportLocation {
             // Timestamp is set in constructor, but we can preserve the original if present
             return new TeleportLocation(world, x, y, z, yaw, pitch, createdBy);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "fromJson: failed to parse TeleportLocation from JSON: {}", e.getMessage());
             return null;
         }
     }
@@ -364,9 +371,9 @@ public class TeleportLocation {
             }
             
         } catch (Exception e) {
-            // Log error and return null for invalid format
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "fromLocationString: invalid location format '{}': {}", locationString, e.getMessage());
         }
-        
+
         return null;
     }
     

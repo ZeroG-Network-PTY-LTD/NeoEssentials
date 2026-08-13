@@ -7,6 +7,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.integrations.ChatIntegrationManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.ResourceUtil;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
@@ -51,6 +53,8 @@ public class DiscordEndpoint implements HttpHandler {
 
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "DiscordEndpoint request: {} {}", method, path);
 
         try {
             if (path.endsWith("/status") && "GET".equals(method)) {
@@ -186,7 +190,7 @@ public class DiscordEndpoint implements HttpHandler {
         }
 
         boolean sent = ChatIntegrationManager.sendToChannel(channel, message);
-        LOGGER.info("[Discord Test] Admin sent test message to channel '{}': {} (delivered: {})", channel, message, sent);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Discord Test] Admin sent test message to channel '{}': {} (delivered: {})", channel, message, sent);
 
         if (sent) {
             sendJson(exchange, 200, "{\"success\":true,\"message\":\"Message sent to channel " + escape(channel) + ".\"}");
@@ -276,7 +280,7 @@ public class DiscordEndpoint implements HttpHandler {
 
         // Invalidate ConfigManager cache so next DiscordAuthConfig.load() re-reads the file
         ConfigManager.getInstance().clearCache();
-        LOGGER.info("[Discord] Admin updated discord_auth.json via dashboard");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Discord] Admin updated discord_auth.json via dashboard");
 
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Discord auth config saved. Changes take effect immediately.\"}");
     }
@@ -305,6 +309,7 @@ public class DiscordEndpoint implements HttpHandler {
 
         Optional<UUID> linkedUuid = ChatIntegrationManager.findLinkedMinecraftUuid(discordId);
         if (linkedUuid.isEmpty()) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Discord link-lookup: no linked account for discordId={}", discordId);
             sendJson(exchange, 200, "{\"success\":true,\"linked\":false}");
             return;
         }
@@ -333,7 +338,9 @@ public class DiscordEndpoint implements HttpHandler {
                 var profile = cache.get(uuid);
                 if (profile.isPresent() && profile.get().getName() != null) return profile.get().getName();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve username for uuid={} via profile cache", uuid, e);
+        }
 
         return uuid.toString();
     }

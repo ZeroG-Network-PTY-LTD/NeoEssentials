@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,18 +27,20 @@ public class BukkitSpongeAdapter implements ExternalPermissionAdapter {
             pluginManagerClass = Class.forName("org.bukkit.plugin.PluginManager");
             isBukkit = true;
             found = true;
-            LOGGER.info("Bukkit API detected for permissions.");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Bukkit API detected for permissions.");
         } catch (Exception e) {
             // Not Bukkit, try Sponge
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Bukkit API not present, probing for Sponge", e);
             try {
                 Class<?> spongeClass = Class.forName("org.spongepowered.api.Sponge");
                 pluginManager = spongeClass.getMethod("server").invoke(null);
                 pluginManagerClass = Class.forName("org.spongepowered.api.Server");
                 isSponge = true;
                 found = true;
-                LOGGER.info("Sponge API detected for permissions.");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Sponge API detected for permissions.");
             } catch (Exception ignored) {
                 // Not Sponge
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Sponge API not present either — Bukkit/Sponge adapter unavailable", ignored);
             }
         }
         available = found;
@@ -51,7 +55,9 @@ public class BukkitSpongeAdapter implements ExternalPermissionAdapter {
                 Class<?> bukkitClass = Class.forName("org.bukkit.Bukkit");
                 Object player = bukkitClass.getMethod("getPlayer", UUID.class).invoke(null, uuid);
                 if (player != null) {
-                    return (boolean) player.getClass().getMethod("hasPermission", String.class).invoke(player, permission);
+                    boolean result = (boolean) player.getClass().getMethod("hasPermission", String.class).invoke(player, permission);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Bukkit permission check: player={}, permission={}, result={}", uuid, permission, result);
+                    return result;
                 }
             } else if (isSponge) {
                 // Sponge: get player by UUID, then hasPermission
@@ -60,11 +66,13 @@ public class BukkitSpongeAdapter implements ExternalPermissionAdapter {
                 Object player = server.getClass().getMethod("player", UUID.class).invoke(server, uuid);
                 if (player != null) {
                     Object subject = player.getClass().getMethod("subject").invoke(player);
-                    return (boolean) subject.getClass().getMethod("hasPermission", String.class).invoke(subject, permission);
+                    boolean result = (boolean) subject.getClass().getMethod("hasPermission", String.class).invoke(subject, permission);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Sponge permission check: player={}, permission={}, result={}", uuid, permission, result);
+                    return result;
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to check Bukkit/Sponge permission", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to check Bukkit/Sponge permission for player {} / {}", uuid, permission, e);
         }
         return false;
     }

@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.endpoints;
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.permissions.PermissionStorage;
 import com.zerog.neoessentials.permissions.PermissionGroup;
@@ -35,6 +37,8 @@ public class PermissionEndpoint implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath().replace("/api/permissions", "");
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "PermissionEndpoint request: {} {}", method, path);
 
         try {
             // POST/PUT/DELETE here create/modify/remove permission groups and users — e.g. a
@@ -527,9 +531,11 @@ public class PermissionEndpoint implements HttpHandler {
 
             PermissionStorage.save(manager);
 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission group created: '{}'", name);
             response.addProperty("success", true);
             response.addProperty("message", "Group created: " + name);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to create permission group", e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to create group: " + e.getMessage());
         }
@@ -561,6 +567,7 @@ public class PermissionEndpoint implements HttpHandler {
                 response.addProperty("message", "Group not found: " + groupName);
             }
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to add permission to group '{}'", groupName, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to add permission: " + e.getMessage());
         }
@@ -592,9 +599,11 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionStorage.save(manager);
             manager.clearCache(); // Clear permission cache
 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "User '{}' set to group '{}'", username, groupName);
             response.addProperty("success", true);
             response.addProperty("message", "User " + username + " set to group: " + groupName);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to set group for user '{}'", username, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to set user group: " + e.getMessage());
         }
@@ -626,9 +635,11 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionStorage.save(manager);
             manager.clearCache(); // Clear permission cache
 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission added to user '{}'", username);
             response.addProperty("success", true);
             response.addProperty("message", "Permission added to user: " + username);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to add permission to user '{}'", username, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to add permission: " + e.getMessage());
         }
@@ -669,6 +680,7 @@ public class PermissionEndpoint implements HttpHandler {
 
                 manager.clearCache();
                 PermissionStorage.save(manager);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission group updated: '{}'", groupName);
                 response.addProperty("success", true);
                 response.addProperty("message", "Group updated: " + groupName);
             } else {
@@ -676,6 +688,7 @@ public class PermissionEndpoint implements HttpHandler {
                 response.addProperty("message", "Group not found: " + groupName);
             }
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to update permission group '{}'", groupName, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to update group: " + e.getMessage());
         }
@@ -708,9 +721,11 @@ public class PermissionEndpoint implements HttpHandler {
                 return response;
             }
             PermissionStorage.save(manager);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission group '{}' renamed to '{}'", groupName, newName);
             response.addProperty("success", true);
             response.addProperty("message", "Group '" + groupName + "' renamed to '" + newName + "'");
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to rename permission group '{}'", groupName, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to rename group: " + e.getMessage());
         }
@@ -747,9 +762,11 @@ public class PermissionEndpoint implements HttpHandler {
             }
             PermissionStorage.save(manager);
 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission group deleted: '{}'", groupName);
             response.addProperty("success", true);
             response.addProperty("message", "Group deleted: " + groupName);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to delete permission group '{}'", groupName, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to delete group: " + e.getMessage());
         }
@@ -779,6 +796,7 @@ public class PermissionEndpoint implements HttpHandler {
                 response.addProperty("message", "Group not found: " + groupName);
             }
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to remove permission from group '{}'", groupName, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to remove permission: " + e.getMessage());
         }
@@ -809,9 +827,11 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionStorage.save(manager);
             manager.clearCache(); // Clear permission cache
 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Permission removed from user '{}'", username);
             response.addProperty("success", true);
             response.addProperty("message", "Permission removed from user: " + username);
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to remove permission from user '{}'", username, e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to remove permission: " + e.getMessage());
         }
@@ -825,9 +845,11 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         try {
             com.zerog.neoessentials.permissions.PermissionSystem.reload();
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Permissions reloaded via dashboard");
             response.addProperty("success", true);
             response.addProperty("message", "Permissions reloaded successfully");
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to reload permissions", e);
             response.addProperty("success", false);
             response.addProperty("message", "Failed to reload: " + e.getMessage());
         }
@@ -866,7 +888,10 @@ public class PermissionEndpoint implements HttpHandler {
         boolean allow = data.get("allow").getAsBoolean();
         group.addContextPermission(contextKey, node, allow);
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save contextual permission for group '{}'", groupName, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Contextual override set: " + node + " → " + (allow ? "allow" : "deny") + " in " + contextKey + " for group " + groupName);
         return response;
@@ -883,7 +908,10 @@ public class PermissionEndpoint implements HttpHandler {
         boolean removed = group.removeContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString());
         if (!removed) return createErrorResponse("No such contextual override");
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save contextual permission removal for group '{}'", groupName, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Contextual override removed");
         return response;
@@ -918,7 +946,10 @@ public class PermissionEndpoint implements HttpHandler {
         com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         user.addContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString(), data.get("allow").getAsBoolean());
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save contextual permission for user '{}'", username, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Contextual override set for user " + username);
         return response;
@@ -936,7 +967,10 @@ public class PermissionEndpoint implements HttpHandler {
         boolean removed = user.removeContextPermission(data.get("contextKey").getAsString(), data.get("node").getAsString());
         if (!removed) return createErrorResponse("No such contextual override");
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save contextual permission removal for user '{}'", username, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Contextual override removed for user " + username);
         return response;
@@ -981,7 +1015,10 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionStorage.save(manager);
             response.addProperty("success", true);
             response.addProperty("message", "Temp permission added to group " + groupName + " for " + data.get("duration").getAsString());
-        } catch (Exception e) { return createErrorResponse(e.getMessage()); }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to add temp permission to group '{}'", groupName, e);
+            return createErrorResponse(e.getMessage());
+        }
         return response;
     }
 
@@ -993,7 +1030,10 @@ public class PermissionEndpoint implements HttpHandler {
         if (group == null) return createErrorResponse("Group not found: " + groupName);
         group.removeTempPermission(node);
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save temp permission removal for group '{}'", groupName, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Temp permission " + node + " removed from group " + groupName);
         return response;
@@ -1038,7 +1078,10 @@ public class PermissionEndpoint implements HttpHandler {
             PermissionStorage.save(manager);
             response.addProperty("success", true);
             response.addProperty("message", "Temp permission added to " + username + " for " + data.get("duration").getAsString());
-        } catch (Exception e) { return createErrorResponse(e.getMessage()); }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to add temp permission to user '{}'", username, e);
+            return createErrorResponse(e.getMessage());
+        }
         return response;
     }
 
@@ -1051,7 +1094,10 @@ public class PermissionEndpoint implements HttpHandler {
         com.zerog.neoessentials.permissions.PermissionUser user = manager.getUser(uuid);
         user.removeTempPermission(node);
         manager.clearCache();
-        try { PermissionStorage.save(manager); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { PermissionStorage.save(manager); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save temp permission removal for user '{}'", username, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Temp permission " + node + " removed from " + username);
         return response;
@@ -1079,7 +1125,10 @@ public class PermissionEndpoint implements HttpHandler {
         com.zerog.neoessentials.permissions.PermissionAliasManager mgr =
             com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance();
         mgr.addAlias(alias, canonical);
-        try { mgr.save(); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { mgr.save(); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save alias '{}'", alias, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Alias registered: " + alias + " → " + canonical);
         return response;
@@ -1091,7 +1140,10 @@ public class PermissionEndpoint implements HttpHandler {
             com.zerog.neoessentials.permissions.PermissionAliasManager.getInstance();
         boolean removed = mgr.removeAlias(alias);
         if (!removed) return createErrorResponse("Alias not found: " + alias);
-        try { mgr.save(); } catch (Exception e) { return createErrorResponse("Save failed: " + e.getMessage()); }
+        try { mgr.save(); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to save alias removal '{}'", alias, e);
+            return createErrorResponse("Save failed: " + e.getMessage());
+        }
         response.addProperty("success", true);
         response.addProperty("message", "Alias removed: " + alias);
         return response;

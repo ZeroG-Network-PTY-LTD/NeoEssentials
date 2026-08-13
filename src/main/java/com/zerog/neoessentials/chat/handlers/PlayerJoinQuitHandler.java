@@ -5,6 +5,8 @@ import com.zerog.neoessentials.api.PlaceholderAPI;
 import com.zerog.neoessentials.chat.ChatManager;
 import com.zerog.neoessentials.integrations.ChatIntegrationManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -49,7 +51,7 @@ public class PlayerJoinQuitHandler {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling vanish-on-join for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error handling vanish-on-join for player " + player.getName().getString(), e);
         }
 
         // --- newPlayerKit logic: Give kit on first join if enabled ---
@@ -65,9 +67,15 @@ public class PlayerJoinQuitHandler {
                         try (java.io.FileReader r = new java.io.FileReader(firstJoinFile)) {
                             com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseReader(r).getAsJsonArray();
                             for (com.google.gson.JsonElement el : arr) {
-                                try { joined.add(java.util.UUID.fromString(el.getAsString())); } catch (Exception ignore) {}
+                                try {
+                                    joined.add(java.util.UUID.fromString(el.getAsString()));
+                                } catch (Exception e) {
+                                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Skipping malformed UUID entry in first_joined.json", e);
+                                }
                             }
-                        } catch (Exception ignore) {}
+                        } catch (Exception e) {
+                            NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to read first_joined.json, treating as empty: {}", e.getMessage());
+                        }
                     }
                     boolean isFirstJoin = !joined.contains(player.getUUID());
                     if (isFirstJoin) {
@@ -88,14 +96,18 @@ public class PlayerJoinQuitHandler {
                         try {
                             java.io.File parent = firstJoinFile.getParentFile();
                             if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                                LOGGER.warn("PlayerJoinQuitHandler: failed to create parent directory: {}", parent.getAbsolutePath());
+                                NeoLog.warn(LOGGER, LogCategory.CHAT, "PlayerJoinQuitHandler: failed to create parent directory: {}", parent.getAbsolutePath());
                             }
-                        } catch (Exception ignore) {}
+                        } catch (Exception e) {
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error preparing first_joined.json parent directory", e);
+                        }
                         try (java.io.FileWriter w = new java.io.FileWriter(firstJoinFile, false)) {
                             com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
                             for (java.util.UUID id : joined) arr.add(id.toString());
                             w.write(arr.toString());
-                        } catch (Exception ignore) {}
+                        } catch (Exception e) {
+                            NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to persist first_joined.json: {}", e.getMessage());
+                        }
                         // Optionally, send a message to the player
                         player.sendSystemMessage(MessageUtil.component("commands.neoessentials.kits.starter_kit_received"));
                     }
@@ -117,20 +129,20 @@ public class PlayerJoinQuitHandler {
                             com.zerog.neoessentials.teleportation.Spawn.SpawnManager.getInstance().teleportToSpawn(player);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Error handling spawnOnJoin for player {}: {}", player.getName().getString(), e.getMessage());
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Error handling spawnOnJoin for player " + player.getName().getString(), e);
                     }
                 }
             }
         } catch (Exception e) {
             // Log but do not interrupt join
-            LOGGER.error("Error handling newPlayerKit for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error handling newPlayerKit for player " + player.getName().getString(), e);
         }
 
         try {
             // Get the ChatManager instance
             ChatManager chatManager = ChatAPI.getChatManager();
             if (chatManager == null) {
-                LOGGER.warn("ChatManager not available, using default join messages");
+                NeoLog.warn(LOGGER, LogCategory.CHAT, "ChatManager not available, using default join messages");
                 return;
             }
 
@@ -155,11 +167,11 @@ public class PlayerJoinQuitHandler {
                     server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
                 }
                 
-                LOGGER.debug("Displayed custom join message for player {}: {}", 
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Displayed custom join message for player {}: {}",
                     player.getName().getString(), formattedMessage.getString());
             } else {
                 // Use default join message behavior
-                LOGGER.debug("Using default join message for player {}", player.getName().getString());
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Using default join message for player {}", player.getName().getString());
             }
 
             // Notify chat integrations about the join
@@ -169,12 +181,11 @@ public class PlayerJoinQuitHandler {
             try {
                 com.zerog.neoessentials.util.commands.MailCommand.notifyOnLogin(player);
             } catch (Exception e) {
-                LOGGER.debug("Could not send mail notification to {}: {}", player.getName().getString(), e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Could not send mail notification to " + player.getName().getString(), e);
             }
 
         } catch (Exception e) {
-            LOGGER.error("Error handling join event for player {}: {}", 
-                player.getName().getString(), e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error handling join event for player " + player.getName().getString(), e);
         }
     }
 
@@ -196,7 +207,7 @@ public class PlayerJoinQuitHandler {
             // Get the ChatManager instance
             ChatManager chatManager = ChatAPI.getChatManager();
             if (chatManager == null) {
-                LOGGER.warn("ChatManager not available, using default quit messages");
+                NeoLog.warn(LOGGER, LogCategory.CHAT, "ChatManager not available, using default quit messages");
                 return;
             }
 
@@ -218,19 +229,18 @@ public class PlayerJoinQuitHandler {
                     server.getPlayerList().broadcastSystemMessage(formattedMessage, false);
                 }
                 
-                LOGGER.debug("Displayed custom quit message for player {}: {}", 
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Displayed custom quit message for player {}: {}",
                     player.getName().getString(), formattedMessage.getString());
             } else {
                 // Use default quit message behavior
-                LOGGER.debug("Using default quit message for player {}", player.getName().getString());
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Using default quit message for player {}", player.getName().getString());
             }
 
             // Notify chat integrations about the quit
             ChatIntegrationManager.broadcastPlayerQuit(player);
 
         } catch (Exception e) {
-            LOGGER.error("Error handling quit event for player {}: {}", 
-                player.getName().getString(), e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error handling quit event for player " + player.getName().getString(), e);
         }
     }
 }

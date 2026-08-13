@@ -8,6 +8,8 @@ import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.shop.model.ShopType;
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +87,9 @@ public class ShopManager {
         try {
             com.zerog.neoessentials.hologram.integration.ShopHologramManager
                 .createShopHologram(shop, shop.signDimension);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.warn(LOGGER, LogCategory.GENERAL, "Failed to create/update hologram for shop '{}': {}", shop.toKey(), e.getMessage());
+        }
     }
 
     /** Remove by sign position. Returns the removed shop or null. */
@@ -103,7 +107,9 @@ public class ShopManager {
             try {
                 com.zerog.neoessentials.hologram.integration.ShopHologramManager
                     .deleteShopHologram(removed);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.warn(LOGGER, LogCategory.GENERAL, "Failed to delete hologram for shop '{}': {}", key, e.getMessage());
+            }
         }
         return removed;
     }

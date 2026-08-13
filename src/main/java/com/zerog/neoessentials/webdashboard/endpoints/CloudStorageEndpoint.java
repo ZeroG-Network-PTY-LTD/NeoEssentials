@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.endpoints;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.backup.BackupManager;
 import com.zerog.neoessentials.webdashboard.cloud.CloudStorageManager;
 import org.slf4j.Logger;
@@ -51,6 +53,8 @@ public class CloudStorageEndpoint implements HttpHandler {
 
         String path   = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "CloudStorageEndpoint request: {} {}", method, path);
 
         try {
             if ("GET".equals(method) && path.endsWith("/status")) {
@@ -104,9 +108,11 @@ public class CloudStorageEndpoint implements HttpHandler {
             }
         } catch (IllegalStateException e) {
             // Provider not configured
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "CloudStorageEndpoint: provider not configured for {} {}: {}", method, path, e.getMessage());
             sendJson(exchange, 400, json(false, e.getMessage()));
         } catch (IOException e) {
             // HTTP call or disk error
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "CloudStorageEndpoint: provider I/O error for {} {}", method, path, e);
             sendJson(exchange, 502, json(false, "Cloud provider error: " + e.getMessage()));
         } catch (Exception e) {
             LOGGER.error("Unexpected error in CloudStorageEndpoint", e);
@@ -137,6 +143,7 @@ public class CloudStorageEndpoint implements HttpHandler {
                     sb.append(",\"connected\":true");
                 }
             } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dropbox quota check failed", e);
                 sb.append(",\"connected\":false,\"error\":\"").append(esc(e.getMessage())).append("\"");
             }
         }
@@ -159,6 +166,7 @@ public class CloudStorageEndpoint implements HttpHandler {
                     sb.append(",\"connected\":true");
                 }
             } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Google Drive quota check failed", e);
                 sb.append(",\"connected\":false,\"error\":\"").append(esc(e.getMessage())).append("\"");
             }
         }
@@ -181,6 +189,7 @@ public class CloudStorageEndpoint implements HttpHandler {
                     sb.append(",\"connected\":true");
                 }
             } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "OneDrive quota check failed", e);
                 sb.append(",\"connected\":false,\"error\":\"").append(esc(e.getMessage())).append("\"");
             }
         }
@@ -310,6 +319,7 @@ public class CloudStorageEndpoint implements HttpHandler {
         Path zipFile   = resolveBackupFile(backupId);
         String fileName = backupId + ".zip";
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Uploading backup '{}' to Dropbox", backupId);
         JsonObject meta = CloudStorageManager.getInstance().uploadToDropbox(zipFile, fileName);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Uploaded to Dropbox successfully\","
             + "\"file\":" + meta.toString() + "}");
@@ -320,6 +330,7 @@ public class CloudStorageEndpoint implements HttpHandler {
         Path zipFile   = resolveBackupFile(backupId);
         String fileName = backupId + ".zip";
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Uploading backup '{}' to Google Drive", backupId);
         JsonObject meta = CloudStorageManager.getInstance().uploadToGoogleDrive(zipFile, fileName);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Uploaded to Google Drive successfully\","
             + "\"file\":" + meta.toString() + "}");
@@ -330,6 +341,7 @@ public class CloudStorageEndpoint implements HttpHandler {
         Path zipFile   = resolveBackupFile(backupId);
         String fileName = backupId + ".zip";
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Uploading backup '{}' to OneDrive", backupId);
         JsonObject meta = CloudStorageManager.getInstance().uploadToOneDrive(zipFile, fileName);
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Uploaded to OneDrive successfully\","
             + "\"file\":" + meta.toString() + "}");
@@ -342,18 +354,21 @@ public class CloudStorageEndpoint implements HttpHandler {
         String filePath = java.net.URLDecoder.decode(
             path.substring(path.indexOf("/files/dropbox/") + "/files/dropbox/".length()),
             StandardCharsets.UTF_8);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Deleting Dropbox file '{}'", filePath);
         CloudStorageManager.getInstance().deleteFromDropbox(filePath);
         sendJson(exchange, 200, json(true, "Deleted from Dropbox: " + filePath));
     }
 
     private void handleDeleteGoogle(HttpExchange exchange, String path) throws Exception {
         String fileId = path.substring(path.lastIndexOf('/') + 1);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Deleting Google Drive file '{}'", fileId);
         CloudStorageManager.getInstance().deleteFromGoogleDrive(fileId);
         sendJson(exchange, 200, json(true, "Deleted from Google Drive: " + fileId));
     }
 
     private void handleDeleteOneDrive(HttpExchange exchange, String path) throws Exception {
         String itemId = path.substring(path.lastIndexOf('/') + 1);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Deleting OneDrive item '{}'", itemId);
         CloudStorageManager.getInstance().deleteFromOneDrive(itemId);
         sendJson(exchange, 200, json(true, "Deleted from OneDrive: " + itemId));
     }

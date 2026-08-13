@@ -6,6 +6,8 @@ import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.api.event.EconomyDepositEvent;
 import com.zerog.neoessentials.api.event.EconomyWithdrawEvent;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import net.neoforged.neoforge.common.NeoForge;
@@ -118,6 +120,8 @@ public class EconomyManager {
         Long activity = lastActivityMap.get(player);
         obj.addProperty("lastActivity", activity != null ? activity : System.currentTimeMillis());
         store.put(COLLECTION, player.toString(), obj);
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "persistPlayer: committed balance={} for player={}",
+            bal != null ? bal.toPlainString() : "0", player);
     }
 
     private void queueAsyncSave(UUID player) {
@@ -160,10 +164,15 @@ public class EconomyManager {
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         if (amount.compareTo(maxBalance) > 0) amount = maxBalance;
 
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setBalance: player={}, requestedAmount={}", player, amount);
+
         BigDecimal finalAmount = amount;
         BigDecimal oldAmount = balancesCache.put(player, finalAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave(player);
+
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setBalance: player={} balance changed {} -> {}, queued for persist",
+            player, oldAmount != null ? oldAmount.toPlainString() : "new account", finalAmount.toPlainString());
 
         // Log transaction
         EconomyTransactionLogger.log("SET", player.toString(), "SERVER", finalAmount.toPlainString(),
@@ -176,11 +185,13 @@ public class EconomyManager {
             return false;
         }
 
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "addBalance: player={}, amount={}", player, amount);
+
         // Fire cancellable deposit event BEFORE modifying balance
         EconomyDepositEvent depositEvent = new EconomyDepositEvent(player, amount);
         NeoForge.EVENT_BUS.post(depositEvent);
         if (depositEvent.isCanceled()) {
-            LOGGER.debug("EconomyDepositEvent cancelled for player {}", player);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "addBalance: EconomyDepositEvent cancelled for player {}", player);
             return false;
         }
 
@@ -211,11 +222,15 @@ public class EconomyManager {
         });
 
         if (result[0] == null) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "addBalance: player={} rejected — negative balances not allowed, amount={}",
+                player, amount);
             return false; // Operation failed validation
         }
 
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave(player);
+
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "addBalance: player={} new balance={}, queued for persist", player, result[0]);
 
         // Log transaction
         EconomyTransactionLogger.log("ADD", "SERVER", player.toString(), amount.toPlainString(), "Add to balance");
@@ -228,11 +243,13 @@ public class EconomyManager {
             return false;
         }
 
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "subtractBalance: player={}, amount={}", player, amount);
+
         // Fire cancellable withdraw event BEFORE modifying balance
         EconomyWithdrawEvent withdrawEvent = new EconomyWithdrawEvent(player, amount);
         NeoForge.EVENT_BUS.post(withdrawEvent);
         if (withdrawEvent.isCanceled()) {
-            LOGGER.debug("EconomyWithdrawEvent cancelled for player {}", player);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "subtractBalance: EconomyWithdrawEvent cancelled for player {}", player);
             return false;
         }
 
@@ -258,11 +275,15 @@ public class EconomyManager {
         });
 
         if (result[0] == null) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "subtractBalance: player={} rejected — insufficient funds for amount={}",
+                player, amount);
             return false; // Insufficient funds
         }
 
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave(player);
+
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "subtractBalance: player={} new balance={}, queued for persist", player, result[0]);
 
         // Log transaction
         EconomyTransactionLogger.log("SUBTRACT", player.toString(), "SERVER", amount.toPlainString(), "Subtract from balance");
@@ -283,8 +304,11 @@ public class EconomyManager {
         if (removed != null) {
             store.delete(COLLECTION, player.toString());
             EconomyTransactionLogger.log("DELETE", player.toString(), "SERVER", "0", "Account deleted");
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "removeAccount: deleted account for player={} (was balance={})",
+                player, removed.toPlainString());
             return true;
         }
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "removeAccount: no account found for player={}", player);
         return false;
     }
 
@@ -389,7 +413,10 @@ public class EconomyManager {
                         if (entry.getKey().startsWith("_")) continue; // skip metadata fields
                         try {
                             legacyBalances.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue().toString()));
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                            NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                                "migrateLegacyFilesIfNeeded: skipping malformed legacy balance entry for key=" + entry.getKey(), ignored);
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -406,7 +433,10 @@ public class EconomyManager {
                         if (entry.getKey().startsWith("_")) continue; // skip metadata fields
                         try {
                             legacyActivity.put(UUID.fromString(entry.getKey()), ((Number) entry.getValue()).longValue());
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                            NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                                "migrateLegacyFilesIfNeeded: skipping malformed legacy activity entry for key=" + entry.getKey(), ignored);
+                        }
                     }
                 }
             } catch (Exception e) {

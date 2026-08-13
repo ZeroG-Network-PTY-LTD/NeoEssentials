@@ -6,6 +6,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +36,10 @@ public class PermissionExpiryHandler {
 
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         try {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "[TempPerms] Running scheduled expiry purge");
             manager.purgeExpiredTempPermissions(server);
         } catch (Exception e) {
-            LOGGER.warn("[TempPerms] Error during expiry purge: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "[TempPerms] Error during expiry purge: {}", e.getMessage(), e);
         }
     }
 }

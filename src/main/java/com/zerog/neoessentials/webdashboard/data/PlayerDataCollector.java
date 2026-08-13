@@ -10,6 +10,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.item.ItemStack;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.HomeManager;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import org.slf4j.Logger;
@@ -881,6 +883,7 @@ public class PlayerDataCollector {
                                         long lastModified = java.nio.file.Files.getLastModifiedTime(path).toMillis();
                                         playerObj.addProperty("lastSeen", formatLastSeenTimestamp(lastModified));
                                     } catch (Exception e) {
+                                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read lastModified for player data file {}", path.getFileName(), e);
                                         playerObj.addProperty("lastSeen", "Unknown");
                                     }
 
@@ -989,6 +992,7 @@ public class PlayerDataCollector {
                     response.addProperty("lastSeen", "Never joined this server");
                 }
             } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not determine lastSeen for {}", uuid, e);
                 response.addProperty("lastSeen", "Unknown");
             }
         }
@@ -1155,6 +1159,7 @@ public class PlayerDataCollector {
                 .getKey(level.getBiome(pos).value());
             return biomeKey != null ? biomeKey.toString() : "Unknown";
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not resolve biome name at {}", pos, e);
             return "Unknown";
         }
     }

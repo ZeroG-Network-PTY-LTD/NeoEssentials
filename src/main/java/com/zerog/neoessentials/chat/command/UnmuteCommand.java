@@ -10,11 +10,16 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles the /unmute command for unmuting a player.
  */
 public class UnmuteCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnmuteCommand.class);
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if chat module is enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
@@ -79,7 +84,9 @@ public class UnmuteCommand {
                     // Notify Discord integrations
                     try {
                         com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, null, false);
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Failed to broadcast unmute event to integrations for " + targetName, e);
+                    }
                     source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.unmute.success", targetName), false);
                     return 1;
                 })

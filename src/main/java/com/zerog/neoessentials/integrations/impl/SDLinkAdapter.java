@@ -8,6 +8,8 @@ import com.hypherionmc.sdlink.api.messaging.MessageType;
 import com.hypherionmc.sdlink.api.messaging.discord.DiscordMessageBuilder;
 import com.hypherionmc.sdlink.core.discord.BotController;
 import com.zerog.neoessentials.integrations.ChatIntegrationAdapter;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
@@ -37,10 +39,10 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public boolean initialize() {
         loaded = ModList.get().isLoaded("sdlink");
         if (loaded) {
-            LOGGER.info("Simple Discord Link mod detected, integration enabled.");
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "Simple Discord Link mod detected, integration enabled.");
             warnIfNativeChatRelayConflicts();
         } else {
-            LOGGER.debug("Simple Discord Link mod not found, integration disabled.");
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Simple Discord Link mod not found, integration disabled.");
         }
         return loaded;
     }
@@ -72,7 +74,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                     continue;
                 }
                 if (inChatSection && trimmed.matches("(?i)playerMessages\\s*=\\s*true.*")) {
-                    LOGGER.warn("Simple Discord Link's own 'chat.playerMessages' is enabled in " +
+                    NeoLog.warn(LOGGER, LogCategory.DISCORD, "Simple Discord Link's own 'chat.playerMessages' is enabled in " +
                         "config/simple-discord-link/simple-discord-link.toml. That makes SDLink relay " +
                         "EVERY Minecraft chat message to its own configured Discord channel on its own, " +
                         "entirely independent of NeoEssentials' chat.channels.*.discord relay. With both " +
@@ -85,7 +87,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not check Simple Discord Link's config for a conflicting native chat relay: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Could not check Simple Discord Link's config for a conflicting native chat relay: {}", e.getMessage());
         }
     }
 
@@ -113,6 +115,8 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 // of settling for an unstyled "PlayerName: message" line — customizable via the
                 // top-level discordEmbedTemplate config section (see readEmbedTemplate()).
                 EmbedTemplate template = readEmbedTemplate();
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: relaying chat from '{}' directly to Discord channel '{}' ({})",
+                    player.getName().getString(), discordChannelId, template.enabled ? "templated embed" : "plain text");
                 if (template.enabled) {
                     JdaBridge.sendTemplatedEmbed(discordChannelId,
                         template.resolve(template.authorName, player, channel, cleanMessage),
@@ -126,12 +130,14 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                     JdaBridge.sendPlain(discordChannelId, player.getName().getString() + ": " + cleanMessage);
                 }
             } else {
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: relaying chat from '{}' via default chat route",
+                    player.getName().getString());
                 send(MessageType.CHAT, authorFor(player), cleanMessage);
             }
         } catch (Throwable e) {
             // Catches Errors too — see JdaBridge's Javadoc for why a missing/incompatible JDA
             // on the classpath surfaces as a LinkageError here, not a plain Exception.
-            LOGGER.error("Failed to relay chat message via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay chat message via SDLink", e);
         }
     }
 
@@ -174,8 +180,9 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             if (cfg.has("footerText")) t.footerText = cfg.get("footerText").getAsString();
             if (cfg.has("footerIconUrl")) t.footerIconUrl = cfg.get("footerIconUrl").getAsString();
             if (cfg.has("showTimestamp")) t.showTimestamp = cfg.get("showTimestamp").getAsBoolean();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // Config missing/malformed — fall back to the built-in defaults above.
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "Could not read discordEmbedTemplate config, using defaults", e);
         }
         return t;
     }
@@ -187,7 +194,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             send(MessageType.CUSTOM, authorFor(sender),
                 String.format("Private message to %s: %s", recipient.getName().getString(), message));
         } catch (Exception e) {
-            LOGGER.error("Failed to relay private message via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay private message via SDLink", e);
         }
     }
 
@@ -200,7 +207,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 String.format("%s has been %s%s", player.getName().getString(), action,
                     reason != null && !reason.isEmpty() ? " (Reason: " + reason + ")" : ""));
         } catch (Exception e) {
-            LOGGER.error("Failed to relay mute event via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay mute event via SDLink", e);
         }
     }
 
@@ -213,7 +220,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 String.format("%s %s%s", player.getName().getString(), status,
                     (isAfk && reason != null && !reason.isEmpty()) ? " (" + reason + ")" : ""));
         } catch (Exception e) {
-            LOGGER.error("Failed to relay AFK event via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay AFK event via SDLink", e);
         }
     }
 
@@ -223,7 +230,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         try {
             send(MessageType.JOIN, authorFor(player), player.getName().getString() + " joined the server");
         } catch (Exception e) {
-            LOGGER.error("Failed to relay join event via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay join event via SDLink", e);
         }
     }
 
@@ -233,7 +240,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         try {
             send(MessageType.LEAVE, authorFor(player), player.getName().getString() + " left the server");
         } catch (Exception e) {
-            LOGGER.error("Failed to relay quit event via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay quit event via SDLink", e);
         }
     }
 
@@ -244,7 +251,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             send(MessageType.ADVANCEMENTS, authorFor(player),
                 player.getName().getString() + " earned the advancement " + advancementName);
         } catch (Exception e) {
-            LOGGER.error("Failed to relay advancement event via SDLink: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay advancement event via SDLink", e);
         }
     }
 
@@ -257,7 +264,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             DiscordUser user = account.getDiscordUser();
             return user != null ? Optional.of(Long.toUnsignedString(user.getUserId())) : Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("SDLink linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink linked-account lookup failed for {}: {}", minecraftUuid, e.getMessage());
             return Optional.empty();
         }
     }
@@ -269,7 +276,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             MinecraftAccount account = MinecraftAccount.fromDiscordId(discordId);
             return account != null && account.isAccountVerified() ? Optional.of(account.getUuid()) : Optional.empty();
         } catch (Exception e) {
-            LOGGER.debug("SDLink reverse-account lookup failed for {}: {}", discordId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink reverse-account lookup failed for {}: {}", discordId, e.getMessage());
             return Optional.empty();
         }
     }
@@ -291,9 +298,12 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public boolean sendToChannel(String channelId, String message) {
         if (!isReady()) return false;
         try {
-            return JdaBridge.sendPlain(channelId, message);
+            boolean sent = JdaBridge.sendPlain(channelId, message);
+            NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: send to Discord channel '{}' {}",
+                channelId, sent ? "succeeded" : "failed");
+            return sent;
         } catch (Throwable e) {
-            LOGGER.error("Failed to send message to Discord channel {} via SDLink: {}", channelId, e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to send message to Discord channel " + channelId + " via SDLink", e);
             return false;
         }
     }
@@ -328,7 +338,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         static boolean sendPlain(String channelId, String message) {
             var channel = BotController.INSTANCE.getJDA().getTextChannelById(channelId);
             if (channel == null) {
-                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                NeoLog.warn(LOGGER, LogCategory.DISCORD, "SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
                 return false;
             }
             channel.sendMessage(message).queue();
@@ -348,7 +358,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                                            String footerIconUrl, boolean showTimestamp) {
             var channel = BotController.INSTANCE.getJDA().getTextChannelById(channelId);
             if (channel == null) {
-                LOGGER.warn("SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
+                NeoLog.warn(LOGGER, LogCategory.DISCORD, "SDLink: no text channel found with ID '{}' (bot may not be in that server, or the ID is wrong)", channelId);
                 return false;
             }
             var builder = new com.hypherionmc.sdlink.shaded.dv8tion.jda.api.EmbedBuilder();
@@ -362,7 +372,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 try {
                     builder.setColor(java.awt.Color.decode(colorHex));
                 } catch (NumberFormatException e) {
-                    LOGGER.debug("Invalid discordEmbedTemplate.color '{}': {}", colorHex, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.DISCORD, "Invalid discordEmbedTemplate.color '{}': {}", colorHex, e.getMessage());
                 }
             }
             if (footerText != null && !footerText.isBlank()) {
@@ -378,6 +388,6 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     @Override
     public void shutdown() {
-        LOGGER.info("Simple Discord Link integration shut down.");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "Simple Discord Link integration shut down.");
     }
 }

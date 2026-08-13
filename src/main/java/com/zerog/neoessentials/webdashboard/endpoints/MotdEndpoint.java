@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.endpoints;
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.motd.MotdManager;
 import net.minecraft.server.MinecraftServer;
@@ -54,6 +56,8 @@ public class MotdEndpoint implements HttpHandler {
         String method = exchange.getRequestMethod().toUpperCase();
         // Strip /api/motd prefix
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/motd", "");
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "MotdEndpoint request: {} {}", method, path);
 
         // MOTD content is server-visible to every player who connects — mutating it (or the
         // broadcast/rotation controls) requires ADMIN, matching every other config-writing
@@ -189,6 +193,7 @@ public class MotdEndpoint implements HttpHandler {
             }
             String switchError = mgr.switchProfile(body.get("name").getAsString());
             if (switchError != null) return error(switchError);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Active MOTD profile switched to '{}'", mgr.getActiveProfileName());
 
             JsonObject obj = new JsonObject();
             obj.addProperty("success", true);
@@ -259,6 +264,7 @@ public class MotdEndpoint implements HttpHandler {
             sent++;
         }
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "MOTD broadcast to {} players", sent);
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);
         obj.addProperty("playersNotified", sent);

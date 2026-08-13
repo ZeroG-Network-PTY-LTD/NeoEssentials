@@ -7,6 +7,8 @@ import net.neoforged.neoforge.server.permission.handler.IPermissionHandler;
 import net.neoforged.neoforge.server.permission.nodes.PermissionDynamicContext;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +62,7 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
      */
     public NeoEssentialsPermissionHandler(Collection<PermissionNode<?>> nodes) {
         this.registeredNodes = new HashSet<>(nodes);
-        LOGGER.info("[Permissions] NeoEssentialsPermissionHandler created with {} registered nodes", nodes.size());
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "[Permissions] NeoEssentialsPermissionHandler created with {} registered nodes", nodes.size());
     }
 
     @Override
@@ -91,13 +93,13 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
             if (PermissionSystem.isInitialized()) {
                 try {
                     boolean result = PermissionAPI.hasPermission(player.getUUID(), nodeName);
-                    LOGGER.debug("[NeoForgePermHandler] {} -> {} : {}", player.getScoreboardName(), nodeName, result);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] {} -> {} : {}", player.getScoreboardName(), nodeName, result);
                     @SuppressWarnings("unchecked")
                     T typed = (T) Boolean.valueOf(result);
                     return typed;
                 } catch (Exception e) {
-                    LOGGER.warn("[NeoForgePermHandler] Error checking '{}' for {}: {}",
-                            nodeName, player.getScoreboardName(), e.getMessage());
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] Error checking '{}' for {}: {}",
+                            nodeName, player.getScoreboardName(), e.getMessage(), e);
                 }
             }
         }
@@ -119,13 +121,13 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
             if (PermissionSystem.isInitialized()) {
                 try {
                     boolean result = PermissionAPI.hasPermission(playerUUID, nodeName);
-                    LOGGER.debug("[NeoForgePermHandler] (offline) {} -> {} : {}", playerUUID, nodeName, result);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] (offline) {} -> {} : {}", playerUUID, nodeName, result);
                     @SuppressWarnings("unchecked")
                     T typed = (T) Boolean.valueOf(result);
                     return typed;
                 } catch (Exception e) {
-                    LOGGER.warn("[NeoForgePermHandler] Error checking offline '{}' for {}: {}",
-                            nodeName, playerUUID, e.getMessage());
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] Error checking offline '{}' for {}: {}",
+                            nodeName, playerUUID, e.getMessage(), e);
                 }
             }
         }

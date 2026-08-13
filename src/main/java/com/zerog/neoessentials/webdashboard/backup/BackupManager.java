@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.backup;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +77,8 @@ public class BackupManager {
             throw new IllegalArgumentException("Invalid snapshot name. Use letters, numbers, - or _  (max 64 chars).");
         }
         if (targets == null || targets.isEmpty()) targets = new ArrayList<>(TARGET_PATHS.keySet());
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting backup snapshot '{}' (targets: {})", name, targets);
 
         Files.createDirectories(BACKUP_DIR);
         Path zipFile = BACKUP_DIR.resolve(name + ".zip");
@@ -191,6 +195,8 @@ public class BackupManager {
         Path zipFile = BACKUP_DIR.resolve(name + ".zip");
         if (!Files.exists(zipFile)) throw new IOException("Snapshot '" + name + "' not found.");
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting restore of snapshot '{}'", name);
+
         // Auto-backup current state before overwriting
         String preRestoreName = "pre-restore-" + System.currentTimeMillis();
         List<String> targets = getSnapshotTargets(zipFile);
@@ -271,7 +277,9 @@ public class BackupManager {
                 minimal.addProperty("filename", zip.getFileName().toString());
                 minimal.addProperty("name",     zip.getFileName().toString().replaceAll("\\.zip$", ""));
                 minimal.addProperty("created",  "unknown");
-                try { minimal.addProperty("sizeBytes", Files.size(zip)); } catch (IOException ignored) {}
+                try { minimal.addProperty("sizeBytes", Files.size(zip)); } catch (IOException ioEx) {
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read size of snapshot '{}'", zip, ioEx);
+                }
                 arr.add(minimal);
             }
         }
@@ -362,7 +370,9 @@ public class BackupManager {
                 manifest.getAsJsonArray("targets").forEach(e -> targets.add(e.getAsString()));
                 return targets;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read targets from manifest for '{}', falling back to all targets", zipFile, e);
+        }
         return new ArrayList<>(TARGET_PATHS.keySet());
     }
 

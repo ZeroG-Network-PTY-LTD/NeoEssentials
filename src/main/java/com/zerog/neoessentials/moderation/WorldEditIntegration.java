@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.moderation;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
@@ -28,6 +30,7 @@ public final class WorldEditIntegration {
             try {
                 available = ModList.get().isLoaded("worldedit");
             } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "Could not determine WorldEdit availability, assuming not installed", e);
                 available = false;
             }
         }
@@ -70,10 +73,10 @@ public final class WorldEditIntegration {
             // WorldEdit is installed but its API doesn't match what this integration was
             // written against (version/fork mismatch) — log once at debug, not an error, since
             // this is a soft integration and NeoEssentials' own wand still works fine.
-            LOGGER.debug("WorldEdit selection lookup failed (API mismatch?): {}", e.toString());
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "WorldEdit selection lookup failed (API mismatch?): {}", e.toString());
             return null;
         } catch (Exception e) {
-            LOGGER.debug("WorldEdit selection lookup failed: {}", e.toString());
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "WorldEdit selection lookup failed: {}", e.toString());
             return null;
         }
     }
@@ -89,8 +92,9 @@ public final class WorldEditIntegration {
                 Class<?> adapterClass = Class.forName(adapterClassName);
                 return adapterClass.getMethod("adaptPlayer", net.minecraft.server.level.ServerPlayer.class)
                     .invoke(null, player);
-            } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+            } catch (ClassNotFoundException | NoSuchMethodException e) {
                 // Try the next known adapter class name.
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "WorldEdit adapter class {} not usable, trying next", adapterClassName, e);
             }
         }
         return null;

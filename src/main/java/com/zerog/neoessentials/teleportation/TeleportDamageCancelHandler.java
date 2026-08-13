@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.teleportation;
 
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -54,7 +56,7 @@ public class TeleportDamageCancelHandler {
         if (!ConfigManager.getInstance().isCancelOnDamageEnabled()) return;
         Runnable cancelAction = pendingTeleports.get(player.getUUID());
         if (cancelAction != null) {
-            LOGGER.debug("Cancelling teleport for {} due to damage taken.", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Cancelling teleport for {} due to damage taken.", player.getName().getString());
             cancelAction.run();
             pendingTeleports.remove(player.getUUID());
         }

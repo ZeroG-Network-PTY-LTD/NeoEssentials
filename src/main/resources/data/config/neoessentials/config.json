@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 39,
+  "_configVersion": 40,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -31,9 +31,27 @@
     "discordIntegrationEnabled": true
   },
 
+  // Per-subsystem logging control. For each category:
+  //   "normal": routine info-level messages -> console + logs/latest.log (default: on)
+  //   "debug":  verbose trace messages      -> logs/debug.log only       (default: off)
+  // Warnings and errors are ALWAYS logged regardless of these settings — these toggles
+  // only control routine chatter and opt-in verbose tracing, never real problems.
+  // Reload in-game with /neoessentials reload after changing these.
   "logging": {
-    // Set true to enable verbose debug output in server logs
-    "enableDebugLogging": false
+    "categories": {
+      "chat":          { "normal": true, "debug": false },
+      "economy":       { "normal": true, "debug": false },
+      "permissions":   { "normal": true, "debug": false },
+      "teleportation": { "normal": true, "debug": false },
+      "moderation":    { "normal": true, "debug": false },
+      "auctionHouse":  { "normal": true, "debug": false },
+      "kits":          { "normal": true, "debug": false },
+      "webDashboard":  { "normal": true, "debug": false },
+      "discord":       { "normal": true, "debug": false },
+      "config":        { "normal": true, "debug": false },
+      "commands":      { "normal": true, "debug": false },
+      "general":       { "normal": true, "debug": false }
+    }
   },
 
   /* ----------------------------------------------------------------

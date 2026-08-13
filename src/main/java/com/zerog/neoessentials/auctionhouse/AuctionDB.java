@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.auctionhouse;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
@@ -168,6 +170,7 @@ public final class AuctionDB {
         try {
             return Integer.parseInt(id);
         } catch (NumberFormatException e) {
+            NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "parseIdSafe: non-numeric listing key '" + id + "', treating as 0", e);
             return 0;
         }
     }

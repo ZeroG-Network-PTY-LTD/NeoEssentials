@@ -5,6 +5,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.CommandEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +37,14 @@ public class AfkCommandHandler {
 
             // Skip excluded commands (from config)
             if (afkManager.getExcludedCommands().contains(commandName.toLowerCase())) {
-                LOGGER.debug("Command '{}' excluded from AFK activity tracking for {}",
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Command '{}' excluded from AFK activity tracking for {}",
                     commandName, player.getName().getString());
                 return;
             }
 
             // Update activity for non-excluded commands
             afkManager.updateActivity(player.getUUID());
-            LOGGER.debug("Command activity tracked for {}: /{}",
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Command activity tracked for {}: /{}",
                 player.getName().getString(), commandName);
         }
     }

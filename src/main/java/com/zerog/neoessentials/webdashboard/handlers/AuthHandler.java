@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -53,7 +55,7 @@ public class AuthHandler implements HttpHandler {
                 sendError(exchange, 404, "Not Found");
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling auth request", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error handling auth request", e);
             sendError(exchange, 500, "Internal Server Error");
         }
     }
@@ -72,22 +74,24 @@ public class AuthHandler implements HttpHandler {
                 sendError(exchange, 400, "Username is required");
                 return;
             }
-            
+
             // Check if player is online
             ServerPlayer player = server.getPlayerList().getPlayerByName(username);
             if (player == null) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard login rejected for '{}': player not online", username);
                 sendError(exchange, 401, "Player must be online on the server to authenticate");
                 return;
             }
-            
+
             // Check if player is OP (super admin)
             boolean isOp = server.getPlayerList().isOp(player.getGameProfile());
-            
+
             // Check permissions
             boolean hasViewPermission = isOp || PermissionAPI.hasPermission(player.getUUID(), DASHBOARD_VIEW_PERMISSION);
             boolean hasAdminPermission = isOp || PermissionAPI.hasPermission(player.getUUID(), DASHBOARD_ADMIN_PERMISSION);
-            
+
             if (!hasViewPermission) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard login rejected for '{}': missing view permission", username);
                 sendError(exchange, 403, "You don't have permission to access the dashboard");
                 return;
             }
@@ -116,11 +120,11 @@ public class AuthHandler implements HttpHandler {
             response.addProperty("authType", "minecraft");
             
             sendJson(exchange, 200, response.toString());
-            
-            LOGGER.info("Player {} authenticated to dashboard (admin: {})", username, hasAdminPermission);
-            
+
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Player {} authenticated to dashboard (admin: {})", username, hasAdminPermission);
+
         } catch (Exception e) {
-            LOGGER.error("Error during login", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during login", e);
             sendError(exchange, 500, "Authentication failed");
         }
     }
@@ -142,6 +146,7 @@ public class AuthHandler implements HttpHandler {
             if (session != null) {
                 sessions.remove(token);
             }
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session validation failed: {}", session == null ? "unknown token" : "expired");
             sendError(exchange, 401, "Invalid or expired token");
             return;
         }

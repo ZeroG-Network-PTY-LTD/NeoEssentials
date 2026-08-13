@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -107,6 +109,8 @@ public class FreezeManager {
         frozenPlayers.put(playerId, freeze);
         store.put(COLLECTION, playerId.toString(), toJson(freeze));
 
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying freeze: player={} ({}) reason={} by={}",
+            playerName, playerId, reason, frozenBy);
         LOGGER.info("Player {} ({}) frozen by {} for: {}", playerName, playerId, frozenBy, reason);
         return true;
     }
@@ -118,6 +122,7 @@ public class FreezeManager {
         FreezeEntry removed = frozenPlayers.remove(playerId);
         if (removed != null) {
             store.delete(COLLECTION, playerId.toString());
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Removing freeze for player {} ({})", removed.playerName, playerId);
 
             // Notify player if online
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();

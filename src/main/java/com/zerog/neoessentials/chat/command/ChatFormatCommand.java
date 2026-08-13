@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.chat.PlayerChatFormatManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -33,13 +35,13 @@ public class ChatFormatCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if chat module is enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
-            LOGGER.debug("Chat module is disabled, skipping chatformat command registration");
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Chat module is disabled, skipping chatformat command registration");
             return;
         }
 
         // Check if the chatformat command is enabled
         if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("chatformat")) {
-            LOGGER.debug("chatformat command is disabled, skipping registration");
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "chatformat command is disabled, skipping registration");
             return;
         }
 
@@ -56,7 +58,7 @@ public class ChatFormatCommand {
                             source.sendSuccess(() -> Component.literal(
                                 "§aSet custom chat format for §e" + target.getName().getString() + "§a."
                             ), true);
-                            LOGGER.info("[ChatFormat] {} set format for {} -> {}",
+                            NeoLog.info(LOGGER, LogCategory.CHAT, "[ChatFormat] {} set format for {} -> {}",
                                 source.getTextName(), target.getName().getString(), format);
                             return 1;
                         })

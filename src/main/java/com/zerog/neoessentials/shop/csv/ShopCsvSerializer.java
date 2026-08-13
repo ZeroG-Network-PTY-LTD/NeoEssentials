@@ -1,6 +1,10 @@
 package com.zerog.neoessentials.shop.csv;
 
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -18,6 +22,7 @@ import java.util.List;
  * <p>Blank {@code buy_price} / {@code sell_price} fields mean the operation is disabled.
  */
 public final class ShopCsvSerializer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopCsvSerializer.class);
 
     private static final String HEADER =
             "item_id,buy_price,sell_price,quantity,shop_type,owner_name,sign_x,sign_y,sign_z,total_sales";
@@ -85,8 +90,8 @@ public final class ShopCsvSerializer {
                 BigDecimal sellPrice = sellStr.isBlank() ? null : new BigDecimal(sellStr);
 
                 rows.add(new CsvRow(itemId, buyPrice, sellPrice, quantity, shopType, ownerName));
-            } catch (NumberFormatException ignored) {
-                // Skip malformed rows
+            } catch (NumberFormatException e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Skipping malformed CSV row: {}", line, e);
             }
         }
         return rows;

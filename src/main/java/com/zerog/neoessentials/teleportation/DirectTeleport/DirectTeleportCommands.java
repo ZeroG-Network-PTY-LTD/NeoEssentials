@@ -7,6 +7,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -24,6 +26,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Collection;
 
 public class DirectTeleportCommands {
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(DirectTeleportCommands.class);
     private static final String PERMISSION_TP     = "neoessentials.teleport.tp";
     private static final String PERMISSION_TPHERE = "neoessentials.teleport.tphere";
     private static final String PERMISSION_TPPOS  = "neoessentials.teleport.tppos";
@@ -108,6 +111,7 @@ public class DirectTeleportCommands {
                         Vec3 pos = coords.getPosition(ctx.getSource());
                         return teleportToCoordinates(ctx, player, pos.x, pos.y, pos.z);
                     } catch (CommandSyntaxException e) {
+                        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "tppos command failed to resolve coordinates: {}", e.getMessage());
                         ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed_coords", e.getMessage()));
                         return 0;
                     }
@@ -212,6 +216,7 @@ public class DirectTeleportCommands {
                 player.getName().getString(), target.getName().getString()), true);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportToPlayer command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed", e.getMessage()));
             return 0;
         }
@@ -226,6 +231,7 @@ public class DirectTeleportCommands {
                 player.getName().getString(), String.valueOf((int) x), String.valueOf((int) y), String.valueOf((int) z)), true);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportToCoordinates command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed_coords", e.getMessage()));
             return 0;
         }
@@ -243,6 +249,7 @@ public class DirectTeleportCommands {
                 player.getName().getString()));
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportPlayerHere command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed", e.getMessage()));
             return 0;
         }
@@ -275,6 +282,7 @@ public class DirectTeleportCommands {
                 String.valueOf(finalCount), player.getName().getString()), true);
             return count;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportAllPlayers command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.failed", e.getMessage()));
             return 0;
         }
@@ -303,6 +311,7 @@ public class DirectTeleportCommands {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.misc.top_success"), false);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportToTop command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.top_failed", e.getMessage()));
             return 0;
         }
@@ -330,6 +339,7 @@ public class DirectTeleportCommands {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.misc.jumpto_success"), false);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "jumpToTargetBlock command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.jumpto_failed", e.getMessage()));
             return 0;
         }
@@ -344,9 +354,11 @@ public class DirectTeleportCommands {
             RandomTeleportManager.getInstance().randomTeleport(player, locationName);
             return 1;
         } catch (CommandSyntaxException e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "randomTeleport command failed: {}", e.getMessage());
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_failed", e.getMessage()));
             return 0;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "randomTeleport command failed unexpectedly", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_failed", e.getMessage()));
             return 0;
         }
@@ -394,9 +406,11 @@ public class DirectTeleportCommands {
                     String.format("%.1f", player.getZ())), true);
             return 1;
         } catch (CommandSyntaxException e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "setTprLocation command requires a player source: {}", e.getMessage());
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.player_only"));
             return 0;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "setTprLocation command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.misc.settpr_failed", e.getMessage()));
             return 0;
         }
@@ -408,9 +422,11 @@ public class DirectTeleportCommands {
             boolean success = DirectTeleportManager.getInstance().teleportToOfflinePlayer(executor, playerName);
             return success ? 1 : 0;
         } catch (CommandSyntaxException e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToOfflinePlayer command requires a player source: {}", e.getMessage());
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.player_only"));
             return 0;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportToOfflinePlayer command failed", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.tpo_failed", e.getMessage()));
             return 0;
         }

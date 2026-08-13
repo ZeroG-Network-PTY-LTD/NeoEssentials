@@ -2,6 +2,8 @@ package com.zerog.neoessentials.teleportation.DirectTeleport;
 
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,6 +63,9 @@ public class DirectTeleportManager {
     public CompletableFuture<TeleportUtil.TeleportResult> teleportPlayerToPlayer(ServerPlayer executor, 
                                                                                 ServerPlayer player, 
                                                                                 ServerPlayer target) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayerToPlayer request: executor={} player={} target={}",
+            executor.getName().getString(), player.getName().getString(), target.getName().getString());
+
         // Save current location for /back command (for the player being teleported)
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
@@ -112,6 +117,9 @@ public class DirectTeleportManager {
     public CompletableFuture<TeleportUtil.TeleportResult> teleportPlayerToCoordinates(ServerPlayer executor,
                                                                                      ServerPlayer player,
                                                                                      double x, double y, double z) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportPlayerToCoordinates request: executor={} player={} target=({},{},{})",
+            executor.getName().getString(), player.getName().getString(), x, y, z);
+
         // Save current location for /back command (for the player being teleported)
         com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
@@ -163,6 +171,8 @@ public class DirectTeleportManager {
      * Teleport all players to a location (/tpall)
      */
     public void teleportAllPlayers(ServerPlayer executor, TeleportLocation targetLocation) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportAllPlayers request: executor={} target={}",
+            executor.getName().getString(), targetLocation.getLocationString());
         Collection<ServerPlayer> players = executor.getServer().getPlayerList().getPlayers();
         int totalPlayers = players.size();
         int excludingSelf = executor != null ? totalPlayers - 1 : totalPlayers;
@@ -255,6 +265,8 @@ public class DirectTeleportManager {
      * Teleport to offline player's last location (/tpo <offline_player>)
      */
     public boolean teleportToOfflinePlayer(ServerPlayer executor, String playerName) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToOfflinePlayer request: executor={} target={}",
+            executor.getName().getString(), playerName);
         try {
             // Get server for UUID lookup
             net.minecraft.server.MinecraftServer server = executor.getServer();

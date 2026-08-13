@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.economy.compat;
 
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class EconomyModifierManager {
     public void register(EconomyModifierProvider provider) {
         if (provider == null) return;
         providers.add(provider);
-        LOGGER.debug("[EconomyModifiers] Registered provider: {}", provider.getName());
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "[EconomyModifiers] Registered provider: {}", provider.getName());
     }
 
     // ── Sell multiplier ───────────────────────────────────────────────────────
@@ -75,7 +77,10 @@ public class EconomyModifierManager {
             try {
                 double v = p.getSellMultiplier(player);
                 if (v > best) best = v;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "getSellMultiplier: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return best;
     }
@@ -89,7 +94,9 @@ public class EconomyModifierManager {
                 com.google.gson.JsonObject eco = cfg.getAsJsonObject("economy");
                 if (eco.has("sellMultiplier")) return eco.get("sellMultiplier").getAsDouble();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "getGlobalSellMultiplier: failed to read config, falling back to 1.0", ignored);
+        }
         return 1.0;
     }
 
@@ -102,7 +109,10 @@ public class EconomyModifierManager {
         for (EconomyModifierProvider p : providers) {
             try {
                 if (p.isTaxExempt(player)) return true;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "isTaxExempt: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return false;
     }
@@ -125,7 +135,10 @@ public class EconomyModifierManager {
                     best = v;
                     overridden = true;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "getEffectiveTaxRate: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return best;
     }
@@ -143,7 +156,10 @@ public class EconomyModifierManager {
             try {
                 BigDecimal v = p.getMaxBalance(player);
                 if (v != null && v.compareTo(best) > 0) best = v;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "getMaxBalance: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return best;
     }
@@ -162,7 +178,10 @@ public class EconomyModifierManager {
                 BigDecimal v = p.getPayLimit(player);
                 // Higher limit wins (providers can expand the limit)
                 if (v != null && v.compareTo(best) > 0) best = v;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "getPayLimit: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return best;
     }
@@ -176,7 +195,10 @@ public class EconomyModifierManager {
         for (EconomyModifierProvider p : providers) {
             try {
                 if (p.hasNoPayCooldown(player)) return true;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "hasNoPayCooldown: provider " + p.getName() + " threw for player " + player, ignored);
+            }
         }
         return false;
     }

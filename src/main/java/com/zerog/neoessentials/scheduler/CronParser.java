@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.scheduler;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,6 +169,7 @@ public class CronParser {
             new CronParser(cronExpression);
             return true;
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Invalid cron expression '{}': {}", cronExpression, e.getMessage());
             return false;
         }
     }

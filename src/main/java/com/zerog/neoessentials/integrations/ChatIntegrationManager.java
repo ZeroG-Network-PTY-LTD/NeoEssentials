@@ -3,6 +3,8 @@ package com.zerog.neoessentials.integrations;
 import com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter;
 import com.zerog.neoessentials.integrations.impl.Mc2DiscordAdapter;
 import com.zerog.neoessentials.integrations.impl.SDLinkAdapter;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +74,7 @@ public class ChatIntegrationManager {
      * before doing anything, so it is safe to call unconditionally.
      */
     public static void initialize() {
-        LOGGER.info("Initializing chat integration adapters...");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "Initializing chat integration adapters...");
         clearAdapters();
 
         List<ChatIntegrationAdapter> candidates = List.of(
@@ -84,20 +86,21 @@ public class ChatIntegrationManager {
         int loaded = 0;
         for (ChatIntegrationAdapter adapter : candidates) {
             try {
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "Probing chat integration adapter candidate '{}'...", adapter.getName());
                 if (adapter.initialize()) {
                     registerAdapter(adapter);
                     loaded++;
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to initialize chat integration adapter '{}': {}",
-                    adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to initialize chat integration adapter '" +
+                    adapter.getName() + "'", e);
             }
         }
 
         if (loaded == 0) {
-            LOGGER.info("No external chat integration mods found. Running in standalone mode.");
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "No external chat integration mods found. Running in standalone mode.");
         } else {
-            LOGGER.info("Initialized {} chat integration adapter(s).", loaded);
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "Initialized {} chat integration adapter(s).", loaded);
         }
     }
 
@@ -110,13 +113,13 @@ public class ChatIntegrationManager {
             try {
                 adapter.shutdown();
             } catch (Exception e) {
-                LOGGER.error("Error shutting down chat integration adapter '{}': {}",
-                    adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error shutting down chat integration adapter '" +
+                    adapter.getName() + "'", e);
             }
         }
         clearAdapters();
         clearEventLog();
-        LOGGER.info("Chat integration adapters shut down.");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "Chat integration adapters shut down.");
     }
     /**
      * Register a chat integration adapter for a NeoForge mod
@@ -125,17 +128,17 @@ public class ChatIntegrationManager {
     public static void registerAdapter(ChatIntegrationAdapter adapter) {
         if (adapter != null && !adapters.contains(adapter)) {
             adapters.add(adapter);
-            LOGGER.info("Registered chat mod integration adapter: {}", adapter.getName());
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "Registered chat mod integration adapter: {}", adapter.getName());
         }
     }
-    
+
     /**
      * Unregister a chat integration adapter
      * @param adapter The adapter to unregister
      */
     public static void unregisterAdapter(ChatIntegrationAdapter adapter) {
         if (adapters.remove(adapter)) {
-            LOGGER.info("Unregistered chat mod integration adapter: {}", adapter.getName());
+            NeoLog.info(LOGGER, LogCategory.DISCORD, "Unregistered chat mod integration adapter: {}", adapter.getName());
         }
     }
     
@@ -150,11 +153,14 @@ public class ChatIntegrationManager {
     public static void broadcastPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
         String targetCh = (discordChannelId != null && !discordChannelId.isEmpty()) ? discordChannelId : channel;
         recordEvent("chat", player.getName().getString(), null, targetCh, message);
+        NeoLog.debug(LOGGER, LogCategory.DISCORD, "Broadcasting player chat from '{}' in channel '{}' (discordChannelId={}) to {} adapter(s)",
+            player.getName().getString(), channel, discordChannelId, adapters.size());
         for (ChatIntegrationAdapter adapter : adapters) {
             try {
                 adapter.onPlayerChat(player, channel, message, formattedMessage, discordChannelId);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling player chat", e);
             }
         }
     }
@@ -171,7 +177,8 @@ public class ChatIntegrationManager {
             try {
                 adapter.onPrivateMessage(sender, recipient, message);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling a private message", e);
             }
         }
     }
@@ -189,7 +196,8 @@ public class ChatIntegrationManager {
             try {
                 adapter.onPlayerMute(player, reason, isMuted);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling a mute event", e);
             }
         }
     }
@@ -207,7 +215,8 @@ public class ChatIntegrationManager {
             try {
                 adapter.onAfkStatusChange(player, isAfk, reason);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling an AFK status change", e);
             }
         }
     }
@@ -222,7 +231,8 @@ public class ChatIntegrationManager {
             try {
                 adapter.onPlayerJoin(player);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling a player join event", e);
             }
         }
     }
@@ -237,7 +247,8 @@ public class ChatIntegrationManager {
             try {
                 adapter.onPlayerQuit(player);
             } catch (Exception e) {
-                LOGGER.error("Error in chat integration adapter {}: {}", adapter.getName(), e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.DISCORD, "Error in chat integration adapter " +
+                    adapter.getName() + " while handling a player quit event", e);
             }
         }
     }
@@ -307,8 +318,13 @@ public class ChatIntegrationManager {
     public static boolean sendToChannel(String channelId, String message) {
         for (ChatIntegrationAdapter adapter : adapters) {
             if (!adapter.isReady()) continue;
-            if (adapter.sendToChannel(channelId, message)) return true;
+            if (adapter.sendToChannel(channelId, message)) {
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "Sent message to Discord channel '{}' via adapter '{}'",
+                    channelId, adapter.getName());
+                return true;
+            }
         }
+        NeoLog.debug(LOGGER, LogCategory.DISCORD, "No ready adapter could send a message to Discord channel '{}'", channelId);
         return false;
     }
 
@@ -333,6 +349,6 @@ public class ChatIntegrationManager {
      */
     public static void clearAdapters() {
         adapters.clear();
-        LOGGER.info("Cleared all chat mod integration adapters");
+        NeoLog.info(LOGGER, LogCategory.DISCORD, "Cleared all chat mod integration adapters");
     }
 }

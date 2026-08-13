@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.moderation.BanManager;
 import com.zerog.neoessentials.moderation.KickManager;
 import com.zerog.neoessentials.chat.MuteManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.WarnEntry;
 import com.zerog.neoessentials.moderation.WarnManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -125,7 +127,9 @@ public class ModHistoryCommand {
         try {
             var profile = ctx.getSource().getServer().getProfileCache().get(playerName);
             if (profile.isPresent()) return profile.get().getId();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Profile cache lookup failed for player name {}", playerName, e);
+        }
         return null;
     }
 }

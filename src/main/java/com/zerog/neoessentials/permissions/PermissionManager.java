@@ -9,6 +9,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ public class PermissionManager {
         this.users.clear();
         this.permissionCache.clear();
         PermissionStorage.load(this);
-        LOGGER.info("Permissions reloaded, cache cleared");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Permissions reloaded, cache cleared");
     }
 
     /**
@@ -143,7 +145,7 @@ public class PermissionManager {
         // any state (group changes, temp perms) applied to it in between.
         return users.computeIfAbsent(uuid, id -> {
             PermissionUser user = new PermissionUser(id, defaultGroup);
-            LOGGER.info("Auto-created user {} with default group '{}'", id, defaultGroup);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Auto-created user {} with default group '{}'", id, defaultGroup);
             // Schedule async save to avoid blocking (don't save synchronously on every getUser call)
             // The save will happen on server shutdown or manual /pex reload
             return user;
@@ -188,7 +190,7 @@ public class PermissionManager {
 
 
     private boolean computePermission(UUID uuid, String permission, PermissionContext context) {
-        LOGGER.debug("Computing permission '{}' for UUID {} (context={})", permission, uuid,
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Computing permission '{}' for UUID {} (context={})", permission, uuid,
                 context == PermissionContext.EMPTY ? "NONE" : context.worldId);
         PermissionUser user = getUser(uuid);
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : defaultGroup;
@@ -205,7 +207,7 @@ public class PermissionManager {
                         ctxVal = wildcardLookup(entry.getValue(), permission);
                     }
                     if (Boolean.FALSE.equals(ctxVal)) {
-                        LOGGER.debug("  -> Denied by user contextual permission ({})", entry.getKey());
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Denied by user contextual permission ({})", entry.getKey());
                         return false;
                     }
                 }
@@ -214,13 +216,13 @@ public class PermissionManager {
 
         // ── 3. Regular negative permissions (user) ───────────────────────────
         if (user != null && hasNegativePermission(user.getPermissions(), permission)) {
-            LOGGER.debug("  -> Denied by user negative permission");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Denied by user negative permission");
             return false;
         }
 
         // ── 5. User temporary permissions ────────────────────────────────────
         if (user != null && hasTempPermissionWithWildcards(user.getTempPermissions(), permission)) {
-            LOGGER.debug("  -> Granted by user temp permission");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Granted by user temp permission");
             return applyCondition(uuid, permission, context, user.getCondition(permission));
         }
 
@@ -234,7 +236,7 @@ public class PermissionManager {
                         ctxVal = wildcardLookup(entry.getValue(), permission);
                     }
                     if (Boolean.TRUE.equals(ctxVal)) {
-                        LOGGER.debug("  -> Granted by user contextual permission ({})", entry.getKey());
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Granted by user contextual permission ({})", entry.getKey());
                         return applyCondition(uuid, permission, context, user.getCondition(permission));
                     }
                 }
@@ -243,7 +245,7 @@ public class PermissionManager {
 
         // ── 7. Regular user permissions ───────────────────────────────────────
         if (user != null && hasPermissionWithWildcards(user.getPermissions(), permission)) {
-            LOGGER.debug("  -> Granted by user permission");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Granted by user permission");
             return applyCondition(uuid, permission, context, user.getCondition(permission));
         }
 
@@ -256,7 +258,7 @@ public class PermissionManager {
         // always lose to the parent's deny. That is backwards from "closest group wins",
         // the precedence essentially every other permission system (LuckPerms included) uses.
         Boolean result = resolveGroupPermissionLevel(groupName, permission, context, new HashSet<>());
-        LOGGER.debug("  -> Group permission check result: {}", result);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Group permission check result: {}", result);
         return Boolean.TRUE.equals(result);
     }
 
@@ -335,7 +337,7 @@ public class PermissionManager {
             }
             return PermissionConditionManager.getInstance().evaluate(condExpr, context, player);
         } catch (Exception e) {
-            LOGGER.warn("Condition evaluation failed for node '{}': {}", permission, e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS, "Condition evaluation failed for node '{}': {}", permission, e.getMessage());
             return true; // fail-open: if we can't evaluate, grant
         }
     }
@@ -361,7 +363,7 @@ public class PermissionManager {
     private void cleanExpiredCache() {
     long cacheTtl = getCacheTtlMs();
     permissionCache.entrySet().removeIf(entry -> entry.getValue().isExpired(cacheTtl));
-    LOGGER.debug("Cleaned permission cache, {} entries remaining", permissionCache.size());
+    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Cleaned permission cache, {} entries remaining", permissionCache.size());
     }
     
     /**
@@ -369,7 +371,7 @@ public class PermissionManager {
      */
     public void clearCache() {
         permissionCache.clear();
-        LOGGER.debug("Permission cache cleared");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Permission cache cleared");
     }
     
     /**
@@ -458,21 +460,21 @@ public class PermissionManager {
 
     private boolean hasPermissionWithWildcards(Set<String> perms, String permission) {
         for (String perm : perms) {
-            LOGGER.debug("Checking perm '{}' against permission '{}'", perm, permission);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Checking perm '{}' against permission '{}'", perm, permission);
             if (perm.equals(permission)) {
-                LOGGER.debug("  -> Exact match!");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Exact match!");
                 return true;
             }
             if (perm.endsWith(".*")) {
                 String prefix = perm.substring(0, perm.length() - 2);
-                LOGGER.debug("  -> Wildcard check: does '{}' start with '{}'?", permission, prefix + ".");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Wildcard check: does '{}' start with '{}'?", permission, prefix + ".");
                 if (permission.startsWith(prefix + ".") && wildcardCanGrant(prefix, permission)) {
-                    LOGGER.debug("  -> Wildcard match!");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Wildcard match!");
                     return true;
                 }
             }
         }
-        LOGGER.debug("No match found for permission '{}'", permission);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"No match found for permission '{}'", permission);
         return false;
     }
 
@@ -624,7 +626,7 @@ public class PermissionManager {
                             String playerName = online != null
                                 ? online.getGameProfile().getName()
                                 : user.getUuid().toString();
-                            LOGGER.info("[TempPerms] Expired user temp permission: {} -> {}", playerName, node);
+                            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"[TempPerms] Expired user temp permission: {} -> {}", playerName, node);
                             PermissionAuditLogger.log("SYSTEM",
                                 PermissionAuditLogger.USER_TEMP_PERM_EXPIRED, playerName, "node=" + node);
                         }
@@ -642,7 +644,7 @@ public class PermissionManager {
                 clearCache();
                 for (Map.Entry<String, Long> e : snapshot.entrySet()) {
                     if (e.getValue() <= now) {
-                        LOGGER.info("[TempPerms] Expired group temp permission: {} -> {}",
+                        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"[TempPerms] Expired group temp permission: {} -> {}",
                             group.getName(), e.getKey());
                         PermissionAuditLogger.log("SYSTEM",
                             PermissionAuditLogger.GROUP_TEMP_PERM_EXPIRED,
@@ -653,9 +655,9 @@ public class PermissionManager {
         }
 
         if (total > 0) {
-            LOGGER.info("[TempPerms] Purged {} expired temporary permission(s)", total);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"[TempPerms] Purged {} expired temporary permission(s)", total);
             try { PermissionStorage.save(this); }
-            catch (Exception e) { LOGGER.warn("[TempPerms] Failed to persist after purge: {}", e.getMessage()); }
+            catch (Exception e) { NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "[TempPerms] Failed to persist after purge: {}", e.getMessage(), e); }
         }
         return total;
     }
