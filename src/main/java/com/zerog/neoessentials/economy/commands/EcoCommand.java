@@ -114,7 +114,7 @@ public class EcoCommand {
                     .parse(new com.mojang.brigadier.StringReader(playerName));
                 ServerPlayer target = selector.findSinglePlayer(ctx.getSource());
                 uuid = target.getUUID();
-                validPlayerName = target.getGameProfile().getName();
+                validPlayerName = target.getGameProfile().name();
             } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
                 return 0;
