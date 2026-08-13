@@ -81,7 +81,11 @@ public class ConfigSplitter {
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
         put("main.json",          1);
         put("commands.json",      1);
-        put("chat.json",          1);
+        put("chat.json",          2);  // v2 — chat-format/formatTemplates defaults patched to use
+                                        //       {neoessentials_displayname} instead of
+                                        //       {neoessentials_username}/{neoessentials_name} so /nick
+                                        //       actually shows up in chat (see
+                                        //       ConfigManager.patchLegacyNicknameChatDefaults)
         put("teleportation.json", 1);
         put("moderation.json",    1);
         put("items.json",         1);
@@ -633,6 +637,13 @@ public class ConfigSplitter {
 
         // Strip legacy _comment / _doc_* / _step* keys left over from older file formats
         stripLegacyCommentKeys(onDisk);
+
+        // Value-level fix for chat-format/formatTemplates defaults that mergeJsonObjects() above
+        // can never touch (the keys already exist on disk from whenever the file was generated —
+        // merges only add missing keys, they never overwrite an existing value).
+        if ("chat.json".equals(fileName) && ConfigManager.patchLegacyNicknameChatDefaults(onDisk)) {
+            LOGGER.info("Split config 'chat.json': upgraded untouched chat-format defaults to show nicknames.");
+        }
 
         onDisk.addProperty("_configVersion", expectedVersion);
         try {

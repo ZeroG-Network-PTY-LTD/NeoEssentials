@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 38,
+  "_configVersion": 39,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -968,13 +968,13 @@
       // Active template: 'default' | 'rpg' | 'modern' | 'minimal' | 'detailed' | 'ranked' | 'custom'
       "activeTemplate": "default",
       "templates": {
-        "default": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
-        "rpg": "&7[Lv.{neoessentials_level}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
-        "modern": "● {neoessentials_prefix}{neoessentials_name} &8› &r{MESSAGE}",
-        "minimal": "{neoessentials_name}: {MESSAGE}",
-        "detailed": "&7[{neoessentials_world}] &r<{neoessentials_prefix}{neoessentials_name}{neoessentials_suffix}&r> {MESSAGE}",
-        "ranked": "&7[{neoessentials_group}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
-        "custom": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}"
+        "default": "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}",
+        "rpg": "&7[Lv.{neoessentials_level}] {neoessentials_prefix}{neoessentials_displayname}&r: {MESSAGE}",
+        "modern": "● {neoessentials_prefix}{neoessentials_displayname} &8› &r{MESSAGE}",
+        "minimal": "{neoessentials_displayname}: {MESSAGE}",
+        "detailed": "&7[{neoessentials_world}] &r<{neoessentials_prefix}{neoessentials_displayname}{neoessentials_suffix}&r> {MESSAGE}",
+        "ranked": "&7[{neoessentials_group}] {neoessentials_prefix}{neoessentials_displayname}&r: {MESSAGE}",
+        "custom": "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}"
       }
     },
 
