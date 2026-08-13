@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +46,11 @@ public class DashboardRegistrationManager {
     private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
 
     private DashboardRegistrationManager() {
-        LOGGER.info("Initializing DashboardRegistrationManager...");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Initializing DashboardRegistrationManager...");
         this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
         migrateLegacyFileIfNeeded();
         loadRegistrations();
-        LOGGER.info("DashboardRegistrationManager initialized with {} existing registration(s)", registrations.size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "DashboardRegistrationManager initialized with {} existing registration(s)", registrations.size());
     }
 
     public static DashboardRegistrationManager getInstance() {
@@ -97,7 +99,7 @@ public class DashboardRegistrationManager {
     public String startRegistration(UUID minecraftUuid, String minecraftUsername) {
         // Check if already registered
         if (isRegistered(minecraftUuid)) {
-            LOGGER.warn("Player {} already has a registered dashboard account", minecraftUsername);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Player {} already has a registered dashboard account", minecraftUsername);
             return null;
         }
 
@@ -114,7 +116,7 @@ public class DashboardRegistrationManager {
 
         pendingRegistrations.put(token, pending);
 
-        LOGGER.info("Started dashboard registration for player {}: token={}", minecraftUsername, token);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Started dashboard registration for player {}", minecraftUsername);
 
         return token;
     }
@@ -126,26 +128,26 @@ public class DashboardRegistrationManager {
         // Get pending registration
         PendingRegistration pending = pendingRegistrations.get(token);
         if (pending == null) {
-            LOGGER.warn("Invalid or expired registration token: {}", token);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid or expired registration token used");
             return null;
         }
 
         // Check expiry
         if (System.currentTimeMillis() > pending.getExpiresAt()) {
             pendingRegistrations.remove(token);
-            LOGGER.warn("Registration token expired for player: {}", pending.getMinecraftUsername());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Registration token expired for player: {}", pending.getMinecraftUsername());
             return null;
         }
 
         // Check if username is already taken
         if (getRegistrationByUsername(dashboardUsername) != null) {
-            LOGGER.warn("Dashboard username already taken: {}", dashboardUsername);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard username already taken: {}", dashboardUsername);
             return null;
         }
 
         // Validate password strength
         if (password == null || password.length() < 8) {
-            LOGGER.warn("Password too weak for dashboard registration: {}", pending.getMinecraftUsername());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Password too weak for dashboard registration: {}", pending.getMinecraftUsername());
             return null;
         }
 
@@ -169,12 +171,12 @@ public class DashboardRegistrationManager {
             User.Role role = determineRole(pending.getMinecraftUuid());
             authManager.createUser(dashboardUsername, password, null, role);
 
-            LOGGER.info("Completed dashboard registration for {} (Minecraft: {})",
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Completed dashboard registration for {} (Minecraft: {})",
                 dashboardUsername, pending.getMinecraftUsername());
 
             return registration;
         } catch (Exception e) {
-            LOGGER.error("Failed to create user account for registration: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to create user account for registration", e);
             // Rollback registration
             registrations.remove(pending.getMinecraftUuid());
             store.delete(COLLECTION, pending.getMinecraftUuid().toString());
@@ -194,7 +196,7 @@ public class DashboardRegistrationManager {
             .orElse(null);
 
         if (pending == null) {
-            LOGGER.warn("No pending registration found for UUID: {}", playerUuid);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "No pending registration found for UUID: {}", playerUuid);
             return null;
         }
 
@@ -212,7 +214,7 @@ public class DashboardRegistrationManager {
     public DashboardAccountRegistration registerWithDiscord(UUID minecraftUuid, String minecraftUsername,
                                                             String discordId, String discordUsername) {
         if (isRegistered(minecraftUuid)) {
-            LOGGER.warn("Player {} already has a registered dashboard account", minecraftUsername);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Player {} already has a registered dashboard account", minecraftUsername);
             return null;
         }
 
@@ -221,7 +223,7 @@ public class DashboardRegistrationManager {
 
         // If the Minecraft username is already taken as a dashboard username by a different MC account, append _mc
         if (getRegistrationByUsername(dashboardUsername) != null) {
-            LOGGER.warn("Dashboard username '{}' already taken during Discord registration for {}", dashboardUsername, minecraftUsername);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard username '{}' already taken during Discord registration for {}", dashboardUsername, minecraftUsername);
             return null;
         }
 
@@ -250,12 +252,12 @@ public class DashboardRegistrationManager {
             User.Role role = determineRole(minecraftUuid);
             authManager.createUser(dashboardUsername, unusablePassword, discordId + "@discord.oauth", role);
 
-            LOGGER.info("Discord-registered dashboard account for {} (MC: {}, Discord: {})",
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord-registered dashboard account for {} (MC: {}, Discord: {})",
                 dashboardUsername, minecraftUsername, discordUsername);
 
             return registration;
         } catch (Exception e) {
-            LOGGER.error("Failed to create user account for Discord registration: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to create user account for Discord registration", e);
             // Rollback
             registrations.remove(minecraftUuid);
             store.delete(COLLECTION, minecraftUuid.toString());
@@ -278,7 +280,7 @@ public class DashboardRegistrationManager {
 
         saveRegistration(registration);
 
-        LOGGER.info("Linked Discord account {} to dashboard user {}",
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Linked Discord account {} to dashboard user {}",
             discordUsername, registration.getDashboardUsername());
 
         return true;
@@ -299,7 +301,7 @@ public class DashboardRegistrationManager {
 
         saveRegistration(registration);
 
-        LOGGER.info("Unlinked Discord account from dashboard user {}",
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Unlinked Discord account from dashboard user {}",
             registration.getDashboardUsername());
 
         return true;
@@ -365,7 +367,7 @@ public class DashboardRegistrationManager {
                 registrations.put(reg.getMinecraftUuid(), reg);
             }
         }
-        LOGGER.info("Loaded {} dashboard registrations", registrations.size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Loaded {} dashboard registrations", registrations.size());
     }
 
     /**
@@ -401,11 +403,11 @@ public class DashboardRegistrationManager {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to migrate legacy dashboard_registrations.json: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to migrate legacy dashboard_registrations.json", e);
         }
 
         if (migrated > 0) {
-            LOGGER.info("DashboardRegistrationManager: migrated {} registration(s) from legacy file into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "DashboardRegistrationManager: migrated {} registration(s) from legacy file into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

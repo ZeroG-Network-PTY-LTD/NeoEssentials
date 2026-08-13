@@ -5,6 +5,8 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.players.NameAndId;
 import org.slf4j.Logger;
@@ -49,6 +51,8 @@ public class EconomyEndpoint implements HttpHandler {
         String method = exchange.getRequestMethod().toUpperCase();
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/economy/?", "");
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "EconomyEndpoint request: {} target='{}'", method, path);
+
         try {
             if (path.isEmpty()) {
                 sendJson(exchange, 400, error("Path must be /api/economy/{username}"));
@@ -57,6 +61,7 @@ public class EconomyEndpoint implements HttpHandler {
 
             UUID uuid = resolveUuid(path);
             if (uuid == null) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Economy request for unknown player '{}'", path);
                 sendJson(exchange, 404, error("Player '" + path + "' not found"));
                 return;
             }
@@ -99,6 +104,7 @@ public class EconomyEndpoint implements HttpHandler {
         try {
             amount = BigDecimal.valueOf(body.get("amount").getAsDouble());
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Economy adjustment rejected: 'amount' not numeric for player '{}'", username);
             sendJson(exchange, 400, error("'amount' must be a number"));
             return;
         }
@@ -120,10 +126,12 @@ public class EconomyEndpoint implements HttpHandler {
         }
 
         if (!success) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Economy adjustment rejected for player '{}': action={} amount={}", username, action, amount);
             sendJson(exchange, 400, error("Balance adjustment rejected (insufficient funds or over limit)"));
             return;
         }
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Economy adjustment applied for player '{}': action={} amount={}", username, action, amount);
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);
         obj.addProperty("username", username);

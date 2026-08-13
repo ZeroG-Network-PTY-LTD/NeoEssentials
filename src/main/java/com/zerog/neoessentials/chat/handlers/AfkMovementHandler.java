@@ -6,6 +6,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +120,7 @@ public class AfkMovementHandler {
         // Validate rotation values - skip this tick if invalid (prevents NaN errors)
         if (Float.isNaN(currentYaw) || Float.isInfinite(currentYaw) ||
             Float.isNaN(currentPitch) || Float.isInfinite(currentPitch)) {
-            LOGGER.debug("Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Skipping movement check for {} due to invalid rotation (NaN/Infinite)",
                 player.getName().getString());
             return;
         }
@@ -162,7 +164,7 @@ public class AfkMovementHandler {
             UUID uuid = player.getUUID();
             lastPositions.remove(uuid);
             tickCounters.remove(uuid);
-            LOGGER.debug("Movement tracking cleanup for: {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Movement tracking cleanup for: {}", player.getName().getString());
         }
     }
 
@@ -179,7 +181,7 @@ public class AfkMovementHandler {
 
             lastPositions.put(uuid, new PlayerPosition(position, yaw, pitch));
             tickCounters.put(uuid, 0);
-            LOGGER.debug("Movement tracking initialized for: {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Movement tracking initialized for: {}", player.getName().getString());
         }
     }
 

@@ -8,6 +8,8 @@ import com.zerog.neoessentials.shop.ShopTransaction.TransactionResult;
 import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -581,7 +583,9 @@ public class ShopHologramManager {
                     if (entity != null) {
                         entity.getPersistentData().putString(NBT_SHOP_KEY, shopKey);
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to tag entity {} with shop key '{}'", uuid, shopKey, e);
+                }
             }
         }
         // The clickable hitbox is the entity that actually receives interact/attack
@@ -592,7 +596,9 @@ public class ShopHologramManager {
                 if (entity != null) {
                     entity.getPersistentData().putString(NBT_SHOP_KEY, shopKey);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to tag interaction entity with shop key '{}'", shopKey, e);
+            }
         }
     }
     private static java.util.List<HologramLine> buildShopLines(ShopData shop) {
@@ -627,7 +633,9 @@ public class ShopHologramManager {
             for (ServerLevel level : server.getAllLevels()) {
                 if (HologramRenderer.dimensionKey(level).equals(dimensionKey)) return level;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve level for dimension '{}'", dimensionKey, e);
+        }
         return null;
     }
 }

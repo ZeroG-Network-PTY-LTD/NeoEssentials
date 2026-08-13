@@ -11,6 +11,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import com.zerog.neoessentials.util.ResourceLocationHelper;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +29,8 @@ import java.util.concurrent.TimeUnit;
  * Kits can have cooldowns, permission requirements, and usage limits.
  */
 public class Kit {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Kit.class);
+
     private final String name;
     private final String displayName;
     private final String description;
@@ -182,6 +188,9 @@ public class Kit {
                     } catch (Exception e) {
                         // Fall back to the legacy CUSTOM_DATA-only field if the server registry
                         // isn't available yet (e.g. AuctionComponentSerializer not initialized).
+                        NeoLog.debug(LOGGER, LogCategory.KITS,
+                            "Full component serialization failed for item in kit, falling back to legacy CUSTOM_DATA: {}",
+                            e.getMessage());
                         if (item.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
                             var customData = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
                             if (customData != null) {
@@ -193,6 +202,8 @@ public class Kit {
                     itemsArray.add(itemJson);
                 } catch (Exception e) {
                     // Skip individual items that fail to serialize; don't abort the whole kit
+                    NeoLog.error(LOGGER, LogCategory.KITS,
+                        "Failed to serialize item '" + item + "' for kit '" + name + "'; item will be dropped from the saved kit", e);
                 }
             }
         }
@@ -263,6 +274,8 @@ public class Kit {
                             stack.applyComponents(components);
                         } catch (Exception e) {
                             // Skip invalid/unresolvable component data
+                            NeoLog.error(LOGGER, LogCategory.KITS,
+                                "Failed to apply saved components to item '" + itemString + "' in kit '" + name + "'; item components may be incomplete", e);
                         }
                     } else if (itemJson.has("nbt")) {
                         // Legacy format (kits saved before this fix) — CUSTOM_DATA only.
@@ -272,12 +285,16 @@ public class Kit {
                                      net.minecraft.world.item.component.CustomData.of(nbt));
                         } catch (Exception e) {
                             // Skip invalid NBT
+                            NeoLog.error(LOGGER, LogCategory.KITS,
+                                "Failed to parse legacy NBT for item '" + itemString + "' in kit '" + name + "'; item data may be incomplete", e);
                         }
                     }
 
                     items.add(stack);
                 } catch (Throwable e) {
                     // Skip invalid items
+                    NeoLog.error(LOGGER, LogCategory.KITS,
+                        "Failed to deserialize item entry in kit '" + name + "'; item will be missing from the kit", e);
                 }
             }
         }

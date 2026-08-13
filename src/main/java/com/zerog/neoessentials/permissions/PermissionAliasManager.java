@@ -2,6 +2,8 @@ package com.zerog.neoessentials.permissions;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +74,7 @@ public class PermissionAliasManager {
                 aliases.put(alias, canonical);
             }
         }
-        LOGGER.info("Loaded {} permission alias(es) from storage.", aliases.size());
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Loaded {} permission alias(es) from storage.", aliases.size());
     }
 
     /**
@@ -105,7 +107,12 @@ public class PermissionAliasManager {
     public String resolve(String node) {
         if (node == null) return null;
         String lower = node.toLowerCase().trim();
-        return aliases.getOrDefault(lower, lower);
+        String canonical = aliases.get(lower);
+        if (canonical != null) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Resolved permission alias '{}' -> '{}'", lower, canonical);
+            return canonical;
+        }
+        return lower;
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────────
@@ -170,12 +177,12 @@ public class PermissionAliasManager {
                 migrated++;
             }
         } catch (Exception e) {
-            LOGGER.warn("Failed to migrate legacy permission_aliases.json: {}", e.getMessage());
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to migrate legacy permission_aliases.json: {}", e.getMessage(), e);
             return;
         }
 
         if (migrated > 0) {
-            LOGGER.info("PermissionAliasManager: migrated {} permission alias(es) from legacy file into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "PermissionAliasManager: migrated {} permission alias(es) from legacy file into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

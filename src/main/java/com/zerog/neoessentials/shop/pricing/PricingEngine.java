@@ -9,6 +9,8 @@ import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.shop.pricing.rules.BulkTierRule;
 import com.zerog.neoessentials.shop.pricing.rules.SupplyDemandRule;
 import com.zerog.neoessentials.shop.pricing.rules.TimeDiscountRule;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,7 +152,9 @@ public class PricingEngine {
                 JsonObject shop = cfg.getAsJsonObject("shop");
                 if (shop.has("pricing")) return shop.getAsJsonObject("pricing");
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read shop.pricing config", e);
+        }
         return null;
     }
 }

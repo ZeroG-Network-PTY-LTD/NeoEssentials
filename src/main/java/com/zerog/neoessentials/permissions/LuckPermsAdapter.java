@@ -15,6 +15,8 @@ import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.util.Tristate;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,17 +51,17 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 .orElse("unknown");
 
         if (luckPermsLoaded) {
-            LOGGER.info("LuckPerms detected — version: {}", detectedVersion);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"LuckPerms detected — version: {}", detectedVersion);
             try {
                 this.luckPermsApi = LuckPermsProvider.get();
-                LOGGER.info("LuckPerms API loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"LuckPerms API loaded successfully");
                 registerEventListeners();
             } catch (Exception e) {
-                LOGGER.error("Failed to load LuckPerms API: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to load LuckPerms API: {}", e.getMessage(), e);
                 this.luckPermsApi = null;
             }
         } else {
-            LOGGER.debug("LuckPerms mod not detected");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms mod not detected");
         }
     }
 
@@ -76,7 +78,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         // A specific user's cached data was recalculated (e.g. added to a new group)
         userDataSubscription = luckPermsApi.getEventBus().subscribe(UserDataRecalculateEvent.class, event -> {
             UUID uuid = event.getUser().getUniqueId();
-            LOGGER.debug("LuckPerms UserDataRecalculate for {} — refreshing command tree", uuid);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms UserDataRecalculate for {} — refreshing command tree", uuid);
             resendCommandsToPlayer(uuid);
         });
 
@@ -84,7 +86,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         // All online members of that group need their command tree refreshed.
         groupDataSubscription = luckPermsApi.getEventBus().subscribe(GroupDataRecalculateEvent.class, event -> {
             String groupName = event.getGroup().getName();
-            LOGGER.debug("LuckPerms GroupDataRecalculate for group '{}' — refreshing command trees", groupName);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms GroupDataRecalculate for group '{}' — refreshing command trees", groupName);
             resendCommandsToGroupMembers(groupName);
         });
     }
@@ -101,7 +103,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             ServerPlayer player = server.getPlayerList().getPlayer(uuid);
             if (player != null) {
                 server.getCommands().sendCommands(player);
-                LOGGER.debug("Command tree re-sent to player {} after LuckPerms permission change", uuid);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Command tree re-sent to player {} after LuckPerms permission change", uuid);
             }
         });
     }
@@ -120,10 +122,10 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                     User lpUser = luckPermsApi.getUserManager().getUser(player.getUUID());
                     if (lpUser != null && lpUser.getPrimaryGroup().equalsIgnoreCase(groupName)) {
                         server.getCommands().sendCommands(player);
-                        LOGGER.debug("Command tree re-sent to {} (group '{}')", player.getName().getString(), groupName);
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Command tree re-sent to {} (group '{}')", player.getName().getString(), groupName);
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("Could not refresh commands for {}: {}", player.getName().getString(), e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not refresh commands for {}: {}", player.getName().getString(), e.getMessage());
                 }
             }
         });
@@ -149,14 +151,14 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                             luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, java.util.concurrent.TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    LOGGER.debug("Could not load user {} from LuckPerms: {}", uuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not load user {} from LuckPerms: {}", uuid, e.getMessage());
                     consecutiveFailures.incrementAndGet();
                     return null;
                 }
             }
 
             if (user == null) {
-                LOGGER.debug("User {} not found in LuckPerms", uuid);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"User {} not found in LuckPerms", uuid);
                 return null;
             }
 
@@ -168,14 +170,14 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
         } catch (Exception e) {
             int failures = consecutiveFailures.incrementAndGet();
-            LOGGER.error("Error querying LuckPerms tristate for '{}' / {}: {}", permission, uuid, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error querying LuckPerms tristate for '{}' / {}: {}", permission, uuid, e.getMessage(), e);
             if (failures == MAX_FAILURES) {
-                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
-                LOGGER.warn("║  LUCKPERMS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
-                LOGGER.warn("║  Version     : {}                                   ║", padRight(detectedVersion, 21));
-                LOGGER.warn("║  NeoEssentials will fall back to internal permissions.       ║");
-                LOGGER.warn("║  Resolve the LuckPerms API issue and run /neoe reload.       ║");
-                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════╗");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  LUCKPERMS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Version     : {}                                   ║", padRight(detectedVersion, 21));
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  NeoEssentials will fall back to internal permissions.       ║");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Resolve the LuckPerms API issue and run /neoe reload.       ║");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════╝");
             }
             return null;
         }
@@ -214,7 +216,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         // NeoEssentials' own default-value logic in PermissionAPI.
         boolean hasPermission = result == Tristate.TRUE;
 
-        LOGGER.debug("LuckPerms permission check: user={}, permission={}, tristate={}, result={}",
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms permission check: user={}, permission={}, tristate={}, result={}",
                 uuid, permission, result, hasPermission);
 
         return hasPermission;
@@ -235,29 +237,29 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
 
     @Override
     public String getPrefix(UUID uuid) {
-        LOGGER.debug("=== LUCKPERMS PREFIX REQUEST ===");
-        LOGGER.debug("UUID: {}", uuid);
-        LOGGER.debug("LuckPerms loaded: {}", luckPermsLoaded);
-        LOGGER.debug("LuckPerms API: {}", (luckPermsApi != null ? "available" : "NULL"));
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"=== LUCKPERMS PREFIX REQUEST ===");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"UUID: {}", uuid);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms loaded: {}", luckPermsLoaded);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms API: {}", (luckPermsApi != null ? "available" : "NULL"));
 
         if (!luckPermsLoaded || luckPermsApi == null) {
-            LOGGER.debug("LuckPerms not available - returning null");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms not available - returning null");
             return null;
         }
 
         try {
             User user = luckPermsApi.getUserManager().getUser(uuid);
-            LOGGER.debug("Cached user: {}", (user != null ? user.getUsername() : "NULL"));
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Cached user: {}", (user != null ? user.getUsername() : "NULL"));
 
             // Try to load if not cached
             if (user == null) {
-                LOGGER.debug("User not cached, attempting to load...");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"User not cached, attempting to load...");
                 try {
                     CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
-                    LOGGER.debug("Loaded user: {}", (user != null ? user.getUsername() : "FAILED"));
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Loaded user: {}", (user != null ? user.getUsername() : "FAILED"));
                 } catch (Exception e) {
-                    LOGGER.debug("Could not load user {} from LuckPerms for prefix: {}", uuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not load user {} from LuckPerms for prefix: {}", uuid, e.getMessage());
                     return null;
                 }
             }
@@ -272,33 +274,33 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 // Get all meta entries to debug
                 var meta = metaData.getMeta();
 
-                LOGGER.debug("User: {}", user.getUsername());
-                LOGGER.debug("Primary Group: {}", primaryGroup);
-                LOGGER.debug("Prefix from LuckPerms: [{}]", prefix);
-                LOGGER.debug("Suffix from LuckPerms: [{}]", suffix);
-                LOGGER.debug("All Meta Data:");
-                meta.forEach((key, value) -> LOGGER.debug("  Meta: {} = {}", key, value));
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"User: {}", user.getUsername());
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Primary Group: {}", primaryGroup);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Prefix from LuckPerms: [{}]", prefix);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Suffix from LuckPerms: [{}]", suffix);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"All Meta Data:");
+                meta.forEach((key, value) -> NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  Meta: {} = {}", key, value));
 
                 // Check if there are prefixes with weights
-                LOGGER.debug("Checking for weighted prefixes...");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Checking for weighted prefixes...");
                 var prefixes = metaData.getPrefixes();
-                LOGGER.debug("Number of prefixes: {}", prefixes.size());
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Number of prefixes: {}", prefixes.size());
                 prefixes.forEach((weight, prefixValue) ->
-                    LOGGER.debug("  Prefix weight {}: [{}]", weight, prefixValue)
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  Prefix weight {}: [{}]", weight, prefixValue)
                 );
 
-                LOGGER.debug("=== END LUCKPERMS PREFIX REQUEST ===");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"=== END LUCKPERMS PREFIX REQUEST ===");
                 return prefix;
             } else {
-                LOGGER.debug("User is null after load attempt");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"User is null after load attempt");
             }
 
         } catch (Exception e) {
-            LOGGER.error("Error getting prefix for user {}: {}", uuid, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error getting prefix for user {}: {}", uuid, e.getMessage(), e);
         }
 
-        LOGGER.debug("Returning null prefix");
-        LOGGER.debug("=== END LUCKPERMS PREFIX REQUEST ===");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Returning null prefix");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"=== END LUCKPERMS PREFIX REQUEST ===");
         return null;
     }
 
@@ -311,7 +313,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 try {
                     user = luckPermsApi.getUserManager().loadUser(uuid).get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    LOGGER.debug("Could not load user {} from LuckPerms for group weight: {}", uuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not load user {} from LuckPerms for group weight: {}", uuid, e.getMessage());
                     return Integer.MIN_VALUE;
                 }
             }
@@ -320,7 +322,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             if (group == null) return Integer.MIN_VALUE;
             return group.getWeight().orElse(0);
         } catch (Exception e) {
-            LOGGER.error("Error getting group weight for user {}: {}", uuid, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error getting group weight for user {}: {}", uuid, e.getMessage(), e);
             return Integer.MIN_VALUE;
         }
     }
@@ -334,13 +336,13 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 try {
                     user = luckPermsApi.getUserManager().loadUser(uuid).get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    LOGGER.debug("Could not load user {} from LuckPerms for primary group: {}", uuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not load user {} from LuckPerms for primary group: {}", uuid, e.getMessage());
                     return null;
                 }
             }
             return user != null ? user.getPrimaryGroup() : null;
         } catch (Exception e) {
-            LOGGER.error("Error getting primary group for user {}: {}", uuid, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error getting primary group for user {}: {}", uuid, e.getMessage(), e);
             return null;
         }
     }
@@ -360,7 +362,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                     CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
                     user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    LOGGER.debug("Could not load user {} from LuckPerms for suffix: {}", uuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Could not load user {} from LuckPerms for suffix: {}", uuid, e.getMessage());
                     return null;
                 }
             }
@@ -370,20 +372,20 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 var metaData = user.getCachedData().getMetaData(queryOptions);
                 String suffix = metaData.getSuffix();
 
-                LOGGER.debug("LuckPerms suffix for user {}: [{}]", uuid, suffix);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms suffix for user {}: [{}]", uuid, suffix);
 
                 // Check if there are suffixes with weights
                 var suffixes = metaData.getSuffixes();
-                LOGGER.debug("Number of suffixes: {}", suffixes.size());
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Number of suffixes: {}", suffixes.size());
                 suffixes.forEach((weight, suffixValue) ->
-                    LOGGER.debug("  Suffix weight {}: [{}]", weight, suffixValue)
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  Suffix weight {}: [{}]", weight, suffixValue)
                 );
 
                 return suffix;
             }
 
         } catch (Exception e) {
-            LOGGER.error("Error getting suffix for user {}: {}", uuid, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error getting suffix for user {}: {}", uuid, e.getMessage(), e);
         }
 
         return null;
@@ -408,7 +410,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     @Override
     public void reload() {
         // LuckPerms handles its own reloading via /lp reload
-        LOGGER.info("LuckPerms reload requested - use '/lp reload' command to reload LuckPerms data");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"LuckPerms reload requested - use '/lp reload' command to reload LuckPerms data");
     }
 
     @Override
@@ -419,7 +421,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     @Override
     public boolean isAvailable() {
         boolean available = luckPermsLoaded && luckPermsApi != null;
-        LOGGER.debug("LuckPerms availability check: loaded={}, api={}, available={}",
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"LuckPerms availability check: loaded={}, api={}, available={}",
             luckPermsLoaded, (luckPermsApi != null), available);
         return available;
     }
@@ -448,28 +450,28 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
      */
     public void registerPermissions(java.util.Set<String> permissions) {
         if (!luckPermsLoaded || luckPermsApi == null) {
-            LOGGER.debug("Cannot register permissions - LuckPerms not available");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Cannot register permissions - LuckPerms not available");
             return;
         }
 
         try {
             // LuckPerms doesn't have a direct API to register permission suggestions,
             // but we can log them for the LuckPerms verbose system to pick up
-            LOGGER.info("Registering {} NeoEssentials permissions with LuckPerms...", permissions.size());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Registering {} NeoEssentials permissions with LuckPerms...", permissions.size());
 
             // Register each permission by creating a meta entry
             // This makes them appear in LuckPerms autocomplete and permission lists
             for (String permission : permissions) {
                 // LuckPerms automatically tracks permissions that are checked
                 // We can also add them to the permission registry for better integration
-                LOGGER.debug("Registered permission with LuckPerms: {}", permission);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Registered permission with LuckPerms: {}", permission);
             }
 
-            LOGGER.info("Successfully registered {} permissions with LuckPerms", permissions.size());
-            LOGGER.info("Permissions will now appear in LuckPerms autocomplete and web editor");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Successfully registered {} permissions with LuckPerms", permissions.size());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Permissions will now appear in LuckPerms autocomplete and web editor");
 
         } catch (Exception e) {
-            LOGGER.error("Error registering permissions with LuckPerms: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error registering permissions with LuckPerms: {}", e.getMessage(), e);
         }
     }
 

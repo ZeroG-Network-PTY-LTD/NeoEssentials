@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.ChatComponentUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.security.ApiKeyManager;
@@ -10,6 +12,8 @@ import com.zerog.neoessentials.webdashboard.security.User;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -26,6 +30,7 @@ import java.time.format.DateTimeFormatter;
  *   /apikey revoke <id>
  */
 public class ApiKeyCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyCommand.class);
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
         .withZone(ZoneId.systemDefault());
 
@@ -57,6 +62,8 @@ public class ApiKeyCommand {
 
     private static int create(CommandContext<CommandSourceStack> ctx, String label, User.Role role) {
         CommandSourceStack source = ctx.getSource();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Creating API key '{}' with role {} (requested by {})",
+            label, role, source.getTextName());
         String token = ApiKeyManager.getInstance().createKey(label, role);
 
         source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aAPI key '" + label + "' created (role: " + role + ")."), false);
@@ -69,6 +76,7 @@ public class ApiKeyCommand {
     private static int list(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         var keys = ApiKeyManager.getInstance().getAllKeys();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Listing {} API key(s) (requested by {})", keys.size(), source.getTextName());
 
         if (keys.isEmpty()) {
             source.sendSuccess(() -> Component.literal("§7No API keys have been created."), false);
@@ -89,6 +97,7 @@ public class ApiKeyCommand {
         boolean removed = ApiKeyManager.getInstance().revoke(id);
 
         if (removed) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key '{}' revoked (requested by {})", id, source.getTextName());
             source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aAPI key '" + id + "' revoked."), false);
             return 1;
         } else {

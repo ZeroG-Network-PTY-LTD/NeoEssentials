@@ -8,11 +8,16 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles the /mute command for muting a player.
  */
 public class MuteCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MuteCommand.class);
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerMuteCommand(dispatcher, "mute");
         registerMuteCommand(dispatcher, "silence");  
@@ -90,7 +95,9 @@ public class MuteCommand {
         // Notify Discord integrations
         try {
             com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastMuteEvent(targetPlayer, reason.isEmpty() ? "No reason given" : reason, true);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Failed to broadcast mute event to integrations for " + targetName, e);
+        }
         if (reason.isEmpty()) {
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.mute.success", targetName), false);
         } else {

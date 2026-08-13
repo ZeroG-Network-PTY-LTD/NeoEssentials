@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.api.endpoints;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.data.LoggingDataCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +29,7 @@ public class LoggingEndpoint implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
         
-        LOGGER.debug("LoggingEndpoint handling request: {} {}", method, path);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "LoggingEndpoint handling request: {} {}", method, path);
 
         try {
             // Only allow GET requests
@@ -57,31 +59,31 @@ public class LoggingEndpoint implements HttpHandler {
             // IOException often means client disconnected - don't try to send error response
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             if (errorMsg.contains("stream is closed") || errorMsg.contains("Broken pipe") || errorMsg.contains("Connection reset")) {
-                LOGGER.warn("Client disconnected during request: {} {} - {}", method, path, errorMsg);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Client disconnected during request: {} {} - {}", method, path, errorMsg);
             } else {
-                LOGGER.error("IOException handling request: {} {}", method, path, e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "IOException handling request: {} {}", method, path, e);
                 try {
                     String errorResponse = String.format("{\"error\":\"IO Error: %s\"}", errorMsg);
                     sendResponse(exchange, 500, errorResponse);
                 } catch (IOException e2) {
-                    LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Unexpected error handling request: {} {}", method, path, e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Unexpected error handling request: {} {}", method, path, e);
             try {
                 String errorMsg = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Unknown error";
                 String errorResponse = String.format("{\"error\":\"%s\"}", errorMsg);
                 sendResponse(exchange, 500, errorResponse);
             } catch (IOException e2) {
-                LOGGER.debug("Could not send error response (client likely disconnected): {}", e2.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not send error response (client likely disconnected): {}", e2.getMessage());
             }
         } finally {
             // Safely close exchange - don't log error if already closed
             try {
                 exchange.close();
             } catch (Exception e) {
-                // Ignore - exchange may already be closed
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Exchange already closed: {}", e.getMessage());
             }
         }
     }

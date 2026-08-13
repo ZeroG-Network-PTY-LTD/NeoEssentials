@@ -10,6 +10,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,17 +35,17 @@ public class DashboardLifecycleManager {
         PermissionRoleSyncTask.start();
 
         if (!ConfigManager.isWebDashboardEnabled()) {
-            LOGGER.info("Dashboard is disabled in configuration");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard is disabled in configuration");
             return;
         }
         
         if (manuallyDisabled) {
-            LOGGER.info("Dashboard was manually disabled and will not auto-start");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard was manually disabled and will not auto-start");
             return;
         }
 
         if (!ConfigManager.isWebDashboardAutoStartEnabled()) {
-            LOGGER.info("Dashboard auto-start is disabled in configuration — use /dashboard start to start it manually");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard auto-start is disabled in configuration — use /dashboard start to start it manually");
             return;
         }
 
@@ -67,14 +69,14 @@ public class DashboardLifecycleManager {
                 int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
                 DashboardWebSocketServer wsServer = DashboardWebSocketServer.getInstance(wsPort);
                 wsServer.start();
-                LOGGER.info("Dashboard WebSocket server started on port {}", wsPort);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard WebSocket server started on port {}", wsPort);
             } catch (Throwable wsEx) {
-                LOGGER.error("Failed to start WebSocket server: {}", wsEx.getMessage(), wsEx);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start WebSocket server: {}", wsEx.getMessage(), wsEx);
             }
 
-            LOGGER.info("Dashboard auto-started successfully");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard auto-started successfully");
         } catch (Throwable e) {
-            LOGGER.error("Failed to auto-start dashboard", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to auto-start dashboard", e);
         }
     }
     
@@ -86,34 +88,34 @@ public class DashboardLifecycleManager {
         PermissionRoleSyncTask.stop();
         try {
             if (DashboardAPI.getInstance().isRunning()) {
-                LOGGER.info("Server stopping - shutting down Dashboard...");
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Server stopping - shutting down Dashboard...");
 
                 // Stop Dashboard API
                 long startTime = System.currentTimeMillis();
                 DashboardAPI.getInstance().stop();
                 long dashboardStopTime = System.currentTimeMillis() - startTime;
-                LOGGER.info("Dashboard API stopped in {}ms", dashboardStopTime);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard API stopped in {}ms", dashboardStopTime);
 
                 // Stop WebSocket server
                 try {
                     DashboardWebSocketServer.getInstance().stop(2000);
-                    LOGGER.info("Dashboard WebSocket server stopped");
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard WebSocket server stopped");
                 } catch (Throwable wsEx) {
-                    LOGGER.warn("Error stopping WebSocket server: {}", wsEx.getMessage());
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Error stopping WebSocket server: {}", wsEx.getMessage());
                 }
 
                 // Shutdown data collector
                 startTime = System.currentTimeMillis();
                 DataCollector.getInstance().shutdown();
                 long collectorStopTime = System.currentTimeMillis() - startTime;
-                LOGGER.info("Data Collector stopped in {}ms", collectorStopTime);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Data Collector stopped in {}ms", collectorStopTime);
 
-                LOGGER.info("Dashboard shutdown complete (total: {}ms)", dashboardStopTime + collectorStopTime);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard shutdown complete (total: {}ms)", dashboardStopTime + collectorStopTime);
             }
             // Always shut down the MOTD rotation scheduler on server stop
             MotdManager.getInstance().shutdown();
         } catch (Throwable e) {
-            LOGGER.error("Error stopping dashboard", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error stopping dashboard", e);
         }
     }
 
@@ -140,13 +142,13 @@ public class DashboardLifecycleManager {
                 int wsPort = ConfigManager.getInstance().getWebDashboardWebSocketPort();
                 DashboardWebSocketServer.getInstance(wsPort).start();
             } catch (Throwable wsEx) {
-                LOGGER.error("Failed to start WebSocket server (manual): {}", wsEx.getMessage(), wsEx);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start WebSocket server (manual): {}", wsEx.getMessage(), wsEx);
             }
 
             manuallyDisabled = false;
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to start dashboard manually", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start dashboard manually", e);
             return false;
         }
     }
@@ -167,7 +169,7 @@ public class DashboardLifecycleManager {
             try {
                 DashboardWebSocketServer.getInstance().stop(2000);
             } catch (Throwable wsEx) {
-                LOGGER.warn("Error stopping WebSocket server (manual): {}", wsEx.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Error stopping WebSocket server (manual): {}", wsEx.getMessage());
             }
 
             // Shutdown data collector
@@ -176,7 +178,7 @@ public class DashboardLifecycleManager {
             manuallyDisabled = true;
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to stop dashboard manually", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to stop dashboard manually", e);
             return false;
         }
     }

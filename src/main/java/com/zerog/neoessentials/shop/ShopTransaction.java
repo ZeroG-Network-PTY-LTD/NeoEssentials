@@ -5,6 +5,8 @@ import com.zerog.neoessentials.shop.api.ShopEconomyRegistry;
 import com.zerog.neoessentials.shop.events.ShopTransactionEvent;
 import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.shop.pricing.PricingEngine;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -193,7 +195,9 @@ public final class ShopTransaction {
                             ")§f is running low! §c" + remaining + " §fitem(s) left."));
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to check/notify low stock for shop '{}'", shop.toKey(), e);
+        }
     }
 
     private static int getDefaultThreshold() {
@@ -204,7 +208,9 @@ public final class ShopTransaction {
                 var shopCfg = cfg.getAsJsonObject("shop");
                 if (shopCfg.has("stockLowThreshold")) return shopCfg.get("stockLowThreshold").getAsInt();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read shop.stockLowThreshold config — using default", e);
+        }
         return 5;
     }
 
@@ -214,7 +220,9 @@ public final class ShopTransaction {
         try {
             ItemStack result = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(itemId);
             if (result != null && !result.isEmpty()) return result;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "WorthManager.resolveItem failed for '{}'", itemId, e);
+        }
         return ItemStack.EMPTY;
     }
 

@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
 import net.minecraft.server.level.ServerPlayer;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +73,8 @@ public class PermissionConditionManager {
     public boolean evaluate(String condition, PermissionContext ctx, ServerPlayer player) {
         if (condition == null || condition.isBlank()) return true;
         String expr = condition.trim();
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Evaluating permission condition '{}' for player={}", expr,
+                player != null ? player.getScoreboardName() : "null");
 
         // AND takes precedence over OR when both appear — simplistic left-to-right for now
         if (expr.contains(" AND ")) {
@@ -141,7 +145,7 @@ public class PermissionConditionManager {
                 float threshold = Float.parseFloat(atom.substring(13));
                 return player.getHealth() > threshold;
             } catch (NumberFormatException e) {
-                LOGGER.warn("Invalid health condition threshold in '{}'", atom);
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Invalid health condition threshold in '{}'", atom);
                 return true;
             }
         }
@@ -153,7 +157,7 @@ public class PermissionConditionManager {
                 float threshold = Float.parseFloat(atom.substring(13));
                 return player.getHealth() < threshold;
             } catch (NumberFormatException e) {
-                LOGGER.warn("Invalid health condition threshold in '{}'", atom);
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Invalid health condition threshold in '{}'", atom);
                 return true;
             }
         }
@@ -162,7 +166,7 @@ public class PermissionConditionManager {
         if (atom.equals("op:true"))  return player != null && com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2);
         if (atom.equals("op:false")) return player == null || !com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 2);
 
-        LOGGER.warn("Unknown condition atom '{}' — treating as true", atom);
+        NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Unknown condition atom '{}' — treating as true", atom);
         return true;
     }
 

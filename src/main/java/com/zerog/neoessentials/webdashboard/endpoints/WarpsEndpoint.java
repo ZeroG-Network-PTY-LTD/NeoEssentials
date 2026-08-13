@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.Warp.WarpManager;
 import net.minecraft.server.MinecraftServer;
@@ -62,6 +64,8 @@ public class WarpsEndpoint implements HttpHandler {
         String method = exchange.getRequestMethod().toUpperCase();
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/warps", "");
         if (path.isEmpty()) path = "/";
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "WarpsEndpoint request: {} {}", method, path);
 
         boolean isAdmin = Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
         boolean isPlayerWarpsPath = path.equals("/players") || path.startsWith("/players/");
@@ -255,7 +259,9 @@ public class WarpsEndpoint implements HttpHandler {
                     var opt = cache.get(uuid);
                     if (opt.isPresent() && opt.get().name() != null) return opt.get().name();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve username for uuid={}", uuid, e);
+            }
             var player = server.getPlayerList().getPlayer(uuid);
             if (player != null) return player.getName().getString();
         }
@@ -284,8 +290,10 @@ public class WarpsEndpoint implements HttpHandler {
         TeleportLocation location = new TeleportLocation(world, x, y, z, yaw, pitch, "Dashboard");
         String failureReason = WarpManager.getInstance().createWarpByAdmin(name, location, "Dashboard");
         if (failureReason != null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Warp creation failed for '{}': {}", name, failureReason);
             return error("Failed to create warp: " + failureReason);
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Warp created: '{}'", name);
 
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);
@@ -301,6 +309,7 @@ public class WarpsEndpoint implements HttpHandler {
 
         boolean removed = WarpManager.getInstance().deleteWarpByAdmin(name, "Dashboard");
         if (!removed) return error("Warp '" + name + "' not found");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Warp deleted: '{}'", name);
 
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);

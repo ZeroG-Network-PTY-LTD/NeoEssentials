@@ -6,7 +6,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.util.MessageUtil;
-import com.zerog.neoessentials.util.ChatDebugUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Map;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class ReplyCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplyCommand.class);
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        ChatDebugUtil.debug("ReplyCommand - Registering /reply command");
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "ReplyCommand - Registering /reply command");
         // Register with vanilla aliases to override vanilla behavior
         registerCommand(dispatcher, "reply");
         registerCommand(dispatcher, "r");
@@ -27,7 +28,7 @@ public class ReplyCommand {
         dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(ctx -> {
-                    ChatDebugUtil.debug("ReplyCommand - Command executed!");
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "ReplyCommand - Command executed!");
                     CommandSourceStack source = ctx.getSource();
                     String message = StringArgumentType.getString(ctx, "message");
                     
@@ -39,9 +40,9 @@ public class ReplyCommand {
                     }
                     
                     // Find target from last message history
-                    ChatDebugUtil.debug("ReplyCommand - Looking for last messager for %s", sender.getName().getString());
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "ReplyCommand - Looking for last messager for {}", sender.getName().getString());
                     ServerPlayer target = com.zerog.neoessentials.chat.LastMessageManager.getLastMessager(sender);
-                    ChatDebugUtil.debug("ReplyCommand - Found target: %s", (target != null ? target.getName().getString() : "null"));
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "ReplyCommand - Found target: {}", (target != null ? target.getName().getString() : "null"));
                     if (target == null) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.reply.no_target"));
                         return 0;
@@ -113,7 +114,7 @@ public class ReplyCommand {
                     sender.sendSystemMessage(MessageUtil.coloredText(resolvedToMessage));
                     
                     // When replying, the target should now be able to reply back to the sender
-                    ChatDebugUtil.debug("ReplyCommand - Setting last messager: %s can reply to %s", target.getName().getString(), sender.getName().getString());
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "ReplyCommand - Setting last messager: {} can reply to {}", target.getName().getString(), sender.getName().getString());
                     com.zerog.neoessentials.chat.LastMessageManager.setLastMessager(target, sender);
                     
                     com.zerog.neoessentials.api.ChatAPI.broadcastSocialSpy(sender, target, message);

@@ -2,6 +2,8 @@ package com.zerog.neoessentials.permissions;
 
 import com.zerog.neoessentials.api.permissions.PermissionRegistry;
 import com.zerog.neoessentials.api.permissions.PermissionScanner;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
 
     @Override
     public void reload() {
-        LOGGER.info("Reloading PermissionsEX adapter - re-exporting permissions");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Reloading PermissionsEX adapter - re-exporting permissions");
         exportPermissionsForPEX();
     }
 
@@ -67,7 +69,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
      */
     private void exportPermissionsForPEX() {
         try {
-            LOGGER.info("Exporting NeoEssentials permissions for PermissionsEX tab completion...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Exporting NeoEssentials permissions for PermissionsEX tab completion...");
             
             // Get all permissions from registry and scanner
             PermissionRegistry registry = PermissionRegistry.getInstance();
@@ -83,7 +85,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             File dataDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR);
             if (!dataDir.exists()) {
                 if (!dataDir.mkdirs()) {
-                    LOGGER.error("Failed to create data directory: {}", dataDir.getAbsolutePath());
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to create data directory: {}", dataDir.getAbsolutePath());
                 }
             }
             
@@ -100,7 +102,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
                     try {
                         writer.write(perm + "\n");
                     } catch (IOException e) {
-                        LOGGER.error("Error writing permission: " + perm, e);
+                        NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error writing permission: " + perm, e);
                     }
                 });
                 
@@ -112,7 +114,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
                         try {
                             writer.write(perm + "\n");
                         } catch (IOException e) {
-                            LOGGER.error("Error writing discovered permission: " + perm, e);
+                            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Error writing discovered permission: " + perm, e);
                         }
                     });
                 
@@ -127,19 +129,19 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
                 writer.write("neoessentials.utilities.*\n");
             }
             
-            LOGGER.info("Successfully exported {} registered and {} discovered permissions to {}", 
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Successfully exported {} registered and {} discovered permissions to {}", 
                 allPermissions.size(), discoveredPermissions.size(), PEX_PERMISSIONS_FILE);
                 
             // Log instructions for server administrators
-            LOGGER.info("=== PermissionsEX Integration Help ===");
-            LOGGER.info("For PermissionsEX tab completion to work properly:");
-            LOGGER.info("1. Install a permissions plugin that supports permission registration");
-            LOGGER.info("2. Use the exported permissions file: {}", PEX_PERMISSIONS_FILE);
-            LOGGER.info("3. Or manually register permissions with your permission plugin");
-            LOGGER.info("4. Use '/neoessentials-permissions export pex' to regenerate this file");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"=== PermissionsEX Integration Help ===");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"For PermissionsEX tab completion to work properly:");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"1. Install a permissions plugin that supports permission registration");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"2. Use the exported permissions file: {}", PEX_PERMISSIONS_FILE);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"3. Or manually register permissions with your permission plugin");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"4. Use '/neoessentials-permissions export pex' to regenerate this file");
             
         } catch (Exception e) {
-            LOGGER.error("Failed to export permissions for PermissionsEX", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to export permissions for PermissionsEX", e);
         }
     }
     
@@ -174,7 +176,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             }
         }
         
-        LOGGER.info("Exported permissions in {} format to {}", format, outputFile.getAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Exported permissions in {} format to {}", format, outputFile.getAbsolutePath());
     }
     
     private void exportForPermissionsEX(FileWriter writer, Set<String> registered, Set<String> discovered) throws IOException {
@@ -183,14 +185,14 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write(perm + "\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
         discovered.stream().filter(p -> !registered.contains(p)).sorted().forEach(perm -> {
             try {
                 writer.write(perm + "\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
     }
@@ -201,7 +203,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write("/lp group default permission set " + perm + " false\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
     }
@@ -213,7 +215,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write("    - \"" + perm + "\"\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
         writer.write("  discovered:\n");
@@ -221,7 +223,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write("    - \"" + perm + "\"\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
     }
@@ -252,7 +254,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write(perm + "\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
         writer.write("\nDiscovered Permissions:\n");
@@ -260,7 +262,7 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
             try {
                 writer.write(perm + "\n");
             } catch (IOException e) {
-                // Handle silently
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error writing permission '{}' during export", perm, e);
             }
         });
     }

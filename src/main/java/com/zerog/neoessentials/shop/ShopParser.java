@@ -2,6 +2,8 @@ package com.zerog.neoessentials.shop;
 
 import com.zerog.neoessentials.economy.worth.WorthManager;
 import com.zerog.neoessentials.shop.model.ShopData;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -237,7 +239,9 @@ public final class ShopParser {
         try {
             ItemStack fromWorth = WorthManager.resolveItem(itemStr);
             if (fromWorth != null && !fromWorth.isEmpty()) return fromWorth;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "WorthManager.resolveItem failed for '{}'", itemStr, e);
+        }
 
         // Try vanilla registry directly
         String id = itemStr.toLowerCase().trim();
@@ -245,7 +249,9 @@ public final class ShopParser {
         try {
             Optional<Item> item = BuiltInRegistries.ITEM.getOptional(Identifier.parse(id));
             if (item.isPresent()) return new ItemStack(item.get());
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Vanilla registry lookup failed for item id '{}'", id, e);
+        }
 
         return ItemStack.EMPTY;
     }
@@ -379,7 +385,9 @@ public final class ShopParser {
         try {
             ItemStack resolved = com.zerog.neoessentials.shop.ShopTransaction.resolveItem(shop);
             if (!resolved.isEmpty()) name = resolved.getHoverName().getString();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve item hover name for sign display of shop item '{}'", shop.itemId, e);
+        }
         if (name == null || name.isBlank()) return buildItemDisplayName(shop.itemId);
         return name.length() > 16 ? name.substring(0, 15) + "…" : name;
     }
@@ -395,7 +403,9 @@ public final class ShopParser {
         try {
             ItemStack resolved = com.zerog.neoessentials.shop.ShopTransaction.resolveItem(shop);
             if (!resolved.isEmpty()) return resolved.getHoverName().getString();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve item hover name for full display of shop item '{}'", shop.itemId, e);
+        }
         return buildItemDisplayName(shop.itemId).replace("…", "");
     }
 

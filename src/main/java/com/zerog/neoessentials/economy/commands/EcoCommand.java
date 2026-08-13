@@ -9,14 +9,19 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.economy.EconomyPlayerUtil;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.economy.managers.TransactionHistoryManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
 public class EcoCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EcoCommand.class);
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register main command
         registerEcoCommand(dispatcher, "eco");
@@ -111,6 +116,8 @@ public class EcoCommand {
             return 0;
         }
         UUID uuid = uuidOpt.get();
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "ecoAdminAction: admin={} action={} target={} ({})",
+            ctx.getSource().getTextName(), action, validPlayerName, uuid);
 
         // "reset" uses no amount arg — sets to starting balance
         if ("reset".equals(action)) {

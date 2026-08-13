@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
@@ -54,6 +56,8 @@ public class WarnManager {
         warnMap.computeIfAbsent(targetId, k -> new java.util.concurrent.CopyOnWriteArrayList<>())
                .add(entry);
         store.put(COLLECTION, entry.getId(), toJson(entry));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying warn: player={} ({}) reason={} by={} ({})",
+            targetName, targetId, reason, warnedBy, warnedById);
         // Always log to console so it appears in server logs
         LOGGER.info("[Warn] {} warned {} — Reason: {} ({})",
             warnedBy, targetName, reason, entry.getFormattedTime());
@@ -86,7 +90,10 @@ public class WarnManager {
         List<WarnEntry> list = warnMap.get(targetId);
         if (list == null) return false;
         boolean removed = list.removeIf(w -> w.getId().equals(warnId));
-        if (removed) store.delete(COLLECTION, warnId);
+        if (removed) {
+            store.delete(COLLECTION, warnId);
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Removed warn {} for player {}", warnId, targetId);
+        }
         return removed;
     }
 
@@ -101,6 +108,7 @@ public class WarnManager {
         for (WarnEntry entry : removed) {
             store.delete(COLLECTION, entry.getId());
         }
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Cleared {} warn(s) for player {}", removed.size(), targetId);
         return removed.size();
     }
 

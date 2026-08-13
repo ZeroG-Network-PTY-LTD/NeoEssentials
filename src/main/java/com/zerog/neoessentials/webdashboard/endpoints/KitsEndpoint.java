@@ -4,6 +4,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.kits.Kit;
 import com.zerog.neoessentials.kits.KitManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,8 @@ public class KitsEndpoint implements HttpHandler {
         }
 
         String path = exchange.getRequestURI().getPath();
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "KitsEndpoint request: GET {}", path);
 
         try {
             if (path.endsWith("/list")) {
@@ -95,6 +99,7 @@ public class KitsEndpoint implements HttpHandler {
     private void handleGetKit(HttpExchange exchange, String kitName) throws IOException {
         Kit kit = KitManager.getInstance().getKit(kitName);
         if (kit == null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Kit lookup miss: '{}'", kitName);
             sendJson(exchange, 404, "{\"success\":false,\"error\":\"Kit not found: " + esc(kitName) + "\"}");
             return;
         }

@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -246,6 +248,8 @@ public class JailManager {
         if (durationMillis > 0) {
             jail.expireAt = System.currentTimeMillis() + durationMillis;
         }
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying jail: player={} ({}) jail={} reason={} by={} durationMs={}",
+            playerName, playerId, jailName, reason, jailedBy, durationMillis);
 
         // Check if already jailed atomically using putIfAbsent
         if (jailedPlayers.putIfAbsent(playerId, jail) != null) {
@@ -341,6 +345,8 @@ public class JailManager {
     public boolean unjailPlayer(UUID playerId) {
         JailEntry jail = jailedPlayers.remove(playerId);
         if (jail != null) {
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Removing jail for player {} ({}) from jail={}",
+                jail.playerName, playerId, jail.jailName);
             saveJailedPlayers();
             
             // Teleport back to original location if online
@@ -530,6 +536,8 @@ public class JailManager {
         if (jail == null) return false;
         if (!jail.isExpired()) return false;
 
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Jail expiry check: player={} ({}) expireAt={} now={}",
+            jail.playerName, playerId, jail.expireAt, System.currentTimeMillis());
         LOGGER.info("Timed jail expired for player {} ({}). Auto-releasing.", jail.playerName, playerId);
         unjailPlayer(playerId);
         return true;

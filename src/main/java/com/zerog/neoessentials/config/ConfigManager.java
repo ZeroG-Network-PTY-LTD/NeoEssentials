@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -110,7 +112,9 @@ public class ConfigManager {
                 try {
                     int val = kickSettings.get("maxKickReason").getAsInt();
                     if (val > 0) return val;
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.kickSettings.maxKickReason, using default 500", e);
+                }
             }
         }
         return 500;
@@ -222,7 +226,9 @@ public class ConfigManager {
                 try {
                     int val = freezeSettings.get("maxFreezeReason").getAsInt();
                     if (val > 0) return val;
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.freezeSettings.maxFreezeReason, using default 500", e);
+                }
             }
         }
         return 500;
@@ -241,7 +247,9 @@ public class ConfigManager {
                 try {
                     int val = freezeSettings.get("freezeReminderInterval").getAsInt();
                     if (val >= 0) return val;
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.freezeSettings.freezeReminderInterval, using default 30", e);
+                }
             }
         }
         return 30;
@@ -625,7 +633,9 @@ public class ConfigManager {
                         int val = banSettings.get("checkExpiredBansInterval").getAsInt();
                         if (val <= 0) return 0; // Disabled
                         return Math.max(val, 5); // Enforce minimum
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.banSettings.checkExpiredBansInterval, using default 300", e);
+                    }
                 }
             }
         }
@@ -664,7 +674,9 @@ public class ConfigManager {
                     try {
                         int val = banSettings.get("maxBanReason").getAsInt();
                         if (val > 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.banSettings.maxBanReason, using default 500", e);
+                    }
                 }
             }
         }
@@ -685,7 +697,9 @@ public class ConfigManager {
                     try {
                         int val = jailSettings.get("maxJailReason").getAsInt();
                         if (val > 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for moderation.jailSettings.maxJailReason, using default 500", e);
+                    }
                 }
             }
         }
@@ -792,7 +806,9 @@ public class ConfigManager {
                 if (general.has("maxTeleportDistance")) {
                     try {
                         return general.get("maxTeleportDistance").getAsInt();
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.generalSettings.maxTeleportDistance, using default -1 (unlimited)", e);
+                    }
                 }
             }
         }
@@ -900,7 +916,9 @@ public class ConfigManager {
                     try {
                         int val = req.get("maxPendingRequests").getAsInt();
                         if (val > 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.teleportRequestSettings.maxPendingRequests, using default 5", e);
+                    }
                 }
             }
         }
@@ -921,7 +939,9 @@ public class ConfigManager {
                     try {
                         int val = req.get("requestTimeout").getAsInt();
                         if (val > 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.teleportRequestSettings.requestTimeout, using default 60", e);
+                    }
                 }
             }
         }
@@ -942,7 +962,9 @@ public class ConfigManager {
                     try {
                         int val = req.get("cooldownBetweenRequests").getAsInt();
                         if (val >= 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.teleportRequestSettings.cooldownBetweenRequests, using default 10", e);
+                    }
                 }
             }
         }
@@ -1080,7 +1102,9 @@ public class ConfigManager {
             if (kits.has("maxKitsPerPlayer")) {
                 try {
                     return kits.get("maxKitsPerPlayer").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for kits.maxKitsPerPlayer, using default -1 (unlimited)", e);
+                }
             }
         }
         return -1;
@@ -1110,7 +1134,9 @@ public class ConfigManager {
                 try {
                     int val = perms.get("permissionCacheExpiryMinutes").getAsInt();
                     if (val > 0) return val;
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for permissions.permissionCacheExpiryMinutes, using default 5", e);
+                }
             }
         }
         return 5; // Default to 5 minutes if not set
@@ -1291,6 +1317,11 @@ public class ConfigManager {
             // Special handling for config.json when split configs are enabled
             if (configName.equals(MAIN_CONFIG) && ConfigSplitter.isSplittingEnabled()) {
                 // Always merge from split files, never from config.json
+                // NOTE: must use plain LOGGER here, not NeoLog — NeoLog's category gating
+                // reads logging.categories.config.debug via getLoggingCategoryEntry(), which
+                // calls back into this very method (getConfig(MAIN_CONFIG)), causing infinite
+                // recursion / StackOverflowError on every startup.
+                LOGGER.debug("Split config mode enabled; merging split files instead of reading {}", configName);
                 JsonObject merged = ConfigSplitter.mergeSplitConfigs();
                 configCache.put(configName, merged);
                 return merged;
@@ -1336,6 +1367,8 @@ public class ConfigManager {
             }
 
             File file = ResourceUtil.getConfigFile(configName);
+            // NOTE: plain LOGGER, not NeoLog — see comment above on the recursion risk.
+            LOGGER.debug("Loading config file {} from disk (cache miss)", configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
             JsonObject obj = parseJsonWithComments(reader).getAsJsonObject();
             configCache.put(configName, obj);
@@ -1403,7 +1436,11 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 39);          // v39 — chat.formatTemplates.templates.* still referenced
+        put(MAIN_CONFIG, 40);          // v40 — replaced logging.enableDebugLogging (single global
+                                       //        toggle) with logging.categories.<name>.{normal,debug}
+                                       //        (per-subsystem toggles); see migrateLoggingCategories()
+                                       //        for the one-time migration of an existing true value.
+        // v39 — chat.formatTemplates.templates.* still referenced
                                        //        {neoessentials_username}/{neoessentials_name} (always
                                        //        the real name) instead of {neoessentials_displayname}
                                        //        (nickname-aware), so /nick never showed up in chat for
@@ -1469,7 +1506,9 @@ public class ConfigManager {
                     if (val != null && !val.trim().isEmpty()) return val.trim().toLowerCase();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for localization.language, using default en_us", e);
+        }
         return "en_us";
     }
 
@@ -1503,7 +1542,9 @@ public class ConfigManager {
                     return loc.get("preserveCustomTranslations").getAsBoolean();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for localization.preserveCustomTranslations, using default false", e);
+        }
         return false;
     }
 
@@ -2016,7 +2057,11 @@ public class ConfigManager {
         boolean externalPermsEnabled = false;
         try {
             externalPermsEnabled = isExternalPermissionsEnabled();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Could not determine externalPermissionsEnabled during config bootstrap, assuming false", e);
+        }
+
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Bootstrapping default configs: splitConfigsEnabled={}, externalPermsEnabled={}", splitConfigsEnabled, externalPermsEnabled);
 
         if (splitConfigsEnabled) {
             // Always ensure split configs are up to date
@@ -2082,6 +2127,7 @@ public class ConfigManager {
             if (onDisk.has(CONFIG_VERSION_KEY)) {
                 currentVersion = onDisk.get(CONFIG_VERSION_KEY).getAsInt();
             }
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config file {} on-disk version {}, expected version {}", configName, currentVersion, expectedVersion);
 
             if (currentVersion < expectedVersion) {
                 LOGGER.warn("Config file {} is outdated (version {} < {}). Merging new keys from JAR template (user values preserved)...",
@@ -2106,9 +2152,20 @@ public class ConfigManager {
                 // Create backup before modifying
                 createConfigBackup(configFile, currentVersion);
 
+                // Migrate the old single-toggle logging.enableDebugLogging into the new
+                // per-category logging.categories.* structure, BEFORE mergeNewKeys fills
+                // categories in with plain defaults (migration needs to see the pre-merge
+                // "categories absent" state to know it hasn't run yet).
+                boolean changed = false;
+                if (MAIN_CONFIG.equals(configName) && migrateLoggingCategories(onDisk)) {
+                    changed = true;
+                    LOGGER.info("Config file {}: migrated logging.enableDebugLogging into per-category logging.categories.*.", configName);
+                }
+
                 // Deep-merge: add keys that exist in JAR but are missing on disk.
                 // Never overwrite existing user values.
-                boolean changed = mergeNewKeys(jarTemplate, onDisk);
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Merging missing keys from JAR template into {} (existing values preserved)", configName);
+                changed |= mergeNewKeys(jarTemplate, onDisk);
 
                 // Strip legacy comment keys (xxx_comment, _doc_*, _step*, etc.)
                 // from the user's file as part of this upgrade.
@@ -2223,6 +2280,41 @@ public class ConfigManager {
         if (!object.has(key) || !object.get(key).isJsonPrimitive()) return false;
         if (!object.get(key).getAsString().equals(oldValue)) return false;
         object.addProperty(key, newValue);
+        return true;
+    }
+
+    /**
+     * One-time migration from the old global {@code logging.enableDebugLogging} boolean to
+     * the new per-category {@code logging.categories.<name>.{normal,debug}} structure. Must
+     * run BEFORE {@link #mergeNewKeys} — it detects "not yet migrated" by the absence of
+     * {@code logging.categories}, which mergeNewKeys would otherwise fill in with plain
+     * defaults first.
+     * <p>
+     * If the old global toggle was {@code true}, every category's {@code debug} flag is
+     * seeded to {@code true} so admins who had global debug logging on don't silently lose
+     * it; otherwise categories are left for {@link #mergeNewKeys} to populate with defaults.
+     * The old key itself is left on disk (unused but harmless), matching how this migration
+     * system doesn't otherwise strip stale keys.
+     *
+     * @return {@code true} if {@code logging.categories} was added by this migration
+     */
+    static boolean migrateLoggingCategories(com.google.gson.JsonObject onDisk) {
+        if (!onDisk.has("logging") || !onDisk.get("logging").isJsonObject()) return false;
+        com.google.gson.JsonObject logging = onDisk.getAsJsonObject("logging");
+        if (logging.has("categories")) return false;
+
+        boolean globalDebugWasOn = logging.has("enableDebugLogging")
+            && logging.get("enableDebugLogging").isJsonPrimitive()
+            && logging.get("enableDebugLogging").getAsBoolean();
+
+        com.google.gson.JsonObject categories = new com.google.gson.JsonObject();
+        for (com.zerog.neoessentials.logging.LogCategory category : com.zerog.neoessentials.logging.LogCategory.values()) {
+            com.google.gson.JsonObject entry = new com.google.gson.JsonObject();
+            entry.addProperty("normal", true);
+            entry.addProperty("debug", globalDebugWasOn);
+            categories.add(category.configKey(), entry);
+        }
+        logging.add("categories", categories);
         return true;
     }
 
@@ -2458,7 +2550,9 @@ public class ConfigManager {
         if (config.has("startingBalance")) {
             try {
                 return config.get("startingBalance").getAsDouble();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json startingBalance, using default 100.0", e);
+            }
         }
         return 100.0;
     }
@@ -2472,7 +2566,9 @@ public class ConfigManager {
         if (config.has("logTransactions")) {
             try {
                 return config.get("logTransactions").getAsBoolean();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json logTransactions, using default true", e);
+            }
         }
         return true;
     }
@@ -2487,7 +2583,9 @@ public class ConfigManager {
             try {
                 int val = config.get("transactionHistoryLimit").getAsInt();
                 if (val > 0) return val;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json transactionHistoryLimit, using default 20", e);
+            }
         }
         return 20;
     }
@@ -2516,7 +2614,9 @@ public class ConfigManager {
         if (config.has("maxBalance")) {
             try {
                 return config.get("maxBalance").getAsDouble();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json maxBalance, using default 999999999.99", e);
+            }
         }
         return 999999999.99;
     }
@@ -2530,7 +2630,9 @@ public class ConfigManager {
         if (config.has("taxPercentage")) {
             try {
                 return config.get("taxPercentage").getAsDouble();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json taxPercentage, using default 0.0", e);
+            }
         }
         return 0.0;
     }
@@ -2552,7 +2654,9 @@ public class ConfigManager {
             try {
                 String name = config.get("currencyName").getAsString();
                 if (name != null && !name.isBlank()) return name;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json currencyName, falling back to currency symbol", e);
+            }
         }
         return getCurrencySymbol();
     }
@@ -2567,7 +2671,9 @@ public class ConfigManager {
             try {
                 String name = config.get("currencyNamePlural").getAsString();
                 if (name != null && !name.isBlank()) return name;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json currencyNamePlural, falling back to singular currency name", e);
+            }
         }
         return getCurrencyName();
     }
@@ -2605,7 +2711,9 @@ public class ConfigManager {
         if (config.has("inactiveAccountCleanupDays")) {
             try {
                 return config.get("inactiveAccountCleanupDays").getAsInt();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json inactiveAccountCleanupDays, using default 30", e);
+            }
         }
         return 30;
     }
@@ -2619,7 +2727,9 @@ public class ConfigManager {
         if (config.has("maxTransferAmount")) {
             try {
                 return config.get("maxTransferAmount").getAsDouble();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json maxTransferAmount, using default 10000.0", e);
+            }
         }
         return 10000.0;
     }
@@ -2645,7 +2755,9 @@ public class ConfigManager {
         if (config.has("cacheMaximumSize")) {
             try {
                 return config.get("cacheMaximumSize").getAsInt();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json cacheMaximumSize, using default 10000", e);
+            }
         }
         return 10000;
     }
@@ -2659,7 +2771,9 @@ public class ConfigManager {
         if (config.has("cacheExpireAfterAccessMinutes")) {
             try {
                 return config.get("cacheExpireAfterAccessMinutes").getAsInt();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for economy.json cacheExpireAfterAccessMinutes, using default 60", e);
+            }
         }
         return 60;
     }
@@ -2692,9 +2806,11 @@ public class ConfigManager {
      * This ensures that any changes made to config files on disk are picked up.
      */
     public static void loadAll() {
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "loadAll() triggered (e.g. /neoessentials reload) - clearing cache and re-verifying default configs");
         getInstance().clearCache();
         // Ensure all required configs exist
         getInstance().ensureDefaultConfigs();
+        NeoLog.debug(LOGGER, LogCategory.CONFIG, "loadAll() complete - configs will be lazily re-read from disk on next access");
     }
 
     /**
@@ -2755,7 +2871,9 @@ public class ConfigManager {
             if (items.has("default-stack-size")) {
                 try {
                     return items.get("default-stack-size").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for items.default-stack-size, using default -1 (vanilla)", e);
+                }
             }
         }
         return -1;
@@ -2772,7 +2890,9 @@ public class ConfigManager {
             if (items.has("oversized-stacksize")) {
                 try {
                     return items.get("oversized-stacksize").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for items.oversized-stacksize, using default 64", e);
+                }
             }
         }
         return 64;
@@ -2967,7 +3087,9 @@ public class ConfigManager {
                 if (costs.has(commandName)) {
                     try {
                         return costs.get(commandName).getAsDouble();
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for kits.commandCosts.{}, using default 0.0", commandName, e);
+                    }
                 }
             }
         }
@@ -3147,18 +3269,37 @@ public class ConfigManager {
     }
 
     /**
-     * Returns true if debug logging is enabled (logging.enableDebugLogging).
-     * Defaults to false if not set.
+     * Returns true if routine/normal-level logging is enabled for the given category
+     * (logging.categories.&lt;category&gt;.normal). Defaults to true if not set.
      */
-    public boolean isDebugLoggingEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("logging")) {
-            JsonObject logging = config.getAsJsonObject("logging");
-            if (logging.has("enableDebugLogging")) {
-                return logging.get("enableDebugLogging").getAsBoolean();
-            }
+    public boolean isCategoryNormalEnabled(com.zerog.neoessentials.logging.LogCategory category) {
+        JsonObject entry = getLoggingCategoryEntry(category);
+        if (entry != null && entry.has("normal")) {
+            return entry.get("normal").getAsBoolean();
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if verbose/debug-level logging is enabled for the given category
+     * (logging.categories.&lt;category&gt;.debug). Defaults to false if not set.
+     */
+    public boolean isCategoryDebugEnabled(com.zerog.neoessentials.logging.LogCategory category) {
+        JsonObject entry = getLoggingCategoryEntry(category);
+        if (entry != null && entry.has("debug")) {
+            return entry.get("debug").getAsBoolean();
         }
         return false;
+    }
+
+    private JsonObject getLoggingCategoryEntry(com.zerog.neoessentials.logging.LogCategory category) {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (!config.has("logging")) return null;
+        JsonObject logging = config.getAsJsonObject("logging");
+        if (!logging.has("categories")) return null;
+        JsonObject categories = logging.getAsJsonObject("categories");
+        if (!categories.has(category.configKey())) return null;
+        return categories.getAsJsonObject(category.configKey());
     }
 
     /**
@@ -3172,7 +3313,9 @@ public class ConfigManager {
             if (security.has("maxCommandLength")) {
                 try {
                     return security.get("maxCommandLength").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for security.maxCommandLength, using default 256", e);
+                }
             }
         }
         return 256;
@@ -3189,7 +3332,9 @@ public class ConfigManager {
             if (security.has("maxReasonLength")) {
                 try {
                     return security.get("maxReasonLength").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for security.maxReasonLength, using default 500", e);
+                }
             }
         }
         return 500;
@@ -3242,7 +3387,9 @@ public class ConfigManager {
             if (items.has("max-unsafe-enchantment-level")) {
                 try {
                     return items.get("max-unsafe-enchantment-level").getAsInt();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for items.max-unsafe-enchantment-level, using default 10", e);
+                }
             }
         }
         return 10;
@@ -3401,7 +3548,9 @@ public class ConfigManager {
                     try {
                         int val = bs.get("teleportDelay").getAsInt();
                         if (val >= 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.backSettings.teleportDelay, falling back to generalSettings.teleportDelay", e);
+                    }
                 }
             }
             if (tp.has("generalSettings")) {
@@ -3410,7 +3559,9 @@ public class ConfigManager {
                     try {
                         int val = gs.get("teleportDelay").getAsInt();
                         if (val >= 0) return val;
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.generalSettings.teleportDelay, using default 3", e);
+                    }
                 }
             }
         }
@@ -3565,7 +3716,9 @@ public class ConfigManager {
                 String val = config.getAsJsonObject("commands").get("backupCommand").getAsString();
                 return val.isBlank() ? null : val;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for commands.backupCommand, treating as unset", e);
+        }
         return null;
     }
 }

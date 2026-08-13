@@ -229,7 +229,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             return null;
         }
 
-        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+        boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
         if (debugEnabled) {
             LOGGER.info(">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
             LOGGER.info(">>> Player UUID: {}", player.getUUID());

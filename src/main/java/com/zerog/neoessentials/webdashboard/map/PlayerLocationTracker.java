@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.map;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +64,7 @@ public class PlayerLocationTracker {
             notifyListeners(location);
             
         } catch (Exception e) {
-            LOGGER.error("Error updating player location: {}", player.getGameProfile().name(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error updating player location: {}", player.getGameProfile().name(), e);
         }
     }
     
@@ -203,7 +205,7 @@ public class PlayerLocationTracker {
             try {
                 listener.onLocationUpdate(location);
             } catch (Exception e) {
-                LOGGER.error("Error notifying location listener", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error notifying location listener", e);
             }
         }
     }

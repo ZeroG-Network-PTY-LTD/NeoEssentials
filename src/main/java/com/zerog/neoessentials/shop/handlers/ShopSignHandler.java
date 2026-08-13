@@ -5,6 +5,8 @@ import com.zerog.neoessentials.shop.ShopManager;
 import com.zerog.neoessentials.shop.ShopParser;
 import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -172,6 +174,7 @@ public class ShopSignHandler {
                 tryRegisterShop(player, lines, pos, ps.dimension(), level);
 
             } catch (Exception e) {
+                NeoLog.warn(LOGGER, LogCategory.GENERAL, "Failed to process pending shop sign '{}': {}", key, e.getMessage());
                 iter.remove();
             }
         }
@@ -330,7 +333,9 @@ public class ShopSignHandler {
                 var shopCfg = cfg.getAsJsonObject("shop");
                 if (shopCfg.has("maxShopsPerPlayer")) return shopCfg.get("maxShopsPerPlayer").getAsInt();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read shop.maxShopsPerPlayer config — using default", e);
+        }
         return 10; // default
     }
 }

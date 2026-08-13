@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.analytics;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -24,10 +26,10 @@ public class PlayerAnalyticsListener {
             PlayerSessionTracker tracker = PlayerSessionTracker.getInstance();
             tracker.trackPlayerJoin(player.getUUID(), player.getGameProfile().name());
             
-            LOGGER.debug("Analytics: Player joined - {} ({})", 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Analytics: Player joined - {} ({})",
                 player.getGameProfile().name(), player.getUUID());
         } catch (Exception e) {
-            LOGGER.error("Error tracking player join event", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error tracking player join event", e);
         }
     }
     
@@ -41,10 +43,10 @@ public class PlayerAnalyticsListener {
             PlayerSessionTracker tracker = PlayerSessionTracker.getInstance();
             tracker.trackPlayerLeave(player.getUUID());
             
-            LOGGER.debug("Analytics: Player left - {} ({})", 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Analytics: Player left - {} ({})",
                 player.getGameProfile().name(), player.getUUID());
         } catch (Exception e) {
-            LOGGER.error("Error tracking player leave event", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error tracking player leave event", e);
         }
     }
 }

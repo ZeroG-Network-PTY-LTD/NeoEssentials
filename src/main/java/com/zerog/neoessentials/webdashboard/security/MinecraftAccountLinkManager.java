@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.security;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class MinecraftAccountLinkManager {
      */
     public String startLink(String ownerKey) {
         if (getLinkedUuid(ownerKey) != null) {
-            LOGGER.warn("'{}' already has a linked Minecraft account", ownerKey);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "'{}' already has a linked Minecraft account", ownerKey);
             return null;
         }
 
@@ -68,6 +70,7 @@ public class MinecraftAccountLinkManager {
 
         String code = generateCode();
         pendingByCode.put(code, new PendingLink(ownerKey, System.currentTimeMillis() + CODE_TTL_MS));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Started Minecraft account link flow for owner '{}'", ownerKey);
         return code;
     }
 
@@ -100,10 +103,12 @@ public class MinecraftAccountLinkManager {
     public LinkResult completeLink(String code, UUID minecraftUuid, String minecraftUsername) {
         PendingLink pending = pendingByCode.get(code);
         if (pending == null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft account link failed for {}: unknown or already-used code", minecraftUsername);
             return LinkResult.failure("That code isn't valid. Generate a new one from the dashboard's Settings page.");
         }
         if (System.currentTimeMillis() > pending.expiresAt) {
             pendingByCode.remove(code);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft account link failed for {}: code expired", minecraftUsername);
             return LinkResult.failure("That code has expired. Generate a new one from the dashboard's Settings page.");
         }
 
@@ -112,10 +117,12 @@ public class MinecraftAccountLinkManager {
         // it enforces its own uniqueness on mc_uuid independently.)
         User existingLink = AuthenticationManager.getInstance().getUserByMcUuid(minecraftUuid.toString());
         if (existingLink != null && !existingLink.getUsername().equals(pending.ownerKey)) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft account link failed for {}: already linked to a different dashboard account", minecraftUsername);
             return LinkResult.failure("This Minecraft account is already linked to a different dashboard account.");
         }
 
         completedByOwnerKey.put(pending.ownerKey, new CompletedLink(minecraftUuid.toString(), minecraftUsername));
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft account '{}' linked to dashboard owner '{}'", minecraftUsername, pending.ownerKey);
 
         // If ownerKey also happens to be a real mod dashboard user, keep it in sync too (this is
         // always true for the mod's own bundled SPA, and gets the audit log + sync webhook for
@@ -136,6 +143,7 @@ public class MinecraftAccountLinkManager {
         if (modUser != null) {
             AuthenticationManager.getInstance().clearMinecraftLink(modUser.getId());
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft account link cleared for owner '{}'", ownerKey);
     }
 
     private String generateCode() {

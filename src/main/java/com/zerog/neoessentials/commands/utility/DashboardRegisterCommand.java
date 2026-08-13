@@ -9,10 +9,14 @@ import com.zerog.neoessentials.webdashboard.security.DashboardRegistrationManage
 import com.zerog.neoessentials.webdashboard.security.DashboardAccountRegistration;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
 import com.zerog.neoessentials.webdashboard.security.DiscordUser;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Command for players to register dashboard accounts
@@ -23,6 +27,8 @@ import net.minecraft.server.level.ServerPlayer;
  * - /dashboardregister status - Check registration status
  */
 public class DashboardRegisterCommand {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardRegisterCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("dashboardregister")) {
@@ -151,21 +157,20 @@ public class DashboardRegisterCommand {
         ServerPlayer player = (ServerPlayer) source.getEntity();
         DashboardRegistrationManager manager = DashboardRegistrationManager.getInstance();
 
-        // Debug logging
-        System.out.println("[DashboardRegister] Player " + player.getName().getString() + " (" + player.getUUID() + ") attempting registration");
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Player {} ({}) attempting dashboard registration", player.getName().getString(), player.getUUID());
 
         // Check if already registered
         if (manager.isRegistered(player.getUUID())) {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.already_registered_info"), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.already_registered_hint_creds"), false);
-            System.out.println("[DashboardRegister] Player already registered");
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Dashboard registration aborted — player {} already registered", player.getName().getString());
             return 0;
         }
 
         // Start registration
         String token = manager.startRegistration(player.getUUID(), player.getName().getString());
 
-        System.out.println("[DashboardRegister] Registration token generated: " + (token != null ? "SUCCESS" : "FAILED"));
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Dashboard registration token generated for {}: {}", player.getName().getString(), token != null ? "SUCCESS" : "FAILED");
 
         if (token == null) {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.reg_start_failed"), false);

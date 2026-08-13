@@ -5,6 +5,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,7 +142,7 @@ public class RichTextFormatter {
             }
             return text;
         } catch (Exception e) {
-            LOGGER.error("Error pre-processing rich text tags: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error pre-processing rich text tags", e);
             return text;
         }
     }
@@ -186,7 +188,7 @@ public class RichTextFormatter {
             text = stripHoverClickMarkers(text);
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
         } catch (Exception e) {
-            LOGGER.error("Error processing tablist text: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error processing tablist text", e);
             try {
                 return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
             } catch (Exception e2) {
@@ -212,7 +214,7 @@ public class RichTextFormatter {
             text = stripHoverClickMarkers(text);
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
         } catch (Exception e) {
-            LOGGER.error("Error processing rich text: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error processing rich text", e);
             try {
                 return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(text);
             } catch (Exception e2) {
@@ -540,7 +542,9 @@ public class RichTextFormatter {
             if (chatConfig.has("richText")) {
                 return chatConfig.getAsJsonObject("richText").get("enabled").getAsBoolean();
             }
-        } catch (Exception e) { /* ignore */ }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading richText.enabled, defaulting to false", e);
+        }
         return false;
     }
 
@@ -550,7 +554,9 @@ public class RichTextFormatter {
             if (chatConfig.has("richText") && chatConfig.getAsJsonObject("richText").has("allowGradients")) {
                 return chatConfig.getAsJsonObject("richText").get("allowGradients").getAsBoolean();
             }
-        } catch (Exception e) { /* ignore */ }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading richText.allowGradients, defaulting to true", e);
+        }
         return true;
     }
 
@@ -560,7 +566,9 @@ public class RichTextFormatter {
             if (chatConfig.has("richText") && chatConfig.getAsJsonObject("richText").has("allowRainbow")) {
                 return chatConfig.getAsJsonObject("richText").get("allowRainbow").getAsBoolean();
             }
-        } catch (Exception e) { /* ignore */ }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading richText.allowRainbow, defaulting to true", e);
+        }
         return true;
     }
 

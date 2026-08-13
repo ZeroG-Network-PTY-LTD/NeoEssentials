@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.endpoints;
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.commands.RulesCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,8 @@ public class RulesEndpoint implements HttpHandler {
         // Strip /api/rules prefix
         String path = exchange.getRequestURI().getPath().replaceFirst("^/api/rules", "");
         if (path.isEmpty()) path = "/";
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "RulesEndpoint request: {} {}", method, path);
 
         // Server rules are player-facing content; mutating them requires ADMIN, matching every
         // other config-writing endpoint group. Reads stay open to any authenticated caller.
@@ -122,6 +126,7 @@ public class RulesEndpoint implements HttpHandler {
             List<String> rules = new ArrayList<>(RulesCommand.getRules());
             rules.add(ruleText);
             RulesCommand.setRules(rules);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule added, now {} rules", rules.size());
 
             JsonObject obj = new JsonObject();
             obj.addProperty("success", true);
@@ -142,6 +147,7 @@ public class RulesEndpoint implements HttpHandler {
                 if (!t.isEmpty()) newRules.add(t);
             }
             RulesCommand.setRules(newRules);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rules replaced, now {} rules", newRules.size());
 
             JsonObject obj = new JsonObject();
             obj.addProperty("success", true);
@@ -195,6 +201,7 @@ public class RulesEndpoint implements HttpHandler {
 
         rules.remove(number - 1);
         RulesCommand.setRules(rules);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule #{} deleted, {} remaining", number, rules.size());
 
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);

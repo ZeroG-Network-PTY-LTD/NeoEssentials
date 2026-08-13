@@ -5,6 +5,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,16 +54,16 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 .orElse("unknown");
 
         if (ftbRanksLoaded) {
-            LOGGER.info("FTB Ranks detected — version: {}", detectedVersion);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks detected — version: {}", detectedVersion);
             if (!detectedVersion.equals("unknown")
                     && !detectedVersion.startsWith(LAST_TESTED_VERSION.substring(0, LAST_TESTED_VERSION.lastIndexOf('.')))) {
-                LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
-                LOGGER.warn("║  FTB RANKS COMPATIBILITY WARNING                              ║");
-                LOGGER.warn("║  Detected version : {}                              ║", padRight(detectedVersion, 30));
-                LOGGER.warn("║  Last tested with : {}                              ║", padRight(LAST_TESTED_VERSION, 30));
-                LOGGER.warn("║  If permissions stop working, please report this version     ║");
-                LOGGER.warn("║  mismatch at github.com/your-repo/neoessentials/issues       ║");
-                LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════╗");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  FTB RANKS COMPATIBILITY WARNING                              ║");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Detected version : {}                              ║", padRight(detectedVersion, 30));
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Last tested with : {}                              ║", padRight(LAST_TESTED_VERSION, 30));
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  If permissions stop working, please report this version     ║");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  mismatch at github.com/your-repo/neoessentials/issues       ║");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════╝");
             }
             probeApi();
         }
@@ -81,9 +83,11 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 resolvedMethod   = m;
                 resolvedInstance = null;
                 resolvedStrategy = 1;
-                LOGGER.info("FTB Ranks adapter: strategy 1 — getPermissionValue(ServerPlayer, String)");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter: strategy 1 — getPermissionValue(ServerPlayer, String)");
                 return;
-            } catch (NoSuchMethodException ignored) {}
+            } catch (NoSuchMethodException ignored) {
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks strategy 1 (static getPermissionValue) not present, trying next strategy");
+            }
 
             // ── Strategy 2: RankManager.getPermissionValue(ServerPlayer, String) ──────
             // Via getInstance().getManager() — alternative accessor path
@@ -97,11 +101,13 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                         resolvedMethod   = m;
                         resolvedInstance = rankManager;
                         resolvedStrategy = 2;
-                        LOGGER.info("FTB Ranks adapter: strategy 2 — RankManager.getPermissionValue(ServerPlayer, String)");
+                        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter: strategy 2 — RankManager.getPermissionValue(ServerPlayer, String)");
                         return;
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks strategy 2 (RankManager.getPermissionValue) probe failed, trying next strategy", ignored);
+            }
 
             // ── Strategy 3: static hasPermission(ServerPlayer, String) ───────────────
             // Legacy static variant
@@ -111,9 +117,11 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 resolvedMethod   = m;
                 resolvedInstance = null;
                 resolvedStrategy = 3;
-                LOGGER.info("FTB Ranks adapter: strategy 3 — hasPermission(ServerPlayer, String)");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter: strategy 3 — hasPermission(ServerPlayer, String)");
                 return;
-            } catch (NoSuchMethodException ignored) {}
+            } catch (NoSuchMethodException ignored) {
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks strategy 3 (static hasPermission) not present, trying next strategy");
+            }
 
             // ── Strategy 4: static checkPermission(ServerPlayer, String) ─────────────
             // Alternative naming used by some FTB Ranks forks / future versions
@@ -123,9 +131,11 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 resolvedMethod   = m;
                 resolvedInstance = null;
                 resolvedStrategy = 4;
-                LOGGER.info("FTB Ranks adapter: strategy 4 — checkPermission(ServerPlayer, String)");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter: strategy 4 — checkPermission(ServerPlayer, String)");
                 return;
-            } catch (NoSuchMethodException ignored) {}
+            } catch (NoSuchMethodException ignored) {
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks strategy 4 (static checkPermission) not present, trying next strategy");
+            }
 
             // ── Strategy 5: instance hasPermission(UUID, String) ─────────────────────
             // Oldest builds via INSTANCE / getInstance()
@@ -133,9 +143,12 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
             try {
                 instance = apiClass.getField("INSTANCE").get(null);
             } catch (NoSuchFieldException e) {
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks INSTANCE field not present, trying getInstance() accessor", e);
                 try {
                     instance = apiClass.getMethod("getInstance").invoke(null);
-                } catch (Exception ignored2) {}
+                } catch (Exception ignored2) {
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks getInstance() accessor also failed for strategy 5", ignored2);
+                }
             }
             if (instance != null) {
                 try {
@@ -143,22 +156,24 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                     resolvedMethod   = m;
                     resolvedInstance = instance;
                     resolvedStrategy = 5;
-                    LOGGER.info("FTB Ranks adapter: strategy 5 — instance.hasPermission(UUID, String)");
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter: strategy 5 — instance.hasPermission(UUID, String)");
                     return;
-                } catch (NoSuchMethodException ignored) {}
+                } catch (NoSuchMethodException ignored) {
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks strategy 5 (instance.hasPermission) not present", ignored);
+                }
             }
 
-            LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
-            LOGGER.warn("║  FTB RANKS API NOT RESOLVED                                  ║");
-            LOGGER.warn("║  Version {} did not match any known API signature.  ║", padRight(detectedVersion, 24));
-            LOGGER.warn("║  Permission checks will fall back to OP / internal system.   ║");
-            LOGGER.warn("║  Please report this at the NeoEssentials issue tracker.      ║");
-            LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════╗");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  FTB RANKS API NOT RESOLVED                                  ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Version {} did not match any known API signature.  ║", padRight(detectedVersion, 24));
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Permission checks will fall back to OP / internal system.   ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Please report this at the NeoEssentials issue tracker.      ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════╝");
 
         } catch (ClassNotFoundException e) {
-            LOGGER.debug("FTB Ranks API class not found — mod may not be installed");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks API class not found — mod may not be installed");
         } catch (Exception e) {
-            LOGGER.warn("FTB Ranks adapter init failed: {}", e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks adapter init failed: {}", e.getMessage());
         }
     }
 
@@ -170,6 +185,8 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         try {
             boolean result = invokeResolvedMethod(uuid, permission);
             consecutiveFailures.set(0); // reset on success
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks permission check: player={}, permission={}, strategy={}, result={}",
+                    uuid, permission, resolvedStrategy, result);
             return result;
         } catch (Exception e) {
             int failures = consecutiveFailures.incrementAndGet();
@@ -222,7 +239,9 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         try {
             Object r = result.getClass().getMethod("asBooleanOrFalse").invoke(result);
             if (r instanceof Boolean b) return b;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks result type {} has no asBooleanOrFalse(), trying next coercion", result.getClass().getName());
+        }
         // Optional<Boolean> — e.g. PermissionValue.asBoolean()
         if (result instanceof java.util.Optional<?> opt) {
             Object inner = opt.orElse(null);
@@ -231,24 +250,26 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         // TriState / enum — try a get() method, then toString comparison
         try {
             return (boolean) result.getClass().getMethod("get").invoke(result);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks result type {} has no get(), falling back to toString comparison", result.getClass().getName());
+        }
         String s = result.toString().toUpperCase();
         return !s.equals("FALSE") && !s.equals("UNDEFINED") && !s.equals("DENY") && !s.equals("MISSING");
     }
 
     private void emitHealthWarnIfNeeded(int failures, String permission, Exception cause) {
         if (failures == 1) {
-            LOGGER.error("FTB Ranks permission check failed for '{}': {}", permission,
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"FTB Ranks permission check failed for '{}': {}", permission,
                     cause.getMessage());
         } else if (failures == MAX_FAILURES) {
-            LOGGER.warn("╔══════════════════════════════════════════════════════════════╗");
-            LOGGER.warn("║  FTB RANKS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
-            LOGGER.warn("║  Version     : {}                                   ║", padRight(detectedVersion, 21));
-            LOGGER.warn("║  Last error  : {}  ║", padRight(cause.getMessage() != null
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════╗");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  FTB RANKS ADAPTER UNHEALTHY — {} consecutive failures    ║", MAX_FAILURES);
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Version     : {}                                   ║", padRight(detectedVersion, 21));
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Last error  : {}  ║", padRight(cause.getMessage() != null
                     ? cause.getMessage().substring(0, Math.min(cause.getMessage().length(), 42)) : "n/a", 42));
-            LOGGER.warn("║  NeoEssentials will fall back to internal permissions.       ║");
-            LOGGER.warn("║  Resolve the FTB Ranks API issue and run /neoe reload.       ║");
-            LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  NeoEssentials will fall back to internal permissions.       ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"║  Resolve the FTB Ranks API issue and run /neoe reload.       ║");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════╝");
         }
     }
 

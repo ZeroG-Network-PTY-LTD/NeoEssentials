@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,65 +74,72 @@ public class AuthenticationManager {
         // Find user
         String userId = userIdByUsername.get(username.toLowerCase());
         if (userId == null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication failed for '{}': user not found", username);
             logAuditEvent("LOGIN_FAILED", username, ipAddress, "User not found");
             return null;
         }
-        
+
         User user = users.get(userId);
         if (user == null) {
             return null;
         }
-        
+
         // Check if account is locked
         if (user.isLockedOut()) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account locked", username);
             logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account locked due to failed attempts");
             return null;
         }
-        
+
         // Check if account is enabled
         if (!user.isEnabled()) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account disabled", username);
             logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account disabled");
             return null;
         }
-        
+
         // Verify password
         if (!verifyPassword(password, user.getPasswordHash())) {
             // Increment failed attempts
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-            
+
             // Lock account if max attempts reached
             if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
                 user.setLockoutUntil(System.currentTimeMillis() + LOCKOUT_DURATION_MS);
-                logAuditEvent("ACCOUNT_LOCKED", username, ipAddress, 
+                logAuditEvent("ACCOUNT_LOCKED", username, ipAddress,
                     "Account locked due to " + MAX_FAILED_ATTEMPTS + " failed attempts");
             }
-            
+
             saveUsers();
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication failed for '{}': invalid password (attempt {}/{})",
+                username, user.getFailedLoginAttempts(), MAX_FAILED_ATTEMPTS);
             logAuditEvent("LOGIN_FAILED", username, ipAddress, "Invalid password");
             return null;
         }
-        
+
         // Successful login - reset failed attempts
         user.setFailedLoginAttempts(0);
         user.setLockoutUntil(0);
         user.setLastLoginAt(System.currentTimeMillis());
         user.setLastLoginIp(ipAddress);
         saveUsers();
-        
+
         // Create session
         Session session = new Session(user.getId(), user.getUsername(), user.getRole(), ipAddress, userAgent);
-        
+
         // Check if user needs to change password (temp password or explicitly flagged)
         if (user.requiresPasswordChange() || user.isTempPassword()) {
             session.setRequiresPasswordChange(true);
-            logAuditEvent("LOGIN_SUCCESS", username, ipAddress, 
+            logAuditEvent("LOGIN_SUCCESS", username, ipAddress,
                 "Session created with password change requirement: " + session.getSessionId());
         } else {
             logAuditEvent("LOGIN_SUCCESS", username, ipAddress, "Session created: " + session.getSessionId());
         }
-        
+
         sessions.put(session.getSessionId(), session);
-        
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication succeeded for '{}', session created (requiresPasswordChange={})",
+            username, session.requiresPasswordChange());
+
         return session;
     }
     
@@ -140,21 +149,22 @@ public class AuthenticationManager {
     public Session createSession(String userId, String ipAddress, String userAgent) {
         User user = users.get(userId);
         if (user == null) {
-            LOGGER.error("Cannot create session: user not found with ID {}", userId);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot create session: user not found with ID {}", userId);
             return null;
         }
-        
+
         // Update user login info
         user.setLastLoginAt(System.currentTimeMillis());
         user.setLastLoginIp(ipAddress);
         saveUsers();
-        
+
         // Create session
         Session session = new Session(user.getId(), user.getUsername(), user.getRole(), ipAddress, userAgent);
         sessions.put(session.getSessionId(), session);
-        
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "External auth session created for '{}'", user.getUsername());
         logAuditEvent("LOGIN_SUCCESS", user.getUsername(), ipAddress, "External auth session created: " + session.getSessionId());
-        
+
         return session;
     }
     
@@ -163,30 +173,22 @@ public class AuthenticationManager {
      */
     public Session validateSession(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
-            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-                LOGGER.debug("validateSession: sessionId is null or empty");
-            }
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "validateSession: sessionId is null or empty");
             return null;
         }
         Session session = sessions.get(sessionId);
         if (session == null) {
-            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-                LOGGER.debug("validateSession: sessionId '{}' not found in sessions map", sessionId);
-            }
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "validateSession: session not found or already expired");
             return null;
         }
         if (!session.isValid()) {
-            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-                LOGGER.debug("validateSession: sessionId '{}' found but session is not valid", sessionId);
-            }
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "validateSession: session found for '{}' but is no longer valid", session.getUsername());
             return null;
         }
         // Update access time
         session.updateAccessTime();
-        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
-            LOGGER.debug("validateSession: sessionId '{}' is valid for user '{}', requiresPasswordChange={}",
-                sessionId, session.getUsername(), session.requiresPasswordChange());
-        }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "validateSession: session valid for user '{}', requiresPasswordChange={}",
+            session.getUsername(), session.requiresPasswordChange());
         return session;
     }
     
@@ -198,7 +200,8 @@ public class AuthenticationManager {
         if (session != null) {
             session.invalidate();
             sessions.remove(sessionId);
-            logAuditEvent("LOGOUT", session.getUsername(), session.getIpAddress(), 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session invalidated for user '{}'", session.getUsername());
+            logAuditEvent("LOGOUT", session.getUsername(), session.getIpAddress(),
                 "Session invalidated: " + sessionId);
         }
     }
@@ -228,7 +231,8 @@ public class AuthenticationManager {
         users.put(user.getId(), user);
         userIdByUsername.put(username.toLowerCase(), user.getId());
         saveUsers();
-        
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard user '{}' created with role {}", username, user.getRole());
         logAuditEvent("USER_CREATED", username, "system", "Role: " + user.getRole());
         DashboardUserSyncWebhook.notify("user_created", user);
 
@@ -253,7 +257,8 @@ public class AuthenticationManager {
         user.setRequiresPasswordChange(false);
         user.setTempPassword(false);
         saveUsers();
-        
+
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Password updated for user '{}'", user.getUsername());
         logAuditEvent("PASSWORD_CHANGED", user.getUsername(), "system", "Password updated and flags cleared");
     }
     
@@ -460,12 +465,12 @@ public class AuthenticationManager {
         if (session == null) {
             return false;
         }
-        
+
         User user = users.get(session.getUserId());
         if (user == null) {
             return false;
         }
-        
+
         return user.hasPermission(permission);
     }
     
@@ -514,7 +519,7 @@ public class AuthenticationManager {
             byte[] actual = pbkdf2(password, salt);
             return java.security.MessageDigest.isEqual(actual, expected);
         } catch (Exception e) {
-            LOGGER.warn("Failed to verify password hash: {}", e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to verify password hash: {}", e.getMessage());
             return false;
         }
     }
@@ -573,11 +578,11 @@ public class AuthenticationManager {
             admin.setTempPassword(true);
             admin.setRequiresPasswordChange(true);
             saveUsers();
-            LOGGER.warn("=================================================================");
-            LOGGER.warn("Created default dashboard admin account — username: admin");
-            LOGGER.warn("Temporary password: {}", tempPassword);
-            LOGGER.warn("You will be required to set a new password on first login.");
-            LOGGER.warn("=================================================================");
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "=================================================================");
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Created default dashboard admin account — username: admin");
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Temporary password: {}", tempPassword);
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "You will be required to set a new password on first login.");
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "=================================================================");
             return;
         }
 
@@ -634,7 +639,7 @@ public class AuthenticationManager {
             userIdByUsername.put(username.toLowerCase(), id);
         }
 
-        LOGGER.info("Loaded {} users from storage", users.size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Loaded {} users from storage", users.size());
     }
 
     /**
@@ -702,11 +707,11 @@ public class AuthenticationManager {
                 }
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to migrate legacy dashboard_users.json: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to migrate legacy dashboard_users.json", e);
         }
 
         if (migrated > 0) {
-            LOGGER.info("AuthenticationManager: migrated {} user account(s) from legacy file into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "AuthenticationManager: migrated {} user account(s) from legacy file into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -728,9 +733,9 @@ public class AuthenticationManager {
             Files.writeString(AUDIT_LOG, logEntry, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             
-            LOGGER.info("AUDIT: {}", logEntry.trim());
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "AUDIT: {}", logEntry.trim());
         } catch (IOException e) {
-            LOGGER.error("Failed to write audit log", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to write audit log", e);
         }
     }
     
@@ -752,7 +757,7 @@ public class AuthenticationManager {
                     }
                 }
                 if (removed > 0) {
-                    LOGGER.debug("Cleaned up {} expired sessions", removed);
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Cleaned up {} expired sessions", removed);
                 }
             }
         }, 60000, 60000); // Run every minute

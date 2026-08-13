@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.security;
 
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -50,7 +52,7 @@ public class PermissionRoleSyncTask {
             return t;
         });
         scheduler.scheduleAtFixedRate(PermissionRoleSyncTask::syncAll, intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
-        LOGGER.info("Permission-driven dashboard role sync started (every {}s)", intervalSeconds);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Permission-driven dashboard role sync started (every {}s)", intervalSeconds);
     }
 
     public static synchronized void stop() {
@@ -75,7 +77,7 @@ public class PermissionRoleSyncTask {
                 syncPlayer(registration.getMinecraftUuid());
             }
         } catch (Exception e) {
-            LOGGER.error("Permission role-sync sweep failed", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Permission role-sync sweep failed", e);
         }
     }
 
@@ -92,14 +94,14 @@ public class PermissionRoleSyncTask {
 
             if (shouldBeAdmin && currentRole != User.Role.ADMIN) {
                 AuthenticationManager.getInstance().updateUserRole(user.getId(), User.Role.ADMIN, true);
-                LOGGER.info("Role sync: granted ADMIN to dashboard user '{}' (in-game permission match)", user.getUsername());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: granted ADMIN to dashboard user '{}' (in-game permission match)", user.getUsername());
             } else if (!shouldBeAdmin && currentRole == User.Role.ADMIN && user.isRoleSyncManaged()) {
                 // Only downgrade a role this task granted itself — never a manually-set ADMIN.
                 AuthenticationManager.getInstance().updateUserRole(user.getId(), User.Role.VIEWER, true);
-                LOGGER.info("Role sync: revoked ADMIN from dashboard user '{}' (no longer matches in-game permission)", user.getUsername());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: revoked ADMIN from dashboard user '{}' (no longer matches in-game permission)", user.getUsername());
             }
         } catch (Exception e) {
-            LOGGER.warn("Permission role-sync failed for {}: {}", minecraftUuid, e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Permission role-sync failed for {}: {}", minecraftUuid, e.getMessage());
         }
     }
 

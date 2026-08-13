@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.webdashboard.security;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
@@ -101,7 +103,7 @@ public class ApiKeyManager {
         keys.put(keyId, record);
         saveKey(record);
 
-        LOGGER.info("API key created: '{}' (id: {}, role: {})", label, keyId, role);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "API key created: '{}' (id: {}, role: {})", label, keyId, role);
         return TOKEN_PREFIX + keyId + "_" + secret;
     }
 
@@ -110,25 +112,38 @@ public class ApiKeyManager {
      * @return the matching record, or null if the token is malformed, unknown, disabled, or wrong.
      */
     public ApiKeyRecord validate(String token) {
-        if (token == null || !token.startsWith(TOKEN_PREFIX)) return null;
+        if (token == null || !token.startsWith(TOKEN_PREFIX)) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key validation failed: missing or malformed prefix");
+            return null;
+        }
 
         String rest = token.substring(TOKEN_PREFIX.length());
         // Fixed-width keyId slice, not indexOf('_') — base64url's alphabet includes '_', so the
         // first underscore in `rest` isn't reliably the keyId/secret separator. KEY_ID_BYTES (9)
         // always base64url-encodes to exactly 12 chars (9*8 bits / 6 bits-per-char, no padding).
         int keyIdLength = (KEY_ID_BYTES * 8) / 6;
-        if (rest.length() <= keyIdLength + 1 || rest.charAt(keyIdLength) != '_') return null;
+        if (rest.length() <= keyIdLength + 1 || rest.charAt(keyIdLength) != '_') {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key validation failed: malformed token shape");
+            return null;
+        }
 
         String keyId = rest.substring(0, keyIdLength);
         String secret = rest.substring(keyIdLength + 1);
 
         ApiKeyRecord record = keys.get(keyId);
-        if (record == null || !record.enabled) return null;
-        if (!verifySecret(secret, record.secretHash)) return null;
+        if (record == null || !record.enabled) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key validation failed for id {}: {}", keyId, record == null ? "unknown key" : "key disabled");
+            return null;
+        }
+        if (!verifySecret(secret, record.secretHash)) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key validation failed for id {}: secret mismatch", keyId);
+            return null;
+        }
 
         record.lastUsedAt = System.currentTimeMillis();
         saveKey(record); // best-effort persistence of lastUsedAt; validate() is called on every request so this is cheap enough
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key validated: id {} (role: {})", keyId, record.role);
         return record;
     }
 
@@ -154,7 +169,7 @@ public class ApiKeyManager {
         ApiKeyRecord record = keys.remove(keyId);
         if (record == null) return false;
         store.delete(COLLECTION, keyId);
-        LOGGER.info("API key revoked: '{}' (id: {})", record.label, keyId);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "API key revoked: '{}' (id: {})", record.label, keyId);
         return true;
     }
 
@@ -175,10 +190,10 @@ public class ApiKeyManager {
                 );
                 keys.put(id, record);
             } catch (Exception e) {
-                LOGGER.warn("Skipping corrupt API key record: {}", e.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Skipping corrupt API key record: {}", e.getMessage());
             }
         }
-        LOGGER.info("Loaded {} API key(s)", keys.size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Loaded {} API key(s)", keys.size());
     }
 
     private void saveKey(ApiKeyRecord record) {
@@ -217,6 +232,7 @@ public class ApiKeyManager {
             byte[] actual = pbkdf2(secret, salt);
             return java.security.MessageDigest.isEqual(actual, expected);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "API key secret verification failed to compute", e);
             return false;
         }
     }

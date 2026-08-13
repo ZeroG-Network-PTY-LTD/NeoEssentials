@@ -6,6 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -59,6 +61,8 @@ public class CommandExecutionHandler implements HttpHandler {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
 
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "CommandExecutionHandler handling request: {} {}", method, path);
+
         try {
             // This whole endpoint runs arbitrary commands at OP level 4 (see
             // createDashboardCommandSource below) — that's not limited to the
@@ -81,7 +85,7 @@ public class CommandExecutionHandler implements HttpHandler {
                 sendJsonResponse(exchange, 400, createErrorResponse("Invalid endpoint"));
             }
         } catch (Exception e) {
-            LOGGER.error("Error handling command execution request", e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error handling command execution request", e);
             sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
         }
     }
@@ -129,7 +133,11 @@ public class CommandExecutionHandler implements HttpHandler {
         String executionId = UUID.randomUUID().toString();
         List<String> output = new ArrayList<>();
         commandOutputs.put(executionId, output);
-        
+
+        Object authUsername = exchange.getAttribute("auth-username");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Executing dashboard command '{}' (by {}, executionId={})",
+            command, authUsername != null ? authUsername : "unknown", executionId);
+
         try {
             // Create command source for dashboard
             CommandSourceStack source = createDashboardCommandSource(server, output);
@@ -154,7 +162,7 @@ public class CommandExecutionHandler implements HttpHandler {
             sendJsonResponse(exchange, 200, response);
             
         } catch (Exception e) {
-            LOGGER.error("Error executing command: {}", command, e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error executing command: {}", command, e);
             
             addToHistory(command, false, "Error: " + e.getMessage());
             

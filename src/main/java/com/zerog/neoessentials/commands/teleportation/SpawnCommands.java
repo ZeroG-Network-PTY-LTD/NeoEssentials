@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.Spawn.SpawnManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -12,6 +14,8 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Commands for the spawn teleportation system:
@@ -20,7 +24,8 @@ import net.minecraft.server.level.ServerPlayer;
  * - /spawninfo - Display spawn information
  */
 public class SpawnCommands {
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(SpawnCommands.class);
+
     // Permission nodes for spawn commands (matching PermissionRegistry)
     private static final String PERMISSION_SPAWN = "neoessentials.teleport.spawn";
     private static final String PERMISSION_SETSPAWN = "neoessentials.teleport.spawn.set";
@@ -53,6 +58,9 @@ public class SpawnCommands {
                         }
                     }
                 } catch (Exception e) {
+                    // Malformed/missing spawnSettings.allowSpawnSet — fall back to the permissive
+                    // default rather than failing registration outright.
+                    NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Failed to read teleportation.spawnSettings.allowSpawnSet, defaulting to true", e);
                     allowSpawnSet = true;
                 }
                 if (allowSpawnSet) {
@@ -60,6 +68,7 @@ public class SpawnCommands {
                 }
             }
         }
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Spawn command family registered");
     }
     
     /**
@@ -146,6 +155,8 @@ public class SpawnCommands {
                 }
             }
         } catch (Exception e) {
+            // Malformed/missing spawnSettings.spawnCooldown — treat as no cooldown.
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Failed to read teleportation.spawnSettings.spawnCooldown, defaulting to 0", e);
             cooldown = 0;
         }
 
@@ -204,6 +215,8 @@ public class SpawnCommands {
                 return 1;
             }
         } catch (Exception e) {
+            // Expected: player supplied coordinates that don't parse or reference an unloaded chunk.
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Invalid /setspawn coordinates", e);
             context.getSource().sendFailure(MessageUtil.error("teleport.spawn.invalid_coordinates"));
         }
         return 0;

@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.webdashboard.data;
 
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +53,8 @@ public class DataCollector {
         this.serverCollector = new ServerDataCollector(server);
         this.gameCollector = new GameDataCollector(server);
         this.loggingCollector = new LoggingDataCollector();
-        
-        LOGGER.info("Data Collector initialized with all specialized collectors");
+
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Data Collector initialized with all specialized collectors");
     }
     
     /**
@@ -60,7 +62,7 @@ public class DataCollector {
      */
     public void shutdown() {
         this.dataCache.clear();
-        LOGGER.info("Data Collector stopped");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Data Collector stopped");
     }
     
     // ===== PLAYER DATA METHODS =====
@@ -258,7 +260,7 @@ public class DataCollector {
      */
     public void clearCache() {
         dataCache.clear();
-        LOGGER.info("All cached data cleared");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "All cached data cleared");
     }
     
     /**
@@ -266,7 +268,7 @@ public class DataCollector {
      */
     public void clearCache(String key) {
         dataCache.remove(key);
-        LOGGER.info("Cache cleared for key: {}", key);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Cache cleared for key: {}", key);
     }
     
     /**

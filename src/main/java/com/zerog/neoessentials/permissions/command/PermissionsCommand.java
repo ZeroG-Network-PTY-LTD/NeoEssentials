@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.permissions.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -33,7 +35,7 @@ public class PermissionsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if permissions module is enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isPermissionsEnabled()) {
-            LOGGER.debug("Permissions module is disabled, skipping permissions command registration");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Permissions module is disabled, skipping permissions command registration");
             return;
         }
         
@@ -42,7 +44,7 @@ public class PermissionsCommand {
         boolean permissionsEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("permissions");
         
         if (!pexEnabled && !permissionsEnabled) {
-            LOGGER.debug("Both pex and permissions commands are disabled, skipping registration");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Both pex and permissions commands are disabled, skipping registration");
             return;
         }
         
@@ -545,6 +547,7 @@ public class PermissionsCommand {
             ServerPlayer p = ctx.getSource().getPlayer();
             return p != null ? p.getGameProfile().name() : "CONSOLE";
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not resolve executor player for audit log, defaulting to CONSOLE", e);
             return "CONSOLE";
         }
     }
@@ -564,7 +567,7 @@ public class PermissionsCommand {
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to reload permissions", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to reload permissions", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.reload_failed", e.getMessage()));
             return 0;
         }
@@ -610,12 +613,12 @@ public class PermissionsCommand {
         // Save with proper error handling
         try {
             PermissionStorage.save(PermissionAPI.getManager());
-            LOGGER.info("Set prefix '{}' for group '{}'", prefix, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set prefix '{}' for group '{}'", prefix, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PREFIX_SET, groupName, "prefix=\"" + prefix + "\"");
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after setting prefix", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting prefix", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_prefix_failed", e.getMessage()));
             return 0;
         }
@@ -661,12 +664,12 @@ public class PermissionsCommand {
         // Save with proper error handling
         try {
             PermissionStorage.save(PermissionAPI.getManager());
-            LOGGER.info("Set suffix '{}' for group '{}'", suffix, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set suffix '{}' for group '{}'", suffix, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_SUFFIX_SET, groupName, "suffix=\"" + suffix + "\"");
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after setting suffix", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting suffix", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_suffix_failed", e.getMessage()));
             return 0;
         }
@@ -690,13 +693,13 @@ public class PermissionsCommand {
         PermissionAPI.getManager().clearCache();
         try {
             PermissionStorage.save(PermissionAPI.getManager());
-            LOGGER.info("Set priority {} for group '{}'", priority, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set priority {} for group '{}'", priority, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PRIORITY_SET, groupName, "priority=" + priority);
             ctx.getSource().sendSuccess(() -> MessageUtil.success(
                 "commands.neoessentials.permissions.priority_set", groupName, priority), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after setting priority", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting priority", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_priority_failed", e.getMessage()));
             return 0;
         }
@@ -735,7 +738,7 @@ public class PermissionsCommand {
             final String groupName = StringArgumentType.getString(ctx, "group");
             final String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
 
-            LOGGER.debug("Adding permission '{}' to group '{}'", perm, groupName);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Adding permission '{}' to group '{}'", perm, groupName);
             
             // Validate permission format
             if (!PermissionManager.isValidPermission(perm)) {
@@ -762,10 +765,10 @@ public class PermissionsCommand {
             
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
-                LOGGER.info("Added permission '{}' to group '{}'", perm, groupName);
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Added permission '{}' to group '{}'", perm, groupName);
                 PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERM_ADDED, groupName, "node=" + perm);
             } catch (Exception e) { 
-                LOGGER.error("Failed to save permissions after adding group permission", e);
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after adding group permission", e);
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
                 return 0;
             }
@@ -781,6 +784,7 @@ public class PermissionsCommand {
                     neoessentialsHandlerActive = activeHandler != null &&
                             activeHandler.equals(com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler.IDENTIFIER);
                 } catch (Exception ex) {
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not determine active permission handler while adding external permission '{}'", perm, ex);
                     neoessentialsHandlerActive = false;
                 }
                 if (neoessentialsHandlerActive) {
@@ -793,7 +797,7 @@ public class PermissionsCommand {
             }
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error in addGroupPermission command", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Unexpected error in addGroupPermission command", e);
             ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.permissions.unexpected_error", e.getMessage()));
             return 0;
         }
@@ -812,7 +816,7 @@ public class PermissionsCommand {
             String groupName = StringArgumentType.getString(ctx, "group");
             String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
             
-            LOGGER.debug("Removing permission '{}' from group '{}'", perm, groupName);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Removing permission '{}' from group '{}'", perm, groupName);
             
             PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
             if (group == null) {
@@ -833,17 +837,17 @@ public class PermissionsCommand {
             
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
-                LOGGER.info("Removed permission '{}' from group '{}'", perm, groupName);
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Removed permission '{}' from group '{}'", perm, groupName);
                 PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERM_REMOVED, groupName, "node=" + perm);
             } catch (Exception e) { 
-                LOGGER.error("Failed to save permissions after removing group permission", e); 
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after removing group permission", e); 
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
                 return 0;
             }
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed", perm, groupName), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error in removeGroupPermission command for group '{}', permission '{}'",
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Unexpected error in removeGroupPermission command for group '{}', permission '{}'",
                 StringArgumentType.getString(ctx, "group"),
                 StringArgumentType.getString(ctx, "permission"), e);
             ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.permissions.unexpected_error", e.getMessage()));
@@ -865,7 +869,7 @@ public class PermissionsCommand {
             String groupName = StringArgumentType.getString(ctx, "group");
             MinecraftServer server = ctx.getSource().getServer();
             
-            LOGGER.debug("Setting group '{}' for user '{}'", groupName, playerName);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Setting group '{}' for user '{}'", groupName, playerName);
             
             // Try to get UUID by player name
             Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
@@ -901,17 +905,17 @@ public class PermissionsCommand {
             
             try { 
                 PermissionStorage.save(PermissionAPI.getManager()); 
-                LOGGER.info("Set group '{}' for user '{}'", groupName, playerName);
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set group '{}' for user '{}'", groupName, playerName);
                 PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_GROUP_SET, playerName, "group=" + groupName);
             } catch (Exception e) { 
-                LOGGER.error("Failed to save permissions after setting user group", e); 
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting user group", e); 
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
                 return 0;
             }
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_group_set", playerName, groupName), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Unexpected error in setUserGroup command for player '{}', group '{}'",
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Unexpected error in setUserGroup command for player '{}', group '{}'",
                 StringArgumentType.getString(ctx, "player"),
                 StringArgumentType.getString(ctx, "group"), e);
             ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.permissions.unexpected_error", e.getMessage()));
@@ -967,10 +971,10 @@ public class PermissionsCommand {
         
         try { 
             PermissionStorage.save(PermissionAPI.getManager()); 
-            LOGGER.info("Added permission '{}' to user '{}'", perm, playerName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Added permission '{}' to user '{}'", perm, playerName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERM_ADDED, playerName, "node=" + perm);
         } catch (Exception e) { 
-            LOGGER.error("Failed to save permissions after adding user permission", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after adding user permission", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
             return 0;
         }
@@ -1018,10 +1022,10 @@ public class PermissionsCommand {
         
         try { 
             PermissionStorage.save(PermissionAPI.getManager()); 
-            LOGGER.info("Removed permission '{}' from user '{}'", perm, playerName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Removed permission '{}' from user '{}'", perm, playerName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERM_REMOVED, playerName, "node=" + perm);
         } catch (Exception e) { 
-            LOGGER.error("Failed to save permissions after removing user permission", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after removing user permission", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
             return 0;
         }
@@ -1311,6 +1315,7 @@ public class PermissionsCommand {
 
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Unexpected error searching permissions for pattern '{}'", pattern, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.search_failed", e.getMessage()));
             return 0;
         }
@@ -1339,11 +1344,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.group_created", groupName), false);
-            LOGGER.info("Created new permission group: {}", groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Created new permission group: {}", groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CREATED, groupName, "new group");
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after creating group", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after creating group", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1377,11 +1382,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.group_deleted", groupName), false);
-            LOGGER.info("Deleted permission group: {}", groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Deleted permission group: {}", groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_DELETED, groupName, "group deleted");
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after deleting group", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after deleting group", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1431,11 +1436,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.group_renamed", oldName, newName), false);
-            LOGGER.info("Renamed permission group '{}' to '{}'", oldName, newName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Renamed permission group '{}' to '{}'", oldName, newName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_RENAMED, oldName, "newName=" + newName);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after renaming group", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after renaming group", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1477,11 +1482,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.group_cloned", sourceName, newName), false);
-            LOGGER.info("Cloned permission group '{}' to '{}'", sourceName, newName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Cloned permission group '{}' to '{}'", sourceName, newName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CLONED, sourceName, "newGroup=" + newName);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after cloning group", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after cloning group", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1510,11 +1515,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.group_perms_cleared", count, groupName), false);
-            LOGGER.info("Cleared all permissions from group '{}'", groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Cleared all permissions from group '{}'", groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PERMS_CLEARED, groupName, "all nodes removed");
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after clearing group", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after clearing group", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1551,11 +1556,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_perms_cleared", count, playerName), false);
-            LOGGER.info("Cleared all permissions from user '{}'", playerName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Cleared all permissions from user '{}'", playerName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_PERMS_CLEARED, playerName, "all direct nodes removed");
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after clearing user", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after clearing user", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1601,11 +1606,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.inherit_added", groupName, inheritGroup), false);
-            LOGGER.info("Added inheritance from '{}' to group '{}'", inheritGroup, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Added inheritance from '{}' to group '{}'", inheritGroup, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_INHERIT_ADDED, groupName, "inherits=" + inheritGroup);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after adding inheritance", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after adding inheritance", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1640,11 +1645,11 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(manager);
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.inherit_removed", inheritGroup, groupName), false);
-            LOGGER.info("Removed inheritance from '{}' from group '{}'", inheritGroup, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Removed inheritance from '{}' from group '{}'", inheritGroup, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_INHERIT_REMOVED, groupName, "removed=" + inheritGroup);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save permissions after removing inheritance", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after removing inheritance", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1670,6 +1675,7 @@ public class PermissionsCommand {
         long durationMs;
         try { durationMs = PermissionManager.parseDurationMs(durStr); }
         catch (IllegalArgumentException e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Rejected invalid temp-permission duration '{}' from user command", durStr, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_duration", e.getMessage()));
             return 0;
         }
@@ -1686,7 +1692,7 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             String remaining = PermissionManager.formatDuration(durationMs);
-            LOGGER.info("Granted temp permission '{}' to {} for {}", perm, playerName, remaining);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Granted temp permission '{}' to {} for {}", perm, playerName, remaining);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_TEMP_PERM_ADDED,
                 playerName, "node=" + perm + " expires_in=" + remaining);
             final String displayPerm = perm;
@@ -1700,7 +1706,7 @@ public class PermissionsCommand {
             }
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save after addtemp", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save after addtemp", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1731,7 +1737,7 @@ public class PermissionsCommand {
         PermissionAPI.getManager().clearCache();
         try {
             PermissionStorage.save(PermissionAPI.getManager());
-            LOGGER.info("Removed temp permission '{}' from {}", perm, playerName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Removed temp permission '{}' from {}", perm, playerName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_TEMP_PERM_REMOVED,
                 playerName, "node=" + perm);
             final String displayPerm = perm;
@@ -1739,6 +1745,7 @@ public class PermissionsCommand {
                 "commands.neoessentials.permissions.temp_removed_user", displayPerm, playerName), false);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after removing temp permission '{}' from user '{}'", perm, playerName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1797,6 +1804,7 @@ public class PermissionsCommand {
         long durationMs;
         try { durationMs = PermissionManager.parseDurationMs(durStr); }
         catch (IllegalArgumentException e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Rejected invalid temp-permission duration '{}' from group command", durStr, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_duration", e.getMessage()));
             return 0;
         }
@@ -1811,7 +1819,7 @@ public class PermissionsCommand {
         try {
             PermissionStorage.save(PermissionAPI.getManager());
             String remaining = PermissionManager.formatDuration(durationMs);
-            LOGGER.info("Granted temp permission '{}' to group '{}' for {}", perm, groupName, remaining);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Granted temp permission '{}' to group '{}' for {}", perm, groupName, remaining);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_TEMP_PERM_ADDED,
                 groupName, "node=" + perm + " expires_in=" + remaining);
             final String displayPerm = perm;
@@ -1819,7 +1827,7 @@ public class PermissionsCommand {
                 "commands.neoessentials.permissions.temp_granted_group", displayPerm, groupName, remaining), false);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to save after group addtemp", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save after group addtemp", e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1848,7 +1856,7 @@ public class PermissionsCommand {
         PermissionAPI.getManager().clearCache();
         try {
             PermissionStorage.save(PermissionAPI.getManager());
-            LOGGER.info("Removed temp permission '{}' from group '{}'", perm, groupName);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Removed temp permission '{}' from group '{}'", perm, groupName);
             PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_TEMP_PERM_REMOVED,
                 groupName, "node=" + perm);
             final String displayPerm = perm;
@@ -1856,6 +1864,7 @@ public class PermissionsCommand {
                 "commands.neoessentials.permissions.temp_removed_group", displayPerm, groupName), false);
             return 1;
         } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after removing temp permission '{}' from group '{}'", perm, groupName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage()));
             return 0;
         }
@@ -1927,6 +1936,7 @@ public class PermissionsCommand {
             return 0;
         }
         UUID uuid = uuidOpt.get();
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Running permission debug trace for player '{}' ({})", playerName, uuid);
 
         // ── Header ──────────────────────────────────────────────────────────
         send(ctx, MessageUtil.localize("commands.neoessentials.permissions.debug.header", playerName));
@@ -1966,7 +1976,9 @@ public class PermissionsCommand {
                     if (profile != null) isOp = server.getPlayerList().isOp(profile);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not resolve OP status for '{}' during permission debug trace", playerName, e);
+        }
         send(ctx, MessageUtil.localize("commands.neoessentials.permissions.debug.op_status",
             isOp ? MessageUtil.localize("commands.neoessentials.permissions.debug.op_yes") : MessageUtil.localize("commands.neoessentials.permissions.debug.op_no")));
 
@@ -2094,9 +2106,11 @@ public class PermissionsCommand {
         String permission = StringArgumentType.getString(ctx, "permission");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName)); return 0; }
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Setting contextual permission '{}' (context={}) to {} for group '{}'", permission, contextKey, allow, groupName);
         group.addContextPermission(contextKey, permission, allow);
         PermissionAPI.getManager().clearCache();
         try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after setting contextual permission for group '{}'", groupName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage())); return 0; }
         String action = allow ? "§aallow" : "§cdeny";
         PermissionAuditLogger.log(getExecutorDisplay(ctx),
@@ -2120,6 +2134,7 @@ public class PermissionsCommand {
         if (!removed) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.context_permission_not_found_remove", permission, contextKey)); return 0; }
         PermissionAPI.getManager().clearCache();
         try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after removing contextual permission for group '{}'", groupName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage())); return 0; }
         PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_CONTEXT_PERM_REMOVED,
             groupName, "context=" + contextKey + " node=" + permission);
@@ -2161,6 +2176,7 @@ public class PermissionsCommand {
         user.addContextPermission(contextKey, permission, allow);
         PermissionAPI.getManager().clearCache();
         try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after setting contextual permission for user '{}'", playerName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage())); return 0; }
         String action = allow ? "§aallow" : "§cdeny";
         PermissionAuditLogger.log(getExecutorDisplay(ctx),
@@ -2185,6 +2201,7 @@ public class PermissionsCommand {
         if (!removed) { ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.context_permission_not_found_remove_user", permission, contextKey)); return 0; }
         PermissionAPI.getManager().clearCache();
         try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to save permissions after removing contextual permission for user '{}'", playerName, e);
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed_generic", e.getMessage())); return 0; }
         PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.USER_CONTEXT_PERM_REMOVED,
             playerName, "context=" + contextKey + " node=" + permission);

@@ -3,10 +3,14 @@ package com.zerog.neoessentials.economy.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -27,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *  - Configurable page size (default 10, matches Essentials)
  */
 public class BaltopCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaltopCommand.class);
 
     private static final int PAGE_SIZE = 10;
 
@@ -147,7 +152,10 @@ public class BaltopCommand {
                         if (profile.isPresent() && profile.get().name() != null) {
                             displayName = profile.get().name();
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                            "runBuild: failed to resolve player name for " + e.getKey() + ", falling back to UUID", ignored);
+                    }
 
                     entries.add(new BaltopEntry(e.getKey(), displayName, e.getValue()));
                     total = total.add(e.getValue());
@@ -159,6 +167,8 @@ public class BaltopCommand {
                 cachedTop   = Collections.unmodifiableList(entries);
                 cachedTotal = total;
                 cacheAge    = System.currentTimeMillis();
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                    "runBuild: rebuilt baltop cache — {} entries, total economy wealth={}", entries.size(), total);
             } finally {
                 cacheBuilding.set(false);
             }

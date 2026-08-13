@@ -7,6 +7,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.util.ResourceUtil;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +80,12 @@ public class ShopEntityManager {
 
     public ShopEntityData getByShopId(UUID shopId)   { return byShopId.get(shopId);    }
     public ShopEntityData getByShopId(String shopId) {
-        try { return byShopId.get(UUID.fromString(shopId)); } catch (Exception e) { return null; }
+        try {
+            return byShopId.get(UUID.fromString(shopId));
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Invalid shop id '{}' passed to getByShopId", shopId, e);
+            return null;
+        }
     }
     public ShopEntityData getByEntityUUID(UUID entityUUID) { return byEntityId.get(entityUUID); }
 

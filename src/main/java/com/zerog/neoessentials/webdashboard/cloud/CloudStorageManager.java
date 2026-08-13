@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,6 +242,7 @@ public class CloudStorageManager {
      */
     public JsonObject uploadToDropbox(Path localFile, String fileName) throws Exception {
         requireDropbox();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting Dropbox upload: {} -> {}", localFile.getFileName(), fileName);
 
         String destPath = dropboxPath + "/" + fileName;
         String apiArg = "{\"path\":\"" + esc(destPath) + "\",\"mode\":\"overwrite\",\"autorename\":false,\"mute\":false}";
@@ -383,6 +386,7 @@ public class CloudStorageManager {
      */
     public JsonObject uploadToGoogleDrive(Path localFile, String fileName) throws Exception {
         requireGoogleDrive();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting Google Drive upload: {} -> {}", localFile.getFileName(), fileName);
         String token = getGoogleAccessToken();
 
         // Build multipart body
@@ -552,6 +556,7 @@ public class CloudStorageManager {
      */
     public JsonObject uploadToOneDrive(Path localFile, String fileName) throws Exception {
         requireOneDrive();
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting OneDrive upload: {} -> {}", localFile.getFileName(), fileName);
         String token = getOneDriveAccessToken();
 
         String itemPath = normalizedPath(oneDrivePath) + "/" + fileName;
@@ -748,6 +753,7 @@ public class CloudStorageManager {
         try {
             return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to URL-encode value, using raw value", e);
             return s;
         }
     }

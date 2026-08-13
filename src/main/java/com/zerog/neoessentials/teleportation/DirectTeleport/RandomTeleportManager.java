@@ -3,6 +3,8 @@ package com.zerog.neoessentials.teleportation.DirectTeleport;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -65,6 +67,8 @@ public class RandomTeleportManager {
      * Returns a future that completes with true on success.
      */
     public CompletableFuture<Boolean> randomTeleport(ServerPlayer player, String locationName) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "randomTeleport request: player={} locationName={}",
+            player.getName().getString(), locationName);
         // Cooldown check
         int cooldownSecs = getTprCooldown();
         if (cooldownSecs > 0) {
@@ -72,6 +76,7 @@ public class RandomTeleportManager {
             long remaining = (last + cooldownSecs * 1000L) - System.currentTimeMillis();
             if (remaining > 0) {
                 long secs = (remaining / 1000) + 1;
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "randomTeleport: {} blocked by cooldown, {}s remaining", player.getName().getString(), secs);
                 player.sendSystemMessage(MessageUtil.error(
                         "commands.neoessentials.teleport.misc.tpr_cooldown",
                         String.valueOf(secs)));
@@ -86,6 +91,8 @@ public class RandomTeleportManager {
         getRandomLocation(com.zerog.neoessentials.util.LevelCompat.of(player), name)
                 .thenAccept(loc -> {
                     if (loc == null) {
+                        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "randomTeleport: no safe location found for {} (location={})",
+                            player.getName().getString(), name);
                         player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_no_safe_location"));
                         result.complete(false);
                         return;
@@ -243,7 +250,7 @@ public class RandomTeleportManager {
                     "RandomTeleport");
 
         } catch (Exception e) {
-            LOGGER.debug("findSafeY error at ({},{}): {}", x, z, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "findSafeY error at ({},{}): {}", x, z, e.getMessage());
             return null;
         }
     }
@@ -354,6 +361,7 @@ public class RandomTeleportManager {
                     .map(key -> key.identifier().toString())
                     .orElse(null);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "getBiomeName failed at {}: {}", pos, e.getMessage());
             return null;
         }
     }

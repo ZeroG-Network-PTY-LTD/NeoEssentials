@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.resourcepack;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -172,7 +174,7 @@ public class ResourcePackManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.autoSendResourcePack config — defaulting to false", e);
         }
         return false;
     }
@@ -187,7 +189,7 @@ public class ResourcePackManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.useCustomImages config — defaulting to false", e);
         }
         return false;
     }
@@ -203,7 +205,7 @@ public class ResourcePackManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.requireResourcePack config — defaulting to false", e);
         }
         return false;
     }
@@ -218,7 +220,7 @@ public class ResourcePackManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.resourcePackUrl config", e);
         }
         return null;
     }
@@ -234,7 +236,7 @@ public class ResourcePackManager {
                 }
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read badges.resourcePackPrompt config — using default prompt", e);
         }
         return "This server uses custom badge images. Please accept the resource pack for the best experience!";
     }

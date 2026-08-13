@@ -1,4 +1,6 @@
 package com.zerog.neoessentials.hologram;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
@@ -222,7 +224,9 @@ public final class HologramRenderer {
                 net.minecraft.world.level.ChunkPos cp = net.minecraft.world.level.ChunkPos.containing(pos);
                 level.getChunk(cp.x(), cp.z());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to force-load chunk for despawn of '{}'", data.id, e);
+        }
 
         if (data.entityUUIDs == null) {
             data.entityUUIDs = new ArrayList<>();
@@ -231,7 +235,9 @@ public final class HologramRenderer {
                 try {
                     net.minecraft.world.entity.Entity e = level.getEntity(uuid);
                     if (e != null) e.discard();
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to discard entity {} for '{}'", uuid, data.id, e);
+                }
             }
             data.entityUUIDs.clear();
         }
@@ -239,7 +245,9 @@ public final class HologramRenderer {
             try {
                 net.minecraft.world.entity.Entity e = level.getEntity(data.interactionEntityUUID);
                 if (e != null) e.discard();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to discard interaction entity for '{}'", data.id, e);
+            }
             data.interactionEntityUUID = null;
         }
 
@@ -257,7 +265,9 @@ public final class HologramRenderer {
                 LOGGER.debug("[Hologram] Discarded {} orphaned/untracked entity(ies) for '{}'.",
                     orphans.size(), data.id);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to sweep orphaned entities for '{}'", data.id, e);
+        }
     }
     /**
      * Spawn all holograms in the given dimension.

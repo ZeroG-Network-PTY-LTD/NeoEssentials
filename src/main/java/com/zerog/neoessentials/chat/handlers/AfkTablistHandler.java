@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.chat.handlers;
 
 import com.zerog.neoessentials.chat.AfkManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -46,11 +48,11 @@ public class AfkTablistHandler {
                 String prefix = afkManager.getTablistAfkPrefix();
                 String suffix = afkManager.getTablistAfkSuffix();
                 displayName = prefix + originalName + suffix;
-                com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Setting AFK tablist name for {}: {}", originalName, displayName);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Setting AFK tablist name for {}: {}", originalName, displayName);
             } else {
                 // Player is not AFK - use original name
                 displayName = originalName;
-                com.zerog.neoessentials.util.DebugLogger.log(LOGGER, "Setting normal tablist name for {}: {}", originalName, displayName);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Setting normal tablist name for {}: {}", originalName, displayName);
             }
             
             // Update the player's display name in the tablist

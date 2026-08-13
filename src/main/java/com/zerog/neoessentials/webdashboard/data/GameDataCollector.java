@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -236,7 +238,7 @@ public class GameDataCollector {
      */
     public void clearEvents() {
         eventQueue.clear();
-        LOGGER.info("Game event history cleared");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Game event history cleared");
     }
     
     // Inner class for game events

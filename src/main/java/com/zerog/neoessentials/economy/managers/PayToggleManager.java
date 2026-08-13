@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import java.util.UUID;
@@ -75,6 +77,7 @@ public class PayToggleManager {
         JsonObject obj = new JsonObject();
         obj.addProperty("enabled", enabled);
         store.put(COLLECTION, player.toString(), obj);
+        NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPayToggle: player={} enabled={}", player, enabled);
     }
 
     @SuppressWarnings("unused") // Public API method
@@ -127,7 +130,10 @@ public class PayToggleManager {
                         obj.addProperty("enabled", entry.getValue());
                         store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj);
                         migrated++;
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                            "migrateLegacyFilesIfNeeded: skipping malformed legacy pay-toggle entry for key=" + entry.getKey(), ignored);
+                    }
                 }
             }
         } catch (Exception e) {

@@ -2,6 +2,8 @@ package com.zerog.neoessentials.permissions;
 
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,70 +22,76 @@ public class PermissionSystem {
      */
     public static void initialize() {
         if (initialized) {
-            LOGGER.warn("Permission system already initialized, skipping");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Permission system already initialized, skipping");
             return;
         }
 
         try {
-            LOGGER.info("═══════════════════════════════════════════════════════════");
-            LOGGER.info("Initializing NeoEssentials Permission System...");
-            LOGGER.info("═══════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"═══════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Initializing NeoEssentials Permission System...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"═══════════════════════════════════════════════════════════");
 
             // Check if we should use external permissions
             boolean useExternal = ConfigManager.getInstance().isExternalPermissionsEnabled();
-            LOGGER.info("External permissions enabled in config: {}", useExternal);
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"External permissions enabled in config: {}", useExternal);
 
             if (useExternal) {
-                LOGGER.info("Attempting to detect external permission system...");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Attempting to detect external permission system...");
                 ExternalPermissionAdapter externalAdapter = detectExternalPermissions();
 
                 if (externalAdapter != null && externalAdapter.isAvailable()) {
-                    LOGGER.info("✓ External permission system detected: {}", externalAdapter.getName());
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ External permission system detected: {}", externalAdapter.getName());
                     // Detect specific permission plugin (LuckPerms, PermissionsEx, GroupManager, etc.)
                     String detectedPlugin = null;
                     try {
                         // LuckPerms
                         Class.forName("net.luckperms.api.LuckPerms");
                         detectedPlugin = "LuckPerms";
-                    } catch (ClassNotFoundException ignored) {}
+                    } catch (ClassNotFoundException ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "LuckPerms class not present on classpath");
+                    }
                     try {
                         // FTB Ranks
                         Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
                         detectedPlugin = "FTB Ranks";
-                    } catch (ClassNotFoundException ignored) {}
+                    } catch (ClassNotFoundException ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks class not present on classpath");
+                    }
                     try {
                         // Bukkit/Arclight
                         Class.forName("org.bukkit.Bukkit");
                         detectedPlugin = "Bukkit/Arclight";
-                    } catch (ClassNotFoundException ignored) {}
-                    if (detectedPlugin != null) {
-                        LOGGER.info("✓ Detected permission plugin: {}", detectedPlugin);
+                    } catch (ClassNotFoundException ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Bukkit/Arclight class not present on classpath");
                     }
-                    LOGGER.info("✓ Using {} for ALL permission checks, prefixes, and suffixes", externalAdapter.getName());
-                    LOGGER.info("  ├─ Vanilla OP fallback: {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
-                    LOGGER.info("  └─ OP bypass (pre-check): {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
+                    if (detectedPlugin != null) {
+                        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ Detected permission plugin: {}", detectedPlugin);
+                    }
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ Using {} for ALL permission checks, prefixes, and suffixes", externalAdapter.getName());
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Vanilla OP fallback: {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ OP bypass (pre-check): {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
                     PermissionAPI.setExternalAdapter(externalAdapter);
                     usingExternal = true;
                     // Internal permission system is NOT loaded or used
-                    LOGGER.warn("  ⚠ Internal permissions.json will be IGNORED for all permission checks");
-                    LOGGER.warn("  ⚠ All permissions/groups MUST be managed in {}", externalAdapter.getName());
+                    NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  ⚠ Internal permissions.json will be IGNORED for all permission checks");
+                    NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  ⚠ All permissions/groups MUST be managed in {}", externalAdapter.getName());
                     // Do not load, create, or backup internal permissions.json
                     manager = null;
                     initialized = true;
-                    LOGGER.info("✓ Permission system initialized with {} (internal groups loaded but NOT USED)", externalAdapter.getName());
-                    LOGGER.info("═══════════════════════════════════════════════════════════");
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ Permission system initialized with {} (internal groups loaded but NOT USED)", externalAdapter.getName());
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"═══════════════════════════════════════════════════════════");
                     return;
                 }
 
-                LOGGER.warn("✗ External permissions enabled but no compatible system found!");
-                LOGGER.warn("✗ Falling back to internal NeoEssentials permission system");
-                LOGGER.warn("✗ To use LuckPerms: Install LuckPerms mod and set useExternalPermissions: true");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"✗ External permissions enabled but no compatible system found!");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"✗ Falling back to internal NeoEssentials permission system");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"✗ To use LuckPerms: Install LuckPerms mod and set useExternalPermissions: true");
             } else {
-                LOGGER.info("External permissions disabled in config");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"External permissions disabled in config");
             }
 
             // Use internal permission system
-            LOGGER.info("Loading internal NeoEssentials permission system...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Loading internal NeoEssentials permission system...");
             manager = new PermissionManager();
 
             // Load permissions from disk
@@ -94,7 +102,7 @@ public class PermissionSystem {
 
             usingExternal = false;
             initialized = true;
-            LOGGER.info("✓ Internal permission system initialized with {} groups",
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ Internal permission system initialized with {} groups",
                 manager.getGroups().size());
 
             // Emit compatibility report even in internal mode (shows which perm mods are absent)
@@ -102,50 +110,50 @@ public class PermissionSystem {
 
             // Log loaded groups for debugging
             if (!manager.getGroups().isEmpty()) {
-                LOGGER.info("Loaded permission groups:");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Loaded permission groups:");
                 for (PermissionGroup group : manager.getGroups()) {
-                    LOGGER.info("  ├─ Group: '{}' ({} permissions, prefix: '{}')", group.getName(), group.getPermissions().size(), group.getPrefix());
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Group: '{}' ({} permissions, prefix: '{}')", group.getName(), group.getPermissions().size(), group.getPrefix());
                 }
             }
-            LOGGER.info("Permission System Configuration:");
-            LOGGER.info("  ├─ Ops bypass permissions: {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
-            LOGGER.info("  ├─ Vanilla OP fallback:    {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
-            LOGGER.info("  ├─ Permission caching:     {}", ConfigManager.getInstance().isPermissionCacheEnabled());
-            LOGGER.info("  ├─ Cache expiry:           {} minutes", ConfigManager.getInstance().getPermissionCacheExpiryMinutes());
-            LOGGER.info("  └─ Default group:          {}", manager.getDefaultGroup());
-            LOGGER.info("");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Permission System Configuration:");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Ops bypass permissions: {}", ConfigManager.getInstance().isOpsBypassPermissionsEnabled());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Vanilla OP fallback:    {}", ConfigManager.getInstance().isVanillaOpFallbackEnabled());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Permission caching:     {}", ConfigManager.getInstance().isPermissionCacheEnabled());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Cache expiry:           {} minutes", ConfigManager.getInstance().getPermissionCacheExpiryMinutes());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ Default group:          {}", manager.getDefaultGroup());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"");
             // Validate permission nodes
             com.zerog.neoessentials.api.permissions.PermissionValidator.ValidationResult validation =
                 com.zerog.neoessentials.api.permissions.PermissionValidator.validate(manager);
             if (validation.hasIssues()) {
-                LOGGER.warn("⚠ PERMISSION VALIDATION FOUND {} ISSUES!", validation.getIssuesFound());
-                LOGGER.warn("⚠ Some NeoEssentials permissions may not work correctly!");
-                LOGGER.warn("⚠ Check the validation output above for details.");
-                LOGGER.warn("⚠ Note: {} external mod permission(s) were skipped (they are valid).",
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"⚠ PERMISSION VALIDATION FOUND {} ISSUES!", validation.getIssuesFound());
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"⚠ Some NeoEssentials permissions may not work correctly!");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"⚠ Check the validation output above for details.");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"⚠ Note: {} external mod permission(s) were skipped (they are valid).",
                         validation.getExternalSkipped());
                 for (String warning : validation.getWarnings()) {
-                    LOGGER.warn(warning);
+                    NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,warning);
                 }
                 for (String suggestion : validation.getSuggestions()) {
-                    LOGGER.warn(suggestion);
+                    NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,suggestion);
                 }
             } else {
-                LOGGER.info("✓ Permission validation passed - all NeoEssentials permissions are properly configured");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"✓ Permission validation passed - all NeoEssentials permissions are properly configured");
                 if (validation.getExternalSkipped() > 0) {
-                    LOGGER.info("  └─ {} external mod permission(s) accepted without validation (e.g. worldedit.*, ftbranks.*, etc.)",
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ {} external mod permission(s) accepted without validation (e.g. worldedit.*, ftbranks.*, etc.)",
                             validation.getExternalSkipped());
                 }
             }
-            LOGGER.info("═══════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"═══════════════════════════════════════════════════════════");
         } catch (Exception e) {
-            LOGGER.error("╔══════════════════════════════════════════════════════════════╗");
-            LOGGER.error("║  PERMISSION SYSTEM FAILED TO INITIALIZE                      ║");
-            LOGGER.error("║  Error: {}  ║",
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"╔══════════════════════════════════════════════════════════════╗");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"║  PERMISSION SYSTEM FAILED TO INITIALIZE                      ║");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"║  Error: {}  ║",
                     padRight(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), 54));
-            LOGGER.error("║  Activating EMERGENCY MODE — OPs will have all permissions.  ║");
-            LOGGER.error("║  Fix the config/permission issue, then run: /neoe reload      ║");
-            LOGGER.error("╚══════════════════════════════════════════════════════════════╝");
-            LOGGER.error("Full stack trace:", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"║  Activating EMERGENCY MODE — OPs will have all permissions.  ║");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"║  Fix the config/permission issue, then run: /neoe reload      ║");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"╚══════════════════════════════════════════════════════════════╝");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Full stack trace:", e);
             com.zerog.neoessentials.api.permissions.PermissionAPI.setEmergencyMode(true);
             com.zerog.neoessentials.util.SupportLinks.markProblemDetected();
             com.zerog.neoessentials.util.SupportLinks.logConsole(LOGGER, true);
@@ -157,110 +165,110 @@ public class PermissionSystem {
      * Detect and load external permission system if available.
      */
     private static ExternalPermissionAdapter detectExternalPermissions() {
-        LOGGER.info("Scanning for external permission systems...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Scanning for external permission systems...");
 
         // Try LuckPerms first
         try {
             Class.forName("net.luckperms.api.LuckPerms");
-            LOGGER.info("  ├─ LuckPerms API class found, attempting to load adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ LuckPerms API class found, attempting to load adapter...");
             LuckPermsAdapter adapter = new LuckPermsAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ LuckPerms adapter loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ LuckPerms adapter loaded successfully");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ LuckPerms detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ LuckPerms detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ LuckPerms not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ LuckPerms not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize LuckPerms adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize LuckPerms adapter: {}", e.getMessage(), e);
         }
         
         // Try FTB Ranks
         try {
             Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
-            LOGGER.info("  ├─ FTB Ranks API class found, attempting to load adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ FTB Ranks API class found, attempting to load adapter...");
             FtbRanksAdapter adapter = new FtbRanksAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ FTB Ranks adapter loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ FTB Ranks adapter loaded successfully");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ FTB Ranks detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ FTB Ranks detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ FTB Ranks not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ FTB Ranks not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize FTB Ranks adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize FTB Ranks adapter: {}", e.getMessage(), e);
         }
 
         // Try Arclight (Bukkit-compatible hybrid server)
         try {
             Class.forName("io.izzel.arclight.api.Arclight");
-            LOGGER.info("  ├─ Arclight API class found, attempting to load Bukkit-compatible adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Arclight API class found, attempting to load Bukkit-compatible adapter...");
             BukkitSpongeAdapter adapter = new BukkitSpongeAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ Arclight adapter loaded successfully (Bukkit-compatible)");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ Arclight adapter loaded successfully (Bukkit-compatible)");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ Arclight detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Arclight detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ Arclight not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Arclight not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize Arclight adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize Arclight adapter: {}", e.getMessage(), e);
         }
 
         // Try Bukkit/Sponge/Mohist
         try {
             Class.forName("org.bukkit.Bukkit");
-            LOGGER.info("  ├─ Bukkit API class found (may be Mohist/Arclight), attempting to load adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Bukkit API class found (may be Mohist/Arclight), attempting to load adapter...");
             BukkitSpongeAdapter adapter = new BukkitSpongeAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ Bukkit/Mohist/Arclight adapter loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ Bukkit/Mohist/Arclight adapter loaded successfully");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ Bukkit/Mohist/Arclight detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Bukkit/Mohist/Arclight detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ Bukkit/Mohist/Arclight not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Bukkit/Mohist/Arclight not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize Bukkit/Mohist/Arclight adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize Bukkit/Mohist/Arclight adapter: {}", e.getMessage(), e);
         }
         // Try Sponge
         try {
             Class.forName("org.spongepowered.api.Sponge");
-            LOGGER.info("  ├─ Sponge API class found, attempting to load adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Sponge API class found, attempting to load adapter...");
             BukkitSpongeAdapter adapter = new BukkitSpongeAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ Sponge adapter loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ Sponge adapter loaded successfully");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ Sponge detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Sponge detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ Sponge not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Sponge not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize Sponge adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize Sponge adapter: {}", e.getMessage(), e);
         }
 
         // Try Mohist (Bukkit-compatible hybrid server)
         try {
             Class.forName("com.mohistmc.api.MohistAPI");
-            LOGGER.info("  ├─ Mohist API class found, attempting to load Bukkit-compatible adapter...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Mohist API class found, attempting to load Bukkit-compatible adapter...");
             BukkitSpongeAdapter adapter = new BukkitSpongeAdapter();
             if (adapter.isAvailable()) {
-                LOGGER.info("  └─ ✓ Mohist adapter loaded successfully (Bukkit-compatible)");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ ✓ Mohist adapter loaded successfully (Bukkit-compatible)");
                 return adapter;
             } else {
-                LOGGER.warn("  └─ ✗ Mohist detected but adapter not available");
+                NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Mohist detected but adapter not available");
             }
         } catch (ClassNotFoundException e) {
-            LOGGER.info("  ├─ Mohist not found (ClassNotFoundException)");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  ├─ Mohist not found (ClassNotFoundException)");
         } catch (Exception e) {
-            LOGGER.error("  └─ ✗ Failed to initialize Mohist adapter: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"  └─ ✗ Failed to initialize Mohist adapter: {}", e.getMessage(), e);
         }
 
-        LOGGER.info("  └─ No external permission system detected");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"  └─ No external permission system detected");
         return null;
     }
 
@@ -269,14 +277,14 @@ public class PermissionSystem {
      */
     public static void reload() {
         if (!initialized) {
-            LOGGER.warn("Cannot reload: permission system not initialized");
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Cannot reload: permission system not initialized");
             initialize();
             return;
         }
 
         // If emergency mode is active, a full re-initialisation is needed to recover.
         if (com.zerog.neoessentials.api.permissions.PermissionAPI.isEmergencyMode()) {
-            LOGGER.info("Emergency mode active — running full permission system re-initialisation...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Emergency mode active — running full permission system re-initialisation...");
             initialized = false;
             manager = null;
             usingExternal = false;
@@ -285,10 +293,10 @@ public class PermissionSystem {
         }
 
         try {
-            LOGGER.info("Reloading permission system...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Reloading permission system...");
             if (isUsingExternal()) {
                 PermissionAPI.reload();
-                LOGGER.info("External permission system reloaded");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"External permission system reloaded");
                 return;
             }
             if (manager != null) {
@@ -296,9 +304,9 @@ public class PermissionSystem {
             }
             // Deactivate emergency mode on a successful reload (edge case: mode set externally)
             com.zerog.neoessentials.api.permissions.PermissionAPI.setEmergencyMode(false);
-            LOGGER.info("Permission system reloaded successfully");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Permission system reloaded successfully");
         } catch (Exception e) {
-            LOGGER.error("Failed to reload permission system", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to reload permission system", e);
             throw new RuntimeException("Permission reload failed", e);
         }
     }
@@ -308,7 +316,7 @@ public class PermissionSystem {
      */
     public static PermissionManager getManager() {
         if (!initialized) {
-            LOGGER.error("Permission system not initialized! Call initialize() first!");
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Permission system not initialized! Call initialize() first!");
             throw new IllegalStateException("Permission system not initialized");
         }
         return manager;
@@ -346,13 +354,13 @@ public class PermissionSystem {
         }
 
         try {
-            LOGGER.info("Shutting down permission system...");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Shutting down permission system...");
             // Save internal manager data
             if (manager != null) {
                 try {
                     PermissionStorage.save(manager);
                 } catch (Exception e) {
-                    LOGGER.error("Failed to save permissions during shutdown", e);
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions during shutdown", e);
                 }
             }
             // Unsubscribe external adapter listeners (e.g. LuckPerms event bus)
@@ -362,12 +370,12 @@ public class PermissionSystem {
                 try {
                     luckPermsAdapter.shutdown();
                 } catch (Exception e) {
-                    LOGGER.error("Failed to shut down LuckPerms adapter", e);
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to shut down LuckPerms adapter", e);
                 }
             }
-            LOGGER.info("Permission system shutdown complete");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Permission system shutdown complete");
         } catch (Exception e) {
-            LOGGER.error("Failed to shutdown permission system", e);
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to shutdown permission system", e);
         }
     }
 

@@ -5,6 +5,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +30,7 @@ public class MapPlayerTracker {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.updatePlayerLocation(player);
-            LOGGER.debug("Map: Player joined - {}", player.getGameProfile().name());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Map: Player joined - {}", player.getGameProfile().name());
         }
     }
     
@@ -40,7 +42,7 @@ public class MapPlayerTracker {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.removePlayer(player.getUUID());
-            LOGGER.debug("Map: Player left - {}", player.getGameProfile().name());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Map: Player left - {}", player.getGameProfile().name());
         }
     }
     

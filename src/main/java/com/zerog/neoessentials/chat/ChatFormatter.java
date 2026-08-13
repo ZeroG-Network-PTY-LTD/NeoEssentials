@@ -65,7 +65,7 @@ public class ChatFormatter {
      */
     public static Component formatMessage(String template, ServerPlayer player, String message, String resolvedChannel) {
         try {
-            boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+            boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
 
             if (debugEnabled) {
                 LOGGER.info("=== CHAT FORMATTING DEBUG ===");
@@ -195,7 +195,7 @@ public class ChatFormatter {
     private static String restrictPlayerMessageColors(String message, ServerPlayer player) {
         UUID uuid = player.getUUID();
         String result = message;
-        boolean debugEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isDebugLoggingEnabled();
+        boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
 
         if (debugEnabled) {
             LOGGER.info(">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);

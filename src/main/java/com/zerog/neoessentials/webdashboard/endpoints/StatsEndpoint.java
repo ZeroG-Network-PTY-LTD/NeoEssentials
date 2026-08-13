@@ -8,6 +8,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.analytics.PlayerSessionTracker;
 import com.zerog.neoessentials.webdashboard.analytics.WebSocketEventBroadcaster;
 import net.minecraft.server.MinecraftServer;
@@ -124,6 +126,7 @@ public class StatsEndpoint implements HttpHandler {
             respond(exchange, 405, "{\"error\":\"Method not allowed\"}");
             return;
         }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "StatsEndpoint request: GET {}", path);
         try {
             if      (path.endsWith("/overview"))    respond(exchange, 200, GSON.toJson(buildOverview()));
             else if (path.endsWith("/economy"))     respond(exchange, 200, GSON.toJson(buildEconomy()));
@@ -340,7 +343,9 @@ public class StatsEndpoint implements HttpHandler {
             try {
                 var opt = cache.get(uuid);
                 if (opt.isPresent() && opt.get().name() != null) return opt.get().name();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve username for uuid={}", uuid, e);
+            }
         }
         var player = server.getPlayerList().getPlayer(uuid);
         if (player != null) return player.getName().getString();

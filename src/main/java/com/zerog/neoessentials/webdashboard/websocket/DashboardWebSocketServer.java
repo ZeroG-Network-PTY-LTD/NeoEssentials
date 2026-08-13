@@ -3,6 +3,8 @@ package com.zerog.neoessentials.webdashboard.websocket;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -37,7 +39,7 @@ public class DashboardWebSocketServer extends WebSocketServer {
     private DashboardWebSocketServer(int port) {
         super(new InetSocketAddress(port));
         setReuseAddr(true);
-        LOGGER.info("WebSocket server created on port {}", port);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket server created on port {}", port);
     }
 
     public static synchronized DashboardWebSocketServer getInstance(int port) {
@@ -59,7 +61,7 @@ public class DashboardWebSocketServer extends WebSocketServer {
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         clientSubscriptions.put(conn, ConcurrentHashMap.newKeySet());
-        LOGGER.debug("WebSocket connection opened: {}", conn.getRemoteSocketAddress());
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket connection opened: {}", conn.getRemoteSocketAddress());
 
         JsonObject welcome = new JsonObject();
         welcome.addProperty("type", "welcome");
@@ -73,7 +75,7 @@ public class DashboardWebSocketServer extends WebSocketServer {
         clientSubscriptions.remove(conn);
         authenticatedClients.remove(conn);
         lastMessageTime.remove(conn);
-        LOGGER.debug("WebSocket connection closed: {} (code={}, reason={})", conn.getRemoteSocketAddress(), code, reason);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket connection closed: {} (code={}, reason={})", conn.getRemoteSocketAddress(), code, reason);
     }
 
     @Override
@@ -99,19 +101,19 @@ public class DashboardWebSocketServer extends WebSocketServer {
                 default -> sendError(conn, "Unknown message type: " + type);
             }
         } catch (Exception e) {
-            LOGGER.warn("Error processing WebSocket message from {}: {}", conn.getRemoteSocketAddress(), e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Error processing WebSocket message from {}: {}", conn.getRemoteSocketAddress(), e.getMessage());
             sendError(conn, "Invalid message format");
         }
     }
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        LOGGER.error("WebSocket error on {}: {}", conn != null ? conn.getRemoteSocketAddress() : "unknown", ex.getMessage());
+        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket error on {}: {}", conn != null ? conn.getRemoteSocketAddress() : "unknown", ex.getMessage());
     }
 
     @Override
     public void onStart() {
-        LOGGER.info("WebSocket server started successfully on port {}", getPort());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket server started successfully on port {}", getPort());
         setConnectionLostTimeout(30);
     }
 
@@ -167,7 +169,7 @@ public class DashboardWebSocketServer extends WebSocketServer {
         response.addProperty("timestamp", System.currentTimeMillis());
         sendToClient(conn, response);
 
-        LOGGER.debug("WebSocket client authenticated: {} ({})", username, conn.getRemoteSocketAddress());
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "WebSocket client authenticated: {} ({})", username, conn.getRemoteSocketAddress());
     }
 
     private void handleSubscribe(WebSocket conn, JsonObject msg) {

@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,7 @@ public class ConditionalFormatter {
             return text;
 
         } catch (Exception e) {
-            LOGGER.error("Error processing conditional formatting: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error processing conditional formatting", e);
             return text;
         }
     }
@@ -190,6 +192,7 @@ public class ConditionalFormatter {
             var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
             return afkManager.isAfk(player);
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking AFK state for conditional formatting", e);
             return false;
         }
     }
@@ -199,6 +202,7 @@ public class ConditionalFormatter {
             var vanishManager = com.zerog.neoessentials.moderation.VanishManager.getInstance();
             return vanishManager.isPlayerVanished(player.getUUID());
         } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking vanish state for conditional formatting", e);
             return false;
         }
     }
@@ -210,7 +214,7 @@ public class ConditionalFormatter {
                 return chatConfig.getAsJsonObject("conditionalFormatting").get("enabled").getAsBoolean();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading conditionalFormatting.enabled, defaulting to false", e);
         }
         return false;
     }
@@ -223,7 +227,7 @@ public class ConditionalFormatter {
                 return cf.get("allowTimeConditionals").getAsBoolean();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading conditionalFormatting.allowTimeConditionals, defaulting to true", e);
         }
         return true;
     }
@@ -236,7 +240,7 @@ public class ConditionalFormatter {
                 return cf.get("allowStatConditionals").getAsBoolean();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading conditionalFormatting.allowStatConditionals, defaulting to true", e);
         }
         return true;
     }
@@ -249,7 +253,7 @@ public class ConditionalFormatter {
                 return cf.get("allowStateConditionals").getAsBoolean();
             }
         } catch (Exception e) {
-            // Ignore
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error reading conditionalFormatting.allowStateConditionals, defaulting to true", e);
         }
         return true;
     }

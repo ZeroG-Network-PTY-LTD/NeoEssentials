@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -252,6 +254,8 @@ public class BanManager {
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
         store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying permanent ban: player={} ({}) reason={} by={}",
+            playerName, playerId, reason, bannedBy);
         // Build the fully-localized/formatted ban message once, and store THAT (not the
         // raw reason) as the vanilla ban-list entry's reason. Vanilla's own login-time ban
         // check (used when this player reconnects later) wraps whatever we put there in its
@@ -312,6 +316,8 @@ public class BanManager {
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
         store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying temp ban: player={} ({}) reason={} by={} duration={}ms",
+            playerName, playerId, reason, bannedBy, durationMillis);
         // Build the fully-localized/formatted ban message once (see banPlayer() for why this,
         // rather than the raw reason, is what gets stored as the vanilla ban entry's reason).
         String format = com.zerog.neoessentials.config.ConfigManager.getTempBanMessageFormat();
@@ -368,6 +374,8 @@ public class BanManager {
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ipBans.put(ipAddress, ban);
         store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying permanent IP ban: ip={} reason={} by={}",
+            ipAddress, reason, bannedBy);
 
         // Kick all players with this IP
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -405,6 +413,8 @@ public class BanManager {
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         ipBans.put(ipAddress, ban);
         store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying temp IP ban: ip={} reason={} by={} duration={}ms",
+            ipAddress, reason, bannedBy, durationMillis);
 
         // Kick all players with this IP
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -442,6 +452,8 @@ public class BanManager {
     public boolean unbanPlayer(UUID playerId, String unbannedBy) {
         BanEntry removed = playerBans.remove(playerId);
         boolean removedFromVanilla = removeFromVanillaBanList(playerId);
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Pardon requested for player {} by {} (had active ban: {}, in vanilla list: {})",
+            playerId, unbannedBy, removed != null, removedFromVanilla);
         if (removed != null || removedFromVanilla) {
             if (removed != null) {
                 removed.active = false;
@@ -539,7 +551,9 @@ public class BanManager {
         try {
             var cache = server.services().nameToIdCache();
             if (cache != null) return cache.get(uuid).orElse(null);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Profile cache lookup failed for {}, falling back to minimal profile", uuid, e);
+        }
         // Fallback: construct a minimal profile
         if (name != null && !name.isBlank()) {
             return new net.minecraft.server.players.NameAndId(uuid, name);
@@ -562,6 +576,8 @@ public class BanManager {
      */
     public boolean unbanIP(String ipAddress, String unbannedBy) {
         IPBanEntry removed = ipBans.remove(ipAddress);
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Pardon requested for IP {} by {} (had active ban: {})",
+            ipAddress, unbannedBy, removed != null);
         if (removed != null) {
             removed.active = false;
             removed.unbannedBy = unbannedBy;
@@ -583,6 +599,7 @@ public class BanManager {
         BanEntry ban = playerBans.get(playerId);
         if (ban != null) {
             if (ban.isExpired()) {
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "Ban for player {} has expired (expireTime={})", playerId, ban.expireTime);
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                     archiveExpiredBan(ban);
                     playerBans.remove(playerId);
@@ -629,6 +646,7 @@ public class BanManager {
         IPBanEntry ban = ipBans.get(ipAddress);
         if (ban == null) return false;
         if (ban.isExpired()) {
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "IP ban for {} has expired (expireTime={})", ipAddress, ban.expireTime);
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
                 archiveExpiredIPBan(ban);
                 ipBans.remove(ipAddress);

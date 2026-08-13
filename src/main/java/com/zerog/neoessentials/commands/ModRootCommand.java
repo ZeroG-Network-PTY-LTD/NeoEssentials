@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.config.ConfigSplitter;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -57,20 +59,20 @@ public class ModRootCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModRootCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LOGGER.info("Registering /neoe and /neoessentials root commands");
+        NeoLog.info(LOGGER, LogCategory.COMMANDS, "Registering /neoe and /neoessentials root commands");
         com.zerog.neoessentials.config.ConfigManager cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
         if (cfg.isCommandEnabled("neoe")) {
         dispatcher.register(
             Commands.literal("neoe")
                 .requires(source -> {
                     boolean result = hasBaseCommandPermission(source);
-                    LOGGER.debug("/neoe permission check for {}: {}", source.getTextName(), result);
+                    NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoe permission check for {}: {}", source.getTextName(), result);
                     return result;
                 })
                 .then(Commands.literal("reload")
                     .requires(source -> {
                         boolean result = hasAdminPermission(source);
-                        LOGGER.debug("/neoe reload admin permission for {}: {}", source.getTextName(), result);
+                        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoe reload admin permission for {}: {}", source.getTextName(), result);
                         return result;
                     })
                     .executes(ModRootCommand::reloadConfiguration)
@@ -78,7 +80,7 @@ public class ModRootCommand {
                 .then(Commands.literal("config")
                     .requires(source -> {
                         boolean result = hasAdminPermission(source);
-                        LOGGER.debug("/neoe config admin permission for {}: {}", source.getTextName(), result);
+                        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoe config admin permission for {}: {}", source.getTextName(), result);
                         return result;
                     })
                     .then(Commands.literal("split")
@@ -106,13 +108,13 @@ public class ModRootCommand {
             Commands.literal("neoessentials")
                 .requires(source -> {
                     boolean result = hasBaseCommandPermission(source);
-                    LOGGER.debug("/neoessentials permission check for {}: {}", source.getTextName(), result);
+                    NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoessentials permission check for {}: {}", source.getTextName(), result);
                     return result;
                 })
                 .then(Commands.literal("reload")
                     .requires(source -> {
                         boolean result = hasAdminPermission(source);
-                        LOGGER.debug("/neoessentials reload admin permission for {}: {}", source.getTextName(), result);
+                        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoessentials reload admin permission for {}: {}", source.getTextName(), result);
                         return result;
                     })
                     .executes(ModRootCommand::reloadConfiguration)
@@ -120,7 +122,7 @@ public class ModRootCommand {
                 .then(Commands.literal("config")
                     .requires(source -> {
                         boolean result = hasAdminPermission(source);
-                        LOGGER.debug("/neoessentials config admin permission for {}: {}", source.getTextName(), result);
+                        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "/neoessentials config admin permission for {}: {}", source.getTextName(), result);
                         return result;
                     })
                     .then(Commands.literal("split")
@@ -199,10 +201,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.config.ConfigManager.loadAll();
-                LOGGER.info("✓ Configuration files reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Configuration files reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload configuration files: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload configuration files: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.error("commands.neoessentials.root.reload_error_config", fMsg));
             }
@@ -211,10 +213,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.util.MessageUtil.reloadTranslations();
-                LOGGER.info("✓ Translations reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Translations reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload translations: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload translations: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_translations", fMsg));
             }
@@ -223,10 +225,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.api.permissions.PermissionAPI.reload();
-                LOGGER.info("✓ Permission system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Permission system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload permissions: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload permissions: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_permissions", fMsg));
             }
@@ -235,10 +237,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.kits.KitManager.getInstance().reload();
-                LOGGER.info("✓ Kit system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Kit system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload kit system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload kit system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_kits", fMsg));
             }
@@ -247,10 +249,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.teleportation.HomeManager.getInstance().reload();
-                LOGGER.info("✓ Home system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Home system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload home system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload home system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_homes", fMsg));
             }
@@ -259,10 +261,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.teleportation.Warp.WarpManager.getInstance().reload();
-                LOGGER.info("✓ Warp system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Warp system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload warp system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload warp system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_warps", fMsg));
             }
@@ -271,10 +273,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.teleportation.Spawn.SpawnManager.getInstance().reload();
-                LOGGER.info("✓ Spawn system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Spawn system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload spawn system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload spawn system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_spawn", fMsg));
             }
@@ -291,10 +293,10 @@ public class ModRootCommand {
                 com.zerog.neoessentials.chat.ChatManager chatManager = new com.zerog.neoessentials.chat.ChatManager(chatObj, commandsObj);
                 com.zerog.neoessentials.api.ChatAPI.setChatManager(chatManager);
                 
-                LOGGER.info("✓ Chat system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Chat system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload chat system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload chat system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_chat", fMsg));
             }
@@ -303,10 +305,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.chat.AfkManager.getInstance().reload();
-                LOGGER.info("✓ AFK system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ AFK system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload AFK system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload AFK system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_afk", fMsg));
             }
@@ -315,10 +317,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.moderation.JailManager.getInstance().reload();
-                LOGGER.info("✓ Jail system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Jail system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload jail system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload jail system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_jail", fMsg));
             }
@@ -335,10 +337,10 @@ public class ModRootCommand {
                 if (reloadServer != null) {
                     tablistMgr.updateAll(reloadServer);
                 }
-                LOGGER.info("✓ Tablist system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Tablist system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload tablist system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload tablist system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_tablist", fMsg));
             }
@@ -347,10 +349,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.economy.worth.WorthManager.getInstance().reload();
-                LOGGER.info("✓ Worth system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Worth system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload worth system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload worth system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_worth", fMsg));
             }
@@ -359,10 +361,10 @@ public class ModRootCommand {
             totalCount++;
             try {
                 com.zerog.neoessentials.util.commands.RulesCommand.reload();
-                LOGGER.info("✓ Rules system reloaded");
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Rules system reloaded");
                 successCount++;
             } catch (Exception e) {
-                LOGGER.error("✗ Failed to reload rules system: {}", e.getMessage(), e);
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload rules system: {}", e.getMessage(), e);
                 final String fMsg = e.getMessage();
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_rules", fMsg));
             }
@@ -393,19 +395,19 @@ public class ModRootCommand {
                             cmdServer.getPlayerList().getPlayers()) {
                         cmdServer.getCommands().sendCommands(onlinePlayer);
                     }
-                    LOGGER.info("✓ Command trees re-sent to {} online player(s)",
+                    NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Command trees re-sent to {} online player(s)",
                         cmdServer.getPlayerList().getPlayerCount());
                 }
             } catch (Exception e) {
-                LOGGER.warn("Could not re-sync command trees to players after reload: {}", e.getMessage());
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Could not re-sync command trees to players after reload: {}", e.getMessage());
             }
 
-            LOGGER.info("Configuration reload completed: {}/{} systems reloaded successfully by {}",
+            NeoLog.info(LOGGER, LogCategory.COMMANDS, "Configuration reload completed: {}/{} systems reloaded successfully by {}",
                 successCount, totalCount, source.getTextName());
             return 1;
             
         } catch (Exception e) {
-            LOGGER.error("CRITICAL: Failed to reload configuration: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.COMMANDS, "CRITICAL: Failed to reload configuration: {}", e.getMessage(), e);
             source.sendFailure(MessageUtil.error("commands.neoessentials.root.reload_error_config", e.getMessage()));
             return 0;
         }
@@ -525,7 +527,7 @@ public class ModRootCommand {
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_backup_note"), false);
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_reload_hint"), false);
 
-                LOGGER.info("Configuration split completed successfully by {}", source.getTextName());
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "Configuration split completed successfully by {}", source.getTextName());
                 return 1;
             } else {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.root.config_split_failed"));
@@ -533,7 +535,7 @@ public class ModRootCommand {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Failed to split configuration: {}", e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.COMMANDS, "Failed to split configuration: {}", e.getMessage(), e);
             source.sendFailure(MessageUtil.error("commands.neoessentials.root.config_split_error", e.getMessage()));
             return 0;
         }
@@ -558,7 +560,7 @@ public class ModRootCommand {
         
         // Double-check that the command actually exists in the dispatcher
         if (!registry.isCommandActuallyRegistered(commandName, dispatcher)) {
-            LOGGER.warn("Command '{}' is in registry but not in dispatcher - possible registration issue", commandName);
+            NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Command '{}' is in registry but not in dispatcher - possible registration issue", commandName);
             source.sendFailure(MessageUtil.error("commands.neoessentials.root.unknown_command", commandName));
             source.sendFailure(MessageUtil.info("commands.neoessentials.root.help_hint"));
             return 0;
@@ -574,22 +576,22 @@ public class ModRootCommand {
             
             if (parseResults.getReader().canRead()) {
                 // Command has additional arguments that weren't consumed
-                LOGGER.warn("Command '{}' has unconsumed arguments: '{}'", commandString, parseResults.getReader().getRemaining());
+                NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Command '{}' has unconsumed arguments: '{}'", commandString, parseResults.getReader().getRemaining());
             }
             
             // Execute the parsed command
             int result = dispatcher.execute(parseResults);
-            LOGGER.debug("Successfully executed command '{}' with result: {}", commandString, result);
+            NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Successfully executed command '{}' with result: {}", commandString, result);
             return result;
             
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
             // Handle command syntax errors gracefully
-            LOGGER.warn("Command syntax error for '{}': {}", commandString, e.getMessage());
+            NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Command syntax error for '{}': {}", commandString, e.getMessage());
             source.sendFailure(MessageUtil.error("commands.neoessentials.root.syntax_error", commandString, e.getMessage()));
             return 0;
         } catch (Exception e) {
             // Handle any other execution errors
-            LOGGER.error("Failed to execute command '{}': {}", commandString, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.COMMANDS, "Failed to execute command '{}': {}", commandString, e.getMessage(), e);
             source.sendFailure(MessageUtil.error("commands.neoessentials.root.execution_failed", commandString));
             return 0;
         }

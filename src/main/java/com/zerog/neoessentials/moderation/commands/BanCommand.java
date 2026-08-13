@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.BanManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
@@ -546,6 +548,7 @@ public class BanCommand {
             }
             return true;
         } catch (NumberFormatException e) {
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Rejected invalid IP address format: {}", ip);
             return false;
         }
     }

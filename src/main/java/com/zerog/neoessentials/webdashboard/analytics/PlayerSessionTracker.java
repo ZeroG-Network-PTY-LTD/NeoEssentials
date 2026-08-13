@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.webdashboard.analytics;
 
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,7 @@ public class PlayerSessionTracker {
     public void trackPlayerJoin(UUID playerUuid, String playerName) {
         PlayerSession session = new PlayerSession(playerUuid, playerName, System.currentTimeMillis());
         activeSessions.put(playerUuid, session);
-        LOGGER.debug("Started tracking session for player: {} ({})", playerName, playerUuid);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Started tracking session for player: {} ({})", playerName, playerUuid);
     }
     
     /**
@@ -43,7 +45,7 @@ public class PlayerSessionTracker {
         if (session != null) {
             session.setEndTime(System.currentTimeMillis());
             historicalSessions.add(session);
-            LOGGER.debug("Ended session for player: {} - Duration: {}ms", 
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Ended session for player: {} - Duration: {}ms",
                 session.getPlayerName(), session.getDuration());
         }
     }

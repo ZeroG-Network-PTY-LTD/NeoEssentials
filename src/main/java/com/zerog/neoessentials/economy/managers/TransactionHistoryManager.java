@@ -1,9 +1,12 @@
 
 package com.zerog.neoessentials.economy.managers;
-import com.zerog.neoessentials.util.DebugUtil;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -25,6 +28,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
 public class TransactionHistoryManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionHistoryManager.class);
     private static TransactionHistoryManager instance;
     public static TransactionHistoryManager getInstance() {
         if (instance == null) instance = new TransactionHistoryManager();
@@ -65,7 +69,7 @@ public class TransactionHistoryManager {
                 }
                 historyMap.put(uuid, deque);
             } catch (Exception ex) {
-                DebugUtil.debugStackTrace(ex);
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY, "Failed to load a transaction history entry from storage", ex);
             }
         }
     }
@@ -105,18 +109,18 @@ public class TransactionHistoryManager {
             saveExecutor.shutdown();
             try {
                 if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-                    DebugUtil.debug("TransactionHistoryManager executor did not terminate gracefully, forcing shutdown...");
+                    NeoLog.debug(LOGGER, LogCategory.ECONOMY, "TransactionHistoryManager executor did not terminate gracefully, forcing shutdown...");
                     saveExecutor.shutdownNow();
                 }
             } catch (InterruptedException e) {
-                DebugUtil.debug("Interrupted while waiting for TransactionHistoryManager executor shutdown");
+                NeoLog.debug(LOGGER, LogCategory.ECONOMY, "Interrupted while waiting for TransactionHistoryManager executor shutdown");
                 saveExecutor.shutdownNow();
                 Thread.currentThread().interrupt();
             }
 
-            DebugUtil.debug("TransactionHistoryManager shutdown complete.");
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "TransactionHistoryManager shutdown complete.");
         } catch (Exception e) {
-            DebugUtil.debugStackTrace(e);
+            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Error during TransactionHistoryManager shutdown", e);
         }
     }
 
@@ -144,16 +148,19 @@ public class TransactionHistoryManager {
                         obj.add("entries", arr);
                         store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj);
                         migrated++;
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                        NeoLog.debug(LOGGER, LogCategory.ECONOMY,
+                            "migrateLegacyFilesIfNeeded: skipping malformed legacy transaction-history entry for key=" + entry.getKey(), ignored);
+                    }
                 }
             }
         } catch (Exception e) {
-            DebugUtil.debugStackTrace(e);
+            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to migrate legacy transaction_history.json", e);
         }
 
         if (migrated > 0) {
-            DebugUtil.debug("TransactionHistoryManager: migrated " + migrated
-                + " record(s) from legacy files into the '" + StorageManager.getInstance().getActiveType() + "' storage backend.");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "TransactionHistoryManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
+                migrated, StorageManager.getInstance().getActiveType());
         }
     }
 }

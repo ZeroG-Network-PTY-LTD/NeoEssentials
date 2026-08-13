@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.Filter;
 import com.sun.net.httpserver.HttpExchange;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.AuthenticationManager;
 import com.zerog.neoessentials.webdashboard.security.Session;
 import com.zerog.neoessentials.webdashboard.security.User;
@@ -21,7 +23,6 @@ import java.util.Set;
  * Validates session tokens and enforces role-based access control
  */
 public class AuthenticationFilter extends Filter {
-    @SuppressWarnings("unused") // Reserved for future logging features
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFilter.class);
     private static final Gson GSON = new Gson();
     
@@ -101,21 +102,25 @@ public class AuthenticationFilter extends Filter {
         // Extract session token
         String sessionId = extractSessionId(exchange);
         if (sessionId == null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rejected request to {} {}: no session token present", method, path);
             sendUnauthorized(exchange, "Authentication required");
             return;
         }
-        
+
         // Validate session
         AuthenticationManager authManager = AuthenticationManager.getInstance();
         Session session = authManager.validateSession(sessionId);
-        
+
         if (session == null) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rejected request to {} {}: invalid or expired session", method, path);
             sendUnauthorized(exchange, "Invalid or expired session");
             return;
         }
-        
+
         // Check role-based permissions
         if (!checkPermissions(path, method, session)) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Denied '{}' (role {}) access to {} {}: insufficient permissions",
+                session.getUsername(), session.getRole(), method, path);
             sendForbidden(exchange, "Insufficient permissions");
             return;
         }

@@ -2,6 +2,8 @@ package com.zerog.neoessentials.webdashboard.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,7 +185,7 @@ public class LoggingDataCollector {
                 response.addProperty("count", logs.size());
                 response.addProperty("totalLines", allLines.size());
             } catch (IOException e) {
-                LOGGER.error("Failed to read server log file", e);
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to read server log file", e);
                 response.addProperty("error", "Failed to read log file: " + e.getMessage());
             }
         } else {
@@ -270,7 +272,7 @@ public class LoggingDataCollector {
             errorLogs.poll();
         }
         
-        LOGGER.error(message, exception);
+        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, message, exception);
     }
     
     /**
@@ -281,21 +283,21 @@ public class LoggingDataCollector {
         switch (logType.toLowerCase()) {
             case "requests" -> {
                 requestLogs.clear();
-                LOGGER.info("Request logs cleared");
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Request logs cleared");
             }
             case "errors" -> {
                 errorLogs.clear();
-                LOGGER.info("Error logs cleared");
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Error logs cleared");
             }
             case "performance" -> {
                 performanceMetrics.clear();
-                LOGGER.info("Performance metrics cleared");
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Performance metrics cleared");
             }
             case "all" -> {
                 requestLogs.clear();
                 errorLogs.clear();
                 performanceMetrics.clear();
-                LOGGER.info("All logs cleared");
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "All logs cleared");
             }
         }
     }

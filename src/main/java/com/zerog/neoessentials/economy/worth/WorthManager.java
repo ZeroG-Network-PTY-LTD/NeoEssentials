@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.economy.worth;
 
 import com.google.gson.*;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.ResourceUtil;
@@ -118,10 +120,12 @@ public class WorthManager {
         if (price <= 0) {
             worthMap.remove(id);
             store.delete(COLLECTION, id);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPrice: removed price for item={} (price<=0)", id);
         } else {
             BigDecimal value = BigDecimal.valueOf(price);
             worthMap.put(id, value);
             persistPrice(id, value);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPrice: item={} price={}", id, value);
         }
     }
 
@@ -133,10 +137,12 @@ public class WorthManager {
         if (price <= 0) {
             worthMap.remove(id);
             store.delete(COLLECTION, id);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPrice: removed price for item={} (price<=0)", id);
         } else {
             BigDecimal value = BigDecimal.valueOf(price);
             worthMap.put(id, value);
             persistPrice(id, value);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPrice: item={} price={}", id, value);
         }
     }
 
@@ -146,7 +152,10 @@ public class WorthManager {
     public boolean removePrice(ItemStack stack) {
         String id = getItemId(stack);
         boolean removed = worthMap.remove(id) != null;
-        if (removed) store.delete(COLLECTION, id);
+        if (removed) {
+            store.delete(COLLECTION, id);
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "removePrice: removed price for item={}", id);
+        }
         return removed;
     }
 
@@ -171,7 +180,9 @@ public class WorthManager {
                     return BigDecimal.valueOf(eco.get("sellMultiplier").getAsDouble());
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "getSellMultiplier: failed to read config, falling back to 1.0", ignored);
+        }
         return BigDecimal.ONE;
     }
 
@@ -189,7 +200,9 @@ public class WorthManager {
                     return eco.get("allowSellNamedItems").getAsBoolean();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "isAllowSellNamedItems: failed to read config, falling back to false", ignored);
+        }
         return false;
     }
 

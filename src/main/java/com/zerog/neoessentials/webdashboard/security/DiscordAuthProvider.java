@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.webdashboard.security;
 
 import com.zerog.neoessentials.integrations.ChatIntegrationManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
@@ -46,7 +48,7 @@ public class DiscordAuthProvider {
         try {
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
             if (server == null) {
-                LOGGER.warn("Server not available, cannot retrieve linked account");
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Server not available, cannot retrieve linked account");
                 return null;
             }
 
@@ -55,13 +57,13 @@ public class DiscordAuthProvider {
                 : server.services().nameToIdCache().get(minecraftUsername).map(profile -> profile.id()).orElse(null);
 
             if (playerUuid == null) {
-                LOGGER.warn("Cannot find UUID for player: {}", minecraftUsername);
+                NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Cannot find UUID for player: {}", minecraftUsername);
                 return null;
             }
 
             return getLinkedAccountByUuid(playerUuid);
         } catch (Exception e) {
-            LOGGER.error("Error getting linked account for {}: {}", minecraftUsername, e.getMessage(), e);
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error getting linked account for " + minecraftUsername, e);
             return null;
         }
     }
@@ -72,7 +74,7 @@ public class DiscordAuthProvider {
     public DiscordUser getLinkedAccountByUuid(UUID minecraftUuid) {
         Optional<String> discordId = ChatIntegrationManager.findLinkedDiscordId(minecraftUuid);
         if (discordId.isEmpty()) {
-            LOGGER.debug("No linked Discord account found for UUID: {}", minecraftUuid);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "No linked Discord account found for UUID: {}", minecraftUuid);
             return null;
         }
 
