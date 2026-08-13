@@ -100,22 +100,42 @@ public class EcoCommand {
         }
 
         String playerName = StringArgumentType.getString(ctx, "player");
-        com.zerog.neoessentials.util.InputValidator.ValidationResult nameValidation =
-            com.zerog.neoessentials.util.InputValidator.validatePlayerName(playerName);
-        if (!nameValidation.isValid()) {
-            ctx.getSource().sendFailure(MessageUtil.error(nameValidation.getErrorMessage()));
-            return 0;
-        }
-        String validPlayerName = nameValidation.getValue(String.class);
-
-        // Resolve UUID — supports offline players via profile cache (Essentials: loopOfflinePlayersConsumer)
         MinecraftServer server = ctx.getSource().getServer();
-        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, validPlayerName);
-        if (uuidOpt.isEmpty()) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
-            return 0;
+
+        // Target selectors (@p, @s, @a[limit=1], @r, @n, a UUID, or a named entity) — lets
+        // quest/reward systems (FTB Quests "run command" rewards, command blocks, etc.) issue
+        // e.g. "/eco give @p 100" instead of needing the triggering player's literal name.
+        // Only usable for online targets, unlike the literal-name path below.
+        UUID uuid;
+        String validPlayerName;
+        if (playerName.startsWith("@")) {
+            try {
+                var selector = net.minecraft.commands.arguments.EntityArgument.player()
+                    .parse(new com.mojang.brigadier.StringReader(playerName));
+                ServerPlayer target = selector.findSinglePlayer(ctx.getSource());
+                uuid = target.getUUID();
+                validPlayerName = target.getGameProfile().getName();
+            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
+                return 0;
+            }
+        } else {
+            com.zerog.neoessentials.util.InputValidator.ValidationResult nameValidation =
+                com.zerog.neoessentials.util.InputValidator.validatePlayerName(playerName);
+            if (!nameValidation.isValid()) {
+                ctx.getSource().sendFailure(MessageUtil.error(nameValidation.getErrorMessage()));
+                return 0;
+            }
+            validPlayerName = nameValidation.getValue(String.class);
+
+            // Resolve UUID — supports offline players via profile cache (Essentials: loopOfflinePlayersConsumer)
+            Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, validPlayerName);
+            if (uuidOpt.isEmpty()) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
+                return 0;
+            }
+            uuid = uuidOpt.get();
         }
-        UUID uuid = uuidOpt.get();
         NeoLog.debug(LOGGER, LogCategory.ECONOMY, "ecoAdminAction: admin={} action={} target={} ({})",
             ctx.getSource().getTextName(), action, validPlayerName, uuid);
 
