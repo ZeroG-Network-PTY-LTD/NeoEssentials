@@ -12,6 +12,58 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.45] — 2026-08-13
+
+### ✨ Per-Subsystem Logging Configuration
+
+- Replaced the single global `logging.enableDebugLogging` toggle — and three separate,
+  inconsistent internal debug-logging helpers — with one unified system: `logging.categories`
+  in `config.json`, with an independent `{ "normal": true/false, "debug": true/false }` pair
+  for each of 12 subsystems (`chat`, `economy`, `permissions`, `teleportation`, `moderation`,
+  `auctionHouse`, `kits`, `webDashboard`, `discord`, `config`, `commands`, `general`).
+- `normal` (on by default) controls routine info-level messages in the console and
+  `logs/latest.log`. `debug` (off by default) controls verbose trace messages, which flow
+  into `logs/debug.log` via the platform's existing Log4j2 setup — no new log files, no
+  log4j2 config changes needed. Warnings and errors are **never** gated by either toggle, so
+  a category can't accidentally hide a real problem.
+- Existing installs migrate automatically: if you had the old global debug flag set to `true`,
+  every category's `debug` flag is seeded to `true` on upgrade so you don't silently lose
+  verbose output. See the [Logging System](docs/Wiki/Logging.md) wiki page for the full config
+  reference.
+- Added real debug-tracing coverage across almost every subsystem (transactions, permission
+  resolution, teleport requests, auction lifecycle, moderation actions, command dispatch,
+  config load/migration, web dashboard requests, Discord bridge messages, and more), plus
+  fixed a large number of previously silent/weak `catch` blocks so real failures actually get
+  logged now instead of vanishing.
+- Along the way this also fixed a few real latent bugs it uncovered: a printf `%s` vs. SLF4J
+  `{}` placeholder mismatch that silently broke several debug messages, exceptions that were
+  being swallowed forever because their old debug-gate config path never actually existed on
+  disk, a couple of spots that were logging raw session IDs in plaintext, and (specific to
+  this branch's newer `GameProfile` API) two files where porting the change over initially
+  left a couple of calls using the older `.getName()` accessor instead of this branch's
+  `.name()`.
+
+---
+
+## [1.0.4-mc26.1.2+build.44] — 2026-08-13
+
+### 🐛 The build.43 Nickname Fix Never Reached Existing Installs, and LuckPerms Ignored Per-World Contexts for Online Players
+
+- build.43 fixed the *shipped default* `chat-format`/`formatTemplates` strings to reference
+  `{neoessentials_displayname}` instead of `{neoessentials_username}`, but never bumped the
+  config version — so the migration system's "only add missing keys, never touch existing
+  values" rule meant every already-generated `config.json` kept the old, broken default
+  forever, even after updating the mod.
+- Config now value-patches any chat-format/formatTemplates entry that's an **exact** match for
+  a known old default (custom values you've actually edited are left untouched) so the nickname
+  fix now actually reaches installs that generated their config before build.43.
+- Fixed `LuckPermsAdapter`'s prefix/suffix meta lookups: two call sites were unconditionally
+  using LuckPerms' static default context instead of the player's live, context-aware options,
+  so per-world/per-server LuckPerms prefix/suffix contexts were silently ignored for online
+  players in those paths (permission checks were unaffected — only prefix/suffix resolution).
+
+---
+
 ## [1.0.4-mc26.1.2+build.43] — 2026-08-04
 
 ### 🐛 Nicknames Never Actually Showed Up in Chat by Default

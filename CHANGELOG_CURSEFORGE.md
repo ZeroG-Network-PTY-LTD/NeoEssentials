@@ -8,6 +8,36 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.45 — 2026-08-13
+
+### ✨ Per-Category Logging Configuration
+
+- You can now control logging per-subsystem instead of all-or-nothing. New `logging.categories`
+  section in `config.json` — 12 categories (chat, economy, permissions, teleportation,
+  moderation, auction house, kits, web dashboard, Discord, config, commands, general), each with
+  its own `normal` (routine messages) and `debug` (verbose troubleshooting output) switch.
+  `debug` output goes to `logs/debug.log`, keeping your normal console/log clean.
+- If you had the old debug toggle on, it carries over automatically — every category's debug
+  switch turns on for you during the upgrade.
+- Lots of new detailed logging added across the whole mod so problems are much easier to
+  diagnose when they happen — just flip on the relevant category's `debug` switch and check
+  `logs/debug.log`.
+
+---
+
+## 1.0.4-mc26.1.2+build.44 — 2026-08-13
+
+### 🐛 Nickname Fix Now Actually Reaches Existing Configs, LuckPerms Context Fix
+
+- The build.43 nickname fix only applied to brand-new configs — if you already had a
+  `config.json`, it kept the old broken default forever. This update patches existing configs
+  too (only if you never customized that setting yourself), so the nickname fix now reaches
+  everyone.
+- Fixed LuckPerms prefix/suffix lookups ignoring per-world/per-server contexts for online
+  players in a couple of spots.
+
+---
+
 ## 1.0.4-mc26.1.2+build.43 — 2026-08-04
 
 ### 🐛 Nicknames Now Show Up in Chat by Default
