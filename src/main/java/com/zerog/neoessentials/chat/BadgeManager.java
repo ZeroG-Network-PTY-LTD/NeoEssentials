@@ -82,7 +82,7 @@ public class BadgeManager {
             }
             NeoLog.debug(LOGGER, LogCategory.CHAT, "No rank badge configured for group '{}'", groupLower);
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting rank badge for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting rank badge for player " + player.getGameProfile().name(), e);
         }
 
         return "";
@@ -142,10 +142,10 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting status icons for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting status icons for player " + player.getGameProfile().name(), e);
         }
 
-        NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved status icons for {}: '{}'", player.getGameProfile().getName(), icons);
+        NeoLog.debug(LOGGER, LogCategory.CHAT, "Resolved status icons for {}: '{}'", player.getGameProfile().name(), icons);
         return !icons.isEmpty() ? icons + " " : "";
     }
 
@@ -207,7 +207,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error applying badges and icons for player " + player.getGameProfile().getName(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error applying badges and icons for player " + player.getGameProfile().name(), e);
         }
 
         return result;
@@ -434,7 +434,7 @@ public class BadgeManager {
                 }
             }
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting primary group for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting primary group for player " + player.getGameProfile().name(), e);
         }
         return "default";
     }
@@ -444,7 +444,7 @@ public class BadgeManager {
             var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
             return afkManager.isAfk(player);
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking AFK status for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking AFK status for player " + player.getGameProfile().name(), e);
             return false;
         }
     }
@@ -454,7 +454,7 @@ public class BadgeManager {
             var vanishManager = com.zerog.neoessentials.moderation.VanishManager.getInstance();
             return vanishManager.isPlayerVanished(player.getUUID());
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking vanish status for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking vanish status for player " + player.getGameProfile().name(), e);
             return false;
         }
     }
@@ -463,7 +463,7 @@ public class BadgeManager {
         try {
             return com.zerog.neoessentials.chat.MuteManager.isMuted(player);
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking mute status for player " + player.getGameProfile().getName(), e);
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error checking mute status for player " + player.getGameProfile().name(), e);
             return false;
         }
     }

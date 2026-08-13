@@ -119,14 +119,14 @@ public class AntiSpamManager {
 
             if (!tracker.allowMessage()) {
                 String action = config.get("action").getAsString();
-                NeoLog.debug(LOGGER, LogCategory.CHAT, "Spam filter triggered for {} (action={})", player.getGameProfile().getName(), action);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Spam filter triggered for {} (action={})", player.getGameProfile().name(), action);
                 if ("block".equals(action)) {
                     return new FilterResult(false, null, "§cYou are sending messages too quickly! Please slow down.");
                 }
             }
 
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking spam filter for " + player.getGameProfile().getName(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking spam filter for " + player.getGameProfile().name(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -159,7 +159,7 @@ public class AntiSpamManager {
 
                 if (lastTime != null && (currentTime - lastTime) < (cooldown * 1000L)) {
                     String action = config.get("action").getAsString();
-                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Repeat filter triggered for {} (action={})", player.getGameProfile().getName(), action);
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Repeat filter triggered for {} (action={})", player.getGameProfile().name(), action);
                     if ("block".equals(action)) {
                         long remainingSeconds = cooldown - ((currentTime - lastTime) / 1000);
                         return new FilterResult(false, null,
@@ -168,7 +168,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking repeat filter for " + player.getGameProfile().getName(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking repeat filter for " + player.getGameProfile().name(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -201,7 +201,7 @@ public class AntiSpamManager {
             // Check if message contains URLs
             Matcher matcher = URL_PATTERN.matcher(message);
             if (matcher.find()) {
-                NeoLog.debug(LOGGER, LogCategory.CHAT, "Link detected in message from {} (action={})", player.getGameProfile().getName(), action);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Link detected in message from {} (action={})", player.getGameProfile().name(), action);
                 // Block all links
                 if ("block".equals(action)) {
                     return new FilterResult(false, null, "§cLinks are not allowed in chat!");
@@ -222,13 +222,13 @@ public class AntiSpamManager {
                     }
 
                     if (!allowed) {
-                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Link '{}' from {} not in whitelist, blocking", url, player.getGameProfile().getName());
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Link '{}' from {} not in whitelist, blocking", url, player.getGameProfile().name());
                         return new FilterResult(false, null, "§cOnly whitelisted links are allowed in chat!");
                     }
                 }
             }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking link filter for " + player.getGameProfile().getName(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking link filter for " + player.getGameProfile().name(), e);
         }
 
         return new FilterResult(true, message, null);
@@ -280,7 +280,7 @@ public class AntiSpamManager {
 
             if (capsPercentage > maxPercentage) {
                 String action = config.get("action").getAsString();
-                NeoLog.debug(LOGGER, LogCategory.CHAT, "Caps filter triggered for {} ({}% caps, action={})", player.getGameProfile().getName(), capsPercentage, action);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Caps filter triggered for {} ({}% caps, action={})", player.getGameProfile().name(), capsPercentage, action);
 
                 if ("lowercase".equals(action)) {
                     // Convert to lowercase
@@ -295,7 +295,7 @@ public class AntiSpamManager {
                 }
             }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking caps filter for " + player.getGameProfile().getName(), e);
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking caps filter for " + player.getGameProfile().name(), e);
         }
 
         return new FilterResult(true, message, null);
