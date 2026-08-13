@@ -178,6 +178,13 @@ public class WarpCommands {
 
         // Warp-others branch (Essentials: essentials.warp.others)
         if (targetName != null) {
+            // Permission is already checked in the argument node's requires(), but double-check
+            // here too — same defense-in-depth as executeDelWarp() below — so this can never be
+            // reached via some other path (e.g. a future redirect/alias) without the gate.
+            if (!PermissionAPI.hasPermission(sender.getUUID(), PERMISSION_WARP_OTHERS)) {
+                source.sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+                return 0;
+            }
             ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(targetName);
             if (target == null) {
                 source.sendFailure(MessageUtil.error(
