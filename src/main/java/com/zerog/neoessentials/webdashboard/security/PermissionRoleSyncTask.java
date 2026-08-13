@@ -68,7 +68,8 @@ public class PermissionRoleSyncTask {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
         UUID uuid = player.getUUID();
-        new Thread(() -> syncPlayer(uuid), "NeoEssentials-RoleSync-" + player.getName().getString()).start();
+        // Shared bounded pool, not a fresh Thread per join — see DelayedTaskExecutor.
+        com.zerog.neoessentials.util.DelayedTaskExecutor.schedule(() -> syncPlayer(uuid), 0);
     }
 
     private static void syncAll() {

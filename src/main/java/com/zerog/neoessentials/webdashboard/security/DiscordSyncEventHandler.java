@@ -26,19 +26,19 @@ public class DiscordSyncEventHandler {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
-            // Run sync asynchronously to avoid blocking player login
-            new Thread(() -> syncPlayerPermissions(player), "DiscordPermissionSync-" + player.getName().getString()).start();
+            // Run sync asynchronously (on a shared bounded pool, not a fresh Thread per join —
+            // see DelayedTaskExecutor) to avoid blocking player login. 1s delay to ensure the
+            // player is fully loaded, matching the previous Thread.sleep(1000) this replaced.
+            com.zerog.neoessentials.util.DelayedTaskExecutor.schedule(
+                () -> syncPlayerPermissions(player), 1000);
         }
     }
-    
+
     /**
      * Sync permissions for a player
      */
     private static void syncPlayerPermissions(net.minecraft.server.level.ServerPlayer player) {
         try {
-            // Small delay to ensure player is fully loaded
-            Thread.sleep(1000);
-            
             // Check if sync is enabled
             DiscordAuthConfig config = DiscordAuthConfig.load();
             if (!config.isPermissionSyncEnabled() || !config.isSyncOnJoin()) {
@@ -71,9 +71,6 @@ public class DiscordSyncEventHandler {
                 NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync skipped for '{}': {}", playerName, result.getMessage());
             }
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync interrupted for player '{}'", player.getName().getString());
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error during Discord permission sync for player '" + player.getName().getString() + "'", e);
         }
