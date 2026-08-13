@@ -1403,7 +1403,19 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 38);          // v38 — added webDashboard.customProfileUrlTemplate: point the
+        put(MAIN_CONFIG, 39);          // v39 — chat.formatTemplates.templates.* still referenced
+                                       //        {neoessentials_username}/{neoessentials_name} (always
+                                       //        the real name) instead of {neoessentials_displayname}
+                                       //        (nickname-aware), so /nick never showed up in chat for
+                                       //        anyone using a formatTemplates preset. Same class of bug
+                                       //        as the v38-era chat-format fix, different config block —
+                                       //        this bump also value-patches any already-deployed
+                                       //        chat-format/formatTemplates entries still holding the
+                                       //        untouched old default strings (see
+                                       //        patchLegacyNicknameChatDefaults()), since the version was
+                                       //        never bumped when the chat-format defaults were fixed, so
+                                       //        that fix silently never reached existing installs.
+        // v38 — added webDashboard.customProfileUrlTemplate: point the
                                        //        in-chat "view profile" link at a server's own site
                                        //        instead of either NeoEssentials dashboard
         // v37 — added chat.channels.team (teamBased:true example channel)
@@ -2106,6 +2118,15 @@ public class ConfigManager {
                     LOGGER.info("Config file {}: removed legacy _comment/_doc keys (comment migration).", configName);
                 }
 
+                // Value-level fixes for known-bad defaults that mergeNewKeys() can never touch
+                // (the key already exists on disk, mergeNewKeys only adds missing keys).
+                if (MAIN_CONFIG.equals(configName)) {
+                    if (patchLegacyNicknameChatDefaults(onDisk)) {
+                        changed = true;
+                        LOGGER.info("Config file {}: upgraded untouched chat-format defaults to show nicknames ({{neoessentials_username}}/{{neoessentials_name}} -> {{neoessentials_displayname}}).", configName);
+                    }
+                }
+
                 // Always bump the version so we don't re-run this on next start
                 onDisk.addProperty(CONFIG_VERSION_KEY, expectedVersion);
 
@@ -2129,6 +2150,80 @@ public class ConfigManager {
         } catch (Exception e) {
             LOGGER.error("Failed to check/update version for config {}: {}", configName, e.getMessage(), e);
         }
+    }
+
+    /**
+     * Value-level fix for the chat-format defaults that shipped, at various points, referencing
+     * {@code {neoessentials_username}}/{@code {neoessentials_name}} — which always resolve to the
+     * real game-profile name — instead of {@code {neoessentials_displayname}}, which respects an
+     * active {@code /nick}. {@link #mergeNewKeys} can never fix this on its own: the keys already
+     * exist on disk (they were generated with the old default the first time the server started),
+     * so the "never overwrite an existing value" rule that protects genuine user customization
+     * also protects this untouched-but-buggy default forever.
+     * <p>
+     * Only replaces a value when it is an <em>exact</em> match for a known old default — anything
+     * an admin has actually customized (even trivially, e.g. reordering the message) is left alone.
+     *
+     * @return {@code true} if at least one value was patched
+     */
+    static boolean patchLegacyNicknameChatDefaults(com.google.gson.JsonObject onDisk) {
+        if (!onDisk.has("chat") || !onDisk.get("chat").isJsonObject()) return false;
+        com.google.gson.JsonObject chat = onDisk.getAsJsonObject("chat");
+        boolean changed = false;
+
+        if (chat.has("chat-format") && chat.get("chat-format").isJsonObject()) {
+            com.google.gson.JsonObject chatFormat = chat.getAsJsonObject("chat-format");
+            changed |= patchIfUnchanged(chatFormat, "default",
+                "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+                "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}");
+            changed |= patchIfUnchanged(chatFormat, "group:admin",
+                "&c[Admin] {neoessentials_username}: {MESSAGE}", "&c[Admin] {neoessentials_displayname}: {MESSAGE}");
+            changed |= patchIfUnchanged(chatFormat, "group:mod",
+                "&2[Mod] {neoessentials_username}: {MESSAGE}", "&2[Mod] {neoessentials_displayname}: {MESSAGE}");
+            changed |= patchIfUnchanged(chatFormat, "world:creative",
+                "&b[C] {neoessentials_username}: {MESSAGE}", "&b[C] {neoessentials_displayname}: {MESSAGE}");
+        }
+
+        if (chat.has("formatTemplates") && chat.get("formatTemplates").isJsonObject()) {
+            com.google.gson.JsonObject formatTemplates = chat.getAsJsonObject("formatTemplates");
+            if (formatTemplates.has("templates") && formatTemplates.get("templates").isJsonObject()) {
+                com.google.gson.JsonObject templates = formatTemplates.getAsJsonObject("templates");
+                changed |= patchIfUnchanged(templates, "default",
+                    "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+                    "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}");
+                changed |= patchIfUnchanged(templates, "rpg",
+                    "&7[Lv.{neoessentials_level}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
+                    "&7[Lv.{neoessentials_level}] {neoessentials_prefix}{neoessentials_displayname}&r: {MESSAGE}");
+                changed |= patchIfUnchanged(templates, "modern",
+                    "● {neoessentials_prefix}{neoessentials_name} &8› &r{MESSAGE}",
+                    "● {neoessentials_prefix}{neoessentials_displayname} &8› &r{MESSAGE}");
+                changed |= patchIfUnchanged(templates, "minimal",
+                    "{neoessentials_name}: {MESSAGE}", "{neoessentials_displayname}: {MESSAGE}");
+                changed |= patchIfUnchanged(templates, "detailed",
+                    "&7[{neoessentials_world}] &r<{neoessentials_prefix}{neoessentials_name}{neoessentials_suffix}&r> {MESSAGE}",
+                    "&7[{neoessentials_world}] &r<{neoessentials_prefix}{neoessentials_displayname}{neoessentials_suffix}&r> {MESSAGE}");
+                changed |= patchIfUnchanged(templates, "ranked",
+                    "&7[{neoessentials_group}] {neoessentials_prefix}{neoessentials_name}&r: {MESSAGE}",
+                    "&7[{neoessentials_group}] {neoessentials_prefix}{neoessentials_displayname}&r: {MESSAGE}");
+                changed |= patchIfUnchanged(templates, "custom",
+                    "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+                    "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}");
+            }
+        }
+
+        return changed;
+    }
+
+    /**
+     * Replaces {@code object.key} with {@code newValue} only if it currently equals exactly
+     * {@code oldValue} — used to correct known-bad shipped defaults without touching any value
+     * an admin has actually customized.
+     */
+    private static boolean patchIfUnchanged(com.google.gson.JsonObject object, String key, String oldValue, String newValue) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()) return false;
+        if (!object.get(key).getAsString().equals(oldValue)) return false;
+        object.addProperty(key, newValue);
+        return true;
     }
 
     /**

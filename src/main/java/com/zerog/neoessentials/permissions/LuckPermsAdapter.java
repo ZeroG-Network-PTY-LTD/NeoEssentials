@@ -142,9 +142,6 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
         if (!luckPermsLoaded || luckPermsApi == null) return null;
 
         try {
-            var server = ServerLifecycleHooks.getCurrentServer();
-            ServerPlayer onlinePlayer = server != null ? server.getPlayerList().getPlayer(uuid) : null;
-
             User user = luckPermsApi.getUserManager().getUser(uuid);
             if (user == null) {
                 try {
@@ -163,14 +160,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
                 return null;
             }
 
-            QueryOptions queryOptions;
-            if (onlinePlayer != null) {
-                queryOptions = luckPermsApi.getContextManager()
-                        .getQueryOptions(user)
-                        .orElse(QueryOptions.defaultContextualOptions());
-            } else {
-                queryOptions = QueryOptions.defaultContextualOptions();
-            }
+            QueryOptions queryOptions = resolveQueryOptions(user);
 
             Tristate result = user.getCachedData().getPermissionData(queryOptions).checkPermission(permission);
             consecutiveFailures.set(0);
@@ -189,6 +179,25 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
             return null;
         }
+    }
+
+    /**
+     * Resolves the correct {@link QueryOptions} for a LuckPerms user — the player's live,
+     * context-aware options (world/server contexts etc.) when they're online, falling back to
+     * LuckPerms' static default context otherwise. Used for permission checks AND for
+     * prefix/suffix meta lookups, which previously used {@link QueryOptions#defaultContextualOptions()}
+     * unconditionally and so ignored per-world/per-server prefix contexts for online players.
+     */
+    private QueryOptions resolveQueryOptions(User user) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        ServerPlayer onlinePlayer = server != null ? server.getPlayerList().getPlayer(user.getUniqueId()) : null;
+
+        if (onlinePlayer != null) {
+            return luckPermsApi.getContextManager()
+                    .getQueryOptions(user)
+                    .orElse(QueryOptions.defaultContextualOptions());
+        }
+        return QueryOptions.defaultContextualOptions();
     }
 
     @Override
@@ -254,7 +263,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
 
             if (user != null) {
-                QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+                QueryOptions queryOptions = resolveQueryOptions(user);
                 var metaData = user.getCachedData().getMetaData(queryOptions);
                 String prefix = metaData.getPrefix();
                 String suffix = metaData.getSuffix();
@@ -357,7 +366,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
 
             if (user != null) {
-                QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+                QueryOptions queryOptions = resolveQueryOptions(user);
                 var metaData = user.getCachedData().getMetaData(queryOptions);
                 String suffix = metaData.getSuffix();
 
