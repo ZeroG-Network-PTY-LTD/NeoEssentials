@@ -146,18 +146,10 @@ public class ResourcePackManager {
         if (event.getEntity() instanceof ServerPlayer player) {
             var server = player.level().getServer();
             if (server != null) {
-                // Sleep on a background thread, then marshal the send back to the server tick thread.
-                Thread t = new Thread(() -> {
-                    try {
-                        Thread.sleep(1000); // 1 second delay (off main thread)
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                    server.execute(() -> getInstance().sendResourcePack(player));
-                }, "NeoEssentials-ResourcePackDelay");
-                t.setDaemon(true);
-                t.start();
+                // Delay on the shared bounded pool (not a fresh Thread per join — see
+                // DelayedTaskExecutor), then marshal the send back to the server tick thread.
+                com.zerog.neoessentials.util.DelayedTaskExecutor.schedule(
+                    () -> server.execute(() -> getInstance().sendResourcePack(player)), 1000);
             }
         }
     }
