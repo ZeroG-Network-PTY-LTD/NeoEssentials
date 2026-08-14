@@ -125,7 +125,7 @@ jobs:
             '{
               embeds: [{
                 author: { name: "NeoEssentials" },
-                title: "🆕 New Release",
+                title: "🆕 Dev Release",
                 color: 3066993,
                 url: $url,
                 fields: [ { name: "Branch", value: $branch, inline: true } ],
