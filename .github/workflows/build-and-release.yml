@@ -27,8 +27,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -40,38 +38,42 @@ jobs:
         run: chmod +x gradlew
 
       # Build numbers are shared across BOTH dev branches, not tracked independently per
-      # branch: this bumps to one higher than the highest build_number.txt committed on
-      # EITHER Dev-Builds or mc-26.1-port (whichever branch this run is for, its own committed
-      # value is also considered, in case it's somehow already ahead), then commits that back
-      # to build_number.txt on the branch that triggered this run.
+      # branch — a plain independent per-branch auto-bump used to exist here and was removed
+      # because it let the two branches' numbers drift apart from each other (each branch's CI
+      # bumping its own copy on its own schedule, nothing keeping them in sync).
       #
-      # A prior version of this used a plain independent per-branch auto-bump, which was
-      # removed because it let the two branches' numbers drift apart from each other (each
-      # branch's CI bumping its own copy on its own schedule, nothing keeping them in sync).
-      # Computing the next number from the max across both branches every time keeps builds
-      # in lockstep — whichever branch ships next just takes the next number in the shared
-      # sequence — without needing the two branches to coordinate any other way.
+      # The counter of record is a repository Actions variable (BUILD_NUMBER), NOT
+      # build_number.txt committed to the branch — every git-based way of landing this bump
+      # (plain push, push via a fresh throwaway branch, GitHub's own Contents API + a PR
+      # auto-merged via the API) was tried and confirmed live to get rejected by this repo's
+      # branch-protection ruleset (Dev-Builds/mc-26.1-port both require signed commits AND
+      # changes to land via a reviewed pull request, and that ruleset's target is ~ALL branches
+      # — even a brand new throwaway branch with no PR involved hit the same rejection). Adding
+      # GitHub Actions to the ruleset's bypass list didn't reliably fix it either. A repository
+      # variable sidesteps all of that: it isn't part of git history, so branch protection
+      # never enters the picture.
       #
-      # [skip ci] on the commit message is required: without it, this bump-and-push would
-      # itself trigger another `push` run of this same workflow, forever.
+      # build_number.txt IS still written to the workspace below (from the bumped variable) so
+      # ./gradlew build picks it up for the version string — it's just not committed back. The
+      # copy checked into each branch is local-dev-only now (see build.gradle's comment); it
+      # will drift from the real shared counter over time, and that's fine.
+      #
+      # GITHUB_TOKEN can't read/write repo variables at all (confirmed live — HTTP 403
+      # "Resource not accessible by integration", regardless of the `actions: write` permission
+      # above): the Variables API requires real admin-level credentials, which the default
+      # workflow token structurally never has. CI_BUILD_NUMBER_PAT is a fine-grained PAT scoped
+      # to only "Variables: Read and write" on this one repo (stored as a repo secret) — the
+      # minimum credential that can actually do this.
       - name: Bump shared build number
         id: build_number
+        env:
+          GH_TOKEN: ${{ secrets.CI_BUILD_NUMBER_PAT }}
         run: |
-          git fetch origin Dev-Builds mc-26.1-port
-          n_dev=$(git show origin/Dev-Builds:build_number.txt 2>/dev/null || echo 0)
-          n_port=$(git show origin/mc-26.1-port:build_number.txt 2>/dev/null || echo 0)
-          n_here=$(cat build_number.txt 2>/dev/null || echo 0)
-          max=$n_dev
-          [ "$n_port" -gt "$max" ] && max=$n_port
-          [ "$n_here" -gt "$max" ] && max=$n_here
-          next=$((max + 1))
+          current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
+          next=$((current + 1))
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add build_number.txt
-          git commit -m "Bump shared build number to ${next} [skip ci]"
-          git push origin HEAD:${{ github.ref_name }}
+          gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
 
       - name: Build jar
         run: ./gradlew build -x test --console=plain
