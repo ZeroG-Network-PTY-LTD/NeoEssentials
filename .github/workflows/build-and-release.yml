@@ -63,8 +63,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value' 2>/dev/null)
-          current=${current:-0}
+          current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
           next=$((current + 1))
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
