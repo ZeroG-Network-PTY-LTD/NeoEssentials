@@ -20,7 +20,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   build-and-release:
@@ -58,10 +57,17 @@ jobs:
       # ./gradlew build picks it up for the version string — it's just not committed back. The
       # copy checked into each branch is local-dev-only now (see build.gradle's comment); it
       # will drift from the real shared counter over time, and that's fine.
+      #
+      # GITHUB_TOKEN can't read/write repo variables at all (confirmed live — HTTP 403
+      # "Resource not accessible by integration", regardless of the `actions: write` permission
+      # above): the Variables API requires real admin-level credentials, which the default
+      # workflow token structurally never has. CI_BUILD_NUMBER_PAT is a fine-grained PAT scoped
+      # to only "Variables: Read and write" on this one repo (stored as a repo secret) — the
+      # minimum credential that can actually do this.
       - name: Bump shared build number
         id: build_number
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CI_BUILD_NUMBER_PAT }}
         run: |
           current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
           next=$((current + 1))
