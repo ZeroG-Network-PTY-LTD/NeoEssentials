@@ -20,7 +20,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  actions: write
 
 jobs:
   build-and-release:
@@ -28,8 +28,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -41,68 +39,36 @@ jobs:
         run: chmod +x gradlew
 
       # Build numbers are shared across BOTH dev branches, not tracked independently per
-      # branch: this bumps to one higher than the highest build_number.txt committed on
-      # EITHER Dev-Builds or mc-26.1-port (whichever branch this run is for, its own committed
-      # value is also considered, in case it's somehow already ahead), then lands that back on
-      # build_number.txt on the branch that triggered this run.
+      # branch — a plain independent per-branch auto-bump used to exist here and was removed
+      # because it let the two branches' numbers drift apart from each other (each branch's CI
+      # bumping its own copy on its own schedule, nothing keeping them in sync).
       #
-      # A prior version of this used a plain independent per-branch auto-bump, which was
-      # removed because it let the two branches' numbers drift apart from each other (each
-      # branch's CI bumping its own copy on its own schedule, nothing keeping them in sync).
-      # Computing the next number from the max across both branches every time keeps builds
-      # in lockstep — whichever branch ships next just takes the next number in the shared
-      # sequence — without needing the two branches to coordinate any other way.
+      # The counter of record is a repository Actions variable (BUILD_NUMBER), NOT
+      # build_number.txt committed to the branch — every git-based way of landing this bump
+      # (plain push, push via a fresh throwaway branch, GitHub's own Contents API + a PR
+      # auto-merged via the API) was tried and confirmed live to get rejected by this repo's
+      # branch-protection ruleset (Dev-Builds/mc-26.1-port both require signed commits AND
+      # changes to land via a reviewed pull request, and that ruleset's target is ~ALL branches
+      # — even a brand new throwaway branch with no PR involved hit the same rejection). Adding
+      # GitHub Actions to the ruleset's bypass list didn't reliably fix it either. A repository
+      # variable sidesteps all of that: it isn't part of git history, so branch protection
+      # never enters the picture.
       #
-      # Can't just `git push` this: Dev-Builds/mc-26.1-port both require changes to land via a
-      # pull request, AND (confirmed live — tried both) this repo's verified-signature
-      # requirement applies repo-wide, rejecting even a plain `git push` of a brand new branch
-      # with no PR involved at all. GITHUB_TOKEN isn't on the bypass list for either rule.
-      #
-      # So the commit itself is made through GitHub's Contents API instead of `git push` —
-      # commits GitHub creates via its own API are automatically signed/verified by GitHub,
-      # satisfying the signature rule with no bot signing key to manage. That lands the bump on
-      # a plain branch; going through a PR (created and immediately merged via the API, so the
-      # resulting merge commit is likewise GitHub-signed) satisfies the "via pull request" rule
-      # for the two protected branches themselves.
-      #
-      # [skip ci] in the PR title carries through to the merge commit subject (set explicitly
-      # below) so merging doesn't itself trigger another `push` run of this same workflow.
+      # build_number.txt IS still written to the workspace below (from the bumped variable) so
+      # ./gradlew build picks it up for the version string — it's just not committed back. The
+      # copy checked into each branch is local-dev-only now (see build.gradle's comment); it
+      # will drift from the real shared counter over time, and that's fine.
       - name: Bump shared build number
         id: build_number
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git fetch origin Dev-Builds mc-26.1-port
-          n_dev=$(git show origin/Dev-Builds:build_number.txt 2>/dev/null || echo 0)
-          n_port=$(git show origin/mc-26.1-port:build_number.txt 2>/dev/null || echo 0)
-          n_here=$(cat build_number.txt 2>/dev/null || echo 0)
-          max=$n_dev
-          [ "$n_port" -gt "$max" ] && max=$n_port
-          [ "$n_here" -gt "$max" ] && max=$n_here
-          next=$((max + 1))
-          blob_sha=$(git rev-parse HEAD:build_number.txt)
+          current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value' 2>/dev/null)
+          current=${current:-0}
+          next=$((current + 1))
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
-
-          bump_branch="ci/bump-build-number-${next}"
-          gh api "repos/${{ github.repository }}/git/refs" \
-            -f ref="refs/heads/${bump_branch}" -f sha="${{ github.sha }}" >/dev/null
-
-          gh api "repos/${{ github.repository }}/contents/build_number.txt" -X PUT \
-            -f message="Bump shared build number to ${next}" \
-            -f content="$(base64 -w0 build_number.txt)" \
-            -f sha="${blob_sha}" \
-            -f branch="${bump_branch}" >/dev/null
-
-          pr_url=$(gh pr create \
-            --base "${{ github.ref_name }}" \
-            --head "$bump_branch" \
-            --title "Bump shared build number to ${next} [skip ci]" \
-            --body "Automated build-number bump for build ${next}.")
-          pr_number=$(basename "$pr_url")
-
-          gh pr merge "$pr_number" --merge --delete-branch \
-            --subject "Bump shared build number to ${next} [skip ci]"
+          gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
 
       - name: Build jar
         run: ./gradlew build -x test --console=plain
