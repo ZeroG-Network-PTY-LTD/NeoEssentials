@@ -80,20 +80,24 @@ jobs:
           prerelease: true
           make_latest: false
 
-      # Posts the built jar straight into a Discord channel via webhook, in addition to the
-      # GitHub Release above. Requires a repo secret DISCORD_BUILDS_WEBHOOK_URL (Discord channel
-      # → Edit Channel → Integrations → Webhooks → Copy URL). Skipped (not failed) if that
-      # secret isn't configured, so forks / other clones of this workflow don't break.
-      # continue-on-error: a Discord outage or an oversized jar (webhook attachments cap out at
-      # 8-100MB depending on the server's boost level) shouldn't fail the actual release.
+      # Posts a rich embed to a Discord channel via webhook, linking straight to the GitHub
+      # Release asset above rather than uploading the jar through the webhook itself — Discord
+      # webhook file attachments cap out at 8-100MB depending on the server's boost level, and
+      # this project's jars routinely exceed that (HTTP 413). A GitHub release asset has no such
+      # cap, and clicking the link/filename downloads the jar directly from GitHub.
+      # Requires a repo secret DISCORD_BUILDS_WEBHOOK_URL (Discord channel → Edit Channel →
+      # Integrations → Webhooks → Copy URL). Skipped (not failed) if that secret isn't
+      # configured, so forks / other clones of this workflow don't break.
+      # continue-on-error: a Discord outage shouldn't fail the actual release.
       - name: Post build to Discord
         continue-on-error: true
         env:
           DISCORD_BUILDS_WEBHOOK_URL: ${{ secrets.DISCORD_BUILDS_WEBHOOK_URL }}
           BRANCH: ${{ github.ref_name }}
-          SHORT_SHA: ${{ github.sha }}
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-          COMPARE_URL: ${{ github.event.compare }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
+          JAR_NAME: ${{ steps.jar.outputs.name }}
+          JAR_PATH: ${{ steps.jar.outputs.path }}
+          REPO: ${{ github.repository }}
         run: |
           # The secrets context can't be referenced in a step-level `if:` (GitHub Actions
           # rejects it at workflow-parse time — "Unrecognized named-value: 'secrets'"), so the
@@ -102,12 +106,34 @@ jobs:
             echo "DISCORD_BUILDS_WEBHOOK_URL not set — skipping Discord notification."
             exit 0
           fi
-          # jq builds the JSON payload so quotes/newlines/backslashes in the commit message
-          # (or anything else user-controlled) can't break or inject into the request body.
-          payload=$(jq -n --arg branch "$BRANCH" --arg sha "${SHORT_SHA:0:7}" \
-            --arg msg "$COMMIT_MSG" --arg url "$COMPARE_URL" \
-            '{content: "**\($branch)** — new build (`\($sha)`)\n\($msg)\n\($url)"}')
+          # GitHub's release-asset download URL is fully predictable from the tag + filename —
+          # no need to parse it back out of the release-creation step's output. Hitting this URL
+          # (e.g. clicking it in Discord) downloads the jar directly, no GitHub UI involved.
+          TAG="build-${BRANCH}-${BUILD_NUMBER}"
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${JAR_NAME}"
+          SIZE_MB=$(awk "BEGIN { printf \"%.2f\", $(stat -c%s "$JAR_PATH") / 1048576 }")
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          # jq builds the JSON payload so quotes/brackets in the branch/jar name (or anything
+          # else user-controlled) can't break or inject into the request body.
+          payload=$(jq -n \
+            --arg branch "$BRANCH" \
+            --arg release_title "${BRANCH} — build ${BUILD_NUMBER}" \
+            --arg jar_name "$JAR_NAME" \
+            --arg url "$DOWNLOAD_URL" \
+            --arg size "${SIZE_MB} MB" \
+            --arg ts "$TIMESTAMP" \
+            '{
+              embeds: [{
+                author: { name: "NeoEssentials" },
+                title: "🆕 New Release",
+                color: 3066993,
+                url: $url,
+                fields: [ { name: "Branch", value: $branch, inline: true } ],
+                description: ("**" + $release_title + "**\n[" + $jar_name + "](" + $url + ")\n" + $size + " • [Download](" + $url + ")"),
+                timestamp: $ts
+              }]
+            }')
           curl -sS -f \
-            -F "payload_json=${payload}" \
-            -F "file=@${{ steps.jar.outputs.path }};filename=${{ steps.jar.outputs.name }}" \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
             "$DISCORD_BUILDS_WEBHOOK_URL"
