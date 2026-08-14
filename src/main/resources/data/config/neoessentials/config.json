@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 40,
+  "_configVersion": 41,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -69,7 +69,14 @@
     "autoMigrate": true,
     "sqlite": {
       // Relative to the server's data directory (neoessentials/store/<this file>)
-      "file": "data.db"
+      "file": "data.db",
+      // The SQLite driver isn't bundled in the mod jar (it used to be, but its native library
+      // caused it to conflict with other mods that also bundle their own copy — see the
+      // SqliteDriverProvisioner javadoc). It's downloaded from Maven Central and verified
+      // against a pinned checksum the first time SQLite storage is actually used. Set false to
+      // disable that download and place the driver jar yourself instead — the server log will
+      // tell you the exact path and download URL if it's missing.
+      "autoDownloadDriver": true
     },
     "mysql": {
       "host": "localhost",

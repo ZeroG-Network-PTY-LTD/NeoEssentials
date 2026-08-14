@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -66,11 +65,22 @@ public class SqliteDataStore implements DataStore {
      */
     private Connection openConnection() {
         try {
-            // Force the driver to register — bundled via JarJar, whose isolated
-            // classloader doesn't reliably trigger SQLite's own ServiceLoader
-            // auto-registration (same workaround AuctionDB already needed).
-            Class.forName("org.sqlite.JDBC");
-            Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
+            // Loads (downloading on first use if needed) the driver — see
+            // SqliteDriverProvisioner for why this isn't just a JarJar-bundled dependency
+            // anymore. Connects through the Driver instance directly, NOT
+            // DriverManager.getConnection(url): DriverManager only considers a registered
+            // driver "visible" to a caller if Class.forName(driver's class name, true,
+            // callerClassLoader) resolves to that same Class object — since this driver is
+            // loaded via its own URLClassLoader that NeoForge's mod classloader can't see
+            // into, DriverManager would silently skip it and throw "No suitable driver
+            // found" even though it's registered. Calling connect() on the Driver instance
+            // we already hold sidesteps that classloader-visibility check entirely.
+            java.sql.Driver driver = SqliteDriverProvisioner.ensureDriver();
+            if (driver == null) {
+                LOGGER.error("SqliteDataStore: SQLite driver unavailable, cannot open {}", dbFile.getAbsolutePath());
+                return null;
+            }
+            Connection conn = driver.connect("jdbc:sqlite:" + dbFile.getAbsolutePath(), new java.util.Properties());
             LOGGER.info("SqliteDataStore: opened {}", dbFile.getAbsolutePath());
             return conn;
         } catch (Exception e) {
