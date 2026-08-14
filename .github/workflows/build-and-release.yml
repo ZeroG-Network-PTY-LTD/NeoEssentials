@@ -2,7 +2,9 @@ name: Build & Release Jar
 
 # Builds the mod jar for a dev branch and publishes it as its own GitHub Release, tagged
 # build-<branch>-<build number> — a new release per build, not one shared/overwritten release
-# per branch — so no need to run gradle locally to grab a build.
+# per branch — so no need to run gradle locally to grab a build. The build number is shared
+# across Dev-Builds and mc-26.1-port (see "Bump shared build number" below), not tracked
+# independently per branch.
 # The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
 # mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
 # resolver (org.gradle.toolchains.foojay-resolver-convention, already
@@ -25,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -35,22 +39,39 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # The build number used for this release's tag/name is whatever is committed in
-      # build_number.txt AT THIS COMMIT — captured before the build runs. Deliberately NOT
-      # read from the file after ./gradlew build: Gradle's own local-dev convenience bump
-      # (build.gradle's taskGraph.whenReady hook, still handy for solo local testing) would
-      # otherwise increment it inside this ephemeral runner checkout, and if that bumped
-      # value got used for the tag, this workflow would need to commit it back — which is
-      # exactly the per-branch-independent auto-bump that made Dev-Builds and mc-26.1-port's
-      # build numbers drift apart in the first place (each branch's CI run bumped its own
-      # copy on its own schedule, with nothing keeping the two in sync).
+      # Build numbers are shared across BOTH dev branches, not tracked independently per
+      # branch: this bumps to one higher than the highest build_number.txt committed on
+      # EITHER Dev-Builds or mc-26.1-port (whichever branch this run is for, its own committed
+      # value is also considered, in case it's somehow already ahead), then commits that back
+      # to build_number.txt on the branch that triggered this run.
       #
-      # Build numbers are now a deliberate, manually-set value: bumped once, applied
-      # identically to both branches' build_number.txt in the same commit/cherry-pick that
-      # ships the change. CI just reads and publishes that number — it does not own it.
-      - name: Read build number
+      # A prior version of this used a plain independent per-branch auto-bump, which was
+      # removed because it let the two branches' numbers drift apart from each other (each
+      # branch's CI bumping its own copy on its own schedule, nothing keeping them in sync).
+      # Computing the next number from the max across both branches every time keeps builds
+      # in lockstep — whichever branch ships next just takes the next number in the shared
+      # sequence — without needing the two branches to coordinate any other way.
+      #
+      # [skip ci] on the commit message is required: without it, this bump-and-push would
+      # itself trigger another `push` run of this same workflow, forever.
+      - name: Bump shared build number
         id: build_number
-        run: echo "value=$(cat build_number.txt)" >> "$GITHUB_OUTPUT"
+        run: |
+          git fetch origin Dev-Builds mc-26.1-port
+          n_dev=$(git show origin/Dev-Builds:build_number.txt 2>/dev/null || echo 0)
+          n_port=$(git show origin/mc-26.1-port:build_number.txt 2>/dev/null || echo 0)
+          n_here=$(cat build_number.txt 2>/dev/null || echo 0)
+          max=$n_dev
+          [ "$n_port" -gt "$max" ] && max=$n_port
+          [ "$n_here" -gt "$max" ] && max=$n_here
+          next=$((max + 1))
+          echo "$next" > build_number.txt
+          echo "value=$next" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add build_number.txt
+          git commit -m "Bump shared build number to ${next} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Build jar
         run: ./gradlew build -x test --console=plain
