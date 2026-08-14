@@ -126,7 +126,7 @@ jobs:
               embeds: [{
                 author: { name: "NeoEssentials" },
                 title: "🆕 Dev Release",
-                color: 3066993,
+                color: 5793266,  # 0x5865F2 — Discord blurple
                 url: $url,
                 fields: [ { name: "Branch", value: $branch, inline: true } ],
                 description: ("**" + $release_title + "**\n[" + $jar_name + "](" + $url + ")\n" + $size + " • [Download](" + $url + ")"),
