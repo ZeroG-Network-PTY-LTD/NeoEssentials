@@ -1436,7 +1436,12 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 40);          // v40 — replaced logging.enableDebugLogging (single global
+        put(MAIN_CONFIG, 41);          // v41 — added storage.sqlite.autoDownloadDriver: the sqlite-jdbc
+                                       //        driver is no longer bundled in the jar (see
+                                       //        SqliteDriverProvisioner) — this controls whether it's
+                                       //        allowed to auto-download from Maven Central on first
+                                       //        actual use, default true.
+        // v40 — replaced logging.enableDebugLogging (single global
                                        //        toggle) with logging.categories.<name>.{normal,debug}
                                        //        (per-subsystem toggles); see migrateLoggingCategories()
                                        //        for the one-time migration of an existing true value.
@@ -1917,6 +1922,25 @@ public class ConfigManager {
             }
         }
         return "data.db";
+    }
+
+    /**
+     * storage.sqlite.autoDownloadDriver — whether {@link com.zerog.neoessentials.storage.SqliteDriverProvisioner}
+     * is allowed to download the sqlite-jdbc driver from Maven Central on first use (SQLite
+     * storage backend, or a one-time legacy Auction House migration). Defaults to true. If
+     * disabled, the driver must be placed manually at
+     * {@code neoessentials/libraries/sqlite-jdbc-<version>.jar} instead.
+     */
+    public boolean isSqliteAutoDownloadDriverEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("storage")) {
+            JsonObject storage = config.getAsJsonObject("storage");
+            if (storage.has("sqlite")) {
+                JsonObject sqlite = storage.getAsJsonObject("sqlite");
+                if (sqlite.has("autoDownloadDriver")) return sqlite.get("autoDownloadDriver").getAsBoolean();
+            }
+        }
+        return true;
     }
 
     private JsonObject getMysqlConfig() {

@@ -214,8 +214,18 @@ public class DatabaseManager {
             throw new SQLException("Database not found: " + databaseId);
         }
         
+        // Loads (downloading on first use if needed) the driver — see SqliteDriverProvisioner
+        // for why this isn't just a JarJar-bundled dependency anymore. This class's whole
+        // feature (browsing arbitrary discovered SQLite databases from the dashboard) is
+        // itself an occasional admin action, not routine server operation.
+        // Connects through the Driver instance directly, not DriverManager.getConnection —
+        // see SqliteDataStore.openConnection() for why (classloader-visibility gotcha).
+        java.sql.Driver driver = com.zerog.neoessentials.storage.SqliteDriverProvisioner.ensureDriver();
+        if (driver == null) {
+            throw new SQLException("SQLite driver unavailable");
+        }
         String url = "jdbc:sqlite:" + db.getPath().toString();
-        Connection conn = DriverManager.getConnection(url);
+        Connection conn = driver.connect(url, new java.util.Properties());
         conn.setReadOnly(true); // Read-only for safety
         return conn;
     }

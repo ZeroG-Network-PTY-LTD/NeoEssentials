@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileReader;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -213,8 +212,18 @@ public final class AuctionDB {
 
         int migrated = 0;
         try {
-            Class.forName("org.sqlite.JDBC");
-            try (Connection connection = DriverManager.getConnection(LEGACY_URL)) {
+            // Loads (downloading on first use if needed) the driver — see
+            // SqliteDriverProvisioner for why this isn't just a JarJar-bundled dependency
+            // anymore. A legacy auctionhouse.db existing is rare (pre-DataStore installs
+            // only), so this is a genuinely occasional download, not a routine one.
+            // Connects through the Driver instance directly, not DriverManager.getConnection —
+            // see SqliteDataStore.openConnection() for why (classloader-visibility gotcha).
+            java.sql.Driver driver = com.zerog.neoessentials.storage.SqliteDriverProvisioner.ensureDriver();
+            if (driver == null) {
+                LOGGER.error("[AuctionHouse] SQLite driver unavailable, cannot migrate legacy auctionhouse.db");
+                return;
+            }
+            try (Connection connection = driver.connect(LEGACY_URL, new java.util.Properties())) {
                 migrated += migrateLegacyTable(connection, "auctionhouse", ACTIVE_COLLECTION, true);
                 migrated += migrateLegacyTable(connection, "expireditems", EXPIRED_COLLECTION, false);
             }
