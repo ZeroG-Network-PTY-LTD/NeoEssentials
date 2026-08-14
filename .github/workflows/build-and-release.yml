@@ -53,12 +53,17 @@ jobs:
       # in lockstep — whichever branch ships next just takes the next number in the shared
       # sequence — without needing the two branches to coordinate any other way.
       #
-      # Can't just `git push` this straight to the branch: Dev-Builds/mc-26.1-port both require
-      # verified-signed commits AND that changes land via a pull request, and GITHUB_TOKEN isn't
-      # on this repo's bypass list for either rule (confirmed — a plain push here gets rejected
-      # with GH013 rule violations for both). Going through a PR satisfies "via pull request",
-      # and merging it lets GitHub itself create (and auto-sign) the merge commit, satisfying
-      # "verified signatures" too — without weakening either rule or needing a bot signing key.
+      # Can't just `git push` this: Dev-Builds/mc-26.1-port both require changes to land via a
+      # pull request, AND (confirmed live — tried both) this repo's verified-signature
+      # requirement applies repo-wide, rejecting even a plain `git push` of a brand new branch
+      # with no PR involved at all. GITHUB_TOKEN isn't on the bypass list for either rule.
+      #
+      # So the commit itself is made through GitHub's Contents API instead of `git push` —
+      # commits GitHub creates via its own API are automatically signed/verified by GitHub,
+      # satisfying the signature rule with no bot signing key to manage. That lands the bump on
+      # a plain branch; going through a PR (created and immediately merged via the API, so the
+      # resulting merge commit is likewise GitHub-signed) satisfies the "via pull request" rule
+      # for the two protected branches themselves.
       #
       # [skip ci] in the PR title carries through to the merge commit subject (set explicitly
       # below) so merging doesn't itself trigger another `push` run of this same workflow.
@@ -75,23 +80,19 @@ jobs:
           [ "$n_port" -gt "$max" ] && max=$n_port
           [ "$n_here" -gt "$max" ] && max=$n_here
           next=$((max + 1))
+          blob_sha=$(git rev-parse HEAD:build_number.txt)
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Done in a separate worktree, not this checkout: this job's own build_number.txt
-          # (written above) needs to stay at $next for the upcoming ./gradlew build to pick
-          # up as the version — switching this checkout's own HEAD around to make the PR
-          # commit would revert that file back to its pre-bump content in the process.
           bump_branch="ci/bump-build-number-${next}"
-          git worktree add -b "$bump_branch" /tmp/bump-wt HEAD
-          echo "$next" > /tmp/bump-wt/build_number.txt
-          git -C /tmp/bump-wt add build_number.txt
-          git -C /tmp/bump-wt commit -m "Bump shared build number to ${next}"
-          git -C /tmp/bump-wt push origin "$bump_branch"
-          git worktree remove /tmp/bump-wt --force
+          gh api "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/heads/${bump_branch}" -f sha="${{ github.sha }}" >/dev/null
+
+          gh api "repos/${{ github.repository }}/contents/build_number.txt" -X PUT \
+            -f message="Bump shared build number to ${next}" \
+            -f content="$(base64 -w0 build_number.txt)" \
+            -f sha="${blob_sha}" \
+            -f branch="${bump_branch}" >/dev/null
 
           pr_url=$(gh pr create \
             --base "${{ github.ref_name }}" \
