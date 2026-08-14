@@ -37,13 +37,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Build numbers are shared across BOTH dev branches, not tracked independently per
-      # branch — a plain independent per-branch auto-bump used to exist here and was removed
-      # because it let the two branches' numbers drift apart from each other (each branch's CI
-      # bumping its own copy on its own schedule, nothing keeping them in sync).
+      # Build numbers are shared across BOTH dev branches, representing "the same shipped
+      # change" for two different MC versions — this repo's normal workflow is commit on
+      # Dev-Builds, cherry-pick the same commit to mc-26.1-port, push both. A branch REUSES the
+      # current shared number if it hasn't built that number before (the common case: the other
+      # branch just took it for this same cherry-picked change), and only bumps to the next
+      # number once it finds it's already used the current one (a genuinely new change). This
+      # keeps a cherry-picked pair on matching numbers (e.g. both land on build 48) while still
+      # never reusing a number within the same branch.
+      #
+      # An earlier version bumped on every single push regardless, which meant a cherry-picked
+      # pair always ended up on two different numbers (one branch takes N, the other takes
+      # N+1) even though they ship the same change — not useful for telling "these two jars are
+      # the same release for two MC versions" apart from "these are two different releases".
       #
       # The counter of record is a repository Actions variable (BUILD_NUMBER), NOT
-      # build_number.txt committed to the branch — every git-based way of landing this bump
+      # build_number.txt committed to the branch — every git-based way of landing a bump commit
       # (plain push, push via a fresh throwaway branch, GitHub's own Contents API + a PR
       # auto-merged via the API) was tried and confirmed live to get rejected by this repo's
       # branch-protection ruleset (Dev-Builds/mc-26.1-port both require signed commits AND
@@ -53,27 +62,33 @@ jobs:
       # variable sidesteps all of that: it isn't part of git history, so branch protection
       # never enters the picture.
       #
-      # build_number.txt IS still written to the workspace below (from the bumped variable) so
-      # ./gradlew build picks it up for the version string — it's just not committed back. The
-      # copy checked into each branch is local-dev-only now (see build.gradle's comment); it
-      # will drift from the real shared counter over time, and that's fine.
+      # build_number.txt IS still written to the workspace below (from the current/bumped
+      # variable) so ./gradlew build picks it up for the version string — it's just not
+      # committed back. The copy checked into each branch is local-dev-only now (see
+      # build.gradle's comment); it will drift from the real shared counter over time, and
+      # that's fine.
       #
       # GITHUB_TOKEN can't read/write repo variables at all (confirmed live — HTTP 403
-      # "Resource not accessible by integration", regardless of the `actions: write` permission
-      # above): the Variables API requires real admin-level credentials, which the default
-      # workflow token structurally never has. CI_BUILD_NUMBER_PAT is a fine-grained PAT scoped
-      # to only "Variables: Read and write" on this one repo (stored as a repo secret) — the
-      # minimum credential that can actually do this.
+      # "Resource not accessible by integration", regardless of the `actions: write` permission):
+      # the Variables API requires real admin-level credentials, which the default workflow
+      # token structurally never has. CI_BUILD_NUMBER_PAT is a fine-grained PAT scoped to only
+      # "Variables: Read and write" on this one repo (stored as a repo secret) — the minimum
+      # credential that can actually do this. It's deliberately NOT used for the release-existence
+      # check below (that uses the default GITHUB_TOKEN via `github.token`, which already has
+      # the Contents read access releases need) — the PAT's scope is intentionally as narrow as
+      # possible, not a general-purpose repo credential.
       - name: Bump shared build number
         id: build_number
-        env:
-          GH_TOKEN: ${{ secrets.CI_BUILD_NUMBER_PAT }}
         run: |
-          current=$(gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
-          next=$((current + 1))
+          current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
+          if GH_TOKEN="${{ github.token }}" gh release view "build-${{ github.ref_name }}-${current}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            next=$((current + 1))
+            GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
+          else
+            next=$current
+          fi
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
-          gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
 
       - name: Build jar
         run: ./gradlew build -x test --console=plain
