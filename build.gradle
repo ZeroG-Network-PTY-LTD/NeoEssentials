@@ -158,8 +158,8 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 // Include jarJar's generated META-INF/jarjar (nested library jars + metadata.json) as a
-// resources source dir. Without this, jarJar-embedded libraries (mysql-connector-j,
-// HikariCP, snakeyaml, Java-WebSocket) only end up inside the final packaged build/libs/*.jar —
+// resources source dir. Without this, jarJar-embedded libraries (HikariCP, snakeyaml,
+// Java-WebSocket) only end up inside the final packaged build/libs/*.jar —
 // FML's dev-mode server run uses the exploded build/classes+build/resources directories instead,
 // which never see META-INF/jarjar unless it's copied there too, causing ClassNotFoundException
 // for these libraries even though they're correctly declared as both implementation and jarJar
@@ -264,12 +264,15 @@ dependencies {
     // legacy Auction House migration is actually used — the default (storage.type: json)
     // never touches it, and never has it in the jar to conflict with anything.
 
-    // MySQL JDBC driver — backs the generic DataStore's MySQL backend, for
-    // multi-server shared data (bans/mutes/economy/etc. synced across a network
-    // of servers pointed at the same database, matching how ban-management
-    // plugins like BanManager use MySQL).
-    implementation 'com.mysql:mysql-connector-j:8.4.0'
-    jarJar(group: 'com.mysql', name: 'mysql-connector-j', version: '[8.0.0,9.0.0)')
+    // MySQL JDBC driver — also NOT bundled here anymore, for the same reason as sqlite-jdbc
+    // above: JarJar embeds it as its own module, and it collided with another mod's own
+    // bundled copy of the exact same driver (split-package ResolutionException — crashed the
+    // WHOLE server at boot, seen in the wild against GriefLogger, same as the sqlite case).
+    // Now loaded on demand at runtime instead: see
+    // com.zerog.neoessentials.storage.MySqlDriverProvisioner, which downloads it from Maven
+    // Central (checksum-verified) only when storage.type is actually "mysql" — the default
+    // (storage.type: json) never touches it, and never has it in the jar to conflict with
+    // anything.
 
     // HikariCP — connection pooling for the MySQL backend. A single unpooled
     // JDBC connection per request would serialize every database-backed
