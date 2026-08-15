@@ -359,6 +359,15 @@ shadowJar {
     from { zipTree(tasks.named('jar', Jar).get().archiveFile.get()) }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    // HikariCP pulls in slf4j-api transitively via shadowBundle. Never relocate/bundle it: the
+    // platform (NeoForge/Minecraft) already provides org.slf4j as its own module on the boot
+    // module path, so shipping our own unrelocated copy causes a split-package
+    // ResolutionException ("Modules neoessentials and org.slf4j export package org.slf4j.spi to
+    // module <other-mod>") the same way an unrelocated bundled JDBC driver would. Excluding it
+    // is safe: HikariCP/our own code call the slf4j API classes, which are resolved against the
+    // platform's copy at runtime instead.
+    exclude 'org/slf4j/**'
+
     relocate 'com.zaxxer.hikari', 'com.zerog.neoessentials.lib.hikari'
     relocate 'org.yaml.snakeyaml', 'com.zerog.neoessentials.lib.snakeyaml'
     relocate 'org.java_websocket', 'com.zerog.neoessentials.lib.javawebsocket'
