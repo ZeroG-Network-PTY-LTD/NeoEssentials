@@ -7,13 +7,18 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
+import java.io.PrintWriter;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -39,12 +44,29 @@ public class MySqlDataStore implements DataStore {
     public MySqlDataStore(String host, int port, String database, String username, String password,
                           boolean useSSL, int poolSize) {
         HikariDataSource ds = null;
+        Driver driver = MySqlDriverProvisioner.ensureDriver();
+        if (driver == null) {
+            LOGGER.error("MySqlDataStore: MySQL driver unavailable — see the preceding log entry for why "
+                + "(download failed, checksum mismatch, or autoDownloadDriver disabled).");
+            this.dataSource = null;
+            return;
+        }
         try {
+            String jdbcUrl = "jdbc:mysql://" + host + ":" + port + "/" + database
+                + "?useSSL=" + useSSL + "&allowPublicKeyRetrieval=true&characterEncoding=utf8";
+            Properties props = new Properties();
+            props.setProperty("user", username);
+            props.setProperty("password", password);
+
             HikariConfig config = new HikariConfig();
-            config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database
-                + "?useSSL=" + useSSL + "&allowPublicKeyRetrieval=true&characterEncoding=utf8");
-            config.setUsername(username);
-            config.setPassword(password);
+            // Routed through the Driver instance MySqlDriverProvisioner loaded via its own
+            // URLClassLoader (see that class's javadoc) instead of HikariConfig.setJdbcUrl(...) —
+            // Hikari's own driverClassName resolution ultimately falls back to
+            // DriverManager.getConnection(url), which requires the CALLER's classloader (this mod's)
+            // to resolve the driver class back to the same Class object; since the driver lives in
+            // an isolated URLClassLoader that check always fails with "No suitable driver found".
+            // Calling driver.connect(...) directly here sidesteps that check entirely.
+            config.setDataSource(new DriverBackedDataSource(driver, jdbcUrl, props));
             config.setMaximumPoolSize(Math.max(1, poolSize));
             config.setPoolName("NeoEssentials-MySQL");
             // Fail fast at startup rather than hanging the server boot if the DB is unreachable —
@@ -59,6 +81,70 @@ public class MySqlDataStore implements DataStore {
             ds = null;
         }
         this.dataSource = ds;
+    }
+
+    /**
+     * Minimal {@link DataSource} wrapping a specific {@link Driver} instance's {@code connect()} —
+     * see the comment in the constructor above for why this is needed instead of
+     * {@code HikariConfig.setJdbcUrl(...)}.
+     */
+    private static final class DriverBackedDataSource implements DataSource {
+        private final Driver driver;
+        private final String jdbcUrl;
+        private final Properties props;
+
+        DriverBackedDataSource(Driver driver, String jdbcUrl, Properties props) {
+            this.driver = driver;
+            this.jdbcUrl = jdbcUrl;
+            this.props = props;
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            return driver.connect(jdbcUrl, props);
+        }
+
+        @Override
+        public Connection getConnection(String username, String password) throws SQLException {
+            Properties p = new Properties(props);
+            p.setProperty("user", username);
+            p.setProperty("password", password);
+            return driver.connect(jdbcUrl, p);
+        }
+
+        @Override
+        public java.io.PrintWriter getLogWriter() {
+            return null;
+        }
+
+        @Override
+        public void setLogWriter(PrintWriter out) {
+        }
+
+        @Override
+        public void setLoginTimeout(int seconds) {
+        }
+
+        @Override
+        public int getLoginTimeout() {
+            return 0;
+        }
+
+        @Override
+        public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            throw new SQLFeatureNotSupportedException();
+        }
+
+        @Override
+        public <T> T unwrap(Class<T> iface) throws SQLException {
+            if (iface.isInstance(this)) return iface.cast(this);
+            throw new SQLException("Not a wrapper for " + iface);
+        }
+
+        @Override
+        public boolean isWrapperFor(Class<?> iface) {
+            return iface.isInstance(this);
+        }
     }
 
     public boolean isConnected() {

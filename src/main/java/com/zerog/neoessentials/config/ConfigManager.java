@@ -1436,7 +1436,14 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 41);          // v41 — added storage.sqlite.autoDownloadDriver: the sqlite-jdbc
+        put(MAIN_CONFIG, 42);          // v42 — added storage.mysql.autoDownloadDriver: the mysql-connector-j
+                                       //        driver is no longer bundled in the jar (see
+                                       //        MySqlDriverProvisioner, same split-package module
+                                       //        conflict as sqlite-jdbc — seen in the wild against
+                                       //        GriefLogger) — this controls whether it's allowed to
+                                       //        auto-download from Maven Central on first actual use,
+                                       //        default true.
+        // v41 — added storage.sqlite.autoDownloadDriver: the sqlite-jdbc
                                        //        driver is no longer bundled in the jar (see
                                        //        SqliteDriverProvisioner) — this controls whether it's
                                        //        allowed to auto-download from Maven Central on first
@@ -1985,6 +1992,17 @@ public class ConfigManager {
     public int getMysqlPoolSize() {
         JsonObject mysql = getMysqlConfig();
         return mysql.has("poolSize") ? mysql.get("poolSize").getAsInt() : 10;
+    }
+
+    /**
+     * storage.mysql.autoDownloadDriver — whether {@link com.zerog.neoessentials.storage.MySqlDriverProvisioner}
+     * is allowed to download the mysql-connector-j driver from Maven Central on first use (MySQL
+     * storage backend configured). Defaults to true. If disabled, the driver must be placed
+     * manually at {@code neoessentials/libraries/mysql-connector-j-<version>.jar} instead.
+     */
+    public boolean isMysqlAutoDownloadDriverEnabled() {
+        JsonObject mysql = getMysqlConfig();
+        return !mysql.has("autoDownloadDriver") || mysql.get("autoDownloadDriver").getAsBoolean();
     }
 
     /**

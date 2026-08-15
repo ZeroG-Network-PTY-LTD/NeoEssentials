@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 41,
+  "_configVersion": 42,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -86,7 +86,14 @@
       "password": "",
       "useSSL": false,
       // Max concurrent connections in the pool
-      "poolSize": 10
+      "poolSize": 10,
+      // The MySQL driver isn't bundled in the mod jar (it used to be, but it caused the same
+      // kind of split-package module conflict as the SQLite driver used to — see the
+      // MySqlDriverProvisioner javadoc). It's downloaded from Maven Central and verified
+      // against a pinned checksum the first time MySQL storage is actually used. Set false to
+      // disable that download and place the driver jar yourself instead — the server log will
+      // tell you the exact path and download URL if it's missing.
+      "autoDownloadDriver": true
     }
   },
 
