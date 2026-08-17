@@ -91,7 +91,7 @@ public class HomeManager {
 
         // Perform migration from old homes.json if needed
         if (PlayerDataMigration.needsMigration(HOMES_FILE)) {
-            LOGGER.info("Migrating homes from old storage format...");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Migrating homes from old storage format...");
             PlayerDataMigration.migrateToPlayerData(HOMES_FILE, "homes");
         }
 
@@ -163,7 +163,7 @@ public class HomeManager {
             setHomeSetCooldownSeconds(setCooldown);
             setHomeTeleportCooldownSeconds(tpCooldown);
             setHomeDeleteCooldownSeconds(delCooldown);
-            LOGGER.info("[HomeManager] Config loaded — safetyCheck={}, maxHomes={}, warmup={}s, tpCooldown={}s, setCooldown={}s, delCooldown={}s, crossDimension={}",
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[HomeManager] Config loaded — safetyCheck={}, maxHomes={}, warmup={}s, tpCooldown={}s, setCooldown={}s, delCooldown={}s, crossDimension={}",
                 safe, maxHomes, teleportDelay, tpCooldown, setCooldown, delCooldown, allowCrossDimensionHomes);
         } catch (Exception e) {
             LOGGER.warn("Failed to load home config, using defaults: {}", e.getMessage());
@@ -280,7 +280,7 @@ public class HomeManager {
 
         // Log home set/update if enabled in config
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
-            LOGGER.info("Player {} {} home '{}' at {}", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} {} home '{}' at {}", 
                 player.getName().getString(), 
                 isNew ? "set" : "updated", 
                 homeName, 
@@ -335,7 +335,7 @@ public class HomeManager {
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.deleted", homeName));
         // Log home delete if enabled in config
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
-            LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} deleted home '{}'", player.getName().getString(), homeName);
         }
 
         return true;
@@ -512,7 +512,7 @@ public class HomeManager {
                     player.getName().getString(), homeName, finalHome.getLocationString());
                 // Log home teleport if enabled in config
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
-                    LOGGER.info("Player {} teleported to home '{}'", player.getName().getString(), homeName);
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to home '{}'", player.getName().getString(), homeName);
                 }
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.failed", homeName, result.getMessage()));
@@ -611,7 +611,7 @@ public class HomeManager {
     private void loadHomes() {
         // This method is now only called during initialization
         // Individual player homes are loaded on-demand via getHomes()
-        LOGGER.debug("Home loading is now on-demand per player");
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Home loading is now on-demand per player");
     }
 
     /**
@@ -623,7 +623,7 @@ public class HomeManager {
             Map<String, TeleportLocation> homes = new HashMap<>();
 
             if (data.keySet().isEmpty()) {
-                LOGGER.debug("No homes found for player {}", playerId);
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "No homes found for player {}", playerId);
                 return homes;
             }
 
@@ -640,7 +640,7 @@ public class HomeManager {
                 }
             }
             
-            LOGGER.debug("Loaded {} homes for player {}", homes.size(), playerId);
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Loaded {} homes for player {}", homes.size(), playerId);
             return homes;
 
         } catch (Exception e) {
@@ -678,7 +678,7 @@ public class HomeManager {
             }
             
             playerDataStore.save(playerId, data);
-            LOGGER.debug("Saved {} homes for player {}", homes.size(), playerId);
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Saved {} homes for player {}", homes.size(), playerId);
 
         } catch (Exception e) {
             LOGGER.error("Failed to save homes for player {}: {}", playerId, e.getMessage(), e);
@@ -714,7 +714,7 @@ public class HomeManager {
     public void clearAllHomes() {
         playerHomes.clear();
         playerDataStore.clearAll();
-        LOGGER.info("Cleared all player homes");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Cleared all player homes");
     }
     
     /**
@@ -740,7 +740,7 @@ public class HomeManager {
      * Reload home data from disk
      */
     public void reload() {
-        LOGGER.info("Reloading home system...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Reloading home system...");
 
         // Reload config values
         loadConfig();
@@ -751,7 +751,7 @@ public class HomeManager {
         // Clear cache - homes will be loaded on-demand from PlayerDataStore
         playerHomes.clear();
 
-        LOGGER.info("Home system reloaded - {} players in storage, homes will load on-demand",
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Home system reloaded - {} players in storage, homes will load on-demand",
             playerDataStore.getTotalPlayers());
     }
 }

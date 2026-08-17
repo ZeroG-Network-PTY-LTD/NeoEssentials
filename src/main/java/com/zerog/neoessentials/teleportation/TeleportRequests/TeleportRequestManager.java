@@ -200,7 +200,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
             requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.auto_accepted", target.getName().getString()));
             target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.auto_accepted_target", requester.getName().getString()));
             if (logTeleportRequests) {
-                LOGGER.info("Teleport request from {} to {} auto-accepted (friends)", requester.getName().getString(), target.getName().getString());
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Teleport request from {} to {} auto-accepted (friends)", requester.getName().getString(), target.getName().getString());
             }
             return true;
         }
@@ -236,7 +236,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }
 
         if (logTeleportRequests) {
-            LOGGER.info("Player {} sent {} request to {}", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} sent {} request to {}", 
                    requester.getName().getString(), type, target.getName().getString());
         }
 
@@ -350,7 +350,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }
         
         if (logTeleportRequests) {
-            LOGGER.info("Player {} denied {} request from {}", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} denied {} request from {}", 
                    denier.getName().getString(), request.getType(), request.getRequesterName());
         }
         
@@ -388,7 +388,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }
         
         if (logTeleportRequests) {
-            LOGGER.info("Player {} cancelled {} request to {}", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} cancelled {} request to {}", 
                    canceller.getName().getString(), request.getType(), request.getTargetName());
         }
         
@@ -447,7 +447,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
                 NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "executeTeleportRequest: {} successfully teleported to {}",
                     teleporter.getName().getString(), destination.getName().getString());
                 if (logTeleportRequests) {
-                    LOGGER.info("Player {} teleported to {} via {} request", teleporter.getName().getString(), destination.getName().getString(), type);
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to {} via {} request", teleporter.getName().getString(), destination.getName().getString(), type);
                 }
             } else {
                 teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.failed", result.getMessage()));
@@ -479,7 +479,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         }
         
         if (logTeleportRequests) {
-            LOGGER.info("Teleport request from {} to {} timed out", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Teleport request from {} to {} timed out", 
                    request.getRequesterName(), request.getTargetName());
         }
     }

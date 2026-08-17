@@ -112,7 +112,7 @@ public class RandomTeleportManager {
                                             String.valueOf((int) loc.getX()),
                                             String.valueOf((int) loc.getY()),
                                             String.valueOf((int) loc.getZ())));
-                                    LOGGER.info("Player {} randomly teleported to ({}, {}, {}) in {}",
+                                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} randomly teleported to ({}, {}, {}) in {}",
                                             player.getName().getString(),
                                             (int) loc.getX(), (int) loc.getY(), (int) loc.getZ(),
                                             loc.getWorldName());

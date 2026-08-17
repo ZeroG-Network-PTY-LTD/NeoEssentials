@@ -92,7 +92,7 @@ public class MiscTeleportManager {
                     }
                 }
             } catch (Exception ignored) {}
-        LOGGER.info("[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}, backSafety={}",
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}, backSafety={}",
             teleportDelay, backCooldownSeconds, enableDeathBack, enableTeleportBack, enableBackSafety);
         } catch (Exception e) {
             LOGGER.warn("Failed to load MiscTeleportManager config, using defaults: {}", e.getMessage());
@@ -218,7 +218,7 @@ public class MiscTeleportManager {
         // Do NOT send a chat message here — LivingDeathEvent fires while the player is
         // transitioning to the death screen, so they cannot read it.  The "use /back to
         // return to death location" hint is sent on respawn instead (see onPlayerRespawn).
-        LOGGER.info("Saved death location for {}: {}", 
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Saved death location for {}: {}", 
                    player.getName().getString(), deathLocation);
     }
     
@@ -332,7 +332,7 @@ public class MiscTeleportManager {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
                 }
                 persistLocations(playerId);
-                LOGGER.info("Player {} teleported back to {}", player.getName().getString(), finalTargetLocation);
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported back to {}", player.getName().getString(), finalTargetLocation);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_failed", result.getMessage()));
                 LOGGER.warn("Failed back teleport for {}: {}", player.getName().getString(), result.getMessage());
@@ -382,7 +382,7 @@ public class MiscTeleportManager {
                 deathLocationTimestamps.remove(playerId);
                 persistLocations(playerId);
                 
-                LOGGER.info("Player {} teleported to death location: {}", 
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to death location: {}", 
                            player.getName().getString(), deathLocation);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.death_teleport_failed", result.getMessage()));
@@ -464,7 +464,7 @@ public class MiscTeleportManager {
     @SubscribeEvent(receiveCanceled = true)
     public static void onPlayerDeathEvent(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        LOGGER.info("[MiscTeleportManager] Death event fired for {} at ({}, {}, {}) in {} — cancelled={}",
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[MiscTeleportManager] Death event fired for {} at ({}, {}, {}) in {} — cancelled={}",
             player.getName().getString(),
             String.format("%.2f", player.getX()),
             String.format("%.2f", player.getY()),
@@ -568,7 +568,7 @@ public class MiscTeleportManager {
                 TeleportUtil.teleportPlayer(player, topLocation, delayTicks, false).thenAccept(result -> {
                     if (result.isSuccess()) {
                         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.top_success"));
-                        LOGGER.info("Player {} teleported to top at Y={}", player.getName().getString(), targetY);
+                        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to top at Y={}", player.getName().getString(), targetY);
                     } else {
                         player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.top_failed", result.getMessage()));
                     }
@@ -616,7 +616,7 @@ public class MiscTeleportManager {
                 TeleportUtil.teleportPlayer(player, jumpLocation, delayTicks, false).thenAccept(result -> {
                     if (result.isSuccess()) {
                         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.jump_success"));
-                        LOGGER.info("Player {} jumped through walls to distance {}", player.getName().getString(), finalDistance);
+                        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} jumped through walls to distance {}", player.getName().getString(), finalDistance);
                     } else {
                         player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.jump_failed", result.getMessage()));
                     }
@@ -656,7 +656,7 @@ public class MiscTeleportManager {
             TeleportUtil.teleportPlayer(player, jumpToLocation, delayTicks, false).thenAccept(result -> {
                 if (result.isSuccess()) {
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.jumpto_success"));
-                    LOGGER.info("Player {} teleported to looking at: {}", player.getName().getString(), targetPos);
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to looking at: {}", player.getName().getString(), targetPos);
                 } else {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.jumpto_failed", result.getMessage()));
                 }
@@ -709,7 +709,7 @@ public class MiscTeleportManager {
                     TeleportUtil.teleportPlayer(player, randomLocation, delayTicks, true).thenAccept(result -> {
                         if (result.isSuccess()) {
                             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.tpr_success", randomX, safeY, randomZ));
-                            LOGGER.info("Player {} randomly teleported to: {} {} {}", player.getName().getString(), randomX, safeY, randomZ);
+                            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} randomly teleported to: {} {} {}", player.getName().getString(), randomX, safeY, randomZ);
                         } else {
                             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_failed", result.getMessage()));
                         }
@@ -732,14 +732,14 @@ public class MiscTeleportManager {
         deathLocations.clear();
         backLocationTimestamps.clear();
         deathLocationTimestamps.clear();
-        LOGGER.info("Cleared all misc teleport data");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Cleared all misc teleport data");
     }
 
     /**
      * Reload configuration (called by dashboard teleport settings endpoint or /reload command).
      */
     public void reload() {
-        LOGGER.info("Reloading MiscTeleportManager config...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Reloading MiscTeleportManager config...");
         loadConfig();
     }
 }

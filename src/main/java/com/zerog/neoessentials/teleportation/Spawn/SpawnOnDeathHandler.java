@@ -7,6 +7,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Handles teleporting players to spawn on death if enabled in config.
@@ -35,7 +37,7 @@ public class SpawnOnDeathHandler {
             }
             if (spawnOnDeath) {
                 SpawnManager.getInstance().teleportToSpawn(player);
-                LOGGER.info("Teleported {} to spawn on death (spawnOnDeath enabled)", player.getName().getString());
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Teleported {} to spawn on death (spawnOnDeath enabled)", player.getName().getString());
             }
         } catch (Exception e) {
             LOGGER.error("Error handling spawnOnDeath for player {}: {}", event.getEntity().getName().getString(), e.getMessage());
