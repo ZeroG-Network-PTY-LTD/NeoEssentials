@@ -76,7 +76,7 @@ public final class AuctionDB {
         }
         nextId.set(maxId + 1);
 
-        LOGGER.info("[AuctionHouse] Storage backend ready ('{}').", StorageManager.getInstance().getActiveType());
+        NeoLog.info(LOGGER, LogCategory.AUCTION_HOUSE, "[AuctionHouse] Storage backend ready ('{}').", StorageManager.getInstance().getActiveType());
     }
 
     public void shutdown() {
@@ -236,7 +236,7 @@ public final class AuctionDB {
             for (String id : store.getAll(ACTIVE_COLLECTION).keySet()) maxId = Math.max(maxId, parseIdSafe(id));
             for (String id : store.getAll(EXPIRED_COLLECTION).keySet()) maxId = Math.max(maxId, parseIdSafe(id));
             nextId.set(maxId + 1);
-            LOGGER.info("[AuctionHouse] migrated {} listing(s) from legacy auctionhouse.db into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.AUCTION_HOUSE, "[AuctionHouse] migrated {} listing(s) from legacy auctionhouse.db into the '{}' storage backend.",
                 migrated, StorageManager.getInstance().getActiveType());
         }
     }
