@@ -1,12 +1,12 @@
 name: Build & Release Jar
 
 # Builds the mod jar for a dev branch and publishes it to ONE shared GitHub Release per build
-# number, tagged build-<build number> — both branches' jars (differently named per MC version,
-# so no filename collision) land in the same release instead of two separate releases, since
-# they represent the same shipped change for two MC versions. A new release per build number,
-# not one shared/overwritten release forever — so no need to run gradle locally to grab a build.
-# The build number is shared across Dev-Builds and mc-26.1-port (see "Bump shared build number"
-# below), not tracked independently per branch.
+# number, tagged <mod_version>-build-<build number> (e.g. 1.0.5-build-49) — both branches' jars
+# (differently named per MC version, so no filename collision) land in the same release instead
+# of two separate releases, since they represent the same shipped change for two MC versions.
+# A new release per build number, not one shared/overwritten release forever — so no need to
+# run gradle locally to grab a build. The build number is shared across Dev-Builds and
+# mc-26.1-port (see "Bump shared build number" below), not tracked independently per branch.
 # The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
 # mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
 # resolver (org.gradle.toolchains.foojay-resolver-convention, already
@@ -87,15 +87,28 @@ jobs:
       # the Contents read access releases need) — the PAT's scope is intentionally as narrow as
       # possible, not a general-purpose repo credential.
       #
-      # Since both branches now publish into the SAME shared release tag (build-<number>), "has
-      # THIS branch already published under the current number" can no longer be answered by
-      # "does a release with this tag exist" (it always will, once either branch has published)
-      # — instead it checks whether the shared release ALREADY HAS an asset carrying this
-      # branch's marker (its jar filename's MC-version fragment, which is what actually makes
-      # each branch's jar unique within the shared release). Update BRANCH_MARKER below if a
-      # branch's target Minecraft version changes.
+      # Read straight from gradle.properties rather than parsing it back out of the built jar's
+      # filename — both branches are expected to stay version-locked together (same convention
+      # the shared build-number counter below already assumes: a cherry-picked pair ships "the
+      # same change" for two MC versions), so this is a single mod_version, not a per-branch one.
+      # If that ever stops being true, the shared-release-per-tag model below stops making sense
+      # anyway and needs a rethink beyond just this line. Read before the build-number bump since
+      # that step's own release lookup needs the final tag format too (see below).
+      - name: Read mod version
+        id: mod_version
+        run: echo "value=$(sed -n 's/^mod_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+
+      # Since both branches now publish into the SAME shared release tag
+      # (<mod_version>-build-<number>), "has THIS branch already published under the current
+      # number" can no longer be answered by "does a release with this tag exist" (it always
+      # will, once either branch has published) — instead it checks whether the shared release
+      # ALREADY HAS an asset carrying this branch's marker (its jar filename's MC-version
+      # fragment, which is what actually makes each branch's jar unique within the shared
+      # release). Update BRANCH_MARKER below if a branch's target Minecraft version changes.
       - name: Bump shared build number
         id: build_number
+        env:
+          MOD_VERSION: ${{ steps.mod_version.outputs.value }}
         run: |
           case "${{ github.ref_name }}" in
             Dev-Builds)    marker="mc1.21.1" ;;
@@ -104,7 +117,7 @@ jobs:
           esac
 
           current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
-          assets=$(GH_TOKEN="${{ github.token }}" gh release view "build-${current}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null) || assets=""
+          assets=$(GH_TOKEN="${{ github.token }}" gh release view "${MOD_VERSION}-build-${current}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null) || assets=""
           if echo "$assets" | grep -q "$marker"; then
             next=$((current + 1))
             GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
@@ -124,7 +137,7 @@ jobs:
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
 
-      # One release PER BUILD NUMBER (tag = build-<number>), shared by BOTH branches — whichever
+      # One release PER BUILD NUMBER (tag = <mod_version>-build-<number>), shared by BOTH branches — whichever
       # branch publishes first for a given number creates the release; the other branch's run
       # (same number, different jar filename — see the marker check above) updates that same
       # release, adding its jar as a second asset rather than creating a separate release. Each
@@ -135,8 +148,8 @@ jobs:
       - name: Publish build release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ steps.build_number.outputs.value }}
-          name: "Build ${{ steps.build_number.outputs.value }}"
+          tag_name: ${{ steps.mod_version.outputs.value }}-build-${{ steps.build_number.outputs.value }}
+          name: "${{ steps.mod_version.outputs.value }} — Build ${{ steps.build_number.outputs.value }}"
           body: |
             `${{ github.ref_name }}`: commit ${{ github.sha }}.
           append_body: true
@@ -159,6 +172,7 @@ jobs:
         env:
           DISCORD_BUILDS_WEBHOOK_URL: ${{ secrets.DISCORD_BUILDS_WEBHOOK_URL }}
           BRANCH: ${{ github.ref_name }}
+          MOD_VERSION: ${{ steps.mod_version.outputs.value }}
           BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
           JAR_NAME: ${{ steps.jar.outputs.name }}
           JAR_PATH: ${{ steps.jar.outputs.path }}
@@ -175,7 +189,7 @@ jobs:
           # no need to parse it back out of the release-creation step's output. Hitting this URL
           # (e.g. clicking it in Discord) downloads the jar directly, no GitHub UI involved.
           # Shared tag (no branch in it) — both branches' jars live under the same release now.
-          TAG="build-${BUILD_NUMBER}"
+          TAG="${MOD_VERSION}-build-${BUILD_NUMBER}"
           DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${JAR_NAME}"
           SIZE_MB=$(awk "BEGIN { printf \"%.2f\", $(stat -c%s "$JAR_PATH") / 1048576 }")
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -183,7 +197,7 @@ jobs:
           # else user-controlled) can't break or inject into the request body.
           payload=$(jq -n \
             --arg branch "$BRANCH" \
-            --arg release_title "${BRANCH} — build ${BUILD_NUMBER}" \
+            --arg release_title "${MOD_VERSION} — ${BRANCH} — build ${BUILD_NUMBER}" \
             --arg jar_name "$JAR_NAME" \
             --arg url "$DOWNLOAD_URL" \
             --arg size "${SIZE_MB} MB" \
