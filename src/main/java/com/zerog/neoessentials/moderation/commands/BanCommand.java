@@ -200,7 +200,7 @@ public class BanCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.ban_broadcast", 
                     resolvedName, bannedBy, reason), senderId(source));
                 
-                LOGGER.info("Player {} banned by {} for: {}", resolvedName, bannedBy, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} banned by {} for: {}", resolvedName, bannedBy, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.ban_failed", resolvedName);
@@ -269,7 +269,7 @@ public class BanCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.tempban_broadcast", 
                     resolvedName, durationStr, bannedBy, reason), senderId(source));
                 
-                LOGGER.info("Player {} temp banned by {} for {} - Reason: {}", resolvedName, bannedBy, durationStr, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} temp banned by {} for {} - Reason: {}", resolvedName, bannedBy, durationStr, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.ban_failed", resolvedName);
@@ -311,7 +311,7 @@ public class BanCommand {
                 source.sendSuccess(() -> MessageUtil.coloredText(msg), false);
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.tempbanip_broadcast",
                     ipAddress, formattedDur, bannedBy, reason), senderId(source));
-                LOGGER.info("IP {} temp-banned by {} for {} - Reason: {}", ipAddress, bannedBy, formattedDur, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} temp-banned by {} for {} - Reason: {}", ipAddress, bannedBy, formattedDur, reason);
                 return 1;
             } else {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.banip_failed", ipAddress));
@@ -349,7 +349,7 @@ public class BanCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.banip_broadcast", 
                     ipAddress, bannedBy, reason), senderId(source));
                 
-                LOGGER.info("IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.banip_failed", ipAddress);
@@ -378,26 +378,26 @@ public class BanCommand {
             
             // First check if it's a banned player
             List<BanManager.BanEntry> allBans = banManager.getAllPlayerBans();
-            LOGGER.info("Checking {} active bans for player '{}'", allBans.size(), playerName);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Checking {} active bans for player '{}'", allBans.size(), playerName);
             
             for (BanManager.BanEntry ban : allBans) {
-                LOGGER.debug("Checking ban: {} (UUID: {})", ban.playerName, ban.playerId);
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "Checking ban: {} (UUID: {})", ban.playerName, ban.playerId);
                 if (ban.playerName.equalsIgnoreCase(playerName)) {
                     playerId = ban.playerId;
                     resolvedName = ban.playerName;
-                    LOGGER.info("Found banned player: {} with UUID {}", resolvedName, playerId);
+                    NeoLog.info(LOGGER, LogCategory.MODERATION, "Found banned player: {} with UUID {}", resolvedName, playerId);
                     break;
                 }
             }
             
             // If not found in bans, try player cache
             if (playerId == null) {
-                LOGGER.info("Player '{}' not found in ban list, checking player cache", playerName);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player '{}' not found in ban list, checking player cache", playerName);
                 var profile = server.services().nameToIdCache().get(playerName);
                 if (profile.isPresent()) {
                     playerId = profile.get().id();
                     resolvedName = profile.get().name();
-                    LOGGER.info("Found player in cache: {} with UUID {}", resolvedName, playerId);
+                    NeoLog.info(LOGGER, LogCategory.MODERATION, "Found player in cache: {} with UUID {}", resolvedName, playerId);
                 }
             }
             
@@ -409,7 +409,7 @@ public class BanCommand {
             
             // Check if player is actually banned before trying to unban
             if (!banManager.isPlayerBanned(playerId)) {
-                LOGGER.info("Player {} ({}) is not currently banned", resolvedName, playerId);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) is not currently banned", resolvedName, playerId);
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_banned", resolvedName));
                 return 0;
             }
@@ -425,7 +425,7 @@ public class BanCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unban_broadcast", 
                     resolvedName, unbannedBy), senderId(source));
                 
-                LOGGER.info("Player {} unbanned by {}", resolvedName, unbannedBy);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} unbanned by {}", resolvedName, unbannedBy);
                 return 1;
             } else {
                 LOGGER.error("Failed to unban player {} ({}): unbanPlayer returned false", resolvedName, playerId);
@@ -460,7 +460,7 @@ public class BanCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unbanip_broadcast", 
                     ipAddress, unbannedBy), senderId(source));
                 
-                LOGGER.info("IP {} unbanned by {}", ipAddress, unbannedBy);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} unbanned by {}", ipAddress, unbannedBy);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.unbanip_failed", ipAddress);

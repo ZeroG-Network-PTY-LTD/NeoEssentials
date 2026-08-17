@@ -165,7 +165,7 @@ public class KickManager {
                 migrated++;
             }
             if (migrated > 0) {
-                LOGGER.info("KickManager: migrated {} kick record(s) from legacy kicks.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "KickManager: migrated {} kick record(s) from legacy kicks.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }
         } catch (IOException e) {

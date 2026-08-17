@@ -146,12 +146,12 @@ public class BanManager {
                     this::cleanupExpiredTempBans,
                     interval, interval, java.util.concurrent.TimeUnit.SECONDS
                 );
-                LOGGER.info("Scheduled expired temp ban cleanup every {} seconds.", interval);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Scheduled expired temp ban cleanup every {} seconds.", interval);
             } else {
-                LOGGER.info("Expired temp ban cleanup scheduler is disabled (interval <= 0).");
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Expired temp ban cleanup scheduler is disabled (interval <= 0).");
             }
         } else {
-            LOGGER.debug("BanManager created during shutdown - scheduler not started");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "BanManager created during shutdown - scheduler not started");
         }
     }
     
@@ -198,7 +198,7 @@ public class BanManager {
             }
         }
         if (removedPlayerBans) {
-            LOGGER.info("Expired temp player bans cleaned up by scheduler.");
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Expired temp player bans cleaned up by scheduler.");
         }
 
         // Clean up expired IP bans
@@ -213,7 +213,7 @@ public class BanManager {
             }
         }
         if (removedIPBans) {
-            LOGGER.info("Expired temp IP bans cleaned up by scheduler.");
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Expired temp IP bans cleaned up by scheduler.");
         }
     }
 
@@ -288,7 +288,7 @@ public class BanManager {
             }
         }
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-            LOGGER.info("Player {} ({}) banned by {} for: {}", playerName, playerId, bannedBy, reason);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) banned by {} for: {}", playerName, playerId, bannedBy, reason);
         }
         return true;
     }
@@ -352,7 +352,7 @@ public class BanManager {
         }
 
     if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-        LOGGER.info("Player {} ({}) temporarily banned by {} for {} - Reason: {}", 
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) temporarily banned by {} for {} - Reason: {}", 
             playerName, playerId, bannedBy, formatDuration(durationMillis), reason);
     }
         return true;
@@ -395,7 +395,7 @@ public class BanManager {
         }
 
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-            LOGGER.info("IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
         }
         return true;
     }
@@ -428,7 +428,7 @@ public class BanManager {
             }
         }
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-            LOGGER.info("IP {} temporarily banned by {} for {} - Reason: {}", ipAddress, bannedBy, formatDuration(durationMillis), reason);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} temporarily banned by {} for {} - Reason: {}", ipAddress, bannedBy, formatDuration(durationMillis), reason);
         }
         return true;
     }
@@ -476,7 +476,7 @@ public class BanManager {
             }
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
                 String name = removed != null ? removed.playerName : playerId.toString();
-                LOGGER.info("Player {} ({}) unbanned", name, playerId);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) unbanned", name, playerId);
             }
             return true;
         }
@@ -509,7 +509,7 @@ public class BanManager {
                 net.minecraft.server.players.UserBanListEntry entry = new net.minecraft.server.players.UserBanListEntry(
                     profile, null, src, expires, displayReason != null ? displayReason : "Banned");
                 vanillaBans.add(entry);
-                LOGGER.debug("Added {} to vanilla ban list", playerName);
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "Added {} to vanilla ban list", playerName);
             }
         } catch (Exception e) {
             LOGGER.warn("Could not sync ban to vanilla ban list for {}: {}", playerName, e.getMessage());
@@ -528,7 +528,7 @@ public class BanManager {
             net.minecraft.server.players.NameAndId profile = resolveProfile(server, playerId, name);
             if (profile != null && vanillaBans.isBanned(profile)) {
                 vanillaBans.remove(profile);
-                LOGGER.debug("Removed {} from vanilla ban list", playerId);
+                NeoLog.debug(LOGGER, LogCategory.MODERATION, "Removed {} from vanilla ban list", playerId);
                 return true;
             }
         } catch (Exception e) {
@@ -585,7 +585,7 @@ public class BanManager {
             ipBanHistory.add(removed);
             store.put(IP_COLLECTION, removed.id, ipBanToJson(removed));
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
-                LOGGER.info("IP {} unbanned by {}", ipAddress, unbannedBy != null ? unbannedBy : "unknown");
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} unbanned by {}", ipAddress, unbannedBy != null ? unbannedBy : "unknown");
             }
             return true;
         }
@@ -627,14 +627,14 @@ public class BanManager {
                             }
                             playerBans.put(playerId, imported);
                             store.put(PLAYER_COLLECTION, imported.id, banToJson(imported));
-                            LOGGER.info("Imported vanilla ban for {} into NeoEssentials ban list", profile.name());
+                            NeoLog.info(LOGGER, LogCategory.MODERATION, "Imported vanilla ban for {} into NeoEssentials ban list", profile.name());
                         }
                         return true;
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not check vanilla ban list for {}: {}", playerId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Could not check vanilla ban list for {}: {}", playerId, e.getMessage());
         }
         return false;
     }
@@ -876,7 +876,7 @@ public class BanManager {
             // Extract IP from format "/127.0.0.1:port"
             return fullAddress.split(":")[0].substring(1);
         } catch (Exception e) {
-            LOGGER.debug("Failed to get IP for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Failed to get IP for player {}: {}", player.getName().getString(), e.getMessage());
             return "unknown";
         }
     }
@@ -995,7 +995,7 @@ public class BanManager {
         migrated += migrateLegacyIPBanFile("ip_ban_history.json", IP_COLLECTION, false);
 
         if (migrated > 0) {
-            LOGGER.info("BanManager: migrated {} ban record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "BanManager: migrated {} ban record(s) from legacy files into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

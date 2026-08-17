@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Staff notes commands:
@@ -31,7 +33,7 @@ public class NoteCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if moderation commands are enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping note command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping note command registration");
             return;
         }
         var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -98,7 +100,7 @@ public class NoteCommand {
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.note.added",
             playerName, text, fShortId), true);
 
-        LOGGER.info("[Note] {} added a note on {}: {} (ID: {})", authorName, playerName, text, entry.getId().substring(0, 8));
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Note] {} added a note on {}: {} (ID: {})", authorName, playerName, text, entry.getId().substring(0, 8));
         return 1;
     }
 
@@ -164,7 +166,7 @@ public class NoteCommand {
         boolean removed = NoteManager.getInstance().removeNote(targetId, fullId);
         if (removed) {
             String sender = getCommandSender(source);
-            LOGGER.info("[Note] {} removed note {} from {}", sender, noteId, playerName);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "[Note] {} removed note {} from {}", sender, noteId, playerName);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.note.removed", noteId, playerName), false);
         } else {
             source.sendFailure(MessageUtil.component("commands.neoessentials.note.remove_failed", playerName));

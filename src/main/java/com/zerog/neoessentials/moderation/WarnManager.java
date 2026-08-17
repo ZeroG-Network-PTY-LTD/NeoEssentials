@@ -59,7 +59,7 @@ public class WarnManager {
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying warn: player={} ({}) reason={} by={} ({})",
             targetName, targetId, reason, warnedBy, warnedById);
         // Always log to console so it appears in server logs
-        LOGGER.info("[Warn] {} warned {} — Reason: {} ({})",
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Warn] {} warned {} — Reason: {} ({})",
             warnedBy, targetName, reason, entry.getFormattedTime());
         return entry;
     }
@@ -170,7 +170,7 @@ public class WarnManager {
                    .add(entry);
             count++;
         }
-        LOGGER.info("WarnManager: loaded {} warn record(s).", count);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "WarnManager: loaded {} warn record(s).", count);
     }
 
     /**
@@ -196,7 +196,7 @@ public class WarnManager {
                 migrated++;
             }
             if (migrated > 0) {
-                LOGGER.info("WarnManager: migrated {} warn(s) from legacy warns.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "WarnManager: migrated {} warn(s) from legacy warns.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }
         } catch (Exception ex) {

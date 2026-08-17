@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Manages player-submitted reports, reviewable by staff even while offline. Persisted
@@ -46,7 +48,7 @@ public class ReportManager {
         ReportEntry entry = new ReportEntry(reporterId, reporterName, targetId, targetName, reason);
         reports.add(entry);
         store.put(COLLECTION, entry.getId(), toJson(entry));
-        LOGGER.info("[Report] {} reported {}: {}", reporterName, targetName, reason);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Report] {} reported {}: {}", reporterName, targetName, reason);
         return entry;
     }
 
@@ -143,7 +145,7 @@ public class ReportManager {
         for (JsonObject obj : store.getAll(COLLECTION).values()) {
             reports.add(fromJson(obj));
         }
-        LOGGER.info("ReportManager: loaded {} report(s).", reports.size());
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "ReportManager: loaded {} report(s).", reports.size());
     }
 
     /**
@@ -169,7 +171,7 @@ public class ReportManager {
                 migrated++;
             }
             if (migrated > 0) {
-                LOGGER.info("ReportManager: migrated {} report(s) from legacy reports.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "ReportManager: migrated {} report(s) from legacy reports.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }
         } catch (Exception ex) {

@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Player report commands:
@@ -32,7 +34,7 @@ public class ReportCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if moderation commands are enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping report command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping report command registration");
             return;
         }
         var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -128,7 +130,7 @@ public class ReportCommand {
             }
         }
 
-        LOGGER.info("[Report] {} reported {} (ID: {}): {}", reporter.getName().getString(), resolvedName, fShortId, reason);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Report] {} reported {} (ID: {}): {}", reporter.getName().getString(), resolvedName, fShortId, reason);
         return 1;
     }
 
@@ -176,7 +178,7 @@ public class ReportCommand {
         boolean success = ReportManager.getInstance().reviewReport(report.getId(), status, reviewerId, reviewerName,
             notes.isEmpty() ? null : notes);
         if (success) {
-            LOGGER.info("[Report] {} marked report {} as {}", reviewerName, reportId, status);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "[Report] {} marked report {} as {}", reviewerName, reportId, status);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.report.reviewed",
                 reportId, status.name(), report.getTargetName()), false);
             return 1;

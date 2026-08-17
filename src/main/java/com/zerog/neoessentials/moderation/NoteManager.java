@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Manages staff notes on players. Mirrors {@link WarnManager}'s shape (per-player list,
@@ -52,7 +54,7 @@ public class NoteManager {
         NoteEntry entry = new NoteEntry(targetId, targetName, authorId, authorName, text);
         noteMap.computeIfAbsent(targetId, k -> new CopyOnWriteArrayList<>()).add(entry);
         store.put(COLLECTION, entry.getId(), toJson(entry));
-        LOGGER.info("[Note] {} added a note on {}: {}", authorName, targetName, text);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Note] {} added a note on {}: {}", authorName, targetName, text);
         return entry;
     }
 
@@ -125,7 +127,7 @@ public class NoteManager {
             noteMap.computeIfAbsent(entry.getTargetId(), k -> new CopyOnWriteArrayList<>()).add(entry);
             count++;
         }
-        LOGGER.info("NoteManager: loaded {} note(s).", count);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "NoteManager: loaded {} note(s).", count);
     }
 
     /**
@@ -151,7 +153,7 @@ public class NoteManager {
                 migrated++;
             }
             if (migrated > 0) {
-                LOGGER.info("NoteManager: migrated {} note(s) from legacy notes.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "NoteManager: migrated {} note(s) from legacy notes.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }
         } catch (Exception ex) {

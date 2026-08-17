@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.zerog.neoessentials.util.InputValidator;
 
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Kick commands: /kick, /kickall
@@ -26,7 +28,7 @@ public class KickCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if moderation commands are enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping kick command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping kick command registration");
             return;
         }
 
@@ -125,7 +127,7 @@ public class KickCommand {
             }
 
             if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
-                LOGGER.info("Player {} kicked by {} for: {}", playerDisplayName, kickedBy, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} kicked by {} for: {}", playerDisplayName, kickedBy, reason);
             }
             return 1;
 
@@ -174,7 +176,7 @@ public class KickCommand {
             source.sendSuccess(() -> MessageUtil.coloredText(confirmMessage), true);
             
             if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
-                LOGGER.info("Kicked {} players by {} for: {}", playersToKick.size(), kickedBy, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Kicked {} players by {} for: {}", playersToKick.size(), kickedBy, reason);
             }
             return 1;
             
