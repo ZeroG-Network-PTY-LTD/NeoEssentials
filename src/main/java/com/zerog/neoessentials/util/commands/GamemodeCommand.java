@@ -11,6 +11,8 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Implements gamemode shortcut commands - /gms, /gmc, /gmsp, /gma
@@ -131,7 +133,7 @@ public class GamemodeCommand {
         String sourceName = source.getEntity() instanceof ServerPlayer sourcePlayer 
             ? sourcePlayer.getName().getString() 
             : "Console";
-        LOGGER.info("Player {} changed {}'s gamemode to {}", 
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} changed {}'s gamemode to {}", 
             sourceName, target.getName().getString(), gameTypeName);
         
         // Notify the target player

@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.sql.Connection;
@@ -81,7 +83,7 @@ public class SqliteDataStore implements DataStore {
                 return null;
             }
             Connection conn = driver.connect("jdbc:sqlite:" + dbFile.getAbsolutePath(), new java.util.Properties());
-            LOGGER.info("SqliteDataStore: opened {}", dbFile.getAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "SqliteDataStore: opened {}", dbFile.getAbsolutePath());
             return conn;
         } catch (Exception e) {
             LOGGER.error("SqliteDataStore: failed to open {} (will retry on next use)",

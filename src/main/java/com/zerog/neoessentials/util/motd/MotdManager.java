@@ -6,6 +6,8 @@ import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -144,7 +146,7 @@ public class MotdManager {
             // (Re)start rotation scheduler if needed
             applyRotationSchedule();
 
-            LOGGER.debug("MOTD data loaded from storage backend '{}'", StorageManager.getInstance().getActiveType());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "MOTD data loaded from storage backend '{}'", StorageManager.getInstance().getActiveType());
             return null;
 
         } catch (Exception e) {
@@ -175,7 +177,7 @@ public class MotdManager {
                 store.put(PROFILE_COLLECTION, e.getKey(), profileToJson(e.getValue()));
             }
 
-            LOGGER.debug("MOTD data saved to storage backend '{}'", StorageManager.getInstance().getActiveType());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "MOTD data saved to storage backend '{}'", StorageManager.getInstance().getActiveType());
             return null;
         } catch (Exception e) {
             String msg = "Failed to save MOTD data: " + e.getMessage();
@@ -287,7 +289,7 @@ public class MotdManager {
         rotationCurrentIndex = (rotationCurrentIndex + 1) % keys.size();
         activeProfile = keys.get(rotationCurrentIndex);
         save();
-        LOGGER.debug("MOTD rotated to profile '{}'", activeProfile);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "MOTD rotated to profile '{}'", activeProfile);
     }
 
     private void applyRotationSchedule() {
@@ -304,7 +306,7 @@ public class MotdManager {
             });
             rotationScheduler.scheduleAtFixedRate(this::rotateNext,
                     rotationIntervalMinutes, rotationIntervalMinutes, TimeUnit.MINUTES);
-            LOGGER.info("MOTD rotation enabled: switching every {} minutes", rotationIntervalMinutes);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "MOTD rotation enabled: switching every {} minutes", rotationIntervalMinutes);
         }
     }
 
@@ -365,7 +367,7 @@ public class MotdManager {
                 store.put(PROFILE_COLLECTION, "default", rec);
                 legacyActive = "default";
                 migrated++;
-                LOGGER.info("Migrated legacy single-profile motd_data.json into multi-profile storage");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Migrated legacy single-profile motd_data.json into multi-profile storage");
             }
 
             if (migrated > 0) {
@@ -375,7 +377,7 @@ public class MotdManager {
                 meta.addProperty("rotationIntervalMinutes", legacyRotInterval);
                 meta.addProperty("rotationCurrentIndex", legacyRotIndex);
                 store.put(META_COLLECTION, META_ID, meta);
-                LOGGER.info("MotdManager: migrated {} MOTD profile(s) from legacy motd_data.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "MotdManager: migrated {} MOTD profile(s) from legacy motd_data.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }
         } catch (Exception e) {

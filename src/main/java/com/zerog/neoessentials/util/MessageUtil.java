@@ -20,6 +20,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Centralized message handling system for NeoEssentials
@@ -41,7 +43,7 @@ public class MessageUtil {
      */
     public static void syncDebugModeFromConfig() {
         debugMode = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
-        LOGGER.debug("Debug mode set to: {} (from config)", debugMode);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Debug mode set to: {} (from config)", debugMode);
     }
     
     // Language version tracking - increment when translations change
@@ -116,10 +118,10 @@ public class MessageUtil {
         if (loaded) return;
         loaded = true;
 
-        LOGGER.debug("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "=== LOADING NEOESSENTIALS TRANSLATIONS ===");
 
         String langCode = getConfiguredLanguage();
-        LOGGER.info("NeoEssentials: loading language '{}'", langCode);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: loading language '{}'", langCode);
 
         File customLangDir = getNeoEssentialsLangCustomDir();
         if (!customLangDir.exists()) {
@@ -127,11 +129,11 @@ public class MessageUtil {
             if (!dirCreated) {
                 LOGGER.error("Failed to create custom language directory: {}", customLangDir.getAbsolutePath());
             } else {
-                LOGGER.debug("Created custom language directory: {}", customLangDir.getAbsolutePath());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created custom language directory: {}", customLangDir.getAbsolutePath());
             }
         }
         File serverLangFile = new File(customLangDir, langCode + ".json");
-        LOGGER.debug("Server language file path: {}", serverLangFile.getAbsolutePath());
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Server language file path: {}", serverLangFile.getAbsolutePath());
 
         boolean preserveCustom = false;
         try {
@@ -160,7 +162,7 @@ public class MessageUtil {
                 if (!preserveCustom) {
                     repaired = repairMojibake(finalTranslations);
                     if (repaired > 0) {
-                        LOGGER.info("NeoEssentials: repaired {} corrupted §-formatting entries in '{}'",
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: repaired {} corrupted §-formatting entries in '{}'",
                             repaired, serverLangFile.getName());
                     }
                 }
@@ -181,14 +183,14 @@ public class MessageUtil {
                 }
 
                 if (preserveCustom) {
-                    LOGGER.info("NeoEssentials: localization.preserveCustomTranslations is enabled — " +
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: localization.preserveCustomTranslations is enabled — " +
                         "skipping merge/auto-fix of '{}'.", serverLangFile.getName());
                 } else if (deployedVersion < CURRENT_LANG_VERSION || lowCoverage) {
                     if (lowCoverage) {
-                        LOGGER.info("NeoEssentials: lang file '{}' has low key coverage ({} keys) — " +
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: lang file '{}' has low key coverage ({} keys) — " +
                             "merging with en_us fallback...", serverLangFile.getName(), finalTranslations.size());
                     } else {
-                        LOGGER.info("NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: lang file is v{} (current v{}) — merging new keys...",
                             deployedVersion, CURRENT_LANG_VERSION);
                     }
                     // Build merge source: configured language + en_us fallback for missing keys
@@ -221,7 +223,7 @@ public class MessageUtil {
                         } catch (Exception ex) {
                             LOGGER.warn("NeoEssentials: could not save merged lang file: {}", ex.getMessage());
                         }
-                        LOGGER.info("NeoEssentials: merged {} new + {} updated translation keys (total: {})",
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: merged {} new + {} updated translation keys (total: {})",
                             added, updated, finalTranslations.size());
                     }
                 } else if (repaired > 0) {
@@ -256,7 +258,7 @@ public class MessageUtil {
                             }
                         }
                         if (forceChanged) {
-                            LOGGER.info("NeoEssentials: force-refreshed known-buggy translation key value(s) in '{}'.",
+                            NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: force-refreshed known-buggy translation key value(s) in '{}'.",
                                 serverLangFile.getName());
                             try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
                                 new com.google.gson.GsonBuilder().setPrettyPrinting()
@@ -268,7 +270,7 @@ public class MessageUtil {
                     }
                 }
                 translations.putAll(finalTranslations);
-                LOGGER.info("NeoEssentials: loaded {} translations (language: {})", translations.size(), langCode);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: loaded {} translations (language: {})", translations.size(), langCode);
             } else {
                 LOGGER.error("Failed to load custom language file, will attempt to update from JAR");
             }
@@ -282,22 +284,22 @@ public class MessageUtil {
                     if (testIn == null) {
                         LOGGER.error("JAR resource 'en_us.json' is missing or not found in /data/lang/");
                     } else {
-                        LOGGER.debug("JAR resource 'en_us.json' is present but failed to load as translations.");
+                        NeoLog.debug(LOGGER, LogCategory.GENERAL, "JAR resource 'en_us.json' is present but failed to load as translations.");
                     }
                 } catch (Exception e) {
                     LOGGER.error("Exception when testing JAR resource existence: {}", e.getMessage(), e);
                 }
                 return;
             }
-            LOGGER.debug("JAR contains {} translation keys for '{}'", jarTranslations.size(), langCode);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "JAR contains {} translation keys for '{}'", jarTranslations.size(), langCode);
             try {
                 updateServerLanguageFile(serverLangFile, jarTranslations);
                 if (serverLangFile.exists()) {
-                    LOGGER.debug("Language file successfully created: {}", serverLangFile.getAbsolutePath());
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "Language file successfully created: {}", serverLangFile.getAbsolutePath());
                     finalTranslations = loadServerTranslations(serverLangFile);
                     if (finalTranslations != null) {
                         translations.putAll(finalTranslations);
-                        LOGGER.info("NeoEssentials: loaded {} translations (updated from JAR, language: {})", translations.size(), langCode);
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: loaded {} translations (updated from JAR, language: {})", translations.size(), langCode);
                     } else {
                         LOGGER.error("Failed to load custom language file after update, using JAR translations directly");
                         translations.putAll(jarTranslations);
@@ -311,7 +313,7 @@ public class MessageUtil {
                 translations.putAll(jarTranslations);
             }
         }
-        LOGGER.debug("Translation loading complete. Total keys: {}", translations.size());
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Translation loading complete. Total keys: {}", translations.size());
         if (serverLangFile.length() == 0) {
             LOGGER.error("Server language file is empty after creation! Check file permissions and JAR resource.");
         }
@@ -331,7 +333,7 @@ public class MessageUtil {
                     return gson.fromJson(json, type);
                 }
             } else {
-                LOGGER.debug("JAR language resource '{}' not found.", langCode + ".json");
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "JAR language resource '{}' not found.", langCode + ".json");
             }
         } catch (Exception e) {
             LOGGER.error("Failed to load JAR translations for '{}': {}", langCode, e.getMessage(), e);
@@ -371,7 +373,7 @@ public class MessageUtil {
         Map<String, String> merged = new HashMap<>();
         if (base != null) merged.putAll(base);
         merged.putAll(lang); // target language takes priority
-        LOGGER.info("NeoEssentials: built '{}' translations ({} keys, {} from en_us fallback)",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials: built '{}' translations ({} keys, {} from en_us fallback)",
             langCode, merged.size(), base != null ? Math.max(0, merged.size() - lang.size()) : 0);
         return merged;
     }
@@ -515,7 +517,7 @@ public class MessageUtil {
                 if (!dirCreated) {
                     LOGGER.error("Failed to create language directory: {}", parentDir.getAbsolutePath());
                 } else {
-                    LOGGER.debug("Created language directory: {}", parentDir.getAbsolutePath());
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created language directory: {}", parentDir.getAbsolutePath());
                 }
             }
             Map<String, String> translationsWithVersion = new HashMap<>(jarTranslations);
@@ -523,7 +525,7 @@ public class MessageUtil {
             try (FileWriter writer = new FileWriter(serverFile, StandardCharsets.UTF_8)) {
                 Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
                 gson.toJson(translationsWithVersion, writer);
-                LOGGER.debug("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to update server language file: {} ({}): {}", serverFile.getAbsolutePath(), serverFile.getParentFile(), e.getMessage(), e);
@@ -650,7 +652,7 @@ public class MessageUtil {
         try {
             String result = applyArgs(template, args);
             if (debugMode) {
-                LOGGER.info("localize success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "localize success - Key: {}, Template: '{}', Args: {}, Result: '{}'",
                     key, template, java.util.Arrays.toString(args), result);
             }
             return result;
@@ -737,7 +739,7 @@ public class MessageUtil {
     public static Component component(String key, Object... args) {
         String message = localize(key, args);
         if (debugMode) {
-            LOGGER.debug("Component created - Key: {}, Message: '{}'", key, message);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Component created - Key: {}, Message: '{}'", key, message);
         }
         return Component.literal(message);
     }
@@ -790,8 +792,8 @@ public class MessageUtil {
      */
     public static void debugKey(String key) {
         loadTranslations();
-        LOGGER.info("Debug key '{}': exists={}, value='{}'", key, translations.containsKey(key), translations.get(key));
-        LOGGER.info("Total translations loaded: {}, Sample keys: {}", translations.size(), 
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Debug key '{}': exists={}, value='{}'", key, translations.containsKey(key), translations.get(key));
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Total translations loaded: {}, Sample keys: {}", translations.size(), 
             translations.keySet().stream().limit(3).toArray());
     }
 
@@ -810,7 +812,7 @@ public class MessageUtil {
         loaded = false;
         translations.clear();
         loadTranslations();
-        LOGGER.info("Forced translation reload completed, {} keys loaded", translations.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Forced translation reload completed, {} keys loaded", translations.size());
     }
     
     /**
@@ -838,7 +840,7 @@ public class MessageUtil {
         if (serverTranslations == null) {
             // File missing — write from JAR (no user edits to preserve)
             updateServerLanguageFile(serverLangFile, jarTranslations);
-            LOGGER.info("Language file created from JAR (was missing).");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Language file created from JAR (was missing).");
         } else {
             // Merge: only add keys that are absent from the server file
             int added = 0;
@@ -854,12 +856,12 @@ public class MessageUtil {
                 try (FileWriter fw = new FileWriter(serverLangFile, StandardCharsets.UTF_8)) {
                     new com.google.gson.GsonBuilder().setPrettyPrinting()
                         .disableHtmlEscaping().create().toJson(serverTranslations, fw);
-                    LOGGER.info("Language file merged: {} new key(s) added (user edits preserved).", added);
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "Language file merged: {} new key(s) added (user edits preserved).", added);
                 } catch (Exception ex) {
                     LOGGER.warn("Could not save merged language file: {}", ex.getMessage());
                 }
             } else {
-                LOGGER.debug("Language file is already up to date, no merge needed.");
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Language file is already up to date, no merge needed.");
             }
         }
 
@@ -1044,7 +1046,7 @@ public class MessageUtil {
             File legacyLangDir = serverRoot.resolve("neoessentials").resolve("lang").toFile();
             if (legacyLangDir.exists() && legacyLangDir.isDirectory()) {
                 deleteDirectoryRecursively(legacyLangDir);
-                LOGGER.info("Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
             }
         } catch (Exception e) {
             // Fallback: use user.dir
@@ -1054,7 +1056,7 @@ public class MessageUtil {
             File legacyLangDir = new File(fallbackRoot, "lang");
             if (legacyLangDir.exists() && legacyLangDir.isDirectory()) {
                 deleteDirectoryRecursively(legacyLangDir);
-                LOGGER.info("Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Removed legacy language directory: {}", legacyLangDir.getAbsolutePath());
             }
         }
         return langDir;

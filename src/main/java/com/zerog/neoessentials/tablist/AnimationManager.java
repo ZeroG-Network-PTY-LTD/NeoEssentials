@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -88,7 +90,7 @@ public class AnimationManager {
             JsonObject root = ConfigManager.getInstance()
                 .getConfig(ConfigManager.ANIMATIONS_CONFIG);
             if (root == null || !root.has("animations")) {
-                LOGGER.debug("AnimationManager: no 'animations' array in animations.json — using empty set.");
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "AnimationManager: no 'animations' array in animations.json — using empty set.");
                 animations.clear();
                 return;
             }
@@ -116,7 +118,7 @@ public class AnimationManager {
             }
             animations.clear();
             animations.putAll(loaded);
-            LOGGER.info("AnimationManager: loaded {} animation(s): {}.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "AnimationManager: loaded {} animation(s): {}.",
                 animations.size(), String.join(", ", animations.keySet()));
         } catch (Exception e) {
             LOGGER.error("AnimationManager: failed to load animations.json: {}", e.getMessage());

@@ -8,6 +8,8 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.neoforged.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -50,9 +52,9 @@ public class CustomLanguageManager {
         this.templatesDir = resolveModDataPath("languages", "templates");
         this.overridesFile = resolveModDataPath("languages", "overrides.json");
         this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
-        LOGGER.info("[LANG] Custom language directory set to: {}", this.customLangDir.toAbsolutePath());
-        LOGGER.info("[LANG] Template directory set to: {}", this.templatesDir.toAbsolutePath());
-        LOGGER.info("[LANG] Overrides file set to: {}", this.overridesFile.toAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[LANG] Custom language directory set to: {}", this.customLangDir.toAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[LANG] Template directory set to: {}", this.templatesDir.toAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[LANG] Overrides file set to: {}", this.overridesFile.toAbsolutePath());
     }
 
     public static CustomLanguageManager getInstance() {
@@ -67,8 +69,8 @@ public class CustomLanguageManager {
      */
     public void initialize() {
         try {
-            LOGGER.info("Custom language directory resolved to: {}", customLangDir.toAbsolutePath());
-            LOGGER.info("Template directory resolved to: {}", templatesDir.toAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Custom language directory resolved to: {}", customLangDir.toAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Template directory resolved to: {}", templatesDir.toAbsolutePath());
 
             // Create directories
             Files.createDirectories(customLangDir);
@@ -95,7 +97,7 @@ public class CustomLanguageManager {
                 try (InputStream in = findLangResource(LANG_FILE)) {
                     if (in != null) {
                         Files.copy(in, langFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                        LOGGER.info("Copied language file from JAR: {}", langFile.toAbsolutePath());
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "Copied language file from JAR: {}", langFile.toAbsolutePath());
                     } else {
                         LOGGER.error("Failed to copy language file: Resource not found for {}!", LANG_FILE);
                     }
@@ -129,7 +131,7 @@ public class CustomLanguageManager {
                     if (updated) {
                         try (Writer writer = Files.newBufferedWriter(langFile, StandardCharsets.UTF_8)) {
                             gson.toJson(fileLang, writer);
-                            LOGGER.info("Merged missing/force-refreshed keys from JAR into language file: {}", langFile.toAbsolutePath());
+                            NeoLog.info(LOGGER, LogCategory.GENERAL, "Merged missing/force-refreshed keys from JAR into language file: {}", langFile.toAbsolutePath());
                         }
                     }
                 }
@@ -151,10 +153,10 @@ public class CustomLanguageManager {
             // Generate templates for common languages if they don't exist
             generateTemplatesIfNeeded();
 
-            LOGGER.info("Custom Language Manager initialized");
-            LOGGER.info("  Custom languages found: {}", languageFiles.keySet());
-            LOGGER.info("  Custom language directory: {}", customLangDir.toAbsolutePath());
-            LOGGER.info("  Template directory: {}", templatesDir.toAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Custom Language Manager initialized");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  Custom languages found: {}", languageFiles.keySet());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  Custom language directory: {}", customLangDir.toAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  Template directory: {}", templatesDir.toAbsolutePath());
         } catch (Exception e) {
             LOGGER.error("Failed to initialize custom language manager", e);
         }
@@ -202,7 +204,7 @@ public class CustomLanguageManager {
                     langCode, nativeName, englishName, author, version, filePath
                 ));
 
-                LOGGER.info("Loaded custom language: {} ({}) - {} keys",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded custom language: {} ({}) - {} keys",
                     langCode, nativeName, translations.size());
             }
 
@@ -311,7 +313,7 @@ public class CustomLanguageManager {
                 gson.toJson(template, writer);
             }
 
-            LOGGER.info("Generated language template: {} ({} keys)", outputPath, template.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Generated language template: {} ({} keys)", outputPath, template.size());
 
         } catch (Exception e) {
             LOGGER.error("Failed to generate language template for {}", languageCode, e);
@@ -338,7 +340,7 @@ public class CustomLanguageManager {
                 gson.toJson(missingTemplate, writer);
             }
 
-            LOGGER.info("Exported {} missing keys to {}", missingKeys.size(), outputPath);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Exported {} missing keys to {}", missingKeys.size(), outputPath);
 
         } catch (Exception e) {
             LOGGER.error("Failed to export missing keys", e);
@@ -382,7 +384,7 @@ public class CustomLanguageManager {
         deployBundledLanguageFiles();
         scanCustomLanguageFiles();
         loadOverrides();
-        LOGGER.info("Reloaded custom languages: {}", languageFiles.keySet());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Reloaded custom languages: {}", languageFiles.keySet());
     }
 
     /**
@@ -461,13 +463,13 @@ public class CustomLanguageManager {
             try {
                 try (InputStream in = findLangResource(fileName)) {
                     if (in == null) {
-                        LOGGER.debug("No bundled lang file found in JAR for: {}", langCode);
+                        NeoLog.debug(LOGGER, LogCategory.GENERAL, "No bundled lang file found in JAR for: {}", langCode);
                         continue;
                     }
                     if (!Files.exists(target)) {
                         // First run — copy from JAR
                         Files.copy(in, target);
-                        LOGGER.info("Deployed bundled language file: {}", fileName);
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "Deployed bundled language file: {}", fileName);
                         deployed++;
                     } else {
                         // Already on disk — merge NEW keys only, don't overwrite user edits
@@ -492,7 +494,7 @@ public class CustomLanguageManager {
                                 try (Writer writer = Files.newBufferedWriter(target, StandardCharsets.UTF_8)) {
                                     gson.toJson(diskLang, writer);
                                 }
-                                LOGGER.info("Merged new keys from JAR into {}", fileName);
+                                NeoLog.info(LOGGER, LogCategory.GENERAL, "Merged new keys from JAR into {}", fileName);
                                 merged++;
                             }
                         }
@@ -503,7 +505,7 @@ public class CustomLanguageManager {
             }
         }
         if (deployed > 0 || merged > 0) {
-            LOGGER.info("Language deployment complete: {} deployed, {} merged", deployed, merged);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Language deployment complete: {} deployed, {} merged", deployed, merged);
         }
     }
 
@@ -529,7 +531,7 @@ public class CustomLanguageManager {
                 count++;
             }
         }
-        LOGGER.info("Loaded {} admin translation override(s) from storage", count);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} admin translation override(s) from storage", count);
     }
 
     /**
@@ -544,7 +546,7 @@ public class CustomLanguageManager {
                 doc.addProperty(entry.getKey(), entry.getValue());
             }
             store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
-            LOGGER.info("Saved {} admin translation override(s) to storage", overrides.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Saved {} admin translation override(s) to storage", overrides.size());
         } catch (Exception e) {
             LOGGER.error("Failed to save translation overrides: {}", e.getMessage(), e);
         }
@@ -570,7 +572,7 @@ public class CustomLanguageManager {
                     doc.addProperty(entry.getKey(), entry.getValue());
                 }
                 store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
-                LOGGER.info("CustomLanguageManager: migrated {} admin translation override(s) from legacy overrides.json into the '{}' storage backend.",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "CustomLanguageManager: migrated {} admin translation override(s) from legacy overrides.json into the '{}' storage backend.",
                     loaded.size(), com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
             }
         } catch (Exception e) {
@@ -698,7 +700,7 @@ public class CustomLanguageManager {
             }
             // Backup current file
             Files.copy(target, backup, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("Backed up {} to {}", target, backup);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Backed up {} to {}", target, backup);
         }
 
         // Load fresh JAR version
@@ -739,7 +741,7 @@ public class CustomLanguageManager {
         try (Writer writer = Files.newBufferedWriter(target, StandardCharsets.UTF_8)) {
             gson.toJson(merged, writer);
         }
-        LOGGER.info("Regenerated {}: {} total keys, {} new from JAR, {} force-refreshed, backup at {}",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Regenerated {}: {} total keys, {} new from JAR, {} force-refreshed, backup at {}",
             fileName, merged.size(), newKeys, forceRefreshed, backup);
 
         // Reload translations for this language
@@ -791,7 +793,7 @@ public class CustomLanguageManager {
         for (String path : paths) {
             InputStream in = getClass().getResourceAsStream(path);
             if (in != null) {
-                LOGGER.debug("Found language resource at: {}", path);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Found language resource at: {}", path);
                 return in;
             }
         }
@@ -800,7 +802,7 @@ public class CustomLanguageManager {
             String normalised = path.startsWith("/") ? path.substring(1) : path;
             InputStream in = getClass().getClassLoader().getResourceAsStream(normalised);
             if (in != null) {
-                LOGGER.debug("Found language resource via classloader at: {}", normalised);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Found language resource via classloader at: {}", normalised);
                 return in;
             }
         }
@@ -821,7 +823,7 @@ public class CustomLanguageManager {
             neoEssentialsDir = neoEssentialsDir.resolve(part);
         }
         // Log the resolved path for debugging
-        LOGGER.info("[LANG] Resolved mod data path: {}", neoEssentialsDir.toAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[LANG] Resolved mod data path: {}", neoEssentialsDir.toAbsolutePath());
         return neoEssentialsDir;
     }
 }

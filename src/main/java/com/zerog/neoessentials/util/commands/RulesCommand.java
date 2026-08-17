@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Implements the /rules command - Displays server rules to players
@@ -369,13 +371,13 @@ public class RulesCommand {
                         serverRules.add(element.getAsString());
                     }
                 }
-                LOGGER.debug("Loaded {} rules from {}", serverRules.size(), RULES_DATA_FILE.getFileName());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Loaded {} rules from {}", serverRules.size(), RULES_DATA_FILE.getFileName());
                 return;
             }
 
             // Legacy fallback: rules.json (used by NeoEssentials <1.0.2.6)
             if (Files.exists(RULES_LEGACY_FILE)) {
-                LOGGER.info("Migrating legacy rules.json → rules_data.json");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Migrating legacy rules.json → rules_data.json");
                 String json = Files.readString(RULES_LEGACY_FILE);
                 JsonObject data = JsonParser.parseString(json).getAsJsonObject();
                 serverRules.clear();
@@ -397,14 +399,14 @@ public class RulesCommand {
                 }
                 // Save to new format
                 saveRulesData();
-                LOGGER.info("Migrated {} rules from rules.json to rules_data.json", serverRules.size());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Migrated {} rules from rules.json to rules_data.json", serverRules.size());
                 return;
             }
 
             // No file found – create defaults and log guidance
-            LOGGER.info("No rules_data.json found — generating default rules file at: {}", RULES_DATA_FILE.toAbsolutePath());
-            LOGGER.info("  Edit rules in-game with:  /rules add <text>  |  /rules edit <n> <text>  |  /rules remove <n>");
-            LOGGER.info("  Or edit directly:  config/neoessentials/rules_data.json  then run /rules reload");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "No rules_data.json found — generating default rules file at: {}", RULES_DATA_FILE.toAbsolutePath());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  Edit rules in-game with:  /rules add <text>  |  /rules edit <n> <text>  |  /rules remove <n>");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  Or edit directly:  config/neoessentials/rules_data.json  then run /rules reload");
             createDefaultRules();
         } catch (Exception e) {
             LOGGER.error("╔══════════════════════════════════════════════════════╗");
@@ -425,7 +427,7 @@ public class RulesCommand {
      */
     public static void reload() {
         loadRulesData();
-        LOGGER.info("Rules reloaded — {} rule(s) active", serverRules.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Rules reloaded — {} rule(s) active", serverRules.size());
     }
 
     /**

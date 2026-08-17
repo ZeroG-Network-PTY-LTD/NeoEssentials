@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +47,7 @@ public class DocumentationManager {
      * Initialize the documentation system
      */
     public void initialize() {
-        LOGGER.info("Initializing NeoEssentials Documentation System...");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Initializing NeoEssentials Documentation System...");
         
         // Create docs directory
         try {
@@ -57,7 +59,7 @@ public class DocumentationManager {
         // Load or create default documentation
         loadDocumentation();
         
-        LOGGER.info("Documentation system initialized with {} sections, {} API endpoints, {} tutorials, {} FAQs",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Documentation system initialized with {} sections, {} API endpoints, {} tutorials, {} FAQs",
                 sections.size(), apiEndpoints.size(), tutorials.size(), faqItems.size());
     }
     
@@ -628,7 +630,7 @@ public class DocumentationManager {
                 6
         ));
 
-        LOGGER.info("Loaded {} documentation sections", sections.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} documentation sections", sections.size());
     }
     
     /**
@@ -822,7 +824,7 @@ public class DocumentationManager {
                 "All"
         ));
         
-        LOGGER.info("Loaded {} API endpoint documentations", apiEndpoints.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} API endpoint documentations", apiEndpoints.size());
     }
     
     /**
@@ -874,7 +876,7 @@ public class DocumentationManager {
                 )
         ));
         
-        LOGGER.info("Loaded {} tutorials", tutorials.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} tutorials", tutorials.size());
     }
     
     /**
@@ -1026,7 +1028,7 @@ public class DocumentationManager {
                 List.of("backups", "storage")
         ));
         
-        LOGGER.info("Loaded {} FAQ items", faqItems.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} FAQ items", faqItems.size());
     }
     
     /**
@@ -1051,7 +1053,7 @@ public class DocumentationManager {
                 "intermediate"
         ));
         
-        LOGGER.info("Loaded {} video tutorials", videoTutorials.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} video tutorials", videoTutorials.size());
     }
     
     // ===== Public API Methods =====

@@ -52,7 +52,7 @@ public class ShopEntityManager {
         try {
             migrateLegacyFilesIfNeeded();
             load();
-            LOGGER.info("[NpcShop] Loaded {} NPC shop(s).", byShopId.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[NpcShop] Loaded {} NPC shop(s).", byShopId.size());
         } catch (Exception e) {
             LOGGER.error("[NpcShop] Failed to load NPC shops from storage", e);
         }
@@ -148,7 +148,7 @@ public class ShopEntityManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("[NpcShop] migrated {} NPC shop record(s) from legacy npc_shops.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[NpcShop] migrated {} NPC shop record(s) from legacy npc_shops.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -214,7 +214,7 @@ public class ShopEntityManager {
 
     public void reload() {
         byShopId.clear(); byEntityId.clear();
-        try { load(); LOGGER.info("[NpcShop] Reloaded {} shop(s).", byShopId.size()); }
+        try { load(); NeoLog.info(LOGGER, LogCategory.GENERAL, "[NpcShop] Reloaded {} shop(s).", byShopId.size()); }
         catch (Exception e) { LOGGER.error("[NpcShop] Reload failed", e); }
     }
 }

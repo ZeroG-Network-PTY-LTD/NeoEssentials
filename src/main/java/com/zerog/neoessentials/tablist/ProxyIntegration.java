@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.*;
 import java.util.*;
@@ -104,11 +106,11 @@ public class ProxyIntegration {
                 }
             }
 
-            LOGGER.info("ProxyIntegration loaded — proxyEnabled={}, serverLabel='{}', knownServers={}",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "ProxyIntegration loaded — proxyEnabled={}, serverLabel='{}', knownServers={}",
                 proxyEnabled, serverLabel, knownServers);
 
         } catch (Exception e) {
-            LOGGER.debug("ProxyIntegration: config load error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: config load error: {}", e.getMessage());
         }
     }
 
@@ -149,14 +151,14 @@ public class ProxyIntegration {
                 case "GetServer" -> {
                     String serverName = in.readUTF();
                     playerServerMap.put(player.getUUID(), serverName);
-                    LOGGER.debug("ProxyIntegration: {} is on server '{}'", player.getName().getString(), serverName);
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: {} is on server '{}'", player.getName().getString(), serverName);
                 }
                 case "GetServers" -> {
                     String[] servers = in.readUTF().split(", ");
                     knownServers.clear();
                     Collections.addAll(knownServers, servers);
                     proxyDetected.set(true);
-                    LOGGER.debug("ProxyIntegration: discovered servers — {}", Arrays.toString(servers));
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: discovered servers — {}", Arrays.toString(servers));
                     // Now poll each server's player count
                     if (cachedServer != null) {
                         for (String srv : knownServers) {
@@ -169,11 +171,11 @@ public class ProxyIntegration {
                     int count = in.readInt();
                     serverPlayerCounts.put(serverName, count);
                     recalculateNetworkTotal();
-                    LOGGER.debug("ProxyIntegration: {} has {} players", serverName, count);
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: {} has {} players", serverName, count);
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("ProxyIntegration: failed to read plugin message: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: failed to read plugin message: {}", e.getMessage());
         }
     }
 
@@ -219,7 +221,7 @@ public class ProxyIntegration {
      * this method.
      */
     private void sendBungeeMessage(@SuppressWarnings("unused") ServerPlayer ignoredPlayer, String... parts) {
-        LOGGER.debug("ProxyIntegration: sendBungeeMessage stub called (channel=bungeecord:main, parts={}) — " +
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "ProxyIntegration: sendBungeeMessage stub called (channel=bungeecord:main, parts={}) — " +
             "outbound BungeeCord messaging pending StreamCodec registration in a future build.", parts.length);
     }
 

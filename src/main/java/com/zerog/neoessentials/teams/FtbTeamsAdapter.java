@@ -45,7 +45,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 .orElse("unknown");
 
         if (ftbTeamsLoaded) {
-            LOGGER.info("FTB Teams detected — version: {}", detectedVersion);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "FTB Teams detected — version: {}", detectedVersion);
             probeApi();
         }
     }
@@ -75,7 +75,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                     m.setAccessible(true);
                     resolvedMethod = m;
                     resolvedInstance = manager;
-                    LOGGER.info("FTB Teams adapter: strategy 1 — manager.getTeamForPlayerID(UUID)");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 1 — manager.getTeamForPlayerID(UUID)");
                     return;
                 }
             } catch (Exception e) {
@@ -87,7 +87,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                 m.setAccessible(true);
                 resolvedMethod = m;
                 resolvedInstance = apiInstance;
-                LOGGER.info("FTB Teams adapter: strategy 2 — api().getTeamForPlayerID(UUID)");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 2 — api().getTeamForPlayerID(UUID)");
                 return;
             } catch (NoSuchMethodException e) {
                 NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 2 not applicable: {}", e.getMessage());
@@ -120,7 +120,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
                     found.setAccessible(true);
                     resolvedMethod = found;
                     resolvedInstance = target;
-                    LOGGER.info("FTB Teams adapter: strategy 3 (auto-discovered) — {}.{}(UUID)",
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "FTB Teams adapter: strategy 3 (auto-discovered) — {}.{}(UUID)",
                             target.getClass().getSimpleName(), found.getName());
                     return;
                 }
@@ -159,7 +159,7 @@ public class FtbTeamsAdapter implements TeamProviderAdapter {
             }
 
         } catch (ClassNotFoundException e) {
-            LOGGER.debug("FTB Teams API class not found — mod may not be installed");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FTB Teams API class not found — mod may not be installed");
         } catch (Exception e) {
             LOGGER.warn("FTB Teams adapter init failed: {}", e.getMessage());
         }

@@ -17,6 +17,8 @@ import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -48,27 +50,27 @@ public class NeoEssentials {
         //  ArmorStand entities; interaction is handled via PlayerInteractEvent.EntityInteract.)
 
         // Enhanced initialization logging with version and build info
-        LOGGER.info("╔════════════════════════════════════════════════════════════════╗");
-        LOGGER.info("║         {} v{} (Build #{})         ║", MOD_NAME, MOD_VERSION, BUILD_NUMBER);
-        LOGGER.info("║    Minecraft {} | NeoForge {}        ║", MINECRAFT_VERSION, NEOFORGE_VERSION);
-        LOGGER.info("╚════════════════════════════════════════════════════════════════╝");
-        LOGGER.info("");
-        LOGGER.info("Initializing {} systems...", MOD_NAME);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "╔════════════════════════════════════════════════════════════════╗");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "║         {} v{} (Build #{})         ║", MOD_NAME, MOD_VERSION, BUILD_NUMBER);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "║    Minecraft {} | NeoForge {}        ║", MINECRAFT_VERSION, NEOFORGE_VERSION);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "╚════════════════════════════════════════════════════════════════╝");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Initializing {} systems...", MOD_NAME);
         
         // Initialize PlaceholderAPI system
         try {
-            LOGGER.info("⚙ Initializing PlaceholderAPI system...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing PlaceholderAPI system...");
             initializePlaceholderAPI();
-            LOGGER.info("✓ PlaceholderAPI system initialized successfully");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ PlaceholderAPI system initialized successfully");
         } catch (Exception e) {
             LOGGER.error("✗ PlaceholderAPI initialization failed: {}", e.getMessage(), e);
         }
         
         // Register all managers with the ManagerRegistry
         try {
-            LOGGER.info("⚙ Registering system managers...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Registering system managers...");
             registerAllManagers();
-            LOGGER.info("✓ Registered {} managers across {} categories", 
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Registered {} managers across {} categories", 
                 ManagerRegistry.getInstance().getManagerCount(),
                 ManagerRegistry.getInstance().getManagersByCategory().size());
         } catch (Exception e) {
@@ -79,10 +81,10 @@ public class NeoEssentials {
         MessageUtil.ensureCustomLanguageFile();
 
         long duration = System.currentTimeMillis() - startTime;
-        LOGGER.info("");
-        LOGGER.info("✓ {} initialized successfully in {}ms", MOD_NAME, duration);
-        LOGGER.info("════════════════════════════════════════════════════════════════");
-        LOGGER.info("");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ {} initialized successfully in {}ms", MOD_NAME, duration);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "");
     }
     
     /**
@@ -99,7 +101,7 @@ public class NeoEssentials {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not read build number: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Could not read build number: {}", e.getMessage());
         }
         return "UNKNOWN";
     }
@@ -176,7 +178,7 @@ public class NeoEssentials {
         registry.registerManager("PermissionSystem", "core",
             com.zerog.neoessentials.permissions.PermissionSystem.class);
         
-        LOGGER.debug("Manager registration complete - {} managers registered", registry.getManagerCount());
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Manager registration complete - {} managers registered", registry.getManagerCount());
     }
     
     @EventBusSubscriber(modid = "neoessentials")
@@ -204,7 +206,7 @@ public class NeoEssentials {
             event.addPermissionHandler(
                     NeoEssentialsPermissionHandler.IDENTIFIER,
                     NeoEssentialsPermissionHandler::new);
-            LOGGER.debug("[Permissions] Registered NeoEssentials permission handler: {}",
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Permissions] Registered NeoEssentials permission handler: {}",
                     NeoEssentialsPermissionHandler.IDENTIFIER);
 
             // 2. Auto-activate when no competing permission mod is present
@@ -217,7 +219,7 @@ public class NeoEssentials {
                     if ("neoforge:default_handler".equals(current)) {
                         net.neoforged.neoforge.common.config.NeoForgeServerConfig.INSTANCE.permissionHandler.set(
                                 NeoEssentialsPermissionHandler.IDENTIFIER.toString());
-                        LOGGER.info("[Permissions] Auto-activated NeoEssentials permission handler " +
+                        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Permissions] Auto-activated NeoEssentials permission handler " +
                                 "(neoessentials:handler).  External mod permissions in permissions.json " +
                                 "will now apply to ALL installed mods.  To revert, set " +
                                 "'permissionHandler = \"neoforge:default_handler\"' in config/neoforge-server.toml.");
@@ -230,23 +232,23 @@ public class NeoEssentials {
 
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
-            LOGGER.info("════════════════════════════════════════════════════════════════");
-            LOGGER.info("Server starting - initializing NeoEssentials systems...");
-            LOGGER.info("════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Server starting - initializing NeoEssentials systems...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
             
             // Check for config splitting opportunity
             try {
                 ConfigSplitter.checkAndPromptMigration();
             } catch (Exception e) {
-                LOGGER.debug("Config split check failed: {}", e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Config split check failed: {}", e.getMessage());
             }
             
             // Initialize permission system FIRST
             try {
-                LOGGER.info("⚙ Initializing Permission System...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Permission System...");
                 PermissionSystem.initialize();
                 ManagerRegistry.getInstance().markInitialized("PermissionSystem");
-                LOGGER.info("✓ Permission System initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Permission System initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("✗ CRITICAL: Permission system failed to initialize!", e);
                 ManagerRegistry.getInstance().markFailed("PermissionSystem", e.getMessage());
@@ -254,19 +256,19 @@ public class NeoEssentials {
 
             // Initialize Vault API (after permissions, before chat/economy features)
             try {
-                LOGGER.info("⚙ Initializing Vault API...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Vault API...");
                 com.zerog.neoessentials.vault.VaultManager.initialize();
-                LOGGER.info("✓ Vault API initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Vault API initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("✗ Vault API initialization failed: {}", e.getMessage(), e);
             }
 
             // Initialize ChestShop system
             try {
-                LOGGER.info("⚙ Initializing ChestShop system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing ChestShop system...");
                 com.zerog.neoessentials.shop.ShopManager.getInstance().initialize();
                 ManagerRegistry.getInstance().markInitialized("ShopManager");
-                LOGGER.info("✓ ChestShop system initialized ({} shop(s) loaded)",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ ChestShop system initialized ({} shop(s) loaded)",
                     com.zerog.neoessentials.shop.ShopManager.getInstance().getShopCount());
             } catch (Exception e) {
                 LOGGER.error("✗ ChestShop system failed to initialize: {}", e.getMessage(), e);
@@ -275,10 +277,10 @@ public class NeoEssentials {
 
             // Initialize NPC shop system
             try {
-                LOGGER.info("⚙ Initializing NPC Shop system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing NPC Shop system...");
                 com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().initialize();
                 ManagerRegistry.getInstance().markInitialized("ShopEntityManager");
-                LOGGER.info("✓ NPC Shop system initialized ({} NPC shop(s) loaded)",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ NPC Shop system initialized ({} NPC shop(s) loaded)",
                     com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().getShopCount());
             } catch (Exception e) {
                 LOGGER.error("✗ NPC Shop system failed to initialize: {}", e.getMessage(), e);
@@ -287,19 +289,19 @@ public class NeoEssentials {
 
             // Initialize Auction House system
             try {
-                LOGGER.info("⚙ Initializing Auction House system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Auction House system...");
                 com.zerog.neoessentials.auctionhouse.AuctionHouseManager.getInstance()
                         .initialize(event.getServer());
-                LOGGER.info("✓ Auction House initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Auction House initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("✗ Auction House failed to initialize: {}", e.getMessage(), e);
             }
 
             // Initialize dynamic pricing engine
             try {
-                LOGGER.info("⚙ Initializing Shop PricingEngine...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Shop PricingEngine...");
                 com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().loadConfig();
-                LOGGER.info("✓ Shop PricingEngine initialized ({} rule(s) active, enabled={})",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Shop PricingEngine initialized ({} rule(s) active, enabled={})",
                     com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().getRuleCount(),
                     com.zerog.neoessentials.shop.pricing.PricingEngine.getInstance().isEnabled());
             } catch (Exception e) {
@@ -308,10 +310,10 @@ public class NeoEssentials {
 
             // Initialize Hologram system
             try {
-                LOGGER.info("⚙ Initializing Hologram system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Hologram system...");
                 com.zerog.neoessentials.hologram.HologramManager.getInstance().initialize();
                 ManagerRegistry.getInstance().markInitialized("HologramManager");
-                LOGGER.info("✓ Hologram system initialized ({} hologram(s) loaded)",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Hologram system initialized ({} hologram(s) loaded)",
                     com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
             } catch (Exception e) {
                 LOGGER.error("✗ Hologram system failed to initialize: {}", e.getMessage(), e);
@@ -328,9 +330,9 @@ public class NeoEssentials {
 
             // Initialize custom language system
             try {
-                LOGGER.info("⚙ Initializing custom language system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing custom language system...");
                 com.zerog.neoessentials.i18n.CustomLanguageManager.getInstance().initialize();
-                LOGGER.info("✓ Custom language system initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Custom language system initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("✗ Custom language system failed to initialize!", e);
             }
@@ -338,35 +340,35 @@ public class NeoEssentials {
             // Initialize custom badge images (Phase 3) — part of the player tags/badges module
             if (com.zerog.neoessentials.config.ConfigManager.isPlayerTagsModuleEnabled()) {
                 try {
-                    LOGGER.info("⚙ Loading custom badge images...");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Loading custom badge images...");
                     com.zerog.neoessentials.chat.BadgeManager.getInstance().loadCustomBadgeImages();
-                    LOGGER.info("✓ Badge images loaded successfully");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Badge images loaded successfully");
                 } catch (Exception e) {
                     LOGGER.warn("⚠ Failed to load badge images: {}", e.getMessage());
                     // Non-critical, continue
                 }
             } else {
-                LOGGER.info("Player tags/badges module is disabled via config, skipping badge image loading.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Player tags/badges module is disabled via config, skipping badge image loading.");
             }
 
             // Initialize resource pack system (Phase 3)
             if (com.zerog.neoessentials.config.ConfigManager.isResourcePacksModuleEnabled()) {
                 try {
-                    LOGGER.info("⚙ Initializing resource pack system...");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing resource pack system...");
                     com.zerog.neoessentials.resourcepack.ResourcePackManager.getInstance().initialize();
-                    LOGGER.info("✓ Resource pack system initialized");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Resource pack system initialized");
                 } catch (Exception e) {
                     LOGGER.warn("⚠ Failed to initialize resource pack system: {}", e.getMessage());
                     // Non-critical, continue
                 }
             } else {
-                LOGGER.info("Resource pack module is disabled via config, skipping resource pack system.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Resource pack module is disabled via config, skipping resource pack system.");
             }
 
             // Display manager registry diagnostics
             try {
                 String diagnosticReport = ManagerRegistry.getInstance().generateDiagnosticReport();
-                LOGGER.info(diagnosticReport);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, diagnosticReport);
                 
                 // Warn about any failed managers
                 int failedCount = ManagerRegistry.getInstance().getFailedCount();
@@ -383,12 +385,12 @@ public class NeoEssentials {
             // the prominent (bordered) version above only shows up on an actual failure.
             com.zerog.neoessentials.util.SupportLinks.logConsole(LOGGER, false);
 
-            LOGGER.info("════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
         }
         
         @SubscribeEvent
         public static void onServerStarted(ServerStartedEvent event) {
-            LOGGER.info("Server started - initializing chat system...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Server started - initializing chat system...");
 
             // Set server reference for Auction House component serialiser (registry ops)
             try {
@@ -406,7 +408,7 @@ public class NeoEssentials {
                     LOGGER.error("Failed to initialize chat integration adapters", e);
                 }
             } else {
-                LOGGER.info("Discord integration module is disabled via config, skipping chat integration adapters.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Discord integration module is disabled via config, skipping chat integration adapters.");
             }
 
             // Initialize ChatManager
@@ -420,7 +422,7 @@ public class NeoEssentials {
                 com.zerog.neoessentials.chat.ChatManager chatManager = new com.zerog.neoessentials.chat.ChatManager(chatObj, commandsObj);
                 com.zerog.neoessentials.api.ChatAPI.setChatManager(chatManager);
                 
-                LOGGER.info("ChatManager initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "ChatManager initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize ChatManager on server start", e);
             }
@@ -431,17 +433,17 @@ public class NeoEssentials {
                 com.google.gson.JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
                 com.google.gson.JsonObject afkObj = config.has("afk") ? config.getAsJsonObject("afk") : new com.google.gson.JsonObject();
                 com.zerog.neoessentials.chat.AfkManager.getInstance().loadConfiguration(afkObj);
-                LOGGER.info("AfkManager configuration loaded successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "AfkManager configuration loaded successfully");
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize AfkManager configuration on server start", e);
             }
 
-            LOGGER.info("Server started - applying player nicknames...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Server started - applying player nicknames...");
             
             // Apply nicknames to all online players
             try {
                 com.zerog.neoessentials.util.commands.NickCommand.applyNicknamesToOnlinePlayers(event.getServer());
-                LOGGER.info("Player nicknames applied successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Player nicknames applied successfully");
             } catch (Exception e) {
                 LOGGER.error("Failed to apply player nicknames on server start", e);
             }
@@ -449,7 +451,7 @@ public class NeoEssentials {
             // Initialize Tablist system
             try {
                 com.zerog.neoessentials.tablist.TablistManager.getInstance().loadConfig();
-                LOGGER.info("TablistManager initialized successfully");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "TablistManager initialized successfully");
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize TablistManager: {}", e.getMessage());
             }
@@ -478,7 +480,7 @@ public class NeoEssentials {
                     // fragile reverse-position guess.
                     com.zerog.neoessentials.hologram.integration.ShopHologramManager.retagAllShopHolograms();
                     com.zerog.neoessentials.hologram.HologramScheduler.start();
-                    LOGGER.info("✓ Holograms spawned and scheduler started ({} hologram(s)).",
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Holograms spawned and scheduler started ({} hologram(s)).",
                         com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
                 } catch (Exception e) {
                     LOGGER.error("Failed to spawn holograms / start scheduler: {}", e.getMessage(), e);
@@ -557,13 +559,13 @@ public class NeoEssentials {
 
         @SubscribeEvent
         public static void onServerStopping(ServerStoppingEvent event) {
-            LOGGER.info("════════════════════════════════════════════════════════════════");
-            LOGGER.info("Server stopping - shutting down NeoEssentials systems...");
-            LOGGER.info("════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Server stopping - shutting down NeoEssentials systems...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
 
             // Shutdown Permission System
             try {
-                LOGGER.info("Shutting down Permission System...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Permission System...");
                 PermissionSystem.shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to save permissions on shutdown", e);
@@ -571,21 +573,21 @@ public class NeoEssentials {
 
             // Shutdown Economy Managers (these have executors that need proper shutdown)
             try {
-                LOGGER.info("Shutting down Economy Manager...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Economy Manager...");
                 com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Economy Manager", e);
             }
 
             try {
-                LOGGER.info("Shutting down Transaction History Manager...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Transaction History Manager...");
                 com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Transaction History Manager", e);
             }
 
             try {
-                LOGGER.info("Shutting down Pay Toggle Manager...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Pay Toggle Manager...");
                 com.zerog.neoessentials.economy.managers.PayToggleManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Pay Toggle Manager", e);
@@ -593,9 +595,9 @@ public class NeoEssentials {
 
             // Shutdown Auction House system
             try {
-                LOGGER.info("Shutting down Auction House system...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Auction House system...");
                 com.zerog.neoessentials.auctionhouse.AuctionHouseManager.getInstance().shutdown();
-                LOGGER.info("✓ Auction House system shutdown.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Auction House system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Auction House system", e);
             }
@@ -610,7 +612,7 @@ public class NeoEssentials {
             // Shutdown ChestShop system
             try {
                 com.zerog.neoessentials.shop.ShopManager.getInstance().shutdown();
-                LOGGER.info("✓ ChestShop system shutdown.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ ChestShop system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown ChestShop system", e);
             }
@@ -618,7 +620,7 @@ public class NeoEssentials {
             // Shutdown NPC Shop system
             try {
                 com.zerog.neoessentials.shop.entity.ShopEntityManager.getInstance().shutdown();
-                LOGGER.info("✓ NPC Shop system shutdown.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ NPC Shop system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown NPC Shop system", e);
             }
@@ -627,28 +629,28 @@ public class NeoEssentials {
             try {
                 com.zerog.neoessentials.hologram.HologramScheduler.stop();
                 com.zerog.neoessentials.hologram.HologramManager.getInstance().shutdown();
-                LOGGER.info("✓ Hologram system shutdown.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Hologram system shutdown.");
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Hologram system", e);
             }
 
             // Shutdown Chat/AFK Managers
             try {
-                LOGGER.info("Shutting down chat integration adapters...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down chat integration adapters...");
                 com.zerog.neoessentials.integrations.ChatIntegrationManager.shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown chat integration adapters", e);
             }
 
             try {
-                LOGGER.info("Shutting down AFK Manager...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down AFK Manager...");
                 com.zerog.neoessentials.chat.AfkManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown AFK Manager", e);
             }
 
             try {
-                LOGGER.info("Shutting down AFK Movement Detector...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down AFK Movement Detector...");
                 com.zerog.neoessentials.chat.handlers.AfkMovementDetector.shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown AFK Movement Detector", e);
@@ -656,7 +658,7 @@ public class NeoEssentials {
 
             // Shutdown Moderation Managers
             try {
-                LOGGER.info("Shutting down Ban Manager scheduler...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Ban Manager scheduler...");
                 com.zerog.neoessentials.moderation.BanManager.getInstance().shutdownScheduler();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Ban Manager", e);
@@ -664,22 +666,22 @@ public class NeoEssentials {
 
             // Shutdown Teleport Managers
             try {
-                LOGGER.info("Shutting down Teleport Request Manager...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Shutting down Teleport Request Manager...");
                 com.zerog.neoessentials.teleportation.TeleportRequests.TeleportRequestManager.getInstance().shutdown();
             } catch (Exception e) {
                 LOGGER.error("Failed to shutdown Teleport Request Manager", e);
             }
 
-            LOGGER.info("════════════════════════════════════════════════════════════════");
-            LOGGER.info("NeoEssentials shutdown complete");
-            LOGGER.info("════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials shutdown complete");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
 
             // Diagnostic: Check for any remaining threads
             // DISABLED: Thread diagnostics can potentially interfere with shutdown
             // Uncomment for debugging if needed
             /*
             try {
-                LOGGER.info("Running thread diagnostics...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Running thread diagnostics...");
                 com.zerog.neoessentials.util.ThreadDiagnostics.logNeoEssentialsThreads();
                 com.zerog.neoessentials.util.ThreadDiagnostics.logNonDaemonThreads();
             } catch (Exception e) {
@@ -690,7 +692,7 @@ public class NeoEssentials {
 
         @SubscribeEvent
         public static void onRegisterCommands(RegisterCommandsEvent event) {
-            LOGGER.info("Registering NeoEssentials commands...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Registering NeoEssentials commands...");
             CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
             CommandRegistry registry = CommandRegistry.getInstance();
             
@@ -725,7 +727,7 @@ public class NeoEssentials {
             try {
                 var commands = dispatcher.getRoot().getChildren();
                 commands.removeIf(node -> node.getName().equals(commandName));
-                LOGGER.debug("Removed vanilla command: /{}", commandName);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Removed vanilla command: /{}", commandName);
             } catch (Exception e) {
                 LOGGER.warn("Failed to remove vanilla command /{}: {}", commandName, e.getMessage());
             }
@@ -1221,21 +1223,21 @@ public class NeoEssentials {
      * @see com.zerog.neoessentials.api.DefaultPlaceholderExpansion
      */
     private void initializePlaceholderAPI() {
-        LOGGER.debug("Initializing PlaceholderAPI system...");
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Initializing PlaceholderAPI system...");
         try {
             // Register the default NeoEssentials placeholder expansion
             com.zerog.neoessentials.api.DefaultPlaceholderExpansion defaultExpansion = 
                 new com.zerog.neoessentials.api.DefaultPlaceholderExpansion();
             
-            LOGGER.debug("Created DefaultPlaceholderExpansion with {} placeholders", 
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created DefaultPlaceholderExpansion with {} placeholders", 
                 defaultExpansion.getPlaceholders().size());
             
             boolean registered = com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(defaultExpansion);
             
             if (registered) {
-                LOGGER.info("PlaceholderAPI initialized with {} default placeholders", 
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "PlaceholderAPI initialized with {} default placeholders", 
                     defaultExpansion.getPlaceholders().size());
-                LOGGER.debug("Available placeholders: {}", 
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Available placeholders: {}", 
                     com.zerog.neoessentials.api.PlaceholderAPI.getRegisteredPlaceholders());
                 
                 // Mark PlaceholderManager as initialized

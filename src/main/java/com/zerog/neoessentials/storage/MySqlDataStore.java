@@ -6,6 +6,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import javax.sql.DataSource;
 import java.io.PrintWriter;
@@ -74,7 +76,7 @@ public class MySqlDataStore implements DataStore {
             config.setConnectionTimeout(5000);
             config.setInitializationFailTimeout(5000);
             ds = new HikariDataSource(config);
-            LOGGER.info("MySqlDataStore: connected to {}:{}/{}", host, port, database);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "MySqlDataStore: connected to {}:{}/{}", host, port, database);
         } catch (Exception e) {
             LOGGER.error("MySqlDataStore: failed to connect to {}:{}/{}", host, port, database, e);
             if (ds != null) ds.close();

@@ -267,7 +267,7 @@ public class EnchantCommand {
         
         if (success) {
             // Log successful enchantment for audit trail
-            LOGGER.info("Player {} enchanted {} with {} level {} for player {}", 
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} enchanted {} with {} level {} for player {}", 
                 executor.getName().getString(),
                 stack.getDisplayName().getString(),
                 enchantId.toString(),

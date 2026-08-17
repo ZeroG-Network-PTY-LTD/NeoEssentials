@@ -27,6 +27,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.List;
 
@@ -433,7 +435,7 @@ public class WorldInteractionCommands {
 
         final int fs = sent;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.tpaall.sent", fs), true);
-        LOGGER.info("{} sent tpaall, {} requests sent", src.getTextName(), sent);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} sent tpaall, {} requests sent", src.getTextName(), sent);
         return sent > 0 ? 1 : 0;
     }
 
@@ -463,7 +465,7 @@ public class WorldInteractionCommands {
                     final int fc = count;
                     src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.broadcastworld.sent",
                         targetLevel.dimension().identifier().getPath(), fc), false);
-                    LOGGER.info("[BroadcastWorld:{}] {}", targetLevel.dimension().identifier().getPath(), resolved);
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "[BroadcastWorld:{}] {}", targetLevel.dimension().identifier().getPath(), resolved);
                     return 1;
                 })
             )

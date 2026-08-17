@@ -111,14 +111,14 @@ public class CommandLengthEnforcer {
         // Check if command is in allowed list for frozen players
         java.util.List<String> allowedCommands = ConfigManager.getFreezeAllowedCommands();
         if (allowedCommands.contains(commandName)) {
-            LOGGER.debug("Frozen player {} used allowed command: {}", player.getName().getString(), commandName);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Frozen player {} used allowed command: {}", player.getName().getString(), commandName);
             return false; // Command is allowed even when frozen
         }
 
         // Block the command
         event.setCanceled(true);
         player.sendSystemMessage(MessageUtil.error("commands.neoessentials.freeze.cannot_use_commands"));
-        LOGGER.info("Blocked command from frozen player {}: {}", player.getName().getString(), rawCommand);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Blocked command from frozen player {}: {}", player.getName().getString(), rawCommand);
         return true; // Command was blocked
     }
 
@@ -136,7 +136,7 @@ public class CommandLengthEnforcer {
             // Block the command
             event.setCanceled(true);
             player.sendSystemMessage(MessageUtil.error(result.getErrorMessage()));
-            LOGGER.info("Blocked invalid command from {}: {} (Reason: {})",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Blocked invalid command from {}: {} (Reason: {})",
                 player.getName().getString(),
                 command.length() > 50 ? command.substring(0, 50) + "..." : command,
                 result.getErrorMessage());

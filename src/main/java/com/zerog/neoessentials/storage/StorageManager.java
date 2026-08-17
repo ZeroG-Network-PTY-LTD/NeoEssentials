@@ -4,6 +4,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 
@@ -65,7 +67,7 @@ public class StorageManager {
 
         this.store = resolved;
         this.activeType = resolvedType;
-        LOGGER.info("StorageManager: active backend is '{}'", resolvedType);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "StorageManager: active backend is '{}'", resolvedType);
     }
 
     public static StorageManager getInstance() {

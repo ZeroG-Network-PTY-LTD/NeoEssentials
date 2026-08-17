@@ -12,6 +12,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.UUID;
 
@@ -98,7 +100,7 @@ public class ItemInteractionHandler {
                     player.createCommandSourceStack(),
                     command.startsWith("/") ? command.substring(1) : command
                 );
-                LOGGER.debug("Executed powertool '{}' for {}", command, player.getName().getString());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Executed powertool '{}' for {}", command, player.getName().getString());
             } catch (Exception e) {
                 LOGGER.error("Failed to execute powertool command '{}' for player {}",
                     command, player.getName().getString(), e);

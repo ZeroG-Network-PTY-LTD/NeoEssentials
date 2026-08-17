@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,7 +116,7 @@ public class FakePlayerManager {
         try {
             JsonObject tab = getTablistSection();
             if (tab == null || !tab.has("fakePlayers")) {
-                LOGGER.debug("FakePlayerManager: no fakePlayers section in config.");
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: no fakePlayers section in config.");
                 enabled = false;
                 return;
             }
@@ -138,7 +140,7 @@ public class FakePlayerManager {
                 }
             }
             enabled = !entries.isEmpty();
-            LOGGER.info("FakePlayerManager: loaded {} fake entries.", entries.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "FakePlayerManager: loaded {} fake entries.", entries.size());
             resolveSkinsAsync();
 
         } catch (Exception e) {
@@ -180,7 +182,7 @@ public class FakePlayerManager {
                     resolvedSkins.put(slotId, textures.iterator().next());
                     refreshAll(server);
                 } catch (Exception e) {
-                    LOGGER.debug("FakePlayerManager: failed to resolve skinOwner '{}': {}", owner, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: failed to resolve skinOwner '{}': {}", owner, e.getMessage());
                 }
             });
         }
@@ -253,7 +255,7 @@ public class FakePlayerManager {
                 if (updatePacket != null) viewer.connection.send(updatePacket);
             }
         } catch (Exception e) {
-            LOGGER.debug("FakePlayerManager: inject error for {}: {}", viewer.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: inject error for {}: {}", viewer.getName().getString(), e.getMessage());
         }
     }
 
@@ -336,7 +338,7 @@ public class FakePlayerManager {
                 if (updatePacket != null) viewer.connection.send(updatePacket);
             }
         } catch (Exception e) {
-            LOGGER.debug("FakePlayerManager: column slot inject error for {}: {}", viewer.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: column slot inject error for {}: {}", viewer.getName().getString(), e.getMessage());
         }
     }
 
@@ -347,7 +349,7 @@ public class FakePlayerManager {
         try {
             viewer.connection.send(new ClientboundPlayerInfoRemovePacket(new ArrayList<>(injected)));
         } catch (Exception e) {
-            LOGGER.debug("FakePlayerManager: column slot remove error for {}: {}", viewer.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: column slot remove error for {}: {}", viewer.getName().getString(), e.getMessage());
         }
     }
 
@@ -361,7 +363,7 @@ public class FakePlayerManager {
         try {
             viewer.connection.send(new ClientboundPlayerInfoRemovePacket(new ArrayList<>(injected)));
         } catch (Exception e) {
-            LOGGER.debug("FakePlayerManager: remove error for {}: {}", viewer.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: remove error for {}: {}", viewer.getName().getString(), e.getMessage());
         }
     }
 
@@ -444,7 +446,7 @@ public class FakePlayerManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("FakePlayerManager: buildFakePacket reflection error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: buildFakePacket reflection error: {}", e.getMessage());
         }
         return null;
     }

@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.stream.StreamSupport;
@@ -75,7 +77,7 @@ public class ServerAdminCommands {
                     ctx.getSource().getServer().getPlayerList().getPlayers()
                         .forEach(p -> p.sendSystemMessage(broadcast));
                     ctx.getSource().getServer().sendSystemMessage(broadcast);
-                    LOGGER.info("[Broadcast] {} : {}", senderName, resolved);
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "[Broadcast] {} : {}", senderName, resolved);
                     return 1;
                 })
             )
@@ -265,7 +267,7 @@ public class ServerAdminCommands {
             ? type + " for " + durationSeconds + "s"
             : type;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.weather.set", label), true);
-        LOGGER.info("{} set weather to {}", src.getPlayer() != null ? src.getPlayer().getName().getString() : "Console", label);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} set weather to {}", src.getPlayer() != null ? src.getPlayer().getName().getString() : "Console", label);
         return 1;
     }
 
@@ -296,7 +298,7 @@ public class ServerAdminCommands {
         }
         target.hurt(target.damageSources().genericKill(), Float.MAX_VALUE);
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.kill.success", targetName), true);
-        LOGGER.info("{} killed {}", src.getPlayer() != null ? src.getPlayer().getName().getString() : "Console", targetName);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} killed {}", src.getPlayer() != null ? src.getPlayer().getName().getString() : "Console", targetName);
         return 1;
     }
 
@@ -637,7 +639,7 @@ public class ServerAdminCommands {
         spawnerBE.setChanged();
         final String fn = mobName;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.spawner.changed", fn), true);
-        LOGGER.info("{} changed spawner at {} to {}", player.getName().getString(), bpos, mobName);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} changed spawner at {} to {}", player.getName().getString(), bpos, mobName);
         return 1;
     }
 

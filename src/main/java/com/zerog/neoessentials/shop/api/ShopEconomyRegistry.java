@@ -2,6 +2,8 @@ package com.zerog.neoessentials.shop.api;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +32,7 @@ public class ShopEconomyRegistry {
      */
     public void register(ShopEconomyAdapter newAdapter) {
         ShopEconomyAdapter old = adapter.getAndSet(newAdapter);
-        LOGGER.info("[ChestShop] Economy adapter changed: '{}' → '{}'",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] Economy adapter changed: '{}' → '{}'",
                 old.getProviderName(), newAdapter.getProviderName());
     }
 

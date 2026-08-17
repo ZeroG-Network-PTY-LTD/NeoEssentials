@@ -70,7 +70,7 @@ public final class ShopParser {
         // Blank → auto-assign to the placing player
         if (ownerLine.isEmpty()) {
             if (ownerUUID == null || ownerName == null || ownerName.isBlank()) {
-                LOGGER.debug("[ChestShop] Blank owner line but no player context at {}", signPos);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Blank owner line but no player context at {}", signPos);
                 return Optional.empty();
             }
             ownerLine = ownerName;
@@ -89,11 +89,11 @@ public final class ShopParser {
         try {
             quantity = Integer.parseInt(qtyStr);
         } catch (NumberFormatException e) {
-            LOGGER.debug("[ChestShop] Invalid quantity '{}' at {}", qtyStr, signPos);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Invalid quantity '{}' at {}", qtyStr, signPos);
             return Optional.empty();
         }
         if (quantity < 1 || quantity > MAX_QUANTITY) {
-            LOGGER.debug("[ChestShop] Quantity {} out of range at {}", quantity, signPos);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Quantity {} out of range at {}", quantity, signPos);
             return Optional.empty();
         }
         shop.quantity = quantity;
@@ -101,7 +101,7 @@ public final class ShopParser {
         // ── Line 2: price ─────────────────────────────────────────────────────
         String priceLine = strip(lines[ShopData.PRICE_LINE]).toUpperCase();
         if (!parsePriceLine(priceLine, shop)) {
-            LOGGER.debug("[ChestShop] Invalid price line '{}' at {}", priceLine, signPos);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Invalid price line '{}' at {}", priceLine, signPos);
             return Optional.empty();
         }
         if (!shop.canBuy() && !shop.canSell()) return Optional.empty();
@@ -120,7 +120,7 @@ public final class ShopParser {
 
             ItemStack resolved = resolveItem(itemStr);
             if (resolved == null || resolved.isEmpty()) {
-                LOGGER.debug("[ChestShop] Could not resolve item '{}' (normalised: '{}') at {} — " +
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Could not resolve item '{}' (normalised: '{}') at {} — " +
                     "check the item ID is correct (e.g. 'thermal:copper_ingot' or 'diamond')",
                     itemRaw, itemStr, signPos);
                 return Optional.empty();
@@ -139,7 +139,7 @@ public final class ShopParser {
         if (!shop.isAdminShop()) {
             BlockPos chestPos = findAdjacentChest(signPos, level);
             if (chestPos == null) {
-                LOGGER.debug("[ChestShop] No chest found adjacent to sign at {}", signPos);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] No chest found adjacent to sign at {}", signPos);
                 return Optional.empty();
             }
             shop.hasChest      = true;

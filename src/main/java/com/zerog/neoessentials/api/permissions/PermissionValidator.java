@@ -4,6 +4,8 @@ import com.zerog.neoessentials.permissions.PermissionGroup;
 import com.zerog.neoessentials.permissions.PermissionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 
@@ -26,9 +28,9 @@ public class PermissionValidator {
      * <p>Logs warnings for any NeoEssentials nodes that are not found in the registry.
      */
     public static ValidationResult validate(PermissionManager manager) {
-        LOGGER.info("═══════════════════════════════════════════════════════════");
-        LOGGER.info("Validating Permission Nodes...");
-        LOGGER.info("═══════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Validating Permission Nodes...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════════════════════════════════════════");
 
         PermissionRegistry registry = PermissionRegistry.getInstance();
         Set<String> registeredPermissions = registry.getAllPermissions();
@@ -41,7 +43,7 @@ public class PermissionValidator {
 
         // Check each group's permissions
         for (PermissionGroup group : manager.getGroups()) {
-            LOGGER.info("Checking group '{}'...", group.getName());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Checking group '{}'...", group.getName());
 
             for (String permission : group.getPermissions()) {
                 totalChecked++;
@@ -59,7 +61,7 @@ public class PermissionValidator {
                 // another mod. We cannot know its permission tree, so we accept it
                 // silently instead of flagging it as unknown.
                 if (!effectiveNode.startsWith("neoessentials.")) {
-                    LOGGER.debug("  ✓ Group '{}': External permission '{}' — accepted (not NeoEssentials)",
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "  ✓ Group '{}': External permission '{}' — accepted (not NeoEssentials)",
                             group.getName(), permission);
                     externalSkipped++;
                     continue;
@@ -95,12 +97,12 @@ public class PermissionValidator {
         }
 
         // Log results
-        LOGGER.info("─────────────────────────────────────────────────────────────");
-        LOGGER.info("Validation Results:");
-        LOGGER.info("  Total permissions checked:           {}", totalChecked);
-        LOGGER.info("  Registered NeoEssentials permissions: {}", registeredPermissions.size());
-        LOGGER.info("  External mod permissions (skipped):  {}", externalSkipped);
-        LOGGER.info("  NeoEssentials issues found:          {}", issuesFound);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "─────────────────────────────────────────────────────────────");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Validation Results:");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  Total permissions checked:           {}", totalChecked);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  Registered NeoEssentials permissions: {}", registeredPermissions.size());
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  External mod permissions (skipped):  {}", externalSkipped);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  NeoEssentials issues found:          {}", issuesFound);
 
         if (!warnings.isEmpty()) {
             LOGGER.warn("─────────────────────────────────────────────────────────────");
@@ -116,7 +118,7 @@ public class PermissionValidator {
             }
         }
 
-        LOGGER.info("═══════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════════════════════════════════════════");
 
         return new ValidationResult(totalChecked, issuesFound, externalSkipped, warnings, suggestions);
     }

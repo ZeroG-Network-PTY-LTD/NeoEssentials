@@ -6,6 +6,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 
@@ -133,11 +135,11 @@ public class TablistLayout {
             }
             fillEmptySlots = !layout.has("fillEmptySlots") || layout.get("fillEmptySlots").getAsBoolean();
 
-            LOGGER.info("TablistLayout loaded — columns={}, sortByWeight={}, groupSections={}, playersByServer={}",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "TablistLayout loaded — columns={}, sortByWeight={}, groupSections={}, playersByServer={}",
                 columns, sortByGroupWeight, groupSections, playersByServer);
 
         } catch (Exception e) {
-            LOGGER.debug("TablistLayout: config load error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "TablistLayout: config load error: {}", e.getMessage());
         }
     }
 
@@ -297,7 +299,7 @@ public class TablistLayout {
                 assignToSortTeam(scoreboard, slot.profileName(), slotTeamKey(slot.position()));
             }
         } catch (Throwable e) {
-            LOGGER.debug("TablistLayout: failed to assign column sort-teams: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "TablistLayout: failed to assign column sort-teams: {}", e.getMessage());
         }
     }
 

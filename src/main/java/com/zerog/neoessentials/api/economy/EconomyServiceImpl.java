@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.api.economy;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -42,11 +44,11 @@ public class EconomyServiceImpl implements EconomyService {
         // One-time migration: Load old data file and import into EconomyManager
         if (!migrated && Files.exists(dataFile)) {
             migrated = true;
-            LOGGER.info("=== EconomyServiceImpl Migration ===");
-            LOGGER.info("Detecting old balance data format - migrating to EconomyManager...");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "=== EconomyServiceImpl Migration ===");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "Detecting old balance data format - migrating to EconomyManager...");
             migrateOldBalances();
         } else {
-            LOGGER.debug("EconomyServiceImpl initialized as wrapper around EconomyManager");
+            NeoLog.debug(LOGGER, LogCategory.ECONOMY, "EconomyServiceImpl initialized as wrapper around EconomyManager");
         }
     }
 
@@ -132,7 +134,7 @@ public class EconomyServiceImpl implements EconomyService {
     private void migrateOldBalances() {
         try {
             if (!Files.exists(dataFile)) {
-                LOGGER.info("No old balance data found, skipping migration");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "No old balance data found, skipping migration");
                 return;
             }
             
@@ -142,13 +144,13 @@ public class EconomyServiceImpl implements EconomyService {
                 Map<String, Object> raw = new Gson().fromJson(reader, type);
                 
                 if (raw == null || raw.isEmpty()) {
-                    LOGGER.info("Old balance file is empty, skipping migration");
+                    NeoLog.info(LOGGER, LogCategory.ECONOMY, "Old balance file is empty, skipping migration");
                     return;
                 }
                 
                 // Check if it's already the new format (has _dataVersion)
                 if (raw.containsKey("_dataVersion")) {
-                    LOGGER.info("Balance data already in new format, no migration needed");
+                    NeoLog.info(LOGGER, LogCategory.ECONOMY, "Balance data already in new format, no migration needed");
                     return;
                 }
                 
@@ -168,12 +170,12 @@ public class EconomyServiceImpl implements EconomyService {
                     }
                 }
                 
-                LOGGER.info("✓ Successfully migrated {} player balances to EconomyManager", migratedCount);
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "✓ Successfully migrated {} player balances to EconomyManager", migratedCount);
                 
                 // Rename old file as backup
                 Path backupPath = dataFile.getParent().resolve(dataFile.getFileName() + ".old");
                 Files.move(dataFile, backupPath);
-                LOGGER.info("✓ Old balance file backed up to: {}", backupPath.getFileName());
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "✓ Old balance file backed up to: {}", backupPath.getFileName());
                 
             }
         } catch (Exception e) {

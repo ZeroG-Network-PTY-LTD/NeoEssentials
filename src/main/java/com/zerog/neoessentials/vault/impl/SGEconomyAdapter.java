@@ -7,6 +7,8 @@ import net.sirgrantd.sg_economy.api.EconomyEventProvider;
 import net.sirgrantd.sg_economy.api.SGEconomyApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.text.DecimalFormat;
 import java.util.UUID;
@@ -106,7 +108,7 @@ public class SGEconomyAdapter extends VaultEconomy {
     public double getBalance(UUID playerId) {
         ServerPlayer player = onlinePlayer(playerId);
         if (player == null) {
-            LOGGER.debug("SGEconomyAdapter: getBalance requested for offline player {} — SG Economy API has no offline lookup, returning 0", playerId);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "SGEconomyAdapter: getBalance requested for offline player {} — SG Economy API has no offline lookup, returning 0", playerId);
             return 0.0;
         }
         try {

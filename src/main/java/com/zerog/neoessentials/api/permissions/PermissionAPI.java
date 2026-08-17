@@ -4,6 +4,8 @@
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import com.zerog.neoessentials.permissions.ExternalPermissionAdapter;
 import com.zerog.neoessentials.permissions.PermissionGroup;
@@ -41,7 +43,7 @@ public class PermissionAPI {
                 LOGGER.warn("║  Run /neoe reload once the config issue has been resolved.    ║");
                 LOGGER.warn("╚══════════════════════════════════════════════════════════════╝");
             } else {
-                LOGGER.info("Permission system emergency mode deactivated — normal checks resumed.");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Permission system emergency mode deactivated — normal checks resumed.");
             }
         }
     }
@@ -65,7 +67,7 @@ public class PermissionAPI {
      */
     public static void setExternalAdapter(ExternalPermissionAdapter adapter) {
         externalAdapter = adapter;
-        LOGGER.info("External permission adapter set: " + (adapter != null ? adapter.getName() : "none"));
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "External permission adapter set: " + (adapter != null ? adapter.getName() : "none"));
     }
 
     /**
@@ -139,15 +141,15 @@ public class PermissionAPI {
             permission = com.zerog.neoessentials.permissions.PermissionAliasManager
                 .getInstance().resolve(permission);
         } catch (Exception e) {
-            LOGGER.debug("Alias resolution failed for '{}': {}", permission, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Alias resolution failed for '{}': {}", permission, e.getMessage());
         }
 
-        LOGGER.debug("═══ PERMISSION CHECK ═══");
-        LOGGER.debug("Player UUID: {}", uuid);
-        LOGGER.debug("Permission: {}", permission);
-        LOGGER.debug("External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══ PERMISSION CHECK ═══");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Player UUID: {}", uuid);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Permission: {}", permission);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "External adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
         if (context != null && context != com.zerog.neoessentials.permissions.PermissionContext.EMPTY) {
-            LOGGER.debug("Context: world={} time={} gamemode={}", context.worldId, context.dayTime, context.gamemode);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Context: world={} time={} gamemode={}", context.worldId, context.dayTime, context.gamemode);
         }
 
         // ── Emergency mode — permission system failed to start ────────────────
@@ -164,9 +166,9 @@ public class PermissionAPI {
         // Different from vanillaOpFallback (which runs AFTER all checks).
         if (allowOpBypass && com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
             if (isPlayerOpped(uuid)) {
-                LOGGER.debug("Player is OP - bypassing permission check (opsBypassPermissions)");
-                LOGGER.debug("Result: TRUE (op bypass)");
-                LOGGER.debug("═══════════════════════");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Player is OP - bypassing permission check (opsBypassPermissions)");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (op bypass)");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
                 return true;
             }
         }
@@ -175,7 +177,7 @@ public class PermissionAPI {
         // Try external first. If unhealthy or throwing, fall through to internal
         // and then to the registry-default / vanilla-OP fallbacks.
         if (externalAdapter != null) {
-            LOGGER.debug("Using external permission system: {}", externalAdapter.getName());
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Using external permission system: {}", externalAdapter.getName());
             boolean externalAvailable = externalAdapter.isAvailable() && externalAdapter.isHealthy();
 
             // explicitDeny caches the result of isExplicitlyDenied() so that we avoid
@@ -188,10 +190,10 @@ public class PermissionAPI {
             if (externalAvailable) {
                 try {
                     boolean hasExternalPerm = externalAdapter.hasPermission(uuid, permission);
-                    LOGGER.debug("External system returned: {}", hasExternalPerm);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "External system returned: {}", hasExternalPerm);
                     if (hasExternalPerm) {
-                        LOGGER.debug("Result: TRUE (external)");
-                        LOGGER.debug("═══════════════════════");
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (external)");
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
                         return true;
                     }
                     // Not explicitly granted — check once whether it is explicitly denied.
@@ -200,11 +202,11 @@ public class PermissionAPI {
                     try {
                         explicitDeny = externalAdapter.isExplicitlyDenied(uuid, permission);
                     } catch (Exception ex2) {
-                        LOGGER.debug("isExplicitlyDenied threw for '{}' — treating as not denied: {}",
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "isExplicitlyDenied threw for '{}' — treating as not denied: {}",
                                 permission, ex2.getMessage());
                         explicitDeny = false;
                     }
-                    LOGGER.debug("External '{}': no explicit grant; explicitDeny={}", permission, explicitDeny);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "External '{}': no explicit grant; explicitDeny={}", permission, explicitDeny);
                 } catch (Exception ex) {
                     LOGGER.warn("External permission adapter '{}' threw during hasPermission('{}') — falling back: {}",
                             externalAdapter.getName(), permission, ex.getMessage());
@@ -217,12 +219,12 @@ public class PermissionAPI {
 
             // ── Internal-manager fallback (external failed or denied) ─────────
             if (manager != null) {
-                LOGGER.debug("Using internal permission system (external adapter fallback)");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Using internal permission system (external adapter fallback)");
                 boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
-                LOGGER.debug("Internal fallback returned: {}", hasInternalPerm);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Internal fallback returned: {}", hasInternalPerm);
                 if (hasInternalPerm) {
-                    LOGGER.debug("Result: TRUE (internal fallback)");
-                    LOGGER.debug("═══════════════════════");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (internal fallback)");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
                     return true;
                 }
                 // Internal also said "no" — try registry defaults before vanilla-OP fallback.
@@ -246,12 +248,12 @@ public class PermissionAPI {
             if (!explicitlyDenied) {
                 boolean registryDefault = checkRegistryDefaultNoAdapterCall(permission);
                 if (registryDefault) {
-                    LOGGER.debug("Result: TRUE (registry default — external had no opinion or was unavailable)");
-                    LOGGER.debug("═══════════════════════");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (registry default — external had no opinion or was unavailable)");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
                     return true;
                 }
             } else {
-                LOGGER.debug("Registry default suppressed: external adapter explicitly denied '{}'", permission);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Registry default suppressed: external adapter explicitly denied '{}'", permission);
             }
 
             // ── Vanilla OP fallback (last resort after external+internal both failed/denied) ──
@@ -259,7 +261,7 @@ public class PermissionAPI {
         }
 
         // ── Pure-internal path (no external adapter configured) ───────────────
-        LOGGER.debug("Using INTERNAL permission system");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Using INTERNAL permission system");
         if (manager == null) {
             LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null");
             // No manager at all — fall straight to vanilla-OP fallback
@@ -267,10 +269,10 @@ public class PermissionAPI {
         }
 
         boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
-        LOGGER.debug("Internal system returned: {}", hasInternalPerm);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Internal system returned: {}", hasInternalPerm);
         if (hasInternalPerm) {
-            LOGGER.debug("Result: TRUE (internal)");
-            LOGGER.debug("═══════════════════════");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (internal)");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
             return true;
         }
 
@@ -279,8 +281,8 @@ public class PermissionAPI {
         // defaultValue=true in the registry and grant it if so.
         boolean registryDefault = checkRegistryDefaultNoAdapterCall(permission);
         if (registryDefault) {
-            LOGGER.debug("Result: TRUE (registry default — internal had no entry)");
-            LOGGER.debug("═══════════════════════");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (registry default — internal had no entry)");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
             return true;
         }
 
@@ -313,10 +315,10 @@ public class PermissionAPI {
             if (info == null || !info.getDefaultValue()) {
                 return false;
             }
-            LOGGER.debug("Registry default applies for '{}' (defaultValue=true, explicit-deny already confirmed as false)", permission);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Registry default applies for '{}' (defaultValue=true, explicit-deny already confirmed as false)", permission);
             return true;
         } catch (Exception e) {
-            LOGGER.debug("Error checking registry default (no-adapter path) for '{}': {}", permission, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Error checking registry default (no-adapter path) for '{}': {}", permission, e.getMessage());
             return false;
         }
     }
@@ -336,14 +338,14 @@ public class PermissionAPI {
     private static boolean checkVanillaOpFallback(UUID uuid, String permission, String source) {
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isVanillaOpFallbackEnabled()) {
             if (isPlayerOpped(uuid)) {
-                LOGGER.debug("Vanilla OP fallback (after {}): granting '{}' to OP {}", source, permission, uuid);
-                LOGGER.debug("Result: TRUE (vanillaOpFallback)");
-                LOGGER.debug("═══════════════════════");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Vanilla OP fallback (after {}): granting '{}' to OP {}", source, permission, uuid);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (vanillaOpFallback)");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
                 return true;
             }
         }
-        LOGGER.debug("Result: FALSE ({} denied, no OP fallback triggered)", source);
-        LOGGER.debug("═══════════════════════");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: FALSE ({} denied, no OP fallback triggered)", source);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
         return false;
     }
 
@@ -371,7 +373,7 @@ public class PermissionAPI {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not check op status for UUID {}: {}", uuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not check op status for UUID {}: {}", uuid, e.getMessage());
         }
         return false;
     }
@@ -387,19 +389,19 @@ public class PermissionAPI {
             return "";
         }
 
-        LOGGER.debug(">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
-        LOGGER.debug(">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
 
         // If external adapter is set, ONLY use it - do NOT fall back to internal
         if (externalAdapter != null) {
-            LOGGER.debug(">>> Querying external adapter for prefix...");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Querying external adapter for prefix...");
             String prefix = externalAdapter.getPrefix(uuid);
-            LOGGER.debug(">>> External adapter returned: [{}]", prefix);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> External adapter returned: [{}]", prefix);
             return prefix != null ? prefix : "";
         }
 
         // Only use internal system if NO external adapter is configured
-        LOGGER.debug(">>> Using internal permission system (no external adapter)");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Using internal permission system (no external adapter)");
 
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
@@ -417,7 +419,7 @@ public class PermissionAPI {
             return "";
         }
         String prefix = group.getPrefix();
-        LOGGER.debug(">>> Internal system prefix: [{}]", prefix);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Internal system prefix: [{}]", prefix);
         return prefix != null ? prefix : "";
     }
 

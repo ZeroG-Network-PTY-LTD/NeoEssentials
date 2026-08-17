@@ -28,6 +28,8 @@ import net.minecraft.world.item.component.Fireworks;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.List;
 import java.util.Random;
@@ -158,7 +160,7 @@ public class FunCommands {
         }
         final int fa = amount;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.firework.fired", fa), false);
-        LOGGER.info("{} fired {}x firework", player.getName().getString(), amount);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} fired {}x firework", player.getName().getString(), amount);
         return 1;
     }
 
@@ -290,7 +292,7 @@ public class FunCommands {
         }
         final int fn = nuked;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.nuke.success", fn), true);
-        LOGGER.info("{} nuked {} player(s)", src.getTextName(), nuked);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} nuked {} player(s)", src.getTextName(), nuked);
         return 1;
     }
 
@@ -742,7 +744,7 @@ public class FunCommands {
         }
 
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.backup.done"), true);
-        LOGGER.info("{} triggered a server backup", src.getTextName());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} triggered a server backup", src.getTextName());
         return 1;
     }
 }

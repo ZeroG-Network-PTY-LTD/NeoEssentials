@@ -19,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.ArrayList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Implements the /book command - Gives players a writable book or converts books
@@ -157,7 +159,7 @@ public class BookCommand {
         // Replace the item in player's hand
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, writableBook);
         
-        LOGGER.info("Player {} unlocked written book with {} pages", player.getName().getString(), pages.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} unlocked written book with {} pages", player.getName().getString(), pages.size());
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.book.unlocked"));
         return 1;
     }
@@ -186,7 +188,7 @@ public class BookCommand {
         tag.putString("PresetTitle", title);
         heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         
-        LOGGER.info("Player {} set book title to: {}", player.getName().getString(), title);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} set book title to: {}", player.getName().getString(), title);
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.book.title_set", title));
         return 1;
     }
@@ -215,7 +217,7 @@ public class BookCommand {
         tag.putString("PresetAuthor", author);
         heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         
-        LOGGER.info("Player {} set book author to: {}", player.getName().getString(), author);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} set book author to: {}", player.getName().getString(), author);
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.book.author_set", author));
         return 1;
     }

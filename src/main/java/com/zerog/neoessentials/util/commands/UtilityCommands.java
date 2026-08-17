@@ -19,6 +19,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -416,7 +418,7 @@ public class UtilityCommands {
         final int fs = spawned;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.spawnmob.success",
             fs, mobId, spawnAt.getName().getString()), true);
-        LOGGER.info("{} spawned {}x {} at {}", senderName(src), fs, mobId, spawnAt.getName().getString());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} spawned {}x {} at {}", senderName(src), fs, mobId, spawnAt.getName().getString());
         return 1;
     }
 

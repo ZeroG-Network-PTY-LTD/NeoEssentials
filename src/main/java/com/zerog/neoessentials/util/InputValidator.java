@@ -4,6 +4,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -152,7 +154,7 @@ public class InputValidator {
             }
             return ValidationResult.success(normalizedPath.toString());
         } catch (Exception e) {
-            LOGGER.debug("Path validation error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Path validation error: {}", e.getMessage());
             return ValidationResult.failure("Invalid file path format");
         }
     }

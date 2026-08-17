@@ -2,6 +2,8 @@ package com.zerog.neoessentials.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +28,7 @@ public class ManagerRegistry {
     private final Map<String, Long> initializationTimes = new ConcurrentHashMap<>();
     
     private ManagerRegistry() {
-        LOGGER.debug("ManagerRegistry initialized");
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "ManagerRegistry initialized");
     }
     
     /**
@@ -80,7 +82,7 @@ public class ManagerRegistry {
             long duration = System.currentTimeMillis() - startTime;
             initializationTimes.put(name, duration);
             
-            LOGGER.debug("Registered manager: {} ({}) [{}ms]", name, category, duration);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Registered manager: {} ({}) [{}ms]", name, category, duration);
             
         } catch (Exception e) {
             LOGGER.error("Failed to register manager '{}': {}", name, e.getMessage(), e);
@@ -118,7 +120,7 @@ public class ManagerRegistry {
         ManagerInfo info = managers.get(name);
         if (info != null) {
             info.markAsInitialized();
-            LOGGER.debug("Manager '{}' marked as initialized", name);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Manager '{}' marked as initialized", name);
         }
     }
     
@@ -301,7 +303,7 @@ public class ManagerRegistry {
     public void clear() {
         managers.clear();
         initializationTimes.clear();
-        LOGGER.info("Cleared all registered managers");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Cleared all registered managers");
     }
     
     /**

@@ -63,7 +63,7 @@ public class PlayerTagManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting primary group: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting primary group: {}", e.getMessage());
         }
         return "default";
     }
@@ -85,11 +85,11 @@ public class PlayerTagManager {
             for (File file : files) {
                 String tagName = file.getName().replaceFirst("\\.[^.]+$", "");
                 customTagFiles.put(tagName, file);
-                LOGGER.debug("Loaded custom tag image: {} -> {}", tagName, file.getAbsolutePath());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Loaded custom tag image: {} -> {}", tagName, file.getAbsolutePath());
             }
         }
         customImagesLoaded = true;
-        LOGGER.info("PlayerTagManager: Loaded {} custom tag images from {}", customTagFiles.size(), assetsDir.getAbsolutePath());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "PlayerTagManager: Loaded {} custom tag images from {}", customTagFiles.size(), assetsDir.getAbsolutePath());
     }
 
     /**

@@ -6,6 +6,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.UUID;
 
@@ -36,7 +38,7 @@ public class PermissionValidator {
             
             // Validate permission
             if (!PermissionAPI.hasPermission(playerUuid, permission)) {
-                LOGGER.debug("Permission denied for player {} ({}): {}",
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Permission denied for player {} ({}): {}",
                     player.getGameProfile().name(), playerUuid, permission);
                 String msg = "You don't have permission to use this command.\n§7Required: §f" + permission;
                 // Append human-friendly description from PermissionRegistry if available
@@ -80,7 +82,7 @@ public class PermissionValidator {
                 }
             }
             
-            LOGGER.debug("Permission denied for player {} ({}): none of {}",
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Permission denied for player {} ({}): none of {}",
                 player.getGameProfile().name(), playerUuid, java.util.Arrays.toString(permissions));
             StringBuilder msg = new StringBuilder("You don't have permission to use this command.\n§7Required (any): §f")
                 .append(String.join("§7 or §f", permissions));

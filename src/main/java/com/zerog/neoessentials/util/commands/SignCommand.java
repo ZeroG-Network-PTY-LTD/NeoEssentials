@@ -22,6 +22,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 public class SignCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(SignCommand.class);
@@ -113,7 +115,7 @@ public class SignCommand {
         // Update the sign text
         updateSignLine(signBlockEntity, line, finalText, com.zerog.neoessentials.util.LevelCompat.of(player));
         
-        LOGGER.info("Player {} edited sign at {} line {} to: {}", 
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} edited sign at {} line {} to: {}", 
             player.getName().getString(), pos, line + 1, finalText);
         
         context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.updated",
@@ -137,7 +139,7 @@ public class SignCommand {
             updateSignLine(signBlockEntity, i, "", com.zerog.neoessentials.util.LevelCompat.of(player));
         }
         
-        LOGGER.info("Player {} cleared all lines on sign at {}", player.getName().getString(), pos);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} cleared all lines on sign at {}", player.getName().getString(), pos);
         
         context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.cleared_all"), false);
         return 1;
@@ -159,7 +161,7 @@ public class SignCommand {
         // Clear the specific line
         updateSignLine(signBlockEntity, line, "", com.zerog.neoessentials.util.LevelCompat.of(player));
         
-        LOGGER.info("Player {} cleared line {} on sign at {}", player.getName().getString(), line + 1, pos);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} cleared line {} on sign at {}", player.getName().getString(), line + 1, pos);
         
         context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.cleared_line", line + 1), false);
         return 1;

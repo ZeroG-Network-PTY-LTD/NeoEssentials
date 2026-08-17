@@ -5,6 +5,8 @@ import com.zerog.neoessentials.vault.api.VaultEconomy;
 import com.zerog.neoessentials.vault.api.VaultServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -76,7 +78,7 @@ public class VaultShopEconomyAdapter implements ShopEconomyAdapter {
         if (eco.isPresent()) {
             VaultEconomy.EconomyResponse resp = eco.get().withdrawPlayer(player, amount.doubleValue());
             if (!resp.transactionSuccess()) {
-                LOGGER.debug("[VaultShopAdapter] debit failed for {}: {}", player, resp.errorMessage);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[VaultShopAdapter] debit failed for {}: {}", player, resp.errorMessage);
             }
             return resp.transactionSuccess();
         }
@@ -89,7 +91,7 @@ public class VaultShopEconomyAdapter implements ShopEconomyAdapter {
         if (eco.isPresent()) {
             VaultEconomy.EconomyResponse resp = eco.get().depositPlayer(player, amount.doubleValue());
             if (!resp.transactionSuccess()) {
-                LOGGER.debug("[VaultShopAdapter] credit failed for {}: {}", player, resp.errorMessage);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[VaultShopAdapter] credit failed for {}: {}", player, resp.errorMessage);
             }
             return resp.transactionSuccess();
         }

@@ -20,6 +20,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,7 +110,7 @@ public class PlayerStateCommands {
         } else {
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.fly.self", state), false);
         }
-        LOGGER.info("{} set fly={} for {}", senderName(src), newState, target.getName().getString());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} set fly={} for {}", senderName(src), newState, target.getName().getString());
         return 1;
     }
 
@@ -724,7 +726,7 @@ public class PlayerStateCommands {
             String label = isChat ? payload : cmdLabel;
             src.sendSuccess(() -> MessageUtil.success(key, count, label), true);
         }
-        LOGGER.info("{} sudoed {} player(s) ({}) to {}: {}",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} sudoed {} player(s) ({}) to {}: {}",
             senderName(src), affected.size(), targetSpec, isChat ? "say" : "run", payload);
         return affected.size();
     }

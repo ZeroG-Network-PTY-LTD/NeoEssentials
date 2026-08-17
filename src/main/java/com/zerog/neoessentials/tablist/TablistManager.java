@@ -13,6 +13,8 @@ import net.minecraft.server.ServerScoreboard;
 import net.minecraft.world.scores.PlayerTeam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -149,10 +151,10 @@ public class TablistManager {
                     .getConfig(ConfigManager.TABLIST_CONFIG);
                 if (standalone != null && standalone.has("tablist")) {
                     tab = standalone.getAsJsonObject("tablist");
-                    LOGGER.debug("TablistManager: loading from tablist.json");
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "TablistManager: loading from tablist.json");
                 }
             } catch (Exception ex) {
-                LOGGER.debug("TablistManager: tablist.json not available, trying config.json fallback: {}", ex.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "TablistManager: tablist.json not available, trying config.json fallback: {}", ex.getMessage());
             }
 
             // 2) Legacy fallback: "tablist" key inside config.json
@@ -160,12 +162,12 @@ public class TablistManager {
                 JsonObject cfg = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
                 if (cfg != null && cfg.has("tablist")) {
                     tab = cfg.getAsJsonObject("tablist");
-                    LOGGER.debug("TablistManager: loading from legacy tablist section in config.json");
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "TablistManager: loading from legacy tablist section in config.json");
                 }
             }
 
             if (tab == null) {
-                LOGGER.info("TablistManager: no tablist configuration found — using defaults.");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "TablistManager: no tablist configuration found — using defaults.");
                 return;
             }
 
@@ -256,7 +258,7 @@ public class TablistManager {
             TablistLayout.getInstance().loadConfig();
             AnimationManager.getInstance().loadConfig();
 
-            LOGGER.info("TablistManager loaded — {} header frame(s), {} footer frame(s), {} group override(s), " +
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "TablistManager loaded — {} header frame(s), {} footer frame(s), {} group override(s), " +
                 "refresh every {} ticks. independentMode={}, proxyEnabled={}, animations={}.",
                 headerFrames.size(), footerFrames.size(), groupHeaderFrames.size(), refreshIntervalTicks,
                 independentMode, ProxyIntegration.getInstance().isProxyEnabled(),
@@ -343,19 +345,19 @@ public class TablistManager {
         } catch (Throwable e) {
             // Catches Errors too (e.g. a version-drifted vanilla API) so one player's
             // failure can't abort the header/footer send for every other player this tick.
-            LOGGER.debug("Failed to send tablist packet to {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to send tablist packet to {}: {}", player.getName().getString(), e.getMessage());
         }
         try {
             updatePlayerTeam(player, server);
         } catch (Throwable e) {
-            LOGGER.debug("Failed to update tablist team for {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to update tablist team for {}: {}", player.getName().getString(), e.getMessage());
         }
         // Inject fake-player decorative entries (BTLP-style fakePlayers)
         if (FakePlayerManager.getInstance().isEnabled()) {
             try {
                 FakePlayerManager.getInstance().injectForPlayer(player, server);
             } catch (Throwable e) {
-                LOGGER.debug("Failed to inject fake tablist entries for {}: {}", player.getName().getString(), e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to inject fake tablist entries for {}: {}", player.getName().getString(), e.getMessage());
             }
         }
         // Inject the BTLP-style column grid's section headers + blank fillers, if enabled
@@ -363,7 +365,7 @@ public class TablistManager {
             try {
                 FakePlayerManager.getInstance().injectColumnSlots(player, server);
             } catch (Throwable e) {
-                LOGGER.debug("Failed to inject column layout entries for {}: {}", player.getName().getString(), e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to inject column layout entries for {}: {}", player.getName().getString(), e.getMessage());
             }
         }
     }
@@ -504,7 +506,7 @@ public class TablistManager {
         } catch (Throwable e) {
             // Catches Errors too — Scoreboard/PlayerTeam are exactly the kind of vanilla
             // API Mojang has reworked across 1.21.x versions elsewhere in this mod.
-            LOGGER.debug("Failed to update team for {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to update team for {}: {}", player.getName().getString(), e.getMessage());
         }
     }
 

@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -849,7 +851,7 @@ public class PermissionBridge {
      * Initialize the permission bridge
      */
     public static void initialize() {
-        LOGGER.info("Initializing NeoEssentials Permission Bridge...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Initializing NeoEssentials Permission Bridge...");
         
         // Initialize the registry and tab completer
         try {
@@ -858,7 +860,7 @@ public class PermissionBridge {
             LOGGER.error("Failed to initialize tab completer", e);
         }
         
-        LOGGER.info("Permission Bridge initialized with {} permissions available for tab completion", 
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Permission Bridge initialized with {} permissions available for tab completion", 
                    PermissionRegistry.getInstance().getAllPermissions().size());
     }
 }

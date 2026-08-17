@@ -2,6 +2,8 @@ package com.zerog.neoessentials.database;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -155,7 +157,7 @@ public class DatabaseManager {
             LOGGER.error("Failed to discover databases", e);
         }
         
-        LOGGER.info("Discovered {} database(s)", discoveredDatabases.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Discovered {} database(s)", discoveredDatabases.size());
     }
     
     /**
@@ -175,7 +177,7 @@ public class DatabaseManager {
             DatabaseInfo info = new DatabaseInfo(id, fileName, dbPath, size, modified);
             discoveredDatabases.put(id, info);
             
-            LOGGER.debug("Registered database: {} at {}", fileName, dbPath);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Registered database: {} at {}", fileName, dbPath);
             
         } catch (IOException e) {
             LOGGER.warn("Failed to register database: {}", dbPath, e);

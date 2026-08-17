@@ -9,6 +9,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Provides inventory clearing functionality for players.
@@ -148,7 +150,7 @@ public class ClearInventoryCommand {
         player.getInventory().clearContent();
 
         // Log inventory clear for audit trail
-        LOGGER.info("Player {} cleared inventory: {} main items, {} armor pieces, {} offhand items (total: {})", 
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} cleared inventory: {} main items, {} armor pieces, {} offhand items (total: {})", 
             player.getName().getString(), 
             mainCleared, 
             armorCleared, 

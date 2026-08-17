@@ -24,7 +24,7 @@ public class HologramEventHandler {
             // for all initial dimensions), so we must NOT spawn again here – that would cause a
             // brief flicker as entities are despawned and immediately re-spawned.
             HologramScheduler.start();
-            LOGGER.info("[Hologram] Scheduler started on server start ({} hologram(s) active).",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started on server start ({} hologram(s) active).",
                 com.zerog.neoessentials.hologram.HologramManager.getInstance().getAllHolograms().size());
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to start hologram scheduler.", e);
@@ -36,7 +36,7 @@ public class HologramEventHandler {
         try {
             String dimKey = HologramRenderer.dimensionKey(level);
             HologramRenderer.spawnAllForWorld(level, dimKey);
-            LOGGER.debug("[Hologram] Spawned holograms for dimension '{}'", dimKey);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Spawned holograms for dimension '{}'", dimKey);
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to spawn holograms on level load.", e);
         }
@@ -47,9 +47,9 @@ public class HologramEventHandler {
         try {
             String dimKey = HologramRenderer.dimensionKey(level);
             HologramRenderer.despawnAllForWorld(level, dimKey);
-            LOGGER.debug("[Hologram] Despawned holograms for dimension '{}'", dimKey);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Despawned holograms for dimension '{}'", dimKey);
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] Error despawning holograms on level unload: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Error despawning holograms on level unload: {}", e.getMessage());
         }
     }
     @SubscribeEvent
