@@ -104,7 +104,7 @@ public class PayToggleManager {
                 Thread.currentThread().interrupt();
             }
 
-            LOGGER.info("PayToggleManager shutdown complete.");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "PayToggleManager shutdown complete.");
         } catch (Exception e) {
             LOGGER.error("Error during PayToggleManager shutdown", e);
         }
@@ -141,7 +141,7 @@ public class PayToggleManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("PayToggleManager: migrated {} pay-toggle record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "PayToggleManager: migrated {} pay-toggle record(s) from legacy files into the '{}' storage backend.",
                 migrated, StorageManager.getInstance().getActiveType());
         }
     }

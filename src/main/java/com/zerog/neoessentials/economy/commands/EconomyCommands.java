@@ -6,6 +6,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 // NOTE: Use LangUtil.translate for all user-facing messages to ensure proper localization.
 
@@ -16,17 +18,17 @@ public class EconomyCommands {
         ConfigManager config = ConfigManager.getInstance();
         
         if (!ConfigManager.isEconomyEnabled()) {
-            LOGGER.info("Economy module is disabled, skipping economy command registration");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "Economy module is disabled, skipping economy command registration");
             return;
         }
         
-        LOGGER.info("Registering economy commands...");
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "Registering economy commands...");
         
         // Register balance command
         if (config.isCommandEnabled("balance")) {
             try {
                 BalanceCommand.register(dispatcher);
-                LOGGER.info("Balance command registered");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "Balance command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register balance command", e);
             }
@@ -36,7 +38,7 @@ public class EconomyCommands {
         if (config.isCommandEnabled("pay")) {
             try {
                 PayCommand.register(dispatcher);
-                LOGGER.info("Pay command registered");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "Pay command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register pay command", e);
             }
@@ -46,7 +48,7 @@ public class EconomyCommands {
         if (config.isCommandEnabled("paytoggle")) {
             try {
                 PayToggleCommand.register(dispatcher);
-                LOGGER.info("PayToggle command registered");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "PayToggle command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register paytoggle command", e);
             }
@@ -56,7 +58,7 @@ public class EconomyCommands {
         if (config.isCommandEnabled("eco")) {
             try {
                 EcoCommand.register(dispatcher);
-                LOGGER.info("Eco command registered");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "Eco command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register eco command", e);
             }
@@ -66,13 +68,13 @@ public class EconomyCommands {
         if (config.isCommandEnabled("baltop")) {
             try {
                 BaltopCommand.register(dispatcher);
-                LOGGER.info("Baltop command registered");
+                NeoLog.info(LOGGER, LogCategory.ECONOMY, "Baltop command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register baltop command", e);
             }
         }
         
-        LOGGER.info("All economy commands registration completed");
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "All economy commands registration completed");
     }
 }
 
