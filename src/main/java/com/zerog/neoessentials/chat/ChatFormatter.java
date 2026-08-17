@@ -622,6 +622,13 @@ public class ChatFormatter {
     private static Component buildComponentFromMarkup(String markup, ServerPlayer sender) {
         MutableComponent result = Component.empty();
         int index = 0;
+        // Tracks the color/format style still active at the current position — e.g. a template
+        // like "&c{neoessentials_username}" needs the clickable-name component (built as its own
+        // sibling, not inline text) to know red is "active" here, since appended sibling
+        // components never inherit a preceding sibling's color on their own. Updated after every
+        // plain-text segment; carries forward unchanged through non-text markers (items/urls/
+        // mentions/names), same as how a color code stays active in the template string itself.
+        net.minecraft.network.chat.Style ambientStyle = net.minecraft.network.chat.Style.EMPTY;
 
         while (index < markup.length()) {
             // Check for ITEM marker
@@ -666,7 +673,7 @@ public class ChatFormatter {
                 int hnameEnd = markup.indexOf("§/HNAME§", hnameStart);
                 if (hnameEnd != -1) {
                     String name = markup.substring(hnameStart + 7, hnameEnd);
-                    result.append(createClickablePlayerNameComponent(name, sender));
+                    result.append(createClickablePlayerNameComponent(name, sender, ambientStyle));
                     index = hnameEnd + 8;
                     continue;
                 }
@@ -678,7 +685,7 @@ public class ChatFormatter {
                 int hdnameEnd = markup.indexOf("§/HDNAME§", hdnameStart);
                 if (hdnameEnd != -1) {
                     String name = markup.substring(hdnameStart + 8, hdnameEnd);
-                    result.append(createClickablePlayerNameComponent(name, sender));
+                    result.append(createClickablePlayerNameComponent(name, sender, ambientStyle));
                     index = hdnameEnd + 9;
                     continue;
                 }
@@ -702,6 +709,7 @@ public class ChatFormatter {
             if (nextMarker > index) {
                 String plainText = markup.substring(index, nextMarker);
                 result.append(com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(plainText));
+                ambientStyle = com.zerog.neoessentials.util.ChatComponentUtil.getTrailingStyle(plainText);
                 index = nextMarker;
             } else {
                 break;
@@ -750,9 +758,17 @@ public class ChatFormatter {
     /**
      * Create a clickable player-name component (hover = player info, click = /msg).
      * Used when the {@code clickablePlayerNames} config option is enabled.
+     *
+     * @param ambientStyle the color/format style active in the template immediately before this
+     *                     marker (see {@code buildComponentFromMarkup}) — applied as the name's
+     *                     base style so e.g. {@code "&c{neoessentials_username}"} actually renders
+     *                     red, since this component is appended as its own sibling and would
+     *                     otherwise default to no color regardless of a preceding color code.
+     *                     Any color code inside {@code displayText} itself (e.g. a colored
+     *                     nickname) still overrides this, same as normal color-code precedence.
      */
-    private static Component createClickablePlayerNameComponent(String displayText, ServerPlayer player) {
-        Component base = com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(displayText);
+    private static Component createClickablePlayerNameComponent(String displayText, ServerPlayer player, net.minecraft.network.chat.Style ambientStyle) {
+        Component base = com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(displayText, ambientStyle);
         // Wrap into a MutableComponent so we can attach events
         MutableComponent comp = Component.empty().append(base);
         comp.withStyle(style -> style
