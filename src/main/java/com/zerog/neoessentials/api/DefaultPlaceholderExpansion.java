@@ -194,7 +194,14 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     
     /**
      * Returns the player's nickname (color-formatted) if one is set via {@code /nick},
-     * otherwise falls back to the scoreboard display name (team prefix/suffix + real name).
+     * otherwise falls back to the raw game-profile name.
+     * <p>
+     * Deliberately NOT {@link ServerPlayer#getDisplayName()}: when a permissions plugin (e.g.
+     * LuckPerms) formats names via vanilla scoreboard teams, getDisplayName() already has the
+     * group prefix/suffix baked in — stacking that on top of a chat-format template that also
+     * places {@code {neoessentials_prefix}}/{@code {neoessentials_suffix}} explicitly produces a
+     * doubled prefix (e.g. "[Owner] [Owner] Name"). {@code {neoessentials_displayname}} exists
+     * only to add nickname-awareness; prefix/suffix are the dedicated placeholders' job.
      */
     private String getNickOrDisplayName(ServerPlayer player) {
         try {
@@ -206,7 +213,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             LOGGER.debug("getNickOrDisplayName: error reading nickname for {}: {}",
                 player.getName().getString(), e.getMessage());
         }
-        return player.getDisplayName().getString();
+        return player.getName().getString();
     }
 
     /**
