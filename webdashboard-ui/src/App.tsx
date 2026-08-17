@@ -10,6 +10,7 @@ import Kits from './pages/Kits';
 import Holograms from './pages/Holograms';
 import Discord from './pages/Discord';
 import Users from './pages/Users';
+import Reports from './pages/Reports';
 import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
@@ -93,6 +94,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Users />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <RequireAuth>
+                <Reports />
               </RequireAuth>
             }
           />

@@ -86,6 +86,22 @@ export interface NoteEntry {
   timestamp: number;
 }
 
+export type ReportStatus = 'PENDING' | 'REVIEWED' | 'DISMISSED';
+
+export interface ReportEntry {
+  id: string;
+  reporterId: string | null;
+  reporterName: string;
+  targetId: string | null;
+  targetName: string;
+  reason: string;
+  timestamp: number;
+  status: ReportStatus;
+  reviewedBy: string | null;
+  reviewedAt: number;
+  reviewNotes: string | null;
+}
+
 export interface InventoryItem {
   id?: string;
   count?: number;
