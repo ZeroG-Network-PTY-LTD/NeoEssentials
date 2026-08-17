@@ -221,7 +221,7 @@ public class ChatHandler {
             }
 
             if (channelsConfig == null || !channelsEnabled) {
-                LOGGER.debug("Chat channels system disabled, using global chat");
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Chat channels system disabled, using global chat");
                 channelsConfig = null; // Treat as if no channels configured
             }
 
@@ -259,7 +259,7 @@ public class ChatHandler {
                 // LuckPerms group assignments and silently fell back to the default group/format.
                 group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
             } catch (Exception e) {
-                LOGGER.debug("Could not get group for player {}: {}", playerName, e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Could not get group for player {}: {}", playerName, e.getMessage());
             }
             String world = null;
             try {
@@ -267,7 +267,7 @@ public class ChatHandler {
                 var level = player.level();
                 world = level.dimension().identifier().getPath();
             } catch (Exception e) {
-                LOGGER.debug("Could not get world for player {}: {}", playerName, e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "Could not get world for player {}: {}", playerName, e.getMessage());
             }
 
 
@@ -331,7 +331,7 @@ public class ChatHandler {
                                 }
                             }
                             if (isConsoleLoggingEnabled()) {
-                                LOGGER.info("[{}] (team) <{}> {}", channel, playerName, message);
+                                NeoLog.info(LOGGER, LogCategory.CHAT, "[{}] (team) <{}> {}", channel, playerName, message);
                             }
                         }
                     } else if (hasRadius) {
@@ -355,7 +355,7 @@ public class ChatHandler {
                         }
                         // Always log to server console so chat appears in logs
                         if (isConsoleLoggingEnabled()) {
-                            LOGGER.info("[{}] (radius:{}) <{}> {}", channel, radius, playerName, message);
+                            NeoLog.info(LOGGER, LogCategory.CHAT, "[{}] (radius:{}) <{}> {}", channel, radius, playerName, message);
                         }
                     } else if (requiredPermission != null) {
                         // Permission-based channel (staff, admin, donor, etc.)
@@ -366,7 +366,7 @@ public class ChatHandler {
                         }
                         // Always log to server console
                         if (isConsoleLoggingEnabled()) {
-                            LOGGER.info("[{}] <{}> {}", channel, playerName, message);
+                            NeoLog.info(LOGGER, LogCategory.CHAT, "[{}] <{}> {}", channel, playerName, message);
                         }
                     } else {
                         // Global channel (no radius, no permission)
@@ -375,11 +375,11 @@ public class ChatHandler {
                         }
                         // Always log to server console
                         if (isConsoleLoggingEnabled()) {
-                            LOGGER.info("[{}] <{}> {}", channel, playerName, message);
+                            NeoLog.info(LOGGER, LogCategory.CHAT, "[{}] <{}> {}", channel, playerName, message);
                         }
                     }
 
-                    // Note: chat is already logged above via LOGGER.info().
+                    // Note: chat is already logged above via NeoLog.info(LOGGER, LogCategory.CHAT, ).
                     // Do NOT call server.sendSystemMessage(formattedMessage) here — it would
                     // route the formatted Component through vanilla's MinecraftServer logger
                     // producing a duplicate (and potentially unresolved-placeholder) log line.
@@ -404,36 +404,36 @@ public class ChatHandler {
                             }
                         }
                         // Debug: Log Discord relay config for this channel
-                        LOGGER.debug("Channel '{}' Discord relay config: enabled={}, channelId={}", channel, discordEnabled, discordChannelId);
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' Discord relay config: enabled={}, channelId={}", channel, discordEnabled, discordChannelId);
                     } else {
-                        LOGGER.debug("Channel '{}' has no Discord relay config.", channel);
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' has no Discord relay config.", channel);
                     }
 
                     // Permission check for Discord relay
                     if (requiredPermission != null && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), requiredPermission)) {
                         permissionPassed = false;
-                        LOGGER.debug("Player '{}' does not have required permission '{}' for channel '{}'. Discord relay skipped.", playerName, requiredPermission, channel);
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Player '{}' does not have required permission '{}' for channel '{}'. Discord relay skipped.", playerName, requiredPermission, channel);
                     }
 
                     // Only send to Discord if enabled for this channel and permission passed
                     if (discordEnabled && permissionPassed) {
                         if (discordChannelId == null) {
-                            LOGGER.debug("Discord relay enabled for channel '{}' but no channelId set. Using fallback logic.", channel);
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Discord relay enabled for channel '{}' but no channelId set. Using fallback logic.", channel);
                         }
                         String formattedMessageText = formattedMessage.getString();
-                        LOGGER.debug("Relaying message to Discord: channel='{}', discordChannelId='{}', message='{}'", channel, discordChannelId, formattedMessage.getString());
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Relaying message to Discord: channel='{}', discordChannelId='{}', message='{}'", channel, discordChannelId, formattedMessage.getString());
                         com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastPlayerChat(
                             player, channel, message, formattedMessageText, discordChannelId);
                     } else {
                         if (!discordEnabled) {
-                            LOGGER.debug("Discord relay is disabled for channel '{}'. Message will NOT be sent to Discord.", channel);
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Discord relay is disabled for channel '{}'. Message will NOT be sent to Discord.", channel);
                         } else if (!permissionPassed) {
-                            LOGGER.debug("Discord relay not sent: player '{}' lacks permission '{}' for channel '{}'", playerName, requiredPermission, channel);
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Discord relay not sent: player '{}' lacks permission '{}' for channel '{}'", playerName, requiredPermission, channel);
                         }
                     }
                 } catch (Exception e) {
                     LOGGER.warn("Failed to send chat to Discord integration: {}", e.getMessage());
-                    LOGGER.debug("Discord integration error detail:", e);
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Discord integration error detail:", e);
                 }
             } // else: do not cancel event, let vanilla formatting happen
 
