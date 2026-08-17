@@ -39,7 +39,7 @@ public class ServerDataCollector {
     
     public ServerDataCollector(MinecraftServer server) {
         this.server = server;
-        LOGGER.debug("ServerDataCollector initialized");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "ServerDataCollector initialized");
     }
     
     /**
@@ -47,16 +47,16 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/profile
      */
     public JsonObject getServerProfile() {
-        LOGGER.info("=== Collecting Server Profile Data ===");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Collecting Server Profile Data ===");
         JsonObject profile = new JsonObject();
         
         try {
             profile.addProperty("serverName", server.getServerModName());
-            LOGGER.debug("Server name: {}", server.getServerModName());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Server name: {}", server.getServerModName());
             
             profile.addProperty("motd", server.getMotd());
             profile.addProperty("minecraftVersion", server.getServerVersion());
-            LOGGER.debug("Minecraft version: {}", server.getServerVersion());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Minecraft version: {}", server.getServerVersion());
             
             // Get NeoForge version dynamically from mod list
             String neoforgeVersion = "Unknown";
@@ -94,7 +94,7 @@ public class ServerDataCollector {
                 profile.add("mods", mods);
                 profile.addProperty("modCount", mods.size());
                 profile.addProperty("modsLoaded", mods.size()); // For frontend compatibility
-                LOGGER.info("Successfully collected profile data: {} mods loaded", mods.size());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Successfully collected profile data: {} mods loaded", mods.size());
             } catch (Exception e) {
                 LOGGER.error("Error collecting mod list", e);
                 profile.add("mods", new JsonArray());
@@ -102,7 +102,7 @@ public class ServerDataCollector {
                 profile.addProperty("modsLoaded", 0);
             }
             
-            LOGGER.info("=== Server Profile Data Collection Complete ===");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Server Profile Data Collection Complete ===");
             return profile;
         } catch (Exception e) {
             LOGGER.error("Critical error collecting server profile", e);
@@ -120,7 +120,7 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/statistics
      */
     public JsonObject getServerStatistics() {
-        LOGGER.debug("=== Collecting Server Statistics ===");
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "=== Collecting Server Statistics ===");
         JsonObject stats = new JsonObject();
         
         try {
@@ -130,7 +130,7 @@ public class ServerDataCollector {
             stats.addProperty("tps", df.format(tps));
             stats.addProperty("averageTickTime", df.format(avgTickTime));
             stats.addProperty("tpsPercent", df.format((tps / 20.0) * 100));
-            LOGGER.debug("TPS: {} ({} ms avg tick time)", df.format(tps), df.format(avgTickTime));
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "TPS: {} ({} ms avg tick time)", df.format(tps), df.format(avgTickTime));
 
             // Memory statistics
             Runtime runtime = Runtime.getRuntime();
@@ -148,7 +148,7 @@ public class ServerDataCollector {
             memory.addProperty("maxMB", maxMemory / (1024 * 1024));
             memory.addProperty("usedPercent", df.format((double) usedMemory / maxMemory * 100));
             stats.add("memory", memory);
-            LOGGER.debug("Memory: {} / {} ({} MB / {} MB)",
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Memory: {} / {} ({} MB / {} MB)",
                 formatBytes(usedMemory), formatBytes(maxMemory),
                 usedMemory / (1024 * 1024), maxMemory / (1024 * 1024));
 
@@ -158,14 +158,14 @@ public class ServerDataCollector {
             cpu.addProperty("processors", osBean.getAvailableProcessors());
             cpu.addProperty("loadAverage", df.format(osBean.getSystemLoadAverage()));
             stats.add("cpu", cpu);
-            LOGGER.debug("CPU: {} processors, load avg: {}", osBean.getAvailableProcessors(), df.format(osBean.getSystemLoadAverage()));
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "CPU: {} processors, load avg: {}", osBean.getAvailableProcessors(), df.format(osBean.getSystemLoadAverage()));
 
             // Player statistics
             int playerCount = server.getPlayerCount();
             int maxPlayers = server.getMaxPlayers();
             stats.addProperty("playersOnline", playerCount);
             stats.addProperty("playersMax", maxPlayers);
-            LOGGER.debug("Players: {} / {}", playerCount, maxPlayers);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Players: {} / {}", playerCount, maxPlayers);
 
             // World statistics
             int worldCount = 0;
@@ -173,7 +173,7 @@ public class ServerDataCollector {
                 worldCount++;
             }
             stats.addProperty("worldsLoaded", worldCount);
-            LOGGER.debug("Worlds loaded: {}", worldCount);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Worlds loaded: {}", worldCount);
 
             // Chunk statistics
             JsonArray worldChunks = new JsonArray();
@@ -189,10 +189,10 @@ public class ServerDataCollector {
                     // Use getLoadedChunksCount() which returns ONLY actively loaded chunks
                     // NOT chunkMap.size() which includes all cached chunks
                     loadedChunks = chunkSource.getLoadedChunksCount();
-                    LOGGER.debug("Loaded chunks for {}: {}",
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Loaded chunks for {}: {}",
                         level.dimension().identifier(), loadedChunks);
                 } catch (Exception e) {
-                    LOGGER.debug("Failed to count chunks for statistics: {}", e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to count chunks for statistics: {}", e.getMessage());
                     loadedChunks = 0;
                 }
 
@@ -202,9 +202,9 @@ public class ServerDataCollector {
             });
             stats.add("chunks", worldChunks);
             stats.addProperty("totalLoadedChunks", totalLoadedChunks[0]);
-            LOGGER.debug("Total chunks loaded: {}", totalLoadedChunks[0]);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Total chunks loaded: {}", totalLoadedChunks[0]);
 
-            LOGGER.info("=== Server Statistics Collection Complete ===");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Server Statistics Collection Complete ===");
             return stats;
         } catch (Exception e) {
             LOGGER.error("Error collecting server statistics", e);
@@ -222,7 +222,7 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/status
      */
     public JsonObject getServerStatus() {
-        LOGGER.info("=== Collecting Server Status ===");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Collecting Server Status ===");
         JsonObject status = new JsonObject();
         
         try {
@@ -233,26 +233,26 @@ public class ServerDataCollector {
             status.addProperty("online", isOnline);
             status.addProperty("playersOnline", playerCount);
             status.addProperty("playersMax", maxPlayers);
-            LOGGER.debug("Server status: online={}, players={}/{}", isOnline, playerCount, maxPlayers);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Server status: online={}, players={}/{}", isOnline, playerCount, maxPlayers);
 
             // Uptime
             long uptimeMillis = ManagementFactory.getRuntimeMXBean().getUptime();
             status.addProperty("uptimeMillis", uptimeMillis);
             status.addProperty("uptimeFormatted", formatUptime(uptimeMillis));
-            LOGGER.debug("Uptime: {} ms ({})", uptimeMillis, formatUptime(uptimeMillis));
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Uptime: {} ms ({})", uptimeMillis, formatUptime(uptimeMillis));
 
             // TPS
             double avgTickTime = server.getAverageTickTimeNanos() / 1_000_000.0;
             double tps = Math.min(20.0, 1000.0 / Math.max(50.0, avgTickTime));
             status.addProperty("tps", df.format(tps));
-            LOGGER.debug("TPS: {}", df.format(tps));
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "TPS: {}", df.format(tps));
 
             // Health indicator
             String health = "healthy";
             if (tps < 15) health = "struggling";
             if (tps < 10) health = "critical";
             status.addProperty("health", health);
-            LOGGER.debug("Health: {}", health);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Health: {}", health);
 
             // Expose WebSocket port so the frontend knows where to connect
             try {
@@ -262,7 +262,7 @@ public class ServerDataCollector {
                 status.addProperty("wsPort", 8081);
             }
 
-            LOGGER.info("=== Server Status Collection Complete ===");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Server Status Collection Complete ===");
             return status;
         } catch (Exception e) {
             LOGGER.error("Error collecting server status", e);
@@ -320,20 +320,20 @@ public class ServerDataCollector {
      * Endpoint: GET /api/server/worlds
      */
     public JsonObject getServerWorlds() {
-        LOGGER.info("=== Starting getServerWorlds data collection ===");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Starting getServerWorlds data collection ===");
         JsonObject worlds = new JsonObject();
         JsonArray worldsList = new JsonArray();
         
         // Log total players first
-        LOGGER.info("Total players online: {}", server.getPlayerList().getPlayers().size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Total players online: {}", server.getPlayerList().getPlayers().size());
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-                LOGGER.info("  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().identifier());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  - Player: {}, Dimension: {}", p.getName().getString(), p.level().dimension().identifier());
         }
         
         server.getAllLevels().forEach(level -> {
             JsonObject world = new JsonObject();
             String dimensionKey = level.dimension().identifier().toString();
-            LOGGER.info("Processing dimension: {}", dimensionKey);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Processing dimension: {}", dimensionKey);
             
             world.addProperty("dimension", dimensionKey);
             world.addProperty("name", getDimensionDisplayName(dimensionKey));
@@ -344,14 +344,14 @@ public class ServerDataCollector {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 String playerDim = player.level().dimension().identifier().toString();
                 boolean matches = playerDim.equals(dimensionKey);
-                LOGGER.info("  Checking player {}: dimension={}, matches={}", 
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  Checking player {}: dimension={}, matches={}", 
                     player.getName().getString(), playerDim, matches);
                 if (matches) {
                     playersInDimension++;
                 }
             }
             world.addProperty("playersInWorld", playersInDimension);
-            LOGGER.info("  Final player count for {}: {}", dimensionKey, playersInDimension);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  Final player count for {}: {}", dimensionKey, playersInDimension);
             
             // Count ACTUAL loaded chunks (not cached chunks)
             int loadedChunks;
@@ -361,7 +361,7 @@ public class ServerDataCollector {
                 // NOT chunkMap.size() which includes all cached/unloaded chunks
                 loadedChunks = chunkSource.getLoadedChunksCount();
 
-                LOGGER.info("  Loaded chunks for {}: {}", dimensionKey, loadedChunks);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  Loaded chunks for {}: {}", dimensionKey, loadedChunks);
             } catch (Exception e) {
                 LOGGER.warn("  Failed to count chunks for {}: {}", dimensionKey, e.getMessage());
                 loadedChunks = 0;
@@ -376,7 +376,7 @@ public class ServerDataCollector {
                 for (@SuppressWarnings("unused") var entity : entities) {
                     entityCount++;
                 }
-                LOGGER.info("  Total entities in {}: {}", dimensionKey, entityCount);
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "  Total entities in {}: {}", dimensionKey, entityCount);
             } catch (Exception e) {
                 LOGGER.warn("  Failed to count entities for {}: {}", dimensionKey, e.getMessage());
                 entityCount = 0;
@@ -395,13 +395,13 @@ public class ServerDataCollector {
             world.add("spawn", spawn);
             
             worldsList.add(world);
-            LOGGER.info("Completed processing dimension: {}", dimensionKey);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Completed processing dimension: {}", dimensionKey);
         });
         
         worlds.add("worlds", worldsList);
         worlds.addProperty("count", worldsList.size());
         
-        LOGGER.info("=== Completed getServerWorlds data collection ===");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Completed getServerWorlds data collection ===");
         return worlds;
     }
     

@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -54,7 +56,7 @@ public class CloudProviderManager {
 
         // Check if token is expired
         if (token.isExpired()) {
-            LOGGER.debug("Token for {} is expired", providerName);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Token for {} is expired", providerName);
             return false;
         }
 
@@ -88,7 +90,7 @@ public class CloudProviderManager {
         tokens.put(providerName.toLowerCase(), token);
         saveTokens();
 
-        LOGGER.info("Stored OAuth token for provider: {}", providerName);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stored OAuth token for provider: {}", providerName);
     }
 
     /**
@@ -98,7 +100,7 @@ public class CloudProviderManager {
         tokens.remove(providerName.toLowerCase());
         saveTokens();
 
-        LOGGER.info("Removed OAuth token for provider: {}", providerName);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Removed OAuth token for provider: {}", providerName);
     }
 
     /**
@@ -106,7 +108,7 @@ public class CloudProviderManager {
      */
     private void loadTokens() {
         if (!TOKENS_FILE.exists()) {
-            LOGGER.debug("Cloud tokens file does not exist, starting with empty tokens");
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Cloud tokens file does not exist, starting with empty tokens");
             return;
         }
 
@@ -130,7 +132,7 @@ public class CloudProviderManager {
                 }
             }
 
-            LOGGER.info("Loaded {} cloud provider token(s)", tokens.size());
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Loaded {} cloud provider token(s)", tokens.size());
         } catch (Exception e) {
             LOGGER.error("Failed to load cloud tokens", e);
         }
@@ -174,7 +176,7 @@ public class CloudProviderManager {
                 GSON.toJson(root, writer);
             }
 
-            LOGGER.debug("Saved {} cloud provider token(s)", tokens.size());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Saved {} cloud provider token(s)", tokens.size());
         } catch (IOException e) {
             LOGGER.error("Failed to save cloud tokens", e);
         }

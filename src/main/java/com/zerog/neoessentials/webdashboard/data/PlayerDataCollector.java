@@ -129,7 +129,7 @@ public class PlayerDataCollector {
                         profile.addProperty("lastSeen", lastModified);
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("Could not get last seen time for {}: {}", playerUuid, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not get last seen time for {}: {}", playerUuid, e.getMessage());
                 }
             } else {
                 profile.addProperty("gameMode", "unknown");
@@ -358,12 +358,12 @@ public class PlayerDataCollector {
             java.nio.file.Path worldPath = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
             java.nio.file.Path playerDataFile = worldPath.resolve(playerUuid + ".dat");
 
-            LOGGER.debug("Loading offline player data from: {}", playerDataFile);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Loading offline player data from: {}", playerDataFile);
 
             if (java.nio.file.Files.exists(playerDataFile)) {
                 return NbtIo.readCompressed(playerDataFile, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             } else {
-                LOGGER.debug("Player data file not found: {}", playerDataFile);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Player data file not found: {}", playerDataFile);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to load offline player data for UUID: {}", playerUuid, e);
@@ -396,7 +396,7 @@ public class PlayerDataCollector {
                 return custom.get("minecraft:play_time").getAsInt();
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not read offline playtime stat for {}: {}", playerUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read offline playtime stat for {}: {}", playerUuid, e.getMessage());
         }
         return 0;
     }
@@ -420,7 +420,7 @@ public class PlayerDataCollector {
             long creationMillis = attrs.creationTime().toMillis();
             return creationMillis > 0 ? creationMillis : null;
         } catch (Exception e) {
-            LOGGER.debug("Could not read first-joined time for {}: {}", playerUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read first-joined time for {}: {}", playerUuid, e.getMessage());
             return null;
         }
     }
@@ -788,7 +788,7 @@ public class PlayerDataCollector {
         JsonArray onlinePlayers = new JsonArray();
         JsonArray offlinePlayers = new JsonArray();
         
-        LOGGER.info("=== Starting getOnlinePlayers data collection ===");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Starting getOnlinePlayers data collection ===");
         
         // Get online players
         List<ServerPlayer> online = server.getPlayerList().getPlayers();
@@ -819,7 +819,7 @@ public class PlayerDataCollector {
             onlineUsernames.add(player.getName().getString());
         });
         
-        LOGGER.info("Found {} online players", onlinePlayers.size());
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Found {} online players", onlinePlayers.size());
         
         // Get offline players from playerdata directory
         try {
@@ -827,12 +827,12 @@ public class PlayerDataCollector {
             net.minecraft.server.level.ServerLevel overworld = server.overworld();
 
             java.nio.file.Path playerDataDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
-            LOGGER.info("Looking for offline players in: {}", playerDataDir);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Looking for offline players in: {}", playerDataDir);
             
             if (java.nio.file.Files.exists(playerDataDir)) {
                 net.minecraft.server.players.UserNameToIdResolver cache = server.services().nameToIdCache();
                 
-                LOGGER.info("Player data directory exists, cache available: {}", (cache != null));
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Player data directory exists, cache available: {}", (cache != null));
                 
                 // Limit to last 50 offline players to avoid performance issues
                 int maxOffline = 50;
@@ -877,7 +877,7 @@ public class PlayerDataCollector {
                                             username = com.zerog.neoessentials.util.CompoundTagCompat.getString(playerData, "lastKnownName");
                                         }
                                     } catch (Exception e) {
-                                        LOGGER.debug("Could not load username from NBT for {}: {}", uuid, e.getMessage());
+                                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not load username from NBT for {}: {}", uuid, e.getMessage());
                                     }
                                 }
 
@@ -906,7 +906,7 @@ public class PlayerDataCollector {
                                         CompoundTag nbtForGamemode = NbtIo.readCompressed(path, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
                                         if (nbtForGamemode != null) gamemodeName = gameTypeNameFromNbt(nbtForGamemode);
                                     } catch (Exception e) {
-                                        LOGGER.debug("Could not read gamemode from NBT for {}: {}", uuid, e.getMessage());
+                                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not read gamemode from NBT for {}: {}", uuid, e.getMessage());
                                     }
                                     playerObj.addProperty("gamemode", gamemodeName);
 
@@ -915,14 +915,14 @@ public class PlayerDataCollector {
                             }
                         } catch (Exception e) {
                             // Skip invalid files
-                            LOGGER.debug("Skipping invalid player data file: {}", path.getFileName());
+                            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Skipping invalid player data file: {}", path.getFileName());
                         }
                     });
                 } catch (java.io.IOException ioEx) {
                     LOGGER.warn("Error reading player data directory: {}", ioEx.getMessage());
                 }
 
-                LOGGER.info("Found {} offline players", offlinePlayers.size());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Found {} offline players", offlinePlayers.size());
             } else {
                 LOGGER.warn("Player data directory does not exist: {}", playerDataDir);
             }
@@ -937,7 +937,7 @@ public class PlayerDataCollector {
         response.addProperty("offlineCount", offlinePlayers.size());
         response.addProperty("max", server.getMaxPlayers());
         
-        LOGGER.info("=== Completed getOnlinePlayers: {} online, {} offline ===", 
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "=== Completed getOnlinePlayers: {} online, {} offline ===", 
             onlinePlayers.size(), offlinePlayers.size());
         
         return response;
@@ -1035,7 +1035,7 @@ public class PlayerDataCollector {
                 return UUID.fromString(formatted);
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
             return null;
         }
     }
@@ -1147,7 +1147,7 @@ public class PlayerDataCollector {
                 return modContainerOpt.get().getModInfo().getDisplayName();
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not get mod name for namespace: {}", namespace);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not get mod name for namespace: {}", namespace);
         }
         
         return null;
