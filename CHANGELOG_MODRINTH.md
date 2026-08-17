@@ -8,6 +8,21 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.46 — 2026-08-17
+
+### 🐛 Doubled Rank Prefix in Chat, Duplicate SDLink Join/Leave Messages
+
+- Fixed a bug where players' rank prefix could show up twice in chat, e.g.
+  `<[Owner] [Owner] PlayerName>`. This happened when your permissions plugin (LuckPerms in
+  particular) formats names using Minecraft's own team system — the display name already had the
+  prefix in it, and the chat template added it again on top. No config changes needed.
+- Fixed duplicate join/leave (and advancement) messages showing up in Discord for servers using
+  Simple Discord Link (SDLink) — SDLink has its own built-in join/leave announcer that runs
+  independently of NeoEssentials, and both were firing at once. You'll now get a clear warning in
+  your server log telling you exactly which SDLink setting to turn off if this affects you.
+
+---
+
 ## 1.0.4-mc26.1.2+build.45 — 2026-08-13
 
 ### ✨ Per-Category Logging Configuration

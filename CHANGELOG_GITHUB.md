@@ -12,6 +12,34 @@ Compatibility: **Minecraft 26.1.2 · NeoForge 26.1.2.76+**
 
 ---
 
+## [1.0.4-mc26.1.2+build.46] — 2026-08-17
+
+### 🐛 Doubled Rank Prefix in Chat, and a SDLink Self-Duplication Gap
+
+- Root cause of `<[Owner] [Owner] PlayerName>`-style doubled prefixes: `{neoessentials_displayname}`
+  fell back to `ServerPlayer.getDisplayName()`, which — under a permissions plugin that formats
+  names via vanilla scoreboard teams (LuckPerms does this on Forge/NeoForge, since there's no
+  Bukkit chat event to hook) — already has the group prefix/suffix baked in. Stacked on top of a
+  `chat-format` template that also places `{neoessentials_prefix}`/`{neoessentials_suffix}`
+  explicitly (the shipped default does exactly this), the prefix rendered twice. This corrects
+  the build.43 changelog note that called LuckPerms "not a conflict" here — under vanilla
+  team-based name formatting, it is.
+- `{neoessentials_displayname}` now falls back to the raw game-profile name instead of
+  `getDisplayName()` in both `DefaultPlaceholderExpansion` and `ChatFormatter`'s clickable-name
+  path — it exists purely to add nickname-awareness; prefix/suffix are the dedicated
+  placeholders' job. No config changes needed, no version bump required (behavior-only fix).
+- Extended `SDLinkAdapter`'s native-relay-conflict warning beyond just `chat.playerMessages` to
+  also cover `chat.playerJoin`, `chat.playerLeave`, and `chat.advancementMessages`. SDLink
+  natively broadcasts join/leave/advancement events by default in its own config, completely
+  independent of the equivalent events NeoEssentials sends through the same adapter — so a
+  **single** SDLink install can double-post join/leave/advancement messages to Discord with two
+  visibly different-looking messages (SDLink's own styled phrasing vs. NeoEssentials' relay),
+  which can easily look like two separate Discord bridge mods are installed when there's only
+  one. The startup log now warns which specific SDLink config key(s) are causing it and what to
+  set them to.
+
+---
+
 ## [1.0.4-mc26.1.2+build.45] — 2026-08-13
 
 ### ✨ Per-Subsystem Logging Configuration
