@@ -1321,7 +1321,7 @@ public class ConfigManager {
                 // reads logging.categories.config.debug via getLoggingCategoryEntry(), which
                 // calls back into this very method (getConfig(MAIN_CONFIG)), causing infinite
                 // recursion / StackOverflowError on every startup.
-                LOGGER.debug("Split config mode enabled; merging split files instead of reading {}", configName);
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config mode enabled; merging split files instead of reading {}", configName);
                 JsonObject merged = ConfigSplitter.mergeSplitConfigs();
                 configCache.put(configName, merged);
                 return merged;
@@ -1350,25 +1350,25 @@ public class ConfigManager {
                         if (fileObj.has(configName) && fileObj.get(configName).isJsonObject()) {
                             JsonObject section = fileObj.getAsJsonObject(configName);
                             configCache.put(configName, section);
-                            LOGGER.debug("Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
+                            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
                             return section;
                         }
                         // File exists but uses a flat layout – return the whole object
                         configCache.put(configName, fileObj);
-                        LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
                         return fileObj;
                     } catch (IOException fallbackEx) {
                         LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
                     }
                 }
                 // Section missing – return empty (do not cache so it retries after reload)
-                LOGGER.debug("Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
                 return new JsonObject();
             }
 
             File file = ResourceUtil.getConfigFile(configName);
             // NOTE: plain LOGGER, not NeoLog — see comment above on the recursion risk.
-            LOGGER.debug("Loading config file {} from disk (cache miss)", configName);
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Loading config file {} from disk (cache miss)", configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
             JsonObject obj = parseJsonWithComments(reader).getAsJsonObject();
             configCache.put(configName, obj);
@@ -2107,7 +2107,7 @@ public class ConfigManager {
 
         if (splitConfigsEnabled) {
             // Always ensure split configs are up to date
-            LOGGER.info("Split configs enabled - ensuring all split config files are up to date");
+            NeoLog.info(LOGGER, LogCategory.CONFIG, "Split configs enabled - ensuring all split config files are up to date");
             ConfigSplitter.ensureSplitConfigsUpToDate();
 
             // Only check other standalone configs (economy, permissions, kits, discord_auth)
@@ -2201,7 +2201,7 @@ public class ConfigManager {
                 boolean changed = false;
                 if (MAIN_CONFIG.equals(configName) && migrateLoggingCategories(onDisk)) {
                     changed = true;
-                    LOGGER.info("Config file {}: migrated logging.enableDebugLogging into per-category logging.categories.*.", configName);
+                    NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: migrated logging.enableDebugLogging into per-category logging.categories.*.", configName);
                 }
 
                 // Deep-merge: add keys that exist in JAR but are missing on disk.
@@ -2214,7 +2214,7 @@ public class ConfigManager {
                 boolean stripped = stripLegacyCommentKeys(onDisk);
                 if (stripped) {
                     changed = true;
-                    LOGGER.info("Config file {}: removed legacy _comment/_doc keys (comment migration).", configName);
+                    NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: removed legacy _comment/_doc keys (comment migration).", configName);
                 }
 
                 // Value-level fixes for known-bad defaults that mergeNewKeys() can never touch
@@ -2222,7 +2222,7 @@ public class ConfigManager {
                 if (MAIN_CONFIG.equals(configName)) {
                     if (patchLegacyNicknameChatDefaults(onDisk)) {
                         changed = true;
-                        LOGGER.info("Config file {}: upgraded untouched chat-format defaults to show nicknames ({{neoessentials_username}}/{{neoessentials_name}} -> {{neoessentials_displayname}}).", configName);
+                        NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: upgraded untouched chat-format defaults to show nicknames ({{neoessentials_username}}/{{neoessentials_name}} -> {{neoessentials_displayname}}).", configName);
                     }
                 }
 
@@ -2235,7 +2235,7 @@ public class ConfigManager {
                 }
 
                 configCache.remove(configName);
-                LOGGER.info("Config file {} merged to version {} ({} new key(s) added).",
+                NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {} merged to version {} ({} new key(s) added).",
                     configName, expectedVersion, changed ? "some" : "no");
 
                 com.zerog.neoessentials.util.MessageUtil.ensureLanguageFileUpToDate();
@@ -2244,7 +2244,7 @@ public class ConfigManager {
                 LOGGER.warn("Config file {} has a newer version ({}) than expected ({}). This may indicate a downgrade.",
                     configName, currentVersion, expectedVersion);
             } else {
-                LOGGER.debug("Config file {} is up to date (version {})", configName, currentVersion);
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config file {} is up to date (version {})", configName, currentVersion);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to check/update version for config {}: {}", configName, e.getMessage(), e);
@@ -2376,7 +2376,7 @@ public class ConfigManager {
                 // Missing entirely — add from template
                 target.add(key, sourceVal.deepCopy());
                 changed = true;
-                LOGGER.debug("  + Added missing config key: {}", key);
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "  + Added missing config key: {}", key);
             } else if (sourceVal.isJsonObject() && target.get(key).isJsonObject()) {
                 // Both sides are objects — recurse
                 changed |= mergeNewKeys(sourceVal.getAsJsonObject(), target.get(key).getAsJsonObject());
@@ -2414,7 +2414,7 @@ public class ConfigManager {
         for (String key : toRemove) {
             obj.remove(key);
             changed = true;
-            LOGGER.debug("  - Removed legacy comment key: {}", key);
+            NeoLog.debug(LOGGER, LogCategory.CONFIG, "  - Removed legacy comment key: {}", key);
         }
         return changed;
     }
@@ -2438,7 +2438,7 @@ public class ConfigManager {
             java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            LOGGER.info("Created backup of old config: {}", backupFile.getName());
+            NeoLog.info(LOGGER, LogCategory.CONFIG, "Created backup of old config: {}", backupFile.getName());
         } catch (Exception e) {
             LOGGER.error("Failed to create backup for {}: {}", configFile.getName(), e.getMessage());
         }
@@ -2464,7 +2464,7 @@ public class ConfigManager {
                         out.write(buffer, 0, len);
                     }
                 }
-                LOGGER.info("Copied default config {} to {}", configName, configFile.getAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.CONFIG, "Copied default config {} to {}", configName, configFile.getAbsolutePath());
             } else {
                 LOGGER.warn("Default config resource not found in JAR: {}", configName);
             }
@@ -2837,7 +2837,7 @@ public class ConfigManager {
         lock.writeLock().lock();
         try {
             configCache.clear();
-            LOGGER.info("Configuration cache cleared - configs will be reloaded from disk");
+            NeoLog.info(LOGGER, LogCategory.CONFIG, "Configuration cache cleared - configs will be reloaded from disk");
         } finally {
             lock.writeLock().unlock();
         }
@@ -3653,7 +3653,7 @@ public class ConfigManager {
         lock.writeLock().lock();
         try {
             if (ConfigSplitter.isSplittingEnabled() && configName.equals(MAIN_CONFIG)) {
-                LOGGER.info("Split configs enabled - writing changes to split files instead of config.json");
+                NeoLog.info(LOGGER, LogCategory.CONFIG, "Split configs enabled - writing changes to split files instead of config.json");
                 ConfigSplitter.saveMergedConfigToSplitFiles(config);
                 configCache.put(configName, config);
                 return;
