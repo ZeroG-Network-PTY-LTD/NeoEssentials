@@ -16,6 +16,13 @@ on:
     branches:
       - Dev-Builds
       - mc-26.1-port
+    # Changelog/wiki-only edits have no effect on the built jar — don't burn a build number
+    # or spam a Discord release notification for them.
+    paths-ignore:
+      - 'CHANGELOG_GITHUB.md'
+      - 'CHANGELOG_CURSEFORGE.md'
+      - 'CHANGELOG_MODRINTH.md'
+      - 'docs/Wiki/**'
   workflow_dispatch:
 
 permissions:
