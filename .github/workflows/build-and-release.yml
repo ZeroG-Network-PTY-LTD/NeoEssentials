@@ -1,10 +1,12 @@
 name: Build & Release Jar
 
-# Builds the mod jar for a dev branch and publishes it as its own GitHub Release, tagged
-# build-<branch>-<build number> — a new release per build, not one shared/overwritten release
-# per branch — so no need to run gradle locally to grab a build. The build number is shared
-# across Dev-Builds and mc-26.1-port (see "Bump shared build number" below), not tracked
-# independently per branch.
+# Builds the mod jar for a dev branch and publishes it to ONE shared GitHub Release per build
+# number, tagged build-<build number> — both branches' jars (differently named per MC version,
+# so no filename collision) land in the same release instead of two separate releases, since
+# they represent the same shipped change for two MC versions. A new release per build number,
+# not one shared/overwritten release forever — so no need to run gradle locally to grab a build.
+# The build number is shared across Dev-Builds and mc-26.1-port (see "Bump shared build number"
+# below), not tracked independently per branch.
 # The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
 # mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
 # resolver (org.gradle.toolchains.foojay-resolver-convention, already
@@ -84,11 +86,26 @@ jobs:
       # check below (that uses the default GITHUB_TOKEN via `github.token`, which already has
       # the Contents read access releases need) — the PAT's scope is intentionally as narrow as
       # possible, not a general-purpose repo credential.
+      #
+      # Since both branches now publish into the SAME shared release tag (build-<number>), "has
+      # THIS branch already published under the current number" can no longer be answered by
+      # "does a release with this tag exist" (it always will, once either branch has published)
+      # — instead it checks whether the shared release ALREADY HAS an asset carrying this
+      # branch's marker (its jar filename's MC-version fragment, which is what actually makes
+      # each branch's jar unique within the shared release). Update BRANCH_MARKER below if a
+      # branch's target Minecraft version changes.
       - name: Bump shared build number
         id: build_number
         run: |
+          case "${{ github.ref_name }}" in
+            Dev-Builds)    marker="mc1.21.1" ;;
+            mc-26.1-port)  marker="mc26.1.2" ;;
+            *)             marker="${{ github.ref_name }}" ;;
+          esac
+
           current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
-          if GH_TOKEN="${{ github.token }}" gh release view "build-${{ github.ref_name }}-${current}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+          assets=$(GH_TOKEN="${{ github.token }}" gh release view "build-${current}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null) || assets=""
+          if echo "$assets" | grep -q "$marker"; then
             next=$((current + 1))
             GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh variable set BUILD_NUMBER --repo "${{ github.repository }}" --body "$next"
           else
@@ -107,19 +124,22 @@ jobs:
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
 
-      # One release PER BUILD now (unique tag = branch + build number), instead of one release
-      # per branch that gets overwritten every push. The old scheme reused the same tag
-      # (build-<branch>) forever, so GitHub only ever fired a release "released" webhook event
-      # once — every subsequent push just "edited" that same release, which a Discord bot (or
-      # any webhook consumer) watching for "released" never saw again. Each build now gets its
-      # own tag/release, so "released" fires fresh every time.
+      # One release PER BUILD NUMBER (tag = build-<number>), shared by BOTH branches — whichever
+      # branch publishes first for a given number creates the release; the other branch's run
+      # (same number, different jar filename — see the marker check above) updates that same
+      # release, adding its jar as a second asset rather than creating a separate release. Each
+      # NEW build number still gets its own fresh tag/release (not one release reused forever),
+      # so GitHub's "released" webhook event still fires fresh every time a number is first used
+      # — append_body appends this branch's line to the other branch's body instead of
+      # overwriting it, so the combined release's description ends up listing both.
       - name: Publish build release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.ref_name }}-${{ steps.build_number.outputs.value }}
-          name: "${{ github.ref_name }} — build ${{ steps.build_number.outputs.value }}"
+          tag_name: build-${{ steps.build_number.outputs.value }}
+          name: "Build ${{ steps.build_number.outputs.value }}"
           body: |
-            Automated build from commit ${{ github.sha }} on `${{ github.ref_name }}`.
+            `${{ github.ref_name }}`: commit ${{ github.sha }}.
+          append_body: true
           target_commitish: ${{ github.sha }}
           files: ${{ steps.jar.outputs.path }}
           prerelease: true
@@ -154,7 +174,8 @@ jobs:
           # GitHub's release-asset download URL is fully predictable from the tag + filename —
           # no need to parse it back out of the release-creation step's output. Hitting this URL
           # (e.g. clicking it in Discord) downloads the jar directly, no GitHub UI involved.
-          TAG="build-${BRANCH}-${BUILD_NUMBER}"
+          # Shared tag (no branch in it) — both branches' jars live under the same release now.
+          TAG="build-${BUILD_NUMBER}"
           DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${JAR_NAME}"
           SIZE_MB=$(awk "BEGIN { printf \"%.2f\", $(stat -c%s "$JAR_PATH") / 1048576 }")
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
