@@ -45,7 +45,7 @@ public class ServerAssetCollector {
             return cachedAssets;
         }
 
-        LOGGER.info("Collecting server assets...");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Collecting server assets...");
         JsonObject assets = new JsonObject();
 
         // Collect all registered items
@@ -111,7 +111,7 @@ public class ServerAssetCollector {
         cachedAssets = assets;
         lastCacheTime = currentTime;
 
-        LOGGER.info("Collected {} items from {} namespaces ({} modded)",
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Collected {} items from {} namespaces ({} modded)",
             items.size(), namespaceCount.size(), namespaceCount.size() - 1);
 
         return assets;
@@ -151,7 +151,7 @@ public class ServerAssetCollector {
                     result.addProperty("modVersion", modContainer.get().getModInfo().getVersion().toString());
                 }
             } catch (Exception e) {
-                LOGGER.debug("Could not get mod info for namespace: {}", namespace);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not get mod info for namespace: {}", namespace);
             }
         }
 
@@ -164,7 +164,7 @@ public class ServerAssetCollector {
     public void clearCache() {
         cachedAssets = null;
         lastCacheTime = 0;
-        LOGGER.info("Server asset cache cleared");
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Server asset cache cleared");
     }
 }
 

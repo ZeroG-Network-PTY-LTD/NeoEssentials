@@ -127,7 +127,7 @@ public class BackupManager {
         manifest.addProperty("sizeBytes", sizeBytes);
         manifest.addProperty("elapsedMs", elapsed);
 
-        LOGGER.info("[Backup] Snapshot '{}' created: {} files, {} KB in {}ms",
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Snapshot '{}' created: {} files, {} KB in {}ms",
             name, fileCount, sizeBytes / 1024, elapsed);
 
         // Prune old snapshots
@@ -201,7 +201,7 @@ public class BackupManager {
         String preRestoreName = "pre-restore-" + System.currentTimeMillis();
         List<String> targets = getSnapshotTargets(zipFile);
         JsonObject preBackup = createSnapshot(preRestoreName, targets);
-        LOGGER.info("[Backup] Pre-restore backup created: {}", preRestoreName);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Pre-restore backup created: {}", preRestoreName);
 
         long extracted = 0;
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
@@ -231,7 +231,7 @@ public class BackupManager {
             }
         }
 
-        LOGGER.info("[Backup] Restored snapshot '{}': {} files extracted.", name, extracted);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Restored snapshot '{}': {} files extracted.", name, extracted);
         JsonObject result = new JsonObject();
         result.addProperty("success",        true);
         result.addProperty("restored",        name);
@@ -335,7 +335,7 @@ public class BackupManager {
         Path zipFile = BACKUP_DIR.resolve(name + ".zip");
         if (!Files.exists(zipFile)) return false;
         Files.delete(zipFile);
-        LOGGER.info("[Backup] Deleted snapshot '{}'", name);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Deleted snapshot '{}'", name);
         return true;
     }
 
@@ -391,7 +391,7 @@ public class BackupManager {
         });
         int toDelete = zips.size() - MAX_SNAPSHOTS;
         for (int i = 0; i < toDelete; i++) {
-            try { Files.delete(zips.get(i)); LOGGER.info("[Backup] Pruned old snapshot: {}", zips.get(i).getFileName()); }
+            try { Files.delete(zips.get(i)); NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Pruned old snapshot: {}", zips.get(i).getFileName()); }
             catch (IOException e) { LOGGER.warn("[Backup] Could not prune snapshot {}: {}", zips.get(i), e.getMessage()); }
         }
     }

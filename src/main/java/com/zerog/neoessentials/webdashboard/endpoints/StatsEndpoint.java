@@ -110,7 +110,7 @@ public class StatsEndpoint implements HttpHandler {
             // Push live stats pulse to WebSocket clients
             WebSocketEventBroadcaster.broadcastStatsPulse(server);
         } catch (Exception e) {
-            LOGGER.debug("[Stats] Sample error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "[Stats] Sample error: {}", e.getMessage());
         }
     }
 

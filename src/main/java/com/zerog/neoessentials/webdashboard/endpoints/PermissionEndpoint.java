@@ -1208,7 +1208,7 @@ public class PermissionEndpoint implements HttpHandler {
                 return UUID.fromString(formatted);
             }
         } catch (Exception e) {
-            LOGGER.debug("Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Could not resolve UUID for '{}' via Mojang API: {}", username, e.getMessage());
             return null;
         }
     }

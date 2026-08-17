@@ -126,7 +126,7 @@ public class BackupEndpoint implements HttpHandler {
             req.getAsJsonArray("targets").forEach(e -> targets.add(e.getAsString()));
         }
 
-        LOGGER.info("[BackupEndpoint] Creating snapshot '{}' with targets: {}", name, targets);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[BackupEndpoint] Creating snapshot '{}' with targets: {}", name, targets);
         JsonObject result = BackupManager.getInstance().createSnapshot(name, targets);
         result.addProperty("success", true);
         respond(exchange, 200, GSON.toJson(result));
@@ -141,7 +141,7 @@ public class BackupEndpoint implements HttpHandler {
         String name = req.has("name") ? req.get("name").getAsString().trim() : null;
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Missing 'name' field");
 
-        LOGGER.info("[BackupEndpoint] Restoring snapshot '{}'", name);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[BackupEndpoint] Restoring snapshot '{}'", name);
         JsonObject result = BackupManager.getInstance().restoreSnapshot(name);
         respond(exchange, 200, GSON.toJson(result));
     }

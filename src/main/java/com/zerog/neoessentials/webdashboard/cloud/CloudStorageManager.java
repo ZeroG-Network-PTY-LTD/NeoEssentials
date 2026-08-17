@@ -115,7 +115,7 @@ public class CloudStorageManager {
 
     private void loadConfig() {
         if (!Files.exists(CONFIG_FILE)) {
-            LOGGER.debug("Cloud storage config not found — using defaults");
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Cloud storage config not found — using defaults");
             return;
         }
         try {
@@ -141,7 +141,7 @@ public class CloudStorageManager {
                 oneDriveClientSecret = o.has("clientSecret") ? o.get("clientSecret").getAsString() : "";
                 oneDrivePath         = o.has("uploadPath")   ? o.get("uploadPath").getAsString()   : "/NeoEssentials-Backups";
             }
-            LOGGER.info("Cloud storage config loaded");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Cloud storage config loaded");
         } catch (Exception e) {
             LOGGER.error("Failed to load cloud storage config: {}", e.getMessage());
         }
@@ -173,7 +173,7 @@ public class CloudStorageManager {
             root.add("oneDrive", o);
 
             Files.writeString(CONFIG_FILE, GSON.toJson(root), StandardCharsets.UTF_8);
-            LOGGER.info("Cloud storage config saved");
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Cloud storage config saved");
         } catch (Exception e) {
             LOGGER.error("Failed to save cloud storage config: {}", e.getMessage());
         }
@@ -259,7 +259,7 @@ public class CloudStorageManager {
 
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         checkStatus(resp.statusCode(), "Dropbox upload", resp.body());
-        LOGGER.info("Uploaded {} to Dropbox as {}", localFile.getFileName(), destPath);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Uploaded {} to Dropbox as {}", localFile.getFileName(), destPath);
         return JsonParser.parseString(resp.body()).getAsJsonObject();
     }
 
@@ -319,7 +319,7 @@ public class CloudStorageManager {
 
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         checkStatus(resp.statusCode(), "Dropbox delete", resp.body());
-        LOGGER.info("Deleted from Dropbox: {}", dropboxFilePath);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Deleted from Dropbox: {}", dropboxFilePath);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -370,7 +370,7 @@ public class CloudStorageManager {
         googleAccessToken = json.get("access_token").getAsString();
         long expiresIn    = json.has("expires_in") ? json.get("expires_in").getAsLong() : 3600L;
         googleTokenExpiry = System.currentTimeMillis() + expiresIn * 1000L;
-        LOGGER.debug("Google Drive access token refreshed (expires in {}s)", expiresIn);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Google Drive access token refreshed (expires in {}s)", expiresIn);
         return googleAccessToken;
     }
 
@@ -418,7 +418,7 @@ public class CloudStorageManager {
 
         HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         checkStatus(resp.statusCode(), "Google Drive upload", resp.body());
-        LOGGER.info("Uploaded {} to Google Drive ({})", localFile.getFileName(), fileName);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Uploaded {} to Google Drive ({})", localFile.getFileName(), fileName);
         return JsonParser.parseString(resp.body()).getAsJsonObject();
     }
 
@@ -490,7 +490,7 @@ public class CloudStorageManager {
         if (resp.statusCode() != 204 && resp.statusCode() != 200) {
             checkStatus(resp.statusCode(), "Google Drive delete", resp.body());
         }
-        LOGGER.info("Deleted from Google Drive: {}", fileId);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Deleted from Google Drive: {}", fileId);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -542,7 +542,7 @@ public class CloudStorageManager {
         oneDriveAccessToken = json.get("access_token").getAsString();
         long expiresIn      = json.has("expires_in") ? json.get("expires_in").getAsLong() : 3600L;
         oneDriveTokenExpiry = System.currentTimeMillis() + expiresIn * 1000L;
-        LOGGER.debug("OneDrive access token refreshed (expires in {}s)", expiresIn);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "OneDrive access token refreshed (expires in {}s)", expiresIn);
         return oneDriveAccessToken;
     }
 
@@ -605,7 +605,7 @@ public class CloudStorageManager {
             }
         }
 
-        LOGGER.info("Uploaded {} to OneDrive as {}", localFile.getFileName(), itemPath);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Uploaded {} to OneDrive as {}", localFile.getFileName(), itemPath);
         return finalResponse;
     }
 
@@ -661,7 +661,7 @@ public class CloudStorageManager {
         if (resp.statusCode() != 204 && resp.statusCode() != 200) {
             checkStatus(resp.statusCode(), "OneDrive delete", resp.body());
         }
-        LOGGER.info("Deleted from OneDrive: {}", itemId);
+        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Deleted from OneDrive: {}", itemId);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
