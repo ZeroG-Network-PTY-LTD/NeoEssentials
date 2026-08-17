@@ -30,6 +30,14 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     private boolean loaded = false;
 
+    // Whether SDLink's OWN native broadcaster is enabled for each event type — detected once at
+    // startup by detectNativeRelayConflicts() and used to SKIP NeoEssentials' own default-route
+    // send for that event, instead of just warning about it. See that method's Javadoc for why.
+    private boolean nativeChatEnabled = false;
+    private boolean nativeJoinEnabled = false;
+    private boolean nativeLeaveEnabled = false;
+    private boolean nativeAdvancementEnabled = false;
+
     @Override
     public String getName() {
         return "Simple Discord Link";
@@ -40,7 +48,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         loaded = ModList.get().isLoaded("sdlink");
         if (loaded) {
             NeoLog.info(LOGGER, LogCategory.DISCORD, "Simple Discord Link mod detected, integration enabled.");
-            warnIfNativeChatRelayConflicts();
+            detectNativeRelayConflicts();
         } else {
             NeoLog.debug(LOGGER, LogCategory.DISCORD, "Simple Discord Link mod not found, integration disabled.");
         }
@@ -57,35 +65,44 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
      * those events posts to Discord TWICE with a SINGLE bridge mod installed — no second Discord
      * bridge mod required, despite how that looks from the Discord side (SDLink's native message
      * uses its own phrasing/formatting, e.g. "*Player has left the server!*", so the two posts
-     * don't even look alike). NeoEssentials has no way to suppress SDLink's native side from here,
-     * so the only real fix is disabling the conflicting native feature(s) in SDLink's own config
-     * and letting NeoEssentials be the single source of truth. This is a read-only, best-effort
-     * text scan (not a full TOML parse) purely to surface an actionable warning — never mind it
-     * and never write to SDLink's config file if the scan fails for any reason.
+     * don't even look alike).
+     * <p>
+     * Rather than just warning and leaving the duplicate in place, the detected flags here make
+     * NeoEssentials the passive side by default: {@link #onPlayerJoin}/{@link #onPlayerQuit}/
+     * {@link #onPlayerAdvancement} skip their SDLink send entirely when SDLink's native equivalent
+     * is on, and {@link #onPlayerChat}'s DEFAULT route (no explicit per-channel Discord ID) does
+     * the same for {@code playerMessages} — a channel-specific override still always sends, since
+     * that targets a different channel than SDLink's native relay ever touches, so it's not a
+     * duplicate. This is a read-only, best-effort text scan (not a full TOML parse) — never write
+     * to SDLink's config file, and fail safe (both sides could send) if the scan fails for any
+     * reason, rather than silently going dark on join/leave/chat.
      */
-    private void warnIfNativeChatRelayConflicts() {
+    private void detectNativeRelayConflicts() {
         try {
             java.nio.file.Path cfg = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get()
                 .resolve("config").resolve("simple-discord-link").resolve("simple-discord-link.toml");
             if (!java.nio.file.Files.exists(cfg)) return;
 
-            record ConflictingKey(String key, String valuePattern, String description) {}
+            record ConflictingKey(String key, String valuePattern, String description, Runnable onDetected) {}
             List<ConflictingKey> checks = List.of(
                 new ConflictingKey("playerMessages", "(?i)playerMessages\\s*=\\s*true.*",
                     "relays EVERY Minecraft chat message to its own configured Discord channel, " +
-                    "entirely independent of NeoEssentials' chat.channels.*.discord relay — with both " +
-                    "active, every relayed message posts to Discord twice, and a NeoEssentials channel " +
-                    "you intend to keep private (e.g. a staff channel) still gets relayed in full by " +
-                    "SDLink's own blanket relay regardless of NeoEssentials' settings"),
+                    "entirely independent of NeoEssentials' chat.channels.*.discord relay — NeoEssentials' " +
+                    "own DEFAULT-route chat relay (no explicit per-channel Discord ID) is now suppressed to " +
+                    "avoid a duplicate; per-channel overrides to a specific Discord ID still send normally",
+                    () -> nativeChatEnabled = true),
                 new ConflictingKey("playerJoin", "(?i)playerJoin\\s*=\\s*true.*",
-                    "posts its own player-join message natively, duplicating the one NeoEssentials " +
-                    "already sends through this same adapter"),
+                    "posts its own player-join message natively — NeoEssentials' own join relay through " +
+                    "this adapter is now suppressed to avoid a duplicate",
+                    () -> nativeJoinEnabled = true),
                 new ConflictingKey("playerLeave", "(?i)playerLeave\\s*=\\s*true.*",
-                    "posts its own player-leave message natively, duplicating the one NeoEssentials " +
-                    "already sends through this same adapter"),
+                    "posts its own player-leave message natively — NeoEssentials' own leave relay through " +
+                    "this adapter is now suppressed to avoid a duplicate",
+                    () -> nativeLeaveEnabled = true),
                 new ConflictingKey("advancementMessages", "(?i)advancementMessages\\s*=\\s*\"ALWAYS\".*",
-                    "posts its own advancement message natively, duplicating the one NeoEssentials " +
-                    "already sends through this same adapter")
+                    "posts its own advancement message natively — NeoEssentials' own advancement relay " +
+                    "through this adapter is now suppressed to avoid a duplicate",
+                    () -> nativeAdvancementEnabled = true)
             );
 
             boolean inChatSection = false;
@@ -98,10 +115,11 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 if (!inChatSection) continue;
                 for (ConflictingKey check : checks) {
                     if (trimmed.matches(check.valuePattern())) {
+                        check.onDetected().run();
                         NeoLog.warn(LOGGER, LogCategory.DISCORD, "Simple Discord Link's own 'chat.{}' is enabled in " +
-                            "config/simple-discord-link/simple-discord-link.toml. That {} — set '{}' to a " +
-                            "non-conflicting value under [chat] in that file and restart to let NeoEssentials' " +
-                            "own relay be the only one active for that event.",
+                            "config/simple-discord-link/simple-discord-link.toml. That {}. If you'd rather " +
+                            "NeoEssentials be the one formatting these instead, set '{}' to a non-conflicting " +
+                            "value under [chat] in that file and restart.",
                             check.key(), check.description(), check.key());
                     }
                 }
@@ -149,10 +167,13 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 } else {
                     JdaBridge.sendPlain(discordChannelId, player.getName().getString() + ": " + cleanMessage);
                 }
-            } else {
+            } else if (!nativeChatEnabled) {
                 NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: relaying chat from '{}' via default chat route",
                     player.getName().getString());
                 send(MessageType.CHAT, authorFor(player), cleanMessage);
+            } else {
+                NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: skipping default-route relay for '{}' — " +
+                    "SDLink's own native chat.playerMessages is already relaying it", player.getName().getString());
             }
         } catch (Throwable e) {
             // Catches Errors too — see JdaBridge's Javadoc for why a missing/incompatible JDA
@@ -246,7 +267,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     @Override
     public void onPlayerJoin(ServerPlayer player) {
-        if (!isReady()) return;
+        if (!isReady() || nativeJoinEnabled) return;
         try {
             send(MessageType.JOIN, authorFor(player), player.getName().getString() + " joined the server");
         } catch (Exception e) {
@@ -256,7 +277,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     @Override
     public void onPlayerQuit(ServerPlayer player) {
-        if (!isReady()) return;
+        if (!isReady() || nativeLeaveEnabled) return;
         try {
             send(MessageType.LEAVE, authorFor(player), player.getName().getString() + " left the server");
         } catch (Exception e) {
@@ -266,7 +287,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
     @Override
     public void onPlayerAdvancement(ServerPlayer player, String advancementName) {
-        if (!isReady()) return;
+        if (!isReady() || nativeAdvancementEnabled) return;
         try {
             send(MessageType.ADVANCEMENTS, authorFor(player),
                 player.getName().getString() + " earned the advancement " + advancementName);
