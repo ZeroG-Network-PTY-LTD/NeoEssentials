@@ -49,7 +49,7 @@ public class ReplyCommand {
                     }
                     
                     // Show who we're replying to for confirmation
-                    LOGGER.debug("Player {} replying to {}", sender.getName().getString(), target.getName().getString());
+                    NeoLog.debug(LOGGER, LogCategory.CHAT, "Player {} replying to {}", sender.getName().getString(), target.getName().getString());
                     
                     // Check if target is still online
                     if (!target.getServer().getPlayerList().getPlayers().contains(target)) {

@@ -5,6 +5,8 @@ import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.UUID;
 import java.util.Map;
@@ -245,7 +247,7 @@ public class AfkManager {
                 player.sendSystemMessage(MessageUtil.component("commands.neoessentials.afk.auto_afk_notice"));
             }
 
-            LOGGER.info("Player {} went AFK{}", player.getName().getString(), 
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Player {} went AFK{}", player.getName().getString(), 
                 reason != null && !reason.equals("Inactive") ? " (" + reason + ")" : "");
 
             // Update tablist display
@@ -278,7 +280,7 @@ public class AfkManager {
             server.getPlayerList().broadcastSystemMessage(returnComponent, false);
             server.sendSystemMessage(returnComponent);
 
-            LOGGER.info("Player {} returned from AFK", player.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Player {} returned from AFK", player.getName().getString());
             
             // Update tablist display
             com.zerog.neoessentials.chat.handlers.AfkTablistHandler.onPlayerReturnFromAfk(player);
@@ -350,7 +352,7 @@ public class AfkManager {
                             ? this.afkKickMessage
                             : MessageUtil.localize("commands.neoessentials.afk.kick_message", afkDuration / 60000);
                         player.connection.disconnect(Component.literal(kickMsg));
-                        LOGGER.info("Kicked player {} for being AFK too long (AFK for {} minutes)",
+                        NeoLog.info(LOGGER, LogCategory.CHAT, "Kicked player {} for being AFK too long (AFK for {} minutes)",
                             player.getName().getString(), afkDuration / 60000);
                     } catch (Exception e) {
                         LOGGER.error("Error kicking AFK player {}", player.getName().getString(), e);
@@ -419,13 +421,13 @@ public class AfkManager {
             long kickTimeoutSeconds = afkConfig.get("kickTimeout").getAsLong();
             this.afkKickTimeoutMs = kickTimeoutSeconds > 0 ? kickTimeoutSeconds * 1000L : 0;
             if (kickTimeoutSeconds > 0) {
-                LOGGER.info("AFK kick timeout: {} seconds ({} minutes)", kickTimeoutSeconds, kickTimeoutSeconds / 60);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "AFK kick timeout: {} seconds ({} minutes)", kickTimeoutSeconds, kickTimeoutSeconds / 60);
             }
         } else if (afkConfig.has("kickTimeoutMinutes")) {
             long kickTimeoutMinutes = afkConfig.get("kickTimeoutMinutes").getAsLong();
             this.afkKickTimeoutMs = kickTimeoutMinutes > 0 ? kickTimeoutMinutes * 60000L : 0;
             if (kickTimeoutMinutes > 0) {
-                LOGGER.info("AFK kick timeout: {} minutes", kickTimeoutMinutes);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "AFK kick timeout: {} minutes", kickTimeoutMinutes);
             }
         } else {
             // No timeout key present; default to 0 (disabled)
@@ -441,7 +443,7 @@ public class AfkManager {
             this.kickAfkPlayers = this.afkKickTimeoutMs > 0;
         }
 
-        LOGGER.info("AFK kick feature: {}", this.kickAfkPlayers ? "ENABLED" : "DISABLED");
+        NeoLog.info(LOGGER, LogCategory.CHAT, "AFK kick feature: {}", this.kickAfkPlayers ? "ENABLED" : "DISABLED");
 
         // Warn if kick is enabled with 0 timeout (would kick immediately!) – guard against explicit misconfiguration
         if (this.kickAfkPlayers && this.afkKickTimeoutMs == 0) {
@@ -531,7 +533,7 @@ public class AfkManager {
             this.invulnerableWhenAfk = false;
         }
 
-        LOGGER.info("AFK configuration loaded: timeout={}min, autoAfk={}, broadcast={}, kick={}, invulnerable={}",
+        NeoLog.info(LOGGER, LogCategory.CHAT, "AFK configuration loaded: timeout={}min, autoAfk={}, broadcast={}, kick={}, invulnerable={}",
             afkTimeoutMs / 60000, autoAfkEnabled, broadcastAfkMessages, kickAfkPlayers, invulnerableWhenAfk);
     }
     
@@ -566,7 +568,7 @@ public class AfkManager {
                 }
             }
 
-            LOGGER.info("Loaded AFK data for {} players", playerData.size());
+            NeoLog.info(LOGGER, LogCategory.CHAT, "Loaded AFK data for {} players", playerData.size());
         } catch (Exception e) {
             LOGGER.error("Failed to load AFK data", e);
         }
@@ -585,7 +587,7 @@ public class AfkManager {
             afkCheckExecutor.execute(this::saveAfkData);
         } catch (java.util.concurrent.RejectedExecutionException e) {
             // Executor is shutting down, just log and skip
-            LOGGER.debug("Cannot queue AFK data save - executor is shutting down");
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Cannot queue AFK data save - executor is shutting down");
         }
     }
 
@@ -636,7 +638,7 @@ public class AfkManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("AfkManager: migrated {} AFK record(s) from legacy afk_data.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.CHAT, "AfkManager: migrated {} AFK record(s) from legacy afk_data.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -662,7 +664,7 @@ public class AfkManager {
      * Shutdown the AFK manager
      */
     public void shutdown() {
-        LOGGER.info("Shutting down AFK Manager...");
+        NeoLog.info(LOGGER, LogCategory.CHAT, "Shutting down AFK Manager...");
         // Set shutdown flag first to prevent new task submissions
         isShuttingDown = true;
 
@@ -676,7 +678,7 @@ public class AfkManager {
                 LOGGER.warn("AFK Manager executor did not terminate gracefully, forcing shutdown...");
                 afkCheckExecutor.shutdownNow();
             }
-            LOGGER.info("AFK Manager shutdown complete");
+            NeoLog.info(LOGGER, LogCategory.CHAT, "AFK Manager shutdown complete");
         } catch (InterruptedException e) {
             LOGGER.warn("Interrupted while waiting for AFK Manager executor shutdown");
             afkCheckExecutor.shutdownNow();
@@ -706,9 +708,9 @@ public class AfkManager {
      * Reload AFK data from disk (does not clear current AFK states)
      */
     public void reload() {
-        LOGGER.info("Reloading AFK system...");
+        NeoLog.info(LOGGER, LogCategory.CHAT, "Reloading AFK system...");
         // Note: We don't clear current AFK states as they represent live player state
         // Just reload configuration if needed
-        LOGGER.info("AFK system reloaded");
+        NeoLog.info(LOGGER, LogCategory.CHAT, "AFK system reloaded");
     }
 }

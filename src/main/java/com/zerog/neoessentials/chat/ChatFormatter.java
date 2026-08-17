@@ -11,6 +11,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.ChatFormatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -68,16 +70,16 @@ public class ChatFormatter {
             boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
 
             if (debugEnabled) {
-                LOGGER.info("=== CHAT FORMATTING DEBUG ===");
-                LOGGER.info("Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
-                LOGGER.info("Original message: [{}]", message);
-                LOGGER.info("Template: [{}]", template);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "=== CHAT FORMATTING DEBUG ===");
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Original message: [{}]", message);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Template: [{}]", template);
             }
 
             // Normalize placeholders to new format
             String normalizedTemplate = normalizePlaceholders(template);
             if (debugEnabled) {
-                LOGGER.debug("After normalization: {}", normalizedTemplate);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "After normalization: {}", normalizedTemplate);
             }
 
             // Phase 3: Apply badges and icons to template.
@@ -92,7 +94,7 @@ public class ChatFormatter {
             // (before_prefix) never touches the username token in the first place.
             normalizedTemplate = BadgeManager.getInstance().applyBadgesAndIcons(player, normalizedTemplate);
             if (debugEnabled) {
-                LOGGER.debug("After badges/icons: {}", normalizedTemplate);
+                NeoLog.debug(LOGGER, LogCategory.CHAT, "After badges/icons: {}", normalizedTemplate);
             }
 
             // Inject clickable player-name markers when both features are enabled.
@@ -119,19 +121,19 @@ public class ChatFormatter {
             // Restrict colors in message BEFORE inserting into template
             String restrictedMessage = restrictPlayerMessageColors(message, player);
             if (debugEnabled) {
-                LOGGER.info("After color restriction: [{}]", restrictedMessage);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After color restriction: [{}]", restrictedMessage);
             }
 
             // Directly replace {MESSAGE} before PlaceholderAPI processing
             String preFormatted = normalizedTemplate.replace("{MESSAGE}", restrictedMessage);
             if (debugEnabled) {
-                LOGGER.info("After message insertion: [{}]", preFormatted);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After message insertion: [{}]", preFormatted);
             }
 
             // Resolve all other placeholders via PlaceholderAPI
             String formatted = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(player, preFormatted);
             if (debugEnabled) {
-                LOGGER.info("After placeholder resolution: [{}]", formatted);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After placeholder resolution: [{}]", formatted);
             }
 
             // Tablist-style short-form tokens ({tps}, {online}, {animation:name}, etc.) that
@@ -139,19 +141,19 @@ public class ChatFormatter {
             formatted = resolveShortPlaceholders(formatted, player, resolvedChannel);
             formatted = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(formatted);
             if (debugEnabled) {
-                LOGGER.info("After short-form placeholders/animations: [{}]", formatted);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After short-form placeholders/animations: [{}]", formatted);
             }
 
             // Phase 4: Apply conditional formatting
             formatted = ConditionalFormatter.processConditionals(player, formatted);
             if (debugEnabled) {
-                LOGGER.info("After conditional formatting: [{}]", formatted);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After conditional formatting: [{}]", formatted);
             }
 
             // Clean up formatting
             formatted = cleanupFormatting(formatted);
             if (debugEnabled) {
-                LOGGER.info("After cleanup: [{}]", formatted);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After cleanup: [{}]", formatted);
             }
 
             // Phase 4: Pre-process rich text tags.
@@ -159,11 +161,11 @@ public class ChatFormatter {
             // When richText.enabled=false → strips <tag> syntax, leaving legacy & codes intact.
             if (debugEnabled) {
                 boolean richTextOn = isRichTextEnabled();
-                LOGGER.info("Rich text enabled: {}", richTextOn);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "Rich text enabled: {}", richTextOn);
             }
             String richPreProcessed = RichTextFormatter.preprocessTags(formatted);
             if (debugEnabled) {
-                LOGGER.info("After rich text pre-processing: [{}]", richPreProcessed);
+                NeoLog.info(LOGGER, LogCategory.CHAT, "After rich text pre-processing: [{}]", richPreProcessed);
             }
 
             // Apply Phase 2 enhancements if enabled
@@ -180,7 +182,7 @@ public class ChatFormatter {
             }
 
             if (debugEnabled) {
-                LOGGER.info("=== END CHAT FORMATTING DEBUG ===");
+                NeoLog.info(LOGGER, LogCategory.CHAT, "=== END CHAT FORMATTING DEBUG ===");
             }
             return result;
 
@@ -202,14 +204,14 @@ public class ChatFormatter {
         boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
 
         if (debugEnabled) {
-            LOGGER.info(">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);
-            LOGGER.info(">>> Original message: [{}]", message);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Original message: [{}]", message);
         }
 
         // First check if color codes are enabled globally in config
         boolean colorCodesEnabled = com.zerog.neoessentials.config.ConfigManager.isColorCodesEnabled();
         if (debugEnabled) {
-            LOGGER.info(">>> Config enable-color-codes: {}", colorCodesEnabled);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Config enable-color-codes: {}", colorCodesEnabled);
         }
 
         if (!colorCodesEnabled) {
@@ -217,7 +219,7 @@ public class ChatFormatter {
             result = HEX_PATTERN.matcher(result).replaceAll("");
             result = AMPERSAND_CODE_PATTERN.matcher(result).replaceAll("");
             if (debugEnabled) {
-                LOGGER.info(">>> Color codes DISABLED in config - Stripped all codes: [{}]", result);
+                NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Color codes DISABLED in config - Stripped all codes: [{}]", result);
             }
             return result;
         }
@@ -228,17 +230,17 @@ public class ChatFormatter {
         boolean hasFormatPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.format");
         
         if (debugEnabled) {
-            LOGGER.info(">>> Permission Check Results:");
-            LOGGER.info(">>>   - neoessentials.chat.color.hex: {}", hasHexPerm);
-            LOGGER.info(">>>   - neoessentials.chat.color: {}", hasColorPerm);
-            LOGGER.info(">>>   - neoessentials.chat.format: {}", hasFormatPerm);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Permission Check Results:");
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   - neoessentials.chat.color.hex: {}", hasHexPerm);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   - neoessentials.chat.color: {}", hasColorPerm);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   - neoessentials.chat.format: {}", hasFormatPerm);
         }
 
         if (!hasHexPerm) {
             if (debugEnabled) {
                 String before = result;
                 result = HEX_PATTERN.matcher(result).replaceAll("");
-                LOGGER.info(">>>   Stripped hex codes: [{}] -> [{}]", before, result);
+                NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   Stripped hex codes: [{}] -> [{}]", before, result);
             } else {
                 result = HEX_PATTERN.matcher(result).replaceAll("");
             }
@@ -248,7 +250,7 @@ public class ChatFormatter {
             if (debugEnabled) {
                 String before = result;
                 result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
-                LOGGER.info(">>>   Stripped color codes: [{}] -> [{}]", before, result);
+                NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   Stripped color codes: [{}] -> [{}]", before, result);
             } else {
                 result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
             }
@@ -258,7 +260,7 @@ public class ChatFormatter {
             if (debugEnabled) {
                 String before = result;
                 result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
-                LOGGER.info(">>>   Stripped format codes: [{}] -> [{}]", before, result);
+                NeoLog.info(LOGGER, LogCategory.CHAT, ">>>   Stripped format codes: [{}] -> [{}]", before, result);
             } else {
                 result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
             }
@@ -274,7 +276,7 @@ public class ChatFormatter {
         }
         
         if (debugEnabled) {
-            LOGGER.info(">>> Final restricted message: [{}]", result);
+            NeoLog.info(LOGGER, LogCategory.CHAT, ">>> Final restricted message: [{}]", result);
         }
         return result;
     }
@@ -812,7 +814,7 @@ public class ChatFormatter {
                 1.0f
             );
         } catch (Exception e) {
-            LOGGER.debug("Failed to play mention sound: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Failed to play mention sound: {}", e.getMessage());
         }
     }
 

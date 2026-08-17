@@ -115,7 +115,7 @@ public class MsgCommand {
                         if (isMuted) {
                             // Log for debugging
                             NeoLog.debug(LOGGER, LogCategory.CHAT, "MsgCommand - FAILED: Player is muted");
-                            LOGGER.debug("Blocked /msg from muted player: {}", senderName);
+                            NeoLog.debug(LOGGER, LogCategory.CHAT, "Blocked /msg from muted player: {}", senderName);
                             source.sendFailure(MessageUtil.error("commands.neoessentials.msg.sender_muted"));
                             return 0;
                         }

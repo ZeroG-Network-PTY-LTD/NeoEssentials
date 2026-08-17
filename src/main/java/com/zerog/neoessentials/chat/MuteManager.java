@@ -87,7 +87,7 @@ public class MuteManager {
     private static void load() {
         loadCollection(PLAYER_COLLECTION, mutedPlayers, muteHistory);
         loadCollection(IP_COLLECTION, mutedIPs, ipMuteHistory);
-        LOGGER.info("MuteManager: loaded {} active mute(s), {} active IP mute(s).", mutedPlayers.size(), mutedIPs.size());
+        NeoLog.info(LOGGER, LogCategory.CHAT, "MuteManager: loaded {} active mute(s), {} active IP mute(s).", mutedPlayers.size(), mutedIPs.size());
     }
 
     private static void loadCollection(String collection, Map<String, MuteEntry> activeMap, List<MuteEntry> historyList) {
@@ -339,7 +339,7 @@ public class MuteManager {
         migrated += migrateLegacyFile("ip_mute_history.json", IP_COLLECTION, false);
 
         if (migrated > 0) {
-            LOGGER.info("MuteManager: migrated {} mute record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.CHAT, "MuteManager: migrated {} mute record(s) from legacy files into the '{}' storage backend.",
                 migrated, StorageManager.getInstance().getActiveType());
         }
     }
