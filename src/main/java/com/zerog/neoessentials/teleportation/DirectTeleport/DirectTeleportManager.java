@@ -91,7 +91,7 @@ public class DirectTeleportManager {
                                                                   player.getName().getString()));
                     }
                     
-                    LOGGER.info("Admin {} teleported {} to {}", 
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Admin {} teleported {} to {}", 
                                executor.getName().getString(), 
                                player.getName().getString(), 
                                target.getName().getString());
@@ -139,7 +139,7 @@ public class DirectTeleportManager {
                     // Notify the teleported player
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.admin.teleported_to_coords", x, y, z));
                     
-                    LOGGER.info("Admin {} teleported {} to coordinates {}, {}, {}", 
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Admin {} teleported {} to coordinates {}, {}, {}", 
                                executor.getName().getString(), 
                                player.getName().getString(), 
                                x, y, z);
@@ -213,7 +213,7 @@ public class DirectTeleportManager {
             executor.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.admin.tpall.completed", 
                                                            successCount[0], failureCount[0]));
             
-            LOGGER.info("Admin {} completed tpall: {} successful, {} failed", 
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Admin {} completed tpall: {} successful, {} failed", 
                        executor.getName().getString(), successCount[0], failureCount[0]);
         });
     }
@@ -303,7 +303,7 @@ public class DirectTeleportManager {
                 .thenAccept(result -> {
                     if (result.isSuccess()) {
                         executor.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.admin.offline_teleported", playerName));
-                        LOGGER.info("Admin {} teleported to offline player {}'s location", 
+                        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Admin {} teleported to offline player {}'s location", 
                                    executor.getName().getString(), playerName);
                     } else {
                         executor.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.admin.offline_failed", result.getMessage()));

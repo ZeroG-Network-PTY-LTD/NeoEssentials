@@ -93,7 +93,7 @@ public class SpawnManager {
                 }
             }
             this.requireSafeLocation = safe;
-            LOGGER.info("[SpawnManager] Config loaded — safetyCheck={}, warmup={}s, cooldown={}s, allowNether={}, allowEnd={}",
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[SpawnManager] Config loaded — safetyCheck={}, warmup={}s, cooldown={}s, allowNether={}, allowEnd={}",
                 safe, teleportDelay, spawnCooldownSeconds, allowSetSpawnInNether, allowSetSpawnInEnd);
         } catch (Exception e) {
             LOGGER.warn("Failed to load spawn safety config, defaulting to safe: {}", e.getMessage());
@@ -141,7 +141,7 @@ public class SpawnManager {
         
         setter.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.set", location.getLocationString()));
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
-            LOGGER.info("Player {} set server spawn to {}", setter.getName().getString(), location.getLocationString());
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} set server spawn to {}", setter.getName().getString(), location.getLocationString());
         }
         
         return true;
@@ -291,7 +291,7 @@ public class SpawnManager {
                 NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} successfully teleported to spawn at {}",
                     player.getName().getString(), spawnLocation.getLocationString());
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
-                    LOGGER.info("Player {} teleported to spawn", player.getName().getString());
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to spawn", player.getName().getString());
                 }
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.failed", result.getMessage()));
@@ -326,7 +326,7 @@ public class SpawnManager {
                 if (result.isSuccess()) {
                     player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.spawn.fallback_success"));
                     if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
-                        LOGGER.info("Player {} teleported to world spawn fallback", player.getName().getString());
+                        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to world spawn fallback", player.getName().getString());
                     }
                 } else {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.fallback_failed", result.getMessage()));
@@ -363,7 +363,7 @@ public class SpawnManager {
         
         clearer.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.cleared"));
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
-            LOGGER.info("Player {} cleared server spawn", clearer.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} cleared server spawn", clearer.getName().getString());
         }
         
         return true;
@@ -376,7 +376,7 @@ public class SpawnManager {
         try {
             JsonObject root = store.get(SPAWN_COLLECTION, SPAWN_ID);
             if (root == null) {
-                LOGGER.info("No spawn record found, using world spawn");
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "No spawn record found, using world spawn");
                 return;
             }
 
@@ -385,7 +385,7 @@ public class SpawnManager {
                 spawnLocation = TeleportLocation.fromJson(spawnJson);
 
                 if (spawnLocation != null) {
-                    LOGGER.info("Loaded spawn location: {}", spawnLocation.getLocationString());
+                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Loaded spawn location: {}", spawnLocation.getLocationString());
                 } else {
                     LOGGER.warn("Failed to parse spawn location from storage");
                 }
@@ -455,7 +455,7 @@ public class SpawnManager {
 
             JsonObject root = JsonParser.parseString(content).getAsJsonObject();
             store.put(SPAWN_COLLECTION, SPAWN_ID, root);
-            LOGGER.info("SpawnManager: migrated legacy spawn.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "SpawnManager: migrated legacy spawn.json into the '{}' storage backend.",
                 com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         } catch (Exception e) {
             LOGGER.error("Failed to migrate legacy spawn.json: {}", e.getMessage());
@@ -489,10 +489,10 @@ public class SpawnManager {
      * Reload spawn data from disk
      */
     public void reload() {
-        LOGGER.info("Reloading spawn system...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Reloading spawn system...");
         loadConfig();
         spawnLocation = null;
         loadSpawn();
-        LOGGER.info("Spawn system reloaded: {}", hasSpawn() ? "Spawn loaded" : "No spawn set");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Spawn system reloaded: {}", hasSpawn() ? "Spawn loaded" : "No spawn set");
     }
 }

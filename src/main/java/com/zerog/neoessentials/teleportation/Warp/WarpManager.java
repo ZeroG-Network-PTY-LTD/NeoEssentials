@@ -138,7 +138,7 @@ public class WarpManager {
                     }
                 }
             }
-            LOGGER.info("[WarpManager] Config loaded — safetyCheck={}, maxWarps={}, allowPlayerWarps={}, maxPlayerWarps={}, warmup={}s, useCooldown={}s, setCooldown={}s, crossDimension={}",
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[WarpManager] Config loaded — safetyCheck={}, maxWarps={}, allowPlayerWarps={}, maxPlayerWarps={}, warmup={}s, useCooldown={}s, setCooldown={}s, crossDimension={}",
                 requireSafeLocations, maxWarps, allowPlayerWarps, maxPlayerWarps, teleportDelay, warpUseCooldown, warpSetCooldown, allowCrossDimensionWarps);
         } catch (Exception e) {
             LOGGER.warn("Failed to load warp config, using defaults: {}", e.getMessage());
@@ -253,7 +253,7 @@ public class WarpManager {
         
         savePlayerWarps();
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.playerwarp_created", warpName, location.getLocationString()));
-        LOGGER.info("Player {} created player warp '{}' at {}", player.getName().getString(), warpName, location.getLocationString());
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} created player warp '{}' at {}", player.getName().getString(), warpName, location.getLocationString());
         return true;
     }
 
@@ -276,7 +276,7 @@ public class WarpManager {
         
         savePlayerWarps();
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.playerwarp_deleted", warpName));
-        LOGGER.info("Player {} deleted player warp '{}'", player.getName().getString(), warpName);
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} deleted player warp '{}'", player.getName().getString(), warpName);
         return true;
     }
 
@@ -325,7 +325,7 @@ public class WarpManager {
         if (removed == null) return false;
 
         savePlayerWarps();
-        LOGGER.info("Admin deleted player warp '{}' for {}", warpName, playerId);
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Admin deleted player warp '{}' for {}", warpName, playerId);
         return true;
     }
 
@@ -442,7 +442,7 @@ public class WarpManager {
         int migratedPlayerWarps = migrateLegacyPlayerWarpsFile();
 
         if (migratedWarps > 0 || migratedPlayerWarps > 0) {
-            LOGGER.info("WarpManager: migrated {} warp(s) and {} player warp owner(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "WarpManager: migrated {} warp(s) and {} player warp owner(s) from legacy files into the '{}' storage backend.",
                 migratedWarps, migratedPlayerWarps, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -578,7 +578,7 @@ public class WarpManager {
         saveWarps();
         
         creator.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.created", warpName, location.getLocationString()));
-        LOGGER.info("Player {} created warp '{}' at {}", creator.getName().getString(), warpName, location.getLocationString());
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} created warp '{}' at {}", creator.getName().getString(), warpName, location.getLocationString());
         
         return true;
     }
@@ -680,7 +680,7 @@ public class WarpManager {
 
         saveWarps();
         if (ConfigManager.getInstance().isLogWarpActionsEnabled()) {
-            LOGGER.info("Warp '{}' created by {} at {}", warpName, createdBy, location.getLocationString());
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Warp '{}' created by {} at {}", warpName, createdBy, location.getLocationString());
         }
         return null;
     }
@@ -695,7 +695,7 @@ public class WarpManager {
         if (removed == null) return false;
         saveWarps();
         if (ConfigManager.getInstance().isLogWarpActionsEnabled()) {
-            LOGGER.info("Warp '{}' deleted by {}", warpName, deletedBy);
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Warp '{}' deleted by {}", warpName, deletedBy);
         }
         return true;
     }
@@ -715,7 +715,7 @@ public class WarpManager {
         saveWarps();
         
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogWarpActionsEnabled()) {
-            LOGGER.info("Player {} deleted warp '{}'", player.getName().getString(), warpName);
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} deleted warp '{}'", player.getName().getString(), warpName);
         }
         return true;
     }
@@ -832,7 +832,7 @@ public class WarpManager {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.success", warpName));
                 NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} successfully teleported to warp '{}' at {}",
                     player.getName().getString(), warpName, finalWarp.getLocationString());
-                LOGGER.info("Player {} teleported to warp '{}'", player.getName().getString(), warpName);
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to warp '{}'", player.getName().getString(), warpName);
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.failed", warpName, result.getMessage()));
                 LOGGER.warn("Failed to teleport player {} to warp '{}': {}", 
@@ -934,7 +934,7 @@ public class WarpManager {
                 }
             }
 
-            LOGGER.info("Loaded {} warps", warps.size());
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Loaded {} warps", warps.size());
 
         } catch (Exception e) {
             LOGGER.error("Failed to load warps from storage", e);
@@ -992,7 +992,7 @@ public class WarpManager {
     public void clearAllWarps() {
         warps.clear();
         saveWarps();
-        LOGGER.info("Cleared all warps");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Cleared all warps");
     }
     
     /**
@@ -1007,13 +1007,13 @@ public class WarpManager {
      * Reload warp data from disk
      */
     public void reload() {
-        LOGGER.info("Reloading warp system...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Reloading warp system...");
         loadConfig();
         warps.clear();
         playerWarps.clear();
         loadWarps();
         loadPlayerWarps();
-        LOGGER.info("Warp system reloaded: {} warps, {} player warps loaded", warps.size(),
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Warp system reloaded: {} warps, {} player warps loaded", warps.size(),
             playerWarps.values().stream().mapToInt(Map::size).sum());
     }
 }

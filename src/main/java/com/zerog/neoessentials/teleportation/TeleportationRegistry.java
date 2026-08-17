@@ -10,6 +10,8 @@ import com.zerog.neoessentials.teleportation.TeleportRequests.TeleportRequestCom
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Central registry for all teleportation commands and systems
@@ -21,7 +23,7 @@ public class TeleportationRegistry {
      * Register all teleportation commands
      */
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LOGGER.info("Registering teleportation commands...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Registering teleportation commands...");
         
         try {
             // Register Home system commands
@@ -42,7 +44,7 @@ public class TeleportationRegistry {
             // Register Misc teleport commands
             MiscTeleportCommands.register(dispatcher);
             
-            LOGGER.info("Successfully registered all teleportation commands!");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Successfully registered all teleportation commands!");
             
         } catch (Exception e) {
             LOGGER.error("Failed to register teleportation commands", e);
@@ -54,13 +56,13 @@ public class TeleportationRegistry {
      * Initialize all teleportation managers
      */
     public static void initializeManagers() {
-        LOGGER.info("Initializing teleportation managers...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Initializing teleportation managers...");
         
         try {
             // Initialize managers (they will be created as singletons when first accessed)
             // This ensures they are ready to handle events
             
-            LOGGER.info("Successfully initialized all teleportation managers!");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Successfully initialized all teleportation managers!");
             
         } catch (Exception e) {
             LOGGER.error("Failed to initialize teleportation managers", e);
@@ -72,12 +74,12 @@ public class TeleportationRegistry {
      * Shutdown all teleportation systems
      */
     public static void shutdown() {
-        LOGGER.info("Shutting down teleportation systems...");
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Shutting down teleportation systems...");
         
         try {
             // Add shutdown logic for managers that need cleanup
             
-            LOGGER.info("Successfully shut down all teleportation systems!");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Successfully shut down all teleportation systems!");
             
         } catch (Exception e) {
             LOGGER.error("Error during teleportation system shutdown", e);

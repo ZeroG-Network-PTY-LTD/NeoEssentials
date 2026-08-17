@@ -13,6 +13,8 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,12 +54,12 @@ public class MiscTeleportCommands {
                     })
                     .executes(context -> executeBack(context))
             );
-            LOGGER.info("Registered misc teleport commands: /back");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Registered misc teleport commands: /back");
         }
 
         if (config.isCommandEnabled("tpauto")) {
             registerTpAuto(dispatcher);
-            LOGGER.info("Registered misc teleport commands: /tpauto");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Registered misc teleport commands: /tpauto");
         }
     }
 

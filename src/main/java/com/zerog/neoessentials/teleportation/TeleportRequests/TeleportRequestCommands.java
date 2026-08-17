@@ -131,7 +131,7 @@ public class TeleportRequestCommands {
                 );
             }
             
-            LOGGER.info("Registered enabled teleport request commands");
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Registered enabled teleport request commands");
         }
     }
     
