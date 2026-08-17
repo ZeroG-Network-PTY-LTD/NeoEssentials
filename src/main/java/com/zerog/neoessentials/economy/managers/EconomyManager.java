@@ -353,21 +353,21 @@ public class EconomyManager {
      */
     private void logCacheMetrics() {
         if (!initialized) return;
-        LOGGER.info("EconomyManager Cache Metrics - Size: {}", balancesCache.size());
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "EconomyManager Cache Metrics - Size: {}", balancesCache.size());
     }
 
     /**
      * Shuts down the economy manager and its executor services properly.
      */
     public void shutdown() {
-        LOGGER.info("Shutting down EconomyManager...");
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "Shutting down EconomyManager...");
 
         // Set shutdown flag to prevent new operations
         shuttingDown.set(true);
 
         if (!initialized) {
             // Economy was never enabled/initialized — nothing to save; just stop the executor.
-            LOGGER.info("EconomyManager was not initialized (economy disabled) — skipping save.");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "EconomyManager was not initialized (economy disabled) — skipping save.");
             saveExecutor.shutdownNow();
             return;
         }
@@ -387,7 +387,7 @@ public class EconomyManager {
             Thread.currentThread().interrupt();
         }
 
-        LOGGER.info("EconomyManager shutdown complete.");
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "EconomyManager shutdown complete.");
     }
 
     // ── Legacy migration ────────────────────────────────────────────────────
@@ -462,7 +462,7 @@ public class EconomyManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("EconomyManager: migrated {} balance record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "EconomyManager: migrated {} balance record(s) from legacy files into the '{}' storage backend.",
                 migrated, StorageManager.getInstance().getActiveType());
         }
     }

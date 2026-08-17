@@ -73,7 +73,7 @@ public class WorthManager {
                 LOGGER.warn("Invalid worth entry '{}': {}", e.getKey(), ex.getMessage());
             }
         }
-        LOGGER.info("Loaded {} item prices", worthMap.size());
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "Loaded {} item prices", worthMap.size());
     }
 
     private void persistPrice(String id, BigDecimal price) {
@@ -314,7 +314,7 @@ public class WorthManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("WorthManager: migrated {} item price record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "WorthManager: migrated {} item price record(s) from legacy files into the '{}' storage backend.",
                 migrated, StorageManager.getInstance().getActiveType());
         }
     }

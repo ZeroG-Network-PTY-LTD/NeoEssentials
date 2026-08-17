@@ -178,7 +178,7 @@ public class SellCommand {
                 "executeSellAll: player={} sold {} item type(s) from inventory, crediting total={}",
                 player.getName().getString(), typesSold, total);
             EconomyManager.getInstance().addBalance(player.getUUID(), total);
-            LOGGER.info("Player {} sold inventory for {}{}", player.getName().getString(),
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "Player {} sold inventory for {}{}", player.getName().getString(),
                 WorthCommand.getCurrencySymbol(), WorthCommand.format(total));
         }
         String sym = WorthCommand.getCurrencySymbol();
@@ -266,7 +266,7 @@ public class SellCommand {
         NeoLog.debug(LOGGER, LogCategory.ECONOMY,
             "doSell: player={} removed {}x {} from inventory, crediting earned={}", player.getName().getString(), toSell, itemId, earned);
         EconomyManager.getInstance().addBalance(player.getUUID(), earned);
-        LOGGER.info("Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
+        NeoLog.info(LOGGER, LogCategory.ECONOMY, "Player {} sold {}x {} for {}{} (x{} multiplier)", player.getName().getString(),
             toSell, itemId,
             WorthCommand.getCurrencySymbol(), WorthCommand.format(earned), multiplier.toPlainString());
         String sym = WorthCommand.getCurrencySymbol();

@@ -33,7 +33,7 @@ public class LuckPermsEconomyModifiers implements EconomyModifierProvider {
     public LuckPermsEconomyModifiers() {
         this.available = ModList.get().isLoaded("luckperms");
         if (available) {
-            LOGGER.info("[Economy] LuckPerms economy meta integration active.");
+            NeoLog.info(LOGGER, LogCategory.ECONOMY, "[Economy] LuckPerms economy meta integration active.");
         }
     }
     @Override
