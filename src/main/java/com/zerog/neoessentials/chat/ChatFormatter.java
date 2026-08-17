@@ -102,11 +102,15 @@ public class ChatFormatter {
             // to plain text by PlaceholderAPI below.
             if (isClickablePlayerNamesEnabled() && isChatEnhancementsEnabled()) {
                 String uname = player.getName().getString();
-                // Use the player's nickname for displayname hover, falling back to the scoreboard name
+                // Use the player's nickname for displayname hover, falling back to the raw name —
+                // NOT getDisplayName(), which (e.g. under LuckPerms' vanilla team-based name
+                // formatting) already has the group prefix/suffix baked in, doubling up with the
+                // template's own {neoessentials_prefix}/{neoessentials_suffix} placeholders. See
+                // DefaultPlaceholderExpansion.getNickOrDisplayName() for the same fix.
                 String nickRaw = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
                 String dname = (nickRaw != null && !nickRaw.isEmpty())
                     ? nickRaw.replace("&", "§")
-                    : player.getDisplayName().getString();
+                    : uname;
                 normalizedTemplate = normalizedTemplate
                     .replace("{neoessentials_username}", "§HNAME§" + uname + "§/HNAME§")
                     .replace("{neoessentials_displayname}", "§HDNAME§" + dname + "§/HDNAME§");

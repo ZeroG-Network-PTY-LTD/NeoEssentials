@@ -48,23 +48,45 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     }
 
     /**
-     * SDLink has its own independent, config-driven "relay every chat message to Discord"
-     * feature ({@code chat.playerMessages} in its own config file) — completely separate from,
-     * and unaware of, NeoEssentials' per-channel {@code chat.channels.<name>.discord} relay.
-     * Running both at once means every message NeoEssentials also explicitly relays gets
-     * posted to Discord TWICE, and — since SDLink's native relay has no concept of
-     * NeoEssentials' chat channels — a channel NeoEssentials treats as private (e.g. a staff
-     * channel) still gets relayed in full by SDLink's own blanket relay regardless. NeoEssentials
-     * has no way to suppress that from its side, so the only real fix is disabling SDLink's own
-     * relay and letting NeoEssentials be the single source of truth. This is a read-only,
-     * best-effort text scan (not a full TOML parse) purely to surface an actionable warning —
-     * never mind it and never write to SDLink's config file if the scan fails for any reason.
+     * SDLink ships several independent, config-driven native broadcasters — chat relay
+     * ({@code chat.playerMessages}), join/leave ({@code chat.playerJoin}/{@code chat.playerLeave}),
+     * and advancements ({@code chat.advancementMessages}) — all default-enabled in its own config
+     * file, completely separate from, and unaware of, the equivalent events NeoEssentials sends
+     * through this SAME adapter's {@link #onPlayerChat}/{@link #onPlayerJoin}/
+     * {@link #onPlayerQuit}/{@link #onPlayerAdvancement}. Running both at once means every one of
+     * those events posts to Discord TWICE with a SINGLE bridge mod installed — no second Discord
+     * bridge mod required, despite how that looks from the Discord side (SDLink's native message
+     * uses its own phrasing/formatting, e.g. "*Player has left the server!*", so the two posts
+     * don't even look alike). NeoEssentials has no way to suppress SDLink's native side from here,
+     * so the only real fix is disabling the conflicting native feature(s) in SDLink's own config
+     * and letting NeoEssentials be the single source of truth. This is a read-only, best-effort
+     * text scan (not a full TOML parse) purely to surface an actionable warning — never mind it
+     * and never write to SDLink's config file if the scan fails for any reason.
      */
     private void warnIfNativeChatRelayConflicts() {
         try {
             java.nio.file.Path cfg = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get()
                 .resolve("config").resolve("simple-discord-link").resolve("simple-discord-link.toml");
             if (!java.nio.file.Files.exists(cfg)) return;
+
+            record ConflictingKey(String key, String valuePattern, String description) {}
+            List<ConflictingKey> checks = List.of(
+                new ConflictingKey("playerMessages", "(?i)playerMessages\\s*=\\s*true.*",
+                    "relays EVERY Minecraft chat message to its own configured Discord channel, " +
+                    "entirely independent of NeoEssentials' chat.channels.*.discord relay — with both " +
+                    "active, every relayed message posts to Discord twice, and a NeoEssentials channel " +
+                    "you intend to keep private (e.g. a staff channel) still gets relayed in full by " +
+                    "SDLink's own blanket relay regardless of NeoEssentials' settings"),
+                new ConflictingKey("playerJoin", "(?i)playerJoin\\s*=\\s*true.*",
+                    "posts its own player-join message natively, duplicating the one NeoEssentials " +
+                    "already sends through this same adapter"),
+                new ConflictingKey("playerLeave", "(?i)playerLeave\\s*=\\s*true.*",
+                    "posts its own player-leave message natively, duplicating the one NeoEssentials " +
+                    "already sends through this same adapter"),
+                new ConflictingKey("advancementMessages", "(?i)advancementMessages\\s*=\\s*\"ALWAYS\".*",
+                    "posts its own advancement message natively, duplicating the one NeoEssentials " +
+                    "already sends through this same adapter")
+            );
 
             boolean inChatSection = false;
             for (String line : java.nio.file.Files.readAllLines(cfg)) {
@@ -73,17 +95,15 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                     inChatSection = trimmed.equalsIgnoreCase("[chat]");
                     continue;
                 }
-                if (inChatSection && trimmed.matches("(?i)playerMessages\\s*=\\s*true.*")) {
-                    NeoLog.warn(LOGGER, LogCategory.DISCORD, "Simple Discord Link's own 'chat.playerMessages' is enabled in " +
-                        "config/simple-discord-link/simple-discord-link.toml. That makes SDLink relay " +
-                        "EVERY Minecraft chat message to its own configured Discord channel on its own, " +
-                        "entirely independent of NeoEssentials' chat.channels.*.discord relay. With both " +
-                        "active, every relayed message posts to Discord twice, and a NeoEssentials channel " +
-                        "you intend to keep private (e.g. a staff channel) will still be relayed in full by " +
-                        "SDLink's own blanket relay regardless of NeoEssentials' settings. Set " +
-                        "'playerMessages = false' under [chat] in that file and restart to let " +
-                        "NeoEssentials' own per-channel Discord relay be the only one active.");
-                    return;
+                if (!inChatSection) continue;
+                for (ConflictingKey check : checks) {
+                    if (trimmed.matches(check.valuePattern())) {
+                        NeoLog.warn(LOGGER, LogCategory.DISCORD, "Simple Discord Link's own 'chat.{}' is enabled in " +
+                            "config/simple-discord-link/simple-discord-link.toml. That {} — set '{}' to a " +
+                            "non-conflicting value under [chat] in that file and restart to let NeoEssentials' " +
+                            "own relay be the only one active for that event.",
+                            check.key(), check.description(), check.key());
+                    }
                 }
             }
         } catch (Exception e) {
