@@ -23,8 +23,11 @@ import java.util.*;
 /**
  * REST handler for moderation management via the dashboard — the canonical punishment
  * model (bans, mutes, kicks, warns, notes, reports), matching ban-management plugins'
- * feature set. GET routes are readable by any logged-in dashboard account; every
- * mutating route requires admin.
+ * feature set. GET routes are readable by any logged-in dashboard account and every
+ * mutating route requires admin, EXCEPT reports: filing one (POST /report) is open to
+ * any logged-in account (matches the in-game /report command's permission node being
+ * granted to every player by default), while every reports GET route plus reviewing one
+ * is admin-only (matches /reports and /reviewreport being staff-only in-game).
  *
  * <p>Bans and mutes are now backed directly by {@link BanManager}/{@link MuteManager} —
  * the same stores the in-game {@code /ban}/{@code /mute} commands actually enforce —
