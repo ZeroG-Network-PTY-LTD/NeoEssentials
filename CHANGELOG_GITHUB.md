@@ -8,6 +8,28 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 > The build counter was reset alongside the v1.0.4 bump, so build numbers here start
 > back at 0/1 — always go by date/version, not build number, when comparing across
 > the reset.
+>
+> **From build.59 onward**, the `+build.NN` suffix matches the real GitHub Actions CI
+> build number (the one in the GitHub Release tag / Discord build notification) instead
+> of an independent count — entries build.44–58 predate this and don't line up with CI.
+
+---
+
+## [1.0.4+build.59] — 2026-08-17
+
+### 🐛 SDLink Discord Duplicates Now Actually Suppressed, Not Just Warned About
+
+- build.45 added a startup warning for SDLink's native `chat.playerMessages`/`playerJoin`/
+  `playerLeave`/`advancementMessages` conflicting with NeoEssentials' own relay through the same
+  adapter, but the duplicate Discord posts stayed either way — admins still had to manually edit
+  SDLink's own config to actually fix it.
+- `SDLinkAdapter` now detects those same native broadcasters at startup and automatically skips
+  its own send for that event when SDLink's native one is already active, instead of just logging
+  about it — a single SDLink install with default settings no longer double-posts join, leave,
+  advancement, or default-route chat messages to Discord. A chat message routed to a specific
+  per-channel Discord ID (`chat.channels.<name>.discord.channelId`) still always sends, since that
+  targets a channel SDLink's native relay never touches, so it was never actually a duplicate.
+- Purely a Discord-relay change — in-game chat display/formatting is untouched.
 
 ---
 
