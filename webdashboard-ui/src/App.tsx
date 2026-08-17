@@ -11,6 +11,7 @@ import Holograms from './pages/Holograms';
 import Discord from './pages/Discord';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
+import ReportPlayer from './pages/ReportPlayer';
 import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
@@ -102,6 +103,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Reports />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/report"
+            element={
+              <RequireAuth>
+                <ReportPlayer />
               </RequireAuth>
             }
           />
