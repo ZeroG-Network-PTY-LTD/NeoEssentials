@@ -291,7 +291,7 @@ public class ModerationEndpoint implements HttpHandler {
         JsonObject body = readBody(exchange);
         String playerName = body.has("playerName") ? body.get("playerName").getAsString() : "";
         String reason = body.has("reason") ? body.get("reason").getAsString() : "No reason provided";
-        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : -1L;
+        long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : -1L;
         String bannedBy = executorName(exchange);
 
         UUID playerId = resolvePlayerId(playerName);
@@ -362,7 +362,7 @@ public class ModerationEndpoint implements HttpHandler {
         JsonObject body = readBody(exchange);
         String ip = body.has("ip") ? body.get("ip").getAsString() : "";
         String reason = body.has("reason") ? body.get("reason").getAsString() : "No reason provided";
-        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : -1L;
+        long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : -1L;
         String bannedBy = executorName(exchange);
 
         boolean success = durationSeconds > 0
@@ -444,7 +444,7 @@ public class ModerationEndpoint implements HttpHandler {
         }
         String targetName = body.get("targetName").getAsString();
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : null;
-        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
+        long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : 0L;
         MuteManager.mute(targetName, reason, executorName(exchange), durationSeconds * 1000L);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Mute created for player '{}'", targetName);
         sendJson(exchange, 200, json(true, targetName + " muted"));
@@ -488,7 +488,7 @@ public class ModerationEndpoint implements HttpHandler {
         JsonObject body = readBody(exchange);
         String ip = body.has("ip") ? body.get("ip").getAsString() : "";
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : null;
-        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
+        long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : 0L;
         MuteManager.muteIP(ip, reason, executorName(exchange), durationSeconds * 1000L);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP mute created");
         sendJson(exchange, 200, json(true, ip + " muted"));
@@ -823,7 +823,7 @@ public class ModerationEndpoint implements HttpHandler {
         String targetName = body.has("targetName") ? body.get("targetName").getAsString() : "";
         String jailName = body.has("jailName") ? body.get("jailName").getAsString() : "";
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : "Jailed by staff";
-        long durationSeconds = body.has("duration") ? body.get("duration").getAsLong() : 0L;
+        long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : 0L;
 
         JailManager jailManager = JailManager.getInstance();
         if (jailManager.getJailLocation(jailName) == null) {
