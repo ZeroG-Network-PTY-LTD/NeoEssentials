@@ -349,6 +349,10 @@ export async function pendingReports(): Promise<ReportEntry[]> {
   return data.reports ?? [];
 }
 
+export async function fileReport(targetName: string, reason: string) {
+  return postJson('/api/moderation/report', { targetName, reason });
+}
+
 export async function allReports(): Promise<ReportEntry[]> {
   const data = await getJson<{ reports?: ReportEntry[] }>('/api/moderation/reports/all');
   return data.reports ?? [];

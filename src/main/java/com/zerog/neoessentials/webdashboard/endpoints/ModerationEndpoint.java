@@ -67,6 +67,7 @@ import java.util.*;
  *  GET    /api/moderation/reports                 – pending report queue
  *  GET    /api/moderation/reports/all             – every report ever filed
  *  GET    /api/moderation/reports/{id}            – a single report
+ *  POST   /api/moderation/report                  – file one: {targetName, reason} [ADMIN]
  *  POST   /api/moderation/reports/{id}/review     – {status: REVIEWED|DISMISSED, notes?} [ADMIN]
  * </pre>
  */
@@ -166,6 +167,9 @@ public class ModerationEndpoint implements HttpHandler {
                 requireAdmin(exchange);
                 handleRemoveNote(exchange, lastSegment(path));
 
+            } else if ("POST".equals(method) && path.endsWith("/report")) {
+                requireAdmin(exchange);
+                handleCreateReport(exchange);
             } else if ("POST".equals(method) && path.contains("/reports/") && path.endsWith("/review")) {
                 requireAdmin(exchange);
                 String id = path.substring(path.indexOf("/reports/") + "/reports/".length(), path.lastIndexOf("/review"));
@@ -638,6 +642,35 @@ public class ModerationEndpoint implements HttpHandler {
     }
 
     // ── Reports ───────────────────────────────────────────────────────────────
+
+    /**
+     * Files a report on the dashboard's behalf — the same underlying store the in-game
+     * {@code /report} command writes to, just without a real ServerPlayer as the reporter
+     * (reporterId is left null; reporterName is whoever's authenticated on the dashboard,
+     * same attribution every other mutating dashboard action already uses).
+     */
+    private void handleCreateReport(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String targetName = body.has("targetName") ? body.get("targetName").getAsString() : "";
+        String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : "";
+        if (targetName.isBlank() || reason.isBlank()) {
+            sendJson(exchange, 400, json(false, "Body must contain 'targetName' and 'reason'"));
+            return;
+        }
+        UUID targetId = resolvePlayerId(targetName);
+        if (targetId == null) {
+            sendJson(exchange, 404, json(false, "Player not found: " + targetName));
+            return;
+        }
+        String reporterName = executorName(exchange);
+        ReportEntry entry = ReportManager.getInstance().addReport(null, reporterName, targetId, targetName, reason);
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Report filed against '{}' by '{}'", targetName, reporterName);
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("message", "Report filed");
+        resp.add("report", reportJson(entry));
+        sendJson(exchange, 200, resp.toString());
+    }
 
     private void handlePendingReports(HttpExchange exchange) throws IOException {
         sendJson(exchange, 200, reportsJson(ReportManager.getInstance().getPendingReports()));
