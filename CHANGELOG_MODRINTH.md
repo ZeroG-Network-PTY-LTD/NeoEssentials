@@ -8,6 +8,28 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.61 — 2026-08-17
+
+### 🐛 Commands Now Logged to Console
+
+- Every player command now gets logged to console/`latest.log` (e.g. "PlayerName issued command:
+  /home") — this wasn't happening in general before, only for a handful of specific commands.
+  Controlled by `logging.categories.commands.normal` (on by default) — turn it off there if you'd
+  rather not see it.
+
+---
+
+## 1.0.4-mc26.1.2+build.60 — 2026-08-17
+
+### 🐛 Clickable Player Names Were Ignoring Your Chat Colors
+
+- If you had `chat.clickablePlayerNames` enabled (the default) and put a color code before
+  `{neoessentials_username}`/`{neoessentials_displayname}` in your chat format, the name itself
+  still rendered white — the color simply wasn't being applied to it. Fixed; the name now picks
+  up whatever color comes before it in your template, same as any other part of the line.
+
+---
+
 ## 1.0.4-mc26.1.2+build.59 — 2026-08-17
 
 ### 🐛 SDLink Discord Duplicates Actually Fixed Now

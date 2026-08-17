@@ -58,7 +58,7 @@ that reaches the console and `logs/latest.log`. There's no NeoEssentials-specifi
 | Web Dashboard | `webDashboard` | HTTP request handling, authentication, analytics, backups, cloud storage, the map/websocket features |
 | Discord | `discord` | Chat bridge adapters (SDLink, Mc2Discord, DCIntegration) |
 | Config | `config` | Config file load/migration/version-check/split-config decisions |
-| Commands | `commands` | Command registration and dispatch (args, permission checks, outcomes) |
+| Commands | `commands` | Command registration/dispatch tracing, **and** (as of build.61) a "PlayerName issued command: /..." console line for every player command — set `commands.normal: false` to turn that line off |
 | General | `general` | Everything else: database/storage, scheduler, security, items, inventory, holograms, tags, teams, resource packs, shop, vault, localization |
 
 ---

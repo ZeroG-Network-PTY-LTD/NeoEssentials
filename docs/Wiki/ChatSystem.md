@@ -98,6 +98,15 @@ A channel with neither `radius` nor `permission` behaves as global chat. `chat.c
 > scoreboard teams (LuckPerms does this on Forge/NeoForge) — already had the prefix baked in,
 > doubling it up when combined with an explicit `{prefix}` token (e.g. `[Owner] [Owner] Name`).
 > Fixed; no config changes needed.
+>
+> **A color code placed right before `{neoessentials_username}`/`{neoessentials_displayname}`
+> now actually colors the name** (fixed in build.60). With `chat.clickablePlayerNames` enabled
+> (the default), the name is built as its own component for its hover/click behavior — before
+> build.60 this component always started uncolored, so e.g. `"&c{neoessentials_username}"`
+> rendered the name in default white no matter what color preceded it, even though everything
+> else in the template colored correctly. An explicit color inside the name itself (e.g. a
+> colored `/nick`) still takes priority over a preceding template color, same as normal color
+> code precedence.
 
 ### Tablist-Style Short Tokens
 
