@@ -53,13 +53,16 @@ export default function Backups() {
         setCloudStatusState(cs);
         setCloudConfigState(cc);
         setTargets((s.availableTargets ?? []).map((t) => t.key));
+
+        // Only list files for a provider once it's actually configured — calling
+        // /api/cloud/files/{provider} before that always 400s (nothing to list), which
+        // threw an unhandled rejection into the console on every Backups page load
+        // regardless of whether the admin had configured anything at all.
+        if (isAdmin && cc?.dropbox.configured) mcApi.cloudDropboxFiles().then(setDropboxFiles).catch(() => setDropboxFiles([]));
+        if (isAdmin && cc?.googleDrive.configured) mcApi.cloudGoogleFiles().then(setGoogleFiles).catch(() => setGoogleFiles([]));
+        if (isAdmin && cc?.oneDrive.configured) mcApi.cloudOneDriveFiles().then(setOneDriveFiles).catch(() => setOneDriveFiles([]));
       })
       .finally(() => setLoading(false));
-    if (isAdmin) {
-      mcApi.cloudDropboxFiles().then(setDropboxFiles);
-      mcApi.cloudGoogleFiles().then(setGoogleFiles);
-      mcApi.cloudOneDriveFiles().then(setOneDriveFiles);
-    }
   };
 
   useEffect(refresh, []);
