@@ -1,0 +1,67 @@
+name: Sync Release Notes from Changelog
+
+# build-and-release.yml's "Publish build release" step only writes a generic "branch: commit
+# SHA" line into a build's release body, since the real changelog entry for that build number is
+# always written and pushed in a SEPARATE, later commit (changelog-only pushes don't even trigger
+# a build — see build-and-release.yml's paths-ignore). This workflow closes that gap: whenever
+# CHANGELOG_GITHUB.md changes, it finds the entry matching the CURRENT shared build number and
+# overwrites that release's notes with the real changelog text, so the (now shared, one-per-build,
+# both-MC-versions) GitHub Release ends up with an actual changelog instead of just commit SHAs.
+
+on:
+  push:
+    branches:
+      - Dev-Builds
+      - mc-26.1-port
+    paths:
+      - 'CHANGELOG_GITHUB.md'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Read-only against the shared BUILD_NUMBER variable, same PAT/rationale as
+      # build-and-release.yml's "Bump shared build number" step (GITHUB_TOKEN can't read repo
+      # variables at all — confirmed live, HTTP 403 regardless of the `actions: write` permission).
+      - name: Sync release notes from changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || exit 0
+
+          # The release for the current build number might not exist yet (e.g. the changelog got
+          # pushed before either branch's build finished) — nothing to update yet in that case;
+          # the next changelog push (or editing this same file again) will pick it up later.
+          if ! gh release view "build-${current}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "No release build-${current} yet — skipping."
+            exit 0
+          fi
+
+          # Extract this build's section: from its "## [...+build.<N>]" header (either branch's
+          # version-string prefix — matching just the "+build.<N>]" suffix handles both) through
+          # the next "---" separator, inclusive.
+          notes_file=$(mktemp)
+          awk -v n="$current" '
+            $0 ~ ("\\+build\\." n "\\]") { capture=1 }
+            capture { print; if (/^---$/) exit }
+          ' CHANGELOG_GITHUB.md > "$notes_file"
+
+          if [ ! -s "$notes_file" ]; then
+            echo "No changelog entry found for build ${current} — skipping."
+            exit 0
+          fi
+
+          final_file=$(mktemp)
+          {
+            echo "Both **mc-26.1-port** (MC 26.1.2) and **Dev-Builds** (MC 1.21.1) jars are attached below."
+            echo
+            cat "$notes_file"
+          } > "$final_file"
+
+          gh release edit "build-${current}" --repo "${{ github.repository }}" --notes-file "$final_file"
