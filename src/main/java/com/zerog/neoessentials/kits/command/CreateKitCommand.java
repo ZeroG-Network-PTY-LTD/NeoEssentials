@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Handles the /createkit command for creating kits from a player's inventory.
@@ -158,7 +160,7 @@ public class CreateKitCommand {
                 //noinspection ConstantConditions (mock always returns non-null; real impl may return null)
                 if (pastebinUrl != null) {
                     source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.createkit.pastebin_success", pastebinUrl), false);
-                    LOGGER.info("Kit '{}' exported to Pastebin by {}: {}", kitName, player.getName().getString(), pastebinUrl);
+                    NeoLog.info(LOGGER, LogCategory.KITS, "Kit '{}' exported to Pastebin by {}: {}", kitName, player.getName().getString(), pastebinUrl);
                     return 1;
                 } else {
                     source.sendFailure(MessageUtil.error("commands.neoessentials.createkit.pastebin_failed"));
@@ -173,7 +175,7 @@ public class CreateKitCommand {
                         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.createkit.created", kitName, items.size(), formatCooldown(cooldownMillis)), false);
                     }
                     source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.createkit.permission_hint", permission), false);
-                    LOGGER.info("Kit '{}' {} by {}", kitName, isUpdate ? "updated" : "created", player.getName().getString());
+                    NeoLog.info(LOGGER, LogCategory.KITS, "Kit '{}' {} by {}", kitName, isUpdate ? "updated" : "created", player.getName().getString());
                     return 1;
                 } else {
                     source.sendFailure(MessageUtil.error("commands.neoessentials.createkit.failed"));

@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Handles the /delkit command for deleting kits.
@@ -144,7 +146,7 @@ public class DelKitCommand {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     playerName = player.getName().getString();
                 }
-                LOGGER.info("Kit '{}' deleted by {}", kitName, playerName);
+                NeoLog.info(LOGGER, LogCategory.KITS, "Kit '{}' deleted by {}", kitName, playerName);
                 
                 return 1;
             } else {
