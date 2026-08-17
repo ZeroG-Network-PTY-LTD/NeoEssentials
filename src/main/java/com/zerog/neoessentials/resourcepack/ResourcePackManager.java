@@ -51,26 +51,26 @@ public class ResourcePackManager {
     public void initialize() {
         try {
             if (!isAutoSendEnabled()) {
-                LOGGER.info("Auto-send resource pack is disabled in config");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Auto-send resource pack is disabled in config");
                 return;
             }
 
             // Check if we should generate pack
             if (shouldGeneratePack()) {
-                LOGGER.info("Generating badge resource pack...");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Generating badge resource pack...");
                 Path packPath = ResourcePackGenerator.generateResourcePack();
 
                 if (packPath != null) {
                     // Load SHA-1
                     loadResourcePackInfo(packPath);
                     autoSendEnabled = true;
-                    LOGGER.info("Resource pack system initialized successfully");
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "Resource pack system initialized successfully");
                 } else {
                     LOGGER.warn("Failed to generate resource pack - will use emoji badges");
                     autoSendEnabled = false;
                 }
             } else {
-                LOGGER.info("Resource pack generation skipped (custom images not enabled)");
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Resource pack generation skipped (custom images not enabled)");
             }
 
         } catch (Exception e) {
@@ -88,7 +88,7 @@ public class ResourcePackManager {
 
         if (configuredUrl != null && !configuredUrl.isEmpty()) {
             resourcePackUrl = configuredUrl;
-            LOGGER.info("Using configured resource pack URL: {}", resourcePackUrl);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Using configured resource pack URL: {}", resourcePackUrl);
         } else {
             // Use local file path (requires players to download separately)
             // In production, you'd host this on a web server
@@ -101,7 +101,7 @@ public class ResourcePackManager {
         Path sha1File = Paths.get("config/neoessentials/NeoEssentials-Badges.sha1");
         if (Files.exists(sha1File)) {
             resourcePackHash = Files.readString(sha1File).trim();
-            LOGGER.info("Loaded resource pack SHA-1: {}", resourcePackHash);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded resource pack SHA-1: {}", resourcePackHash);
         }
     }
 
@@ -125,7 +125,7 @@ public class ResourcePackManager {
             // When available, use: player.connection.send(new ClientboundResourcePackPushPacket(...))
             // For now, provide helpful logging
 
-            LOGGER.debug("Resource pack auto-send requested for player: {}", player.getName().getString());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Resource pack auto-send requested for player: {}", player.getName().getString());
             LOGGER.warn("Auto-send not yet implemented - please configure server.properties");
             LOGGER.warn("Add to server.properties:");
             LOGGER.warn("  resource-pack={}", resourcePackUrl);

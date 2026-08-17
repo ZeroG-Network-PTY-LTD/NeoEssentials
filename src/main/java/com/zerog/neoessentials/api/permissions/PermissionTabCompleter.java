@@ -7,6 +7,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -107,12 +109,12 @@ public class PermissionTabCompleter {
      * This method should be called during mod initialization
      */
     public static void initialize() {
-        LOGGER.info("Initializing NeoEssentials permission tab completion...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Initializing NeoEssentials permission tab completion...");
         
         // Register permission nodes for external plugin integration
         registerWithExternalPlugins();
         
-        LOGGER.info("Permission tab completion initialized with {} nodes", 
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Permission tab completion initialized with {} nodes", 
                    PermissionRegistry.getInstance().getAllPermissions().size());
     }
     
@@ -138,7 +140,7 @@ public class PermissionTabCompleter {
         try {
             // We can't directly register with PermissionsEX since it's not a NeoForge mod
             // Instead, we'll make our permissions available through our external provider
-            LOGGER.info("Making NeoEssentials permissions available for external plugin compatibility");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Making NeoEssentials permissions available for external plugin compatibility");
             
             // Get all permissions (registered + discovered)
             PermissionRegistry registry = PermissionRegistry.getInstance();
@@ -151,15 +153,15 @@ public class PermissionTabCompleter {
             java.util.Set<String> allPermissions = new java.util.HashSet<>(registry.getAllPermissions());
             allPermissions.addAll(scanner.getDiscoveredPermissions());
             
-            LOGGER.info("Made {} total permissions available for external plugin access", allPermissions.size());
-            LOGGER.info("External plugins can access permissions via ExternalPermissionProvider class");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Made {} total permissions available for external plugin access", allPermissions.size());
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "External plugins can access permissions via ExternalPermissionProvider class");
             
             // Log some sample permissions for verification
             if (!allPermissions.isEmpty()) {
-                LOGGER.info("Sample permissions available:");
-                allPermissions.stream().limit(5).forEach(perm -> LOGGER.info("  - {}", perm));
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Sample permissions available:");
+                allPermissions.stream().limit(5).forEach(perm -> NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  - {}", perm));
                 if (allPermissions.size() > 5) {
-                    LOGGER.info("  ... and {} more permissions", allPermissions.size() - 5);
+                    NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  ... and {} more permissions", allPermissions.size() - 5);
                 }
             }
             
@@ -176,17 +178,17 @@ public class PermissionTabCompleter {
             // Check if LuckPerms is available
             Class.forName("net.luckperms.api.LuckPerms");
             
-            LOGGER.info("LuckPerms detected - registering permission nodes");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "LuckPerms detected - registering permission nodes");
             
             // Register all NeoEssentials permissions with LuckPerms
             for (String permission : PermissionRegistry.getInstance().getAllPermissions()) {
                 // LuckPerms integration code would go here
                 // This would use LuckPerms API to register permissions
-                LOGGER.debug("Would register permission with LuckPerms: {}", permission);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Would register permission with LuckPerms: {}", permission);
             }
             
         } catch (ClassNotFoundException e) {
-            LOGGER.debug("LuckPerms not found - skipping integration");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "LuckPerms not found - skipping integration");
         } catch (Exception e) {
             LOGGER.warn("Failed to register with LuckPerms: {}", e.getMessage());
         }
@@ -199,19 +201,19 @@ public class PermissionTabCompleter {
         // GroupManager integration
         try {
             Class.forName("org.anjocaido.groupmanager.GroupManager");
-            LOGGER.info("GroupManager detected - registering permission nodes");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "GroupManager detected - registering permission nodes");
             // GroupManager integration would go here
         } catch (ClassNotFoundException e) {
-            LOGGER.debug("GroupManager not found - skipping integration");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "GroupManager not found - skipping integration");
         }
         
         // PermissionsBukkit integration
         try {
             Class.forName("com.platymuus.bukkit.permissions.PermissionsBukkit");
-            LOGGER.info("PermissionsBukkit detected - registering permission nodes");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "PermissionsBukkit detected - registering permission nodes");
             // PermissionsBukkit integration would go here
         } catch (ClassNotFoundException e) {
-            LOGGER.debug("PermissionsBukkit not found - skipping integration");
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "PermissionsBukkit not found - skipping integration");
         }
     }
     
@@ -232,7 +234,7 @@ public class PermissionTabCompleter {
      * Export permissions for PermissionsEX format
      */
     private static void exportForPermissionsEX(String outputPath) {
-        LOGGER.info("Exporting permissions for PermissionsEX to: {}", outputPath);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Exporting permissions for PermissionsEX to: {}", outputPath);
         // Implementation for PEX export format
     }
     
@@ -240,7 +242,7 @@ public class PermissionTabCompleter {
      * Export permissions for LuckPerms format
      */
     private static void exportForLuckPerms(String outputPath) {
-        LOGGER.info("Exporting permissions for LuckPerms to: {}", outputPath);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Exporting permissions for LuckPerms to: {}", outputPath);
         // Implementation for LuckPerms export format
     }
     
@@ -248,7 +250,7 @@ public class PermissionTabCompleter {
      * Export permissions for GroupManager format
      */
     private static void exportForGroupManager(String outputPath) {
-        LOGGER.info("Exporting permissions for GroupManager to: {}", outputPath);
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Exporting permissions for GroupManager to: {}", outputPath);
         // Implementation for GroupManager export format
     }
     
@@ -289,6 +291,6 @@ public class PermissionTabCompleter {
     private static void registerSinglePermissionWithExternalPlugins(String permission) {
         // This would notify external plugins about the new permission
         // Implementation depends on the specific plugin APIs
-        LOGGER.debug("Registering dynamic permission with external plugins: {}", permission);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Registering dynamic permission with external plugins: {}", permission);
     }
 }

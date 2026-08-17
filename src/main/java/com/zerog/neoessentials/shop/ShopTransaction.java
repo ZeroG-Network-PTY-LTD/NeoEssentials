@@ -115,7 +115,7 @@ public final class ShopTransaction {
 
         if (!shop.isAdminShop()) checkAndNotifyLowStock(shop, level, template);
 
-        LOGGER.debug("[ChestShop] BUY: {} bought {}x {} for {} from {}",
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] BUY: {} bought {}x {} for {} from {}",
                 buyer.getName().getString(), shop.quantity, shop.itemId, price, shop.ownerName);
         return ok(price, shop.quantity);
     }
@@ -171,7 +171,7 @@ public final class ShopTransaction {
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
                 shop, seller.getUUID(), ShopTransactionEvent.Type.SELL, price, shop.quantity));
 
-        LOGGER.debug("[ChestShop] SELL: {} sold {}x {} for {} to {}",
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] SELL: {} sold {}x {} for {} to {}",
                 seller.getName().getString(), shop.quantity, shop.itemId, price, shop.ownerName);
         return ok(price, shop.quantity);
     }

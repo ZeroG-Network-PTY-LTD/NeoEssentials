@@ -61,7 +61,7 @@ public class ShopManager {
         try {
             migrateLegacyFilesIfNeeded();
             loadShops();
-            LOGGER.info("[ChestShop] Loaded {} shop(s) from storage", shopsBySign.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] Loaded {} shop(s) from storage", shopsBySign.size());
         } catch (Exception e) {
             LOGGER.error("[ChestShop] Failed to load shops from storage — shops disabled until reload", e);
         }
@@ -69,7 +69,7 @@ public class ShopManager {
 
     public void shutdown() {
         // Every mutation is already persisted immediately via the DataStore — nothing to flush.
-        LOGGER.info("[ChestShop] Shutdown — {} shop(s) persisted.", shopsBySign.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] Shutdown — {} shop(s) persisted.", shopsBySign.size());
     }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ public class ShopManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("[ChestShop] migrated {} shop record(s) from legacy shops.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] migrated {} shop record(s) from legacy shops.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -279,7 +279,7 @@ public class ShopManager {
         shopsByChest.clear();
         try {
             loadShops();
-            LOGGER.info("[ChestShop] Reloaded {} shop(s).", shopsBySign.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] Reloaded {} shop(s).", shopsBySign.size());
         } catch (Exception e) {
             LOGGER.error("[ChestShop] Reload failed", e);
         }

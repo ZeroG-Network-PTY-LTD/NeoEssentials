@@ -5,6 +5,8 @@ import com.zerog.neoessentials.shop.model.ShopData;
 import com.zerog.neoessentials.shop.model.ShopType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class ShopCsvImporter {
                         break;
                     }
                 }
-                if (!found) { skipped++; LOGGER.debug("[CSV] Skipped player-shop row for {} (no match)", row.itemId()); }
+                if (!found) { skipped++; NeoLog.debug(LOGGER, LogCategory.GENERAL, "[CSV] Skipped player-shop row for {} (no match)", row.itemId()); }
                 continue;
             }
 
@@ -94,7 +96,7 @@ public class ShopCsvImporter {
 
         String msg = String.format("Updated=%d Created=%d Skipped=%d%s",
                 updated, created, skipped, details.length() > 0 ? " (new:" + details + ")" : "");
-        LOGGER.info("[ChestShop] CSV import: {}", msg);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] CSV import: {}", msg);
         return new ImportSummary(updated, created, skipped, msg);
     }
 }

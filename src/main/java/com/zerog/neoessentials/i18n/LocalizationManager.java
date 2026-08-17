@@ -5,6 +5,8 @@ import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -61,7 +63,7 @@ public class LocalizationManager {
             // Ensure language directory exists
             if (!Files.exists(langDirectory)) {
                 Files.createDirectories(langDirectory);
-                LOGGER.info("Created language directory: {}", langDirectory.toAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Created language directory: {}", langDirectory.toAbsolutePath());
             }
             
             // Register built-in languages
@@ -75,8 +77,8 @@ public class LocalizationManager {
                 createDefaultDashboardTranslations();
             }
             
-            LOGGER.info("Dashboard localization initialized with {} languages", availableLanguages.size());
-            LOGGER.info("Dashboard-specific translations loaded for: {}", dashboardTranslations.keySet());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Dashboard localization initialized with {} languages", availableLanguages.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Dashboard-specific translations loaded for: {}", dashboardTranslations.keySet());
             
         } catch (Exception e) {
             LOGGER.error("Failed to initialize localization", e);
@@ -176,7 +178,7 @@ public class LocalizationManager {
             Map<String, String> langTranslations = gson.fromJson(content, type);
             
             dashboardTranslations.put(langCode, langTranslations);
-            LOGGER.debug("Loaded dashboard translations: {} ({} keys)", langCode, langTranslations.size());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Loaded dashboard translations: {} ({} keys)", langCode, langTranslations.size());
             
         } catch (Exception e) {
             LOGGER.error("Failed to load dashboard translation file: {}", filePath, e);
@@ -292,7 +294,7 @@ public class LocalizationManager {
             Path langFile = langDirectory.resolve(defaultLanguage + "_dashboard.json");
             
             Files.writeString(langFile, gson.toJson(defaultTranslations), StandardCharsets.UTF_8);
-            LOGGER.info("Created default dashboard translation file: {}", langFile);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Created default dashboard translation file: {}", langFile);
             
         } catch (IOException e) {
             LOGGER.error("Failed to create default dashboard translation file", e);
@@ -493,7 +495,7 @@ public class LocalizationManager {
         // Also reload MessageUtil's translations
         MessageUtil.reloadTranslations();
         
-        LOGGER.info("Reloaded dashboard translation files and MessageUtil translations");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Reloaded dashboard translation files and MessageUtil translations");
     }
     
     /**

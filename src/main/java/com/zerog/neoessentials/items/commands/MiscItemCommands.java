@@ -20,6 +20,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -175,7 +177,7 @@ public class MiscItemCommands {
             player.inventoryMenu.sendAllDataToRemote();
             final int fc = convertCount;
             src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.condense.success", fc), false);
-            LOGGER.info("{} condensed {} item type(s)", player.getName().getString(), convertCount);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "{} condensed {} item type(s)", player.getName().getString(), convertCount);
         } else {
             src.sendFailure(MessageUtil.error("commands.neoessentials.condense.nothing"));
         }

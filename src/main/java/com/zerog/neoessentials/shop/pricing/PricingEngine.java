@@ -91,7 +91,7 @@ public class PricingEngine {
                 if (!tiers.isEmpty()) rules.add(new BulkTierRule(tiers));
             }
 
-            LOGGER.info("[ChestShop] PricingEngine: enabled with {} rule(s)", rules.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[ChestShop] PricingEngine: enabled with {} rule(s)", rules.size());
         } catch (Exception e) {
             LOGGER.error("[ChestShop] PricingEngine config load error — dynamic pricing disabled", e);
             enabled = false;
@@ -139,7 +139,7 @@ public class PricingEngine {
                     price = adjusted.setScale(2, RoundingMode.HALF_UP);
                 }
             } catch (Exception e) {
-                LOGGER.debug("[ChestShop] PriceRule {} threw: {}", rule.getClass().getSimpleName(), e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] PriceRule {} threw: {}", rule.getClass().getSimpleName(), e.getMessage());
             }
         }
         return price;

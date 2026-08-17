@@ -3,6 +3,8 @@ package com.zerog.neoessentials.api;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -30,7 +32,7 @@ public class PlaceholderManager {
     private final Map<String, PlaceholderExpansion> expansions = new ConcurrentHashMap<>();
     
     private PlaceholderManager() {
-        LOGGER.info("PlaceholderAPI Manager initialized");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "PlaceholderAPI Manager initialized");
     }
     
     /**
@@ -76,7 +78,7 @@ public class PlaceholderManager {
         }
         
         placeholders.put(normalizedIdentifier, provider);
-        LOGGER.debug("Registered placeholder: {}", normalizedIdentifier);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Registered placeholder: {}", normalizedIdentifier);
         return true;
     }
     
@@ -95,7 +97,7 @@ public class PlaceholderManager {
         boolean removed = placeholders.remove(normalizedIdentifier) != null;
         
         if (removed) {
-            LOGGER.debug("Unregistered placeholder: {}", normalizedIdentifier);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Unregistered placeholder: {}", normalizedIdentifier);
         }
         
         return removed;
@@ -186,7 +188,7 @@ public class PlaceholderManager {
                 default -> null;
             };
         } catch (Exception e) {
-            LOGGER.debug("Failed to resolve LuckPerms placeholder '{}': {}", identifier, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to resolve LuckPerms placeholder '{}': {}", identifier, e.getMessage());
         }
 
         return null;
@@ -200,7 +202,7 @@ public class PlaceholderManager {
         try {
             return com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(player.getUUID());
         } catch (Exception e) {
-            LOGGER.debug("Error getting LuckPerms prefix: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting LuckPerms prefix: {}", e.getMessage());
             return "";
         }
     }
@@ -213,7 +215,7 @@ public class PlaceholderManager {
         try {
             return com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(player.getUUID());
         } catch (Exception e) {
-            LOGGER.debug("Error getting LuckPerms suffix: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting LuckPerms suffix: {}", e.getMessage());
             return "";
         }
     }
@@ -231,7 +233,7 @@ public class PlaceholderManager {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting LuckPerms group: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting LuckPerms group: {}", e.getMessage());
         }
         return "";
     }
@@ -395,7 +397,7 @@ public class PlaceholderManager {
         }
         
         expansions.put(normalizedIdentifier, expansion);
-        LOGGER.info("Registered placeholder expansion: {} v{} by {}", 
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Registered placeholder expansion: {} v{} by {}", 
             normalizedIdentifier, expansion.getVersion(), expansion.getAuthor());
         return true;
     }
@@ -421,7 +423,7 @@ public class PlaceholderManager {
         boolean removed = expansions.remove(normalizedIdentifier) != null;
         
         if (removed) {
-            LOGGER.info("Unregistered placeholder expansion: {}", normalizedIdentifier);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Unregistered placeholder expansion: {}", normalizedIdentifier);
         }
         
         return removed;
@@ -447,6 +449,6 @@ public class PlaceholderManager {
     public void clear() {
         placeholders.clear();
         expansions.clear();
-        LOGGER.info("Cleared all placeholders and expansions");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Cleared all placeholders and expansions");
     }
 }

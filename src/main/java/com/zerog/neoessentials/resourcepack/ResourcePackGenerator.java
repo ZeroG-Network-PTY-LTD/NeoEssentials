@@ -35,7 +35,7 @@ public class ResourcePackGenerator {
      */
     public static Path generateResourcePack() {
         try {
-            LOGGER.info("Generating NeoEssentials badge resource pack...");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Generating NeoEssentials badge resource pack...");
 
             Path badgesDir = getBadgesDirectory();
             if (!Files.exists(badgesDir)) {
@@ -50,7 +50,7 @@ public class ResourcePackGenerator {
                 return null;
             }
 
-            LOGGER.info("Found {} badge images to pack", badgeImages.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Found {} badge images to pack", badgeImages.size());
 
             // Create temp directory for pack structure
             Path tempDir = Files.createTempDirectory("neoessentials-pack-");
@@ -65,11 +65,11 @@ public class ResourcePackGenerator {
 
                 createZipFile(tempDir, outputZip);
 
-                LOGGER.info("Resource pack generated successfully: {}", outputZip.toAbsolutePath());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Resource pack generated successfully: {}", outputZip.toAbsolutePath());
 
                 // Calculate SHA-1 hash
                 String sha1 = calculateSHA1(outputZip);
-                LOGGER.info("Resource pack SHA-1: {}", sha1);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Resource pack SHA-1: {}", sha1);
 
                 // Save hash to file for server.properties
                 saveSHA1(sha1);
@@ -109,7 +109,7 @@ public class ResourcePackGenerator {
             Path targetImage = texturesDir.resolve(rankName + ".png");
 
             Files.copy(sourceImage, targetImage, StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.debug("Copied badge image: {} -> {}", rankName, targetImage);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Copied badge image: {} -> {}", rankName, targetImage);
         }
 
         // Create font definition
@@ -133,7 +133,7 @@ public class ResourcePackGenerator {
             GSON.toJson(packMeta, writer);
         }
 
-        LOGGER.debug("Created pack.mcmeta");
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created pack.mcmeta");
     }
 
     /**
@@ -159,7 +159,7 @@ public class ResourcePackGenerator {
 
             providers.add(provider);
 
-            LOGGER.debug("Mapped {} to \\u{}", rankName, Integer.toHexString(unicodePoint).toUpperCase());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Mapped {} to \\u{}", rankName, Integer.toHexString(unicodePoint).toUpperCase());
             unicodePoint++;
         }
 
@@ -170,7 +170,7 @@ public class ResourcePackGenerator {
             GSON.toJson(fontDef, writer);
         }
 
-        LOGGER.debug("Created font definition with {} badge mappings", badgeImages.size());
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created font definition with {} badge mappings", badgeImages.size());
     }
 
     /**
@@ -197,7 +197,7 @@ public class ResourcePackGenerator {
                 });
         }
 
-        LOGGER.debug("Created ZIP file: {} ({}bytes)", zipFile, Files.size(zipFile));
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Created ZIP file: {} ({}bytes)", zipFile, Files.size(zipFile));
     }
 
     /**
@@ -231,7 +231,7 @@ public class ResourcePackGenerator {
     private static void saveSHA1(String sha1) throws IOException {
         Path sha1File = Paths.get("config/neoessentials/", PACK_NAME + ".sha1");
         Files.writeString(sha1File, sha1);
-        LOGGER.debug("Saved SHA-1 to {}", sha1File);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Saved SHA-1 to {}", sha1File);
     }
 
     /**

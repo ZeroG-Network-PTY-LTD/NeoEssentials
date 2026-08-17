@@ -24,6 +24,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -518,7 +520,7 @@ public class MailCommand {
             });
             // Also load and update offline player mailboxes from disk
             saveMailData();
-            LOGGER.info("sendall from {} completed: {} players", senderName,
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "sendall from {} completed: {} players", senderName,
                 source.getServer().getPlayerList().getPlayerCount());
         }, "NeoEssentials-MailSendAll");
         t.setDaemon(true);
@@ -586,7 +588,7 @@ public class MailCommand {
         saveMailData();
         source.sendSuccess(() -> MessageUtil.success(
             "commands.neoessentials.mail.cleared_all", count), false);
-        LOGGER.info("[Mail] clearall executed by {}", source.getTextName());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Mail] clearall executed by {}", source.getTextName());
         return 1;
     }
 
@@ -722,7 +724,7 @@ public class MailCommand {
                     LOGGER.warn("Skipped invalid mail entry for key '{}': {}", entry.getKey(), e.getMessage());
                 }
             }
-            LOGGER.debug("Loaded mail data for {} players", MAIL_BOX.size());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Loaded mail data for {} players", MAIL_BOX.size());
         } catch (Exception e) {
             LOGGER.error("Failed to load mail data: {}", e.getMessage(), e);
         }

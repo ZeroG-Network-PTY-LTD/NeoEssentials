@@ -6,6 +6,8 @@ import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.storage.StorageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -66,9 +68,9 @@ public class PlayerDataStore {
         JsonObject data = store.get(collection, playerId.toString());
         if (data == null) {
             data = new JsonObject();
-            LOGGER.debug("No {} data found for player {}, using empty data", dataType, playerId);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "No {} data found for player {}, using empty data", dataType, playerId);
         } else {
-            LOGGER.debug("Loaded {} data for player {}", dataType, playerId);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Loaded {} data for player {}", dataType, playerId);
         }
 
         cache.put(playerId, data);
@@ -106,7 +108,7 @@ public class PlayerDataStore {
         try {
             store.put(collection, playerId.toString(), data);
             dirtyEntries.remove(playerId);
-            LOGGER.debug("Saved {} data for player {}", dataType, playerId);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Saved {} data for player {}", dataType, playerId);
         } catch (Exception e) {
             LOGGER.error("Failed to save {} data for player {}: {}", dataType, playerId, e.getMessage(), e);
         }
@@ -120,14 +122,14 @@ public class PlayerDataStore {
             return;
         }
 
-        LOGGER.info("Flushing {} dirty {} entries...", dirtyEntries.size(), dataType);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Flushing {} dirty {} entries...", dirtyEntries.size(), dataType);
 
         Set<UUID> toFlush = new HashSet<>(dirtyEntries);
         for (UUID playerId : toFlush) {
             flush(playerId);
         }
 
-        LOGGER.info("Flushed all {} data", dataType);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Flushed all {} data", dataType);
     }
 
     /**
@@ -141,7 +143,7 @@ public class PlayerDataStore {
         dirtyEntries.remove(playerId);
         boolean existed = store.delete(collection, playerId.toString());
         if (existed) {
-            LOGGER.info("Deleted {} data for player {}", dataType, playerId);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Deleted {} data for player {}", dataType, playerId);
         }
         return true;
     }
@@ -184,7 +186,7 @@ public class PlayerDataStore {
     public void unload(UUID playerId) {
         flush(playerId);
         cache.remove(playerId);
-        LOGGER.debug("Unloaded {} data for player {} from cache", dataType, playerId);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Unloaded {} data for player {} from cache", dataType, playerId);
     }
 
     /**
@@ -257,7 +259,7 @@ public class PlayerDataStore {
         }
 
         if (migrated > 0) {
-            LOGGER.info("PlayerDataStore({}): migrated {} legacy player file(s) into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "PlayerDataStore({}): migrated {} legacy player file(s) into the '{}' storage backend.",
                 dataType, migrated, StorageManager.getInstance().getActiveType());
         }
     }

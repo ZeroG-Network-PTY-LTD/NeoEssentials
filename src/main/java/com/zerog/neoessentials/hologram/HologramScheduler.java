@@ -8,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 /**
  * Drives placeholder refresh and animation ticking for all active holograms.
  * Uses a single daemon thread; all entity mutations are marshalled back onto
@@ -27,7 +29,7 @@ public class HologramScheduler {
         stop();
         refreshTask = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2, 1, TimeUnit.SECONDS);
         animTask    = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, 50, TimeUnit.MILLISECONDS);
-        LOGGER.info("[Hologram] Scheduler started.");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started.");
     }
     public static void stop() {
         if (refreshTask != null) { refreshTask.cancel(false); refreshTask = null; }
@@ -48,7 +50,7 @@ public class HologramScheduler {
                         HologramRenderer.refreshAllLines(data, level, null);
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("[Hologram] refresh error for '{}': {}", data.id, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] refresh error for '{}': {}", data.id, e.getMessage());
                 }
             });
         }
@@ -122,7 +124,7 @@ public class HologramScheduler {
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.debug("[Hologram] animation error for '{}': {}", fd.id, e.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] animation error for '{}': {}", fd.id, e.getMessage());
                 }
             });
         }

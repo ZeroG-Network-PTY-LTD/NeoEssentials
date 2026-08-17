@@ -7,6 +7,8 @@ import com.zerog.neoessentials.permissions.PermissionUser;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 
@@ -55,7 +57,7 @@ public class PermissionsServiceImpl implements PermissionsService {
             PermissionUser user = mgr.getUser(playerUuid);
             return user != null ? user.getGroup() : mgr.getDefaultGroup();
         } catch (Exception e) {
-            LOGGER.debug("getGroup failed for {}: {}", playerUuid, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "getGroup failed for {}: {}", playerUuid, e.getMessage());
             return "";
         }
     }
@@ -81,7 +83,7 @@ public class PermissionsServiceImpl implements PermissionsService {
                 description != null ? description : "",
                 PermissionRegistry.PermissionCategory.MISC,
                 false);
-            LOGGER.debug("External permission registered: {}", node);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "External permission registered: {}", node);
         } catch (Exception e) {
             LOGGER.warn("Failed to register external permission '{}': {}", node, e.getMessage());
         }
@@ -98,7 +100,7 @@ public class PermissionsServiceImpl implements PermissionsService {
     @Override
     public void registerAlias(String alias, String canonical) {
         PermissionAliasManager.getInstance().addAlias(alias, canonical);
-        LOGGER.debug("Permission alias registered: {} -> {}", alias, canonical);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Permission alias registered: {} -> {}", alias, canonical);
     }
 
     @Override

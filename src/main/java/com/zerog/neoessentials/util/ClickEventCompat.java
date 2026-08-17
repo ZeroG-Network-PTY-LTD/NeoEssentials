@@ -3,6 +3,8 @@ package com.zerog.neoessentials.util;
 import net.minecraft.network.chat.ClickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -45,7 +47,7 @@ public final class ClickEventCompat {
             if (viaFactory != null) {
                 if (!loggedReflectionSuccess) {
                     loggedReflectionSuccess = true;
-                    LOGGER.info("ClickEvent(Action, String) is unavailable on this Minecraft version — " +
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "ClickEvent(Action, String) is unavailable on this Minecraft version — " +
                         "using the modern static factory method instead. Click actions remain functional.");
                 }
                 return viaFactory;

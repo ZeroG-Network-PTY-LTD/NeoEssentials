@@ -2,6 +2,8 @@ package com.zerog.neoessentials.api.permissions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.IOException;
 import java.net.URI;
@@ -81,7 +83,7 @@ public class PermissionScanner {
      * Scan all Java files in the mod for permission nodes
      */
     public void scanForPermissions() {
-        LOGGER.info("Starting automatic permission discovery...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Starting automatic permission discovery...");
         
         discoveredPermissions.clear();
         dynamicPermissionPrefixes.clear();
@@ -93,11 +95,11 @@ public class PermissionScanner {
             
             if (sourceUri.toString().endsWith(".jar")) {
                 // Running from JAR - try scanning but don't fail if it doesn't work
-                LOGGER.debug("Detected JAR execution: {}", sourceUri);
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Detected JAR execution: {}", sourceUri);
                 try {
                     scanJarFile(sourceUri);
                 } catch (Exception jarScanException) {
-                    LOGGER.debug("JAR scanning failed (this is normal): {}", jarScanException.getMessage());
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "JAR scanning failed (this is normal): {}", jarScanException.getMessage());
                     // Use fallback discovery method
                     generateKnownPermissions();
                 }
@@ -106,27 +108,27 @@ public class PermissionScanner {
                 Path sourcePath = Paths.get(sourceUri);
                 Path rootPath = sourcePath.getParent();
                 if (rootPath != null) {
-                    LOGGER.debug("Detected development environment: {}", rootPath);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Detected development environment: {}", rootPath);
                     scanSourceDirectory(rootPath);
                 } else {
-                    LOGGER.debug("Could not determine root path, using fallback discovery");
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Could not determine root path, using fallback discovery");
                     generateKnownPermissions();
                 }
             }
             
-            LOGGER.info("Permission discovery completed. Found {} permissions across {} files", 
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Permission discovery completed. Found {} permissions across {} files", 
                 discoveredPermissions.size(), filePermissionMap.size());
             
             // Log discovered permissions by category if any were found
             if (!discoveredPermissions.isEmpty()) {
                 logDiscoveredPermissions();
             } else {
-                LOGGER.info("No permissions discovered from file scanning. All permissions are registered in PermissionRegistry.");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "No permissions discovered from file scanning. All permissions are registered in PermissionRegistry.");
             }
             
         } catch (Exception e) {
             LOGGER.warn("Error during permission scanning: {}", e.getMessage());
-            LOGGER.info("Using fallback permission discovery method");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Using fallback permission discovery method");
             generateKnownPermissions();
         }
     }
@@ -144,11 +146,11 @@ public class PermissionScanner {
         Path javaSourcePath = rootPath.resolve("src").resolve("main").resolve("java");
         
         if (Files.exists(javaSourcePath)) {
-            LOGGER.debug("Scanning source directory: {}", javaSourcePath);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Scanning source directory: {}", javaSourcePath);
             scanDirectory(javaSourcePath);
         } else {
             // Fallback: scan current directory for Java files
-            LOGGER.debug("Java source path not found, scanning from: {}", rootPath);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Java source path not found, scanning from: {}", rootPath);
             scanDirectory(rootPath);
         }
     }
@@ -157,7 +159,7 @@ public class PermissionScanner {
      * Scan JAR file for Java classes
      */
     private void scanJarFile(URI jarUri) {
-        LOGGER.debug("Attempting to scan JAR file: {}", jarUri);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Attempting to scan JAR file: {}", jarUri);
         
         try (FileSystem jarFs = FileSystems.newFileSystem(jarUri, Collections.emptyMap())) {
             Path jarRoot = jarFs.getPath("/");
@@ -166,14 +168,14 @@ public class PermissionScanner {
                 // Collect to list first so forEach processes all elements eagerly
                 var classFiles = paths.filter(path -> path.toString().endsWith(".class"))
                      .filter(path -> path.toString().contains("neoessentials"))
-                     .peek(path -> LOGGER.debug("Scanning class file: {}", path))
+                     .peek(path -> NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Scanning class file: {}", path))
                      .toList();
                 classFiles.forEach(this::scanClassFile);
-                LOGGER.debug("Scanned {} class files from JAR", classFiles.size());
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Scanned {} class files from JAR", classFiles.size());
             }
         } catch (Exception e) {
             LOGGER.warn("Failed to scan JAR file: {}. Error: {}", jarUri, e.getMessage());
-            LOGGER.info("This is normal in some deployment environments. Using registered permissions only.");
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "This is normal in some deployment environments. Using registered permissions only.");
         }
     }
     
@@ -209,7 +211,7 @@ public class PermissionScanner {
         // But we can at least record that we found a class in our package
         String className = classFile.toString();
         if (className.contains("neoessentials")) {
-            LOGGER.debug("Found NeoEssentials class: {}", className);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Found NeoEssentials class: {}", className);
         }
     }
     
@@ -227,7 +229,7 @@ public class PermissionScanner {
                 if (isValidPermission(permission)) {
                     discoveredPermissions.add(permission);
                     filePermissions.add(permission);
-                    LOGGER.debug("Found permission '{}' in {}", permission, fileName);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Found permission '{}' in {}", permission, fileName);
                 }
             }
         }
@@ -239,7 +241,7 @@ public class PermissionScanner {
                 String prefix = matcher.group(1).toLowerCase();
                 if (isValidPermission(prefix)) {
                     dynamicPermissionPrefixes.add(prefix);
-                    LOGGER.debug("Found dynamic permission prefix '{}' in {}", prefix, fileName);
+                    NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Found dynamic permission prefix '{}' in {}", prefix, fileName);
                 }
             }
         }
@@ -347,22 +349,22 @@ public class PermissionScanner {
     private void logDiscoveredPermissions() {
         Map<String, Set<String>> categories = getPermissionsByCategory();
         
-        LOGGER.info("=== DISCOVERED PERMISSIONS BY CATEGORY ===");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "=== DISCOVERED PERMISSIONS BY CATEGORY ===");
         
         for (Map.Entry<String, Set<String>> entry : categories.entrySet()) {
             String category = entry.getKey();
             Set<String> perms = entry.getValue();
             
-            LOGGER.info("{} ({}): {}", category.toUpperCase(), perms.size(), 
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "{} ({}): {}", category.toUpperCase(), perms.size(), 
                 String.join(", ", perms.stream().sorted().toArray(String[]::new)));
         }
         
         if (!dynamicPermissionPrefixes.isEmpty()) {
-            LOGGER.info("DYNAMIC PREFIXES ({}): {}", dynamicPermissionPrefixes.size(),
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "DYNAMIC PREFIXES ({}): {}", dynamicPermissionPrefixes.size(),
                 String.join(", ", dynamicPermissionPrefixes.stream().sorted().toArray(String[]::new)));
         }
         
-        LOGGER.info("=== END PERMISSION DISCOVERY REPORT ===");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "=== END PERMISSION DISCOVERY REPORT ===");
     }
     
     /**
@@ -407,7 +409,7 @@ public class PermissionScanner {
      * This ensures we always have comprehensive permission coverage for PermissionsEX
      */
     private void generateKnownPermissions() {
-        LOGGER.debug("Loading permissions from permissions_nodes.txt resource file");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Loading permissions from permissions_nodes.txt resource file");
         
         try {
             // Try to load from classpath resource
@@ -446,13 +448,13 @@ public class PermissionScanner {
                     if (isValidPermission(permission)) {
                         discoveredPermissions.add(permission);
                         loadedCount++;
-                        LOGGER.debug("Loaded permission from file: {}", permission);
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Loaded permission from file: {}", permission);
                     } else {
-                        LOGGER.debug("Skipping invalid permission line: {}", line);
+                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Skipping invalid permission line: {}", line);
                     }
                 }
                 
-                LOGGER.info("Loaded {} permissions from permissions_nodes.txt for PermissionsEX integration", loadedCount);
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Loaded {} permissions from permissions_nodes.txt for PermissionsEX integration", loadedCount);
                 
             } catch (IOException e) {
                 LOGGER.error("Error reading permissions_nodes.txt: {}", e.getMessage());
@@ -469,7 +471,7 @@ public class PermissionScanner {
      * Hardcoded fallback if resource file cannot be loaded
      */
     private void loadHardcodedFallback() {
-        LOGGER.debug("Using hardcoded permission fallback");
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Using hardcoded permission fallback");
         
         // Add basic wildcard permissions as last resort
         addDiscoveredPermission("neoessentials.*", "All NeoEssentials permissions");
@@ -496,7 +498,7 @@ public class PermissionScanner {
     private void addDiscoveredPermission(String permission, String ignoredSource) {
         if (isValidPermission(permission)) {
             discoveredPermissions.add(permission);
-            LOGGER.debug("Added fallback permission: {}", permission);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Added fallback permission: {}", permission);
         }
     }
 }

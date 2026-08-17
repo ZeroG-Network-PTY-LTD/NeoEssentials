@@ -3,6 +3,8 @@ package com.zerog.neoessentials.util;
 import net.minecraft.network.chat.HoverEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.reflect.Method;
 
@@ -42,7 +44,7 @@ public final class HoverEventCompat {
             if (viaFactory != null) {
                 if (!loggedReflectionSuccess) {
                     loggedReflectionSuccess = true;
-                    LOGGER.info("HoverEvent(Action, Object) is unavailable on this Minecraft version — " +
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "HoverEvent(Action, Object) is unavailable on this Minecraft version — " +
                         "using the modern static factory method instead. Hover tooltips remain functional.");
                 }
                 return viaFactory;

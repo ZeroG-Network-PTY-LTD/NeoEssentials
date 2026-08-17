@@ -2,6 +2,8 @@ package com.zerog.neoessentials.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -26,9 +28,9 @@ public class ThreadDiagnostics {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(false, false);
 
-        LOGGER.info("════════════════════════════════════════════════════════════════");
-        LOGGER.info("Thread Diagnostics - Total Threads: {}", threadInfos.length);
-        LOGGER.info("════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Thread Diagnostics - Total Threads: {}", threadInfos.length);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
 
         for (ThreadInfo threadInfo : threadInfos) {
             if (threadInfo != null) {
@@ -38,11 +40,11 @@ public class ThreadDiagnostics {
 
                 // Highlight non-daemon threads as they prevent JVM shutdown
                 String prefix = isDaemon ? "  [DAEMON]" : "  [USER]  ";
-                LOGGER.info("{} {} - State: {}", prefix, name, state);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "{} {} - State: {}", prefix, name, state);
             }
         }
 
-        LOGGER.info("════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
     }
 
     /**
@@ -58,13 +60,13 @@ public class ThreadDiagnostics {
             .collect(Collectors.toSet());
 
         if (neoThreads.isEmpty()) {
-            LOGGER.info("No NeoEssentials threads detected");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "No NeoEssentials threads detected");
             return;
         }
 
-        LOGGER.info("════════════════════════════════════════════════════════════════");
-        LOGGER.info("NeoEssentials Threads - Count: {}", neoThreads.size());
-        LOGGER.info("════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "NeoEssentials Threads - Count: {}", neoThreads.size());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
 
         for (ThreadInfo threadInfo : neoThreads) {
             Thread.State state = threadInfo.getThreadState();
@@ -75,7 +77,7 @@ public class ThreadDiagnostics {
             LOGGER.warn("{} {} - State: {} (NEEDS SHUTDOWN!)", prefix, name, state);
         }
 
-        LOGGER.info("════════════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
     }
 
     /**
@@ -107,7 +109,7 @@ public class ThreadDiagnostics {
             .collect(Collectors.toSet());
 
         if (nonDaemonThreads.isEmpty()) {
-            LOGGER.info("No non-daemon user threads detected (good for shutdown)");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "No non-daemon user threads detected (good for shutdown)");
             return;
         }
 

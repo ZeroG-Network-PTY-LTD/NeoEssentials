@@ -11,6 +11,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.*;
 import java.nio.file.*;
@@ -110,7 +112,7 @@ public class ResourcePackManager {
         resourcePacks.put(pack.getId(), pack);
         savePacks();
         
-        LOGGER.info("Uploaded resource pack: {} ({})", name, pack.getId());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Uploaded resource pack: {} ({})", name, pack.getId());
         return pack;
     }
     
@@ -129,7 +131,7 @@ public class ResourcePackManager {
         resourcePacks.put(pack.getId(), pack);
         savePacks();
         
-        LOGGER.info("Registered external resource pack: {} from {}", name, url);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Registered external resource pack: {} from {}", name, url);
         return pack;
     }
     
@@ -154,7 +156,7 @@ public class ResourcePackManager {
 
         store.delete(PACKS_COLLECTION, packId);
         savePacks();
-        LOGGER.info("Deleted resource pack: {}", pack.getName());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Deleted resource pack: {}", pack.getName());
         return true;
     }
     
@@ -184,7 +186,7 @@ public class ResourcePackManager {
         if (pack != null) {
             pack.setActive(true);
             savePacks();
-            LOGGER.info("Set active resource pack: {}", pack.getName());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Set active resource pack: {}", pack.getName());
         }
     }
     
@@ -240,7 +242,7 @@ public class ResourcePackManager {
             );
             
             player.connection.send(packet);
-            LOGGER.info("Sent resource pack {} to player {}", pack.getName(), player.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Sent resource pack {} to player {}", pack.getName(), player.getName().getString());
         } catch (Exception e) {
             LOGGER.error("Failed to send resource pack to player", e);
         }
@@ -329,7 +331,7 @@ public class ResourcePackManager {
             }
         }
         if (!all.isEmpty()) {
-            LOGGER.info("Loaded {} resource packs", all.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} resource packs", all.size());
         }
     }
 
@@ -457,7 +459,7 @@ public class ResourcePackManager {
                 store.put(PACKS_COLLECTION, entry.getKey(), toJson(entry.getValue()));
                 count++;
             }
-            LOGGER.info("ResourcePackManager: migrated {} resource pack record(s) from legacy packs.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "ResourcePackManager: migrated {} resource pack record(s) from legacy packs.json into the '{}' storage backend.",
                 count, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         } catch (Exception e) {
             LOGGER.error("Failed to migrate legacy packs.json: {}", e.getMessage(), e);

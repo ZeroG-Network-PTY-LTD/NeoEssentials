@@ -15,6 +15,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -231,7 +233,7 @@ public class HelpCommand {
             children.remove(literal);
             literals.remove(literal);
         } catch (Exception e) {
-            LOGGER.debug("Could not remove existing '{}' command node before registering NeoEssentials help", literal, e);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Could not remove existing '{}' command node before registering NeoEssentials help", literal, e);
         }
     }
 }

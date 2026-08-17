@@ -5,6 +5,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.reflect.Method;
 
@@ -50,7 +52,7 @@ public final class EntityTypeCompat {
             if (viaReflection != null) {
                 if (!loggedReflectionSuccess) {
                     loggedReflectionSuccess = true;
-                    LOGGER.info("EntityType.create(Level) is unavailable on this Minecraft version — " +
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "EntityType.create(Level) is unavailable on this Minecraft version — " +
                         "using the modern create(Level, spawnReason) overload instead.");
                 }
                 return viaReflection;

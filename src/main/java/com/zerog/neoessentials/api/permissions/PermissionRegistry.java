@@ -2,6 +2,8 @@ package com.zerog.neoessentials.api.permissions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -106,7 +108,7 @@ public class PermissionRegistry {
         registeredPermissions.add(permission);
         permissionInfo.put(permission, new PermissionInfo(permission, description, category, defaultValue));
         
-        LOGGER.debug("Registered permission: {} ({})", permission, category.getKey());
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Registered permission: {} ({})", permission, category.getKey());
     }
     
     /**
@@ -228,7 +230,7 @@ public class PermissionRegistry {
      * Register all known permission nodes
      */
     private void registerAllPermissions() {
-        LOGGER.info("Registering NeoEssentials permission nodes...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Registering NeoEssentials permission nodes...");
         
         // Core permissions
         register("neoessentials.use", "Basic mod usage", PermissionCategory.CORE, true);
@@ -741,7 +743,7 @@ public class PermissionRegistry {
         register("neoessentials.payconfirmtoggle", "Toggle payment confirmation prompts", PermissionCategory.PLAYER, true);
         register("neoessentials.ciconfirmtoggle", "Toggle /clearinventory confirmation prompts", PermissionCategory.PLAYER, true);
 
-        LOGGER.info("Registered {} permission nodes", registeredPermissions.size());
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Registered {} permission nodes", registeredPermissions.size());
     }
     
     /**
@@ -771,7 +773,7 @@ public class PermissionRegistry {
         registeredPermissions.remove(nocooldownPermission);
         permissionInfo.remove(nocooldownPermission);
         
-        LOGGER.debug("Unregistered kit permissions: {} and {}", permission, nocooldownPermission);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Unregistered kit permissions: {} and {}", permission, nocooldownPermission);
     }
     
     /**
@@ -792,7 +794,7 @@ public class PermissionRegistry {
      * Automatically discover and register permissions from the codebase
      */
     private void autoDiscoverPermissions() {
-        LOGGER.info("Starting automatic permission discovery...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Starting automatic permission discovery...");
         
         try {
             // Get the permission scanner and scan for permissions
@@ -810,7 +812,7 @@ public class PermissionRegistry {
                 }
             }
             
-            LOGGER.info("Auto-discovery completed: {} permissions discovered, {} new permissions registered", 
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Auto-discovery completed: {} permissions discovered, {} new permissions registered", 
                 discoveredPermissions.size(), 
                 discoveredPermissions.stream().mapToInt(p -> isRegistered(p) ? 0 : 1).sum());
                 
@@ -848,13 +850,13 @@ public class PermissionRegistry {
      * Refresh permissions by re-scanning the codebase (useful for development)
      */
     public void refreshPermissions() {
-        LOGGER.info("Refreshing permission registry...");
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Refreshing permission registry...");
         
         int initialCount = registeredPermissions.size();
         autoDiscoverPermissions();
         int finalCount = registeredPermissions.size();
         
-        LOGGER.info("Permission refresh completed: {} -> {} permissions (+" + (finalCount - initialCount) + " new)", 
+        NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Permission refresh completed: {} -> {} permissions (+" + (finalCount - initialCount) + " new)", 
             initialCount, finalCount);
     }
     
@@ -912,21 +914,21 @@ public class PermissionRegistry {
             var externalAdapter = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter();
 
             if (externalAdapter instanceof com.zerog.neoessentials.permissions.LuckPermsAdapter luckPermsAdapter) {
-                LOGGER.info("Syncing {} permissions with LuckPerms...", registeredPermissions.size());
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "Syncing {} permissions with LuckPerms...", registeredPermissions.size());
                 luckPermsAdapter.registerPermissions(registeredPermissions);
 
-                LOGGER.info("✓ Permissions synced with LuckPerms");
-                LOGGER.info("  - Permissions will now appear in LuckPerms autocomplete");
-                LOGGER.info("  - Use '/lp info' to see registered permissions");
-                LOGGER.info("  - Web editor will show NeoEssentials permissions");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "✓ Permissions synced with LuckPerms");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  - Permissions will now appear in LuckPerms autocomplete");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  - Use '/lp info' to see registered permissions");
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "  - Web editor will show NeoEssentials permissions");
 
             } else {
-                LOGGER.debug("LuckPerms not detected - skipping permission sync");
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "LuckPerms not detected - skipping permission sync");
             }
 
         } catch (Exception e) {
             LOGGER.warn("Could not sync permissions with LuckPerms: {}", e.getMessage());
-            LOGGER.debug("LuckPerms sync error details", e);
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "LuckPerms sync error details", e);
         }
     }
 

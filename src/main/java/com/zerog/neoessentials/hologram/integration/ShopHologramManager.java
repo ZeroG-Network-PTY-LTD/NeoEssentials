@@ -85,7 +85,7 @@ public class ShopHologramManager {
                     HologramRenderer.spawn(existing, level);
                     tagEntitiesWithShopKey(existing, shop);
                 }
-                LOGGER.debug("[ShopHologram] Refreshed hologram '{}' for shop at {}", id, shop.toKey());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Refreshed hologram '{}' for shop at {}", id, shop.toKey());
                 return;
             }
 
@@ -107,7 +107,7 @@ public class ShopHologramManager {
             // Tag all spawned entities with the shop key so interaction lookup
             // works correctly even if the hologram is later moved.
             tagEntitiesWithShopKey(data, shop);
-            LOGGER.debug("[ShopHologram] Created hologram '{}' for shop at {}", id, shop.toKey());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Created hologram '{}' for shop at {}", id, shop.toKey());
         } catch (Exception e) {
             LOGGER.error("[ShopHologram] Failed to create shop hologram: {}", e.getMessage(), e);
         }
@@ -192,7 +192,7 @@ public class ShopHologramManager {
                 HologramManager.getInstance().removeHologram(id);
             }
         } catch (Exception e) {
-            LOGGER.debug("[ShopHologram] Error deleting shop hologram: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Error deleting shop hologram: {}", e.getMessage());
         }
     }
     /** Convenience overload using ShopData directly. */
@@ -206,7 +206,7 @@ public class ShopHologramManager {
                 HologramManager.getInstance().removeHologram(id);
             }
         } catch (Exception e) {
-            LOGGER.debug("[ShopHologram] Error deleting shop hologram: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Error deleting shop hologram: {}", e.getMessage());
         }
     }
     /**
@@ -241,10 +241,10 @@ public class ShopHologramManager {
                 ServerLevel level = findLevel(orphan.world);
                 if (level != null) HologramRenderer.despawn(orphan, level);
                 HologramManager.getInstance().removeHologram(orphan.id);
-                LOGGER.info("[ShopHologram] Removed orphaned shop hologram '{}' (no matching shop found).", orphan.id);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "[ShopHologram] Removed orphaned shop hologram '{}' (no matching shop found).", orphan.id);
             }
             if (!orphans.isEmpty()) {
-                LOGGER.info("[ShopHologram] Cleaned {} orphaned shop hologram(s).", orphans.size());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "[ShopHologram] Cleaned {} orphaned shop hologram(s).", orphans.size());
             }
         } catch (Exception e) {
             LOGGER.warn("[ShopHologram] cleanOrphanedShopHolograms failed: {}", e.getMessage(), e);
@@ -267,7 +267,7 @@ public class ShopHologramManager {
                 tagEntitiesWithShopKey(data, shop);
             }
         } catch (Exception e) {
-            LOGGER.debug("[ShopHologram] Error refreshing shop hologram: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Error refreshing shop hologram: {}", e.getMessage());
         }
     }
     // ── Event listeners ───────────────────────────────────────────────────────
@@ -470,7 +470,7 @@ public class ShopHologramManager {
             }
             return shop;
         } catch (Exception e) {
-            LOGGER.debug("[ShopHologram] shopFromHologramEntity error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] shopFromHologramEntity error: {}", e.getMessage());
             return null;
         }
     }
@@ -565,7 +565,7 @@ public class ShopHologramManager {
                 tagged++;
             }
             if (tagged > 0) {
-                LOGGER.debug("[ShopHologram] Re-tagged {} shop hologram(s) after startup respawn.", tagged);
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Re-tagged {} shop hologram(s) after startup respawn.", tagged);
             }
         } catch (Exception e) {
             LOGGER.error("[ShopHologram] Failed to re-tag shop holograms: {}", e.getMessage(), e);
@@ -623,7 +623,7 @@ public class ShopHologramManager {
             ServerLevel level = findLevel(data.world);
             if (level != null) HologramRenderer.spawn(data, level);
         } catch (Exception e) {
-            LOGGER.debug("[ShopHologram] Could not spawn in level: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ShopHologram] Could not spawn in level: {}", e.getMessage());
         }
     }
     private static ServerLevel findLevel(String dimensionKey) {

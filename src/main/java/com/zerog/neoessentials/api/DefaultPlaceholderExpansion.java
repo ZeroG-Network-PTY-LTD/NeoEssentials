@@ -8,6 +8,8 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import javax.annotation.Nullable;
 import java.text.DecimalFormat;
@@ -92,7 +94,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("mob_kills");
         placeholders.add("play_time");
         
-        LOGGER.debug("Initialized {} default placeholders", placeholders.size());
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "Initialized {} default placeholders", placeholders.size());
     }
     
     @Override
@@ -210,7 +212,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return nick.replace("&", "§");
             }
         } catch (Exception e) {
-            LOGGER.debug("getNickOrDisplayName: error reading nickname for {}: {}",
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "getNickOrDisplayName: error reading nickname for {}: {}",
                 player.getName().getString(), e.getMessage());
         }
         return player.getName().getString();
@@ -238,15 +240,15 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
 
         boolean debugEnabled = com.zerog.neoessentials.logging.NeoLog.isDebugEnabled(com.zerog.neoessentials.logging.LogCategory.CHAT);
         if (debugEnabled) {
-            LOGGER.info(">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
-            LOGGER.info(">>> Player UUID: {}", player.getUUID());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, ">>> DefaultPlaceholderExpansion.getPlayerPrefix() for: {}", player.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, ">>> Player UUID: {}", player.getUUID());
         }
 
         try {
             String prefix = PermissionAPI.getPrefix(player.getUUID());
             if (debugEnabled) {
-                LOGGER.info(">>> PermissionAPI returned prefix: [{}]", prefix);
-                LOGGER.info(">>> Returning prefix: [{}]", prefix);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, ">>> PermissionAPI returned prefix: [{}]", prefix);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, ">>> Returning prefix: [{}]", prefix);
             }
             return prefix;
         } catch (Exception e) {
@@ -265,7 +267,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return PermissionAPI.getSuffix(player.getUUID());
         } catch (Exception e) {
-            LOGGER.debug("Error getting suffix for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting suffix for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
         }
     }
@@ -289,7 +291,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             }
             return "default";
         } catch (Exception e) {
-            LOGGER.debug("Error getting group for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting group for player {}: {}", player.getName().getString(), e.getMessage());
             return "default";
         }
     }
@@ -308,7 +310,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             String channelKey = com.zerog.neoessentials.chat.ChatHandler.getEffectiveChannel(player.getUUID());
             return com.zerog.neoessentials.chat.ChatHandler.getChannelDisplayName(channelKey);
         } catch (Exception e) {
-            LOGGER.debug("Error getting channel for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting channel for player {}: {}", player.getName().getString(), e.getMessage());
             return "global";
         }
     }
@@ -325,7 +327,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             Level level = player.level();
             return level.dimension().location().getPath();
         } catch (Exception e) {
-            LOGGER.debug("Error getting world name for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting world name for player {}: {}", player.getName().getString(), e.getMessage());
             return "unknown";
         }
     }
@@ -342,7 +344,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             var biome = player.level().getBiome(player.blockPosition());
             return biome.unwrapKey().map(key -> key.location().getPath()).orElse("unknown");
         } catch (Exception e) {
-            LOGGER.debug("Error getting biome for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting biome for player {}: {}", player.getName().getString(), e.getMessage());
             return "unknown";
         }
     }
@@ -361,7 +363,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return balance.toString();
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting balance for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting balance for player {}: {}", player.getName().getString(), e.getMessage());
         }
         return "0.0";
     }
@@ -430,7 +432,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return DECIMAL_FORMAT.format(balance.doubleValue());
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting formatted balance for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting formatted balance for player {}: {}", player.getName().getString(), e.getMessage());
         }
         return "0.00";
     }
@@ -444,7 +446,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return player.getServer().getMotd();
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting server name: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting server name: {}", e.getMessage());
         }
         return "Minecraft Server";
     }
@@ -458,7 +460,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return String.valueOf(player.getServer().getPlayerCount());
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting online player count: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting online player count: {}", e.getMessage());
         }
         return "0";
     }
@@ -472,7 +474,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return String.valueOf(player.getServer().getMaxPlayers());
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting max player count: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting max player count: {}", e.getMessage());
         }
         return "20";
     }
@@ -484,7 +486,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"));
         } catch (Exception e) {
-            LOGGER.debug("Error getting current time: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting current time: {}", e.getMessage());
             return "00:00 AM";
         }
     }
@@ -496,7 +498,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
         } catch (Exception e) {
-            LOGGER.debug("Error getting current time (24h): {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting current time (24h): {}", e.getMessage());
             return "00:00";
         }
     }
@@ -508,7 +510,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception e) {
-            LOGGER.debug("Error getting current date: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting current date: {}", e.getMessage());
             return "1970-01-01";
         }
     }
@@ -525,7 +527,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             boolean isAfk = afkManager.isAfk(player.getUUID());
             return isAfk ? "AFK" : "";
         } catch (Exception e) {
-            LOGGER.debug("Error getting AFK status for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting AFK status for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
         }
     }
@@ -558,7 +560,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 return String.format("%ds", seconds);
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting AFK time for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting AFK time for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
         }
     }
@@ -579,7 +581,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
             String reason = afkManager.getAfkReason(player.getUUID());
             return reason != null ? reason : "";
         } catch (Exception e) {
-            LOGGER.debug("Error getting AFK reason for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting AFK reason for player {}: {}", player.getName().getString(), e.getMessage());
             return "";
         }
     }

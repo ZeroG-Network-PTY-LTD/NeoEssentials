@@ -2,6 +2,8 @@ package com.zerog.neoessentials.logs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.*;
 import java.nio.file.*;
@@ -217,7 +219,7 @@ public class LogManager {
             return new LogEntry(timestamp, level, thread, logger, message, lineNumber);
             
         } catch (Exception e) {
-            LOGGER.debug("Failed to parse log line: {}", line, e);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to parse log line: {}", line, e);
             return new LogEntry("", "INFO", "", "", line, lineNumber);
         }
     }

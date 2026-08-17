@@ -118,7 +118,7 @@ public class InventoryViewCommands {
                 )
         );
 
-        LOGGER.info("Registered inventory view commands: /invsee, /invseeedit, /enderchest, /enderchestedit (/inv, /ec, /ecedit)");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Registered inventory view commands: /invsee, /invseeedit, /enderchest, /enderchestedit (/inv, /ec, /ecedit)");
     }
 
     // ── Edit-lock management ────────────────────────────────────────────────
@@ -148,7 +148,7 @@ public class InventoryViewCommands {
                 String targetName = resolveNameFromServer(entry.getKey());
                 InventoryAuditLogger.log(viewerName, InventoryAuditLogger.INV_EDIT_CLOSED,
                     targetName, "Viewer disconnected — edit lock released");
-                LOGGER.info("Inventory edit lock released: {} was editing {}'s inventory", viewerName, targetName);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Inventory edit lock released: {} was editing {}'s inventory", viewerName, targetName);
                 return true;
             }
             return false;
@@ -159,7 +159,7 @@ public class InventoryViewCommands {
                 String targetName = resolveNameFromServer(entry.getKey());
                 InventoryAuditLogger.log(viewerName, InventoryAuditLogger.EC_EDIT_CLOSED,
                     targetName, "Viewer disconnected — ender chest edit lock released");
-                LOGGER.info("Ender chest edit lock released: {} was editing {}'s ender chest", viewerName, targetName);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Ender chest edit lock released: {} was editing {}'s ender chest", viewerName, targetName);
                 return true;
             }
             return false;
@@ -255,7 +255,7 @@ public class InventoryViewCommands {
                 viewer.getName().getString(), InventoryAuditLogger.INV_EDIT_OPENED,
                 target.getName().getString(),
                 "Editable inventory opened");
-            LOGGER.info("{} is viewing and editing {}'s inventory", viewer.getName().getString(), target.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "{} is viewing and editing {}'s inventory", viewer.getName().getString(), target.getName().getString());
         } else {
             openReadOnlyInventory(viewer, target);
             viewer.sendSystemMessage(MessageUtil.success(
@@ -264,7 +264,7 @@ public class InventoryViewCommands {
                 viewer.getName().getString(), InventoryAuditLogger.INV_VIEWED,
                 target.getName().getString(),
                 "Read-only inventory view opened");
-            LOGGER.info("{} is viewing {}'s inventory (read-only)", viewer.getName().getString(), target.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "{} is viewing {}'s inventory (read-only)", viewer.getName().getString(), target.getName().getString());
         }
 
         return 1;
@@ -307,7 +307,7 @@ public class InventoryViewCommands {
                 viewer.getName().getString(), InventoryAuditLogger.EC_EDIT_OPENED,
                 target.getName().getString(),
                 "Editable ender chest opened");
-            LOGGER.info("{} is viewing and editing {}'s ender chest", viewer.getName().getString(), target.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "{} is viewing and editing {}'s ender chest", viewer.getName().getString(), target.getName().getString());
         } else {
             openReadOnlyEnderChest(viewer, target);
             viewer.sendSystemMessage(MessageUtil.success(
@@ -316,7 +316,7 @@ public class InventoryViewCommands {
                 viewer.getName().getString(), InventoryAuditLogger.EC_VIEWED,
                 target.getName().getString(),
                 "Read-only ender chest view opened");
-            LOGGER.info("{} is viewing {}'s ender chest (read-only)", viewer.getName().getString(), target.getName().getString());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "{} is viewing {}'s ender chest (read-only)", viewer.getName().getString(), target.getName().getString());
         }
 
         return 1;

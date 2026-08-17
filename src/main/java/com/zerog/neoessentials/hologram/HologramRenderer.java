@@ -66,7 +66,7 @@ public final class HologramRenderer {
             DATA_STYLE        = reflectAccessor(Display.TextDisplay.class, "DATA_STYLE_FLAGS_ID");
             DATA_TEXT_OPACITY = reflectAccessor(Display.TextDisplay.class, "DATA_TEXT_OPACITY_ID");
             DATA_LINE_WIDTH   = reflectAccessor(Display.TextDisplay.class, "DATA_LINE_WIDTH_ID");
-            LOGGER.debug("[Hologram] Display.TextDisplay data accessors resolved.");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Display.TextDisplay data accessors resolved.");
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to resolve Display.TextDisplay data accessors.", e);
         }
@@ -77,7 +77,7 @@ public final class HologramRenderer {
             DATA_INTERP_START_DELTA = reflectAccessor(Display.class, "DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID");
             DATA_SCALE              = reflectAccessor(Display.class, "DATA_SCALE_ID");
             DATA_VIEW_RANGE         = reflectAccessor(Display.class, "DATA_VIEW_RANGE_ID");
-            LOGGER.debug("[Hologram] Display base-class data accessors resolved.");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Display base-class data accessors resolved.");
         } catch (Exception e) {
             LOGGER.warn("[Hologram] Failed to resolve Display base-class accessors: {}", e.getMessage());
         }
@@ -127,7 +127,7 @@ public final class HologramRenderer {
             spawnInteractionEntity(data, level);
         }
         data.lastRefreshMs = System.currentTimeMillis();
-        LOGGER.debug("[Hologram] Spawned {} line entity(ies) for '{}'.", data.entityUUIDs.size(), data.id);
+        NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Spawned {} line entity(ies) for '{}'.", data.entityUUIDs.size(), data.id);
     }
     /**
      * Spawns (or re-spawns) the invisible {@code minecraft:interaction} hitbox that makes
@@ -198,7 +198,7 @@ public final class HologramRenderer {
                     applySpinRotation(entity, data);
                 }
             } catch (Exception e) {
-                LOGGER.debug("[Hologram] updateRotationsAndPositions error for '{}' line {}: {}",
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] updateRotationsAndPositions error for '{}' line {}: {}",
                         data.id, i, e.getMessage());
             }
         }
@@ -261,7 +261,7 @@ public final class HologramRenderer {
             });
             for (var e : orphans) e.discard();
             if (!orphans.isEmpty()) {
-                LOGGER.debug("[Hologram] Discarded {} orphaned/untracked entity(ies) for '{}'.",
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Discarded {} orphaned/untracked entity(ies) for '{}'.",
                     orphans.size(), data.id);
             }
         } catch (Exception e) {
@@ -288,7 +288,7 @@ public final class HologramRenderer {
                     level.getChunk(cp.x, cp.z);
                 }
             } catch (Exception e) {
-                LOGGER.debug("[Hologram] Failed to preload chunk for '{}': {}", d.id, e.getMessage());
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Failed to preload chunk for '{}': {}", d.id, e.getMessage());
             }
         }
         cleanStaleEntities(level);
@@ -340,7 +340,7 @@ public final class HologramRenderer {
                 spawn(data, level);
             }
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] updateLineText failed for '{}'[{}]: {}", data.id, lineIndex, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] updateLineText failed for '{}'[{}]: {}", data.id, lineIndex, e.getMessage());
         }
     }
     // -- Internal helpers -------------------------------------------------------
@@ -366,7 +366,7 @@ public final class HologramRenderer {
                 entity.getEntityData().set(DATA_LINE_WIDTH, Math.max(1, data.lineWidth));
             }
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] applyText error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] applyText error: {}", e.getMessage());
         }
     }
     /**
@@ -405,7 +405,7 @@ public final class HologramRenderer {
                 entity.getEntityData().set(DATA_LEFT_ROTATION, buildRotationQuat(data));
             }
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] applyBillboardAndRotation error for '{}': {}", data.id, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] applyBillboardAndRotation error for '{}': {}", data.id, e.getMessage());
         }
     }
     /**
@@ -418,7 +418,7 @@ public final class HologramRenderer {
                 entity.getEntityData().set(DATA_LEFT_ROTATION, buildRotationQuat(data));
             }
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] applySpinRotation error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] applySpinRotation error: {}", e.getMessage());
         }
     }
     /**
@@ -515,11 +515,11 @@ public final class HologramRenderer {
             });
             for (var e : stale) e.discard();
             if (!stale.isEmpty()) {
-                LOGGER.debug("[Hologram] Cleaned {} stale entity(ies) from '{}'.",
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] Cleaned {} stale entity(ies) from '{}'.",
                         stale.size(), dimensionKey(level));
             }
         } catch (Exception e) {
-            LOGGER.debug("[Hologram] cleanStaleEntities error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] cleanStaleEntities error: {}", e.getMessage());
         }
     }
     // -- Reflection -------------------------------------------------------------

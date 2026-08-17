@@ -101,7 +101,7 @@ public class ShopSignHandler {
         // Remove the shop (and its hologram via ShopManager → ShopHologramManager)
         ShopData removed = ShopManager.getInstance().removeShop(dimension, pos);
         if (removed != null) {
-            LOGGER.debug("[ChestShop] Removed shop at {} (sign broken by {})",
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] Removed shop at {} (sign broken by {})",
                 key, event.getPlayer() != null ? event.getPlayer().getName().getString() : "unknown");
         }
     }

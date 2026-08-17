@@ -14,6 +14,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import net.neoforged.fml.ModList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.*;
 
@@ -45,7 +47,7 @@ public class ListCommand {
                     })
             );
         } else {
-            LOGGER.debug("Skipped registering 'list' command (disabled in config)");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Skipped registering 'list' command (disabled in config)");
         }
 
         if (cfg.isCommandEnabled("who")) {
@@ -62,7 +64,7 @@ public class ListCommand {
                     })
             );
         } else {
-            LOGGER.debug("Skipped registering 'who' command (disabled in config)");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Skipped registering 'who' command (disabled in config)");
         }
 
         // Register /online alias
@@ -80,7 +82,7 @@ public class ListCommand {
                     })
             );
         } else {
-            LOGGER.debug("Skipped registering 'online' command (disabled in config)");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Skipped registering 'online' command (disabled in config)");
         }
     }
 
@@ -442,7 +444,7 @@ public class ListCommand {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error getting LuckPerms group info for player {}: {}", player.getName().getString(), e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting LuckPerms group info for player {}: {}", player.getName().getString(), e.getMessage());
         }
 
         return null;

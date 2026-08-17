@@ -7,6 +7,8 @@ import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.world.level.GameType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.lang.reflect.Constructor;
 import java.util.UUID;
@@ -45,7 +47,7 @@ public final class TabListEntryCompat {
             if (viaReflection != null) {
                 if (!loggedReflectionSuccess) {
                     loggedReflectionSuccess = true;
-                    LOGGER.info("ClientboundPlayerInfoUpdatePacket.Entry's 7-arg constructor is unavailable on " +
+                    NeoLog.info(LOGGER, LogCategory.GENERAL, "ClientboundPlayerInfoUpdatePacket.Entry's 7-arg constructor is unavailable on " +
                         "this Minecraft version — using the modern constructor instead. Fake tablist entries remain functional.");
                 }
                 return viaReflection;

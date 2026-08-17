@@ -7,6 +7,8 @@ import com.zerog.neoessentials.permissions.PermissionStorage;
 import com.zerog.neoessentials.vault.api.VaultChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.util.UUID;
 
@@ -35,7 +37,7 @@ public class NeoEssentialsChat extends VaultChat {
             // PermissionAPI.getPrefix() handles: external adapter (LuckPerms/FTBRanks) → internal group prefix
             return PermissionAPI.getPrefix(playerId);
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getPlayerPrefix error for {}: {}", playerId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "VaultChat: getPlayerPrefix error for {}: {}", playerId, e.getMessage());
             return "";
         }
     }
@@ -59,7 +61,7 @@ public class NeoEssentialsChat extends VaultChat {
             // PermissionAPI.getSuffix() handles: external adapter → internal group suffix
             return PermissionAPI.getSuffix(playerId);
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getPlayerSuffix error for {}: {}", playerId, e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "VaultChat: getPlayerSuffix error for {}: {}", playerId, e.getMessage());
             return "";
         }
     }
@@ -87,7 +89,7 @@ public class NeoEssentialsChat extends VaultChat {
             PermissionGroup grp = pm.getGroup(group);
             return grp != null && grp.getPrefix() != null ? grp.getPrefix() : "";
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getGroupPrefix error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "VaultChat: getGroupPrefix error: {}", e.getMessage());
             return "";
         }
     }
@@ -114,7 +116,7 @@ public class NeoEssentialsChat extends VaultChat {
             PermissionGroup grp = pm.getGroup(group);
             return grp != null && grp.getSuffix() != null ? grp.getSuffix() : "";
         } catch (Exception e) {
-            LOGGER.debug("VaultChat: getGroupSuffix error: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "VaultChat: getGroupSuffix error: {}", e.getMessage());
             return "";
         }
     }

@@ -9,6 +9,8 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Provides item repair functionality allowing players to instantly repair damaged items.
@@ -96,7 +98,7 @@ public class RepairCommand {
             stack.setDamageValue(0);
             
             // Log repair action for audit trail
-            LOGGER.info("Player {} repaired item: {} (damage: {} -> 0)", 
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} repaired item: {} (damage: {} -> 0)", 
                 player.getName().getString(), 
                 itemName,
                 damageBefore);

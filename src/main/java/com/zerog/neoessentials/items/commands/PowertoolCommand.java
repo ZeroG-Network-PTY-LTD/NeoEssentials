@@ -3,6 +3,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -115,7 +117,7 @@ public class PowertoolCommand {
                 player.sendSystemMessage(MessageUtil.success(
                     fe ? "commands.neoessentials.powertooltoggle.enabled"
                        : "commands.neoessentials.powertooltoggle.disabled"));
-                LOGGER.info("Player {} {} all powertools via /powertooltoggle",
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} {} all powertools via /powertooltoggle",
                     player.getName().getString(), nowEnabled ? "enabled" : "disabled");
                 return 1;
             })
@@ -347,7 +349,7 @@ public class PowertoolCommand {
         POWERS.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(itemId, command);
 
         // Log powertool assignment for audit trail
-        LOGGER.info("Player {} assigned powertool command '{}' to item {}",
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} assigned powertool command '{}' to item {}",
             player.getName().getString(), command, itemId);
     }
 
@@ -462,7 +464,7 @@ public class PowertoolCommand {
 
         if (successCount[0] > 0) {
             // Log successful target command execution for audit trail
-            LOGGER.info("Player {} executed target command '{}' on {}/{} players successfully",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Player {} executed target command '{}' on {}/{} players successfully",
                 executor.getName().getString(), validCommand, successCount[0], targets.size());
             
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.pt.target.success", 

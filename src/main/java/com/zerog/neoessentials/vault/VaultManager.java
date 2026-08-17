@@ -13,6 +13,8 @@ import com.zerog.neoessentials.shop.api.NeoEssentialsShopEconomy;
 import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * NeoEssentials Vault sub-system manager.
@@ -61,7 +63,7 @@ public class VaultManager {
             return;
         }
 
-        LOGGER.info("[VaultAPI] Initialising NeoEssentials Vault API...");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[VaultAPI] Initialising NeoEssentials Vault API...");
 
         VaultServiceRegistry registry = VaultServiceRegistry.getInstance();
 
@@ -106,7 +108,7 @@ public class VaultManager {
 
         registry.logStatus();
         initialised = true;
-        LOGGER.info("[VaultAPI] Vault API ready.");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[VaultAPI] Vault API ready.");
 
         // Bridge: replace the shop's economy adapter with a VaultShopEconomyAdapter that
         // dynamically delegates to whichever VaultEconomy has the highest active priority.
@@ -115,7 +117,7 @@ public class VaultManager {
         try {
             ShopEconomyRegistry.getInstance().register(
                 new VaultShopEconomyAdapter(new NeoEssentialsShopEconomy()));
-            LOGGER.info("[VaultAPI] VaultShopEconomyAdapter registered — shop now uses VaultServiceRegistry.");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[VaultAPI] VaultShopEconomyAdapter registered — shop now uses VaultServiceRegistry.");
         } catch (Exception e) {
             LOGGER.error("[VaultAPI] Failed to register VaultShopEconomyAdapter: {}", e.getMessage(), e);
         }
@@ -125,7 +127,7 @@ public class VaultManager {
     public static void shutdown() {
         VaultServiceRegistry.getInstance().clear();
         initialised = false;
-        LOGGER.info("[VaultAPI] Vault API shut down.");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[VaultAPI] Vault API shut down.");
     }
 
     /** Convenience accessor — economy (may be empty if disabled). */

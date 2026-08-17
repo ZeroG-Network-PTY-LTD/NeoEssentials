@@ -4,6 +4,8 @@ import com.google.gson.*;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -85,7 +87,7 @@ public class TaskManager {
         tasks.put(task.getId(), task);
         saveTasks();
         
-        LOGGER.info("Created scheduled task: {} ({})", name, task.getId());
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Created scheduled task: {} ({})", name, task.getId());
         return task;
     }
     
@@ -127,7 +129,7 @@ public class TaskManager {
         task.setUpdatedAt(System.currentTimeMillis());
         saveTasks();
         
-        LOGGER.info("Updated scheduled task: {} ({})", task.getName(), id);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Updated scheduled task: {} ({})", task.getName(), id);
         return true;
     }
     
@@ -140,7 +142,7 @@ public class TaskManager {
             executionHistory.remove(id);
             saveTasks();
             saveExecutionHistory();
-            LOGGER.info("Deleted scheduled task: {} ({})", removed.getName(), id);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Deleted scheduled task: {} ({})", removed.getName(), id);
             return true;
         }
         return false;
@@ -279,7 +281,7 @@ public class TaskManager {
                     }
                 }
                 
-                LOGGER.info("Loaded {} scheduled tasks from disk", tasks.size());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded {} scheduled tasks from disk", tasks.size());
             }
         } catch (Exception e) {
             LOGGER.error("Failed to load tasks", e);
@@ -330,7 +332,7 @@ public class TaskManager {
                     }
                 }
                 
-                LOGGER.info("Loaded execution history for {} tasks", executionHistory.size());
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Loaded execution history for {} tasks", executionHistory.size());
             }
         } catch (Exception e) {
             LOGGER.error("Failed to load execution history", e);

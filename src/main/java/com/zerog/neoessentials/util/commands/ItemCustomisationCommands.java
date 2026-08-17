@@ -28,6 +28,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -456,7 +458,7 @@ public class ItemCustomisationCommands {
 
         final int fr = removed;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.remove.success", fr, type, radius), true);
-        LOGGER.info("{} removed {} {} entities within {}r", senderName(src), fr, type, radius);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "{} removed {} {} entities within {}r", senderName(src), fr, type, radius);
         return 1;
     }
 

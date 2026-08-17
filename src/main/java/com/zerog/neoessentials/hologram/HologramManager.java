@@ -9,6 +9,8 @@ import com.zerog.neoessentials.storage.DataStore;
 import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -54,7 +56,7 @@ public class HologramManager {
             holograms.clear();
             migrateLegacyFilesIfNeeded();
             load();
-            LOGGER.info("[Hologram] Loaded {} hologram(s).", holograms.size());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Loaded {} hologram(s).", holograms.size());
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to load holograms — starting fresh.", e);
         }
@@ -63,7 +65,7 @@ public class HologramManager {
     public void shutdown() {
         // Every mutation already persists immediately via the DataStore, so there's
         // nothing left to flush here beyond letting the backend close cleanly.
-        LOGGER.info("[Hologram] Holograms are persisted; nothing further to flush on shutdown.");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Holograms are persisted; nothing further to flush on shutdown.");
     }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -267,7 +269,7 @@ public class HologramManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("HologramManager: migrated {} record(s) from legacy holograms.json into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "HologramManager: migrated {} record(s) from legacy holograms.json into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

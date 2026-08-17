@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -43,13 +45,13 @@ public class PlayerDataMigration {
 
         // Check if old file exists
         if (!oldFile.exists()) {
-            LOGGER.debug("No old {} file to migrate", oldFileName);
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "No old {} file to migrate", oldFileName);
             return 0;
         }
 
-        LOGGER.info("════════════════════════════════════════════════════════");
-        LOGGER.info("Migrating {} to per-player storage...", dataType);
-        LOGGER.info("════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Migrating {} to per-player storage...", dataType);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════");
 
         try {
             // Load old data
@@ -59,7 +61,7 @@ public class PlayerDataMigration {
             }
 
             if (oldData.keySet().isEmpty()) {
-                LOGGER.info("Old {} file is empty, skipping migration", oldFileName);
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "Old {} file is empty, skipping migration", oldFileName);
                 return 0;
             }
 
@@ -79,7 +81,7 @@ public class PlayerDataMigration {
                     store.save(playerId, playerData);
                     migratedCount++;
 
-                    LOGGER.debug("Migrated {} data for player {}", dataType, playerId);
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "Migrated {} data for player {}", dataType, playerId);
 
                 } catch (Exception e) {
                     LOGGER.error("Failed to migrate {} for player {}: {}",
@@ -94,27 +96,27 @@ public class PlayerDataMigration {
             // Backup old file
             File backupFile = new File(oldFile.getAbsolutePath() + ".backup");
             Files.copy(oldFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("✓ Backed up old {} file to {}", oldFileName, backupFile.getName());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Backed up old {} file to {}", oldFileName, backupFile.getName());
 
             // Delete old file (commented out for safety - admins can delete manually)
             // oldFile.delete();
-            // LOGGER.info("✓ Deleted old {} file", oldFileName);
+            // NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Deleted old {} file", oldFileName);
 
             // Rename old file to .migrated to prevent re-migration
             File migratedFile = new File(oldFile.getAbsolutePath() + ".migrated");
             Files.move(oldFile.toPath(), migratedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("✓ Renamed old {} file to {} (safe to delete manually)",
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Renamed old {} file to {} (safe to delete manually)",
                 oldFileName, migratedFile.getName());
 
-            LOGGER.info("════════════════════════════════════════════════════════");
-            LOGGER.info("✓ Migration complete!");
-            LOGGER.info("  - {} migrated: {} players", dataType, migratedCount);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "✓ Migration complete!");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  - {} migrated: {} players", dataType, migratedCount);
             if (failedCount > 0) {
                 LOGGER.warn("  - Failed: {} players", failedCount);
             }
-            LOGGER.info("  - Old file backed up: {}", backupFile.getName());
-            LOGGER.info("  - New location: config/neoessentials/playerdata/{}/", dataType);
-            LOGGER.info("════════════════════════════════════════════════════════");
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  - Old file backed up: {}", backupFile.getName());
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "  - New location: config/neoessentials/playerdata/{}/", dataType);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════");
 
             return migratedCount;
 
@@ -128,7 +130,7 @@ public class PlayerDataMigration {
      * Migrate all data types to per-player structure.
      */
     public static void migrateAll() {
-        LOGGER.info("Checking for data migrations...");
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "Checking for data migrations...");
 
         int totalMigrated = 0;
 
@@ -140,9 +142,9 @@ public class PlayerDataMigration {
         // totalMigrated += migrateToPlayerData("mail.json", "mail");
 
         if (totalMigrated > 0) {
-            LOGGER.info("Total players migrated across all systems: {}", totalMigrated);
+            NeoLog.info(LOGGER, LogCategory.GENERAL, "Total players migrated across all systems: {}", totalMigrated);
         } else {
-            LOGGER.debug("No migrations needed");
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "No migrations needed");
         }
     }
 
