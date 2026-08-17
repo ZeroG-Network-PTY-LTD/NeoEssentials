@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings, Flag } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings, Flag, Send } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -47,9 +47,10 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     { label: 'Backups', href: '/backups', icon: DatabaseBackup },
     { label: 'Commands', href: '/commands', icon: Terminal },
     { label: 'Logs', href: '/logs', icon: ScrollText },
-    // Reviewing player reports is admin-only — the GET endpoints themselves are readable by
-    // any logged-in dashboard account (see ModerationEndpoint's own doc comment), but review
-    // actions require admin server-side, so there's nothing a non-admin could actually do here.
+    // Filing a report is open to everyone (matches the in-game /report command, whose
+    // permission node is granted to every player by default). Reviewing the queue is
+    // staff-only, same as /reports and /reviewreport in-game — separate nav item below.
+    { label: 'Report', href: '/report', icon: Send },
     ...(isAdmin ? [{ label: 'Reports', href: '/reports', icon: Flag }] : []),
     // Mod dashboard account management is admin-only, same gate as the external
     // dashboard's copy of this page.

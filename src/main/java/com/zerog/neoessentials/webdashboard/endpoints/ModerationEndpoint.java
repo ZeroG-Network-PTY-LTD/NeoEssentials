@@ -64,10 +64,11 @@ import java.util.*;
  *  POST   /api/moderation/note                    – {targetName, text} [ADMIN]
  *  DELETE /api/moderation/note/{id}                – remove a note (body: {targetName}) [ADMIN]
  *
- *  GET    /api/moderation/reports                 – pending report queue
- *  GET    /api/moderation/reports/all             – every report ever filed
- *  GET    /api/moderation/reports/{id}            – a single report
- *  POST   /api/moderation/report                  – file one: {targetName, reason} [ADMIN]
+ *  GET    /api/moderation/reports                 – pending report queue [ADMIN]
+ *  GET    /api/moderation/reports/all             – every report ever filed [ADMIN]
+ *  GET    /api/moderation/reports/player/{name}   – reports filed against one player [ADMIN]
+ *  GET    /api/moderation/reports/{id}            – a single report [ADMIN]
+ *  POST   /api/moderation/report                  – file one: {targetName, reason} (any authenticated user)
  *  POST   /api/moderation/reports/{id}/review     – {status: REVIEWED|DISMISSED, notes?} [ADMIN]
  * </pre>
  */
@@ -168,17 +169,25 @@ public class ModerationEndpoint implements HttpHandler {
                 handleRemoveNote(exchange, lastSegment(path));
 
             } else if ("POST".equals(method) && path.endsWith("/report")) {
-                requireAdmin(exchange);
+                // Filing a report is intentionally NOT admin-gated — matches the in-game
+                // /report command, whose permission node is granted to every player by
+                // default. Only reviewing/dismissing the queue is staff-only (below).
                 handleCreateReport(exchange);
             } else if ("POST".equals(method) && path.contains("/reports/") && path.endsWith("/review")) {
                 requireAdmin(exchange);
                 String id = path.substring(path.indexOf("/reports/") + "/reports/".length(), path.lastIndexOf("/review"));
                 handleReviewReport(exchange, id);
             } else if ("GET".equals(method) && path.endsWith("/reports/all")) {
+                requireAdmin(exchange);
                 handleAllReports(exchange);
+            } else if ("GET".equals(method) && path.contains("/reports/player/")) {
+                requireAdmin(exchange);
+                handleReportsForPlayer(exchange, lastSegment(path));
             } else if ("GET".equals(method) && path.contains("/reports/")) {
+                requireAdmin(exchange);
                 handleReportById(exchange, lastSegment(path));
             } else if ("GET".equals(method) && path.endsWith("/reports")) {
+                requireAdmin(exchange);
                 handlePendingReports(exchange);
 
             } else if ("GET".equals(method) && path.endsWith("/freeze/list")) {
@@ -678,6 +687,15 @@ public class ModerationEndpoint implements HttpHandler {
 
     private void handleAllReports(HttpExchange exchange) throws IOException {
         sendJson(exchange, 200, reportsJson(ReportManager.getInstance().getAllReports()));
+    }
+
+    /** Every report ever filed against a given player, newest logic handled client-side — used by
+     *  the player-lookup panel's staff-only reports section. Admin-gated (see route dispatch). */
+    private void handleReportsForPlayer(HttpExchange exchange, String playerName) throws IOException {
+        UUID targetId = resolvePlayerId(playerName);
+        List<ReportEntry> reports = targetId != null
+            ? ReportManager.getInstance().getReportsAgainst(targetId) : Collections.emptyList();
+        sendJson(exchange, 200, reportsJson(reports));
     }
 
     private void handleReportById(HttpExchange exchange, String id) throws IOException {

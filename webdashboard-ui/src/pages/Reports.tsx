@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import Card from '../components/Dashboard/Card';
 import PageHeading from '../components/Dashboard/PageHeading';
@@ -6,7 +6,7 @@ import Badge from '../components/Dashboard/Badge';
 import { useToast } from '../lib/toast';
 import * as mcApi from '../lib/mcApi';
 import type { ReportEntry, ReportStatus } from '../types';
-import { Flag, Send, Check, X } from 'lucide-react';
+import { Flag, Check, X } from 'lucide-react';
 
 const STATUS_BADGE: Record<ReportStatus, 'ember' | 'moss' | 'neutral'> = {
   PENDING: 'ember',
@@ -21,10 +21,6 @@ export default function Reports() {
   const [showAll, setShowAll] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const [targetName, setTargetName] = useState('');
-  const [reason, setReason] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   const refresh = (all = showAll) => {
     setLoading(true);
     (all ? mcApi.allReports() : mcApi.pendingReports())
@@ -33,23 +29,6 @@ export default function Reports() {
   };
 
   useEffect(() => refresh(showAll), [showAll]);
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!targetName.trim() || !reason.trim()) return;
-    setSubmitting(true);
-    try {
-      await mcApi.fileReport(targetName.trim(), reason.trim());
-      showToast(`Report filed against '${targetName.trim()}'.`);
-      setTargetName('');
-      setReason('');
-      refresh();
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to file report.', true);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const review = async (id: string, status: ReportStatus) => {
     setBusyId(id);
@@ -103,7 +82,7 @@ export default function Reports() {
         }
       />
 
-      <div className="grid grid-cols-[1fr_320px] gap-5 mb-5">
+      <div className="mb-5">
         <Card title={`${reports.length} report${reports.length === 1 ? '' : 's'}`} icon={Flag}>
           {reports.length === 0 && (
             <div className="px-4 py-8 text-center text-[13px] text-[var(--mc-text-muted)]">
@@ -149,40 +128,6 @@ export default function Reports() {
               )}
             </div>
           ))}
-        </Card>
-
-        <Card title="File a report" icon={Send} accent="purple" padded className="h-fit">
-          <form onSubmit={submit} className="flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">
-              Player
-              <input
-                value={targetName}
-                onChange={(e) => setTargetName(e.target.value)}
-                placeholder="Username"
-                className="font-data text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)]"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">
-              Reason
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-                placeholder="What happened?"
-                className="text-[13px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border-strong)] rounded-[8px] px-2.5 py-1.5 text-[var(--mc-text-primary)] outline-none transition-colors focus:border-[var(--mc-cyan-400)] resize-none"
-              />
-            </label>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-pop mt-1 flex items-center justify-center gap-1.5 text-[13px] px-3 py-2 rounded-[var(--radius)] bg-[var(--mc-cyan-500)] text-[#0a1620] font-medium transition-colors hover:bg-[var(--mc-cyan-400)] disabled:opacity-50"
-            >
-              <Send size={13} strokeWidth={2} />
-              File report
-            </button>
-          </form>
         </Card>
       </div>
     </DashboardLayout>
