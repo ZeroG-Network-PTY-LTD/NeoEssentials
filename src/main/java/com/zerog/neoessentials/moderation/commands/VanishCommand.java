@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Vanish commands: /vanish, /unvanish, /vanishlist
@@ -40,7 +42,7 @@ public class VanishCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Enforce moderationEnabled and vanish system config
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping vanish command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping vanish command registration");
             return;
         }
         var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -142,7 +144,7 @@ public class VanishCommand {
                         broadcastToAll(server, MessageUtil.localize("neoessentials.moderation.vanish_disabled_broadcast", targetName, vanishedBy));
                     }
                     if (ConfigManager.isLogVanishActionsEnabled()) {
-                        LOGGER.info("Player {} unvanished by {}", targetName, vanishedBy);
+                        NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} unvanished by {}", targetName, vanishedBy);
                     }
                     return 1;
                 } else {
@@ -173,7 +175,7 @@ public class VanishCommand {
                         broadcastToAll(server, MessageUtil.localize("neoessentials.moderation.vanish_enabled_broadcast", targetName, vanishedBy));
                     }
                     if (ConfigManager.isLogVanishActionsEnabled()) {
-                        LOGGER.info("Player {} vanished by {}", targetName, vanishedBy);
+                        NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} vanished by {}", targetName, vanishedBy);
                     }
                     return 1;
                 } else {
@@ -248,7 +250,7 @@ public class VanishCommand {
                 }
                 
                 if (ConfigManager.isLogVanishActionsEnabled()) {
-                    LOGGER.info("Player {} unvanished by {}", targetName, vanishedBy);
+                    NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} unvanished by {}", targetName, vanishedBy);
                 }
                 
                 return 1;

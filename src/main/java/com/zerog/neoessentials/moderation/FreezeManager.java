@@ -111,7 +111,7 @@ public class FreezeManager {
 
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying freeze: player={} ({}) reason={} by={}",
             playerName, playerId, reason, frozenBy);
-        LOGGER.info("Player {} ({}) frozen by {} for: {}", playerName, playerId, frozenBy, reason);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) frozen by {} for: {}", playerName, playerId, frozenBy, reason);
         return true;
     }
     
@@ -142,7 +142,7 @@ public class FreezeManager {
                 }
             }
             
-            LOGGER.info("Player {} ({}) unfrozen", removed.playerName, playerId);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) unfrozen", removed.playerName, playerId);
             return true;
         }
         return false;
@@ -162,7 +162,7 @@ public class FreezeManager {
             }
         }
         
-        LOGGER.info("Froze {} players by {}", count, frozenBy);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Froze {} players by {}", count, frozenBy);
         return count;
     }
     
@@ -189,7 +189,7 @@ public class FreezeManager {
         }
         frozenPlayers.clear();
 
-        LOGGER.info("Unfroze {} players", count);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Unfroze {} players", count);
         return count;
     }
     
@@ -399,7 +399,7 @@ public class FreezeManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("FreezeManager: migrated {} freeze record(s) from legacy file into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "FreezeManager: migrated {} freeze record(s) from legacy file into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

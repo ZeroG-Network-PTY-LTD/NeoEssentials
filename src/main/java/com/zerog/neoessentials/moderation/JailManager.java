@@ -183,7 +183,7 @@ public class JailManager {
         // Check config for jail system enabled
         jailSystemEnabledCache = com.zerog.neoessentials.config.ConfigManager.isJailSystemEnabled();
         if (!jailSystemEnabledCache) {
-            LOGGER.info("Jail system is disabled via config. All jail features will be inactive.");
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail system is disabled via config. All jail features will be inactive.");
         }
 
         this.store = com.zerog.neoessentials.storage.StorageManager.getInstance().getStore();
@@ -280,7 +280,7 @@ public class JailManager {
             banManager.banPlayer(playerName, playerId, "Exceeded maximum jailings (permanent ban)", "System");
             jailCounts.put(playerId, 0); // Reset count
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
-                LOGGER.info("Player {} ({}) permanently banned after {} jailings.", playerName, playerId, jailCount);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) permanently banned after {} jailings.", playerName, playerId, jailCount);
             }
             notifyJailer(jailedBy, MessageUtil.error("commands.neoessentials.jail.auto_permban_notice",
                 playerName, jailCount));
@@ -291,7 +291,7 @@ public class JailManager {
             BanManager banManager = BanManager.getInstance();
             banManager.tempBanPlayer(playerName, playerId, "Exceeded maximum jailings (temporary ban)", "System", tempBanDuration * 60 * 1000L);
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
-                LOGGER.info("Player {} ({}) temp-banned for {} minutes after {} jailings.", playerName, playerId, tempBanDuration, jailCount);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) temp-banned for {} minutes after {} jailings.", playerName, playerId, tempBanDuration, jailCount);
             }
             notifyJailer(jailedBy, MessageUtil.error("commands.neoessentials.jail.auto_tempban_notice",
                 playerName, jailCount, tempBanDuration));
@@ -321,7 +321,7 @@ public class JailManager {
                 player.sendSystemMessage(MessageUtil.coloredText(message));
 
         if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
-            LOGGER.info("Player {} ({}) jailed by {} in {} for: {}", 
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) jailed by {} in {} for: {}", 
                 playerName, playerId, jailedBy, jailName, reason);
         }
                 return true;
@@ -333,7 +333,7 @@ public class JailManager {
         saveJailedPlayers();
 
     if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
-        LOGGER.info("Player {} ({}) jailed while offline by {} in {} for: {}", 
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) jailed while offline by {} in {} for: {}", 
             playerName, playerId, jailedBy, jailName, reason);
     }
         return true;
@@ -364,7 +364,7 @@ public class JailManager {
             }
             
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
-                LOGGER.info("Player {} ({}) unjailed", jail.playerName, playerId);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) unjailed", jail.playerName, playerId);
             }
             return true;
         }
@@ -380,7 +380,7 @@ public class JailManager {
         jailLocations.put(jailName, jail);
         saveJailLocations();
 
-        LOGGER.info("Jail location '{}' set at {} in {} by {}", jailName, position, dimension, createdBy);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail location '{}' set at {} in {} by {}", jailName, position, dimension, createdBy);
         return true;
     }
 
@@ -392,7 +392,7 @@ public class JailManager {
         jailLocations.put(jailName, jail);
         saveJailLocations();
 
-        LOGGER.info("Jail location '{}' set as sphere at {} (radius {}) in {} by {}", jailName, center, radius, dimension, createdBy);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail location '{}' set as sphere at {} (radius {}) in {} by {}", jailName, center, radius, dimension, createdBy);
         return true;
     }
 
@@ -404,7 +404,7 @@ public class JailManager {
         jailLocations.put(jailName, jail);
         saveJailLocations();
 
-        LOGGER.info("Jail location '{}' set as cuboid {} to {} in {} by {}", jailName, jail.corner1, jail.corner2, dimension, createdBy);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail location '{}' set as cuboid {} to {} in {} by {}", jailName, jail.corner1, jail.corner2, dimension, createdBy);
         return true;
     }
 
@@ -429,7 +429,7 @@ public class JailManager {
         JailLocation removed = jailLocations.remove(jailName);
         if (removed != null) {
             saveJailLocations();
-            LOGGER.info("Jail location '{}' removed", jailName);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail location '{}' removed", jailName);
             return true;
         }
         return false;
@@ -538,7 +538,7 @@ public class JailManager {
 
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Jail expiry check: player={} ({}) expireAt={} now={}",
             jail.playerName, playerId, jail.expireAt, System.currentTimeMillis());
-        LOGGER.info("Timed jail expired for player {} ({}). Auto-releasing.", jail.playerName, playerId);
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Timed jail expired for player {} ({}). Auto-releasing.", jail.playerName, playerId);
         unjailPlayer(playerId);
         return true;
     }
@@ -815,7 +815,7 @@ public class JailManager {
         migrated += migrateLegacyJailLocationsFile();
 
         if (migrated > 0) {
-            LOGGER.info("JailManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "JailManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -864,13 +864,13 @@ public class JailManager {
      * Reload jail data from the active DataStore.
      */
     public void reload() {
-        LOGGER.info("Reloading jail system...");
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Reloading jail system...");
         jailedPlayers.clear();
         jailLocations.clear();
         jailCounts.clear();
         loadJailedPlayers();
         loadJailLocations();
-        LOGGER.info("Jail system reloaded: {} jailed players, {} jail locations",
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail system reloaded: {} jailed players, {} jail locations",
             jailedPlayers.size(), jailLocations.size());
     }
 }

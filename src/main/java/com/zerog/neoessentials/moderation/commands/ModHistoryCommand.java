@@ -41,7 +41,7 @@ public class ModHistoryCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping modhistory command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping modhistory command registration");
             return;
         }
         var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();

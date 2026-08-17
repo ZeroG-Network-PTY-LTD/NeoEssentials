@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Event handler for moderation system integration.
@@ -468,7 +470,7 @@ public class ModerationEventHandler {
                 player.getYRot(), player.getXRot());
 
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.jail.escape_prevented"));
-            LOGGER.debug("Jailed player {} redirected back to jail ({}).", player.getName().getString(), reason);
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Jailed player {} redirected back to jail ({}).", player.getName().getString(), reason);
         } catch (Exception e) {
             LOGGER.error("Error redirecting jailed player", e);
         }

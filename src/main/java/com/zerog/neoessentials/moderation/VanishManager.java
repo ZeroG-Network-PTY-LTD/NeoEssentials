@@ -154,7 +154,7 @@ public class VanishManager {
         }
 
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
-            LOGGER.info("Player {} ({}) vanished by {}", playerName, playerId, vanishedBy);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} ({}) vanished by {}", playerName, playerId, vanishedBy);
         }
         return true;
     }
@@ -199,7 +199,7 @@ public class VanishManager {
         }
 
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
-            LOGGER.info("Player ({}) unvanished", playerId);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player ({}) unvanished", playerId);
         }
         return true;
     }
@@ -238,7 +238,7 @@ public class VanishManager {
         }
         
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
-            LOGGER.info("Player ({}) enabled see vanished", playerId);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player ({}) enabled see vanished", playerId);
         }
     }
     
@@ -263,7 +263,7 @@ public class VanishManager {
         }
         
         if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
-            LOGGER.info("Player ({}) disabled see vanished", playerId);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Player ({}) disabled see vanished", playerId);
         }
     }
     
@@ -584,7 +584,7 @@ public class VanishManager {
         }
 
         if (migrated > 0) {
-            LOGGER.info("VanishManager: migrated {} vanish record(s) from legacy file into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "VanishManager: migrated {} vanish record(s) from legacy file into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }

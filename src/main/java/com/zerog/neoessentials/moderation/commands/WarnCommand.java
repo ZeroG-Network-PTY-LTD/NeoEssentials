@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Warn system commands:
@@ -32,7 +34,7 @@ public class WarnCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if moderation commands are enabled
         if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
-            LOGGER.debug("Moderation module is disabled, skipping warn command registration");
+            NeoLog.debug(LOGGER, LogCategory.MODERATION, "Moderation module is disabled, skipping warn command registration");
             return;
         }
         var cfg = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -121,7 +123,7 @@ public class WarnCommand {
             playerName, reason, fTotal, fShortId), true);
 
         // Always log to console so warns are always visible in server logs
-        LOGGER.info("[Warn] {} warned {} for: {} (warn #{}, ID: {})",
+        NeoLog.info(LOGGER, LogCategory.MODERATION, "[Warn] {} warned {} for: {} (warn #{}, ID: {})",
             warnedBy, playerName, reason, total, entry.getId().substring(0, 8));
 
         // Notify target if online
@@ -185,7 +187,7 @@ public class WarnCommand {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.clear_none", playerName), false);
         } else {
             String sender = getCommandSender(source);
-            LOGGER.info("[Warn] {} cleared all {} warn(s) for {}", sender, count, playerName);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "[Warn] {} cleared all {} warn(s) for {}", sender, count, playerName);
             final int fCount = count;
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.cleared", fCount, playerName), true);
         }
@@ -220,7 +222,7 @@ public class WarnCommand {
         boolean removed = WarnManager.getInstance().removeWarn(targetId, fullId);
         if (removed) {
             String sender = getCommandSender(source);
-            LOGGER.info("[Warn] {} removed warn {} from {}", sender, warnId, playerName);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "[Warn] {} removed warn {} from {}", sender, warnId, playerName);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.warn.removed", warnId, playerName), false);
         } else {
             source.sendFailure(MessageUtil.component("commands.neoessentials.warn.remove_failed", playerName));

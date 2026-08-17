@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Freeze commands: /freeze, /unfreeze, /freezeall, /unfreezeall, /freezelist
@@ -150,7 +152,7 @@ public class FreezeCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.freeze_broadcast", 
                     targetName, frozenBy, reason), senderId(source));
 
-                LOGGER.info("Player {} frozen by {} for: {}", targetName, frozenBy, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} frozen by {} for: {}", targetName, frozenBy, reason);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.freeze_failed", targetName);
@@ -231,7 +233,7 @@ public class FreezeCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unfreeze_broadcast", 
                     resolvedName, unfrozenBy), senderId(source));
                 
-                LOGGER.info("Player {} unfrozen by {}", resolvedName, unfrozenBy);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} unfrozen by {}", resolvedName, unfrozenBy);
                 return 1;
             } else {
                 String message = MessageUtil.localize("neoessentials.moderation.unfreeze_failed", resolvedName);
@@ -306,7 +308,7 @@ public class FreezeCommand {
             broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.freezeall_broadcast", 
                 frozenCount, frozenBy, reason), senderId(source));
 
-            LOGGER.info("{} players frozen by {} for: {}", frozenCount, frozenBy, reason);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "{} players frozen by {} for: {}", frozenCount, frozenBy, reason);
             return 1;
 
         } catch (Exception e) {
@@ -355,7 +357,7 @@ public class FreezeCommand {
             broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unfreezeall_broadcast", 
                 unfrozenCount, unfrozenBy), senderId(source));
             
-            LOGGER.info("{} players unfrozen by {}", unfrozenCount, unfrozenBy);
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "{} players unfrozen by {}", unfrozenCount, unfrozenBy);
             return 1;
             
         } catch (Exception e) {

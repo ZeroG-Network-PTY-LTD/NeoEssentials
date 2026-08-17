@@ -19,6 +19,8 @@ import com.zerog.neoessentials.util.InputValidator;
 
 import java.util.List;
 import java.util.UUID;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Jail commands: /jail, /unjail, /setjail, /jaillist, /jailinfo
@@ -352,7 +354,7 @@ public class JailCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.jail_broadcast",
                     resolvedName, jailedBy, reason), senderId(source));
 
-                LOGGER.info("Player {} jailed by {} in {} for: {}", resolvedName, jailedBy, jailName, reason);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} jailed by {} in {} for: {}", resolvedName, jailedBy, jailName, reason);
                 return 1;
             } else {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.jail_failed", resolvedName));
@@ -415,7 +417,7 @@ public class JailCommand {
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unjail_broadcast",
                     resolvedName, unjailedBy), senderId(source));
 
-                LOGGER.info("Player {} unjailed by {}", resolvedName, unjailedBy);
+                NeoLog.info(LOGGER, LogCategory.MODERATION, "Player {} unjailed by {}", resolvedName, unjailedBy);
                 return 1;
             } else {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.unjail_failed", resolvedName));
@@ -711,7 +713,7 @@ public class JailCommand {
                 String warn = MessageUtil.localize("commands.neoessentials.jail.deljail_had_inmates", inmates);
                 source.sendSuccess(() -> MessageUtil.coloredText(warn), false);
             }
-            LOGGER.info("Jail location '{}' deleted by {}", jailName, getCommandSender(source));
+            NeoLog.info(LOGGER, LogCategory.MODERATION, "Jail location '{}' deleted by {}", jailName, getCommandSender(source));
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing deljail command", e);
