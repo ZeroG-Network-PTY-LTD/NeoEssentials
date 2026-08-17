@@ -89,6 +89,16 @@ A channel with neither `radius` nor `permission` behaves as global chat. `chat.c
 | `{neoessentials_channel}` | The channel this message is being sent in — that channel's `displayName` if set (see [Chat Channels](ChatChannels)), else the raw channel key (`local`, `global`, `staff`, or any custom channel key from `chat.channels`) |
 | `{MESSAGE}` | Alias for `{message}` (case-insensitive) |
 
+> **`{displayname}`/`{neoessentials_displayname}` never includes the rank prefix/suffix** — it only
+> ever resolves to the player's `/nick` nickname (if set) or their real username, nothing else.
+> Use `{prefix}`/`{suffix}` explicitly in your template if you want the rank shown, as the shipped
+> default does (`<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}>`).
+> Prior to build.45/build.46, `{displayname}` could fall back to the platform's raw
+> `getDisplayName()` value, which — under a permissions plugin that formats names via vanilla
+> scoreboard teams (LuckPerms does this on Forge/NeoForge) — already had the prefix baked in,
+> doubling it up when combined with an explicit `{prefix}` token (e.g. `[Owner] [Owner] Name`).
+> Fixed; no config changes needed.
+
 ### Tablist-Style Short Tokens
 
 These tokens have no `{neoessentials_*}` equivalent — they were previously tablist/hologram-only,
@@ -469,6 +479,19 @@ channel. If a channel has a `permission` requirement, players without it are exc
 Discord relay as well as in-game delivery.
 
 Works standalone (no relay) if Simple Discord Link is not installed.
+
+> **SDLink has its own native chat/join/leave/advancement broadcasters, independent of
+> NeoEssentials.** SDLink's own config (`config/simple-discord-link/simple-discord-link.toml`,
+> under `[chat]`) ships with `playerMessages`, `playerJoin`, `playerLeave`, and
+> `advancementMessages` all **enabled by default** — each of these posts to Discord natively,
+> completely separately from the equivalent event NeoEssentials also sends through the same
+> SDLink bot. Running both means every one of those events posts to Discord **twice** with only
+> SDLink installed (no second Discord bridge mod needed) — and since SDLink's native message uses
+> its own phrasing (e.g. `*Player has left the server!*`) while NeoEssentials' looks different,
+> it's easy to mistake for two separate mods. If you see duplicated join/leave/chat/advancement
+> posts, set the corresponding key(s) under `[chat]` in SDLink's own config to `false`
+> (`advancementMessages` to `"NEVER"`) and restart — NeoEssentials will log a startup warning
+> naming the specific conflicting key(s) if it detects this.
 
 ---
 
