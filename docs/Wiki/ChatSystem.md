@@ -483,15 +483,18 @@ Works standalone (no relay) if Simple Discord Link is not installed.
 > **SDLink has its own native chat/join/leave/advancement broadcasters, independent of
 > NeoEssentials.** SDLink's own config (`config/simple-discord-link/simple-discord-link.toml`,
 > under `[chat]`) ships with `playerMessages`, `playerJoin`, `playerLeave`, and
-> `advancementMessages` all **enabled by default** — each of these posts to Discord natively,
+> `advancementMessages` all **enabled by default** — each of these can post to Discord natively,
 > completely separately from the equivalent event NeoEssentials also sends through the same
-> SDLink bot. Running both means every one of those events posts to Discord **twice** with only
-> SDLink installed (no second Discord bridge mod needed) — and since SDLink's native message uses
-> its own phrasing (e.g. `*Player has left the server!*`) while NeoEssentials' looks different,
-> it's easy to mistake for two separate mods. If you see duplicated join/leave/chat/advancement
-> posts, set the corresponding key(s) under `[chat]` in SDLink's own config to `false`
-> (`advancementMessages` to `"NEVER"`) and restart — NeoEssentials will log a startup warning
-> naming the specific conflicting key(s) if it detects this.
+> SDLink bot. **As of build.59, NeoEssentials detects this automatically at startup and skips its
+> own send for whichever event(s) SDLink's native config already handles** — a normal SDLink
+> install no longer double-posts join/leave/advancement/default-route chat messages, with nothing
+> to configure. A chat message routed to a specific per-channel Discord ID
+> (`chat.channels.<name>.discord.channelId`) always still sends through NeoEssentials regardless,
+> since that targets a channel SDLink's native relay never touches. NeoEssentials logs a startup
+> warning naming which SDLink key(s) it detected as active/suppressed — if you'd rather
+> NeoEssentials be the one formatting a given event instead of SDLink's native phrasing, set the
+> corresponding key under `[chat]` in SDLink's own config to `false` (`advancementMessages` to
+> `"NEVER"`) and restart.
 
 ---
 

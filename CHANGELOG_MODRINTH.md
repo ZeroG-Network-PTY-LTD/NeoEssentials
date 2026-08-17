@@ -8,6 +8,18 @@ migration history) is not carried over.
 
 ---
 
+## 1.0.4-mc26.1.2+build.59 — 2026-08-17
+
+### 🐛 SDLink Discord Duplicates Actually Fixed Now
+
+- Last update only warned you about SDLink's own native join/leave/chat/advancement messages
+  conflicting with NeoEssentials — you still had to manually edit SDLink's config to stop the
+  duplicates. Now NeoEssentials detects it automatically and stays quiet on its side, so a normal
+  SDLink install just works with no duplicate posts and no config editing needed.
+- This only affects Discord messages — in-game chat is unaffected.
+
+---
+
 ## 1.0.4-mc26.1.2+build.46 — 2026-08-17
 
 ### 🐛 Doubled Rank Prefix in Chat, Duplicate SDLink Join/Leave Messages
