@@ -4,6 +4,8 @@ import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.InputValidator;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.FreezeManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.EventPriority;
@@ -49,6 +51,12 @@ public class CommandLengthEnforcer {
 
         // Get the raw command string
         String rawCommand = event.getParseResults().getReader().getString();
+
+        // Gated by logging.categories.commands.normal (default on) — every OTHER command log
+        // in the mod only fires for specific commands (reload, language, etc.) or for commands
+        // this enforcer actually blocks; this is the only place that sees every player command
+        // unconditionally, so it's the one spot that can log all of them to console/latest.log.
+        NeoLog.info(LOGGER, LogCategory.COMMANDS, "{} issued command: /{}", player.getName().getString(), rawCommand);
 
         // ========================================
         // FREEZE SYSTEM CHECK (First Priority)
