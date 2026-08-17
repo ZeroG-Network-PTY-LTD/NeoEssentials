@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings, Flag } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -47,6 +47,10 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     { label: 'Backups', href: '/backups', icon: DatabaseBackup },
     { label: 'Commands', href: '/commands', icon: Terminal },
     { label: 'Logs', href: '/logs', icon: ScrollText },
+    // Reviewing player reports is admin-only — the GET endpoints themselves are readable by
+    // any logged-in dashboard account (see ModerationEndpoint's own doc comment), but review
+    // actions require admin server-side, so there's nothing a non-admin could actually do here.
+    ...(isAdmin ? [{ label: 'Reports', href: '/reports', icon: Flag }] : []),
     // Mod dashboard account management is admin-only, same gate as the external
     // dashboard's copy of this page.
     ...(isAdmin ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),

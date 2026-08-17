@@ -37,6 +37,8 @@ import type {
   PlayerInventory,
   FreezeEntry,
   JailEntry,
+  ReportEntry,
+  ReportStatus,
 } from '../types';
 
 /**
@@ -336,6 +338,24 @@ export async function muteHistory(username: string): Promise<MuteEntry[]> {
 
 export async function unmute(username: string) {
   return del(`/api/moderation/mute/${encodeURIComponent(username)}`);
+}
+
+// --- Player reports (in-game /report — GET routes are readable by any
+// logged-in dashboard account per ModerationEndpoint's own doc comment;
+// reviewing one is admin-only, enforced server-side) -------------------------
+
+export async function pendingReports(): Promise<ReportEntry[]> {
+  const data = await getJson<{ reports?: ReportEntry[] }>('/api/moderation/reports');
+  return data.reports ?? [];
+}
+
+export async function allReports(): Promise<ReportEntry[]> {
+  const data = await getJson<{ reports?: ReportEntry[] }>('/api/moderation/reports/all');
+  return data.reports ?? [];
+}
+
+export async function reviewReport(id: string, status: ReportStatus, notes?: string) {
+  return postJson(`/api/moderation/reports/${encodeURIComponent(id)}/review`, { status, notes: notes || null });
 }
 
 export async function kickHistory(username: string): Promise<KickEntry[]> {
