@@ -5,6 +5,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * Registers all kit-related commands.
@@ -16,25 +18,25 @@ public class KitCommands {
         ConfigManager config = ConfigManager.getInstance();
         
         if (!ConfigManager.isKitModuleEnabled()) {
-            LOGGER.info("Kits module is disabled, skipping kit command registration");
+            NeoLog.info(LOGGER, LogCategory.KITS, "Kits module is disabled, skipping kit command registration");
             return;
         }
         
         // Initialize KitManager before registering commands
         try {
             com.zerog.neoessentials.kits.KitManager.getInstance().initialize();
-            LOGGER.info("KitManager initialized successfully");
+            NeoLog.info(LOGGER, LogCategory.KITS, "KitManager initialized successfully");
         } catch (Throwable e) {
             LOGGER.error("Failed to initialize KitManager: {}", e.getMessage(), e);
         }
 
-        LOGGER.info("Registering kit commands...");
+        NeoLog.info(LOGGER, LogCategory.KITS, "Registering kit commands...");
         
         // Register kit command
         if (config.isCommandEnabled("kit")) {
             try {
                 KitCommand.register(dispatcher);
-                LOGGER.info("Kit command registered");
+                NeoLog.info(LOGGER, LogCategory.KITS, "Kit command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register kit command", e);
             }
@@ -44,7 +46,7 @@ public class KitCommands {
         if (config.isCommandEnabled("createkit")) {
             try {
                 CreateKitCommand.register(dispatcher);
-                LOGGER.info("CreateKit command registered");
+                NeoLog.info(LOGGER, LogCategory.KITS, "CreateKit command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register createkit command", e);
             }
@@ -54,7 +56,7 @@ public class KitCommands {
         if (config.isCommandEnabled("delkit")) {
             try {
                 DelKitCommand.register(dispatcher);
-                LOGGER.info("DelKit command registered");
+                NeoLog.info(LOGGER, LogCategory.KITS, "DelKit command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register delkit command", e);
             }
@@ -64,7 +66,7 @@ public class KitCommands {
         if (config.isCommandEnabled("listkits")) {
             try {
                 ListKitsCommand.register(dispatcher);
-                LOGGER.info("ListKits command registered");
+                NeoLog.info(LOGGER, LogCategory.KITS, "ListKits command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register listkits command", e);
             }
@@ -74,12 +76,12 @@ public class KitCommands {
         if (config.isCommandEnabled("kitreset")) {
             try {
                 KitResetCommand.register(dispatcher);
-                LOGGER.info("KitReset command registered");
+                NeoLog.info(LOGGER, LogCategory.KITS, "KitReset command registered");
             } catch (Exception e) {
                 LOGGER.error("Failed to register kitreset command", e);
             }
         }
 
-        LOGGER.info("All kit commands registration completed");
+        NeoLog.info(LOGGER, LogCategory.KITS, "All kit commands registration completed");
     }
 }

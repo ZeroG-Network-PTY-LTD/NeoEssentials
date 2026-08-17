@@ -67,12 +67,12 @@ public class KitManager {
         if (initialized) return;
 
         try {
-            LOGGER.info("Initializing Kit Manager...");
+            NeoLog.info(LOGGER, LogCategory.KITS, "Initializing Kit Manager...");
             migrateLegacyFilesIfNeeded();
             loadKits();
             loadPlayerData();
             initialized = true;
-            LOGGER.info("Kit Manager initialized with {} kits", kits.size());
+            NeoLog.info(LOGGER, LogCategory.KITS, "Kit Manager initialized with {} kits", kits.size());
         } catch (Throwable e) {
             LOGGER.error("Failed to initialize Kit Manager: {}", e.getMessage(), e);
         }
@@ -102,7 +102,7 @@ public class KitManager {
                     LOGGER.warn("Failed to load kit from storage: {}", e.getMessage());
                 }
             }
-            LOGGER.info("Loaded {} kits from storage", loadedCount);
+            NeoLog.info(LOGGER, LogCategory.KITS, "Loaded {} kits from storage", loadedCount);
         } catch (Throwable e) {
             LOGGER.error("Failed to load kits from storage: {}", e.getMessage(), e);
         }
@@ -158,7 +158,7 @@ public class KitManager {
                 }
             }
 
-            LOGGER.debug("Loaded player data for {} players",
+            NeoLog.debug(LOGGER, LogCategory.KITS, "Loaded player data for {} players",
                        Math.max(playerCooldowns.size(), playerUsages.size()));
         } catch (Exception e) {
             LOGGER.error("Failed to load player kit data: {}", e.getMessage(), e);
@@ -225,7 +225,7 @@ public class KitManager {
         migrated += migrateLegacyPlayerDataFile();
 
         if (migrated > 0) {
-            LOGGER.info("KitManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
+            NeoLog.info(LOGGER, LogCategory.KITS, "KitManager: migrated {} record(s) from legacy files into the '{}' storage backend.",
                 migrated, com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         }
     }
@@ -324,7 +324,7 @@ public class KitManager {
                 LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
             }
             
-            LOGGER.info("Created/updated kit: {}", kit.getName());
+            NeoLog.info(LOGGER, LogCategory.KITS, "Created/updated kit: {}", kit.getName());
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to create kit '{}': {}", name, e.getMessage(), e);
@@ -348,7 +348,7 @@ public class KitManager {
                 LOGGER.warn("Failed to unregister kit permission for '{}': {}", normalizedName, e.getMessage());
             }
             
-            LOGGER.info("Deleted kit: {}", normalizedName);
+            NeoLog.info(LOGGER, LogCategory.KITS, "Deleted kit: {}", normalizedName);
             return true;
         }
         return false;
@@ -647,7 +647,7 @@ public class KitManager {
             }
 
             if (com.zerog.neoessentials.config.ConfigManager.isLogKitUsageEnabled()) {
-                LOGGER.info("Player {} used kit {}", player.getName().getString(), kitName);
+                NeoLog.info(LOGGER, LogCategory.KITS, "Player {} used kit {}", player.getName().getString(), kitName);
             }
             NeoLog.debug(LOGGER, LogCategory.KITS,
                 "Kit granted: player={} kit={} itemsGiven={} itemsDropped={} itemsDenied={}",

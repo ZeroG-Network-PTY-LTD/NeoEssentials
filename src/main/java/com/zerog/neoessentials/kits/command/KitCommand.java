@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * /kit [name] [player]
@@ -198,7 +200,7 @@ public class KitCommand {
                 "commands.neoessentials.kits.given", display), false);
         }
 
-        LOGGER.info("{} gave kit '{}' to {}",
+        NeoLog.info(LOGGER, LogCategory.KITS, "{} gave kit '{}' to {}",
             sender != null ? sender.getName().getString() : "Console",
             kitName, recipient.getName().getString());
         return 1;

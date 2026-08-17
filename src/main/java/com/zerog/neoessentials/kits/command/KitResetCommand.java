@@ -12,6 +12,8 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.logging.LogCategory;
+import com.zerog.neoessentials.logging.NeoLog;
 
 /**
  * /kitreset <kit> [player]
@@ -105,7 +107,7 @@ public class KitResetCommand {
                 "commands.neoessentials.kits.reset_notify", kitName));
         }
 
-        LOGGER.info("{} reset kit cooldown '{}' for {}",
+        NeoLog.info(LOGGER, LogCategory.KITS, "{} reset kit cooldown '{}' for {}",
             sender != null ? sender.getName().getString() : "Console",
             kitName, tName);
         return 1;
