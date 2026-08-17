@@ -15,6 +15,34 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.4+build.61] — 2026-08-17
+
+### 🐛 Commands Never Logged to Console
+
+- Added a generic "PlayerName issued command: /..." console log line for every player command,
+  gated by `logging.categories.commands.normal` (on by default) — previously nothing in the mod
+  logged command usage in general; only specific commands (reload, language, etc.) logged
+  themselves, or only when a command was actually blocked by `CommandLengthEnforcer`. That
+  enforcer already hooks NeoForge's `CommandEvent` for every player command, so it's now also
+  the single place that logs all of them.
+
+---
+
+## [1.0.4+build.60] — 2026-08-17
+
+### 🐛 Clickable Player Names Ignoring the Template's Color Code
+
+- Fixed clickable player names (`chat.clickablePlayerNames`, default on) always rendering in
+  default/white text regardless of a color code placed before `{neoessentials_username}`/
+  `{neoessentials_displayname}` in a `chat-format` template (e.g. `"&c{neoessentials_username}"`
+  rendered white, not red) — the clickable name is built as a separate sibling component (for its
+  hover/click behavior) starting from no style, so it never picked up a preceding color code.
+  `ChatComponentUtil.parseColorCodes` gained a style-seeded overload used to carry the template's
+  "ambient" color into the name component; an explicit color inside the name itself (e.g. a
+  colored nickname) still overrides it, same precedence as normal color codes.
+
+---
+
 ## [1.0.4+build.59] — 2026-08-17
 
 ### 🐛 SDLink Discord Duplicates Now Actually Suppressed, Not Just Warned About
