@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 42,
+  "_configVersion": 43,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -352,6 +352,23 @@
     // since silently switching which mod controls player money is higher-stakes than the
     // equivalent external-permissions toggle.
     "useExternalEconomy": false
+  },
+
+  /* ----------------------------------------------------------------
+     Localization  —  server language and translation-file handling
+  ---------------------------------------------------------------- */
+  "localization": {
+    // Language code (e.g. "fr_fr", "de_de"). Leave empty for "en_us". Change with /language <code>.
+    "language": "",
+
+    /* If true, the mod will never modify the on-disk language file after first
+     * creation — not even to add newly translated keys or auto-fix legacy
+     * {NAME}/{HOME} placeholders left over from older versions.
+     * Keys missing from your file will show a readable placeholder derived from
+     * the key name instead of the real translation.
+     * Leave false unless you are hand-maintaining a fully custom translation file.
+     */
+    "preserveCustomTranslations": false
   },
 
   /* ----------------------------------------------------------------
@@ -853,20 +870,6 @@
      *   {neoessentials_x/y/z}, {neoessentials_health}, {neoessentials_level}, and more via PAPI.
      * Use '&' for color codes  (e.g. &c = red, &6 = gold).
      */
-    "localization": {
-      "language": "",
-
-      /* If true, the mod will never modify the on-disk language file after first
-       * creation — not even to add newly translated keys or auto-fix legacy
-       * {NAME}/{HOME} placeholders left over from older versions.
-       * Keys missing from your file will show a readable placeholder derived from
-       * the key name instead of the real translation.
-       * Leave false unless you are hand-maintaining a fully custom translation file.
-       */
-      "preserveCustomTranslations": false
-    },
-
-
     "chat-format": {
       "default": "<{neoessentials_prefix} {neoessentials_displayname} {neoessentials_suffix}> {MESSAGE}",
       "group:admin": "&c[Admin] {neoessentials_displayname}: {MESSAGE}",
