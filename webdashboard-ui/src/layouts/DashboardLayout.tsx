@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings, Flag, Send } from 'lucide-react';
+import { LayoutGrid, Users, Coins, MapPin, Package, Sparkles, MessageCircle, ShieldCheck, UserCog, DatabaseBackup, Terminal, ScrollText, Search, Radio, LogOut, UserRound, Menu, X, Settings, Flag, Send, Ban } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 
@@ -52,6 +52,9 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     // staff-only, same as /reports and /reviewreport in-game — separate nav item below.
     { label: 'Report', href: '/report', icon: Send },
     ...(isAdmin ? [{ label: 'Reports', href: '/reports', icon: Flag }] : []),
+    // IP-level bans/mutes are admin-only — a broader, more severe action than
+    // per-player moderation (affects anyone sharing that IP), same gate as Reports.
+    ...(isAdmin ? [{ label: 'IP Bans', href: '/ip-bans', icon: Ban }] : []),
     // Mod dashboard account management is admin-only, same gate as the external
     // dashboard's copy of this page.
     ...(isAdmin ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),
