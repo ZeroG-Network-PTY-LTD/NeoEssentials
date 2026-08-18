@@ -77,7 +77,9 @@ public class PermissionsCommand {
                                 if (!groups.isEmpty()) {
                                     return SharedSuggestionProvider.suggest(groups, builder);
                                 }
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                            }
                             return SharedSuggestionProvider.suggest(
                                 java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
@@ -111,7 +113,9 @@ public class PermissionsCommand {
                                 if (!groups.isEmpty()) {
                                     return SharedSuggestionProvider.suggest(groups, builder);
                                 }
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                            }
                             return SharedSuggestionProvider.suggest(
                                 java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
@@ -136,7 +140,9 @@ public class PermissionsCommand {
                                 if (!groups.isEmpty()) {
                                     return SharedSuggestionProvider.suggest(groups, builder);
                                 }
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                            }
                             return SharedSuggestionProvider.suggest(
                                 java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
@@ -153,7 +159,9 @@ public class PermissionsCommand {
                                 if (!groups.isEmpty()) {
                                     return SharedSuggestionProvider.suggest(groups, builder);
                                 }
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                            }
                             return SharedSuggestionProvider.suggest(
                                 java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
@@ -171,7 +179,9 @@ public class PermissionsCommand {
                                 if (!groups.isEmpty()) {
                                     return SharedSuggestionProvider.suggest(groups, builder);
                                 }
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                            }
                             return SharedSuggestionProvider.suggest(
                                 java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                 builder);
@@ -279,7 +289,9 @@ public class PermissionsCommand {
                                         if (!groups.isEmpty()) {
                                             return SharedSuggestionProvider.suggest(groups, builder);
                                         }
-                                    } catch (Exception e) {}
+                                    } catch (Exception e) {
+                                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                                    }
                                     return SharedSuggestionProvider.suggest(
                                         java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                         builder);
@@ -294,7 +306,9 @@ public class PermissionsCommand {
                                         if (group != null && !group.getInherits().isEmpty()) {
                                             return SharedSuggestionProvider.suggest(group.getInherits(), builder);
                                         }
-                                    } catch (Exception e) {}
+                                    } catch (Exception e) {
+                                        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Group-name suggestion lookup failed, falling back to static list: {}", e.getMessage());
+                                    }
                                     return SharedSuggestionProvider.suggest(
                                         java.util.List.of("admin", "moderator", "player", "vip", "default"),
                                         builder);
