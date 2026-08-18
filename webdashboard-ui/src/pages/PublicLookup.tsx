@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 import PlayerRender from '../components/PlayerRender';
 import PlayerManagementPanel from '../components/PlayerManagementPanel';
-import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert, Ban } from 'lucide-react';
+import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert, Ban, History, Gauge } from 'lucide-react';
 import type { IPBanEntry, MuteEntry as IpMuteEntry } from '../types';
 
 /**
@@ -89,6 +89,38 @@ function StatusPill({ active, permanent }: { active: boolean; permanent: boolean
   );
 }
 
+type Tab = 'moderation' | 'recent' | 'ipbans';
+
+const TABS: { id: Tab; label: string; icon: typeof ShieldBan }[] = [
+  { id: 'moderation', label: 'Moderation', icon: Gauge },
+  { id: 'recent', label: 'Recent Activity', icon: History },
+  { id: 'ipbans', label: 'IP Bans', icon: Ban },
+];
+
+/** Lightweight pill tab bar — matches the toggle-button styling used elsewhere in this
+ *  dashboard (e.g. Reports.tsx's Pending/All toggle) since there's no shared SegmentedTabs
+ *  component here yet (unlike the external dashboard, which has one). */
+function TabBar({ value, onChange }: { value: Tab; onChange: (tab: Tab) => void }) {
+  return (
+    <div className="mt-8 flex gap-1.5 rounded-[var(--radius)] border border-[var(--mc-border-strong)] p-0.5 w-fit">
+      {TABS.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          onClick={() => onChange(id)}
+          className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-[6px] transition-colors ${
+            value === id
+              ? 'bg-[var(--mc-cyan-500)] text-[#0a1620]'
+              : 'text-[var(--mc-text-secondary)] hover:bg-[var(--mc-bg-surface-raised)]'
+          }`}
+        >
+          <Icon size={13} strokeWidth={2} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SectionCard({ icon: Icon, title, count, children }: { icon: typeof ShieldBan; title: string; count: number; children: React.ReactNode }) {
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)] p-5">
@@ -111,6 +143,7 @@ export default function PublicLookup() {
   const [recent, setRecent] = useState<RecentEntry[]>([]);
   const [ipBans, setIpBans] = useState<IPBanEntry[]>([]);
   const [ipMutes, setIpMutes] = useState<IpMuteEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('moderation');
 
   const runLookup = async (playerName: string) => {
     const q = playerName.trim();
@@ -173,25 +206,35 @@ export default function PublicLookup() {
             </button>
           </form>
 
-          {query && (
-            <div className="mt-8">
-              {!result ? (
-                <div className="rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)] p-5 text-sm text-[var(--mc-text-secondary)]">
-                  Couldn't reach the moderation lookup service. Try again shortly.
+          {query && !result && (
+            <div className="mt-8 rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)] p-5 text-sm text-[var(--mc-text-secondary)]">
+              Couldn't reach the moderation lookup service. Try again shortly.
+            </div>
+          )}
+
+          {result && (
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-4">
+                <PlayerRender uuid={result.playerId} size={160} />
+                <h2 className="font-display text-lg font-semibold">{result.playerName}</h2>
+              </div>
+
+              {token && (
+                <div className="rounded-[var(--radius-lg)] border border-[var(--mc-purple-400)] bg-[var(--mc-bg-surface)] p-5">
+                  <PlayerManagementPanel username={result.playerName} />
                 </div>
+              )}
+            </div>
+          )}
+
+          <TabBar value={activeTab} onChange={setActiveTab} />
+
+          {activeTab === 'moderation' && (
+            <div className="mt-4">
+              {!result ? (
+                <p className="text-sm text-[var(--mc-text-muted)]">Search for a player above to see their moderation record.</p>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <PlayerRender uuid={result.playerId} size={160} />
-                    <h2 className="font-display text-lg font-semibold">{result.playerName}</h2>
-                  </div>
-
-                  {token && (
-                    <div className="rounded-[var(--radius-lg)] border border-[var(--mc-purple-400)] bg-[var(--mc-bg-surface)] p-5">
-                      <PlayerManagementPanel username={result.playerName} />
-                    </div>
-                  )}
-
                   <SectionCard icon={ShieldBan} title="Bans" count={result.bans.length}>
                     {result.bans.map((b) => (
                       <div key={b.id} className="rounded-[var(--radius)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface-raised)] p-3 text-sm">
@@ -250,66 +293,69 @@ export default function PublicLookup() {
             </div>
           )}
 
-          <div className="mt-10">
-            <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">Recent activity</h2>
-            <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
-              {recent.length === 0 ? (
-                <p className="p-4 text-sm text-[var(--mc-text-muted)]">Nothing recent.</p>
-              ) : (
-                recent.map((entry) => (
-                  <div key={`${entry.type}-${entry.id}`} className="flex items-center gap-3 p-3 text-sm">
-                    {entry.type === 'ban' ? <ShieldBan size={15} className="text-[var(--mc-ember-500)]" /> : <VolumeX size={15} className="text-[var(--mc-cyan-500)]" />}
-                    <button
-                      onClick={() => runLookup(entry.type === 'ban' ? entry.playerName : entry.target)}
-                      className="font-medium text-[var(--mc-text-primary)] hover:text-[var(--mc-cyan-500)]"
-                    >
-                      {entry.type === 'ban' ? entry.playerName : entry.target}
-                    </button>
-                    <span className="text-[var(--mc-text-muted)]">{entry.reason || 'No reason given'}</span>
-                    <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(entry.type === 'ban' ? entry.banTime : entry.muteTime)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP bans</h2>
-              <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
-                {ipBans.length === 0 ? (
-                  <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP bans.</p>
+          {activeTab === 'recent' && (
+            <div className="mt-4">
+              <div className="divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
+                {recent.length === 0 ? (
+                  <p className="p-4 text-sm text-[var(--mc-text-muted)]">Nothing recent.</p>
                 ) : (
-                  ipBans.map((b) => (
-                    <div key={b.id} className="flex items-center gap-3 p-3 text-sm">
-                      <Ban size={15} className="text-[var(--mc-ember-500)]" />
-                      <span className="font-data font-medium text-[var(--mc-text-primary)]">{b.ipAddress}</span>
-                      <span className="text-[var(--mc-text-muted)]">{b.reason || 'No reason given'}</span>
-                      <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(b.banTime)}</span>
+                  recent.map((entry) => (
+                    <div key={`${entry.type}-${entry.id}`} className="flex items-center gap-3 p-3 text-sm">
+                      {entry.type === 'ban' ? <ShieldBan size={15} className="text-[var(--mc-ember-500)]" /> : <VolumeX size={15} className="text-[var(--mc-cyan-500)]" />}
+                      <button
+                        onClick={() => runLookup(entry.type === 'ban' ? entry.playerName : entry.target)}
+                        className="font-medium text-[var(--mc-text-primary)] hover:text-[var(--mc-cyan-500)]"
+                      >
+                        {entry.type === 'ban' ? entry.playerName : entry.target}
+                      </button>
+                      <span className="text-[var(--mc-text-muted)]">{entry.reason || 'No reason given'}</span>
+                      <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(entry.type === 'ban' ? entry.banTime : entry.muteTime)}</span>
                     </div>
                   ))
                 )}
               </div>
             </div>
+          )}
 
-            <div>
-              <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP mutes</h2>
-              <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
-                {ipMutes.length === 0 ? (
-                  <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP mutes.</p>
-                ) : (
-                  ipMutes.map((m) => (
-                    <div key={m.id} className="flex items-center gap-3 p-3 text-sm">
-                      <VolumeX size={15} className="text-[var(--mc-cyan-500)]" />
-                      <span className="font-data font-medium text-[var(--mc-text-primary)]">{m.target}</span>
-                      <span className="text-[var(--mc-text-muted)]">{m.reason || 'No reason given'}</span>
-                      <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(m.muteTime)}</span>
-                    </div>
-                  ))
-                )}
+          {activeTab === 'ipbans' && (
+            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP bans</h2>
+                <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
+                  {ipBans.length === 0 ? (
+                    <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP bans.</p>
+                  ) : (
+                    ipBans.map((b) => (
+                      <div key={b.id} className="flex items-center gap-3 p-3 text-sm">
+                        <Ban size={15} className="text-[var(--mc-ember-500)]" />
+                        <span className="font-data font-medium text-[var(--mc-text-primary)]">{b.ipAddress}</span>
+                        <span className="text-[var(--mc-text-muted)]">{b.reason || 'No reason given'}</span>
+                        <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(b.banTime)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP mutes</h2>
+                <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
+                  {ipMutes.length === 0 ? (
+                    <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP mutes.</p>
+                  ) : (
+                    ipMutes.map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 p-3 text-sm">
+                        <VolumeX size={15} className="text-[var(--mc-cyan-500)]" />
+                        <span className="font-data font-medium text-[var(--mc-text-primary)]">{m.target}</span>
+                        <span className="text-[var(--mc-text-muted)]">{m.reason || 'No reason given'}</span>
+                        <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(m.muteTime)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
     </div>
