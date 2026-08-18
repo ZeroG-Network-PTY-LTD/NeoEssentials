@@ -188,22 +188,22 @@ public class HomeManager {
         NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "setHome request: player={} homeName={} requireSafe={}",
             player.getName().getString(), homeName, requireSafe);
 
-        // Enforce set home cooldown - atomic check (skip if player has bypass permission)
+        // Check set-home cooldown (read-only) — only actually consumed once the home genuinely
+        // gets set (see below). Same fix as PayCommand/TeleportRequestManager's cooldown bugs
+        // earlier this session: consuming it here unconditionally meant an invalid name, a
+        // cross-dimension restriction, an unreachable safe spot, or the home limit all still
+        // cost the player a full cooldown for a /sethome that never took effect.
         boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.cooldown")
             || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.home.bypass.cooldown");
         if (homeSetCooldownSeconds > 0 && !bypassCooldown) {
-            long now = System.currentTimeMillis();
-            // Use putIfAbsent to atomically check and update cooldown
-            Long lastSet = lastHomeSetTimestamps.putIfAbsent(playerId, now);
+            Long lastSet = lastHomeSetTimestamps.get(playerId);
             if (lastSet != null) {
-                long elapsed = (now - lastSet) / 1000L;
+                long elapsed = (System.currentTimeMillis() - lastSet) / 1000L;
                 if (elapsed < homeSetCooldownSeconds) {
                     long wait = homeSetCooldownSeconds - elapsed;
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.cooldown", wait));
                     return false;
                 }
-                // Update timestamp atomically
-                lastHomeSetTimestamps.put(playerId, now);
             }
         }
 
@@ -269,6 +269,11 @@ public class HomeManager {
         
         boolean isNew = result[1];
 
+        // Home genuinely set — now commit the cooldown.
+        if (homeSetCooldownSeconds > 0 && !bypassCooldown) {
+            lastHomeSetTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         // Save to file (per-player storage)
         savePlayerHomes(playerId);
 
@@ -296,20 +301,18 @@ public class HomeManager {
     public boolean deleteHome(ServerPlayer player, String homeName) {
         UUID playerId = player.getUUID();
 
-        // Enforce delete home cooldown - atomic check
+        // Check delete-home cooldown (read-only) — only actually consumed once the home
+        // genuinely gets deleted (see below); deleting a non-existent home no longer costs
+        // the cooldown, same fix as setHome/teleportToHome above.
         if (homeDeleteCooldownSeconds > 0) {
-            long now = System.currentTimeMillis();
-            // Use putIfAbsent to atomically check and update cooldown
-            Long lastDelete = lastHomeDeleteTimestamps.putIfAbsent(playerId, now);
+            Long lastDelete = lastHomeDeleteTimestamps.get(playerId);
             if (lastDelete != null) {
-                long elapsed = (now - lastDelete) / 1000L;
+                long elapsed = (System.currentTimeMillis() - lastDelete) / 1000L;
                 if (elapsed < homeDeleteCooldownSeconds) {
                     long wait = homeDeleteCooldownSeconds - elapsed;
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_cooldown", wait));
                     return false;
                 }
-                // Update timestamp atomically
-                lastHomeDeleteTimestamps.put(playerId, now);
             }
         }
 
@@ -327,6 +330,11 @@ public class HomeManager {
         if (!deleted[0]) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return false;
+        }
+
+        // Home genuinely deleted — now commit the cooldown.
+        if (homeDeleteCooldownSeconds > 0) {
+            lastHomeDeleteTimestamps.put(playerId, System.currentTimeMillis());
         }
 
         // Save to file (per-player storage)

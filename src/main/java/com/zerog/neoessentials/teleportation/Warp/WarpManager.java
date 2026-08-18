@@ -202,23 +202,22 @@ public class WarpManager {
             return false;
         }
         
-        // Enforce warp set cooldown per player (atomic check)
+        // Check warp-set cooldown (read-only) — only actually consumed once the warp genuinely
+        // gets created (see below); an invalid name, a name collision, or the player-warp limit
+        // no longer costs the cooldown for a /setpwarp that never took effect.
+        UUID playerId = player.getUUID();
         if (warpSetCooldown > 0) {
-            long now = System.currentTimeMillis();
-            UUID playerId = player.getUUID();
-            Long lastSet = lastWarpSetTimestamps.putIfAbsent(playerId, now);
-            if (lastSet != null && (now - lastSet < warpSetCooldown * 1000L)) {
-                long secondsLeft = (warpSetCooldown - ((now - lastSet) / 1000));
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.set_cooldown", secondsLeft));
-                return false;
-            }
-            // Update timestamp atomically if cooldown passed
+            Long lastSet = lastWarpSetTimestamps.get(playerId);
             if (lastSet != null) {
-                lastWarpSetTimestamps.put(playerId, now);
+                long elapsed = System.currentTimeMillis() - lastSet;
+                if (elapsed < warpSetCooldown * 1000L) {
+                    long secondsLeft = (warpSetCooldown - (elapsed / 1000));
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.set_cooldown", secondsLeft));
+                    return false;
+                }
             }
         }
-        
-        UUID playerId = player.getUUID();
+
         String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
         
         if (!isValidWarpName(warpName)) {
@@ -250,7 +249,12 @@ public class WarpManager {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.already_exists", warpName));
             return false;
         }
-        
+
+        // Warp genuinely created — now commit the cooldown.
+        if (warpSetCooldown > 0) {
+            lastWarpSetTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         savePlayerWarps();
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.playerwarp_created", warpName, location.getLocationString()));
         NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} created player warp '{}' at {}", player.getName().getString(), warpName, location.getLocationString());
@@ -498,22 +502,25 @@ public class WarpManager {
      * Create a new warp
      */
     public boolean createWarp(ServerPlayer creator, String warpName, TeleportLocation location) {
-        // Enforce warp set cooldown per player (atomic check)
+        // Check warp-set cooldown (read-only) — only actually consumed once the warp genuinely
+        // gets created (see below). Same fix as setHome/PayCommand/TeleportRequestManager's
+        // cooldown bugs earlier this session: consuming it here unconditionally meant an
+        // invalid name, the warp limit, a restricted world, an unreachable safe spot, or a
+        // name collision all still cost the player a full cooldown for a /setwarp that never
+        // took effect.
+        UUID playerId = creator.getUUID();
         if (warpSetCooldown > 0) {
-            long now = System.currentTimeMillis();
-            UUID playerId = creator.getUUID();
-            Long lastSet = lastWarpSetTimestamps.putIfAbsent(playerId, now);
-            if (lastSet != null && (now - lastSet < warpSetCooldown * 1000L)) {
-                long secondsLeft = (warpSetCooldown - ((now - lastSet) / 1000));
-                creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.set_cooldown", secondsLeft));
-                return false;
-            }
-            // Update timestamp atomically if cooldown passed
+            Long lastSet = lastWarpSetTimestamps.get(playerId);
             if (lastSet != null) {
-                lastWarpSetTimestamps.put(playerId, now);
+                long elapsed = System.currentTimeMillis() - lastSet;
+                if (elapsed < warpSetCooldown * 1000L) {
+                    long secondsLeft = (warpSetCooldown - (elapsed / 1000));
+                    creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.set_cooldown", secondsLeft));
+                    return false;
+                }
             }
         }
-        
+
         // Enforce cross-dimension restriction
         if (!allowCrossDimensionWarps && !isOverworld(location)) {
             creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.cross_dimension_disabled"));
@@ -574,7 +581,12 @@ public class WarpManager {
             creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.already_exists", warpName));
             return false;
         }
-        
+
+        // Warp genuinely created — now commit the cooldown.
+        if (warpSetCooldown > 0) {
+            lastWarpSetTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         saveWarps();
         
         creator.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.warp.created", warpName, location.getLocationString()));
@@ -734,22 +746,23 @@ public class WarpManager {
             return;
         }
 
-        // Enforce warp USE cooldown - atomic check (skip if player has bypass permission)
+        // Check warp-use cooldown (read-only) — only actually consumed once the teleport
+        // genuinely proceeds (see below). Checked before maxTeleportDistance so a too-far
+        // warp attempt (blocked below) doesn't cost the cooldown for a teleport that never
+        // happened, but the actual timestamp update is deferred past both checks.
         boolean bypassCooldown = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.bypass.cooldown")
             || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.warp.bypass.cooldown");
+        UUID playerId = player.getUUID();
         if (warpUseCooldown > 0 && !bypassCooldown) {
-            long now = System.currentTimeMillis();
-            UUID playerId = player.getUUID();
-            Long lastUse = lastWarpUseTimestamps.putIfAbsent(playerId, now);
+            Long lastUse = lastWarpUseTimestamps.get(playerId);
             if (lastUse != null) {
-                long elapsed = (now - lastUse) / 1000L;
+                long elapsed = (System.currentTimeMillis() - lastUse) / 1000L;
                 if (elapsed < warpUseCooldown) {
                     long wait = warpUseCooldown - elapsed;
                     NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToWarp: player {} blocked by use cooldown, {}s remaining", player.getName().getString(), wait);
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.cooldown", wait));
                     return;
                 }
-                lastWarpUseTimestamps.put(playerId, now);
             }
         }
 
@@ -766,7 +779,14 @@ public class WarpManager {
                 }
             }
         }
-        
+
+        // Past the checks that reject the teleport outright — commit the cooldown now (the
+        // remaining unsafe-location-with-no-fallback path below is a rare edge case, same
+        // tradeoff already made for the equivalent case in HomeManager.teleportToHome()).
+        if (warpUseCooldown > 0 && !bypassCooldown) {
+            lastWarpUseTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         // Check if warp location is still safe - read from config dynamically
         boolean requireSafe = true; // Default to true for safety
         try {
