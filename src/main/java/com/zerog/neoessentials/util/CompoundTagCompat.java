@@ -131,7 +131,10 @@ public final class CompoundTagCompat {
                 Method m = CompoundTag.class.getMethod("getBoolean", String.class, boolean.class);
                 Object result = m.invoke(tag, key, false);
                 if (result instanceof Boolean b) return b;
-            } catch (Exception ignored) {}
+            } catch (Exception ex) {
+                com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                    "getBoolean(String, boolean) reflective fallback failed for key '{}'", key, ex);
+            }
             try {
                 Method m = CompoundTag.class.getMethod("getBoolean", String.class);
                 Object result = m.invoke(tag, key);
@@ -139,7 +142,10 @@ public final class CompoundTagCompat {
                     Object value = opt.isPresent() ? opt.get() : Boolean.FALSE;
                     if (value instanceof Boolean b) return b;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ex) {
+                com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                    "getBoolean(String) Optional-based reflective fallback failed for key '{}'", key, ex);
+            }
             return false;
         }
     }

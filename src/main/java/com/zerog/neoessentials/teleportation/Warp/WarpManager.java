@@ -108,22 +108,34 @@ public class WarpManager {
                         if (warpSettings.has("maxPlayerWarps")) {
                             try {
                                 maxPlayerWarps = warpSettings.get("maxPlayerWarps").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse warpSettings.maxPlayerWarps, using default", e);
+                            }
                         }
                         if (warpSettings.has("warpSetCooldown")) {
                             try {
                                 warpSetCooldown = warpSettings.get("warpSetCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse warpSettings.warpSetCooldown, using default", e);
+                            }
                         }
                         if (warpSettings.has("warpCooldown")) {
                             try {
                                 warpUseCooldown = warpSettings.get("warpCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse warpSettings.warpCooldown, using default", e);
+                            }
                         }
                         if (warpSettings.has("allowCrossDimensionWarps")) {
                             try {
                                 allowCrossDimensionWarps = warpSettings.get("allowCrossDimensionWarps").getAsBoolean();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse warpSettings.allowCrossDimensionWarps, using default", e);
+                            }
                         }
                     }
 
@@ -133,7 +145,10 @@ public class WarpManager {
                         if (generalSettings.has("teleportDelay")) {
                             try {
                                 teleportDelay = generalSettings.get("teleportDelay").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse generalSettings.teleportDelay, using default", e);
+                            }
                         }
                     }
                 }
@@ -839,7 +854,10 @@ public class WarpManager {
                 if (generalSettings.has("enableTeleportWarmup")) {
                     showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                    "Failed to read generalSettings.enableTeleportWarmup, defaulting to shown", e);
+            }
             if (showWarmup) {
                 player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.warp.warmup", warpName, teleportDelay));
             }

@@ -660,7 +660,10 @@ public class MailCommand {
             var cfg = ConfigManager.getInstance().getConfig("config.json");
             if (cfg.has("mail") && cfg.getAsJsonObject("mail").has("mailsPerMinute"))
                 return cfg.getAsJsonObject("mail").get("mailsPerMinute").getAsInt();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                "Failed to read mail.mailsPerMinute, using default", e);
+        }
         return DEFAULT_MAILS_PER_MINUTE;
     }
 
@@ -670,7 +673,10 @@ public class MailCommand {
         try {
             com.mojang.authlib.GameProfile p = server.getProfileCache().get(name).orElse(null);
             if (p != null) return p.getId();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                "Failed to resolve offline UUID for '{}'", name, e);
+        }
         return null;
     }
 

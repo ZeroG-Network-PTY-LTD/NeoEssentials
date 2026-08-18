@@ -58,7 +58,10 @@ public class HelpCommand {
                     try {
                         int pageNum = Integer.parseInt(arg);
                         if (pageNum >= 1) return executeHelp(ctx, null, pageNum);
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException e) {
+                        NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                            "'{}' isn't a page number, treating as a command/topic search", arg, e);
+                    }
                     return executeHelp(ctx, arg, 1);
                 })
                 // /help <command> <page>
@@ -82,7 +85,10 @@ public class HelpCommand {
                     try {
                         int pageNum = Integer.parseInt(arg);
                         if (pageNum >= 1) return executeHelp(ctx, null, pageNum);
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException e) {
+                        NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                            "'{}' isn't a page number, treating as a command/topic search", arg, e);
+                    }
                     return executeHelp(ctx, arg, 1);
                 })
             )

@@ -484,7 +484,10 @@ public class RandomTeleportManager {
                     if (gs.has("teleportDelay")) return gs.get("teleportDelay").getAsInt();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                "Failed to read teleportation.generalSettings.teleportDelay, defaulting to 3", e);
+        }
         return 3;
     }
 
@@ -520,7 +523,10 @@ public class RandomTeleportManager {
                     return tp.getAsJsonObject("randomTeleportSettings");
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                "Failed to read teleportation.randomTeleportSettings", e);
+        }
         return null;
     }
 

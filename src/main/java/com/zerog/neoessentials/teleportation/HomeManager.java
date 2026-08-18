@@ -124,27 +124,42 @@ public class HomeManager {
                         if (homeSettings.has("maxHomes")) {
                             try {
                                 maxHomes = homeSettings.get("maxHomes").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse homeSettings.maxHomes, using default", e);
+                            }
                         }
                         if (homeSettings.has("allowCrossDimensionHomes")) {
                             try {
                                 allowCrossDimensionHomes = homeSettings.get("allowCrossDimensionHomes").getAsBoolean();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse homeSettings.allowCrossDimensionHomes, using default", e);
+                            }
                         }
                         if (homeSettings.has("homeSetCooldown")) {
                             try {
                                 setCooldown = homeSettings.get("homeSetCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse homeSettings.homeSetCooldown, using default", e);
+                            }
                         }
                         if (homeSettings.has("homeTeleportCooldown")) {
                             try {
                                 tpCooldown = homeSettings.get("homeTeleportCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse homeSettings.homeTeleportCooldown, using default", e);
+                            }
                         }
                         if (homeSettings.has("homeDeleteCooldown")) {
                             try {
                                 delCooldown = homeSettings.get("homeDeleteCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse homeSettings.homeDeleteCooldown, using default", e);
+                            }
                         }
                     }
                     // Read teleport delay (warmup) from generalSettings
@@ -153,7 +168,10 @@ public class HomeManager {
                         if (generalSettings.has("teleportDelay")) {
                             try {
                                 teleportDelay = generalSettings.get("teleportDelay").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.TELEPORTATION,
+                                    "Failed to parse generalSettings.teleportDelay, using default", e);
+                            }
                         }
                     }
                 }
@@ -505,7 +523,10 @@ public class HomeManager {
                 if (generalSettings.has("enableTeleportWarmup")) {
                     showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                    "Failed to read generalSettings.enableTeleportWarmup, defaulting to shown", e);
+            }
             if (showWarmup) {
                 player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.home.warmup", homeName, teleportDelay));
             }

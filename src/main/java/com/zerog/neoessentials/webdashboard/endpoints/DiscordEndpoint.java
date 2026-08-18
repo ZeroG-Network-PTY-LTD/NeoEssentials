@@ -113,7 +113,9 @@ public class DiscordEndpoint implements HttpHandler {
         if (query != null) {
             for (String param : query.split("&")) {
                 if (param.startsWith("limit=")) {
-                    try { limit = Integer.parseInt(param.substring(6)); } catch (NumberFormatException ignored) {}
+                    try { limit = Integer.parseInt(param.substring(6)); } catch (NumberFormatException e) {
+                        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Invalid limit query param '{}', using default", param, e);
+                    }
                 }
             }
         }

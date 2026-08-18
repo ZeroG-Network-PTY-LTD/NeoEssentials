@@ -339,7 +339,10 @@ public class PermissionsCommand {
                                     String groupName = StringArgumentType.getString(ctx, "group");
                                     PermissionGroup g = PermissionAPI.getManager().getGroup(groupName);
                                     if (g != null) return SharedSuggestionProvider.suggest(g.getTempPermissions().keySet(), builder);
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                    NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                        "Failed to build removetemp group-permission suggestions", e);
+                                }
                                 return builder.buildFuture();
                             })
                             .executes(ctx -> removeGroupTempPermission(ctx))))
@@ -370,7 +373,10 @@ public class PermissionsCommand {
                                         String gn = StringArgumentType.getString(ctx, "group");
                                         PermissionGroup g = PermissionAPI.getManager().getGroup(gn);
                                         if (g != null) return SharedSuggestionProvider.suggest(g.getContextualPermissions().keySet(), builder);
-                                    } catch (Exception ignored) {}
+                                    } catch (Exception e) {
+                                        NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                            "Failed to build context-remove group contextKey suggestions", e);
+                                    }
                                     return SharedSuggestionProvider.suggest(
                                         com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder);
                                 })
@@ -382,7 +388,10 @@ public class PermissionsCommand {
                                             PermissionGroup g = PermissionAPI.getManager().getGroup(gn);
                                             if (g != null && g.getContextualPermissions().containsKey(ck))
                                                 return SharedSuggestionProvider.suggest(g.getContextualPermissions().get(ck).keySet(), builder);
-                                        } catch (Exception ignored) {}
+                                        } catch (Exception e) {
+                                            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                                "Failed to build context-remove group permission suggestions", e);
+                                        }
                                         return builder.buildFuture();
                                     })
                                     .executes(ctx -> removeGroupContextPermission(ctx)))))
@@ -490,7 +499,10 @@ public class PermissionsCommand {
                                         PermissionUser u = PermissionAPI.getManager().getUser(uuidOpt.get());
                                         if (u != null) return SharedSuggestionProvider.suggest(u.getTempPermissions().keySet(), builder);
                                     }
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                    NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                        "Failed to build removetemp user-permission suggestions", e);
+                                }
                                 return builder.buildFuture();
                             })
                             .executes(ctx -> removeUserTempPermission(ctx))))
@@ -524,7 +536,10 @@ public class PermissionsCommand {
                                             PermissionUser u = PermissionAPI.getManager().getUser(uOpt.get());
                                             if (u != null) return SharedSuggestionProvider.suggest(u.getContextualPermissions().keySet(), builder);
                                         }
-                                    } catch (Exception ignored) {}
+                                    } catch (Exception e) {
+                                        NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                            "Failed to build context-remove user contextKey suggestions", e);
+                                    }
                                     return SharedSuggestionProvider.suggest(
                                         com.zerog.neoessentials.permissions.PermissionContext.SUGGESTIONS, builder);
                                 })
@@ -539,7 +554,10 @@ public class PermissionsCommand {
                                                 if (u != null && u.getContextualPermissions().containsKey(ck))
                                                     return SharedSuggestionProvider.suggest(u.getContextualPermissions().get(ck).keySet(), builder);
                                             }
-                                        } catch (Exception ignored) {}
+                                        } catch (Exception e) {
+                                            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.PERMISSIONS,
+                                                "Failed to build context-remove user permission suggestions", e);
+                                        }
                                         return builder.buildFuture();
                                     })
                                     .executes(ctx -> removeUserContextPermission(ctx)))))

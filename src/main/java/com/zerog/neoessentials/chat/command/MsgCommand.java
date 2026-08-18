@@ -187,7 +187,10 @@ public class MsgCommand {
                     if (fmt != null && !fmt.isBlank()) return fmt;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                "Failed to read chat.messaging.{}, falling back to localized default", configKey, e);
+        }
         return MessageUtil.localize(langKey);
     }
 }

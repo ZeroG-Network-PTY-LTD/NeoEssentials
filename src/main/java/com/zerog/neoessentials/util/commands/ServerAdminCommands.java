@@ -639,7 +639,10 @@ public class ServerAdminCommands {
             try {
                 if (holder.value().getResultItem(src.getServer().registryAccess()).getItem() == finalItem)
                     matching.add(holder);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                    "Failed to resolve result item for recipe {}, skipping", holder.id(), e);
+            }
         }
         if (matching.isEmpty()) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.no_recipe", finalItem.getDescriptionId())); return 0;

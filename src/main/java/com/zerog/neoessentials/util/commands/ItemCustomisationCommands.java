@@ -175,7 +175,10 @@ public class ItemCustomisationCommands {
                 double avgMs = avgNs / 1_000_000.0;
                 tps = Math.min(20.0, 1000.0 / avgMs);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                "Failed to resolve server TPS, using default", e);
+        }
         String tpsColor = tps >= 18 ? "§a" : tps >= 15 ? "§e" : "§c";
         int loaded = 0;
         for (var level : src.getServer().getAllLevels()) loaded += level.getChunkSource().getLoadedChunksCount();

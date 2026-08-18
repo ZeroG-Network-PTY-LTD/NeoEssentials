@@ -244,11 +244,17 @@ public class ProxyIntegration {
             if (standalone != null && standalone.has("tablist")) {
                 return standalone.getAsJsonObject("tablist");
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to read standalone tablist config, falling back to main config", e);
+        }
         try {
             JsonObject cfg = ConfigManager.getInstance().getConfig(ConfigManager.MAIN_CONFIG);
             if (cfg != null && cfg.has("tablist")) return cfg.getAsJsonObject("tablist");
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to read tablist section from main config", e);
+        }
         return null;
     }
 

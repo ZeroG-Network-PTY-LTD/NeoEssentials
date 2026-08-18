@@ -600,7 +600,10 @@ public class TablistManager {
         try {
             java.math.BigDecimal bd = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().getBalance(player.getUUID());
             balance = String.format("%.2f", bd.doubleValue());
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve balance for {} tablist placeholder", player.getName().getString(), e);
+        }
 
         // ── Permission / group ────────────────────────────────────────────────
         // Computed lazily (only when actually referenced) — getPermissionPrefix/Suffix now run
@@ -686,7 +689,10 @@ public class TablistManager {
         // registered expansions are resolved too.
         try {
             result = com.zerog.neoessentials.api.PlaceholderAPI.setPlaceholders(player, result);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve remaining placeholders for {} tablist entry", player.getName().getString(), e);
+        }
 
         return result;
     }
@@ -742,7 +748,10 @@ public class TablistManager {
     private boolean isAfk(ServerPlayer player) {
         try {
             return com.zerog.neoessentials.chat.AfkManager.getInstance().isAfk(player.getUUID());
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve AFK state for {} tablist entry", player.getName().getString(), e);
+        }
         return false;
     }
 
@@ -751,7 +760,10 @@ public class TablistManager {
         try {
             String nick = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
             if (nick != null && !nick.isEmpty()) return nick.replace("&", "§");
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve nickname for {} tablist entry", player.getName().getString(), e);
+        }
         String custom = customNames.get(player.getUUID());
         if (custom != null && !custom.isEmpty()) return custom;
         return player.getName().getString();
@@ -800,7 +812,10 @@ public class TablistManager {
 
             String prefix = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrefix(uuid);
             return prefix != null ? resolveNametagText(prefix, player, server) : "";
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve nametag prefix for {}", player.getName().getString(), e);
+        }
         return "";
     }
 
@@ -818,7 +833,10 @@ public class TablistManager {
 
             String suffix = com.zerog.neoessentials.api.permissions.PermissionAPI.getSuffix(uuid);
             return suffix != null ? resolveNametagText(suffix, player, server) : "";
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve nametag suffix for {}", player.getName().getString(), e);
+        }
         return "";
     }
 
@@ -848,7 +866,10 @@ public class TablistManager {
         try {
             String group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
             if (group != null) return group;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve permission group for {}, defaulting to 'default'", player.getName().getString(), e);
+        }
         return "default";
     }
 
@@ -861,7 +882,10 @@ public class TablistManager {
         // tablist sort order.
         try {
             return com.zerog.neoessentials.api.permissions.PermissionAPI.getGroupWeight(player.getUUID());
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
+                "Failed to resolve group weight for {}", player.getName().getString(), e);
+        }
         return 0;
     }
 

@@ -220,7 +220,10 @@ public class FunCommands {
             if (hex.isEmpty()) continue;
             try {
                 result.add((int) Long.parseLong(hex, 16));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException e) {
+                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                    "Failed to parse '{}' as a hex color, skipping", hex, e);
+            }
         }
         return result;
     }

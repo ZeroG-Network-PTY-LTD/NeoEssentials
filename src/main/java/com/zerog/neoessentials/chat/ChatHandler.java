@@ -89,7 +89,10 @@ public class ChatHandler {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                "Failed to resolve default chat channel, falling back to 'global'", e);
+        }
         return "global";
     }
 
@@ -122,7 +125,10 @@ public class ChatHandler {
                     if (!displayName.isEmpty()) return displayName;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                "Failed to resolve display name for channel '{}', using raw key", channelKey, e);
+        }
         return channelKey;
     }
 
@@ -458,7 +464,10 @@ public class ChatHandler {
                     return chat.get("logChatToConsole").getAsBoolean();
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                "Failed to read chat.logChatToConsole, defaulting to true", e);
+        }
         return true; // Default: always log to console
     }
 }
