@@ -12,6 +12,7 @@ import Discord from './pages/Discord';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import ReportPlayer from './pages/ReportPlayer';
+import IpBans from './pages/IpBans';
 import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
@@ -111,6 +112,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <ReportPlayer />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/ip-bans"
+            element={
+              <RequireAuth>
+                <IpBans />
               </RequireAuth>
             }
           />

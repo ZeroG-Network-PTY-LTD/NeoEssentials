@@ -39,6 +39,7 @@ import type {
   JailEntry,
   ReportEntry,
   ReportStatus,
+  IPBanEntry,
 } from '../types';
 
 /**
@@ -340,9 +341,9 @@ export async function unmute(username: string) {
   return del(`/api/moderation/mute/${encodeURIComponent(username)}`);
 }
 
-// --- Player reports (in-game /report — GET routes are readable by any
-// logged-in dashboard account per ModerationEndpoint's own doc comment;
-// reviewing one is admin-only, enforced server-side) -------------------------
+// --- Player reports (in-game /report — filing (POST /report) is open to any
+// logged-in dashboard account; every GET route plus reviewing one is
+// admin-only, enforced server-side) ------------------------------------------
 
 export async function pendingReports(): Promise<ReportEntry[]> {
   const data = await getJson<{ reports?: ReportEntry[] }>('/api/moderation/reports');
@@ -360,6 +361,34 @@ export async function allReports(): Promise<ReportEntry[]> {
 
 export async function reviewReport(id: string, status: ReportStatus, notes?: string) {
   return postJson(`/api/moderation/reports/${encodeURIComponent(id)}/review`, { status, notes: notes || null });
+}
+
+// --- IP bans/mutes (admin-only, matches the in-game equivalents) -----------
+
+export async function ipBans(all = false): Promise<IPBanEntry[]> {
+  const data = await getJson<{ ipBans?: IPBanEntry[] }>(all ? '/api/moderation/ipbans' : '/api/moderation/ipbans/active');
+  return data.ipBans ?? [];
+}
+
+export async function createIpBan(ip: string, reason: string, duration?: string) {
+  return postJson('/api/moderation/ipban', { ip, reason, duration: duration ? Number(duration) : -1 });
+}
+
+export async function removeIpBan(ip: string) {
+  return del(`/api/moderation/ipban/${encodeURIComponent(ip)}`);
+}
+
+export async function ipMutes(): Promise<MuteEntry[]> {
+  const data = await getJson<{ ipMutes?: MuteEntry[] }>('/api/moderation/ipmutes');
+  return data.ipMutes ?? [];
+}
+
+export async function createIpMute(ip: string, reason: string, duration?: string) {
+  return postJson('/api/moderation/ipmute', { ip, reason, duration: duration ? Number(duration) : null });
+}
+
+export async function removeIpMute(ip: string) {
+  return del(`/api/moderation/ipmute/${encodeURIComponent(ip)}`);
 }
 
 export async function kickHistory(username: string): Promise<KickEntry[]> {

@@ -45,6 +45,20 @@ export interface BanEntry {
   active: boolean;
 }
 
+export interface IPBanEntry {
+  id: string;
+  ipAddress: string;
+  reason: string;
+  bannedBy: string;
+  banTime: number;
+  expireTime: number;
+  permanent: boolean;
+  evidence?: string;
+  active: boolean;
+  unbannedBy?: string;
+  unbannedAt?: number;
+}
+
 export interface MuteEntry {
   id: string;
   target: string;
