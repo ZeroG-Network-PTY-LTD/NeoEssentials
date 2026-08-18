@@ -87,6 +87,13 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         scheduler.scheduleAtFixedRate(this::cleanupExpiredRequests, 30, 30, TimeUnit.SECONDS);
     }
     
+    /** Marks the cooldown as consumed for a requester whose /tpa genuinely just went out. */
+    private void recordCooldown(UUID requesterId) {
+        if (cooldownBetweenRequestsSeconds > 0) {
+            lastRequestTimestamps.put(requesterId, System.currentTimeMillis());
+        }
+    }
+
     /**
      * Send a teleportation request
      */
@@ -97,23 +104,24 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
         NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "sendTeleportRequest: requester={} target={} type={}",
             requester.getName().getString(), target.getName().getString(), type);
 
-        // Enforce cooldown between requests - ATOMIC
+        // Check cooldown (read-only) — only actually consumed once a request genuinely goes out
+        // (see recordCooldown() calls below), same fix as PayCommand's cooldown bug earlier this
+        // session: consuming it here unconditionally meant "already has a pending request",
+        // "target has tptoggle off", or "target has too many pending requests" all still cost
+        // the requester a full cooldown for a /tpa that never actually sent.
         if (cooldownBetweenRequestsSeconds > 0) {
-            long now = System.currentTimeMillis();
-            // Use putIfAbsent to atomically check and set cooldown
-            Long last = lastRequestTimestamps.putIfAbsent(requesterId, now);
+            Long last = lastRequestTimestamps.get(requesterId);
             if (last != null) {
+                long now = System.currentTimeMillis();
                 if ((now - last) < (cooldownBetweenRequestsSeconds * 1000L)) {
                     long wait = ((cooldownBetweenRequestsSeconds * 1000L) - (now - last)) / 1000L + 1;
                     NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "sendTeleportRequest: {} blocked by request cooldown, {}s remaining", requester.getName().getString(), wait);
                     requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.cooldown", wait));
                     return false;
                 }
-                // Update timestamp atomically
-                lastRequestTimestamps.put(requesterId, now);
             }
         }
-        
+
         // Check if requester already has a sent request (ConcurrentHashMap doesn't allow null values)
         TeleportRequest existingSent = sentRequests.get(requesterId);
         if (existingSent != null) {
@@ -156,6 +164,7 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
             executeTeleportRequest(requester, target, type);
             requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.auto_accepted", target.getName().getString()));
             target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.auto_accepted_target", requester.getName().getString()));
+            recordCooldown(requesterId);
             return true;
         }
 
@@ -192,6 +201,11 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
             return false;
         }
+
+        // Past this point the request is guaranteed to genuinely go out (either auto-accepted
+        // via friends below, or delivered normally) — this is the one point that covers both
+        // remaining return-true paths, so the cooldown only gets consumed once.
+        recordCooldown(requesterId);
 
         // Auto-accept if enabled and requester is a friend (stub)
         if (autoAcceptFromFriends && isFriend(target, requester)) {
