@@ -8,9 +8,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,20 +94,45 @@ public class JsonFileDataStore implements DataStore {
             }
         } catch (IOException e) {
             LOGGER.error("Failed to read collection '{}' from {}", collection, file.getAbsolutePath(), e);
+        } catch (com.google.gson.JsonParseException e) {
+            // A truncated/corrupt file (e.g. the process died mid-save before the atomic
+            // rename in save() below existed, or the file was hand-edited into invalid JSON)
+            // throws here, not IOException. Rename it aside instead of silently treating the
+            // collection as empty — returning empty would make the very next put() overwrite
+            // it with just the one new record, permanently destroying whatever was still
+            // intact in the rest of the file.
+            File corrupted = new File(file.getParentFile(), file.getName() + ".corrupt-" + System.currentTimeMillis());
+            LOGGER.error("Collection '{}' at {} is not valid JSON — treating as empty and preserving the " +
+                "corrupted file at {} for manual recovery.", collection, file.getAbsolutePath(), corrupted.getName(), e);
+            try {
+                Files.copy(file.toPath(), corrupted.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException copyEx) {
+                LOGGER.error("Could not preserve corrupted collection file {}: {}", file.getAbsolutePath(), copyEx.getMessage());
+            }
         }
         return records;
     }
 
     private void save(String collection, Map<String, JsonObject> records) {
         File file = fileFor(collection);
-        try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
+        // Write to a temp file first, then atomically replace the target — writing directly
+        // into the target truncates it immediately, so a crash mid-write (process kill, OOM,
+        // power loss) between the truncation and the write completing left the collection
+        // empty or half-written, and readFromDisk() had no way to tell that apart from a
+        // genuinely empty collection.
+        File tmp = new File(file.getParentFile(), file.getName() + ".tmp-" + System.currentTimeMillis());
+        try {
             JsonObject root = new JsonObject();
             for (Map.Entry<String, JsonObject> entry : records.entrySet()) {
                 root.add(entry.getKey(), entry.getValue());
             }
-            GSON.toJson(root, writer);
+            try (var writer = Files.newBufferedWriter(tmp.toPath(), StandardCharsets.UTF_8)) {
+                GSON.toJson(root, writer);
+            }
+            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             LOGGER.error("Failed to save collection '{}' to {}", collection, file.getAbsolutePath(), e);
+            try { Files.deleteIfExists(tmp.toPath()); } catch (IOException ignored) { /* best effort cleanup */ }
         }
     }
 

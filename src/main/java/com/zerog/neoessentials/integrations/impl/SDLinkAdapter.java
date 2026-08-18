@@ -143,7 +143,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
+            String cleanMessage = sanitizeDiscordMentions(message.replaceAll("§[0-9a-fk-or]", ""));
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 // A specific Discord channel was configured for this NeoEssentials chat channel
                 // (e.g. a private staff channel). SDLink's DiscordMessageBuilder has no API to
@@ -233,7 +233,7 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
         if (!isReady()) return;
         try {
             send(MessageType.CUSTOM, authorFor(sender),
-                String.format("Private message to %s: %s", recipient.getName().getString(), message));
+                String.format("Private message to %s: %s", recipient.getName().getString(), sanitizeDiscordMentions(message)));
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay private message via SDLink", e);
         }
@@ -347,6 +347,24 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
             NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to send message to Discord channel " + channelId + " via SDLink", e);
             return false;
         }
+    }
+
+    /**
+     * Neutralizes Discord mention syntax in player-supplied text before it's relayed —
+     * neither this adapter's own JDA calls nor SDLink's DiscordMessageBuilder restrict
+     * allowed mention types on outgoing messages, so an unsanitized "@everyone"/"@here" or a
+     * pasted role/user mention ({@code <@123>}/{@code <@&123>}) in a player's chat message or
+     * /msg would actually ping the whole server/role if the bridge bot has that permission —
+     * a griefing vector reachable by any player who can type in a bridged channel, not just
+     * staff. Inserting a zero-width space breaks Discord's mention parser while leaving the
+     * text visually identical to a human reader.
+     */
+    private static String sanitizeDiscordMentions(String text) {
+        if (text == null || text.isEmpty()) return text;
+        return text
+            .replace("@everyone", "@​everyone")
+            .replace("@here", "@​here")
+            .replaceAll("<(@[!&]?\\d+)>", "<​$1>");
     }
 
     private void send(MessageType type, DiscordAuthor author, String message) {
