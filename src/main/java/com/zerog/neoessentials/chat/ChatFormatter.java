@@ -118,8 +118,12 @@ public class ChatFormatter {
                     .replace("{neoessentials_displayname}", "§HDNAME§" + dname + "§/HDNAME§");
             }
 
+            // Strip any literal occurrences of our internal markup markers from the raw
+            // player message BEFORE anything else touches it — see stripInjectedMarkupMarkers().
+            String sanitizedMessage = stripInjectedMarkupMarkers(message);
+
             // Restrict colors in message BEFORE inserting into template
-            String restrictedMessage = restrictPlayerMessageColors(message, player);
+            String restrictedMessage = restrictPlayerMessageColors(sanitizedMessage, player);
             if (debugEnabled) {
                 NeoLog.info(LOGGER, LogCategory.CHAT, "After color restriction: [{}]", restrictedMessage);
             }
@@ -192,6 +196,25 @@ public class ChatFormatter {
             // Fallback
             return MessageUtil.component("commands.neoessentials.chat.fallback_format", player.getName().getString(), message);
         }
+    }
+
+    // Literal marker sequences buildComponentFromMarkup() treats as its own internal
+    // syntax for interactive components. § is an ordinary character in a chat packet —
+    // nothing stops a player from sending one of these literally — so they must be
+    // stripped from raw player input before it ever reaches processItemLinks/markupUrls/
+    // markupMentions, or a forged marker would be rendered as a real, trusted-looking
+    // clickable/hoverable component (e.g. impersonating another player's clickable name).
+    private static final String[] INTERNAL_MARKUP_MARKERS = {
+        "§ITEM§", "§/ITEM§", "§URL§", "§/URL§", "§MENTION§", "§/MENTION§",
+        "§HNAME§", "§/HNAME§", "§HDNAME§", "§/HDNAME§"
+    };
+
+    private static String stripInjectedMarkupMarkers(String message) {
+        String result = message;
+        for (String marker : INTERNAL_MARKUP_MARKERS) {
+            result = result.replace(marker, "");
+        }
+        return result;
     }
 
     /**

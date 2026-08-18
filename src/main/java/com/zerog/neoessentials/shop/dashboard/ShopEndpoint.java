@@ -187,13 +187,24 @@ public class ShopEndpoint implements HttpHandler {
                 .filter(s -> s.toKey().equals(signKey)).findFirst().orElse(null);
         if (shop == null) { respond(exchange, 404, "{\"error\":\"Shop not found\"}"); return; }
 
-        if (req.has("buyPrice") && !req.get("buyPrice").isJsonNull()) {
-            shop.buyPrice  = new BigDecimal(req.get("buyPrice").getAsString());
-        }
-        if (req.has("sellPrice") && !req.get("sellPrice").isJsonNull()) {
-            shop.sellPrice = new BigDecimal(req.get("sellPrice").getAsString());
-        }
-        ShopManager.getInstance().registerShop(shop);
+        BigDecimal newBuyPrice  = (req.has("buyPrice")  && !req.get("buyPrice").isJsonNull())
+                ? new BigDecimal(req.get("buyPrice").getAsString())  : null;
+        BigDecimal newSellPrice = (req.has("sellPrice") && !req.get("sellPrice").isJsonNull())
+                ? new BigDecimal(req.get("sellPrice").getAsString()) : null;
+
+        // ShopData's fields are plain (unsynchronized) instance fields also read by
+        // ShopTransaction on the main game thread during buy/sell. Mutating them directly
+        // from this HTTP-server thread races with those reads (no atomicity across the two
+        // field writes, no visibility guarantee for the caller thread's writes). Marshal the
+        // actual mutation onto the main thread instead, same as HologramEndpoint's
+        // executeOnMain() pattern.
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) { respond(exchange, 503, "{\"error\":\"Server not ready\"}"); return; }
+        server.execute(() -> {
+            if (newBuyPrice  != null) shop.buyPrice  = newBuyPrice;
+            if (newSellPrice != null) shop.sellPrice = newSellPrice;
+            ShopManager.getInstance().registerShop(shop);
+        });
 
         JsonObject resp = new JsonObject();
         resp.addProperty("success", true);
