@@ -402,6 +402,10 @@ public class ModerationEndpoint implements HttpHandler {
     private void handleCreateIPBan(HttpExchange exchange) throws Exception {
         JsonObject body = readBody(exchange);
         String ip = body.has("ip") ? body.get("ip").getAsString() : "";
+        if (!isValidIpAddress(ip)) {
+            sendJson(exchange, 400, json(false, "'ip' is not a valid IPv4 or IPv6 address"));
+            return;
+        }
         String reason = body.has("reason") ? body.get("reason").getAsString() : "No reason provided";
         long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : -1L;
         String bannedBy = executorName(exchange);
@@ -422,6 +426,26 @@ public class ModerationEndpoint implements HttpHandler {
         boolean removed = BanManager.getInstance().unbanIP(URLDecoder.decode(ip, StandardCharsets.UTF_8), executorName(exchange));
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP unban request removed={}", removed);
         sendJson(exchange, 200, json(removed, removed ? "IP ban removed" : "IP ban not found: " + ip));
+    }
+
+    // Deliberately a plain regex, not InetAddress.getByName() — that method performs a DNS
+    // lookup for any string that isn't already a literal IP, which would make this endpoint do
+    // a network resolution on every request (slow, and resolves attacker-controlled hostnames).
+    private static final java.util.regex.Pattern IPV4_PATTERN = java.util.regex.Pattern.compile(
+        "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}$");
+    private static final java.util.regex.Pattern IPV6_PATTERN = java.util.regex.Pattern.compile(
+        "^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$");
+
+    /**
+     * Rejects anything that isn't a literal IPv4/IPv6 address before it reaches BanManager/
+     * MuteManager — without this, a mistyped or garbage "ip" value (a username pasted by
+     * mistake, a stray space) was silently stored as a valid IP ban/mute entry with no
+     * feedback that anything was wrong. Mirrors the external Laravel dashboard's own
+     * 'ip' => ['required', 'ip'] validation rule, which this endpoint had no equivalent of.
+     */
+    private static boolean isValidIpAddress(String ip) {
+        if (ip == null || ip.isBlank()) return false;
+        return IPV4_PATTERN.matcher(ip).matches() || IPV6_PATTERN.matcher(ip).matches();
     }
 
     private JsonObject ipBanJson(BanManager.IPBanEntry b) {
@@ -528,6 +552,10 @@ public class ModerationEndpoint implements HttpHandler {
     private void handleCreateIPMute(HttpExchange exchange) throws Exception {
         JsonObject body = readBody(exchange);
         String ip = body.has("ip") ? body.get("ip").getAsString() : "";
+        if (!isValidIpAddress(ip)) {
+            sendJson(exchange, 400, json(false, "'ip' is not a valid IPv4 or IPv6 address"));
+            return;
+        }
         String reason = body.has("reason") && !body.get("reason").isJsonNull() ? body.get("reason").getAsString() : null;
         long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : 0L;
         MuteManager.muteIP(ip, reason, executorName(exchange), durationSeconds * 1000L);
