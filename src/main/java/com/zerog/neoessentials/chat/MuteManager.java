@@ -140,6 +140,7 @@ public class MuteManager {
         entry.unmutedAt = entry.expireTime;
         history.add(entry);
         persist(collection, entry);
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Mute expired and auto-archived: target={} expireTime={}", entry.target, entry.expireTime);
     }
 
     // ── Public API — players ──────────────────────────────────────────────────
@@ -281,6 +282,7 @@ public class MuteManager {
         entry.expireTime = durationMillis > 0 ? System.currentTimeMillis() + durationMillis : 0L;
         mutedIPs.put(ipAddress, entry);
         persist(IP_COLLECTION, entry);
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Muted IP {} (expire={}) by {}. Active IP mutes: {}", ipAddress, entry.expireTime, mutedBy, mutedIPs.size());
     }
 
     public static void unmuteIP(String ipAddress, String unmutedBy) {
@@ -292,6 +294,7 @@ public class MuteManager {
             ipMuteHistory.add(removed);
             persist(IP_COLLECTION, removed);
         }
+        NeoLog.debug(LOGGER, LogCategory.MODERATION, "Unmuted IP {} by {}. Active IP mutes: {}", ipAddress, unmutedBy, mutedIPs.size());
     }
 
     public static boolean isIPMuted(String ipAddress) {
