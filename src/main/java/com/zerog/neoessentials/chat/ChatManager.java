@@ -37,20 +37,8 @@ public class ChatManager {
         return playerChatPermissions;
     }
     // Config toggles and options
-    private final boolean sleepIgnoresAfkPlayers;
-    private final boolean sleepIgnoresVanishedPlayers;
-    private final String afkListName;
-    private final boolean broadcastAfkMessage;
-    private final boolean deathMessages;
-    private final String vanishingItemsPolicy;
-    private final String bindingItemsPolicy;
-    private final boolean sendInfoAfterDeath;
-    private final boolean allowSilentJoinQuit;
     private final String customJoinMessage;
     private final String customQuitMessage;
-    private final String customNewUsernameMessage;
-    private final boolean useCustomServerFullMessage;
-    private final int hideJoinQuitMessagesAbove;
     // Chat format: can be a string (default) or a map for per-group/world - thread-safe
     private final String defaultChatFormat;
     private final java.util.Map<String, String> chatFormatMap;
@@ -66,20 +54,8 @@ public class ChatManager {
     public ChatManager(JsonObject chatConfig, JsonObject commandsConfig) {
         this.mutedCommands = toSet(chatConfig, "muteCommands");
         this.playerChatPermissions = toSet(chatConfig, "playerChatPermissions");
-        this.sleepIgnoresAfkPlayers = chatConfig.has("sleepIgnoresAfkPlayers") && chatConfig.get("sleepIgnoresAfkPlayers").getAsBoolean();
-        this.sleepIgnoresVanishedPlayers = chatConfig.has("sleepIgnoresVanishedPlayers") && chatConfig.get("sleepIgnoresVanishedPlayers").getAsBoolean();
-        this.afkListName = chatConfig.has("afkListName") ? chatConfig.get("afkListName").getAsString() : "none";
-        this.broadcastAfkMessage = chatConfig.has("broadcastAfkMessage") && chatConfig.get("broadcastAfkMessage").getAsBoolean();
-        this.deathMessages = chatConfig.has("deathMessages") && chatConfig.get("deathMessages").getAsBoolean();
-        this.vanishingItemsPolicy = chatConfig.has("vanishingItemsPolicy") ? chatConfig.get("vanishingItemsPolicy").getAsString() : "keep";
-        this.bindingItemsPolicy = chatConfig.has("bindingItemsPolicy") ? chatConfig.get("bindingItemsPolicy").getAsString() : "keep";
-        this.sendInfoAfterDeath = chatConfig.has("sendInfoAfterDeath") && chatConfig.get("sendInfoAfterDeath").getAsBoolean();
-        this.allowSilentJoinQuit = chatConfig.has("allowSilentJoinQuit") && chatConfig.get("allowSilentJoinQuit").getAsBoolean();
         this.customJoinMessage = chatConfig.has("customJoinMessage") ? chatConfig.get("customJoinMessage").getAsString() : "none";
         this.customQuitMessage = chatConfig.has("customQuitMessage") ? chatConfig.get("customQuitMessage").getAsString() : "none";
-        this.customNewUsernameMessage = chatConfig.has("customNewUsernameMessage") ? chatConfig.get("customNewUsernameMessage").getAsString() : "none";
-        this.useCustomServerFullMessage = chatConfig.has("useCustomServerFullMessage") && chatConfig.get("useCustomServerFullMessage").getAsBoolean();
-        this.hideJoinQuitMessagesAbove = chatConfig.has("hideJoinQuitMessagesAbove") ? chatConfig.get("hideJoinQuitMessagesAbove").getAsInt() : -1;
         // Support chat-format as string or object
         if (chatConfig.has("chat-format")) {
             if (chatConfig.get("chat-format").isJsonObject()) {
@@ -135,34 +111,8 @@ public class ChatManager {
     }
 
     // Accessors for chat config options
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean shouldSleepIgnoreAfk() { return sleepIgnoresAfkPlayers; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean shouldSleepIgnoreVanished() { return sleepIgnoresVanishedPlayers; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public String getAfkListName() { return afkListName; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean shouldBroadcastAfk() { return broadcastAfkMessage; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean showDeathMessages() { return deathMessages; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public String getVanishingItemsPolicy() { return vanishingItemsPolicy; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public String getBindingItemsPolicy() { return bindingItemsPolicy; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean shouldSendInfoAfterDeath() { return sendInfoAfterDeath; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean allowSilentJoinQuit() { return allowSilentJoinQuit; }
-    @SuppressWarnings("unused") // May be used by external systems
     public String getCustomJoinMessage() { return customJoinMessage; }
-    @SuppressWarnings("unused") // May be used by external systems
     public String getCustomQuitMessage() { return customQuitMessage; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public String getCustomNewUsernameMessage() { return customNewUsernameMessage; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public boolean useCustomServerFullMessage() { return useCustomServerFullMessage; }
-    @SuppressWarnings("unused") // May be used by external systems
-    public int getHideJoinQuitMessagesAbove() { return hideJoinQuitMessagesAbove; }
 
     /**
      * Returns the chat format for a given group and/or world.
