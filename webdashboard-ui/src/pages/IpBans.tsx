@@ -12,6 +12,15 @@ function formatDate(ms: number) {
   return ms ? new Date(ms).toLocaleString() : '—';
 }
 
+// Mirrors the mod's own isValidIpAddress() check (ModerationEndpoint) — catches an obvious
+// typo (pasted a username, stray space) before making a round trip, rather than letting the
+// backend reject it. The backend validates independently either way.
+const IPV4_RE = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+const IPV6_RE = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+function isValidIp(value: string): boolean {
+  return IPV4_RE.test(value) || IPV6_RE.test(value);
+}
+
 export default function IpBans() {
   const { showToast } = useToast();
 
@@ -50,6 +59,10 @@ export default function IpBans() {
   const submitBan = async (e: FormEvent) => {
     e.preventDefault();
     if (!banIp.trim() || !banReason.trim()) return;
+    if (!isValidIp(banIp.trim())) {
+      showToast('Enter a valid IPv4 or IPv6 address.', true);
+      return;
+    }
     setBanSubmitting(true);
     try {
       await mcApi.createIpBan(banIp.trim(), banReason.trim(), banDuration.trim() || undefined);
@@ -81,6 +94,10 @@ export default function IpBans() {
   const submitMute = async (e: FormEvent) => {
     e.preventDefault();
     if (!muteIp.trim()) return;
+    if (!isValidIp(muteIp.trim())) {
+      showToast('Enter a valid IPv4 or IPv6 address.', true);
+      return;
+    }
     setMuteSubmitting(true);
     try {
       await mcApi.createIpMute(muteIp.trim(), muteReason.trim(), muteDuration.trim() || undefined);
