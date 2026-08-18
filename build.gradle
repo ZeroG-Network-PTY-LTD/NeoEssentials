@@ -157,25 +157,14 @@ neoForge {
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             logLevel = org.slf4j.event.Level.DEBUG
 
-            // Dev-run classpath gap: ModDevGradle does NOT put this project's own
-            // 'implementation' dependencies on a dev run's classpath — only the mod's own
-            // compiled classes/resources ride along automatically (see the `mods {}` block
-            // below). Everything else needs to be added to the run's own
-            // additionalRuntimeClasspathConfiguration explicitly, or it's a
-            // NoClassDefFoundError at runtime under ./gradlew runServer/runClient even
-            // though it resolves fine on the plain `runtimeClasspath` Gradle configuration
-            // and compiles fine. Confirmed live: this is exactly why the dashboard's
-            // WebSocket server silently failed to start in dev (NoClassDefFoundError:
-            // org/java_websocket/server/WebSocketServer) after HikariCP/snakeyaml/
-            // Java-WebSocket moved from jarJar (which DOES merge into the mod's own module,
-            // in dev and in production) to shadowJar+relocate (production-only — see that
-            // block's own comment). The three libraries below need their UNrelocated,
-            // unshaded jars here since dev mode never runs shadowJar at all.
-            additionalRuntimeClasspathConfiguration.dependencies.addAll([
-                project.dependencies.create('com.zaxxer:HikariCP:5.1.0'),
-                project.dependencies.create('org.yaml:snakeyaml:2.2'),
-                project.dependencies.create('org.java-websocket:Java-WebSocket:1.5.7'),
-            ])
+            // NOTE: Dev-Builds (MC 1.21.1) needs an extra additionalRuntimeClasspathConfiguration
+            // block here to make HikariCP/snakeyaml/Java-WebSocket available to dev runs (see that
+            // branch's build.gradle for the full explanation) — NOT needed here. ModDevGradle
+            // explicitly rejects that mechanism for MC 26.1.2: "there is no additional classpath
+            // anymore for Minecraft 26.1.2 ... add the dependency to a standard configuration such
+            // as implementation or runtimeOnly" — confirmed live, this MC version's newer module
+            // system already puts plain 'implementation' dependencies on the dev-run classpath
+            // automatically, so no workaround is needed on this branch.
         }
     }
 
