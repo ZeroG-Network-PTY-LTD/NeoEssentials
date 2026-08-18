@@ -367,6 +367,7 @@ public class VanishManager {
         // After 1 tick, handle what the joining player should (or should not) see.
         if (server != null) {
             com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
+                if (player.hasDisconnected()) return;
                 for (UUID vanishedId : new HashSet<>(vanishedPlayers.keySet())) {
                     if (vanishedId.equals(playerId)) continue;
                     ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
