@@ -71,7 +71,8 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
         if (!isReady() || discordChannelId == null || discordChannelId.isBlank()) return;
         try {
-            String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
+            String cleanMessage = com.zerog.neoessentials.integrations.DiscordTextSanitizer.sanitizeMentions(
+                message.replaceAll("§[0-9a-fk-or]", ""));
             NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration: relaying chat from '{}' in channel '{}' to Discord channel '{}'",
                 player.getName().getString(), channel, discordChannelId);
             sendToChannel(discordChannelId, player.getName().getString() + ": " + cleanMessage);

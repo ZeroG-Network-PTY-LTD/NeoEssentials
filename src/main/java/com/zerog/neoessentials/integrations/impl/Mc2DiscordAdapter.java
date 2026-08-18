@@ -60,7 +60,8 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public void onPlayerChat(ServerPlayer player, String channel, String message, String formattedMessage, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String cleanMessage = message.replaceAll("§[0-9a-fk-or]", "");
+            String cleanMessage = com.zerog.neoessentials.integrations.DiscordTextSanitizer.sanitizeMentions(
+                message.replaceAll("§[0-9a-fk-or]", ""));
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 // Same rationale as SDLinkAdapter's equivalent fix: sendChatMessage() always
                 // posts wherever Mc2Discord's OWN config routes chat, ignoring this parameter
