@@ -1321,7 +1321,7 @@ public class ConfigManager {
                 // reads logging.categories.config.debug via getLoggingCategoryEntry(), which
                 // calls back into this very method (getConfig(MAIN_CONFIG)), causing infinite
                 // recursion / StackOverflowError on every startup.
-                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config mode enabled; merging split files instead of reading {}", configName);
+                LOGGER.debug("Split config mode enabled; merging split files instead of reading {}", configName);
                 JsonObject merged = ConfigSplitter.mergeSplitConfigs();
                 configCache.put(configName, merged);
                 return merged;
@@ -1350,25 +1350,26 @@ public class ConfigManager {
                         if (fileObj.has(configName) && fileObj.get(configName).isJsonObject()) {
                             JsonObject section = fileObj.getAsJsonObject(configName);
                             configCache.put(configName, section);
-                            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
+                            // NOTE: plain LOGGER, not NeoLog — see recursion-risk comment above.
+                            LOGGER.debug("Config section '{}' loaded directly from {}.json (fallback)", configName, configName);
                             return section;
                         }
                         // File exists but uses a flat layout – return the whole object
                         configCache.put(configName, fileObj);
-                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
+                        LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
                         return fileObj;
                     } catch (IOException fallbackEx) {
                         LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
                     }
                 }
                 // Section missing – return empty (do not cache so it retries after reload)
-                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
+                LOGGER.debug("Config section '{}' not found in main config or {}.json, returning empty object", configName, configName);
                 return new JsonObject();
             }
 
             File file = ResourceUtil.getConfigFile(configName);
             // NOTE: plain LOGGER, not NeoLog — see comment above on the recursion risk.
-            NeoLog.debug(LOGGER, LogCategory.CONFIG, "Loading config file {} from disk (cache miss)", configName);
+            LOGGER.debug("Loading config file {} from disk (cache miss)", configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
             JsonObject obj = parseJsonWithComments(reader).getAsJsonObject();
             configCache.put(configName, obj);
@@ -1436,7 +1437,14 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 42);          // v42 — added storage.mysql.autoDownloadDriver: the mysql-connector-j
+        put(MAIN_CONFIG, 43);          // v43 — moved "localization" out from under "chat" to a proper
+                                       //        top-level section. getServerLanguage()/setServerLanguage()/
+                                       //        isPreserveCustomTranslationsEnabled() have always read/written
+                                       //        it as top-level (matching ConfigSplitter's FILE_SECTIONS_MAP),
+                                       //        so chat.localization in the template was dead documentation
+                                       //        that /language never actually touched, and it made split-config
+                                       //        migration permanently report "MISSING SECTION 'localization'".
+                                       // v42 — added storage.mysql.autoDownloadDriver: the mysql-connector-j
                                        //        driver is no longer bundled in the jar (see
                                        //        MySqlDriverProvisioner, same split-package module
                                        //        conflict as sqlite-jdbc — seen in the wild against

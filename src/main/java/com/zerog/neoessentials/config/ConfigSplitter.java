@@ -81,7 +81,12 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          2);  // v2 — replaced logging.enableDebugLogging with
+        put("main.json",          3);  // v3 — added "localization" section: it was never actually
+                                        //       part of the top-level config.json sections (it lived
+                                        //       under "chat" in the template, which nothing reads),
+                                        //       so main.json could never contain it, permanently
+                                        //       tripping the "MISSING SECTION 'localization'" check.
+                                        // v2 — replaced logging.enableDebugLogging with
                                         //       logging.categories.<name>.{normal,debug}
                                         //       per-subsystem toggles (see
                                         //       ConfigManager.migrateLoggingCategories)
@@ -425,7 +430,7 @@ public class ConfigSplitter {
         // NeoLog's category gating (isCategoryDebugEnabled -> getLoggingCategoryEntry)
         // calls getConfig(MAIN_CONFIG) again regardless of category, causing infinite
         // recursion / StackOverflowError on every startup in split-config mode.
-        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Merging {} split config file(s) into a virtual config view", FILE_SECTIONS_MAP.size());
+        LOGGER.debug("Merging {} split config file(s) into a virtual config view", FILE_SECTIONS_MAP.size());
         JsonObject merged = new JsonObject();
         merged.addProperty("_configVersion", CURRENT_MAIN_VERSION);
         merged.addProperty("_configVersion_comment",
@@ -471,7 +476,8 @@ public class ConfigSplitter {
      * monolithic {@code config.json}.
      */
     public static void saveMergedConfigToSplitFiles(JsonObject merged) {
-        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Persisting merged config view back out across {} split file(s)", FILE_SECTIONS_MAP.size());
+        // NOTE: plain LOGGER, not NeoLog — same recursion risk as mergeSplitConfigs() above.
+        LOGGER.debug("Persisting merged config view back out across {} split file(s)", FILE_SECTIONS_MAP.size());
         for (Map.Entry<String, List<String>> entry : FILE_SECTIONS_MAP.entrySet()) {
             String fileName = entry.getKey();
             List<String> sections = entry.getValue();
