@@ -113,16 +113,27 @@ public class EconomyEndpoint implements HttpHandler {
             return;
         }
 
+        if (!"give".equals(action) && !"take".equals(action) && !"set".equals(action)) {
+            sendJson(exchange, 400, error("'action' must be 'give', 'take', or 'set'"));
+            return;
+        }
+
         EconomyManager em = EconomyManager.getInstance();
         boolean success;
-        switch (action) {
-            case "give" -> success = em.addBalance(uuid, amount);
-            case "take" -> success = em.subtractBalance(uuid, amount);
-            case "set" -> { em.setBalance(uuid, amount); success = true; }
-            default -> {
-                sendJson(exchange, 400, error("'action' must be 'give', 'take', or 'set'"));
-                return;
-            }
+        try {
+            // addBalance/subtractBalance/setBalance post cancellable economy events and mutate
+            // shared balance state that main-thread listeners (scoreboards, other mods) may not
+            // expect to observe off-thread. Marshal onto the main thread, same as
+            // ModerationEndpoint's vanish/jail fixes.
+            success = server.submit(() -> switch (action) {
+                case "give" -> em.addBalance(uuid, amount);
+                case "take" -> em.subtractBalance(uuid, amount);
+                default -> { em.setBalance(uuid, amount); yield true; }
+            }).get();
+        } catch (Exception e) {
+            LOGGER.error("Error applying economy adjustment on main thread for player '{}'", username, e);
+            sendJson(exchange, 500, error("Internal server error: " + e.getMessage()));
+            return;
         }
 
         if (!success) {

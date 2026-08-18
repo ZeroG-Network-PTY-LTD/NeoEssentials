@@ -891,7 +891,14 @@ public class ModerationEndpoint implements HttpHandler {
             sendJson(exchange, 404, json(false, "Player '" + targetName + "' is not online"));
             return;
         }
-        boolean success = VanishManager.getInstance().vanishPlayer(target.getUUID(), targetName, executorName(exchange), false);
+        // VanishManager.vanishPlayer() mutates live entity/AI state (nearby mob targets,
+        // player visibility tracking) that is also touched on the main game thread during
+        // normal ticking. Marshal it onto the main thread instead of racing it from this
+        // HTTP-server thread, same as ShopEndpoint.handleSetPrice()'s executeOnMain() pattern —
+        // here we need the boolean result back synchronously to shape the HTTP response.
+        String executor = executorName(exchange);
+        boolean success = srv.submit(() ->
+            VanishManager.getInstance().vanishPlayer(target.getUUID(), targetName, executor, false)).get();
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Vanish request for player '{}' success={}", targetName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " vanished" : "Player is already vanished"));
     }
@@ -942,7 +949,13 @@ public class ModerationEndpoint implements HttpHandler {
             sendJson(exchange, 404, json(false, "Player not found: " + targetName));
             return;
         }
-        boolean success = jailManager.jailPlayer(targetName, targetId, reason, executorName(exchange), jailName, durationSeconds * 1000L);
+        MinecraftServer srv = this.server;
+        if (srv == null) { sendJson(exchange, 503, json(false, "Server not ready")); return; }
+        // JailManager.jailPlayer() teleports the target player, touching the main-thread-owned
+        // entity/level state. Marshal it onto the main thread (see handleCreateVanish above).
+        String executor = executorName(exchange);
+        boolean success = srv.submit(() ->
+            jailManager.jailPlayer(targetName, targetId, reason, executor, jailName, durationSeconds * 1000L)).get();
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Jail request for player '{}' jail='{}' success={}", targetName, jailName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " jailed" : "Player is already jailed"));
     }
