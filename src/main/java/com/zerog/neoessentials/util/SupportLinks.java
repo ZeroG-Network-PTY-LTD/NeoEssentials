@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Central home for the mod's support/help links (website, Discord, GitHub) — shared by the
  * always-on startup console banner and the "something actually went wrong" alert (console,
- * prominent form, plus a clickable in-game message shown once to the first admin who joins
- * after a real detected problem: a manager failing to initialize, or the permission system
- * falling back to emergency mode).
+ * prominent form, plus a clickable in-game message queued into {@link AdminNotices} after a
+ * real detected problem: a manager failing to initialize, or the permission system falling
+ * back to emergency mode).
  */
 public final class SupportLinks {
     private SupportLinks() {}
@@ -22,23 +22,15 @@ public final class SupportLinks {
     public static final String DISCORD_URL = "https://discord.gg/dUGAQF2Mga";
     public static final String GITHUB_URL = "https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials";
 
-    // Session-scoped (not persisted) — reset naturally on every server restart, matching
-    // "once every server restart" for the problem alert.
-    private static final AtomicBoolean PROBLEM_DETECTED = new AtomicBoolean(false);
-    private static final AtomicBoolean SHOWN_INGAME = new AtomicBoolean(false);
+    // Session-scoped (not persisted) — reset naturally on every server restart. Guards against
+    // queuing a duplicate AdminNotices entry if multiple managers each report a problem.
+    private static final AtomicBoolean QUEUED = new AtomicBoolean(false);
 
-    /** Marks that something actually went wrong this session — enables the join alert below. */
+    /** Marks that something actually went wrong this session — queues the join alert once. */
     public static void markProblemDetected() {
-        PROBLEM_DETECTED.set(true);
-    }
-
-    /**
-     * Whether the in-game join alert should fire for the CURRENT join being processed. Only
-     * ever returns {@code true} once per server session (first qualifying admin to join),
-     * even if multiple admins join afterward or the problem is flagged more than once.
-     */
-    public static boolean shouldAlertJoiningAdmin() {
-        return PROBLEM_DETECTED.get() && SHOWN_INGAME.compareAndSet(false, true);
+        if (QUEUED.compareAndSet(false, true)) {
+            AdminNotices.queue(Component.literal("§e§l  NEED HELP?"), chatMessage());
+        }
     }
 
     /**

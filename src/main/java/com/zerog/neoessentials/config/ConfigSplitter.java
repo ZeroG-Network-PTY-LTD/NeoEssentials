@@ -505,8 +505,6 @@ public class ConfigSplitter {
 
     // ── Startup prompt ────────────────────────────────────────────────────────
 
-    private static boolean shouldNotifyAdmins = false;
-
     public static void checkAndPromptMigration() {
         if (isSplittingEnabled()) {
             NeoLog.debug(LOGGER, LogCategory.CONFIG, "Split config mode already active - skipping monolithic-config migration prompt");
@@ -521,14 +519,18 @@ public class ConfigSplitter {
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Run:  /neoe config split  to migrate to split files.");
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Run:  /neoe config status  to see the current config state.");
             NeoLog.info(LOGGER, LogCategory.CONFIG, "════════════════════════════════════════════════════════");
-            shouldNotifyAdmins = true;
+            com.zerog.neoessentials.util.AdminNotices.queue(
+                "commands.neoessentials.admin_notice.config_split.title",
+                "commands.neoessentials.admin_notice.config_split.large_config",
+                "commands.neoessentials.admin_notice.config_split.benefit",
+                "commands.neoessentials.admin_notice.config_split.benefit_easy",
+                "commands.neoessentials.admin_notice.config_split.benefit_safe",
+                "commands.neoessentials.admin_notice.config_split.benefit_organized",
+                "commands.neoessentials.admin_notice.config_split.benefit_backup",
+                "commands.neoessentials.admin_notice.config_split.run_command"
+            );
         }
     }
-
-    @SuppressWarnings("unused")
-    public static boolean shouldNotifyAdmins()  { return shouldNotifyAdmins; }
-    @SuppressWarnings("unused")
-    public static void markAdminsNotified()     { shouldNotifyAdmins = false; }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
