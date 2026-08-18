@@ -147,6 +147,26 @@ neoForge {
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             logLevel = org.slf4j.event.Level.DEBUG
+
+            // Dev-run classpath gap: ModDevGradle does NOT put this project's own
+            // 'implementation' dependencies on a dev run's classpath — only the mod's own
+            // compiled classes/resources ride along automatically (see the `mods {}` block
+            // below). Everything else needs to be added to the run's own
+            // additionalRuntimeClasspathConfiguration explicitly, or it's a
+            // NoClassDefFoundError at runtime under ./gradlew runServer/runClient even
+            // though it resolves fine on the plain `runtimeClasspath` Gradle configuration
+            // and compiles fine. Confirmed live: this is exactly why the dashboard's
+            // WebSocket server silently failed to start in dev (NoClassDefFoundError:
+            // org/java_websocket/server/WebSocketServer) after HikariCP/snakeyaml/
+            // Java-WebSocket moved from jarJar (which DOES merge into the mod's own module,
+            // in dev and in production) to shadowJar+relocate (production-only — see that
+            // block's own comment). The three libraries below need their UNrelocated,
+            // unshaded jars here since dev mode never runs shadowJar at all.
+            additionalRuntimeClasspathConfiguration.dependencies.addAll([
+                project.dependencies.create('com.zaxxer:HikariCP:5.1.0'),
+                project.dependencies.create('org.yaml:snakeyaml:2.2'),
+                project.dependencies.create('org.java-websocket:Java-WebSocket:1.5.7'),
+            ])
         }
     }
 
