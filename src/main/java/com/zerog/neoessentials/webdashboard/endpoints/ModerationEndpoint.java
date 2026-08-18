@@ -44,7 +44,7 @@ import java.util.*;
  *  GET    /api/moderation/bans/{uuid}             – ban history for one player
  *  POST   /api/moderation/ban                    – {playerName, reason, duration(s, -1=perm)} [ADMIN]
  *  DELETE /api/moderation/ban/{uuid}              – unban a player [ADMIN]
- *  GET    /api/moderation/ipbans/active | ipbans – IP bans, active or active+history
+ *  GET    /api/moderation/ipbans/active | ipbans – IP bans, active or active+history [ADMIN]
  *  POST   /api/moderation/ipban                  – {ip, reason, duration} [ADMIN]
  *  DELETE /api/moderation/ipban/{ip}              – unban an IP [ADMIN]
  *
@@ -53,7 +53,7 @@ import java.util.*;
  *  GET    /api/moderation/mutes/{name}            – mute history for one player
  *  POST   /api/moderation/mute                   – {targetName, reason, duration(s)} [ADMIN]
  *  DELETE /api/moderation/mute/{name}             – unmute a player [ADMIN]
- *  GET    /api/moderation/ipmutes                 – active IP mutes
+ *  GET    /api/moderation/ipmutes                 – active IP mutes [ADMIN]
  *  POST   /api/moderation/ipmute                  – {ip, reason, duration} [ADMIN]
  *  DELETE /api/moderation/ipmute/{ip}             – unmute an IP [ADMIN]
  *
@@ -117,9 +117,15 @@ public class ModerationEndpoint implements HttpHandler {
                 requireAdmin(exchange);
                 handleRemoveBan(exchange, lastSegment(path));
 
+            // IP bans/mutes GET routes are admin-only, unlike per-player bans/mutes above —
+            // these expose a real, un-redacted IP address (plus reason/staff/timestamps) to
+            // whoever can read them, which is more sensitive than a player name. Matches the
+            // admin-only gate already used for reports and jail-locations.
             } else if ("GET".equals(method) && path.endsWith("/ipbans/active")) {
+                requireAdmin(exchange);
                 handleIPBans(exchange, true);
             } else if ("GET".equals(method) && path.endsWith("/ipbans")) {
+                requireAdmin(exchange);
                 handleIPBans(exchange, false);
             } else if ("POST".equals(method) && path.endsWith("/ipban")) {
                 requireAdmin(exchange);
@@ -142,6 +148,7 @@ public class ModerationEndpoint implements HttpHandler {
                 handleRemoveMute(exchange, lastSegment(path));
 
             } else if ("GET".equals(method) && path.endsWith("/ipmutes")) {
+                requireAdmin(exchange);
                 handleIPMutes(exchange);
             } else if ("POST".equals(method) && path.endsWith("/ipmute")) {
                 requireAdmin(exchange);
@@ -962,6 +969,10 @@ public class ModerationEndpoint implements HttpHandler {
             double radius = body.has("radius") && !body.get("radius").isJsonNull()
                 ? body.get("radius").getAsDouble()
                 : com.zerog.neoessentials.config.ConfigManager.getDefaultJailSphereRadius();
+            if (radius <= 0) {
+                sendJson(exchange, 400, json(false, "'radius' must be greater than 0"));
+                return;
+            }
             jailManager.setJailLocationSphere(name, center, radius, dimension, createdBy);
         }
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Jail location '{}' created via dashboard by '{}'", name, createdBy);
