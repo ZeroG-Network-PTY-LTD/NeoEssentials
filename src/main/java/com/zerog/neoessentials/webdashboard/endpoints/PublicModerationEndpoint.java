@@ -30,14 +30,18 @@ import java.util.UUID;
  * com.zerog.neoessentials.webdashboard.DashboardAPI#registerEndpoints()} — still gets CORS
  * and per-IP rate limiting from that same wrapper, just skips the Bearer-token check.
  *
- * <p><b>Deliberately excludes:</b> IP bans, IP mutes (never resolvable from a player name, and
- * would leak network information if they were), staff notes (freeform internal commentary),
- * and player reports (contains the reporter's identity). Only the four punishment types a
- * player can see about themselves/others in-game — bans, mutes, kicks, warns — are exposed.
+ * <p><b>Deliberately excludes:</b> staff notes (freeform internal commentary) and player
+ * reports (contains the reporter's identity) — never exposed here. IP bans/mutes ARE exposed
+ * (transparency: "who is currently banned from this server"), but only with the address
+ * itself redacted (see {@link #redactIp}) — a full real IP tied to a punishment reason is
+ * more than this page's transparency purpose needs, and would otherwise let anyone browsing
+ * the site harvest addresses.
  *
  * <pre>
  *  GET /api/public/moderation/lookup/{name}   – bans/mutes/kicks/warns for one player, by name
  *  GET /api/public/moderation/recent          – recent active bans + mutes across all players
+ *  GET /api/public/moderation/ip-bans         – active IP bans, address redacted
+ *  GET /api/public/moderation/ip-mutes        – active IP mutes, address redacted
  * </pre>
  */
 public class PublicModerationEndpoint implements HttpHandler {
@@ -76,6 +80,10 @@ public class PublicModerationEndpoint implements HttpHandler {
                 handleLookup(exchange, lastSegment(path));
             } else if ("GET".equals(method) && path.endsWith("/recent")) {
                 handleRecent(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/ip-bans")) {
+                handleIpBans(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/ip-mutes")) {
+                handleIpMutes(exchange);
             } else {
                 sendJson(exchange, 404, json(false, "Unknown public moderation endpoint"));
             }
@@ -166,6 +174,81 @@ public class PublicModerationEndpoint implements HttpHandler {
         resp.addProperty("count", arr.size());
         resp.add("recent", arr);
         sendJson(exchange, 200, resp.toString());
+    }
+
+    // ── IP bans/mutes (address redacted — see class doc comment) ──────────────────
+
+    private void handleIpBans(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        for (BanManager.IPBanEntry b : BanManager.getInstance().getAllIPBans()) {
+            arr.add(publicIpBanJson(b));
+        }
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("count", arr.size());
+        resp.add("ipBans", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private void handleIpMutes(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        for (MuteManager.MuteEntry m : MuteManager.getAllIPMutes()) {
+            arr.add(publicIpMuteJson(m));
+        }
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.addProperty("count", arr.size());
+        resp.add("ipMutes", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    private JsonObject publicIpBanJson(BanManager.IPBanEntry b) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("id", b.id);
+        obj.addProperty("ipAddress", redactIp(b.ipAddress));
+        obj.addProperty("reason", b.reason);
+        obj.addProperty("bannedBy", b.bannedBy);
+        obj.addProperty("banTime", b.banTime);
+        obj.addProperty("expireTime", b.expireTime);
+        obj.addProperty("permanent", b.expireTime == 0);
+        obj.addProperty("active", b.active);
+        return obj;
+    }
+
+    private JsonObject publicIpMuteJson(MuteManager.MuteEntry m) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("id", m.id);
+        obj.addProperty("target", redactIp(m.target));
+        obj.addProperty("reason", m.reason);
+        obj.addProperty("mutedBy", m.mutedBy);
+        obj.addProperty("muteTime", m.muteTime);
+        obj.addProperty("expireTime", m.expireTime);
+        obj.addProperty("permanent", m.expireTime == 0);
+        obj.addProperty("active", m.active);
+        return obj;
+    }
+
+    /**
+     * Masks the low-order part of an IP address for public display — enough left over to
+     * show "this is roughly where the ban is from" without handing out an address someone
+     * could act on. IPv4: drop the last octet ({@code 203.0.113.42 -> 203.0.113.***}). IPv6:
+     * drop the last two groups the same way. Anything that isn't a recognizable IP (shouldn't
+     * happen — these come straight from BanManager/MuteManager's own IP-entry stores) is
+     * returned as-is rather than guessing at a redaction that might not actually hide anything.
+     */
+    private String redactIp(String ip) {
+        if (ip == null || ip.isBlank()) return ip;
+        if (ip.contains(":")) {
+            String[] parts = ip.split(":");
+            if (parts.length <= 2) return ip;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < parts.length - 2; i++) sb.append(parts[i]).append(':');
+            sb.append("****");
+            return sb.toString();
+        }
+        int lastDot = ip.lastIndexOf('.');
+        if (lastDot < 0) return ip;
+        return ip.substring(0, lastDot) + ".***";
     }
 
     // ── JSON shapes (mirrors ModerationEndpoint's, minus evidence/internal fields) ──

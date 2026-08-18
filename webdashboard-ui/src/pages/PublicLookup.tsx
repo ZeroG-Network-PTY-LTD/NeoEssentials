@@ -4,7 +4,8 @@ import { useAuth } from '../lib/auth';
 import * as mcApi from '../lib/mcApi';
 import PlayerRender from '../components/PlayerRender';
 import PlayerManagementPanel from '../components/PlayerManagementPanel';
-import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert } from 'lucide-react';
+import { Search, ShieldBan, VolumeX, LogOut, TriangleAlert, Ban } from 'lucide-react';
+import type { IPBanEntry, MuteEntry as IpMuteEntry } from '../types';
 
 /**
  * Ported from the external dashboard's Pages/PublicLookup.tsx — this page needs no login on
@@ -108,6 +109,8 @@ export default function PublicLookup() {
   const [query, setQuery] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
   const [recent, setRecent] = useState<RecentEntry[]>([]);
+  const [ipBans, setIpBans] = useState<IPBanEntry[]>([]);
+  const [ipMutes, setIpMutes] = useState<IpMuteEntry[]>([]);
 
   const runLookup = async (playerName: string) => {
     const q = playerName.trim();
@@ -122,6 +125,8 @@ export default function PublicLookup() {
 
   useEffect(() => {
     mcApi.publicRecent<RecentEntry>().then(setRecent);
+    mcApi.publicIpBans().then(setIpBans);
+    mcApi.publicIpMutes().then(setIpMutes);
     // Deep-linked from in-game (e.g. the chat "view profile" click) as /lookup?player=<name> —
     // run the lookup immediately instead of requiring the player to re-type the name.
     const initial = searchParams.get('player');
@@ -265,6 +270,44 @@ export default function PublicLookup() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP bans</h2>
+              <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
+                {ipBans.length === 0 ? (
+                  <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP bans.</p>
+                ) : (
+                  ipBans.map((b) => (
+                    <div key={b.id} className="flex items-center gap-3 p-3 text-sm">
+                      <Ban size={15} className="text-[var(--mc-ember-500)]" />
+                      <span className="font-data font-medium text-[var(--mc-text-primary)]">{b.ipAddress}</span>
+                      <span className="text-[var(--mc-text-muted)]">{b.reason || 'No reason given'}</span>
+                      <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(b.banTime)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="font-display text-sm font-semibold text-[var(--mc-text-secondary)]">IP mutes</h2>
+              <div className="mt-3 divide-y divide-[var(--mc-border)] rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)]">
+                {ipMutes.length === 0 ? (
+                  <p className="p-4 text-sm text-[var(--mc-text-muted)]">No active IP mutes.</p>
+                ) : (
+                  ipMutes.map((m) => (
+                    <div key={m.id} className="flex items-center gap-3 p-3 text-sm">
+                      <VolumeX size={15} className="text-[var(--mc-cyan-500)]" />
+                      <span className="font-data font-medium text-[var(--mc-text-primary)]">{m.target}</span>
+                      <span className="text-[var(--mc-text-muted)]">{m.reason || 'No reason given'}</span>
+                      <span className="ml-auto shrink-0 text-xs text-[var(--mc-text-muted)]">{formatDate(m.muteTime)}</span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </main>
