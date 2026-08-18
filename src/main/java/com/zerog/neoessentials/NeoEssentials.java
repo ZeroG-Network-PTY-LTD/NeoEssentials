@@ -230,6 +230,29 @@ public class NeoEssentials {
             }
         }
 
+        /**
+         * Warn admins once if kits.json and/or permissions.json still contain real data but are
+         * no longer being read — the one-time import into the active storage backend already
+         * ran on a previous boot, so further edits to either file now silently do nothing.
+         */
+        private static void checkLegacyDataFileNotice() {
+            java.util.List<String> body = new java.util.ArrayList<>();
+            if (com.zerog.neoessentials.kits.KitManager.getInstance().isLegacyKitsFileNowInert()) {
+                body.add("commands.neoessentials.admin_notice.legacy_data.kits");
+            }
+            if (com.zerog.neoessentials.permissions.PermissionStorage.isLegacyFileNowInert()) {
+                body.add("commands.neoessentials.admin_notice.legacy_data.permissions");
+            }
+            if (body.isEmpty()) return;
+
+            body.add("commands.neoessentials.admin_notice.legacy_data.explain");
+            body.add("commands.neoessentials.admin_notice.legacy_data.use_instead");
+            com.zerog.neoessentials.util.AdminNotices.queue(
+                "commands.neoessentials.admin_notice.legacy_data.title",
+                body.toArray(new String[0])
+            );
+        }
+
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
             NeoLog.info(LOGGER, LogCategory.GENERAL, "════════════════════════════════════════════════════════════════");
@@ -242,7 +265,16 @@ public class NeoEssentials {
             } catch (Exception e) {
                 NeoLog.debug(LOGGER, LogCategory.GENERAL, "Config split check failed: {}", e.getMessage());
             }
-            
+
+            // Check for legacy kits.json/permissions.json files that are no longer read (the
+            // one-time import into the active storage backend already ran) — editing them now
+            // silently does nothing, so warn admins instead of letting them find out the hard way.
+            try {
+                checkLegacyDataFileNotice();
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Legacy data file check failed: {}", e.getMessage());
+            }
+
             // Initialize permission system FIRST
             try {
                 NeoLog.info(LOGGER, LogCategory.GENERAL, "⚙ Initializing Permission System...");
@@ -490,71 +522,24 @@ public class NeoEssentials {
         
         @SubscribeEvent
         public static void onPlayerLoggedIn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
-            // If a real problem was detected during startup (a manager failed to init, or the
-            // permission system fell back to emergency mode), the first admin to join this
-            // session gets a clickable support/Discord/GitHub message — same admin check as
-            // the config-split notice just below, reused for consistency.
-            // Admin check MUST come before shouldAlertJoiningAdmin() — that call consumes the
-            // "show once" flag via compareAndSet, so checking it first would burn the one
-            // opportunity on a non-admin joining before any admin does.
-            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer adminCheckPlayer
-                    && (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(adminCheckPlayer, 4) ||
-                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "*") ||
-                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "neoessentials.*") ||
-                        com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(adminCheckPlayer.getUUID(), "neoessentials.admin.*"))
-                    && com.zerog.neoessentials.util.SupportLinks.shouldAlertJoiningAdmin()) {
-                adminCheckPlayer.sendSystemMessage(com.zerog.neoessentials.util.SupportLinks.chatMessage());
+            // Any notices raised during startup (config split available, legacy data files now
+            // inert, a manager failing to init, etc — see AdminNotices) are delivered together,
+            // once, to the first admin who joins this session.
+            // Admin check MUST come before consumeIfPending() — that call consumes the "show
+            // once" flag via compareAndSet, so checking it first would burn the one opportunity
+            // on a non-admin joining before any admin does.
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player
+                    && isAdmin(player)
+                    && com.zerog.neoessentials.util.AdminNotices.consumeIfPending()) {
+                com.zerog.neoessentials.util.AdminNotices.scheduleSendTo(player);
             }
+        }
 
-            // Check if we should notify admins about config splitting
-            if (ConfigSplitter.shouldNotifyAdmins() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
-                // Check if player has permission (OP or wildcard permission)
-                if (com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4) ||
-                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "*") ||
-                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.*") ||
-                    com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*")) {
-
-                    // Mark that we've notified admins (only show once per server start)
-                    ConfigSplitter.markAdminsNotified();
-
-                    // Send notification after a short delay to ensure player is fully connected.
-                    // The sleep MUST happen on a background thread — sleeping inside server.execute()
-                    // would block the Minecraft main tick thread for 2 seconds, causing a server freeze.
-                    net.minecraft.server.MinecraftServer server = player.level().getServer();
-                    if (server != null) {
-                        Thread notifyThread = new Thread(() -> {
-                            try {
-                                Thread.sleep(2000); // 2 second delay (off the server thread)
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                return;
-                            }
-                            // Marshal message sending back onto the server thread
-                            server.execute(() -> {
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_title"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_large_config"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_easy"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_safe"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_organized"));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.split_notice_benefit_backup"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_run_command"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.config.admin_notify_border"));
-                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(""));
-                            });
-                        }, "NeoEssentials-AdminNotify");
-                        notifyThread.setDaemon(true);
-                        notifyThread.start();
-                    }
-                }
-            }
+        private static boolean isAdmin(net.minecraft.server.level.ServerPlayer player) {
+            return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(player, 4) ||
+                com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "*") ||
+                com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.*") ||
+                com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.admin.*");
         }
 
         @SubscribeEvent
