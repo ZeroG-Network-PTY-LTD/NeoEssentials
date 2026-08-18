@@ -20,6 +20,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -489,7 +490,7 @@ public class VanishManager {
                 unvanishedPlayer.getZ(),
                 unvanishedPlayer.getXRot(),
                 unvanishedPlayer.getYRot(),
-                EntityType.PLAYER,
+                EntityTypes.PLAYER,
                 0,
                 unvanishedPlayer.getDeltaMovement(),
                 unvanishedPlayer.getYHeadRot()

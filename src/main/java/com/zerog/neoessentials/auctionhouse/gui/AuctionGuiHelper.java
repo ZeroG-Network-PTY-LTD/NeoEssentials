@@ -64,10 +64,10 @@ public final class AuctionGuiHelper {
                 Component.translatable("spectatorMenu.close").withStyle(ChatFormatting.RED));
     }
     public static ItemStack fillerItem() {
-        return named(new ItemStack(Items.LIGHT_GRAY_STAINED_GLASS_PANE), Component.literal(" "));
+        return named(new ItemStack(Items.STAINED_GLASS_PANE.pick(net.minecraft.world.item.DyeColor.LIGHT_GRAY)), Component.literal(" "));
     }
     public static ItemStack backItem(String label) {
-        return named(new ItemStack(Items.RED_CONCRETE), Component.literal(label).withStyle(ChatFormatting.RED));
+        return named(new ItemStack(Items.CONCRETE.pick(net.minecraft.world.item.DyeColor.RED)), Component.literal(label).withStyle(ChatFormatting.RED));
     }
     public static ItemStack myListingsItem() {
         return named(new ItemStack(Items.CHEST), Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.my_listings")).withStyle(ChatFormatting.GREEN));

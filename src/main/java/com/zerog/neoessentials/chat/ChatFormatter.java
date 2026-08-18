@@ -372,7 +372,7 @@ public class ChatFormatter {
                     // Apply the formatting
                     if (formatting == ChatFormatting.RESET) {
                         currentStyle = net.minecraft.network.chat.Style.EMPTY;
-                    } else if (formatting.isColor()) {
+                    } else if (com.zerog.neoessentials.util.ChatFormattingCompat.isColor(formatting)) {
                         currentStyle = net.minecraft.network.chat.Style.EMPTY.applyFormat(formatting);
                     } else {
                         // Format codes (bold, italic, etc)

@@ -18,6 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.item.FireworkRocketItem;
@@ -283,7 +284,7 @@ public class FunCommands {
             int topY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level);
             for (int x = -10; x <= 10; x += 5) {
                 for (int z = -10; z <= 10; z += 5) {
-                    PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
+                    PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.TNT, level);
                     if (tnt != null) {
                         tnt.snapTo(bx + x, topY, bz + z);
                         tnt.setFuse(80); // 4 seconds
@@ -560,7 +561,7 @@ public class FunCommands {
         var hit = player.pick(20, 1.0f, false);
         var pos = hit.getLocation();
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-        PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TNT, level);
+        PrimedTnt tnt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.TNT, level);
         if (tnt != null) {
             tnt.snapTo(pos.x, pos.y, pos.z);
             tnt.setFuse(80);
@@ -590,7 +591,7 @@ public class FunCommands {
         if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
 
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
-        Cat cat = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.CAT, level);
+        Cat cat = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.CAT, level);
         if (cat == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.general.error"));
             return 0;
@@ -648,7 +649,7 @@ public class FunCommands {
         ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {
-            var bee = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.BEE, level);
+            var bee = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.BEE, level);
             if (bee != null) {
                 bee.snapTo(player.getX(), player.getEyeY(), player.getZ());
                 var look = player.getLookAngle().normalize().scale(1.5 + RANDOM.nextDouble() * 0.5);

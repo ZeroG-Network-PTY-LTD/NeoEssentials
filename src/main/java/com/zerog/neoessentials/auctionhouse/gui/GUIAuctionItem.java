@@ -73,7 +73,7 @@ public class GUIAuctionItem extends AbstractContainerMenu {
     }
     private ItemStack buildActionButton(boolean isSeller) {
         if (isSeller)
-            return AuctionGuiHelper.named(new ItemStack(Items.RED_CONCRETE),
+            return AuctionGuiHelper.named(new ItemStack(Items.CONCRETE.pick(net.minecraft.world.item.DyeColor.RED)),
                     Component.literal(MessageUtil.localize("commands.neoessentials.ah.gui.cancel_listing")).withStyle(ChatFormatting.RED));
         double bal = com.zerog.neoessentials.api.EconomyAPI.getBalance(viewer.getUUID()).doubleValue();
         boolean canAfford = bal >= item.getPrice();
