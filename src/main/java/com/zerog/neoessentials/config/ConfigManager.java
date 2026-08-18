@@ -1437,7 +1437,12 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 43);          // v43 — moved "localization" out from under "chat" to a proper
+        put(MAIN_CONFIG, 44);          // v44 — added "shop.pricing": dynamic ChestShop/NPC-shop
+                                       //        pricing (supply/demand, time discounts, bulk
+                                       //        tiers) was fully implemented and reachable in
+                                       //        code (PricingEngine) but had no config section
+                                       //        at all — nothing to enable/configure it with.
+        // v43 — moved "localization" out from under "chat" to a proper
                                        //        top-level section. getServerLanguage()/setServerLanguage()/
                                        //        isPreserveCustomTranslationsEnabled() have always read/written
                                        //        it as top-level (matching ConfigSplitter's FILE_SECTIONS_MAP),

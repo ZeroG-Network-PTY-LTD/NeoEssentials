@@ -68,28 +68,19 @@ public class PayCommand {
         
         ServerPlayer sender = permResult.getPlayer();
         
-        // Check cooldown atomically to prevent bypass
-        long now = System.currentTimeMillis();
-        long cooldownMs = getPayCooldownMs();
-        // EconomyModifierManager: players with bypass permission skip the cooldown
+        // Check cooldown (read-only) — only actually consumed once the payment succeeds, see
+        // below. EconomyModifierManager: players with bypass permission skip the cooldown
+        // entirely (never checked, never recorded).
         boolean bypassCooldown = com.zerog.neoessentials.economy.compat.EconomyModifierManager
             .getInstance().hasNoPayCooldown(sender.getUUID());
         if (!bypassCooldown) {
-            Long lastPay = payCooldowns.putIfAbsent(sender.getUUID(), now);
-            if (lastPay != null) {
-                long timeSince = now - lastPay;
-                if (timeSince < cooldownMs) {
-                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
-                    return 0;
-                }
-                // Update cooldown time
-                payCooldowns.put(sender.getUUID(), now);
+            Long lastPay = payCooldowns.get(sender.getUUID());
+            if (lastPay != null && System.currentTimeMillis() - lastPay < getPayCooldownMs()) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
+                return 0;
             }
-        } else {
-            // Always update timestamp even for bypass players (for record-keeping)
-            payCooldowns.put(sender.getUUID(), now);
         }
-        
+
         // Check if economy is enabled
         if (!EconomyManager.getInstance().isEnabled()) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.economy.disabled"));
@@ -205,6 +196,14 @@ public class PayCommand {
         }
         NeoLog.debug(LOGGER, LogCategory.ECONOMY, "pay: transaction committed sender={} recipient={} netAmount={}",
             sender.getUUID(), finalRecipientUUID, netAmount);
+
+        // Only now — after every validation check has passed and the transfer actually went
+        // through — start the cooldown. Consuming it any earlier meant a mistyped name, a
+        // toggled-off recipient, or insufficient funds still cost the player a full cooldown
+        // for a payment that never happened.
+        if (!bypassCooldown) {
+            payCooldowns.put(sender.getUUID(), System.currentTimeMillis());
+        }
 
         String currency = EconomyManager.getInstance().getCurrencySymbol();
         // amount keeps whatever scale the parsed input had (e.g. "1000.0"), while fee/netAmount
