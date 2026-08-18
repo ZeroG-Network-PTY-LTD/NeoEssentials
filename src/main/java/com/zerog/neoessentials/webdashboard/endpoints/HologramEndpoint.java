@@ -118,6 +118,15 @@ public class HologramEndpoint implements HttpHandler {
             return;
         }
         if (data.entityUUIDs == null) data.entityUUIDs = new java.util.ArrayList<>();
+        // registerHologram() is an unconditional overwrite — if an entity is already spawned
+        // under this id, despawn it first (same as handleUpdate below), or its armor-stand/
+        // text-display becomes orphaned: still physically present and rendering, but no longer
+        // reachable through HologramManager once the id now points at the new data.
+        HologramData existing = HologramManager.getInstance().getHologram(data.id);
+        if (existing != null) {
+            ServerLevel existingLevel = findLevel(existing.world);
+            if (existingLevel != null) executeOnMain(() -> HologramRenderer.despawn(existing, existingLevel));
+        }
         HologramManager.getInstance().registerHologram(data);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Hologram created: id='{}' world='{}'", data.id, data.world);
         ServerLevel level = findLevel(data.world);
