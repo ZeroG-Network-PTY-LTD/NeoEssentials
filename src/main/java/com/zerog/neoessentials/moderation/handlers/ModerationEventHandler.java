@@ -132,7 +132,10 @@ public class ModerationEventHandler {
 
             // Schedule 1-tick delayed teleport so respawn completes first
             com.zerog.neoessentials.scheduler.DelayedTaskScheduler.schedule(1, () -> {
-                if (player.isAlive()) {
+                // isAlive() alone doesn't catch a logout in this 1-tick window — a
+                // disconnected ServerPlayer still reports isAlive()==true, so without
+                // hasDisconnected() this would teleport/message a connection that's gone.
+                if (player.isAlive() && !player.hasDisconnected()) {
                     player.teleportTo(jailLevel,
                         jailLoc.position.getX() + 0.5,
                         jailLoc.position.getY() + 1,
