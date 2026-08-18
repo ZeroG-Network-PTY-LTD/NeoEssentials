@@ -1136,17 +1136,8 @@
     },
 
     "playerChatPermissions": [],
-    "sleepIgnoresAfkPlayers": true,
-    "sleepIgnoresVanishedPlayers": true,
-    "afkListName": "none",
-    "broadcastAfkMessage": true,
-    "deathMessages": true,
-    "vanishingItemsPolicy": "keep",
-    "bindingItemsPolicy": "keep",
-    "sendInfoAfterDeath": true,
-    "allowSilentJoinQuit": false,
 
-    /* Custom join / quit / name-change messages.
+    /* Custom join / quit messages.
      * Use "none" for the built-in default message.
      * Placeholders: {neoessentials_displayname}, {neoessentials_username},
      *   {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world},
@@ -1154,12 +1145,7 @@
      * Example: "&a{neoessentials_prefix}&f{neoessentials_displayname} &ejoined the server!"
      */
     "customJoinMessage": "none",
-    "customQuitMessage": "none",
-    "customNewUsernameMessage": "none",
-
-    "useCustomServerFullMessage": false,
-    // Hide join/quit messages when online count exceeds this value (-1 = always show)
-    "hideJoinQuitMessagesAbove": -1
+    "customQuitMessage": "none"
   },
 
   /* ----------------------------------------------------------------
