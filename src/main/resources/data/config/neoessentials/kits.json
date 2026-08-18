@@ -4,8 +4,15 @@
 
   /* ================================================================
      NeoEssentials — Kits  (kits.json)
-     Add or edit kits here, or use /createkit in-game.
      Fields: name, cooldown (seconds, -1 = one-time only), items[], commands[]
+
+     IMPORTANT: this file is only read ONCE, on first boot (or the first
+     boot after switching storage.type), to seed the active storage backend
+     (json/yaml/sqlite/mysql, see storage.type in config.json). After that
+     one-time import, this file is never read again — editing it later does
+     nothing. Once a server has real kit data, use /createkit, /delkit, and
+     the in-game kit commands (or the dashboard) instead; they write
+     straight to the active backend.
   ================================================================ */
 
   "kits": [

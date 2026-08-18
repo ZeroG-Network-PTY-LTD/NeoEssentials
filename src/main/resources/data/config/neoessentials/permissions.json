@@ -4,8 +4,16 @@
 
   /* ================================================================
      NeoEssentials — Permissions  (permissions.json)
-     Manage groups, prefixes, suffixes, and permission nodes here.
-     Changes take effect after /permissions reload.
+
+     IMPORTANT: this file is only read ONCE, on first boot, to seed the
+     active storage backend (json/yaml/sqlite/mysql, see storage.type in
+     config.json) with these starter groups — and only when using the
+     internal permission system (permissions.useExternalPermissions:
+     false in config.json). After that one-time import, this file is
+     never read again — editing it later, then running /permissions
+     reload, does nothing. Once a server has real permission data, manage
+     groups/permissions with the /permissions in-game commands or the
+     dashboard instead; they write straight to the active backend.
   ================================================================ */
 
   // The group assigned to players with no explicit group
