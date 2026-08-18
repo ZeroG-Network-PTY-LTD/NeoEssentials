@@ -875,3 +875,19 @@ export async function publicRecent<T = Record<string, unknown>>(): Promise<T[]> 
   const data = await res.json();
   return data.recent ?? [];
 }
+
+/** Active IP bans — the mod redacts the address itself before this ever reaches us. */
+export async function publicIpBans(): Promise<IPBanEntry[]> {
+  const res = await fetch('/api/public/moderation/ip-bans');
+  if (!res.ok) throw new Error(`Request failed (${res.status}).`);
+  const data = await res.json();
+  return data.ipBans ?? [];
+}
+
+/** Active IP mutes — same redaction as publicIpBans(). */
+export async function publicIpMutes(): Promise<MuteEntry[]> {
+  const res = await fetch('/api/public/moderation/ip-mutes');
+  if (!res.ok) throw new Error(`Request failed (${res.status}).`);
+  const data = await res.json();
+  return data.ipMutes ?? [];
+}
