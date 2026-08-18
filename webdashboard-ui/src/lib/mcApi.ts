@@ -40,6 +40,7 @@ import type {
   ReportEntry,
   ReportStatus,
   IPBanEntry,
+  JailLocation,
 } from '../types';
 
 /**
@@ -389,6 +390,38 @@ export async function createIpMute(ip: string, reason: string, duration?: string
 
 export async function removeIpMute(ip: string) {
   return del(`/api/moderation/ipmute/${encodeURIComponent(ip)}`);
+}
+
+// --- Jail locations (admin-only) — defining the cell itself (name, dimension, shape,
+// coordinates), as opposed to jailing/unjailing a specific player into one. Lets an admin
+// create a jail cell by typed-in coordinates without needing to physically stand there
+// in-game first (the in-game /setjail + jail wand flow still works exactly as before). --
+
+export async function jailLocationsDetailed(): Promise<JailLocation[]> {
+  const data = await getJson<{ jailLocations?: JailLocation[] }>('/api/moderation/jail-locations');
+  return data.jailLocations ?? [];
+}
+
+export async function createJailLocationSphere(name: string, dimension: string, position: { x: number; y: number; z: number }, radius?: number) {
+  return postJson('/api/moderation/jail-location', { name, dimension, shape: 'SPHERE', position, radius });
+}
+
+export async function createJailLocationCuboid(name: string, dimension: string, corner1: { x: number; y: number; z: number }, corner2: { x: number; y: number; z: number }) {
+  return postJson('/api/moderation/jail-location', { name, dimension, shape: 'CUBOID', corner1, corner2 });
+}
+
+export async function removeJailLocation(name: string) {
+  return del(`/api/moderation/jail-location/${encodeURIComponent(name)}`);
+}
+
+export interface ServerWorld {
+  dimension: string;
+  name: string;
+}
+
+export async function serverWorlds(): Promise<ServerWorld[]> {
+  const data = await getJson<{ worlds?: ServerWorld[] }>('/api/server/worlds');
+  return data.worlds ?? [];
 }
 
 export async function kickHistory(username: string): Promise<KickEntry[]> {

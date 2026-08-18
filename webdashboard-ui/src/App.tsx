@@ -13,6 +13,7 @@ import Users from './pages/Users';
 import Reports from './pages/Reports';
 import ReportPlayer from './pages/ReportPlayer';
 import IpBans from './pages/IpBans';
+import Jails from './pages/Jails';
 import Backups from './pages/Backups';
 import Commands from './pages/Commands';
 import Logs from './pages/Logs';
@@ -120,6 +121,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <IpBans />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/jails"
+            element={
+              <RequireAuth>
+                <Jails />
               </RequireAuth>
             }
           />
