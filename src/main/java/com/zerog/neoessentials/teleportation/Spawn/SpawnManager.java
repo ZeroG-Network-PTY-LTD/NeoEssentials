@@ -78,7 +78,10 @@ public class SpawnManager {
                         if (spawnSettings.has("spawnCooldown")) {
                             try {
                                 spawnCooldownSeconds = spawnSettings.get("spawnCooldown").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse spawnSettings.spawnCooldown, using default", e);
+                            }
                         }
                     }
                     // Read teleport delay (warmup) from generalSettings
@@ -87,7 +90,10 @@ public class SpawnManager {
                         if (generalSettings.has("teleportDelay")) {
                             try {
                                 teleportDelay = generalSettings.get("teleportDelay").getAsInt();
-                            } catch (Exception ignored) {}
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse generalSettings.teleportDelay, using default", e);
+                            }
                         }
                     }
                 }
@@ -277,7 +283,10 @@ public class SpawnManager {
                 if (generalSettings.has("enableTeleportWarmup")) {
                     showWarmup = generalSettings.get("enableTeleportWarmup").getAsBoolean();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                    "Failed to read generalSettings.enableTeleportWarmup, defaulting to shown", e);
+            }
             if (showWarmup) {
                 player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.spawn.warmup", teleportDelay));
             }

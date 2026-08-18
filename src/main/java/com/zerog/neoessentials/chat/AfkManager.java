@@ -182,7 +182,10 @@ public class AfkManager {
                     ServerPlayer p = srv.getPlayerList().getPlayer(playerUuid);
                     if (p != null) com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastAfkEvent(p, true, reason);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                    "Failed to broadcast AFK-start event for {}", playerUuid, e);
+            }
         } else if (!afk && wasAfk) {
             data.setAfkStartTime(0);
             data.setLastActivity(System.currentTimeMillis());
@@ -194,7 +197,10 @@ public class AfkManager {
                     ServerPlayer p = srv.getPlayerList().getPlayer(playerUuid);
                     if (p != null) com.zerog.neoessentials.integrations.ChatIntegrationManager.broadcastAfkEvent(p, false, null);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                    "Failed to broadcast AFK-return event for {}", playerUuid, e);
+            }
         }
 
         queueSaveAfkData();

@@ -110,7 +110,9 @@ public class MessageUtil {
     private static String getConfiguredLanguage() {
         try {
             return com.zerog.neoessentials.config.ConfigManager.getServerLanguage();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read configured server language, defaulting to en_us", e);
+        }
         return "en_us";
     }
 
@@ -138,7 +140,9 @@ public class MessageUtil {
         boolean preserveCustom = false;
         try {
             preserveCustom = com.zerog.neoessentials.config.ConfigManager.isPreserveCustomTranslationsEnabled();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to read preserveCustomTranslations setting, defaulting to false", e);
+        }
 
         Map<String, String> finalTranslations;
         if (serverLangFile.exists() && serverLangFile.length() > 0) {
@@ -149,7 +153,10 @@ public class MessageUtil {
                 try {
                     deployedVersion = Integer.parseInt(
                         finalTranslations.getOrDefault(LANG_VERSION_KEY, "0"));
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) {
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL,
+                        "Failed to parse deployed language version, treating as 0 (forces a merge)", e);
+                }
 
                 // One-time repair of the "§" double-UTF-8-encoding corruption that could be
                 // baked into a server's custom lang file from before this was fixed at the

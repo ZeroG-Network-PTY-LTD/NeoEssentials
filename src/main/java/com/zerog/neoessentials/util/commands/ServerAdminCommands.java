@@ -684,7 +684,10 @@ public class ServerAdminCommands {
                     .flatMap(display -> display.result().resolveForStacks(slotDisplayContext).stream())
                     .anyMatch(stack -> stack.getItem() == finalItem);
                 if (produces) matching.add(holder);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.COMMANDS,
+                    "Failed to resolve result item for recipe {}, skipping", holder.id(), e);
+            }
         }
         if (matching.isEmpty()) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.recipe.no_recipe", finalItem.getDescriptionId())); return 0;

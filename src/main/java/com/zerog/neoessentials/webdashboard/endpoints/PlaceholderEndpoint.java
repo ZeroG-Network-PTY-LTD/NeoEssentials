@@ -73,7 +73,9 @@ public class PlaceholderEndpoint implements HttpHandler {
             LOGGER.error("Error in PlaceholderEndpoint [{} {}]", method, path, e);
             try {
                 sendJson(exchange, 500, errorBody("Internal server error: " + sanitise(e.getMessage())));
-            } catch (IOException ignored) {}
+            } catch (IOException ioe) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to write 500 error response for [{} {}]", method, path, ioe);
+            }
         }
     }
 

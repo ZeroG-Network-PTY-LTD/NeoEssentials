@@ -48,7 +48,10 @@ public class PermissionValidator {
                     if (info != null && info.getDescription() != null && !info.getDescription().isEmpty()) {
                         msg += "\n§8(" + info.getDescription() + ")";
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.GENERAL,
+                        "Failed to look up description for permission '{}'", permission, e);
+                }
                 return PermissionResult.failure(msg);
             }
             
@@ -95,7 +98,9 @@ public class PermissionValidator {
                         msg.append("\n§8  ").append(perm).append(" — ").append(info.getDescription());
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to look up permission descriptions", e);
+            }
             return PermissionResult.failure(msg.toString());
 
         } catch (Exception e) {

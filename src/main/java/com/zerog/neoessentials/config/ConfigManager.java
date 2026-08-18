@@ -1381,7 +1381,10 @@ public class ConfigManager {
             return empty;
         } finally {
             if (reader != null) {
-                try { reader.close(); } catch (IOException ignored) {}
+                try { reader.close(); } catch (IOException e) {
+                    NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CONFIG,
+                        "Failed to close reader for config file {}", configName, e);
+                }
             }
             lock.readLock().unlock();
         }

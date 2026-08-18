@@ -91,7 +91,10 @@ public class MiscTeleportManager {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                    "Failed to read back cooldown from config, using default", e);
+            }
         NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[MiscTeleportManager] Config loaded — warmup={}s, cooldown={}s, deathBack={}, teleportBack={}, backSafety={}",
             teleportDelay, backCooldownSeconds, enableDeathBack, enableTeleportBack, enableBackSafety);
         } catch (Exception e) {
