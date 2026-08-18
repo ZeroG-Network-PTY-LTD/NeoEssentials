@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Card from './Dashboard/Card';
 import Badge from './Dashboard/Badge';
 import { useToast } from '../lib/toast';
@@ -108,10 +108,20 @@ export default function PlayerManagementPanel({ username }: Props) {
   const [nicknameInput, setNicknameInput] = useState('');
   const [teleportTarget, setTeleportTarget] = useState('');
 
+  // Guards against out-of-order responses: PlayerManagementPanel is reused (not remounted)
+  // across searches on the public lookup page, so without this, a slow-resolving load() for
+  // a previously-searched player can land after a newer search already started and overwrite
+  // that player's data on screen with the old player's — showing staff the wrong player's
+  // ban/mute/note history. Each load() bumps this ref and only applies its own results if it's
+  // still the most recent call by the time they arrive.
+  const requestIdRef = useRef(0);
+
   const load = () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setNotFound(false);
     mcApi.lookupPlayer(username).then(async (result) => {
+      if (requestId !== requestIdRef.current) return;
       setLookup(result);
       if (!result.success || !result.uuid) {
         setNotFound(true);
@@ -136,6 +146,7 @@ export default function PlayerManagementPanel({ username }: Props) {
         mcApi.getPtime(username),
         mcApi.getPweather(username),
       ]);
+      if (requestId !== requestIdRef.current) return;
       if (bal.status === 'fulfilled') setBalance(bal.value.balance);
       if (perm.status === 'fulfilled') setPermInfo(perm.value);
       if (grp.status === 'fulfilled') setGroups(grp.value);
