@@ -73,9 +73,7 @@ public class BackupManager {
      * @return the resulting manifest as a {@link JsonObject}
      */
     public JsonObject createSnapshot(String name, List<String> targets) throws IOException {
-        if (name == null || !name.matches("[a-zA-Z0-9_\\-]{1,64}")) {
-            throw new IllegalArgumentException("Invalid snapshot name. Use letters, numbers, - or _  (max 64 chars).");
-        }
+        requireValidName(name);
         if (targets == null || targets.isEmpty()) targets = new ArrayList<>(TARGET_PATHS.keySet());
 
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Starting backup snapshot '{}' (targets: {})", name, targets);
@@ -192,6 +190,7 @@ public class BackupManager {
      * @return result JSON with pre-restore backup name and file count
      */
     public JsonObject restoreSnapshot(String name) throws IOException {
+        requireValidName(name);
         Path zipFile = BACKUP_DIR.resolve(name + ".zip");
         if (!Files.exists(zipFile)) throw new IOException("Snapshot '" + name + "' not found.");
 
@@ -332,6 +331,7 @@ public class BackupManager {
     // ── Delete snapshot ───────────────────────────────────────────────────────
 
     public boolean deleteSnapshot(String name) throws IOException {
+        requireValidName(name);
         Path zipFile = BACKUP_DIR.resolve(name + ".zip");
         if (!Files.exists(zipFile)) return false;
         Files.delete(zipFile);
@@ -341,10 +341,24 @@ public class BackupManager {
 
     /** Returns the raw ZIP {@link Path} for a snapshot (for streaming download). */
     public Path getSnapshotPath(String name) {
+        requireValidName(name);
         return BACKUP_DIR.resolve(name + ".zip");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Every public method here that takes a caller-supplied snapshot name resolves it
+     * straight into a filesystem path under {@link #BACKUP_DIR} — without this check, a name
+     * like {@code ../../../../some/file} escapes the backups directory entirely (Path.resolve()
+     * does not sanitize ".." components), letting restore/delete/download read, delete, or
+     * (for restore) extract an attacker-reachable ZIP into the live server directories.
+     */
+    private static void requireValidName(String name) {
+        if (name == null || !name.matches("[a-zA-Z0-9_\\-]{1,64}")) {
+            throw new IllegalArgumentException("Invalid snapshot name. Use letters, numbers, - or _  (max 64 chars).");
+        }
+    }
 
     /** Reads the {@code backup-manifest.json} from inside the ZIP. */
     private JsonObject readManifest(Path zipFile) throws IOException {
