@@ -253,8 +253,21 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
         } catch (Exception ignored) {
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "FTB Ranks result type {} has no get(), falling back to toString comparison", result.getClass().getName());
         }
+        // Deny-by-default allowlist, not a grant-by-default blocklist — this class's own doc
+        // comment acknowledges the exact return-value shape is unstable across FTB Ranks
+        // versions/forks, so treating "anything not in a hardcoded negative list" as an
+        // allow was a fail-OPEN bug: any future/incompatible build whose value stringifies to
+        // something outside {FALSE, UNDEFINED, DENY, MISSING} (e.g. an enum like NOT_SET,
+        // DEFAULT, INHERIT, NONE) would have silently granted every permission checked through
+        // this adapter, with no exception thrown and no failure-counter trip to surface it.
         String s = result.toString().toUpperCase();
-        return !s.equals("FALSE") && !s.equals("UNDEFINED") && !s.equals("DENY") && !s.equals("MISSING");
+        boolean allow = s.equals("TRUE") || s.equals("ALLOW") || s.equals("ALLOWED") || s.equals("GRANTED") || s.equals("YES");
+        if (!allow) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,
+                "FTB Ranks result type {} (stringified '{}') did not match any known true/allow form — denying (fail-closed)",
+                result.getClass().getName(), s);
+        }
+        return allow;
     }
 
     private void emitHealthWarnIfNeeded(int failures, String permission, Exception cause) {
