@@ -109,7 +109,7 @@ public class ConfigSplitter {
      * Current monolithic config version — must stay in sync with the JAR's config.json
      * {@code _configVersion} field and {@code ConfigManager.EXPECTED_CONFIG_VERSIONS}.
      */
-    private static final int CURRENT_MAIN_VERSION = 23;
+    private static final int CURRENT_MAIN_VERSION = 43;
 
     // ── Marker ────────────────────────────────────────────────────────────────
 
@@ -637,7 +637,11 @@ public class ConfigSplitter {
         // Backup
         try {
             String ts = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
-            String backupName = fileName.replace(".json",
+            // Use configFile.getName(), not fileName — for "templates/discord_embed.json",
+            // fileName still carries the "templates/" prefix, which combined with
+            // configFile.getParentFile() (already .../templates/) built a nonexistent
+            // .../templates/templates/... path and silently failed every backup for that file.
+            String backupName = configFile.getName().replace(".json",
                     String.format("_v%d_backup_%s.json", current, ts));
             Files.copy(configFile.toPath(), new File(configFile.getParentFile(), backupName).toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);

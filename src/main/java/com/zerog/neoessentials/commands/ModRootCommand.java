@@ -524,6 +524,8 @@ public class ModRootCommand {
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_file_items"), false);
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_file_afk"), false);
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_file_security"), false);
+                source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_file_tablist"), false);
+                source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_file_discord_embed"), false);
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_backup_note"), false);
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.root.config_split_reload_hint"), false);
 
