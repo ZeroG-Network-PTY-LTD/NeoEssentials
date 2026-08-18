@@ -63,6 +63,21 @@ export default function Holograms() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!editingId && !form.id.trim()) return;
+    // Number('') is 0, not NaN — without this check, tabbing past a blank X/Y/Z field
+    // silently creates the hologram at (0,0,0) instead of erroring or prompting.
+    if (form.x.trim() === '' || form.y.trim() === '' || form.z.trim() === '') {
+      showToast('X, Y, and Z coordinates are required.', true);
+      return;
+    }
+    // createHologram() overwrites any existing hologram with the same id in place (the mod
+    // now despawns the old entity first — fixed earlier this session — so nothing orphans),
+    // but from the user's side that's still silent data loss: an existing hologram's
+    // position/text/visibility just vanishes with no warning, unlike every delete action on
+    // this page which confirms first.
+    if (!editingId && holograms.some((h) => h.id === form.id.trim())) {
+      if (!confirm(`A hologram named '${form.id.trim()}' already exists. Replace it?`)) return;
+    }
     setSubmitting(true);
     // The mod deserializes `lines` straight into a List<HologramLine> (Gson), so each entry
     // must be an object with at least a `text` field — a bare string 400s with a

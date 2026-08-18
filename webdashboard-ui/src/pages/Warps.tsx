@@ -73,6 +73,12 @@ export default function Warps() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    // Number('') is 0, not NaN — without this check, tabbing past a blank X/Y/Z field
+    // silently creates the warp at (0,0,0) instead of erroring or prompting.
+    if (x.trim() === '' || y.trim() === '' || z.trim() === '') {
+      showToast('X, Y, and Z coordinates are required.', true);
+      return;
+    }
     setSubmitting(true);
     try {
       await mcApi.createWarp(name.trim(), { world, x: Number(x), y: Number(y), z: Number(z) });
