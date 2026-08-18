@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 43,
+  "_configVersion": 44,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -498,6 +498,47 @@
     ],
     // Log every /invsee and /enderchest view/edit to neoessentials/inventory_audit.log
     "inventoryAuditLog": true
+  },
+
+  /* ----------------------------------------------------------------
+     Shop  —  dynamic pricing for ChestShop / NPC shops (off by default;
+     shops otherwise just use their fixed configured buy/sell price)
+  ---------------------------------------------------------------- */
+  "shop": {
+    "pricing": {
+      // Master switch. false = every shop uses its raw configured buy/sell price, no
+      // computation overhead at all. All the sub-sections below are ignored while off.
+      "enabled": false,
+
+      // Prices drift toward maxMultiplier as a shop's stock depletes, and toward
+      // minMultiplier as it fills back up — buying gets more expensive, selling gets
+      // less rewarding, the closer a shop is to running out.
+      "supplyDemand": {
+        "enabled": true,
+        // Stock level (items) at which the multiplier bottoms out at minMultiplier
+        "maxStock": 500,
+        "minMultiplier": 0.8,
+        "maxMultiplier": 2.0
+      },
+
+      // Flat percentage discount on buy prices during a fixed daily time window
+      // (server time, 24h clock).
+      "timeDiscount": {
+        "enabled": true,
+        "startHour": 12,
+        "endHour": 14,
+        "discountPercent": 10.0
+      },
+
+      // Extra discount for buying in bulk. Each tier's discount applies once the
+      // purchase quantity reaches minQuantity; only the highest tier a purchase
+      // qualifies for is applied. Leave the array empty to disable bulk discounts
+      // without touching the other rules above.
+      "bulkTiers": [
+        { "minQuantity": 16, "discountPercent": 5.0 },
+        { "minQuantity": 64, "discountPercent": 10.0 }
+      ]
+    }
   },
 
   /* ----------------------------------------------------------------

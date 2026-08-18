@@ -54,6 +54,7 @@ public class ConfigSplitter {
         put("security",      "security.json");
         put("commands",      "commands.json");
         put("items",         "items.json");
+        put("shop",          "items.json");   // shop.pricing — no dedicated split file, items.json is the closest fit
         put("afk",           "afk.json");
         put("teleportation", "teleportation.json");
         put("moderation",    "moderation.json");
@@ -72,7 +73,7 @@ public class ConfigSplitter {
         put("chat.json",          Collections.singletonList("chat"));
         put("teleportation.json", Collections.singletonList("teleportation"));
         put("moderation.json",    Collections.singletonList("moderation"));
-        put("items.json",         Collections.singletonList("items"));
+        put("items.json",         List.of("items", "shop"));
         put("afk.json",           Collections.singletonList("afk"));
         put("security.json",      Collections.singletonList("security"));
         put("tablist.json",       Collections.singletonList("tablist"));
@@ -98,7 +99,10 @@ public class ConfigSplitter {
                                         //       ConfigManager.patchLegacyNicknameChatDefaults)
         put("teleportation.json", 1);
         put("moderation.json",    1);
-        put("items.json",         1);
+        put("items.json",         2);  // v2 — added "shop" section (shop.pricing — dynamic
+                                        //       ChestShop/NPC-shop pricing was implemented
+                                        //       and reachable in code but had no discoverable
+                                        //       config path at all; see PricingEngine)
         put("afk.json",           2);  // v2  — invulnerableWhenAfk option
         put("security.json",      1);
         put("tablist.json",       1);
