@@ -9,6 +9,7 @@ import com.zerog.neoessentials.chat.MuteManager;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,6 +226,21 @@ public class ModerationEndpoint implements HttpHandler {
             } else if ("DELETE".equals(method) && path.contains("/jail/")) {
                 requireAdmin(exchange);
                 handleRemoveJail(exchange, lastSegment(path));
+
+            // Jail LOCATIONS — defining the cell itself (name, dimension, shape, coordinates),
+            // as opposed to /jail above which sends a PLAYER to an already-defined one. Lets
+            // the dashboard create a jail cell by typed-in coordinates without an admin needing
+            // to physically stand there in-game first (still fully supported too, via
+            // /setjail and the jail wand — see JailCommand/JailWandHandler).
+            } else if ("GET".equals(method) && path.endsWith("/jail-locations")) {
+                requireAdmin(exchange);
+                handleJailLocationsDetailed(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/jail-location")) {
+                requireAdmin(exchange);
+                handleCreateJailLocation(exchange);
+            } else if ("DELETE".equals(method) && path.contains("/jail-location/")) {
+                requireAdmin(exchange);
+                handleRemoveJailLocation(exchange, lastSegment(path));
 
             } else {
                 sendJson(exchange, 404, "{\"success\":false,\"error\":\"Unknown moderation endpoint\"}");
@@ -900,6 +916,97 @@ public class ModerationEndpoint implements HttpHandler {
         boolean removed = JailManager.getInstance().unjailPlayer(uuid);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unjail request for player '{}' removed={}", playerName, removed);
         sendJson(exchange, 200, json(removed, removed ? playerName + " unjailed" : "Player was not jailed"));
+    }
+
+    private void handleJailLocationsDetailed(HttpExchange exchange) throws IOException {
+        JsonArray arr = new JsonArray();
+        for (JailManager.JailLocation loc : JailManager.getInstance().getAllJailLocations()) arr.add(jailLocationJson(loc));
+        JsonObject resp = new JsonObject();
+        resp.addProperty("success", true);
+        resp.add("jailLocations", arr);
+        sendJson(exchange, 200, resp.toString());
+    }
+
+    /**
+     * Creates (or overwrites, by name) a jail cell from typed-in coordinates — {@code sphere}:
+     * {name, dimension, shape:"SPHERE", position:{x,y,z}, radius?} or {@code cuboid}:
+     * {name, dimension, shape:"CUBOID", corner1:{x,y,z}, corner2:{x,y,z}}.
+     */
+    private void handleCreateJailLocation(HttpExchange exchange) throws Exception {
+        JsonObject body = readBody(exchange);
+        String name = body.has("name") && !body.get("name").isJsonNull() ? body.get("name").getAsString() : "";
+        if (name.isBlank()) {
+            sendJson(exchange, 400, json(false, "Body must contain 'name'"));
+            return;
+        }
+        String dimension = body.has("dimension") && !body.get("dimension").isJsonNull()
+            ? body.get("dimension").getAsString() : "minecraft:overworld";
+        String shape = body.has("shape") && !body.get("shape").isJsonNull() ? body.get("shape").getAsString() : "SPHERE";
+        String createdBy = executorName(exchange);
+        JailManager jailManager = JailManager.getInstance();
+
+        if ("CUBOID".equalsIgnoreCase(shape)) {
+            if (!body.has("corner1") || !body.has("corner2")) {
+                sendJson(exchange, 400, json(false, "Cuboid jail requires 'corner1' and 'corner2'"));
+                return;
+            }
+            BlockPos corner1 = blockPosFromJson(body.getAsJsonObject("corner1"));
+            BlockPos corner2 = blockPosFromJson(body.getAsJsonObject("corner2"));
+            jailManager.setJailLocationCuboid(name, corner1, corner2, dimension, createdBy);
+        } else {
+            if (!body.has("position")) {
+                sendJson(exchange, 400, json(false, "Sphere jail requires 'position'"));
+                return;
+            }
+            BlockPos center = blockPosFromJson(body.getAsJsonObject("position"));
+            double radius = body.has("radius") && !body.get("radius").isJsonNull()
+                ? body.get("radius").getAsDouble()
+                : com.zerog.neoessentials.config.ConfigManager.getDefaultJailSphereRadius();
+            jailManager.setJailLocationSphere(name, center, radius, dimension, createdBy);
+        }
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Jail location '{}' created via dashboard by '{}'", name, createdBy);
+        sendJson(exchange, 200, json(true, "Jail location '" + name + "' created"));
+    }
+
+    private void handleRemoveJailLocation(HttpExchange exchange, String name) throws IOException {
+        boolean removed = JailManager.getInstance().removeJailLocation(URLDecoder.decode(name, StandardCharsets.UTF_8));
+        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Jail location '{}' remove request removed={}", name, removed);
+        sendJson(exchange, 200, json(removed, removed ? "Jail location removed" : "Jail location not found: " + name));
+    }
+
+    private BlockPos blockPosFromJson(JsonObject obj) {
+        return new BlockPos(obj.get("x").getAsInt(), obj.get("y").getAsInt(), obj.get("z").getAsInt());
+    }
+
+    private JsonObject jailLocationJson(JailManager.JailLocation loc) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("name", loc.name);
+        obj.addProperty("dimension", loc.dimension);
+        obj.addProperty("shape", loc.shape.name());
+        obj.addProperty("createdBy", loc.createdBy);
+        obj.addProperty("createdTime", loc.createdTime);
+
+        JsonObject pos = new JsonObject();
+        pos.addProperty("x", loc.position.getX());
+        pos.addProperty("y", loc.position.getY());
+        pos.addProperty("z", loc.position.getZ());
+        obj.add("position", pos);
+
+        if (loc.shape == JailManager.JailShape.CUBOID && loc.corner1 != null && loc.corner2 != null) {
+            JsonObject c1 = new JsonObject();
+            c1.addProperty("x", loc.corner1.getX());
+            c1.addProperty("y", loc.corner1.getY());
+            c1.addProperty("z", loc.corner1.getZ());
+            obj.add("corner1", c1);
+            JsonObject c2 = new JsonObject();
+            c2.addProperty("x", loc.corner2.getX());
+            c2.addProperty("y", loc.corner2.getY());
+            c2.addProperty("z", loc.corner2.getZ());
+            obj.add("corner2", c2);
+        } else {
+            obj.addProperty("radius", loc.radius);
+        }
+        return obj;
     }
 
     private JsonObject jailEntryJson(JailManager.JailEntry j) {
