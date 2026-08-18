@@ -471,11 +471,16 @@ public class FileManagementHandler implements HttpHandler {
             return;
         }
         Path targetPath = resolvePath(request.get("targetPath").getAsString());
-        Path backupPath = Paths.get(request.get("backupPath").getAsString());
+        // .normalize() before the containment check below — Path.startsWith() is a purely
+        // syntactic, segment-by-segment comparison that does NOT resolve ".." components, so
+        // an unnormalized "neoessentials/backups/files/../../../../etc/passwd" would pass this
+        // check (its first three segments literally match backupDir) and only actually escape
+        // the backups directory once Files.copy() resolves it for real at the OS level.
+        Path backupPath = Paths.get(request.get("backupPath").getAsString()).normalize().toAbsolutePath();
         validatePath(targetPath);
         // Only allow restore from backup directory
-        Path backupDir = Paths.get("neoessentials", "backups", "files").toAbsolutePath();
-        if (!backupPath.toAbsolutePath().startsWith(backupDir)) {
+        Path backupDir = Paths.get("neoessentials", "backups", "files").normalize().toAbsolutePath();
+        if (!backupPath.startsWith(backupDir)) {
             sendJsonResponse(exchange, 403, createErrorResponse("Invalid backup path"));
             return;
         }
