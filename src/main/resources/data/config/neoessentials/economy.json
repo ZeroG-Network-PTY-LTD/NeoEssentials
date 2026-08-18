@@ -22,8 +22,6 @@
   "logTransactions": true,
   // Maximum number of transactions kept per player for /history
   "transactionHistoryLimit": 50,
-  // Seconds between auto-saves of the economy database to disk
-  "autoSaveInterval": 60,
   // Maximum amount that can be sent in a single /pay transfer
   "maxTransferAmount": 10000.0,
   // Default state of /paytoggle (true = payments enabled on join)
