@@ -338,7 +338,7 @@ public class PermissionManager {
             return PermissionConditionManager.getInstance().evaluate(condExpr, context, player);
         } catch (Exception e) {
             NeoLog.warn(LOGGER, LogCategory.PERMISSIONS, "Condition evaluation failed for node '{}': {}", permission, e.getMessage());
-            return true; // fail-open: if we can't evaluate, grant
+            return false; // fail-closed: a malformed/erroring condition must not silently grant access
         }
     }
 
