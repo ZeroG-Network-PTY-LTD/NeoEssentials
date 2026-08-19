@@ -1,9 +1,9 @@
 # NeoEssentials
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.2-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-orange.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-orange.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/mrwhiteflamesyt)
 
-> NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 26.2 servers (this is the 26.x port branch — see the `Dev-Builds` branch for the 1.21.1 primary build). It provides 100+ commands, GUI tools, advanced administration, a real-time web dashboard, animated tablist, full localization support, and a PlaceholderAPI system — all managed by modular JSON config files.
+> NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 1.21.1 servers. It provides 100+ commands, GUI tools, advanced administration, a real-time web dashboard, animated tablist, full localization support, and a PlaceholderAPI system — all managed by modular JSON config files.
 
 ## 🌟 Overview
 
@@ -145,10 +145,10 @@ This project uses **IntelliJ IDEA Community Edition** with Gradle.
 Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
 
 ### Project Structure
-- **Java 25** - Target JDK version (required by Minecraft 26.x)
+- **Java 21** - Target JDK version
 - **Gradle** - Build system with auto-incrementing build numbers
 - **NeoForge ModDev 2.0.107** - Modern mod development plugin
-- Parchment Mappings not used on this branch — Mojang ships real parameter names directly as of 26.1
+- **Parchment Mappings** - Better parameter names and javadocs
 
 ## 🤝 Support & Community
 
