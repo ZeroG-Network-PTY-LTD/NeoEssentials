@@ -18,6 +18,7 @@ on:
     branches:
       - Dev-Builds
       - mc-26.1-port
+      - Dev-Build-26.x.x
     # Changelog/wiki-only edits have no effect on the built jar — don't burn a build number
     # or spam a Discord release notification for them.
     paths-ignore:
@@ -111,9 +112,10 @@ jobs:
           MOD_VERSION: ${{ steps.mod_version.outputs.value }}
         run: |
           case "${{ github.ref_name }}" in
-            Dev-Builds)    marker="mc1.21.1" ;;
-            mc-26.1-port)  marker="mc26.1.2" ;;
-            *)             marker="${{ github.ref_name }}" ;;
+            Dev-Builds)        marker="mc1.21.1" ;;
+            mc-26.1-port)      marker="mc26.1.2" ;;
+            Dev-Build-26.x.x)  marker="mc26.2" ;;
+            *)                 marker="${{ github.ref_name }}" ;;
           esac
 
           current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
