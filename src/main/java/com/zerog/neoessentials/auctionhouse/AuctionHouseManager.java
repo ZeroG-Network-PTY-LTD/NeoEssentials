@@ -227,10 +227,22 @@ public final class AuctionHouseManager {
 
         AuctionDB.getInstance().removeActive(item.getId());
 
-        // Pay seller
+        // Pay seller. By this point the buyer has already been charged and the listing is
+        // already removed — this is a completed sale, not a voluntary transfer, so the seller
+        // must be paid unconditionally even if the normal (cancellable) deposit path rejects it
+        // (e.g. an EconomyDepositEvent listener cancels it, or the seller is at the balance cap).
+        // Falling back to setBalance() (which doesn't fire a cancellable event) guarantees
+        // settlement instead of silently destroying the buyer's payment.
         try {
             java.util.UUID sellerUuid = java.util.UUID.fromString(item.getUuid());
-            com.zerog.neoessentials.api.EconomyAPI.deposit(sellerUuid, price);
+            com.zerog.neoessentials.economy.managers.EconomyManager em = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+            boolean paid = com.zerog.neoessentials.api.EconomyAPI.deposit(sellerUuid, price);
+            if (!paid) {
+                NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE,
+                        "buyItem: normal deposit rejected for seller {} ({}) on listing {} — forcing settlement to avoid losing the buyer's payment",
+                        item.getOwner(), item.getUuid(), item.getId());
+                em.setBalance(sellerUuid, em.getBalance(sellerUuid).add(price));
+            }
             NeoLog.debug(LOGGER, LogCategory.AUCTION_HOUSE, "buyItem: paid seller {} ({}) {} for listing {}",
                     item.getOwner(), item.getUuid(), price, item.getId());
         } catch (Exception e) {
