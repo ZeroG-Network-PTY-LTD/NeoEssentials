@@ -1,14 +1,14 @@
 name: Build & Release Jar
 
 # Builds the mod jar for a dev branch and publishes it to ONE shared GitHub Release per build
-# number, tagged <mod_version>-build-<build number> (e.g. 1.0.5-build-49) — both branches' jars
+# number, tagged <mod_version>-build-<build number> (e.g. 1.0.5-build-49) — all three branches' jars
 # (differently named per MC version, so no filename collision) land in the same release instead
 # of two separate releases, since they represent the same shipped change for two MC versions.
 # A new release per build number, not one shared/overwritten release forever — so no need to
-# run gradle locally to grab a build. The build number is shared across Dev-Builds and
-# mc-26.1-port (see "Bump shared build number" below), not tracked independently per branch.
-# The correct JDK per branch (21 for Dev-Builds' MC 1.21.1, 25 for
-# mc-26.1-port's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
+# run gradle locally to grab a build. The build number is shared across 1.21.x and
+# 26.1.x (see "Bump shared build number" below), not tracked independently per branch.
+# The correct JDK per branch (21 for 1.21.x's MC 1.21.1, 25 for
+# 26.1.x's MC 26.1.2) is auto-provisioned by Gradle's own toolchain
 # resolver (org.gradle.toolchains.foojay-resolver-convention, already
 # configured in settings.gradle) — the runner JDK below is only what launches
 # Gradle itself, not what compiles the mod.
@@ -16,9 +16,9 @@ name: Build & Release Jar
 on:
   push:
     branches:
-      - Dev-Builds
-      - mc-26.1-port
-      - Dev-Build-26.x.x
+      - 1.21.x
+      - 26.1.x
+      - 26.x
     # Changelog/wiki-only edits have no effect on the built jar — don't burn a build number
     # or spam a Discord release notification for them.
     paths-ignore:
@@ -47,9 +47,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Build numbers are shared across BOTH dev branches, representing "the same shipped
+      # Build numbers are shared across all three dev branches, representing "the same shipped
       # change" for two different MC versions — this repo's normal workflow is commit on
-      # Dev-Builds, cherry-pick the same commit to mc-26.1-port, push both. A branch REUSES the
+      # 1.21.x, cherry-pick the same commit to 26.1.x, push both. A branch REUSES the
       # current shared number if it hasn't built that number before (the common case: the other
       # branch just took it for this same cherry-picked change), and only bumps to the next
       # number once it finds it's already used the current one (a genuinely new change). This
@@ -65,7 +65,7 @@ jobs:
       # build_number.txt committed to the branch — every git-based way of landing a bump commit
       # (plain push, push via a fresh throwaway branch, GitHub's own Contents API + a PR
       # auto-merged via the API) was tried and confirmed live to get rejected by this repo's
-      # branch-protection ruleset (Dev-Builds/mc-26.1-port both require signed commits AND
+      # branch-protection ruleset (1.21.x/26.1.x both require signed commits AND
       # changes to land via a reviewed pull request, and that ruleset's target is ~ALL branches
       # — even a brand new throwaway branch with no PR involved hit the same rejection). Adding
       # GitHub Actions to the ruleset's bypass list didn't reliably fix it either. A repository
@@ -89,7 +89,7 @@ jobs:
       # possible, not a general-purpose repo credential.
       #
       # Read straight from gradle.properties rather than parsing it back out of the built jar's
-      # filename — both branches are expected to stay version-locked together (same convention
+      # filename — all three branches are expected to stay version-locked together (same convention
       # the shared build-number counter below already assumes: a cherry-picked pair ships "the
       # same change" for two MC versions), so this is a single mod_version, not a per-branch one.
       # If that ever stops being true, the shared-release-per-tag model below stops making sense
@@ -99,7 +99,7 @@ jobs:
         id: mod_version
         run: echo "value=$(sed -n 's/^mod_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
 
-      # Since both branches now publish into the SAME shared release tag
+      # Since all three branches now publish into the SAME shared release tag
       # (<mod_version>-build-<number>), "has THIS branch already published under the current
       # number" can no longer be answered by "does a release with this tag exist" (it always
       # will, once either branch has published) — instead it checks whether the shared release
@@ -112,10 +112,10 @@ jobs:
           MOD_VERSION: ${{ steps.mod_version.outputs.value }}
         run: |
           case "${{ github.ref_name }}" in
-            Dev-Builds)        marker="mc1.21.1" ;;
-            mc-26.1-port)      marker="mc26.1.2" ;;
-            Dev-Build-26.x.x)  marker="mc26.2" ;;
-            *)                 marker="${{ github.ref_name }}" ;;
+            1.21.x)  marker="mc1.21.1" ;;
+            26.1.x)  marker="mc26.1.2" ;;
+            26.x)    marker="mc26.2" ;;
+            *)       marker="${{ github.ref_name }}" ;;
           esac
 
           current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
@@ -190,7 +190,7 @@ jobs:
           # GitHub's release-asset download URL is fully predictable from the tag + filename —
           # no need to parse it back out of the release-creation step's output. Hitting this URL
           # (e.g. clicking it in Discord) downloads the jar directly, no GitHub UI involved.
-          # Shared tag (no branch in it) — both branches' jars live under the same release now.
+          # Shared tag (no branch in it) — all three branches' jars live under the same release now.
           TAG="${MOD_VERSION}-build-${BUILD_NUMBER}"
           DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${JAR_NAME}"
           SIZE_MB=$(awk "BEGIN { printf \"%.2f\", $(stat -c%s "$JAR_PATH") / 1048576 }")
