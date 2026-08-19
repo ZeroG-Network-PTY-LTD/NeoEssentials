@@ -103,20 +103,17 @@ jobs:
       # (<mod_version>-build-<number>), "has THIS branch already published under the current
       # number" can no longer be answered by "does a release with this tag exist" (it always
       # will, once either branch has published) — instead it checks whether the shared release
-      # ALREADY HAS an asset carrying this branch's marker (its jar filename's MC-version
-      # fragment, which is what actually makes each branch's jar unique within the shared
-      # release). Update BRANCH_MARKER below if a branch's target Minecraft version changes.
+      # ALREADY HAS an asset carrying this branch's marker. The marker is just the branch name
+      # itself (github.ref_name) — build.gradle's version string embeds gradle.properties'
+      # version_label, which is kept identical to the branch name on every branch (e.g. the
+      # 26.1.x branch's jar filename contains "26.1.x"), so no separate mapping is needed here
+      # the way there was before version_label existed.
       - name: Bump shared build number
         id: build_number
         env:
           MOD_VERSION: ${{ steps.mod_version.outputs.value }}
         run: |
-          case "${{ github.ref_name }}" in
-            1.21.x)  marker="mc1.21.1" ;;
-            26.1.x)  marker="mc26.1.2" ;;
-            26.2.x)  marker="mc26.2" ;;
-            *)       marker="${{ github.ref_name }}" ;;
-          esac
+          marker="${{ github.ref_name }}"
 
           current=$(GH_TOKEN="${{ secrets.CI_BUILD_NUMBER_PAT }}" gh api "repos/${{ github.repository }}/actions/variables/BUILD_NUMBER" --jq '.value') || current=0
           assets=$(GH_TOKEN="${{ github.token }}" gh release view "${MOD_VERSION}-build-${current}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name' 2>/dev/null) || assets=""
