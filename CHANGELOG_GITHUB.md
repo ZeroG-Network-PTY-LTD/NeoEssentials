@@ -6,6 +6,25 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+**
 
 ---
 
+## [1.0.5] — 2026-08-19
+
+#### Fixed
+- Player chat could inject internal rich-text formatting markers (`§ITEM§`, `§URL§`, `§MENTION§`, and similar) to spoof clickable items, links, or mentions — these are now stripped from all player-submitted chat before formatting.
+- Web dashboard shop price changes could race a concurrent buy/sell, applying a stale price.
+- A player released from jail on respawn could be re-teleported into the jail cell even after disconnecting mid-respawn.
+- FTB Ranks permission integration failed *open* (granted access) instead of denying it when a permission lookup errored.
+- `/tpa` and the home/warp cooldowns could be consumed even when the request failed validation, effectively wasting the player's cooldown for nothing.
+- Discord mention sanitization (preventing chat-triggered `@everyone`/`@here`/role pings) now also covers the Mc2Discord and DCIntegration bridge adapters, not just the primary integration.
+- Web dashboard vanish, jail, and balance-adjustment actions were mutating live player/entity state directly from the HTTP request thread instead of the main server thread, risking corrupted entity state under concurrent use — now correctly synchronized.
+- A narrow disconnect race in the vanish system's player-join handling, where a player who disconnected within a 1-tick window could still be sent stale visibility packets.
+
+#### Changed
+- Replaced the single global debug-logging toggle with independent per-category logging (`logging.categories` in config) — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can each be switched on/off separately for normal and debug output, instead of one all-or-nothing flag.
+- Dozens of previously-silent error paths across chat, permissions, tablist, teleportation, and command handling now log real diagnostic detail when their category's debug logging is enabled, instead of failing without a trace.
+
+#### Platform
+- Added a Minecraft 26.2 build (NeoForge 26.2.0.63+), alongside the existing pinned Minecraft 26.1–26.1.2 build. Both are separate downloads from the primary 1.21.1–1.21.11 build.
+
 ## [1.0.2.6+build.1] — 2026-03-06
 
 ### Starting fresh from 1.0.2.6

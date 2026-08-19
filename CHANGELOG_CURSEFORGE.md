@@ -4,6 +4,25 @@
 
 ---
 
+## 1.0.5 — 2026-08-19
+
+### 🛡️ Security & Correctness Fixes
+- Player chat could inject internal rich-text markers to spoof clickable items, links, or mentions — now stripped from all player chat
+- Fixed a web dashboard shop price race condition that could apply a stale price during concurrent buy/sell
+- Fixed jail respawn re-teleporting a player who had already disconnected
+- Fixed FTB Ranks integration failing *open* (granting access) instead of denying on a lookup error
+- Fixed `/tpa` and home/warp cooldowns being consumed even when the request failed validation
+- Discord mention sanitization now also covers the Mc2Discord and DCIntegration bridge adapters
+- Fixed web dashboard vanish/jail/balance actions running off the main server thread, risking corrupted entity state
+- Fixed a narrow disconnect race in the vanish system's join handling
+
+### 📋 Logging
+- Replaced the single global debug toggle with independent per-category logging — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can each be switched on/off separately
+- Dozens of previously-silent error paths now log real diagnostic detail when their category's debug logging is enabled
+
+### 🧩 Platform
+- Added a Minecraft 26.2 build (NeoForge 26.2.0.63+), alongside the existing pinned Minecraft 26.1–26.1.2 build
+
 ## 1.0.2.6+build.1 — 2026-03-06
 
 ### 🔁 Starting fresh from 1.0.2.6
