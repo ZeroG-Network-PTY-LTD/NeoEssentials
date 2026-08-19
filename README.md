@@ -15,7 +15,7 @@ split by target Minecraft version:
 |---|---|---|
 | [`1.21.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/1.21.x) | Minecraft 1.21.1 – 1.21.11 · NeoForge 21.1.179+ | Primary development branch |
 | [`26.1.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.1.x) | Minecraft 26.1 – 26.1.2 · NeoForge 26.1.2.76+ | Pinned 26.1.x port branch |
-| [`26.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.x) | Minecraft 26.2 · NeoForge 26.2.0.63+ | Rolling 26.x port branch — advances with each new 26.x release |
+| [`26.2.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.2.x) | Minecraft 26.2 · NeoForge 26.2.0.63+ | Pinned 26.2.x port branch |
 
 ### Download
 
@@ -118,7 +118,7 @@ See [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APIS
 ## 🛠️ Development
 
 This branch has no source code — see [This Branch](#-this-branch) above for
-where to find it. `1.21.x`, `26.1.x`, and `26.x` each have their own
+where to find it. `1.21.x`, `26.1.x`, and `26.2.x` each have their own
 IDE/Gradle setup and build instructions.
 
 ## 🤝 Support & Community
