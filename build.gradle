@@ -61,7 +61,7 @@ gradle.taskGraph.whenReady { graph ->
     if (isPackagingBuild && !isCI) {
         buildNumber++
         buildNumberFile.text = buildNumber.toString()
-        project.version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
+        project.version = "${mod_version}-${version_label}+build.${buildNumber}"
         println "=========================================="
         println "Building ${mod_name} v${project.version}"
         println "Build #${buildNumber}"
@@ -70,9 +70,10 @@ gradle.taskGraph.whenReady { graph ->
 }
 
 // Set version with build number (current value; only bumped above for real packaging builds).
-// Tagged with the target Minecraft version so jars built from this 26.x port branch are
-// never confused with 1.21.1 jars.
-version = "${mod_version}-mc${minecraft_version}+build.${buildNumber}"
+// Tagged with version_label (this branch's version-line, e.g. "26.2.x") so jars from
+// different branches are never confused with each other, and a patch bump within the same
+// line doesn't change the jar filename.
+version = "${mod_version}-${version_label}+build.${buildNumber}"
 group = mod_group_id
 
 repositories {
