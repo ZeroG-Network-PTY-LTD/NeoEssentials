@@ -341,9 +341,12 @@ public class ModerationEndpoint implements HttpHandler {
             return;
         }
 
-        boolean success = durationSeconds > 0
+        // BanManager.banPlayer()/tempBanPlayer() kick the target if online and broadcast to
+        // staff — both touch live entity/network state, so marshal onto the main thread (same
+        // pattern as ModerationEndpoint's vanish/jail handlers) instead of racing it from here.
+        boolean success = server.submit(() -> durationSeconds > 0
             ? BanManager.getInstance().tempBanPlayer(playerName, playerId, reason, bannedBy, durationSeconds * 1000L)
-            : BanManager.getInstance().banPlayer(playerName, playerId, reason, bannedBy);
+            : BanManager.getInstance().banPlayer(playerName, playerId, reason, bannedBy)).get();
 
         if (!success) {
             sendJson(exchange, 409, json(false, "Player is already banned, or bans are disabled in config"));
@@ -353,12 +356,15 @@ public class ModerationEndpoint implements HttpHandler {
         sendJson(exchange, 200, "{\"success\":true,\"message\":\"Ban created\",\"playerId\":\"" + esc(playerId.toString()) + "\"}");
     }
 
-    private void handleRemoveBan(HttpExchange exchange, String uuidStr) throws IOException {
+    private void handleRemoveBan(HttpExchange exchange, String uuidStr) throws Exception {
         UUID playerId;
         try { playerId = UUID.fromString(uuidStr); }
         catch (Exception e) { sendJson(exchange, 400, json(false, "Invalid UUID: " + uuidStr)); return; }
 
-        boolean removed = BanManager.getInstance().unbanPlayer(playerId, executorName(exchange));
+        // BanManager.unbanPlayer() broadcasts to staff — touches live network state, so marshal
+        // onto the main thread (see handleCreateBan above).
+        String executor = executorName(exchange);
+        boolean removed = server.submit(() -> BanManager.getInstance().unbanPlayer(playerId, executor)).get();
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unban request for playerId={} removed={}", playerId, removed);
         sendJson(exchange, 200, json(removed, removed ? "Ban removed" : "Ban not found: " + uuidStr));
     }
@@ -410,9 +416,11 @@ public class ModerationEndpoint implements HttpHandler {
         long durationSeconds = body.has("duration") && !body.get("duration").isJsonNull() ? body.get("duration").getAsLong() : -1L;
         String bannedBy = executorName(exchange);
 
-        boolean success = durationSeconds > 0
+        // BanManager.banIP()/tempBanIP() kick every online player on that IP — touches live
+        // entity/network state, so marshal onto the main thread (see handleCreateBan above).
+        boolean success = server.submit(() -> durationSeconds > 0
             ? BanManager.getInstance().tempBanIP(ip, reason, bannedBy, durationSeconds * 1000L)
-            : BanManager.getInstance().banIP(ip, reason, bannedBy);
+            : BanManager.getInstance().banIP(ip, reason, bannedBy)).get();
 
         if (!success) {
             sendJson(exchange, 409, json(false, "IP is already banned, or IP bans are disabled in config"));
@@ -422,8 +430,13 @@ public class ModerationEndpoint implements HttpHandler {
         sendJson(exchange, 200, json(true, "IP ban created"));
     }
 
-    private void handleRemoveIPBan(HttpExchange exchange, String ip) throws IOException {
-        boolean removed = BanManager.getInstance().unbanIP(URLDecoder.decode(ip, StandardCharsets.UTF_8), executorName(exchange));
+    private void handleRemoveIPBan(HttpExchange exchange, String ip) throws Exception {
+        // BanManager.unbanIP() itself is main-thread-safe today (no broadcast, unlike
+        // unbanPlayer()), but marshaling for consistency with its sibling handlers avoids this
+        // silently regressing if broadcast-on-unban is ever added here too.
+        String decodedIp = URLDecoder.decode(ip, StandardCharsets.UTF_8);
+        String executor = executorName(exchange);
+        boolean removed = server.submit(() -> BanManager.getInstance().unbanIP(decodedIp, executor)).get();
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "IP unban request removed={}", removed);
         sendJson(exchange, 200, json(removed, removed ? "IP ban removed" : "IP ban not found: " + ip));
     }

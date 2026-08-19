@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages player bans and IP bans with persistent storage
@@ -64,8 +65,11 @@ public class BanManager {
     // Both the active map and this archive persist to the SAME storage collection
     // (see PLAYER_COLLECTION/IP_COLLECTION), distinguished by BanEntry.active — one
     // record's worth of writes per mutation instead of rewriting a whole file.
-    private final List<BanEntry> banHistory = new ArrayList<>();
-    private final List<IPBanEntry> ipBanHistory = new ArrayList<>();
+    // CopyOnWriteArrayList, not ArrayList: mutated from the background cleanup scheduler thread,
+    // the web dashboard's HTTP thread, and the main game thread (mute/ban expiry checks) — a
+    // plain ArrayList risks ConcurrentModificationException or silently corrupted/lost history.
+    private final List<BanEntry> banHistory = new CopyOnWriteArrayList<>();
+    private final List<IPBanEntry> ipBanHistory = new CopyOnWriteArrayList<>();
 
     public static class BanEntry {
         public String id;
