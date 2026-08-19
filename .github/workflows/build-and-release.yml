@@ -18,7 +18,7 @@ on:
     branches:
       - 1.21.x
       - 26.1.x
-      - 26.x
+      - 26.2.x
     # Changelog/wiki-only edits have no effect on the built jar — don't burn a build number
     # or spam a Discord release notification for them.
     paths-ignore:
@@ -114,7 +114,7 @@ jobs:
           case "${{ github.ref_name }}" in
             1.21.x)  marker="mc1.21.1" ;;
             26.1.x)  marker="mc26.1.2" ;;
-            26.x)    marker="mc26.2" ;;
+            26.2.x)  marker="mc26.2" ;;
             *)       marker="${{ github.ref_name }}" ;;
           esac
 
