@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Thread-safe manager for muted players and IP addresses.
@@ -74,8 +75,12 @@ public class MuteManager {
     private static final Map<String, MuteEntry> mutedPlayers = new ConcurrentHashMap<>();
     private static final Map<String, MuteEntry> mutedIPs = new ConcurrentHashMap<>();
     // Archive of reversed/expired mutes
-    private static final List<MuteEntry> muteHistory = new ArrayList<>();
-    private static final List<MuteEntry> ipMuteHistory = new ArrayList<>();
+    // CopyOnWriteArrayList, not ArrayList: mutated from the background cleanup scheduler thread,
+    // the web dashboard's HTTP thread, and the main game thread (mute expiry checks in isMuted()/
+    // getMuteEntry()) — a plain ArrayList risks ConcurrentModificationException or silently
+    // corrupted/lost history.
+    private static final List<MuteEntry> muteHistory = new CopyOnWriteArrayList<>();
+    private static final List<MuteEntry> ipMuteHistory = new CopyOnWriteArrayList<>();
 
     static {
         migrateLegacyFilesIfNeeded();
