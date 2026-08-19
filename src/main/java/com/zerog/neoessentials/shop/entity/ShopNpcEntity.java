@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.shop.entity;
 
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
 
@@ -41,7 +40,7 @@ public final class ShopNpcEntity {
      * @return configured ArmorStand, ready to spawn
      */
     public static ArmorStand create(Level level, UUID shopId, String shopName) {
-        ArmorStand stand = new ArmorStand(EntityTypes.ARMOR_STAND, level);
+        ArmorStand stand = new ArmorStand(EntityType.ARMOR_STAND, level);
         stand.setInvulnerable(true);
         stand.setSilent(true);
         stand.setNoGravity(true);

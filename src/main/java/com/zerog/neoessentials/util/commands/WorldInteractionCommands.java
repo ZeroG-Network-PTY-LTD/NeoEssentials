@@ -122,7 +122,7 @@ public class WorldInteractionCommands {
                 yield sk;
             }
             case "arrow"      -> {
-                var ar = new Arrow(net.minecraft.world.entity.EntityTypes.ARROW, level);
+                var ar = new Arrow(net.minecraft.world.entity.EntityType.ARROW, level);
                 ar.setOwner(player);
                 ar.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);
                 ar.setDeltaMovement(dir);
@@ -152,7 +152,7 @@ public class WorldInteractionCommands {
                 yield df;
             }
             case "windcharge" -> {
-                var wc = com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityTypes.WIND_CHARGE, level);
+                var wc = com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.WIND_CHARGE, level);
                 if (wc != null) {
                     wc.setOwner(player);
                     wc.snapTo(spawnPos.x, spawnPos.y, spawnPos.z);

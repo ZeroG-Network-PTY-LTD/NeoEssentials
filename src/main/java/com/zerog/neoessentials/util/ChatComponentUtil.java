@@ -273,7 +273,7 @@ public class ChatComponentUtil {
                     // Apply the formatting
                     if (formatting == ChatFormatting.RESET) {
                         currentStyle = net.minecraft.network.chat.Style.EMPTY;
-                    } else if (ChatFormattingCompat.isColor(formatting)) {
+                    } else if (formatting.isColor()) {
                         currentStyle = net.minecraft.network.chat.Style.EMPTY.applyFormat(formatting);
                     } else {
                         // Format codes (bold, italic, etc)

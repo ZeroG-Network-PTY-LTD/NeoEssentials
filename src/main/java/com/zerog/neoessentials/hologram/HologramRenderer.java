@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -106,7 +105,7 @@ public final class HologramRenderer {
             double lineY = data.lineYWithHover(i);
             Component text = HologramTextProcessor.process(line.currentText(), nearestPlayer);
             try {
-                Display.TextDisplay entity = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.TEXT_DISPLAY, level);
+                Display.TextDisplay entity = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.TEXT_DISPLAY, level);
                 if (entity == null) continue;
                 entity.setPos(data.x, lineY, data.z);
                 entity.setNoGravity(true);
@@ -139,7 +138,7 @@ public final class HologramRenderer {
     private static void spawnInteractionEntity(HologramData data, ServerLevel level) {
         try {
             net.minecraft.world.entity.Interaction entity =
-                com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityTypes.INTERACTION, level);
+                com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.INTERACTION, level);
             if (entity == null) return;
 
             double topY = data.lineY(data.lines.size() - 1);

@@ -16,7 +16,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -249,7 +248,7 @@ public class ItemCustomisationCommands {
     }
 
     private static void strikeLightning(net.minecraft.server.level.ServerLevel level, double x, double y, double z) {
-        LightningBolt bolt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityTypes.LIGHTNING_BOLT, level);
+        LightningBolt bolt = com.zerog.neoessentials.util.EntityTypeCompat.create(EntityType.LIGHTNING_BOLT, level);
         if (bolt != null) {
             bolt.snapTo(x, y, z);
             level.addFreshEntity(bolt);

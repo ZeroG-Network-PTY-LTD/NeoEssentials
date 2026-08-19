@@ -926,7 +926,7 @@ public class PlayerEndpoint implements HttpHandler {
                 }
                 var level = com.zerog.neoessentials.util.LevelCompat.of(player);
                 net.minecraft.world.entity.LightningBolt bolt =
-                    com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT, level);
+                    com.zerog.neoessentials.util.EntityTypeCompat.create(net.minecraft.world.entity.EntityType.LIGHTNING_BOLT, level);
                 if (bolt != null) {
                     bolt.snapTo(player.getX(), player.getY(), player.getZ());
                     level.addFreshEntity(bolt);
