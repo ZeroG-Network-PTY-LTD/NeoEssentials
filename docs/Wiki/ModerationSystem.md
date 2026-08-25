@@ -1,6 +1,6 @@
 # Moderation System
 
-> **Version:** 1.0.3+build.9 · **Config:** `config.json` → `moderation` / `storage` sections
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `moderation` / `storage` sections
 
 ---
 
@@ -62,6 +62,13 @@ Every kick (including dashboard-initiated kicks) is recorded with a timestamp, r
 | `/mutelist` | `/mutelist` | `neoessentials.chat.mute` | List muted players |
 
 Muted players cannot chat, send private messages, or send mail. The mute system is implemented in the **chat** module (`com.zerog.neoessentials.chat`), not the moderation module — all three commands share the single `neoessentials.chat.mute` permission (there's no separate exempt/list/unmute node), plus `neoessentials.chat.mute.exempt` to make a player un-mutable.
+
+> ⚠️ Unlike every other moderation command, `/mute`/`/unmute`/`/mutelist` have **no root
+> permission gate at registration** — `neoessentials.chat.mute` is only checked deep inside the
+> command body, not at the point Brigadier registers the command. This means all three are
+> visible to every player in `/help` and can be *attempted* by anyone, though the body-level
+> check should still reject an unauthorized caller — worth verifying directly if you rely on
+> this restriction, rather than assuming registration-time enforcement like most other commands.
 
 Like bans, every mute tracks reason, issuing staff member, an `active` flag, and — once lifted — `unmutedBy` / `unmutedAt`, with full history preserved. **IP mutes** are also supported (mute an IP directly rather than a player name) — currently exposed via the dashboard's `/api/moderation/ipmute` / `/api/moderation/ipmutes` routes rather than an in-game command.
 
