@@ -125,21 +125,25 @@ public class AdminEndpoint implements HttpHandler {
 
                 NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcasting restart message and scheduling restart in 5 seconds");
 
-                // Schedule restart in 5 seconds
+                // Schedule restart in 5 seconds — only the sleep happens off-thread; the
+                // actual world-save/halt calls are marshaled back onto the main thread via
+                // server.execute() instead of touching server state from this raw thread.
                 new Thread(() -> {
                     try {
                         Thread.sleep(5000);
 
-                        // Save all worlds
-                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before restart...");
-                        server.saveAllChunks(true, true, true);
+                        server.execute(() -> {
+                            // Save all worlds
+                            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before restart...");
+                            server.saveAllChunks(true, true, true);
 
-                        // Stop server
-                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server for restart...");
-                        server.halt(false);
+                            // Stop server
+                            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server for restart...");
+                            server.halt(false);
 
-                        // Note: Actual restart depends on how the server is launched
-                        // Most server wrappers detect shutdown and restart automatically
+                            // Note: Actual restart depends on how the server is launched
+                            // Most server wrappers detect shutdown and restart automatically
+                        });
 
                     } catch (InterruptedException e) {
                         NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Restart interrupted", e);
@@ -187,18 +191,22 @@ public class AdminEndpoint implements HttpHandler {
 
                 NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Broadcasting shutdown message and scheduling stop in 5 seconds");
 
-                // Schedule stop in 5 seconds
+                // Schedule stop in 5 seconds — only the sleep happens off-thread; the actual
+                // world-save/halt calls are marshaled back onto the main thread via
+                // server.execute() instead of touching server state from this raw thread.
                 new Thread(() -> {
                     try {
                         Thread.sleep(5000);
 
-                        // Save all worlds
-                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before shutdown...");
-                        server.saveAllChunks(true, true, true);
+                        server.execute(() -> {
+                            // Save all worlds
+                            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Saving all worlds before shutdown...");
+                            server.saveAllChunks(true, true, true);
 
-                        // Stop server
-                        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server...");
-                        server.halt(false);
+                            // Stop server
+                            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Stopping server...");
+                            server.halt(false);
+                        });
 
                     } catch (InterruptedException e) {
                         NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Stop interrupted", e);

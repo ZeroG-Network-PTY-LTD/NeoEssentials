@@ -257,11 +257,22 @@ public class MotdEndpoint implements HttpHandler {
         net.minecraft.network.chat.Component motdComp =
                 net.minecraft.network.chat.Component.literal(p.motd.replace("&", "§"));
 
-        int sent = 0;
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.motd.tag"));
-            player.sendSystemMessage(motdComp);
-            sent++;
+        // Iterating the live player list and touching connections must happen on the main
+        // thread, not this HTTP worker thread — same pattern as AdminEndpoint's broadcast.
+        int sent;
+        try {
+            sent = server.submit(() -> {
+                int count = 0;
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    player.sendSystemMessage(MessageUtil.component("commands.neoessentials.motd.tag"));
+                    player.sendSystemMessage(motdComp);
+                    count++;
+                }
+                return count;
+            }).get();
+        } catch (Exception e) {
+            LOGGER.error("Error broadcasting MOTD on main thread", e);
+            return error("Failed to broadcast MOTD: " + e.getMessage());
         }
 
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "MOTD broadcast to {} players", sent);
