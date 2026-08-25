@@ -57,13 +57,14 @@ public class DiscordSyncEventHandler {
             DiscordPermissionSync.SyncResult result = syncService.syncPlayerPermissions(player);
 
             if (result.isSuccess() && result.getPermissionsGranted() > 0) {
-                // Notify player that permissions were synced
-                player.sendSystemMessage(
+                // This runs on DelayedTaskExecutor's shared pool, not the main server thread —
+                // touching the player's connection must be marshaled back.
+                player.getServer().execute(() -> player.sendSystemMessage(
                     Component.literal(MessageUtil.localize("commands.neoessentials.discord.sync_success_icon"))
                         .withStyle(ChatFormatting.GREEN)
                         .append(Component.literal(MessageUtil.localize("commands.neoessentials.discord.sync_success_message"))
                             .withStyle(ChatFormatting.GRAY))
-                );
+                ));
 
                 NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord permission sync completed for '{}': {}", playerName, result.getMessage());
             } else if (!result.isSuccess()) {
