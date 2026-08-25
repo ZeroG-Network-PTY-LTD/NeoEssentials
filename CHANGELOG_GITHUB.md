@@ -39,6 +39,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 - `/mail sendall` ran on a raw background thread and could corrupt the shared mailbox under concurrent mail activity; it now runs safely on the main thread.
 - Config files and mail data could be left truncated/corrupted if the server crashed mid-save; saves are now atomic (write-then-rename) everywhere, matching how moderation data already worked.
 - The dashboard's saved encryption key for stored secrets (e.g. a paired external dashboard's token) could be left corrupted by a crash during first-time key generation; key writes are now atomic as well.
+- `/pay` could silently lose the sender's money if crediting the receiver failed AND the automatic refund to the sender was itself rejected — the refund now falls back to a guaranteed settlement, same as the auction house/shop fix above.
+- Kit items with saved enchantments, custom names, or other item data failed to load on every server startup (logged as "Failed to deserialize item entry in kit") because kits were loaded before the game's item-component registries were ready; kits are now re-loaded once the server has fully started, so this data is no longer silently dropped.
+- Uploading a resource pack through the web dashboard could corrupt the uploaded file, since the upload parser decoded the binary zip data as text; uploads are now parsed in a binary-safe way.
+- The dashboard login lockout (locking an account after repeated failed attempts) could be bypassed by firing multiple login attempts at the same time, losing some of the failed-attempt count; this is now correctly counted under concurrent attempts.
+- Creating warps at the same time from multiple sources could let the total warp count exceed the configured limit; warp creation now enforces the limit atomically.
 
 #### Changed
 - Replaced the single global debug-logging toggle with independent per-category logging (`logging.categories` in config) — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can now each be switched on/off separately for normal and debug output, instead of one all-or-nothing flag.
