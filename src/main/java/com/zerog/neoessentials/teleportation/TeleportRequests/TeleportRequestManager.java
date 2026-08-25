@@ -478,24 +478,31 @@ private final ScheduledExecutorService scheduler = Executors.newScheduledThreadP
      */
     private void timeoutRequest(TeleportRequest request) {
         cleanupRequest(request);
-        
-        ServerPlayer requester = getPlayerById(request.getRequesterId());
-        ServerPlayer target = getPlayerById(request.getTargetId());
-        
-        if (requester != null) {
-            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.timed_out", 
-                                                          request.getTargetName()));
-        }
-        
-        if (target != null) {
-            target.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.expired_received", 
-                                                       request.getRequesterName()));
-        }
-        
-        if (logTeleportRequests) {
-            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Teleport request from {} to {} timed out", 
-                   request.getRequesterName(), request.getTargetName());
-        }
+
+        // This fires on the manager's own dedicated scheduler thread, not the main server
+        // thread — iterating the live player list (via getPlayerById) and touching player
+        // connections must be marshaled back.
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        server.execute(() -> {
+            ServerPlayer requester = getPlayerById(request.getRequesterId());
+            ServerPlayer target = getPlayerById(request.getTargetId());
+
+            if (requester != null) {
+                requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.timed_out",
+                                                              request.getTargetName()));
+            }
+
+            if (target != null) {
+                target.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.expired_received",
+                                                           request.getRequesterName()));
+            }
+
+            if (logTeleportRequests) {
+                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Teleport request from {} to {} timed out",
+                       request.getRequesterName(), request.getTargetName());
+            }
+        });
     }
     
     /**
