@@ -17,6 +17,7 @@ import java.time.format.FormatStyle;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * REST API handler for internationalization and localization.
@@ -26,8 +27,9 @@ public class TranslationHandler implements HttpHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationHandler.class);
     private final Gson gson = new Gson();
     
-    // Store user language preferences by session
-    private final Map<String, String> userLanguages = new HashMap<>();
+    // Store user language preferences by session — HttpServer dispatches concurrent
+    // requests to this single shared handler instance, so this must be concurrent-safe.
+    private final Map<String, String> userLanguages = new ConcurrentHashMap<>();
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -345,13 +347,31 @@ public class TranslationHandler implements HttpHandler {
      * Reload language files
      */
     private void handleReload(HttpExchange exchange) throws IOException {
-        LocalizationManager.getInstance().reload();
-        
+        // MessageUtil.translations (mutated by reload()) is read from the main thread on
+        // every chat message/command response, so the clear+repopulate must not run on this
+        // HTTP thread concurrently with that. This handler has no MinecraftServer reference
+        // of its own, so marshal via ServerLifecycleHooks like ShopTransaction's low-stock
+        // notification does; if the server isn't up yet (e.g. reload called during early
+        // boot), there's no main thread contending for the map, so run inline.
+        net.minecraft.server.MinecraftServer server =
+                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            try {
+                server.submit(() -> LocalizationManager.getInstance().reload()).get();
+            } catch (Exception e) {
+                LOGGER.error("Failed to reload translations on main thread", e);
+                sendError(exchange, "Failed to reload translations: " + e.getMessage());
+                return;
+            }
+        } else {
+            LocalizationManager.getInstance().reload();
+        }
+
         JsonObject response = new JsonObject();
         response.addProperty("success", true);
         response.addProperty("message", "Language files reloaded");
         response.addProperty("timestamp", Instant.now().toString());
-        
+
         sendJsonResponse(exchange, 200, response);
     }
     
