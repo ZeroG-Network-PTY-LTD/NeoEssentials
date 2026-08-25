@@ -84,45 +84,52 @@ public class AuthenticationManager {
             return null;
         }
 
-        // Check if account is locked
-        if (user.isLockedOut()) {
-            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account locked", username);
-            logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account locked due to failed attempts");
-            return null;
-        }
-
-        // Check if account is enabled
-        if (!user.isEnabled()) {
-            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account disabled", username);
-            logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account disabled");
-            return null;
-        }
-
-        // Verify password
-        if (!verifyPassword(password, user.getPasswordHash())) {
-            // Increment failed attempts
-            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-
-            // Lock account if max attempts reached
-            if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
-                user.setLockoutUntil(System.currentTimeMillis() + LOCKOUT_DURATION_MS);
-                logAuditEvent("ACCOUNT_LOCKED", username, ipAddress,
-                    "Account locked due to " + MAX_FAILED_ATTEMPTS + " failed attempts");
+        // Everything below reads-then-writes user.failedLoginAttempts/lockoutUntil — the
+        // dashboard's HttpServer dispatches concurrent requests, and every request for this
+        // username shares the same User instance (from the ConcurrentHashMap), so this whole
+        // check-then-act sequence must be serialized per-user or parallel login attempts can
+        // lose increments and never trip the lockout (classic lost-update TOCTOU race).
+        synchronized (user) {
+            // Check if account is locked
+            if (user.isLockedOut()) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account locked", username);
+                logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account locked due to failed attempts");
+                return null;
             }
 
-            saveUsers();
-            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication failed for '{}': invalid password (attempt {}/{})",
-                username, user.getFailedLoginAttempts(), MAX_FAILED_ATTEMPTS);
-            logAuditEvent("LOGIN_FAILED", username, ipAddress, "Invalid password");
-            return null;
-        }
+            // Check if account is enabled
+            if (!user.isEnabled()) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication blocked for '{}': account disabled", username);
+                logAuditEvent("LOGIN_BLOCKED", username, ipAddress, "Account disabled");
+                return null;
+            }
 
-        // Successful login - reset failed attempts
-        user.setFailedLoginAttempts(0);
-        user.setLockoutUntil(0);
-        user.setLastLoginAt(System.currentTimeMillis());
-        user.setLastLoginIp(ipAddress);
-        saveUsers();
+            // Verify password
+            if (!verifyPassword(password, user.getPasswordHash())) {
+                // Increment failed attempts
+                user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+
+                // Lock account if max attempts reached
+                if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+                    user.setLockoutUntil(System.currentTimeMillis() + LOCKOUT_DURATION_MS);
+                    logAuditEvent("ACCOUNT_LOCKED", username, ipAddress,
+                        "Account locked due to " + MAX_FAILED_ATTEMPTS + " failed attempts");
+                }
+
+                saveUsers();
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Authentication failed for '{}': invalid password (attempt {}/{})",
+                    username, user.getFailedLoginAttempts(), MAX_FAILED_ATTEMPTS);
+                logAuditEvent("LOGIN_FAILED", username, ipAddress, "Invalid password");
+                return null;
+            }
+
+            // Successful login - reset failed attempts
+            user.setFailedLoginAttempts(0);
+            user.setLockoutUntil(0);
+            user.setLastLoginAt(System.currentTimeMillis());
+            user.setLastLoginIp(ipAddress);
+            saveUsers();
+        }
 
         // Create session
         Session session = new Session(user.getId(), user.getUsername(), user.getRole(), ipAddress, userAgent);
