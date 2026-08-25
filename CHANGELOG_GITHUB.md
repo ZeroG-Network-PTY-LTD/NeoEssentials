@@ -44,10 +44,28 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 - Uploading a resource pack through the web dashboard could corrupt the uploaded file, since the upload parser decoded the binary zip data as text; uploads are now parsed in a binary-safe way.
 - The dashboard login lockout (locking an account after repeated failed attempts) could be bypassed by firing multiple login attempts at the same time, losing some of the failed-attempt count; this is now correctly counted under concurrent attempts.
 - Creating warps at the same time from multiple sources could let the total warp count exceed the configured limit; warp creation now enforces the limit atomically.
+- Banning, muting, or jailing a player from the web dashboard without specifying a duration (i.e. a permanent action) crashed with an error instead of applying the permanent punishment.
+- Web dashboard routes for viewing IP ban/mute lists were missing an admin check, letting any authenticated dashboard account read real IP addresses, ban reasons, and staff attribution.
+- Path-traversal vulnerabilities in the server backup system (restore/delete/download) and the dashboard's file-restore tool could let an authenticated admin session read or overwrite arbitrary files on the server outside the intended backup directory.
+- Overwriting a hologram by reusing an existing hologram's ID left the old entity orphaned in the world (still visible, but no longer manageable) instead of removing it first.
+- `/ipban` and `/ipmute` (and the equivalent dashboard forms) accepted any text as an IP address with no validation, silently storing typos as junk ban/mute entries; both now validate the address format.
+- The moderation data storage backend (bans, mutes, kicks, warns, notes, jails) wrote directly to its files with no crash protection — a crash mid-write could corrupt or truncate that data; saves are now atomic, and a corrupted file found on load is backed up aside instead of silently treated as empty.
+- `/pay` could consume the sender's cooldown even when the payment failed for an unrelated reason (mistyped name, over the transfer limit, etc.); the cooldown is now only consumed on an actual successful payment.
+- Split-config mode (`config.json` split into per-module files) could crash the server with a stack overflow shortly after being enabled.
+- The `/language` command's setting was stored under the wrong config location and silently had no effect; it's now read from and applied to the correct place.
+- `kits.json`/`permissions.json`'s in-file instructions incorrectly implied they could still be hand-edited after the first server boot — corrected to explain they're one-time import files once a storage backend has data, with a one-time in-game notice if you still have real data sitting unmigrated in either.
+
+#### Added
+- The web dashboard can now file a moderation report directly (previously reports could only be viewed/reviewed there, and had to be filed in-game via `/report`).
+- Jail cells can now be created directly from the web dashboard by typing in coordinates, not just in-game via `/setjail`/the jail wand.
+- Active IP bans/mutes are now visible on the public (no-login) moderation lookup page, with the address partially redacted.
+- Added `shop.pricing` to `config.json` — the dynamic shop-pricing engine (supply/demand, time-based discounts, bulk-purchase tiers) was already fully implemented but had no config section to actually turn it on or tune it.
 
 #### Changed
 - Replaced the single global debug-logging toggle with independent per-category logging (`logging.categories` in config) — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can now each be switched on/off separately for normal and debug output, instead of one all-or-nothing flag.
 - Dozens of previously-silent error paths across chat, permissions, tablist, teleportation, and command handling now log real diagnostic detail when their category's debug logging is enabled, instead of failing without a trace.
+- Removed several dead config keys that had no effect on server behavior despite being present in `config.json` (a handful of unused chat-notification keys, and economy's `autoSaveInterval`) — if you had customized any of these, they were never actually doing anything.
+- Report filing (`/report` in-game, and the new dashboard route above) is open to any player/dashboard user by default, matching the in-game command's default permission — only reviewing the report queue is staff-only.
 
 #### Platform
 - Added a Minecraft 26.2 build (`26.2.x` branch, NeoForge 26.2.0.63+), alongside the existing pinned Minecraft 26.1–26.1.2 build (`26.1.x`).
