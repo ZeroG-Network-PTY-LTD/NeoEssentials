@@ -103,7 +103,7 @@ public final class ShopTransaction {
         giveItems(buyer, item);
 
         if (!shop.isAdminShop() && shop.ownerUUID != null) {
-            eco.credit(shop.ownerUUID, price);
+            guaranteedCredit(eco, shop.ownerUUID, price, "BUY", shop);
         }
 
         shop.totalSalesCount++;
@@ -162,7 +162,7 @@ public final class ShopTransaction {
             if (chest != null) addItems(chest, template, shop.quantity);
         }
 
-        eco.credit(seller.getUUID(), price);
+        guaranteedCredit(eco, seller.getUUID(), price, "SELL", shop);
 
         shop.totalSalesCount++;
         shop.lastSaleTimestamp = System.currentTimeMillis();
@@ -174,6 +174,30 @@ public final class ShopTransaction {
         NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] SELL: {} sold {}x {} for {} to {}",
                 seller.getName().getString(), shop.quantity, shop.itemId, price, shop.ownerName);
         return ok(price, shop.quantity);
+    }
+
+    /**
+     * Credits {@code recipient} via the pluggable {@link ShopEconomyAdapter}, and if that's
+     * rejected (a cancellable deposit event, provider error, etc.) falls back to a guaranteed,
+     * non-cancellable {@code EconomyManager.setBalance()} settlement — by the point this is
+     * called, the other side of the trade (item or payment) has already been taken from the
+     * counterparty, so a rejected credit here must not silently lose it. Matches the fallback
+     * already used by {@code AuctionHouseManager.buyItem()} for the same failure mode.
+     */
+    private static void guaranteedCredit(ShopEconomyAdapter eco, java.util.UUID recipient, BigDecimal amount, String direction, ShopData shop) {
+        try {
+            boolean paid = eco.credit(recipient, amount);
+            if (!paid) {
+                NeoLog.error(LOGGER, LogCategory.GENERAL,
+                        "[ChestShop] {} credit rejected via {} for {} on shop '{}' — forcing settlement to avoid losing the payment",
+                        direction, eco.getProviderName(), recipient, shop.toKey());
+                var em = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+                em.setBalance(recipient, em.getBalance(recipient).add(amount));
+            }
+        } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL,
+                    "[ChestShop] Could not credit " + recipient + " for shop '" + shop.toKey() + "'", e);
+        }
     }
 
     // ── Low-stock notification ─────────────────────────────────────────────────
