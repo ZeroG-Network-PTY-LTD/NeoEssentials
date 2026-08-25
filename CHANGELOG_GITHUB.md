@@ -32,6 +32,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 - Discord mention sanitization (preventing chat-triggered `@everyone`/`@here`/role pings) now also covers the Mc2Discord and DCIntegration bridge adapters, not just the primary integration.
 - Web dashboard vanish, jail, and balance-adjustment actions were mutating live player/entity state directly from the HTTP request thread instead of the main server thread, risking corrupted entity state under concurrent use — now correctly synchronized.
 - A narrow disconnect race in the vanish system's player-join handling, where a player who disconnected within a 1-tick window could still be sent stale visibility packets.
+- Permission condition evaluation failed *open* (granted access) instead of denying it when a condition errored, the same bug class as the FTB Ranks fix above.
+- Auction house sellers, and ChestShop buyers/sellers, could lose their payment if the economy credit was rejected mid-transaction; both now fall back to a guaranteed settlement instead of silently dropping the money.
+- A wide range of web dashboard actions — ban/IP-ban management, scheduled-task execution (including server restart), server restart/stop, MOTD broadcast, statistics, permissions, and Discord integration status — were reading or mutating live player/server state directly from the dashboard's HTTP request thread instead of the main server thread, risking corrupted state or crashes under concurrent use. All now correctly synchronized, matching the vanish/jail/economy fix above.
+- The AFK movement detector, the fake tab-list player skin refresh, the Discord permission-sync join notification, and the `/tpa` request timeout all had the same off-main-thread state access as above and are now fixed.
+- `/mail sendall` ran on a raw background thread and could corrupt the shared mailbox under concurrent mail activity; it now runs safely on the main thread.
+- Config files and mail data could be left truncated/corrupted if the server crashed mid-save; saves are now atomic (write-then-rename) everywhere, matching how moderation data already worked.
+- The dashboard's saved encryption key for stored secrets (e.g. a paired external dashboard's token) could be left corrupted by a crash during first-time key generation; key writes are now atomic as well.
 
 #### Changed
 - Replaced the single global debug-logging toggle with independent per-category logging (`logging.categories` in config) — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can now each be switched on/off separately for normal and debug output, instead of one all-or-nothing flag.
