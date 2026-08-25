@@ -432,6 +432,16 @@ public class NeoEssentials {
                 LOGGER.error("Failed to set AuctionHouse server reference", e);
             }
 
+            // KitManager.initialize() ran during RegisterCommandsEvent, before the component
+            // serializer's server reference above was set — any kit item with saved
+            // DataComponentMap data failed to deserialize on that first load. Re-load kits now
+            // that components are bound.
+            try {
+                com.zerog.neoessentials.kits.KitManager.getInstance().reloadKitItemsAfterServerStart();
+            } catch (Exception e) {
+                LOGGER.error("Failed to reload kit items after server start", e);
+            }
+
             // Initialize chat integration adapters (SDLink, DCIntegration, DiscordSRV, etc.)
             if (com.zerog.neoessentials.config.ConfigManager.isDiscordIntegrationModuleEnabled()) {
                 try {
