@@ -24,9 +24,6 @@ The AFK system automatically marks players as AFK after a configurable period of
 | `broadcastOnReturn` | `true` | Broadcast when a player returns from AFK |
 | `afkMessage` | `"{player} is now AFK"` | Broadcast when going AFK (`{player}` placeholder) |
 | `returnMessage` | `"{player} is no longer AFK"` | Broadcast on return |
-| `enableTablistIndicator` | `true` | Show AFK indicator in tablist |
-| `tablistAfkPrefix` | `"[AFK] "` | Prefix added to tablist name for AFK players |
-| `tablistAfkSuffix` | `""` | Suffix added to tablist name for AFK players |
 | `ignoreAfkInSleep` | `true` | AFK players do not count for sleep percentage |
 | `enableActivityTracking` | `true` | Track player activity to detect inactivity |
 | `trackMovement` | `true` | Player movement resets AFK timer |
@@ -46,6 +43,14 @@ Each of the four sub-toggles independently gates its own activity source (moveme
 messages, command execution, block/item interactions). A genuine, non-muted, non-frozen chat
 message now resets the AFK timer when `trackChat` is enabled (previously chat never reset the
 timer at all, regardless of this setting — fixed alongside the rest of this audit).
+
+> **Tablist AFK indicator is NOT configured here.** The `enableTablistIndicator`/
+> `tablistAfkPrefix`/`tablistAfkSuffix` keys previously documented in this section don't exist in
+> the shipped `afk` config, and the code path that would consume them (`AfkTablistHandler`) is
+> dead — it computes a display name but never applies it. The AFK indicator that actually renders
+> is controlled by `tablist.json` → `showAfkIndicator` (default `true`) and `afkSuffix` (default
+> `" &7[AFK]"`, suffix only — there's no separate prefix option). See
+> [Tablist System](TablistSystem) for the rest of that config.
 
 ---
 

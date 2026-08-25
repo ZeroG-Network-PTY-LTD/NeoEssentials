@@ -361,7 +361,7 @@ Shows Y-coordinate information including depth below sea level and height above 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
 | `/me` | `/me <action>` | `neoessentials.me` | Broadcast a third-person action message |
-| `/firework` | `/firework` | `neoessentials.firework` | Launch a firework |
+| `/firework` | `/firework clear\|power <0-127>\|fire [amount]\|color <hex[,hex]> [fade:<hex>] [shape:<shape>] [effect:<effect>]` | `neoessentials.firework` (`fire` additionally needs `neoessentials.firework.fire`) | Edit and launch the firework rocket you're holding — there's no bare `/firework` with no subcommand |
 | `/antioch` | `/antioch` | `neoessentials.antioch` | Launch a Holy Hand Grenade 🐇 |
 | `/kittycannon` | `/kittycannon` | `neoessentials.kittycannon` | Launch a kitten |
 | `/beezooka` | `/beezooka` | `neoessentials.beezooka` | Launch bees |
@@ -377,9 +377,13 @@ Shows Y-coordinate information including depth below sea level and height above 
 |---|---|---|---|
 | `/mail read` | `/mail read [page]` | `neoessentials.mail` | Read your mail |
 | `/mail send` | `/mail send <player> <message>` | `neoessentials.mail.send` | Send mail |
-| `/mail sendtemp` | `/mail sendtemp <player> <duration> <message>` | `neoessentials.mail.sendtemp` | Send expiring mail |
-| `/mail sendall` | `/mail sendall <message>` | `neoessentials.mail.sendall` | Broadcast mail to all players |
-| `/mail clear` | `/mail clear [index]` | `neoessentials.mail` | Clear your mailbox or specific message |
+| `/mail sendtemp` | `/mail sendtemp <player> <duration> <message>` | `neoessentials.mail.sendtemp` | Send expiring mail (duration like `30s`/`5m`/`2h`/`1d`/`1w`) |
+| `/mail sendall` | `/mail sendall <message>` | `neoessentials.mail.sendall` | Broadcast mail to all players (admin) |
+| `/mail sendtempall` | `/mail sendtempall <duration> <message>` | `neoessentials.mail.sendtempall` | Broadcast expiring mail to all players (admin) |
+| `/mail delete` | `/mail delete <id>` | `neoessentials.mail` | Delete a single message by its short ID |
+| `/mail clear` | `/mail clear [index]` | `neoessentials.mail.clear` | Clear your mailbox or a specific message |
+| `/mail clear` | `/mail clear <player> [index]` | `neoessentials.mail.clear.others` | Clear another player's mailbox (admin) |
+| `/mail clearall` | `/mail clearall` | `neoessentials.mail.clearall` | Wipe every player's mailbox (admin) |
 
 ---
 

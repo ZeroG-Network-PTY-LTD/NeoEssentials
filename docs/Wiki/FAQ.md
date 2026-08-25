@@ -17,9 +17,10 @@ tablist customization, and a built-in web dashboard — the kind of feature set 
 covers on Bukkit/Spigot, but for NeoForge.
 
 **Q: Is there a Fabric/Forge (non-Neo) version?**
-Not covered by this repo. There is a separate `mc-26.1-port` branch targeting a newer Minecraft/
-NeoForge version (26.1.2), maintained in parallel with the main 1.21.1 branch — features get
-ported over manually, so the two branches can drift out of sync.
+Not covered by this repo. There are three dev branches, one per supported Minecraft-minor line —
+`1.21.x` (1.21.1–1.21.11, the primary branch), `26.1.x` (pinned to 26.1–26.1.2), and `26.2.x`
+(pinned to 26.2) — since a single jar can't be binary-compatible across those API boundaries.
+Features get ported over manually between branches, so they can drift out of sync.
 
 **Q: Where do I report bugs / ask questions?**
 Discord: https://discord.gg/dUGAQF2Mga (per the wiki's Support section).

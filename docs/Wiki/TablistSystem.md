@@ -123,18 +123,6 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
 | `{max_health}` | Maximum HP (integer) |
 | `{afk}` | Blank when active; shows `afkSuffix` text when AFK |
 
-### BTLP-Style (Player Stats & Session)
-
-| Placeholder | Description |
-|-------------|-------------|
-| `{rank_weight}` | Numeric permission group weight |
-| `{session_minutes}` | Minutes elapsed in current session (0–59) |
-| `{session_hours}` | Full hours elapsed in current session |
-| `{level}` | Player XP level |
-| `{health}` | Current HP (integer) |
-| `{max_health}` | Maximum HP (integer) |
-| `{afk}` | Blank when active; shows `afkSuffix` text when AFK |
-
 ### PlaceholderAPI / NeoEssentials Expansion Tokens
 
 Any `{neoessentials_*}` token registered with the PlaceholderAPI system is also resolved in tablist header, footer, and player row fields. This includes all built-in tokens and any custom expansion tokens registered by other mods.
@@ -411,7 +399,7 @@ for separator lines, section headers, or grid padding.
 | `skinTexture` | string | — | Raw base64 `textures` property value for a fully custom skin/head |
 | `skinSignature` | string | — | Signature paired with `skinTexture` (optional — vanilla doesn't re-verify it for tab-list rendering) |
 
-Each fake entry uses a **stable UUID** derived from its `id` via `UUID.nameUUIDFromBytes()",
+Each fake entry uses a **stable UUID** derived from its `id` via `UUID.nameUUIDFromBytes()`,
 so the same entry is always represented by the same UUID across server restarts and reloads.
 
 ### Custom Skins / Heads
