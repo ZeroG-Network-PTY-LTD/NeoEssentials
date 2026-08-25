@@ -90,6 +90,22 @@ public class KitManager {
     }
     
     /**
+     * Re-deserializes every kit's items from storage. {@link #initialize()} runs during
+     * {@code RegisterCommandsEvent}, which fires before {@code AuctionComponentSerializer}'s
+     * server reference is set (that happens at {@code ServerStartedEvent}) — so any kit item
+     * carrying saved {@code DataComponentMap} data (enchantments, custom names, etc.) silently
+     * fails to deserialize on that first load and is dropped from the kit. Call this once the
+     * server has started to re-load every kit with components now correctly bound; loadKits()
+     * naturally overwrites each kit's map entry in place, so this is safe to call even if the
+     * first load already partially succeeded.
+     */
+    public void reloadKitItemsAfterServerStart() {
+        if (!initialized) return;
+        NeoLog.debug(LOGGER, LogCategory.KITS, "Re-loading kits now that item components are bound...");
+        loadKits();
+    }
+
+    /**
      * Loads all kits from the active {@link com.zerog.neoessentials.storage.DataStore}.
      */
     private void loadKits() {
