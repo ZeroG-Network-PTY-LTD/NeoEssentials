@@ -551,12 +551,6 @@ public class WarpManager {
             return false;
         }
         
-        // Check warp limit before attempting creation
-        if (warps.size() >= maxWarps) {
-            creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.limit_reached", maxWarps));
-            return false;
-        }
-        
         // Check world restriction
         if (allowOverworldOnly && !isOverworld(location)) {
             creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.overworld_only"));
@@ -590,11 +584,22 @@ public class WarpManager {
             creator.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.warp.moved_to_safety"));
         }
         
-        // Atomic warp creation using putIfAbsent to prevent duplicate names
-        TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
-        if (existing != null) {
-            creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.already_exists", warpName));
-            return false;
+        // Atomic warp-limit check + creation: checking warps.size() and then putIfAbsent as two
+        // separate steps let two concurrent creations with different names both pass the limit
+        // check before either inserted, letting the count exceed maxWarps — same TOCTOU class
+        // already fixed via Map.compute() in HomeManager.setHome(). Synchronizing the
+        // check-then-insert here closes the same gap without needing every read of `warps`
+        // elsewhere to also synchronize.
+        synchronized (warps) {
+            if (warps.size() >= maxWarps) {
+                creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.limit_reached", maxWarps));
+                return false;
+            }
+            TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
+            if (existing != null) {
+                creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.already_exists", warpName));
+                return false;
+            }
         }
 
         // Warp genuinely created — now commit the cooldown.
@@ -663,10 +668,6 @@ public class WarpManager {
             return "invalid_name";
         }
 
-        if (warps.size() >= maxWarps) {
-            return "limit_reached";
-        }
-
         if (!allowCrossDimensionWarps && !isOverworld(location)) {
             return "cross_dimension_disabled";
         }
@@ -700,9 +701,16 @@ public class WarpManager {
         }
 
         String normalizedName = caseSensitiveNames ? warpName : warpName.toLowerCase();
-        TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
-        if (existing != null) {
-            return "already_exists";
+        // See createWarp()'s matching comment — the limit check and insert must be atomic
+        // together, not two separate steps, to actually enforce maxWarps under concurrency.
+        synchronized (warps) {
+            if (warps.size() >= maxWarps) {
+                return "limit_reached";
+            }
+            TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
+            if (existing != null) {
+                return "already_exists";
+            }
         }
 
         saveWarps();
