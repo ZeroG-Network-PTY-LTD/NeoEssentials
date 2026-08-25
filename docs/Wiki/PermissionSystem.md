@@ -1,6 +1,6 @@
 # NeoEssentials — Permission System
 
-> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28
+> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28 (Mail permission-node section re-verified 2026-08-25 against v1.0.5+build.54 — the rest of this ~1500-line reference has not had a full node-by-node re-audit since the version above; treat other sections as probably-but-not-recently-verified accurate)
 > **Source of truth:** `PermissionRegistry.registerAllPermissions()` in the mod source.  
 > All nodes listed here are **actively registered** and recognised by the permission engine.  
 > Nodes marked `✅ default` are granted to every player automatically (including non-OP).  
@@ -808,9 +808,15 @@ These are **registered automatically** when a kit is created via `/createkit`.
 #### Mail
 | Node | Default | Description | Command |
 |---|---|---|---|
-| `neoessentials.mail` | ✅ default | Use the mail system | `/mail` |
+| `neoessentials.mail` | ✅ default | View mail status, read own mail | `/mail`, `/mail read` |
 | `neoessentials.mail.send` | ✅ default | Send mail to a player | `/mail send` |
-| `neoessentials.mail.clear` | ✅ default | Clear own mailbox | `/mail clear` |
+| `neoessentials.mail.sendtemp` | ✅ default | Send an expiring mail to a player | `/mail sendtemp` |
+| `neoessentials.mail.sendall` |  op-only | Broadcast mail to every player | `/mail sendall` |
+| `neoessentials.mail.sendtempall` |  op-only | Broadcast expiring mail to every player | `/mail sendtempall` |
+| `neoessentials.mail` | ✅ default | Delete own mail by ID | `/mail delete` |
+| `neoessentials.mail.clear` | ✅ default | Clear own mailbox (or one message by index) | `/mail clear [index]` |
+| `neoessentials.mail.clear.others` |  op-only | Clear another player's mailbox | `/mail clear <player> [index]` |
+| `neoessentials.mail.clearall` |  op-only | Wipe every player's mailbox | `/mail clearall` |
 
 #### Moderation Chat
 | Node | Default | Description | Command |

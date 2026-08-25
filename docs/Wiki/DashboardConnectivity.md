@@ -122,21 +122,26 @@ Work through these in order — each rules out one layer:
 
 ---
 
-## Keeping `mc-26.1-port` in sync
+## Keeping the other branches in sync
 
-`mc-26.1-port` (targeting Minecraft 26.1.2) is a parallel branch kept in sync with `Dev-Builds`
-(1.21.1) by cherry-picking every feature commit across as it lands — including all of the
-dashboard/connectivity work described on this page. Both branches share the same `build_number.txt`
-value and changelog entry numbers for anything shipped on both. Everything described on this page
-(the `webDashboard.mode` config, `/api/ping`, the dashboard security/account-linking features)
-is already live on both branches as of build.16 — this isn't a pending-port item.
+NeoEssentials ships three parallel dev branches, one per supported Minecraft-version line —
+`1.21.x` (1.21.1–1.21.11), `26.1.x` (pinned to 26.1–26.1.2), and `26.2.x` (26.2) — kept in sync by
+cherry-picking every feature/fix commit across all three as it lands, including all of the
+dashboard/connectivity work described on this page. They share one build-number counter (a GitHub
+Actions repo variable, `BUILD_NUMBER` — not a file committed to the branches) so a fix shipped on
+all three lands under the same build number everywhere. Everything described on this page (the
+`webDashboard.mode` config, `/api/ping`, the dashboard security/account-linking features) is
+already live on all three branches.
 
 Since this connectivity layer is plain Java (`HttpExchange`/`HttpServer`, no `net.minecraft.*`
 types touched) and JSON config, it's historically been a low-risk, mechanical cherry-pick with no
-exposure to the Minecraft-version API differences that trip up other ports (e.g.
+exposure to the Minecraft-version API differences that trip up other cross-branch ports (e.g.
 `GameProfile`/`getProfileCache()` → `NameAndId`/`server.services().nameToIdCache()`,
 `ClickType` → `ContainerInput`) — worth knowing if you're deciding how to port a *future* change
-here yourself.
+here yourself. `26.1.x` and `26.2.x` do occasionally need a small API-shape adjustment for changes
+in other parts of the mod (not this connectivity layer specifically) since Mojang's official
+mappings rename things between Minecraft versions — see each branch's own README for its current
+target version.
 
 ---
 

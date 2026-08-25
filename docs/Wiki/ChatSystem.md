@@ -1,6 +1,6 @@
 # Chat System
 
-> **Version:** 1.0.2.7 · **Config:** `config.json` → `chat` section
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `chat` section
 
 ---
 
@@ -14,14 +14,22 @@ Full-featured chat system with format templates, rich text (gradients/rainbow/ho
 
 | Key | Default | Description |
 |---|---|---|
-| `enabled` | `true` | Enable NeoEssentials chat handling |
-| `enable-chat-formatting` | `true` | Apply format templates to messages |
-| `chat-format` | `"<{prefix}{name}{suffix}> {message}"` | Default format. Supports placeholders, color codes, and rich text tags |
+| `modules.chatEnabled` | `true` | Master switch for chat handling (top-level `modules` section, not under `chat`) |
+| `chat-format` | *(object)* | Per-group/world/default format templates — see [Format Priority](#format-priority) below |
+| `enableChatEnhancements` | `true` | Clickable names, mentions, URL linking, `[item]` display |
+| `clickablePlayerNames` | `true` | Make player names clickable (hover for stats, click to message) |
+| `autoLinkUrls` | `true` | Automatically linkify URLs in chat |
+| `allowItemLinks` | `true` | Allow `[item]` placeholder to show the held item |
+| `mentions.enabled` | `true` | `@PlayerName` mention system (highlight color, sound, permission gate — see `mentions.*`) |
+| `badges.enabled` | `true` | Rank badges/status icons — see [Rank Badges & Status Icons](#rank-badges--status-icons) |
+| `richText.enabled` | **`false`** | Gradient/rainbow rich-text tags. **Off by default** — enable this to use `<gradient>`/`<rainbow>` (hover/click tags aren't gated by this flag) |
+| `conditionalFormatting.enabled` | `false` | `<if:time=...>`/`<if:health<50>`/`<if:afk>`-style conditional format tags — a separate feature from `richText`, not otherwise documented on this page yet |
+| `channels` | *(object)* | Per-channel definitions — see [Chat Channels](ChatChannels) |
+| `enable-chat-formatting` | `true` | Apply the `chat-format` templates at all — `false` falls back to vanilla chat formatting |
+| `enable-color-codes` | `true` | Allow `&`-color codes (including hex) to render in formatted chat at all — a prerequisite gate above the per-player [Colour Permissions](#player-message-colour-permissions) below |
 | `logChatToConsole` | `true` | Print formatted messages to server console |
 | `customJoinMessage` | `"none"` | Custom join broadcast (placeholders supported via PlaceholderAPI). `"none"` = use vanilla join message |
 | `customQuitMessage` | `"none"` | Custom quit broadcast. `"none"` = use vanilla quit message |
-| `channels` | *(object)* | Per-channel definitions — see [Chat Channels](#chat-channels) below |
-| `richText.enabled` | `true` | Enable gradient/rainbow/hover/click tags |
 
 > There is no global `localChatRadius`/`joinMessage`/`quitMessage` key — proximity-based chat is
 > configured per-channel (see below), and join/quit broadcasts are controlled by
@@ -434,7 +442,7 @@ Players must have the appropriate permissions to use color/formatting in their o
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
 | `/msg` | `/msg <player> <message>` | `neoessentials.chat.msg` | Send a private message |
-| `/message`, `/tell`, `/whisper`, `/w` | aliases | same | Aliases (there is no `/m` alias) |
+| `/message`, `/tell`, `/pm`, `/w` | aliases | same | Aliases (there is no `/whisper` or `/m` alias) |
 | `/reply` | `/reply <message>` | `neoessentials.chat.reply` | Reply to last private message |
 | `/r` | alias | same | Alias |
 | `/msgtoggle` | `/msgtoggle [on\|off]` | `neoessentials.chat.msgtoggle` | Toggle receiving private messages |
@@ -509,11 +517,18 @@ Works standalone (no relay) if Simple Discord Link is not installed.
 
 ## Data Files
 
-| File | Contents |
+Ignore lists and mutes are persisted through the pluggable **DataStore** backend (JSON by
+default — see [Storage Backend](Storage)), not dedicated bespoke files:
+
+| Collection / File | Contents |
 |---|---|
-| `neoessentials/ignore_data.json` | Per-player ignore lists |
-| `neoessentials/muted_players.json` | Active mutes |
-| `config/neoessentials/player_chat_formats.json` | Per-player format overrides |
+| `ignore_lists` | Per-player ignore lists |
+| `mutes` / `ip_mutes` | Active player mutes / IP mutes |
+| `config/neoessentials/player_chat_formats.json` | Per-player format overrides (still a bespoke file, not DataStore-backed) |
+
+> **Legacy files:** `neoessentials/ignore_data.json` and `neoessentials/muted_players.json` are
+> the pre-DataStore on-disk formats. They're only read once, automatically, to migrate their
+> contents into the collections above — never written to again afterward.
 
 ---
 

@@ -1,6 +1,6 @@
 # Chat Channels
 
-> **Version:** 1.0.2.6 · **Config:** `config.json` → `chat.channels` section
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `chat.channels` section
 
 ---
 
@@ -119,6 +119,15 @@ This is (trimmed from) the actual shipped default in `config.json`:
 ```json
 "channels": {
   "enabled": true,
+  "team": {
+    "enabled": true,
+    "command": "team",
+    "aliases": ["t", "teamchat"],
+    "displayName": "&a⛨ Team",
+    "teamBased": true,
+    "default": false,
+    "discord": { "enabled": false, "channelId": "" }
+  },
   "local": {
     "enabled": true,
     "radius": 100,
@@ -131,7 +140,7 @@ This is (trimmed from) the actual shipped default in `config.json`:
   "global": {
     "enabled": true,
     "command": "g",
-    "aliases": ["global", "gc"],
+    "aliases": ["global"],
     "prefix": "!",
     "default": false,
     "discord": { "enabled": true, "channelId": "" }
@@ -148,7 +157,12 @@ This is (trimmed from) the actual shipped default in `config.json`:
 }
 ```
 
-With this config, typing `@hi` sends `hi` to the staff channel for that message only, `!hi` sends it to global, and plain unprefixed chat goes to `local` (the `default: true` channel) unless the player has run `/staff` or `/g` to switch persistently.
+> `global`'s alias list used to also include `gc`, but that collides with the built-in
+> memory/TPS diagnostics command (`/gc`) — the diagnostics command wins registration, silently
+> making `gc` unusable for switching channels. It was dropped from the shipped default; use
+> `/g`/`/global` instead.
+
+With this config, typing `@hi` sends `hi` to the staff channel for that message only, `!hi` sends it to global, and plain unprefixed chat goes to `local` (the `default: true` channel) unless the player has run `/staff`, `/g`, or `/team` to switch persistently. The `team` channel is shipped enabled by default too — see [Team Channel](#team-channel-ftb-teams-or-similar) below for what happens if no supported team mod is installed.
 
 ---
 

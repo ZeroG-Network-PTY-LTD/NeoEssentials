@@ -1,6 +1,6 @@
 # Item Management
 
-> **Version:** 1.0.4+build.16 · **Last verified:** 2026-07-23
+> **Version:** 1.0.5+build.54 · **Last verified:** 2026-08-25
 
 ---
 
@@ -111,7 +111,7 @@ Command contains unsafe characters. Enable 'allowUnsafeCommands' in config to us
 | `/say Hello` | Chat message |
 | `/neoe heal` | NeoEssentials shortcut |
 
-**Commands blocked by default** (require `allowUnsafeCommands: true`):
+**Commands blocked when `allowUnsafeCommands` is `false`:**
 
 | Command | Blocked because |
 |---|---|
@@ -121,9 +121,14 @@ Command contains unsafe characters. Enable 'allowUnsafeCommands' in config to us
 | `/tellraw @a {"text":"hi"}` | Contains `@` and `{` |
 | `/give @s shulker_box{Items:[]}` | Contains `@` and `{` |
 
-**To unlock all command patterns**, set `allowUnsafeCommands: true` in:
-- **Split config mode:** `config/neoessentials/security.json` → `security.allowUnsafeCommands`
-- **Monolithic mode:** `config/neoessentials/config.json` → `security.allowUnsafeCommands`
+> **`allowUnsafeCommands` ships `true` by default** — the patterns above are **not** blocked out
+> of the box. Set it to `false` if you want powertool bindings restricted to the simpler patterns
+> in the "works without any config change" table above; leave it `true` (the default) to allow
+> the full range of commands, including relative coordinates and selectors, in a powertool
+> binding.
+>
+> - **Split config mode:** `config/neoessentials/security.json` → `security.allowUnsafeCommands`
+> - **Monolithic mode:** `config/neoessentials/config.json` → `security.allowUnsafeCommands`
 
 Then run `/neoe reload` — no restart needed.
 

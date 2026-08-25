@@ -1,6 +1,6 @@
 # Split Configuration System
 
-> **Version:** 1.0.4+build.16 · **Config dir:** `config/neoessentials/`
+> **Version:** 1.0.5+build.54 · **Config dir:** `config/neoessentials/`
 
 ---
 
@@ -23,7 +23,7 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 | `chat.json` | `chat` (formatting, channels, anti-spam, badges, rich text) |
 | `teleportation.json` | `teleportation` (homes, warps, spawn, TPA, random TP) |
 | `moderation.json` | `moderation` (ban, jail, vanish, freeze, kick) |
-| `items.json` | `items` (item spawn, enchantments, stack sizes) |
+| `items.json` | `items` (item spawn, enchantments, stack sizes) and `shop` (dynamic pricing settings — no dedicated split file of its own, so it lands here) |
 | `afk.json` | `afk` (AFK timeout, kick, broadcast messages) |
 | `security.json` | `security` (input validation, unsafe commands) |
 | `tablist.json` | `tablist` (header, footer, player row format, animation) |
@@ -96,7 +96,7 @@ Files:
   ✔ chat.json          — chat
   ✔ teleportation.json — teleportation
   ✔ moderation.json    — moderation
-  ✔ items.json         — items
+  ✔ items.json         — items, shop
   ✔ afk.json           — afk
   ✔ security.json      — security
   ✔ tablist.json       — tablist

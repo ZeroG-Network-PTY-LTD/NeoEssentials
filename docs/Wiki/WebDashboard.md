@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.4+build.16 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
@@ -33,7 +33,8 @@ against and reads/writes through the API.
 
 1. Set `webDashboard.enabled: true` **and** `modules.webDashboardEnabled: true` in `config.json` (both default to `true`)
 2. Configure `port` (default `8080`) and `websocketPort` (default `8081`)
-3. Start the server — the dashboard's REST API auto-starts
+3. Start the server, then run `/dashboard start` (`webDashboard.autoStart` ships `false`, so the
+   API server doesn't come up on its own unless you set `autoStart: true`)
 4. Create a credential for whatever's going to call the API:
    - **An external dashboard backend (recommended path):** create an API key in-game —
      `/apikey create <label> [role]` — and give the printed token to that dashboard's server
@@ -189,7 +190,7 @@ is unaffected.
 | Key | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Enable the dashboard system |
-| `autoStart` | `true` | Start dashboard on server boot. If `false`, start it manually with `/dashboard start` |
+| `autoStart` | `false` | Start dashboard on server boot. If `false` (the shipped default), start it manually with `/dashboard start` |
 | `port` | `8080` | HTTP port |
 | `websocketPort` | `8081` | WebSocket port for live updates |
 | `bindAddress` | `"0.0.0.0"` | IP to bind (use `127.0.0.1` for local-only) |
@@ -291,6 +292,15 @@ The dashboard's moderation endpoints are backed directly by the same manager cla
 | `/api/moderation/note/{id}` | DELETE | Remove a staff note |
 | `/api/moderation/reports`, `/reports/all`, `/reports/{id}` | GET | Pending / all / one report |
 | `/api/moderation/reports/{id}/review` | POST | Accept or dismiss a report |
+| `/api/moderation/freeze/list` | GET | Currently-frozen players |
+| `/api/moderation/freeze` | POST | Freeze a player |
+| `/api/moderation/freeze/{name}` | DELETE | Unfreeze a player |
+| `/api/moderation/vanish/list` | GET | Currently-vanished players |
+| `/api/moderation/vanish` | POST | Vanish/unvanish a player |
+| `/api/moderation/vanish/{name}` | DELETE | Force a player visible |
+| `/api/moderation/jails`, `/jail-locations` | GET | Jailed players / configured jail cell locations |
+| `/api/moderation/jail`, `/jail-location` | POST | Jail a player / define a jail cell location |
+| `/api/moderation/jail/{name}`, `/jail-location/{name}` | DELETE | Release a player / remove a jail cell location |
 
 All routes above require the standard dashboard Bearer-token authentication (session or API key); mutating routes (POST/DELETE) additionally require the **ADMIN** role specifically — a MODERATOR-role credential can read but not act.
 
@@ -332,9 +342,11 @@ to keep using one of the two dashboards.
 
 ## Commands
 
-All `/dashboard` subcommands (including the bare `/dashboard`) require `neoessentials.admin.dashboard`.
-Account registration is a **separate** command tree, `/dashboardregister`, gated by
-`neoessentials.dashboard.access`.
+All `/dashboard` subcommands (including the bare `/dashboard`) require `neoessentials.admin.dashboard`
+— this is checked on the `dashboard` literal itself, so `pair`/`unpair` need it **in addition to**
+`neoessentials.dashboard.pair` listed below (brigadier requires every node from the root down to
+pass, not just the leaf). Account registration is a **separate** command tree, `/dashboardregister`,
+gated by `neoessentials.dashboard.access`.
 
 | Command | Permission | Description |
 |---|---|---|

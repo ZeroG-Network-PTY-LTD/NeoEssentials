@@ -1,6 +1,6 @@
 # API & Placeholder System
 
-> **Version:** 1.0.2.6 · **API Version:** 1.2.0
+> **Version:** 1.0.5+build.54 · **API Version:** 1.2.0
 
 ---
 
@@ -281,7 +281,7 @@ if (minor >= 2) {
 ## REST API (External Dashboard)
 
 > **The mod no longer ships its own dashboard UI.** `webDashboard.mode` is `"external"` —
-> the embedded HTTP server on `config.json → webDashboard.port` (default `8090`) serves
+> the embedded HTTP server on `config.json → webDashboard.port` (default `8080`) serves
 > **REST only**; a separately-hosted dashboard app is the actual UI. Everything below is the
 > integration surface for that app.
 >
@@ -339,13 +339,13 @@ lookup, `/api/docs/*`, `/api/ping`), **AUTH** (any valid key/session, any role),
 
 ```bash
 # Login (session-based)
-curl -X POST http://localhost:8090/api/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"username":"admin","password":"secret"}'
 # Response includes: {"success":true,"sessionId":"...", "user":{...}}
 
 # Authenticated request — works identically with a session id or an API key
-curl http://localhost:8090/api/placeholders/list \
+curl http://localhost:8080/api/placeholders/list \
      -H "Authorization: Bearer <sessionId-or-api-key>"
 ```
 
@@ -376,7 +376,7 @@ curl http://localhost:8090/api/placeholders/list \
 | `/api/stats` | Economy/activity/performance dashboards, 60-min history |
 | `/api/docs` | The mod's own public in-game documentation content (unrelated to this API doc) |
 
-A live event feed also runs on `websocketPort` (default `8091`) alongside REST — channels
+A live event feed also runs on `websocketPort` (default `8081`) alongside REST — channels
 `events`/`chat`/`stats`, authenticated the same way (session id or API key). Full protocol in
 `docs/API.md`.
 

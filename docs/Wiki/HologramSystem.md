@@ -7,7 +7,7 @@ Holograms are fully server-side — no client mod required.
 
 ## Storage
 
-All hologram data is persisted to `neoessentials/holograms.json` and is loaded automatically on server start / world load.  
+Hologram data lives in the active [storage backend](Storage) (`holograms` collection — JSON files by default, or SQLite/MySQL if configured), loaded automatically on server start / world load. The legacy `neoessentials/holograms.json` file is only read once, to migrate any existing data into the storage backend on first boot after upgrading — it's not written to afterward.  
 Shop-managed holograms (prefixed `shop_`) are created and destroyed automatically by the Shop system — see [Shop Holograms](#shop-holograms) below.
 
 ---

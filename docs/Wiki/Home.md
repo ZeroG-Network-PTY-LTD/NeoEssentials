@@ -1,6 +1,6 @@
 # NeoEssentials Wiki
 
-Welcome to the official documentation hub for **NeoEssentials v1.0.4** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1.
+Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1–1.21.10 (this is the primary development branch — see [`26.1.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.1.x) for the pinned Minecraft 26.1-26.1.2 build, or [`26.2.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.2.x) for the pinned Minecraft 26.2 build).
 
 ---
 
@@ -70,4 +70,4 @@ All optional — NeoEssentials runs fully standalone without any of them.
 
 ---
 
-*NeoEssentials v1.0.4 · Minecraft 1.21.1 · NeoForge 21.1.179+ · build.16*
+*NeoEssentials v1.0.5 · Minecraft 1.21.1–1.21.10 · NeoForge 21.1.179+ · build.54*

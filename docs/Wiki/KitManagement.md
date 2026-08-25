@@ -1,6 +1,6 @@
 # Kit Management
 
-> **Version:** 1.0.4+build.16 · **Last verified:** 2026-07-23 · **Config:** `kits.json`, `config.json` → `kits` section
+> **Version:** 1.0.5+build.54 · **Last verified:** 2026-08-25 · **Config:** `config.json` → `kits` section (kit definitions themselves live in the DataStore, not `kits.json` — see below)
 
 ---
 
@@ -49,24 +49,25 @@ There is no built-in support for running server commands on kit claim — kits o
 
 ---
 
-## Kit Data Format (`kits.json`)
+## Kit Data Format
+
+Kit definitions are persisted through the pluggable **DataStore** backend (JSON by default — see
+[Storage Backend](Storage)), one record per kit under the `kits` collection — **not** a single
+`kits.json` file anymore. Each record has this shape (shown here as JSON for reference; edit kits
+via `/createkit`/`/delkit` rather than hand-editing storage files):
 
 ```json
 {
-  "kits": [
-    {
-      "name": "starter",
-      "displayName": "Starter Kit",
-      "description": "Given to new players",
-      "cooldownMillis": 86400000,
-      "permission": "neoessentials.kits.starter",
-      "maxUses": -1,
-      "enabled": true,
-      "items": [
-        { "item": "minecraft:stone_sword", "count": 1 },
-        { "item": "minecraft:bread", "count": 16 }
-      ]
-    }
+  "name": "starter",
+  "displayName": "Starter Kit",
+  "description": "Given to new players",
+  "cooldownMillis": 86400000,
+  "permission": "neoessentials.kits.starter",
+  "maxUses": -1,
+  "enabled": true,
+  "items": [
+    { "item": "minecraft:stone_sword", "count": 1, "components": {} },
+    { "item": "minecraft:bread", "count": 16 }
   ]
 }
 ```
@@ -80,9 +81,14 @@ There is no built-in support for running server commands on kit claim — kits o
 | `permission` | Permission required to see/claim the kit; defaults to `neoessentials.kits.<name>` if omitted |
 | `maxUses` | Max claims per player (`-1` = unlimited); `/listkits`'s `skipUsedOneTimeKitsFromKitList` treats `maxUses == 1` (or a negative legacy value) as "one-time" |
 | `enabled` | Whether the kit is currently claimable (defaults to `true`) |
-| `items` | List of items — `item` (registry ID), `count`, optional `nbt` |
+| `items` | List of items — `item` (registry ID), `count`, and either `components` (preferred — the item's full `DataComponentMap`: enchantments, custom name, dyed color, etc.) or a legacy `nbt` string (CUSTOM_DATA only, from kits saved before components support was added) |
 
 There is no `commands` field — kits only grant items, they do not run server commands on claim.
+
+> **Legacy file:** `config/neoessentials/kits.json` is the pre-DataStore on-disk format. It's
+> only read once, automatically, to migrate its contents into the DataStore `kits` collection —
+> never written to again afterward. If it still exists alongside DataStore data, editing it has
+> no effect; `/neoe` startup logs (and `isLegacyKitsFileNowInert()`) flag this case.
 
 ---
 
@@ -92,8 +98,8 @@ There is no `commands` field — kits only grant items, they do not run server c
 |---|---|---|
 | `skipUsedOneTimeKitsFromKitList` | `false` | Hide one-time kits from `/listkits` once claimed |
 | `kitAutoEquip` | `false` | Auto-equip armour from kits into empty armour slots |
-| `maxKitsPerPlayer` | `-1` | Max simultaneous active cooldowns (`-1`/any non-positive = unlimited) |
-| `allowKitOverride` | `false` | Allow `neoessentials.kits.override` bypass |
+| `maxKitsPerPlayer` | `10` | Max simultaneous active cooldowns (`-1`/any non-positive = unlimited) |
+| `allowKitOverride` | `true` | Allow `neoessentials.kits.override` bypass |
 | `newPlayerKit.enabled` | `false` | Enable/disable giving a kit automatically on first join (nested under `kits.newPlayerKit`, not a flat key) |
 | `newPlayerKit.kitName` | *(none)* | Kit name to auto-give on first join when `newPlayerKit.enabled` is `true` (nested under `kits.newPlayerKit`, not a flat key) |
 | `logKitUsage` | `true` | Log kit claims to console |
