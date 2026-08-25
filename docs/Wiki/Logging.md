@@ -1,6 +1,6 @@
 # Logging System
 
-> **Version:** 1.0.4+build.45 · **Config:** `config.json` → `logging` section
+> **Version:** 1.0.4+build.44 · **Config:** `config.json` → `logging` section
 
 ---
 
