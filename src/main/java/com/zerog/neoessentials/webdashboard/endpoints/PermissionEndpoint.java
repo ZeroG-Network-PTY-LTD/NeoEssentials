@@ -331,8 +331,16 @@ public class PermissionEndpoint implements HttpHandler {
         JsonObject response = new JsonObject();
         JsonArray users = new JsonArray();
 
-        // Get all online players
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+        // Snapshot the live player list on the main thread — iterating it and reading each
+        // player's state must not happen on this HTTP worker thread.
+        List<ServerPlayer> online;
+        try {
+            online = server.submit(() -> new ArrayList<>(server.getPlayerList().getPlayers())).get();
+        } catch (Exception e) {
+            LOGGER.error("Error reading online players on main thread", e);
+            online = List.of();
+        }
+        for (ServerPlayer player : online) {
             JsonObject userObj = new JsonObject();
             userObj.addProperty("username", player.getName().getString());
             userObj.addProperty("uuid", player.getUUID().toString());
@@ -380,7 +388,13 @@ public class PermissionEndpoint implements HttpHandler {
         UUID uuid = resolvePlayerUuid(username);
 
         if (uuid != null) {
-            boolean online = server.getPlayerList().getPlayer(uuid) != null;
+            boolean online;
+            try {
+                online = server.submit(() -> server.getPlayerList().getPlayer(uuid) != null).get();
+            } catch (Exception e) {
+                LOGGER.error("Error checking online status on main thread for '" + username + "'", e);
+                online = false;
+            }
             response.addProperty("username", username);
             response.addProperty("uuid", uuid.toString());
             response.addProperty("online", online);
@@ -1160,7 +1174,12 @@ public class PermissionEndpoint implements HttpHandler {
     }
 
     private int getOnlineUserCount() {
-        return server.getPlayerList().getPlayerCount();
+        try {
+            return server.submit(() -> server.getPlayerList().getPlayerCount()).get();
+        } catch (Exception e) {
+            LOGGER.error("Error reading online player count on main thread", e);
+            return 0;
+        }
     }
 
     /**
@@ -1172,11 +1191,21 @@ public class PermissionEndpoint implements HttpHandler {
      * offline-capable Minecraft-account auth).
      */
     private UUID resolvePlayerUuid(String username) {
-        ServerPlayer online = server.getPlayerList().getPlayerByName(username);
-        if (online != null) return online.getUUID();
-
-        com.mojang.authlib.GameProfile cached = server.getProfileCache().get(username).orElse(null);
-        if (cached != null) return cached.getId();
+        // Only the live-player-list/profile-cache lookups need the main thread; the Mojang
+        // API fallback below is a network call and must stay off it (would block the tick).
+        UUID local;
+        try {
+            local = server.submit(() -> {
+                ServerPlayer online = server.getPlayerList().getPlayerByName(username);
+                if (online != null) return online.getUUID();
+                com.mojang.authlib.GameProfile cached = server.getProfileCache().get(username).orElse(null);
+                return cached != null ? cached.getId() : null;
+            }).get();
+        } catch (Exception e) {
+            LOGGER.error("Error resolving player UUID '" + username + "' on main thread", e);
+            local = null;
+        }
+        if (local != null) return local;
 
         return fetchUuidFromMojangAPI(username);
     }

@@ -836,9 +836,15 @@ public class ConfigSplitter {
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
             LOGGER.warn("Could not create directory: {}", parent.getAbsolutePath());
         }
-        try (FileWriter w = new FileWriter(f, StandardCharsets.UTF_8)) {
+        // Atomic temp-file + rename, same pattern as JsonFileDataStore — a crash, disk-full,
+        // or serialization error partway through GSON.toJson() must not leave a split config
+        // file (or main.json) truncated/invalid, which would otherwise break startup.
+        File tmp = new File(f.getParentFile(), f.getName() + ".tmp-" + System.currentTimeMillis());
+        try (FileWriter w = new FileWriter(tmp, StandardCharsets.UTF_8)) {
             GSON.toJson(obj, w);
         }
+        Files.move(tmp.toPath(), f.toPath(),
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
     }
 
     private static void ensureConfigDir() {

@@ -2245,10 +2245,15 @@ public class ConfigManager {
                 // Always bump the version so we don't re-run this on next start
                 onDisk.addProperty(CONFIG_VERSION_KEY, expectedVersion);
 
-                // Write merged result back
-                try (java.io.FileWriter writer = new java.io.FileWriter(configFile, StandardCharsets.UTF_8)) {
+                // Write merged result back — atomic temp-file + rename, same pattern as
+                // JsonFileDataStore, so a crash/disk-full mid-write can't leave the config
+                // truncated/invalid.
+                java.io.File tmpMerged = new java.io.File(configFile.getParentFile(), configFile.getName() + ".tmp-" + System.currentTimeMillis());
+                try (java.io.FileWriter writer = new java.io.FileWriter(tmpMerged, StandardCharsets.UTF_8)) {
                     new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(onDisk, writer);
                 }
+                java.nio.file.Files.move(tmpMerged.toPath(), configFile.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
 
                 configCache.remove(configName);
                 NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {} merged to version {} ({} new key(s) added).",
@@ -3675,10 +3680,15 @@ public class ConfigManager {
                 return;
             }
             File file = ResourceUtil.getConfigFile(configName);
-            try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
+            // Atomic temp-file + rename, same pattern as JsonFileDataStore — a crash/disk-full
+            // mid-write must not leave config.json truncated/invalid.
+            File tmp = new File(file.getParentFile(), file.getName() + ".tmp-" + System.currentTimeMillis());
+            try (FileWriter writer = new FileWriter(tmp, StandardCharsets.UTF_8)) {
                 com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
                 gson.toJson(config, writer);
             }
+            java.nio.file.Files.move(tmp.toPath(), file.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
             configCache.put(configName, config);
         } catch (IOException e) {
             LOGGER.error("Failed to save config file {}: {}", configName, e.getMessage());

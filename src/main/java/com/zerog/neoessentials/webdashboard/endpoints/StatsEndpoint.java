@@ -128,11 +128,16 @@ public class StatsEndpoint implements HttpHandler {
         }
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "StatsEndpoint request: GET {}", path);
         try {
-            if      (path.endsWith("/overview"))    respond(exchange, 200, GSON.toJson(buildOverview()));
-            else if (path.endsWith("/economy"))     respond(exchange, 200, GSON.toJson(buildEconomy()));
-            else if (path.endsWith("/activity"))    respond(exchange, 200, GSON.toJson(buildActivity()));
-            else if (path.endsWith("/performance")) respond(exchange, 200, GSON.toJson(buildPerformance()));
-            else respond(exchange, 404, "{\"error\":\"Not found\"}");
+            // Every builder below reads MinecraftServer/player-list state, so it must run on
+            // the main thread rather than this HTTP worker thread — same requirement
+            // WarpsEndpoint documents for ServerEndpoint-style reads.
+            JsonObject result;
+            if      (path.endsWith("/overview"))    result = server.submit(this::buildOverview).get();
+            else if (path.endsWith("/economy"))     result = server.submit(this::buildEconomy).get();
+            else if (path.endsWith("/activity"))    result = server.submit(this::buildActivity).get();
+            else if (path.endsWith("/performance")) result = server.submit(this::buildPerformance).get();
+            else { respond(exchange, 404, "{\"error\":\"Not found\"}"); return; }
+            respond(exchange, 200, GSON.toJson(result));
         } catch (Exception e) {
             LOGGER.error("[StatsEndpoint] Error for {}: {}", path, e.getMessage(), e);
             respond(exchange, 500, "{\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}");

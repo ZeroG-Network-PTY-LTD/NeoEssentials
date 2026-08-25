@@ -331,20 +331,28 @@ public class DiscordEndpoint implements HttpHandler {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return uuid.toString();
 
-        var online = server.getPlayerList().getPlayer(uuid);
-        if (online != null) return online.getName().getString();
-
+        // Reading the live player list/profile cache must happen on the main thread, not
+        // this HTTP worker thread.
         try {
-            GameProfileCache cache = server.getProfileCache();
-            if (cache != null) {
-                var profile = cache.get(uuid);
-                if (profile.isPresent() && profile.get().getName() != null) return profile.get().getName();
-            }
-        } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve username for uuid={} via profile cache", uuid, e);
-        }
+            return server.submit(() -> {
+                var online = server.getPlayerList().getPlayer(uuid);
+                if (online != null) return online.getName().getString();
 
-        return uuid.toString();
+                try {
+                    GameProfileCache cache = server.getProfileCache();
+                    if (cache != null) {
+                        var profile = cache.get(uuid);
+                        if (profile.isPresent() && profile.get().getName() != null) return profile.get().getName();
+                    }
+                } catch (Exception e) {
+                    NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to resolve username for uuid={} via profile cache", uuid, e);
+                }
+                return uuid.toString();
+            }).get();
+        } catch (Exception e) {
+            LOGGER.error("Error resolving username on main thread for uuid=" + uuid, e);
+            return uuid.toString();
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -502,7 +502,7 @@ public class MailCommand {
         return 1;
     }
 
-    /** /mail sendall / sendtempall — broadcast to every player's mailbox. Runs async. */
+    /** /mail sendall / sendtempall — broadcast to every player's mailbox. */
     private static int sendMailAll(CommandSourceStack source, String senderName,
                                    String senderUuid, String message, long expireAt) {
         if (message.length() > MAX_MESSAGE_LENGTH) {
@@ -511,20 +511,20 @@ public class MailCommand {
             return 0;
         }
 
-        // Run asynchronously — could touch many files
-        Thread t = new Thread(() -> {
-            // Online players first
-            source.getServer().getPlayerList().getPlayers().forEach(p -> {
-                MailMessage mail = new MailMessage(senderName, senderUuid, message, expireAt);
-                MAIL_BOX.computeIfAbsent(p.getUUID(), k -> new ArrayList<>()).add(0, mail);
-            });
-            // Also load and update offline player mailboxes from disk
-            saveMailData();
-            NeoLog.info(LOGGER, LogCategory.GENERAL, "sendall from {} completed: {} players", senderName,
-                source.getServer().getPlayerList().getPlayerCount());
-        }, "NeoEssentials-MailSendAll");
-        t.setDaemon(true);
-        t.start();
+        var server = source.getServer();
+        // This command already runs on the main thread (brigadier dispatch), so no
+        // marshaling is needed here — the previous version spawned a raw background thread
+        // that iterated the live player list and mutated the shared mailbox lists
+        // concurrently with other /mail commands running on the main thread; that raced
+        // against MAIL_BOX's per-player ArrayLists (not thread-safe) and could throw
+        // ConcurrentModificationException against concurrent join/leave.
+        server.getPlayerList().getPlayers().forEach(p -> {
+            MailMessage mail = new MailMessage(senderName, senderUuid, message, expireAt);
+            MAIL_BOX.computeIfAbsent(p.getUUID(), k -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(0, mail);
+        });
+        saveMailData();
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "sendall from {} completed: {} players", senderName,
+            server.getPlayerList().getPlayerCount());
 
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.mail.sent_all"), false);
         return 1;
@@ -756,7 +756,11 @@ public class MailCommand {
                 data.add(entry.getKey().toString(), arr);
             }
             Files.createDirectories(MAIL_DATA_FILE.getParent());
-            Files.writeString(MAIL_DATA_FILE, GSON.toJson(data));
+            // Atomic temp-file + rename, same pattern as JsonFileDataStore — a crash mid-write
+            // must not leave every player's mailbox truncated/corrupt.
+            Path tmp = MAIL_DATA_FILE.resolveSibling(MAIL_DATA_FILE.getFileName() + ".tmp-" + System.currentTimeMillis());
+            Files.writeString(tmp, GSON.toJson(data));
+            Files.move(tmp, MAIL_DATA_FILE, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
         } catch (Exception e) {
             LOGGER.error("Failed to save mail data: {}", e.getMessage(), e);
         }
