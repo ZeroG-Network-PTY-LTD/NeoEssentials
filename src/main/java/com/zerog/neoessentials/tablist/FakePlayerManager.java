@@ -180,7 +180,10 @@ public class FakePlayerManager {
                     var textures = profile.get().properties().get("textures");
                     if (textures.isEmpty()) return;
                     resolvedSkins.put(slotId, textures.iterator().next());
-                    refreshAll(server);
+                    // This callback runs on ForkJoinPool.commonPool(), not the main server
+                    // thread — refreshAll() sends packets to every online player's
+                    // connection, so it must be marshaled back onto the main thread.
+                    server.execute(() -> refreshAll(server));
                 } catch (Exception e) {
                     NeoLog.debug(LOGGER, LogCategory.GENERAL, "FakePlayerManager: failed to resolve skinOwner '{}': {}", owner, e.getMessage());
                 }
