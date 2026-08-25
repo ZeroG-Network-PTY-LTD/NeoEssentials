@@ -97,8 +97,16 @@ public class EconomyAPI {
         // Add to receiver
         boolean receiverSuccess = manager.addBalance(receiver, netAmount);
         if (!receiverSuccess) {
-            // Extremely unlikely — refund the sender
-            manager.addBalance(sender, amount);
+            // Extremely unlikely — refund the sender. addBalance() can itself be rejected by
+            // the same cancellable EconomyDepositEvent, so a plain retry here could silently
+            // lose the sender's money (already subtracted above) without it reaching either
+            // party. Fall back to a guaranteed, non-cancellable settlement on rejection,
+            // matching AuctionHouseManager/ShopTransaction's existing fix for the same
+            // failure mode.
+            boolean refunded = manager.addBalance(sender, amount);
+            if (!refunded) {
+                manager.setBalance(sender, manager.getBalance(sender).add(amount));
+            }
             return false;
         }
 
