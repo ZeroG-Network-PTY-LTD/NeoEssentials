@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.SecureRandom;
@@ -109,7 +110,11 @@ public final class ConfigSecretCipher {
 
         byte[] keyBytes = new byte[KEY_LENGTH_BYTES];
         new SecureRandom().nextBytes(keyBytes);
-        Files.writeString(keyPath, Base64.getEncoder().encodeToString(keyBytes));
+        // Atomic temp-file + rename, same pattern as JsonFileDataStore — a crash mid-write
+        // must not leave a truncated/corrupt key file behind.
+        Path tmp = keyPath.resolveSibling(keyPath.getFileName() + ".tmp-" + System.currentTimeMillis());
+        Files.writeString(tmp, Base64.getEncoder().encodeToString(keyBytes));
+        Files.move(tmp, keyPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         restrictToOwnerOnly(keyPath);
 
         NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Generated a new dashboard secret-encryption key at {} — back this up or " +
