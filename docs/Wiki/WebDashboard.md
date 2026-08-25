@@ -31,13 +31,18 @@ against and reads/writes through the API.
 
 ## Setup
 
-1. Set `webDashboard.enabled: true` in `config.json` (default: `true`)
+1. Set `webDashboard.enabled: true` **and** `modules.webDashboardEnabled: true` in `config.json` (both default to `true`)
 2. Configure `port` (default `8080`) and `websocketPort` (default `8081`)
-3. Start the server — the dashboard auto-starts
-4. Register a dashboard account in-game: `/dashboardregister start` then
-   `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
-   Simple Discord Link is linked) — or use one of the other paths below
-5. Open `http://<server-ip>:8080` in a browser and log in
+3. Start the server — the dashboard's REST API auto-starts
+4. Create a credential for whatever's going to call the API:
+   - **An external dashboard backend (recommended path):** create an API key in-game —
+     `/apikey create <label> [role]` — and give the printed token to that dashboard's server
+     config. See [API System → Authentication](APISystem#authentication) for the full picture.
+   - **A human dashboard account:** register in-game via `/dashboardregister start` then
+     `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
+     Simple Discord Link is linked) — or use one of the other paths below.
+5. Point your external dashboard app at `http://<server-ip>:<port>/api/...` (`port` from step 2)
+   using the API key or session token as a Bearer token.
 
 ---
 
@@ -64,18 +69,26 @@ check your current registration state.
 
 **Other ways to get dashboard access:**
 
-1. **Default admin account** — a random 12-character temp password is generated and logged to the
-   server console the first time the dashboard starts with no accounts yet (search for "Created
-   default dashboard admin account"). You're required to set a new password on first login.
-2. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
+1. **API key (for an external dashboard backend, not a human)** — `/apikey create <label>
+   [role]` in-game, or `POST /api/apikeys` once a first key exists. Not a login account at all;
+   see [API System](APISystem) and `docs/API.md`.
+2. **Default admin account** — the first time the dashboard starts with no accounts at all, an
+   `admin` account is auto-created with a **random** temporary password, printed once to the
+   server console/log (`Temporary password: ...`) and flagged to require a password change on
+   first login. There is no fixed default password — check the boot log if you've lost it, or
+   reset it via `/api/users/{id}/password` (admin session) if you still have another admin
+   account.
+3. **Minecraft-permission login (self-service, works offline, deprecated)** — on the login page,
    authenticate with just your Minecraft username (no password). The server checks whether that
    player has `neoessentials.dashboard.access` and auto-creates an account with role assigned
    from `neoessentials.dashboard.admin`/`.moderator`/`.access`. Predates the `/dashboardregister`
    flow above and is marked deprecated in server logs, but still functional.
-3. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
+4. **Discord OAuth (optional, self-service)** — see below. If `allowAutoRegistration: true`
    (the default), logging in with Discord auto-creates an account on first use.
-4. **Admin-created accounts** — an existing admin can create accounts for other players via the
-   dashboard's own Users management page, or `POST /api/users/create`.
+5. **Admin-created accounts** — an existing admin can create accounts directly via
+   `POST /api/users/create` (or whatever user-management screen the external dashboard exposes
+   for it), or push-sync one from the external dashboard's own user table with
+   `POST /api/users/sync` — see `docs/API.md`.
 
 ### Discord Auth (Optional)
 
@@ -279,7 +292,23 @@ The dashboard's moderation endpoints are backed directly by the same manager cla
 | `/api/moderation/reports`, `/reports/all`, `/reports/{id}` | GET | Pending / all / one report |
 | `/api/moderation/reports/{id}/review` | POST | Accept or dismiss a report |
 
-All routes require the standard dashboard Bearer-token authentication; mutating routes (POST/DELETE) additionally require the moderator or admin dashboard role.
+All routes above require the standard dashboard Bearer-token authentication (session or API key); mutating routes (POST/DELETE) additionally require the **ADMIN** role specifically — a MODERATOR-role credential can read but not act.
+
+### Public Moderation Lookup (no login required)
+
+A separate, unauthenticated set of routes — matching ban-management plugins' public
+transparency page, where anyone can look up a player's punishment history without an account:
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/public/moderation/lookup/{name}` | GET | Bans, mutes, kicks, and warns for one player, by name |
+| `/api/public/moderation/recent` | GET | Recent active bans + mutes across all players, newest first |
+
+These deliberately **never** expose IP bans, IP mutes, staff notes, or player reports (privacy —
+notes/reports contain staff commentary and a reporter's identity). Still CORS/rate-limited the
+same as every other dashboard route, just without the Bearer-token check. Gated by
+`webDashboard.securitySettings.publicModerationLookupEnabled` (default `true`) — set to `false`
+to disable public lookup entirely.
 
 ### In-Chat "View Profile" Link
 
@@ -309,13 +338,14 @@ Account registration is a **separate** command tree, `/dashboardregister`, gated
 
 | Command | Permission | Description |
 |---|---|---|
-| `/dashboard` | `neoessentials.admin.dashboard` | Show dashboard status, URL, and installed file version |
-| `/dashboard start` | `neoessentials.admin.dashboard` | Start dashboard if stopped |
-| `/dashboard stop` | `neoessentials.admin.dashboard` | Stop the dashboard |
-| `/dashboard restart` | `neoessentials.admin.dashboard` | Restart the dashboard |
-| `/dashboard status` | `neoessentials.admin.dashboard` | Show dashboard status |
-| `/dashboard url` | `neoessentials.admin.dashboard` | Show the dashboard URL |
-| `/dashboard update [check\|force]` | `neoessentials.admin.dashboard` | Update bundled dashboard files from the JAR (`check` = dry-run, `force` = bypass checksum) |
+| `/dashboard` | `neoessentials.admin.dashboard` | Show the REST API + WebSocket server's status |
+| `/dashboard start` | `neoessentials.admin.dashboard` | Start the API server if stopped |
+| `/dashboard stop` | `neoessentials.admin.dashboard` | Stop the API server |
+| `/dashboard restart` | `neoessentials.admin.dashboard` | Restart the API server |
+| `/dashboard status` | `neoessentials.admin.dashboard` | Show the API server's status |
+| `/dashboard url` | `neoessentials.admin.dashboard` | Show the API base URL |
+| `/dashboard pair "<dashboardUrl>" <code>` | `neoessentials.dashboard.pair` | Complete the pairing handshake with an external dashboard — see [API System → Pairing](APISystem#pairing) |
+| `/dashboard unpair` | `neoessentials.dashboard.pair` | Clear the paired connection and revoke its API key |
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
 | `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
@@ -344,7 +374,9 @@ account starting from an in-game player.
 | `neoessentials.dashboard.manage` | 🔒 | Access console and management tools |
 | `neoessentials.dashboard.moderator` | 🔒 | Moderator-level dashboard access |
 | `neoessentials.dashboard.admin` | 🔒 | Full admin dashboard access |
-| `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the dashboard server (`/dashboard`) |
+| `neoessentials.admin.dashboard` | 🔒 | Start/stop/manage the API server (`/dashboard`) |
+| `neoessentials.dashboard.apikeys` | 🔒 | Create/list/revoke API keys for external dashboard integrations (`/apikey`) |
+| `neoessentials.dashboard.pair` | 🔒 | Pair/unpair this server with an external dashboard (`/dashboard pair`, `/dashboard unpair`) |
 
 > Unlike most permission nodes documented on the [Permission System](PermissionSystem) page,
 > the dashboard nodes above (other than `neoessentials.dashboard.apikeys`/`.pair`, which **are**
@@ -355,12 +387,6 @@ account starting from an in-game player.
 > included) instead of guessing `neoessentials.<commandname>` — that guess used to be wrong for
 > `/apikey` specifically (it showed `neoessentials.apikey` instead of the real
 > `neoessentials.dashboard.apikeys`), and for roughly 160 other commands mod-wide.
-
----
-
-## File Auto-Update
-
-Dashboard HTML/JS/CSS files are versioned. On every server start, NeoEssentials checks if the bundled dashboard files in the JAR are newer than the deployed files on disk — if so, they are automatically updated. Customised files will be overwritten if the version number increases.
 
 ---
 
