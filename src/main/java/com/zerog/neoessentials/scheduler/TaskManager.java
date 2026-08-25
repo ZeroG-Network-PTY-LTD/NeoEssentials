@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Task manager for CRUD operations and persistence
@@ -186,12 +187,14 @@ public class TaskManager {
         execution.message = message;
         execution.executionTime = executionTime;
         
-        List<TaskExecution> history = executionHistory.computeIfAbsent(taskId, k -> new ArrayList<>());
-        history.addFirst(execution);
-        
+        // CopyOnWriteArrayList: this list is mutated both from the main-thread scheduler
+        // tick and from the dashboard's manual-execute HTTP path, which run concurrently.
+        List<TaskExecution> history = executionHistory.computeIfAbsent(taskId, k -> new CopyOnWriteArrayList<>());
+        history.add(0, execution);
+
         // Limit history size
         if (history.size() > MAX_HISTORY_PER_TASK) {
-            history.removeLast();
+            history.remove(history.size() - 1);
         }
         
         // Update task statistics
@@ -324,7 +327,7 @@ public class TaskManager {
                     JsonObject historyObj = data.getAsJsonObject("history");
                     for (String taskId : historyObj.keySet()) {
                         JsonArray executions = historyObj.getAsJsonArray(taskId);
-                        List<TaskExecution> execList = new ArrayList<>();
+                        List<TaskExecution> execList = new CopyOnWriteArrayList<>();
                         for (JsonElement element : executions) {
                             execList.add(GSON.fromJson(element, TaskExecution.class));
                         }

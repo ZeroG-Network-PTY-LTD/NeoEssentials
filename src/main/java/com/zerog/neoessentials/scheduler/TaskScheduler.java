@@ -216,15 +216,15 @@ public class TaskScheduler {
         }
         
         LOGGER.warn("Executing server restart task: {}", task.getName());
-        
-        // Send warning to all players
+
+        // Warn players and halt on the main thread — this can be triggered from the
+        // dashboard's manual-execute HTTP handler, so the player list must not be
+        // iterated or touched off-thread.
         Component message = MessageUtil.component("commands.neoessentials.scheduler.restart_warning", task.getName());
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.sendSystemMessage(message);
-        }
-        
-        // Stop server on server thread
         server.execute(() -> {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                player.sendSystemMessage(message);
+            }
             try {
                 server.halt(false);
             } catch (Exception e) {
