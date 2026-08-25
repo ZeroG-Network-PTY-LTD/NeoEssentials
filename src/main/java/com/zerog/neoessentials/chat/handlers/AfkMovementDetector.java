@@ -44,16 +44,21 @@ public class AfkMovementDetector {
      * Check movement for all online players
      */
     private static void checkAllPlayersMovement() {
-        try {
-            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-            if (server == null) return;
-            
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                checkPlayerMovement(player);
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+
+        // This runs on the dedicated AFK-MovementDetector timer thread, not the main server
+        // thread — iterating the live player list and reading each player's position/rotation
+        // must happen on the main thread, since both are mutated every tick there.
+        server.execute(() -> {
+            try {
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    checkPlayerMovement(player);
+                }
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking player movement", e);
             }
-        } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.CHAT, "Error checking player movement", e);
-        }
+        });
     }
     
     /**
