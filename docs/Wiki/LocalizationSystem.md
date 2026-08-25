@@ -114,9 +114,7 @@ Each language file contains a `_langVersion` metadata key:
 
 `MessageUtil.java` maintains a constant `CURRENT_LANG_VERSION`. On startup, if the deployed file's version is lower, new keys are merged automatically. The file version is then bumped to the current value and saved.
 
-**Current version: 23** (`MessageUtil.CURRENT_LANG_VERSION`, verified 2026-07-23 against source)
-
-> Note: the shipped `src/main/resources/data/lang/en_us.json` currently has `_langVersion: "22"` baked in — one behind the `CURRENT_LANG_VERSION` constant. This is a real (if minor) drift in the repo, not a doc error; the merge-on-mismatch logic in [Startup / Boot](#startup--boot) means deployed files still get corrected at runtime.
+**Current version: 23** (`MessageUtil.CURRENT_LANG_VERSION`, matches the shipped `en_us.json`'s own `_langVersion`).
 
 When you add new translation keys to `en_us.json`, increment `_langVersion` by 1 in both:
 - `src/main/resources/data/lang/en_us.json` (the `_langVersion` value)

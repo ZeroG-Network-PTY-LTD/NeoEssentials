@@ -269,7 +269,7 @@ See [Moderation System](ModerationSystem) for full details on history/audit trai
 | `/socialspy` | `/socialspy [on\|off]` | none | 🔒 (by convention, not enforced at the root) | See all private messages between players |
 | `/ignore` | `/ignore <player>` | none | ✅ | Ignore a player's messages |
 | `/unignore` | `/unignore <player>` | none | ✅ | Stop ignoring a player |
-| `/mail` | `/mail send\|read\|clear\|sendall [args]` | `neoessentials.mail` | ✅ | In-game mail system |
+| `/mail` | `/mail read [page]\|send <player> <msg>\|sendtemp <player> <duration> <msg>\|sendall <msg>\|sendtempall <duration> <msg>\|delete <id>\|clear [index\|player [index]]\|clearall` | `neoessentials.mail` (send/sendtemp need `.mail.send`/`.mail.sendtemp`; sendall/sendtempall need `.mail.sendall`/`.mail.sendtempall`; clear-others needs `.mail.clear.others`; clearall needs `.mail.clearall`) | ✅ (own mailbox) 🔒 (sendall/sendtempall/clearall/clear-others) | In-game mail system (was missing `sendtemp`/`sendtempall`/`delete`/`clearall` from the syntax column) |
 | `/helpop` | `/helpop <message>` | `neoessentials.helpop` | ✅ | Send a help request to all online staff |
 | `/ac` | alias for `/helpop` | same | ✅ | Alias |
 | `/amsg` | alias for `/helpop` | same | ✅ | Alias |

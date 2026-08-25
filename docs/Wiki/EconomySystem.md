@@ -1,6 +1,6 @@
 # Economy System
 
-> **Version:** 1.0.2.6 · **Config files:** `economy.json`, `config.json` → `economy` section
+> **Version:** 1.0.5+build.54 · **Config files:** `economy.json`, `config.json` → `economy` section
 
 ---
 
@@ -26,7 +26,7 @@ Note: `modules.economyEnabled` (in `config.json`) is the master on/off switch �
 | `maxTransferAmount` | `10000.0` | Max single `/pay` amount (overridable per-player via LuckPerms meta) |
 | `paytoggleDefault` | `true` | Whether players accept payments by default |
 | `logTransactions` | `true` | Log transactions to `logs/neoessentials/transactions.log` |
-| `transactionHistoryLimit` | `20` | Max entries kept per player for `/eco history` |
+| `transactionHistoryLimit` | `50` | Max entries kept per player for `/eco history` |
 | `cleanupInactiveAccounts` | `true` | Automatically delete balances for long-inactive accounts |
 | `inactiveAccountCleanupDays` | `30` | Inactivity threshold (days) before an account is cleaned up |
 | `cacheMaximumSize` | `10000` | Max entries in the balance cache |
@@ -38,6 +38,7 @@ Note: `modules.economyEnabled` (in `config.json`) is the master on/off switch �
 |---|---|---|
 | `sellMultiplier` | `1.0` | Global multiplier applied to all `/sell` prices |
 | `allowSellNamedItems` | `false` | Allow selling renamed items |
+| `useExternalEconomy` | `false` | Use a detected external economy mod (e.g. SG Economy API) instead of NeoEssentials' own internal balances, registered at higher priority into the Vault service registry. Off by default — switching which mod controls player money is opt-in. |
 
 `/baltop`'s page size (10) and cache lifetime (60s) are currently hardcoded and not configurable.
 

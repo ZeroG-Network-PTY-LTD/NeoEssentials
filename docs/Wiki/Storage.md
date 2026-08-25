@@ -1,6 +1,6 @@
 # Storage Backend
 
-> **Version:** 1.0.4+build.16 · **Config:** `config.json` → `storage` section
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `storage` section
 
 ---
 
@@ -72,6 +72,7 @@ This only affects local development via `runServer` — installing the built mod
 - **Permissions** (`permission_groups`/`permission_users`) preserve group inheritance, priorities, temp permissions, contextual permissions, and per-node conditions exactly as before — this is the one system where `save()` replaces the *entire* current state rather than writing one record at a time, since deleting a group or resetting a user has to actually remove its record from the backend, not just stop referencing it.
 - **Auction House** (`auction_listings`/`auction_expired`) no longer opens its own dedicated SQLite database (`auctionhouse.db`) — it now uses the same backend as everything else. A listing keeps the same numeric ID when it moves from active to expired, matching the previous behavior; existing `auctionhouse.db` data is imported automatically on first boot.
 - **Vanish**: the "who can see vanished players" viewer-priority toggle is intentionally session-only (not persisted) — only the vanished-state itself survives a restart.
+- **Mail** (`/mail`) is the one system not yet migrated onto DataStore — it still persists directly to its own file, `config/neoessentials/mail_data.json`, regardless of `storage.type`.
 
 ---
 
