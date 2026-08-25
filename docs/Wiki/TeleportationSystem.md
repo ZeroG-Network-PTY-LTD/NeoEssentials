@@ -1,6 +1,6 @@
 # Teleportation System
 
-> **Version:** 1.0.4+build.16 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
+> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
 
 ---
 
@@ -65,6 +65,10 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 | `/homes` | `/homes` | `neoessentials.teleport.home.list` | List all homes |
 | `/renamehome` | `/renamehome <old> <new>` | `neoessentials.renamehome` | Rename a home |
 
+> Aliases: `/h` for `/home` · `/createhome` for `/sethome` · `/deletehome`, `/removehome`, `/rhome` for `/delhome` · `/homelist`/`/listhomes` for `/homes`. `/h`, `/createhome`, `/removehome`, `/rhome` are skipped automatically if a conflicting mod (FTB Essentials, Essentials) is detected.
+>
+> Overwriting an existing home with `/sethome <name>` requires confirmation, same as `/delhome` — you'll be prompted with clickable `/sethome confirm`/`/sethome deny` buttons.
+
 ### Config (`teleportation.homeSettings`)
 
 | Key | Default | Description |
@@ -76,6 +80,7 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 | `homeDeleteCooldown` | `10` | Seconds between `/delhome` uses (0 = disabled) |
 | `requireConfirmationForDelete` | `true` | Require a confirmation dialog before deleting a home |
 | `enableHomeTeleportSafety` | `true` | Check safe location on home TP |
+| `logHomeActions` | `true` | Log home set/delete/teleport actions |
 
 > `teleportDelay` (warmup before the teleport fires) and `cancelOnMovement` (cancel if the player moves during warm-up) are **global** settings under `generalSettings`, not per-feature — see the table below.
 
@@ -111,9 +116,17 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 | `/delpwarp` | `/delpwarp <name>` | `neoessentials.teleport.pwarp.delete` | Delete a player warp |
 | `/pwarps` | `/pwarps` | `neoessentials.teleport.pwarp.list` | List your player warps |
 
+> Aliases: `/createwarp`/`/addwarp` for `/setwarp` · `/deletewarp`, `/removewarp`, `/rwarp` for `/delwarp` · `/warplist`/`/listwarps` for `/warps`.
+
 Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` per warp.
 
 > **Warp cooldown** is configured via `teleportation.warpSettings.warpCooldown` in `config.json` (seconds; `0` = no cooldown).
+>
+> **Server-wide warp limit** defaults to 50 total warps and, unlike the per-feature settings
+> above, is **not** currently read from `config.json` at runtime — it's tracked in the warp
+> data store's own internal record. The dashboard's Teleportation settings page shows/edits a
+> `warpSettings.maxWarps` value in `config.json`, but changing it there has no effect on the
+> actual enforced limit.
 
 ---
 
@@ -151,6 +164,7 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | `/tpr` | `/tpr [location]` | `neoessentials.teleport.tpr` | Teleport to a random location |
 | `/rtp` | alias | same | Alias |
 | `/randomtp` | alias | same | Alias |
+| `/randomteleport` | alias | same | Alias |
 | `/settpr` | `/settpr <name>` | `neoessentials.teleport.settpr` | Set a named RTP centre point |
 
 ### Config (`teleportation.randomTeleportSettings`)
@@ -176,7 +190,7 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | `/tphere` | `/tphere <player>` | `neoessentials.teleport.tphere` | Bring player to you |
 | `/tpall` | `/tpall` | `neoessentials.teleport.admin.tpall` | Bring all players to you |
 | `/tppos` | `/tppos <x> <y> <z>` | `neoessentials.teleport.tppos` | Teleport to exact coordinates |
-| `/tpo` | `/tpo <player>` | `neoessentials.teleport.tpo` | TP to player, bypasses tptoggle |
+| `/tpo` | `/tpo <player>` | `neoessentials.teleport.admin.tpo` | TP to player, bypasses tptoggle |
 | `/tpohere` | `/tpohere <player>` | `neoessentials.teleport.tpohere` | Bring player, bypasses tptoggle |
 | `/tpoffline` | `/tpoffline <player>` | `neoessentials.teleport.tpoffline` | TP to offline player's last position |
 | `/world` | `/world [dimension] [player]` | `neoessentials.world` | Teleport to a world/dimension |
