@@ -29,6 +29,25 @@ Starting from **v1.0.5** — earlier history (v1.0.4.x and before) is not carrie
 - Fixed uploading a resource pack through the web dashboard corrupting the uploaded file
 - Fixed the dashboard's login lockout being bypassable by firing multiple simultaneous login attempts
 - Fixed concurrent warp creation being able to exceed the configured warp limit
+- Fixed dashboard crashing when banning/muting/jailing a player without specifying a duration (permanent action)
+- Fixed IP ban/mute list dashboard routes leaking real IP addresses, reasons, and staff attribution to non-admin accounts
+- Fixed path-traversal vulnerabilities in the backup system (restore/delete/download) and the dashboard's file-restore tool that could read/overwrite arbitrary server files
+- Fixed overwriting a hologram by reusing its ID leaving the old entity orphaned in the world
+- Fixed `/ipban`/`/ipmute` accepting any text as an IP address with no validation
+- Fixed non-atomic moderation data writes that could corrupt ban/mute/kick/warn/note/jail data on a crash mid-save
+- Fixed `/pay` consuming the cooldown even when the payment failed for an unrelated reason
+- Fixed a stack-overflow crash shortly after enabling split-config mode
+- Fixed the `/language` setting being stored in the wrong config location and not actually applying
+
+### ✨ New Features
+- The web dashboard can now file a moderation report directly
+- Jail cells can now be created directly from the web dashboard via typed-in coordinates
+- Active IP bans/mutes are now visible on the public (no-login) moderation lookup page, address redacted
+- Added `shop.pricing` config section for the dynamic shop-pricing engine (was implemented but unconfigurable)
+
+### 🧹 Cleanup
+- Removed several dead config keys that had no effect on server behavior
+- Clarified `kits.json`/`permissions.json`'s in-file instructions — both are one-time import files once a storage backend has data, not always-live-editable
 
 ### 📋 Logging
 - Replaced the single global debug toggle with independent per-category logging — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can each be switched on/off separately
