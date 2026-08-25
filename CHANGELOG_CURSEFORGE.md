@@ -17,6 +17,18 @@ Starting from **v1.0.5** — earlier history (v1.0.4.x and before) is not carrie
 - Discord mention sanitization now also covers the Mc2Discord and DCIntegration bridge adapters
 - Fixed web dashboard vanish/jail/balance actions running off the main server thread, risking corrupted entity state
 - Fixed a narrow disconnect race in the vanish system's join handling
+- Fixed permission condition evaluation failing *open* instead of denying on error, same class of bug as the FTB Ranks fix above
+- Fixed auction house and ChestShop buyers/sellers losing their payment if the economy credit was rejected mid-transaction — now guaranteed to settle instead of silently dropping the money
+- Fixed a wide range of web dashboard actions (ban/IP-ban management, scheduled-task execution incl. server restart, server restart/stop, MOTD broadcast, statistics, permissions, Discord status) running off the main server thread instead of correctly synchronizing
+- Fixed the AFK movement detector, the fake tab-list player skin refresh, the Discord permission-sync join notification, and the `/tpa` request timeout having the same off-main-thread issue as above
+- Fixed `/mail sendall` running on a raw background thread, which could corrupt the shared mailbox under concurrent mail activity
+- Fixed config files and mail data being left corrupted if the server crashed mid-save — saves are now atomic everywhere
+- Fixed the dashboard's saved encryption key for stored secrets being left corrupted by a crash during first-time key generation
+- Fixed `/pay` silently losing the sender's money if crediting the receiver failed and the automatic refund was itself rejected
+- Fixed kit items with saved enchantments/custom names failing to load on every server startup — kits are now re-loaded once the server has fully started
+- Fixed uploading a resource pack through the web dashboard corrupting the uploaded file
+- Fixed the dashboard's login lockout being bypassable by firing multiple simultaneous login attempts
+- Fixed concurrent warp creation being able to exceed the configured warp limit
 
 ### 📋 Logging
 - Replaced the single global debug toggle with independent per-category logging — chat, economy, permissions, teleportation, moderation, auction house, kits, web dashboard, Discord, config, commands, and general subsystems can each be switched on/off separately
