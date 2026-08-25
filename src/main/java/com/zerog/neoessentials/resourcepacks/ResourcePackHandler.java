@@ -363,41 +363,71 @@ public class ResourcePackHandler implements HttpHandler {
         return obj;
     }
     
+    /**
+     * Binary-safe multipart/form-data parser — scans for the boundary as a raw byte sequence
+     * instead of decoding the whole request as UTF-8 text line-by-line. The previous
+     * line-based approach lossily decoded/re-encoded any part body that wasn't valid UTF-8
+     * (e.g. an uploaded resource-pack .zip's raw bytes), silently corrupting the file before
+     * it was ever stored.
+     */
     private Map<String, byte[]> parseMultipartData(byte[] data, String boundary) throws IOException {
         Map<String, byte[]> result = new HashMap<>();
-        String boundaryStr = "--" + boundary;
-        
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(bais, StandardCharsets.UTF_8));
-        
-        String line;
-        String currentName = null;
-        ByteArrayOutputStream currentData = null;
-        boolean inData = false;
-        
-        while ((line = reader.readLine()) != null) {
-            if (line.startsWith(boundaryStr)) {
-                if (currentName != null && currentData != null) {
-                    result.put(currentName, currentData.toByteArray());
-                }
-                currentName = null;
-                currentData = null;
-                inData = false;
-            } else if (line.startsWith("Content-Disposition:")) {
-                String[] parts = line.split("name=\"");
-                if (parts.length > 1) {
-                    currentName = parts[1].split("\"")[0];
-                    currentData = new ByteArrayOutputStream();
-                }
-            } else if (line.isEmpty() && currentName != null) {
-                inData = true;
-            } else if (inData && currentData != null) {
-                currentData.write(line.getBytes(StandardCharsets.UTF_8));
-                currentData.write('\n');
-            }
+        byte[] boundaryBytes = ("--" + boundary).getBytes(StandardCharsets.UTF_8);
+        byte[] headerSep = "\r\n\r\n".getBytes(StandardCharsets.UTF_8);
+
+        List<Integer> boundaryPositions = new ArrayList<>();
+        int idx = indexOf(data, boundaryBytes, 0);
+        while (idx >= 0) {
+            boundaryPositions.add(idx);
+            idx = indexOf(data, boundaryBytes, idx + boundaryBytes.length);
         }
-        
+
+        for (int i = 0; i < boundaryPositions.size() - 1; i++) {
+            int partStart = boundaryPositions.get(i) + boundaryBytes.length;
+            int partEnd = boundaryPositions.get(i + 1);
+
+            // The part's actual content ends right before the CRLF preceding the next boundary.
+            if (partEnd >= 2 && data[partEnd - 2] == '\r' && data[partEnd - 1] == '\n') {
+                partEnd -= 2;
+            }
+            // Skip the CRLF immediately after this boundary's marker line.
+            if (partStart + 1 < data.length && data[partStart] == '\r' && data[partStart + 1] == '\n') {
+                partStart += 2;
+            }
+            if (partStart >= partEnd) continue;
+
+            int headerEnd = indexOf(data, headerSep, partStart);
+            if (headerEnd < 0 || headerEnd > partEnd) continue;
+
+            String headers = new String(data, partStart, headerEnd - partStart, StandardCharsets.UTF_8);
+            String name = null;
+            for (String headerLine : headers.split("\r\n")) {
+                if (headerLine.startsWith("Content-Disposition:")) {
+                    String[] parts = headerLine.split("name=\"");
+                    if (parts.length > 1) {
+                        name = parts[1].split("\"")[0];
+                    }
+                }
+            }
+            if (name == null) continue;
+
+            int bodyStart = headerEnd + headerSep.length;
+            if (bodyStart > partEnd) bodyStart = partEnd;
+            result.put(name, Arrays.copyOfRange(data, bodyStart, partEnd));
+        }
+
         return result;
+    }
+
+    private static int indexOf(byte[] array, byte[] target, int fromIndex) {
+        outer:
+        for (int i = fromIndex; i <= array.length - target.length; i++) {
+            for (int j = 0; j < target.length; j++) {
+                if (array[i + j] != target[j]) continue outer;
+            }
+            return i;
+        }
+        return -1;
     }
     
     private String getUsernameFromSession(HttpExchange exchange) {
