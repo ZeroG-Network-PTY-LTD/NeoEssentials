@@ -61,6 +61,11 @@ public class TablistCommand {
             // ── /tablist reload ───────────────────────────────────────────────
             .then(Commands.literal("reload")
                 .executes(ctx -> {
+                    // Without this, loadConfig() below would just re-parse the same stale
+                    // in-memory JsonObject ConfigManager cached at startup/last reload — the
+                    // tablist.json file on disk is never actually re-read, so edits only take
+                    // effect after a full server restart (which builds a fresh, empty cache).
+                    ConfigManager.getInstance().clearCache();
                     TablistManager.getInstance().loadConfig();
                     var server = ServerLifecycleHooks.getCurrentServer();
                     if (server != null) TablistManager.getInstance().updateAll(server);
