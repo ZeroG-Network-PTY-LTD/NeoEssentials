@@ -606,103 +606,133 @@ public class PermissionsCommand {
     }
 
     private static int setPrefix(CommandContext<CommandSourceStack> ctx) {
-        // Validate admin permission for modifying groups
-        PermissionValidator.PermissionResult permResult = 
-            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.modify");
-        if (!permResult.hasPermission()) {
-            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-            return 0;
-        }
-        
-        String groupName = StringArgumentType.getString(ctx, "group");
-        String prefix = StringArgumentType.getString(ctx, "prefix");
-
-        // Safety validations
-        if (prefix.length() > 64) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.prefix_too_long"));
-            return 0;
-        }
-
-        // Validate no dangerous characters (but allow color codes &)
-        if (prefix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.prefix_invalid_chars"));
-            return 0;
-        }
-
-        // Check for group existence
-        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
-        if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
-            return 0;
-        }
-
-        // Set the prefix
-        group.setPrefix(prefix);
-
-        // Clear cache to ensure new prefix is used immediately
-        PermissionAPI.getManager().clearCache();
-
-        // Save with proper error handling
         try {
-            PermissionStorage.save(PermissionAPI.getManager());
-            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set prefix '{}' for group '{}'", prefix, groupName);
-            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PREFIX_SET, groupName, "prefix=\"" + prefix + "\"");
-            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
-            return 1;
+            // Validate admin permission for modifying groups
+            PermissionValidator.PermissionResult permResult =
+                PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.modify");
+            if (!permResult.hasPermission()) {
+                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                return 0;
+            }
+
+            String groupName = StringArgumentType.getString(ctx, "group");
+            String prefix = StringArgumentType.getString(ctx, "prefix");
+
+            // Safety validations
+            if (prefix.length() > 64) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.prefix_too_long"));
+                return 0;
+            }
+
+            // Validate no dangerous characters (but allow color codes &)
+            if (prefix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.prefix_invalid_chars"));
+                return 0;
+            }
+
+            // If an external permissions plugin (LuckPerms, etc.) is active, NeoEssentials'
+            // internal PermissionManager is never initialized — getManager() returns null,
+            // and permissions.json is never loaded/saved (PermissionStorage.load/save both
+            // no-op under isUsingExternal()). Editing prefix/suffix here — or by hand in
+            // permissions.json — would silently do nothing even without this check, so fail
+            // fast with a message that tells the admin why, instead of NPEing into the
+            // generic unexpected_error catch below.
+            if (PermissionAPI.getManager() == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.internal_manager_unavailable"));
+                return 0;
+            }
+
+            // Check for group existence
+            PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+            if (group == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+                return 0;
+            }
+
+            // Set the prefix
+            group.setPrefix(prefix);
+
+            // Clear cache to ensure new prefix is used immediately
+            PermissionAPI.getManager().clearCache();
+
+            // Save with proper error handling
+            try {
+                PermissionStorage.save(PermissionAPI.getManager());
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set prefix '{}' for group '{}'", prefix, groupName);
+                PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_PREFIX_SET, groupName, "prefix=\"" + prefix + "\"");
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
+                return 1;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting prefix", e);
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_prefix_failed", e.getMessage()));
+                return 0;
+            }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting prefix", e);
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_prefix_failed", e.getMessage()));
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Unexpected error in setPrefix command", e);
+            ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.permissions.unexpected_error", e.getMessage()));
             return 0;
         }
     }
 
     private static int setSuffix(CommandContext<CommandSourceStack> ctx) {
-        // Validate admin permission for modifying groups
-        PermissionValidator.PermissionResult permResult = 
-            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.modify");
-        if (!permResult.hasPermission()) {
-            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
-            return 0;
-        }
-        
-        String groupName = StringArgumentType.getString(ctx, "group");
-        String suffix = StringArgumentType.getString(ctx, "suffix");
-
-        // Safety validations
-        if (suffix.length() > 64) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.suffix_too_long"));
-            return 0;
-        }
-
-        // Validate no dangerous characters (but allow color codes &)
-        if (suffix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.suffix_invalid_chars"));
-            return 0;
-        }
-
-        // Check for group existence
-        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
-        if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
-            return 0;
-        }
-
-        // Set the suffix
-        group.setSuffix(suffix);
-
-        // Clear cache to ensure new suffix is used immediately
-        PermissionAPI.getManager().clearCache();
-
-        // Save with proper error handling
         try {
-            PermissionStorage.save(PermissionAPI.getManager());
-            NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set suffix '{}' for group '{}'", suffix, groupName);
-            PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_SUFFIX_SET, groupName, "suffix=\"" + suffix + "\"");
-            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
-            return 1;
+            // Validate admin permission for modifying groups
+            PermissionValidator.PermissionResult permResult =
+                PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.modify");
+            if (!permResult.hasPermission()) {
+                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                return 0;
+            }
+
+            String groupName = StringArgumentType.getString(ctx, "group");
+            String suffix = StringArgumentType.getString(ctx, "suffix");
+
+            // Safety validations
+            if (suffix.length() > 64) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.suffix_too_long"));
+                return 0;
+            }
+
+            // Validate no dangerous characters (but allow color codes &)
+            if (suffix.matches(".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*")) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.suffix_invalid_chars"));
+                return 0;
+            }
+
+            // See setPrefix's identical check for why this guard exists.
+            if (PermissionAPI.getManager() == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.internal_manager_unavailable"));
+                return 0;
+            }
+
+            // Check for group existence
+            PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+            if (group == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+                return 0;
+            }
+
+            // Set the suffix
+            group.setSuffix(suffix);
+
+            // Clear cache to ensure new suffix is used immediately
+            PermissionAPI.getManager().clearCache();
+
+            // Save with proper error handling
+            try {
+                PermissionStorage.save(PermissionAPI.getManager());
+                NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"Set suffix '{}' for group '{}'", suffix, groupName);
+                PermissionAuditLogger.log(getExecutorDisplay(ctx), PermissionAuditLogger.GROUP_SUFFIX_SET, groupName, "suffix=\"" + suffix + "\"");
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
+                return 1;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting suffix", e);
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_suffix_failed", e.getMessage()));
+                return 0;
+            }
         } catch (Exception e) {
-            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Failed to save permissions after setting suffix", e);
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_suffix_failed", e.getMessage()));
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS,"Unexpected error in setSuffix command", e);
+            ctx.getSource().sendFailure(MessageUtil.component("commands.neoessentials.permissions.unexpected_error", e.getMessage()));
             return 0;
         }
     }

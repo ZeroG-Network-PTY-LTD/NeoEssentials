@@ -1727,6 +1727,7 @@
     "commands.neoessentials.permissions.external_perm_note_active": "§7[Info] NeoEssentials permission handler is active — §a{0}§7 will apply to all mods that use NeoForge's permission API.",
     "commands.neoessentials.permissions.external_perm_note_inactive": "§e[Note] §7Permission §f{0} §7is stored in permissions.json but will only affect NeoEssentials commands right now.  To apply it to external mods (e.g. WorldEdit), NeoEssentials must be the active NeoForge permission handler.  Set §f'permissionHandler = \"neoessentials:handler\"' §7in §fconfig/neoforge-server.toml §7(or install LuckPerms and manage permissions there).",
     "commands.neoessentials.permissions.unexpected_error": "§cAn unexpected error occurred: {0}",
+    "commands.neoessentials.permissions.internal_manager_unavailable": "§cNeoEssentials' internal group storage isn't active right now — you're running an external permissions plugin (e.g. LuckPerms). Manage group prefixes/suffixes there instead.",
     "commands.neoessentials.permissions.group_already_exists": "Group '{0}' already exists!",
     "commands.neoessentials.permissions.group_does_not_exist": "Group '{0}' does not exist!",
     "commands.neoessentials.permissions.group_created": "Created group: {0}",
