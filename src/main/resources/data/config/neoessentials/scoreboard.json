@@ -1,0 +1,70 @@
+{
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 1,
+
+  /* ================================================================
+     NeoEssentials — Sidebar Scoreboard Configuration  (scoreboard.json)
+     Reload in-game: /scoreboard reload
+  ================================================================ */
+
+  "scoreboard": {
+
+    // Set false to hide the sidebar scoreboard entirely.
+    "enabled": true,
+
+    // How often the scoreboard updates in ticks (20 = 1s). Lower = smoother, more traffic.
+    "refreshInterval": 20,
+
+    // Ticks to wait after a player joins before showing them a board (avoids a flash of
+    // content during the join sequence).
+    "joinDelayTicks": 40,
+
+    /* Color / formatting reference — same syntax as tablist.json:
+     *   &0–&9, &a–&f    legacy color codes (black → white)
+     *   &k &l &m &n &o &r   obfuscated, bold, strikethrough, underline, italic, reset
+     *   &#RRGGBB        inline hex color
+     *   <gradient:RRGGBB-RRGGBB>text</gradient>
+     *   <rainbow>text</rainbow>
+     * Placeholders: {player} {displayname} {online} {max} {ping} {world} {balance} {prefix}
+     *   {suffix} {group} {x} {y} {z} {server_name} {time} — plus the full registered
+     *   placeholder set via {neoessentials_*} (e.g. {neoessentials_player_kills},
+     *   {neoessentials_mob_kills}, {neoessentials_play_time} — vanilla's own per-player
+     *   stat tracker, no extra setup needed) and {animation:NAME} from animations.json.
+     * Leaderboard rank/name/value: {leaderboard_<board>:<rank>:name} /
+     *   {leaderboard_<board>:<rank>:value} — boards registered in code are "money", "kills",
+     *   "mob_kills", "playtime" (see /leaderboard for the full list).
+     *
+     * Multiple named boards are evaluated top-to-bottom by descending "priority"; the first
+     * one whose "conditions" all pass is shown. A board with an empty "conditions" list
+     * always matches, so give it priority 0 and keep it last to act as the fallback.
+     * Condition grammar: "perm:some.node", "world:name", "{placeholder} == value",
+     * "{placeholder} != value" — see ConditionEvaluator for the exact rules.
+     */
+    "boards": [
+      {
+        "name": "default",
+        "priority": 0,
+        "conditions": [],
+        "title": "<gradient:FFD700-FF8C00>&l{server_name}",
+        "lines": [
+          { "text": "&7&m                    " },
+          { "text": "&eOnline: &f{online}&7/&f{max}" },
+          { "text": "&eBalance: &f${balance}" },
+          { "text": "&eGroup: &f{group}" },
+          { "text": "&6Richest: &f{leaderboard_money:1:name}" },
+          { "text": "&7&m                     " }
+        ]
+      }
+    ],
+
+    /* Per-group title/line overrides. "lineOverrides" keys are 0-based line indexes into
+     * the resolved board's "lines" array. Priority: per-player > per-group > board default.
+     */
+    "groups": {
+    },
+
+    // Per-player title/line overrides, keyed by player UUID.
+    "players": {
+    }
+  }
+}

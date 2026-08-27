@@ -1434,13 +1434,18 @@ public class ConfigManager {
     public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
     public static final String TABLIST_CONFIG = "tablist.json";
     public static final String ANIMATIONS_CONFIG = "animations.json";
+    public static final String SCOREBOARD_CONFIG = "scoreboard.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 44);          // v44 — added "shop.pricing": dynamic ChestShop/NPC-shop
+        put(MAIN_CONFIG, 45);          // v45 — added "modules.scoreboardEnabled" and
+                                       //        "commands.scoreboard": the new sidebar
+                                       //        scoreboard system, same restart-required
+                                       //        module/command toggle pattern as tablist.
+        // v44 — added "shop.pricing": dynamic ChestShop/NPC-shop
                                        //        pricing (supply/demand, time discounts, bulk
                                        //        tiers) was fully implemented and reachable in
                                        //        code (PricingEngine) but had no config section
@@ -1517,6 +1522,7 @@ public class ConfigManager {
                                        // v9  — removed OAuth2 (no direct Discord API calls); dashboard login now sources identity from a Discord companion mod (SDLink/Mc2Discord)
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
+        put(SCOREBOARD_CONFIG, 1);     // v1  — initial sidebar scoreboard config
     }};
 
     /**
@@ -2107,7 +2113,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG
         };
 
         // Check if split configs are enabled
@@ -3078,6 +3084,21 @@ public class ConfigManager {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("tablistEnabled")) {
                 return modules.get("tablistEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the sidebar scoreboard module is enabled (modules.scoreboardEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isScoreboardModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("scoreboardEnabled")) {
+                return modules.get("scoreboardEnabled").getAsBoolean();
             }
         }
         return true;
