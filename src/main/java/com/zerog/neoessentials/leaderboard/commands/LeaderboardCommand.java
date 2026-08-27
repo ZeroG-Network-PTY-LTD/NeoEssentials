@@ -206,7 +206,7 @@ public class LeaderboardCommand {
         var online = server.getPlayerList().getPlayerByName(name);
         if (online != null) return Optional.of(online.getUUID());
         try {
-            return server.getProfileCache().get(name).map(p -> p.getId());
+            return server.services().nameToIdCache().get(name).map(p -> p.id());
         } catch (Exception e) {
             return Optional.empty();
         }
