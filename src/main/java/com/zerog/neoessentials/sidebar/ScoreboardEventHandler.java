@@ -24,7 +24,7 @@ public class ScoreboardEventHandler {
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!com.zerog.neoessentials.config.ConfigManager.isScoreboardModuleEnabled()) return;
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return;
         ScoreboardManager.getInstance().onPlayerJoin(player, server);
         server.execute(() -> ScoreboardManager.getInstance().updatePlayer(player, server));

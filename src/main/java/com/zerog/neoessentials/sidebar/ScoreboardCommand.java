@@ -119,7 +119,7 @@ public class ScoreboardCommand {
                         ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
                         return 0;
                     }
-                    var server = player.getServer();
+                    var server = player.level().getServer();
                     if (server != null) ScoreboardManager.getInstance().updatePlayer(player, server);
                     ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.scoreboard.preview_active"), false);
                     return 1;

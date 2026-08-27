@@ -380,7 +380,7 @@ public class ScoreboardManager {
 
         int online = server.getPlayerList().getPlayers().size();
         int max = server.getMaxPlayers();
-        String world = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().getPath();
+        String world = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().getPath();
         String balance = "0";
         try {
             java.math.BigDecimal bd = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().getBalance(player.getUUID());

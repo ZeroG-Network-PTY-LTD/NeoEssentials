@@ -46,7 +46,7 @@ public class LeaderboardPlaceholderExpansion extends PlaceholderExpansion {
         LeaderboardCache cache = LeaderboardManager.getInstance().getBoard(identifier);
         if (cache == null || player == null) return null;
 
-        List<LeaderboardCache.Entry> top = cache.getTop(player.getServer());
+        List<LeaderboardCache.Entry> top = cache.getTop(player.level().getServer());
         if (rank < 1 || rank > top.size()) return "";
         LeaderboardCache.Entry entry = top.get(rank - 1);
 
