@@ -58,5 +58,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   external permissions plugin like LuckPerms is active) — it now explains why instead of
   crashing into a generic error, matching the error handling every other group-editing
   subcommand already had.
+- `{luckperms_group}`/`{luckperms_primary_group}`/`{ftbranks_rank}`/`{ftbranks_group}`
+  placeholders no longer silently resolve to an empty string when an external permissions
+  plugin (LuckPerms/FTB Ranks) is actually active — they went straight to the internal-only
+  permission manager instead of checking the active external adapter first, exactly the
+  scenario these placeholders exist for. `{luckperms_prefix}`/`{suffix}`/`{displayname}` and
+  the `{ftbranks_}` equivalents were unaffected.
 
 ---
