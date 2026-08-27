@@ -60,6 +60,7 @@ public class ConfigSplitter {
         put("moderation",    "moderation.json");
         put("chat",          "chat.json");
         put("tablist",       "tablist.json");
+        put("scoreboard",    "scoreboard.json");
         put("discordEmbedTemplate", "templates/discord_embed.json");
     }};
 
@@ -77,6 +78,7 @@ public class ConfigSplitter {
         put("afk.json",           Collections.singletonList("afk"));
         put("security.json",      Collections.singletonList("security"));
         put("tablist.json",       Collections.singletonList("tablist"));
+        put("scoreboard.json",    Collections.singletonList("scoreboard"));
         put("templates/discord_embed.json", Collections.singletonList("discordEmbedTemplate"));
     }};
 
@@ -106,6 +108,7 @@ public class ConfigSplitter {
         put("afk.json",           2);  // v2  — invulnerableWhenAfk option
         put("security.json",      1);
         put("tablist.json",       1);
+        put("scoreboard.json",    1);
         put("templates/discord_embed.json", 1);
     }};
 

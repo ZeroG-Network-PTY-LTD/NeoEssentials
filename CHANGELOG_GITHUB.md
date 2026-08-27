@@ -23,6 +23,22 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 
 ## [1.0.6] — 2026-08-27
 
+### Added
+- **Sidebar scoreboard system** — `/scoreboard toggle|reload|enable|disable|info|preview|
+  board list|set title|set line|player ...|group ...`. Config-driven named boards with
+  priority-ordered conditions (`perm:`, `world:`, placeholder comparisons), per-line
+  animation, per-group/per-player title/line overrides, a persisted per-player toggle, and
+  a dashboard endpoint (`/api/scoreboard`) for reading/editing boards. Renders entirely via
+  direct per-connection packets (not the shared server scoreboard), so different players can
+  see different boards or values at the same time with no cross-player interference.
+- **General leaderboard system** — `/leaderboard` (alias `/lb`) generalizes `/baltop`
+  (still works unchanged) into a registry any stat can plug into. Ships with four boards:
+  `money`, `kills`, `mob_kills`, `playtime` — the last three read Minecraft's own per-player
+  stat tracking directly (online players live, offline players from their stats file), no
+  new event tracking needed. Exposes `{leaderboard_<board>:<rank>:name|value}` placeholders
+  (usable in the new scoreboard's line config) and a read-only dashboard endpoint
+  (`/api/leaderboard`).
+
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
   "unexpected error" when the internal permission manager isn't initialized (e.g. an
