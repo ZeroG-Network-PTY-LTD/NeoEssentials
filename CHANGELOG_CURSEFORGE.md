@@ -13,6 +13,10 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   animation, group/player overrides, a toggle command, and a dashboard endpoint.
 - General leaderboard system — `/leaderboard` (`/lb`), with `money`/`kills`/`mob_kills`/
   `playtime` boards and `{leaderboard_<board>:<rank>:name|value}` placeholders.
+- Leaderboard boards are now config-driven (`leaderboard.json`) — register any vanilla
+  per-player stat (blocks mined, mobs killed, distance, etc.) as a board via config, plus
+  "custom" point-total boards (`/leaderboard admin set|add|reset|create|delete`) and a
+  `LeaderboardAPI` for other mods to register their own boards.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected

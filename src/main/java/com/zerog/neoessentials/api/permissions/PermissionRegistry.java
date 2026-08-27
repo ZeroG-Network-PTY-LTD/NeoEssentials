@@ -723,6 +723,7 @@ public class PermissionRegistry {
         register("neoessentials.scoreboard.admin", "Manage the sidebar scoreboard system", PermissionCategory.ADMIN, false);
         register("neoessentials.scoreboard.toggle", "Toggle your own sidebar scoreboard on/off", PermissionCategory.PLAYER, true);
         register("neoessentials.leaderboard.view", "View leaderboards (/leaderboard, /lb)", PermissionCategory.PLAYER, true);
+        register("neoessentials.leaderboard.admin", "Manage leaderboards: reload, create/delete custom boards, set values", PermissionCategory.ADMIN, false);
         register("neoessentials.leaderboard.kills.exempt", "Excluded from the kills leaderboard", PermissionCategory.PLAYER, false);
         register("neoessentials.leaderboard.mob_kills.exempt", "Excluded from the mob kills leaderboard", PermissionCategory.PLAYER, false);
         register("neoessentials.leaderboard.playtime.exempt", "Excluded from the playtime leaderboard", PermissionCategory.PLAYER, false);

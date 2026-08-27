@@ -506,27 +506,13 @@ public class NeoEssentials {
                 LOGGER.error("Failed to initialize ScoreboardManager: {}", e.getMessage());
             }
 
-            // Register the v1 leaderboard boards (money, kills, mob_kills, playtime) — kills/
-            // mob_kills/playtime read vanilla's own per-player stats.json files directly, no
-            // custom event tracking needed.
+            // Register leaderboard boards from leaderboard.json (money/kills/mob_kills/
+            // playtime by default, plus whatever else an admin has enabled/added — see
+            // LeaderboardConfigLoader).
             try {
-                var lbManager = com.zerog.neoessentials.leaderboard.LeaderboardManager.getInstance();
-                lbManager.registerBoard(
-                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("money", "Balance", "neoessentials.economy.baltop.exempt", true),
-                    new com.zerog.neoessentials.leaderboard.adapters.EconomyStatProvider());
-                lbManager.registerBoard(
-                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("kills", "Player Kills", "neoessentials.leaderboard.kills.exempt", true),
-                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
-                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAYER_KILLS), "minecraft:player_kills", false));
-                lbManager.registerBoard(
-                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("mob_kills", "Mob Kills", "neoessentials.leaderboard.mob_kills.exempt", true),
-                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
-                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.MOB_KILLS), "minecraft:mob_kills", false));
-                lbManager.registerBoard(
-                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("playtime", "Playtime", "neoessentials.leaderboard.playtime.exempt", true),
-                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
-                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME), "minecraft:play_time", true));
-                NeoLog.info(LOGGER, LogCategory.GENERAL, "LeaderboardManager initialized with {} board(s)", lbManager.getRegisteredBoardIds().size());
+                com.zerog.neoessentials.leaderboard.config.LeaderboardConfigLoader.load();
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "LeaderboardManager initialized with {} board(s)",
+                    com.zerog.neoessentials.leaderboard.LeaderboardManager.getInstance().getRegisteredBoardIds().size());
             } catch (Exception e) {
                 LOGGER.error("Failed to initialize LeaderboardManager: {}", e.getMessage());
             }

@@ -1435,6 +1435,7 @@ public class ConfigManager {
     public static final String TABLIST_CONFIG = "tablist.json";
     public static final String ANIMATIONS_CONFIG = "animations.json";
     public static final String SCOREBOARD_CONFIG = "scoreboard.json";
+    public static final String LEADERBOARD_CONFIG = "leaderboard.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
@@ -1523,6 +1524,7 @@ public class ConfigManager {
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
         put(SCOREBOARD_CONFIG, 1);     // v1  — initial sidebar scoreboard config
+        put(LEADERBOARD_CONFIG, 1);    // v1  — initial config-driven leaderboard boards
     }};
 
     /**
@@ -2113,7 +2115,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG
         };
 
         // Check if split configs are enabled
