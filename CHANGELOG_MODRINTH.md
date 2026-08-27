@@ -24,5 +24,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
   error" when the internal permission manager isn't active (e.g. an external permissions
   plugin like LuckPerms is in use) — it now explains why instead.
+- `{luckperms_group}`/`{luckperms_primary_group}`/`{ftbranks_rank}`/`{ftbranks_group}`
+  placeholders no longer resolve to an empty string when LuckPerms/FTB Ranks is actually
+  active — `prefix`/`suffix`/`displayname` variants were unaffected.
 
 ---

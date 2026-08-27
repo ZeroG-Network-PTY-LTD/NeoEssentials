@@ -221,19 +221,20 @@ public class PlaceholderManager {
     }
 
     /**
-     * Get LuckPerms primary group.
+     * Get the player's primary group — via {@link com.zerog.neoessentials.api.permissions.PermissionAPI#getPrimaryGroup},
+     * which checks the active external adapter (LuckPerms/FTB Ranks) first and falls back to the
+     * internal manager. This used to go straight to {@code PermissionAPI.getManager()} (the
+     * internal manager only), so {@code {luckperms_group}}/{@code {ftbranks_rank}} silently
+     * returned an empty string whenever an external permission plugin was actually active —
+     * exactly the scenario these placeholders exist for. Same class of bug already fixed for
+     * {@code TablistManager}'s group/weight lookups.
      */
     private String getLuckPermsPrimaryGroup(ServerPlayer player) {
         try {
-            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (permManager != null) {
-                var user = permManager.getUser(player.getUUID());
-                if (user != null && user.getGroup() != null) {
-                    return user.getGroup();
-                }
-            }
+            String group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
+            if (group != null) return group;
         } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting LuckPerms group: {}", e.getMessage());
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting primary group: {}", e.getMessage());
         }
         return "";
     }
