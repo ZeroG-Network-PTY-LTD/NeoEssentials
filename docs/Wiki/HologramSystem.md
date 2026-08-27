@@ -167,6 +167,14 @@ Common useful placeholders:
 
 Set `refreshInterval` > 0 on the hologram to keep placeholder values up-to-date.
 
+### Leaderboard Boards
+
+Any registered [leaderboard](LeaderboardSystem) board's rank/name/value is also available:
+`{leaderboard_<board>:<rank>:name}` / `{leaderboard_<board>:<rank>:value}`, e.g.
+`{leaderboard_money:1:name}`. Rather than typing each `/hologram addline` by hand,
+`/leaderboard hologram create <board> <id> [lines]` generates a full ranked hologram in one
+command — see [Leaderboard System → Holograms](LeaderboardSystem#holograms).
+
 ---
 
 ## Colour Codes
