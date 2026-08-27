@@ -2,15 +2,22 @@ package com.zerog.neoessentials.leaderboard.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.leaderboard.LeaderboardCache;
 import com.zerog.neoessentials.leaderboard.LeaderboardManager;
+import com.zerog.neoessentials.leaderboard.config.LeaderboardConfigLoader;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.MinecraftServer;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * /leaderboard [board] [page] — generalized ranked-stat command; /baltop keeps working
@@ -19,6 +26,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
  */
 public class LeaderboardCommand {
     private static final String PERM_VIEW = "neoessentials.leaderboard.view";
+    private static final String PERM_ADMIN = "neoessentials.leaderboard.admin";
     private static final int PAGE_SIZE = 10;
 
     private static final SuggestionProvider<CommandSourceStack> BOARD_SUGGESTIONS = (ctx, builder) ->
@@ -38,8 +46,77 @@ public class LeaderboardCommand {
                     .then(Commands.argument("page", IntegerArgumentType.integer(1))
                         .executes(ctx -> show(ctx.getSource(), StringArgumentType.getString(ctx, "board"),
                             IntegerArgumentType.getInteger(ctx, "page")))))
+
+                .then(Commands.literal("reload")
+                    .requires(adminCheck())
+                    .executes(ctx -> {
+                        ConfigManager.getInstance().clearCache();
+                        LeaderboardConfigLoader.load();
+                        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.leaderboard.reloaded"), false);
+                        return 1;
+                    })
+                )
+
+                .then(Commands.literal("admin")
+                    .requires(adminCheck())
+                    .then(Commands.literal("set")
+                        .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
+                            .then(Commands.argument("player", StringArgumentType.word())
+                                .then(Commands.argument("value", LongArgumentType.longArg())
+                                    .executes(ctx -> adminSet(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "board"),
+                                        StringArgumentType.getString(ctx, "player"),
+                                        LongArgumentType.getLong(ctx, "value")))))))
+                    .then(Commands.literal("add")
+                        .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
+                            .then(Commands.argument("player", StringArgumentType.word())
+                                .then(Commands.argument("delta", LongArgumentType.longArg())
+                                    .executes(ctx -> adminAdd(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "board"),
+                                        StringArgumentType.getString(ctx, "player"),
+                                        LongArgumentType.getLong(ctx, "delta")))))))
+                    .then(Commands.literal("reset")
+                        .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
+                            .then(Commands.argument("player", StringArgumentType.word())
+                                .executes(ctx -> adminSet(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "board"),
+                                    StringArgumentType.getString(ctx, "player"), 0L)))))
+                    .then(Commands.literal("create")
+                        .then(Commands.argument("id", StringArgumentType.word())
+                            .then(Commands.argument("displayName", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    String id = StringArgumentType.getString(ctx, "id");
+                                    if (LeaderboardManager.getInstance().getBoard(id) != null) {
+                                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.board_exists", id));
+                                        return 0;
+                                    }
+                                    String displayName = StringArgumentType.getString(ctx, "displayName");
+                                    LeaderboardConfigLoader.addCustomBoard(id, displayName);
+                                    ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.board_created", id), false);
+                                    return 1;
+                                })))
+                    )
+                    .then(Commands.literal("delete")
+                        .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
+                            .executes(ctx -> {
+                                String id = StringArgumentType.getString(ctx, "board");
+                                if (!LeaderboardConfigLoader.deleteCustomBoard(id)) {
+                                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.not_custom_board", id));
+                                    return 0;
+                                }
+                                ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.board_deleted", id), false);
+                                return 1;
+                            })))
+                )
             );
         }
+    }
+
+    private static java.util.function.Predicate<CommandSourceStack> adminCheck() {
+        return src -> {
+            var p = src.getPlayer();
+            return p == null || PermissionAPI.hasPermission(p.getUUID(), PERM_ADMIN);
+        };
     }
 
     private static int listBoards(CommandSourceStack source) {
@@ -86,5 +163,52 @@ public class LeaderboardCommand {
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.leaderboard.refreshing"), false);
         }
         return 1;
+    }
+
+    // ── Admin: custom-board value editing ────────────────────────────────────
+    private static int adminSet(CommandSourceStack source, String boardId, String playerName, long value) {
+        return withCustomBoardAndPlayer(source, boardId, playerName, (server, uuid) -> {
+            LeaderboardConfigLoader.customStats().set(boardId, uuid, value);
+            LeaderboardManager.getInstance().getBoard(boardId).invalidate();
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.value_set", boardId, playerName, value), false);
+        });
+    }
+
+    private static int adminAdd(CommandSourceStack source, String boardId, String playerName, long delta) {
+        return withCustomBoardAndPlayer(source, boardId, playerName, (server, uuid) -> {
+            LeaderboardConfigLoader.customStats().add(boardId, uuid, delta);
+            LeaderboardManager.getInstance().getBoard(boardId).invalidate();
+            long newValue = LeaderboardConfigLoader.customStats().get(boardId, uuid);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.value_set", boardId, playerName, newValue), false);
+        });
+    }
+
+    private interface PlayerAction {
+        void run(MinecraftServer server, UUID uuid);
+    }
+
+    private static int withCustomBoardAndPlayer(CommandSourceStack source, String boardId, String playerName, PlayerAction action) {
+        if (!LeaderboardConfigLoader.isCustomBoard(boardId)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.not_custom_board", boardId));
+            return 0;
+        }
+        MinecraftServer server = source.getServer();
+        Optional<UUID> uuid = resolveUuid(server, playerName);
+        if (uuid.isEmpty()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", playerName));
+            return 0;
+        }
+        action.run(server, uuid.get());
+        return 1;
+    }
+
+    private static Optional<UUID> resolveUuid(MinecraftServer server, String name) {
+        var online = server.getPlayerList().getPlayerByName(name);
+        if (online != null) return Optional.of(online.getUUID());
+        try {
+            return server.getProfileCache().get(name).map(p -> p.getId());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }
