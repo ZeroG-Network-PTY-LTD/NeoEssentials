@@ -15,6 +15,7 @@ NeoEssentials exposes five integration surfaces for server admins and mod develo
 | **REST API** | HTTP endpoints for external tools, dashboards, and automation |
 | **`NeoEssentialsAPI`** | Single stable entry-point exposing Economy, Permissions, and Placeholder services |
 | **Vault API** | Standalone, dependency-free economy/permission/chat interop for *other NeoForge mods* — see [`docs/VaultAPI.md`](../VaultAPI) |
+| **`LeaderboardAPI`** | Register your own ranked-stat boards — same one-line pattern as the Placeholder API, see [Leaderboard System → LeaderboardAPI](LeaderboardSystem#leaderboardapi--for-mod-developers) |
 
 ---
 
