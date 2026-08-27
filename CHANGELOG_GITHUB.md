@@ -20,3 +20,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 > between branches.
 
 ---
+
+## [1.0.6] — 2026-08-27
+
+### Fixed
+- `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
+  "unexpected error" when the internal permission manager isn't initialized (e.g. an
+  external permissions plugin like LuckPerms is active) — it now explains why instead of
+  crashing into a generic error, matching the error handling every other group-editing
+  subcommand already had.
+
+---
