@@ -52,6 +52,12 @@
 | `/eco` | `/eco give\|take\|set\|reset <player> <amount>` | `neoessentials.economy.eco` | 🔒 | Admin economy management |
 | `/payconfirmtoggle` | `/payconfirmtoggle` | `neoessentials.payconfirmtoggle` | ✅ | Toggle a confirmation prompt before sending a payment (was missing from this table) |
 
+> **v1.0.6+:** `/baltop` now sits alongside a generalized `/leaderboard` (alias `/lb`) command
+> covering money, kills, mob kills, playtime, any vanilla-tracked stat, and custom
+> admin-defined boards — see [Leaderboard System](LeaderboardSystem) (full command table
+> there, not duplicated here). `/baltop` itself is unchanged. The sidebar scoreboard
+> (`/scoreboard`) is documented separately at [Scoreboard System](ScoreboardSystem).
+
 ---
 
 ## Teleportation

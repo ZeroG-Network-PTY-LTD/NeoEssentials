@@ -26,6 +26,8 @@ NeoEssentials brings essential server management, player utilities, and advanced
 - **Utility Systems**: Nicknames, MOTD, rules, near, ping, depth, helpop, getpos, playtime, etc.
 - **API & Placeholder System**: `{neoessentials_*}` PlaceholderAPI tokens, stat placeholders (deaths, kills, playtime), custom expansion API, and REST API endpoints.
 - **Tablist System**: Animated header/footer, per-group/per-player overrides, hex/gradient/rainbow colors, fake player entries, layout config, and full PlaceholderAPI support.
+- **Sidebar Scoreboard System**: Config-driven named boards with conditions, animation, per-group/per-player overrides, a persisted toggle, and true per-viewer rendering.
+- **Leaderboard System**: `/leaderboard` (`/lb`) ranks money, any vanilla-tracked stat, or custom admin-defined boards — config-driven, with a `LeaderboardAPI` for other mods and a hologram generator.
 - **Localization System**: Set the server language with one config line (`"language": "fr_fr"`). Supports 9 built-in languages with `en_us` fallback for missing keys.
 
 ## 📖 Documentation
@@ -46,6 +48,8 @@ Start at [Home](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/Home
 | [APISystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/APISystem) | PlaceholderAPI, stat tokens, REST API |
 | [AFKSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/AFKSystem) | Auto-AFK, broadcasts, kick timeout |
 | [TablistSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/TablistSystem) | Animated tablist, hex/gradient colors, PlaceholderAPI |
+| [ScoreboardSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/ScoreboardSystem) | Config-driven sidebar boards, conditions, per-viewer rendering |
+| [LeaderboardSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/LeaderboardSystem) | Ranked boards, vanilla stats, custom boards, LeaderboardAPI |
 | [LocalizationSystem](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/LocalizationSystem) | Server language, custom translations, overrides |
 | [SplitConfigs](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/wiki/SplitConfigs) | Split config files, repair, migration |
 
@@ -71,6 +75,8 @@ config/neoessentials/
 ├── afk.json            # AFK timeout, kick, broadcast messages
 ├── security.json       # Input validation, unsafe command filter
 ├── tablist.json        # Animated tablist header/footer/format
+├── scoreboard.json     # Sidebar scoreboard boards, conditions, overrides
+├── leaderboard.json    # Ranked leaderboard boards (economy/vanilla stat/custom)
 ├── kits.json           # Kit definitions
 ├── permissions.json    # Permission groups and nodes
 └── .split_configs      # Marker file that activates split mode

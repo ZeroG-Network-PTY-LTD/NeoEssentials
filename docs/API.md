@@ -1005,6 +1005,45 @@ Blocked command → `403 {"error":"Command 'stop' requires elevated permissions"
 
 ---
 
+## /api/scoreboard
+
+**Handler:** `ScoreboardEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/ScoreboardEndpoint.java`
+
+**GET = AUTH; every POST/PUT/DELETE = ADMIN.** See [Scoreboard System](Wiki/ScoreboardSystem) for the full board/condition config reference.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| GET | `/api/scoreboard` | AUTH | Full config overview (enabled, all boards, overrides) |
+| GET | `/api/scoreboard/boards/{name}` | AUTH | Single board detail |
+| PUT | `/api/scoreboard/enabled` | ADMIN | `{enabled}` — toggle the whole system |
+| POST | `/api/scoreboard/boards` | ADMIN | Create/update a board `{name,priority,conditions,title,lines}` |
+| DELETE | `/api/scoreboard/boards/{name}` | ADMIN | Delete a board |
+| PUT | `/api/scoreboard/boards/{name}/line/{index}` | ADMIN | Quick single-line edit `{text}` |
+
+**POST `/api/scoreboard/boards`** — `lines` is an array of `{"text":"...","condition":null}`; `text` may be a string (static) or array (animated frames). Response: `{"success":true,"message":"Board 'default' saved"}`.
+
+---
+
+## /api/leaderboard
+
+**Handler:** `LeaderboardEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/LeaderboardEndpoint.java`
+
+**GET = AUTH; every POST/PUT/DELETE = ADMIN.** Write routes only accept `type: "custom"` boards — `economy`/`vanilla_stat` boards are `leaderboard.json`-file-only, same restriction as the in-game `/leaderboard admin` subcommands. See [Leaderboard System](Wiki/LeaderboardSystem) for the full board-type/config reference.
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| GET | `/api/leaderboard` | AUTH | List registered board ids + display names |
+| GET | `/api/leaderboard/{board}?page=N` | AUTH | Paginated ranked entries for one board |
+| POST | `/api/leaderboard/boards` | ADMIN | Create a custom board `{id,displayName}` |
+| PUT | `/api/leaderboard/boards/{id}/value` | ADMIN | Set a custom board's value `{player,value}` |
+| DELETE | `/api/leaderboard/boards/{id}` | ADMIN | Delete a custom board |
+
+**GET `/api/leaderboard/money?page=1`**: `{"success":true,"board":"money","displayName":"Balance","page":1,"totalPages":2,"entries":[{"rank":1,"name":"Notch","value":"$1100.00"}, ...]}`
+
+**PUT `/api/leaderboard/boards/event_points/value`** — `{"player":"Notch","value":50}`. Response: `{"success":true,"message":"Set 'event_points' = 50"}`.
+
+---
+
 ## /api/stats
 
 **Handler:** `StatsEndpoint` — `src/main/java/com/zerog/neoessentials/webdashboard/endpoints/StatsEndpoint.java`
@@ -1073,6 +1112,6 @@ GET-only, all AUTH. Samples TPS + memory into a 60-point/60-minute ring buffer o
 
 - **`/api/ping`** (registered inline in `DashboardAPI`, PUBLIC, no auth): `GET` returns `{"success":true,"mod":"neoessentials","mode":"internal|external"}` — a reachability check independent of auth. Good first call to verify connectivity before attempting login/API-key auth.
 - **CORS:** every handler sets `Access-Control-Allow-Origin: *` and answers `OPTIONS` preflight (204). This is permissive by design given the intended integration shape (external dashboard's own backend holds the API key and calls this API server-to-server — never a browser calling directly with the key embedded). If the external dashboard's frontend ever needs to call this API directly from a browser, that would need the key threaded through the dashboard's own backend as a proxy instead; do not embed an API key in frontend JS under any circumstance.
-- **Security tiers, current as of the last lockdown pass:** `/api/files`, `/api/users`, `/api/commands`, `/api/apikeys` are **fully admin-only**. `/api/motd`, `/api/rules`, `/api/shops`, `/api/holograms`, `/api/warps` are **mixed — GET = AUTH, every mutating route = ADMIN** (this was tightened from a previous "no admin check at all" state; if you're looking at an older copy of this doc, re-check). `/api/kits` is GET-only — there's nothing to lock down, the mod has no create/update/delete routes for kits at all. `/api/permissions`, `/api/admin`, `/api/teleport`, `/api/economy`, `/api/backup`, `/api/moderation`, `/api/cloud`, `/api/discord` are also **mixed** (read = AUTH, write = ADMIN) as tabled above. If building fine-grained UI permissions into the external dashboard, use these actual gates, not assumptions from the route name.
+- **Security tiers, current as of the last lockdown pass:** `/api/files`, `/api/users`, `/api/commands`, `/api/apikeys` are **fully admin-only**. `/api/motd`, `/api/rules`, `/api/shops`, `/api/holograms`, `/api/warps` are **mixed — GET = AUTH, every mutating route = ADMIN** (this was tightened from a previous "no admin check at all" state; if you're looking at an older copy of this doc, re-check). `/api/kits` is GET-only — there's nothing to lock down, the mod has no create/update/delete routes for kits at all. `/api/permissions`, `/api/admin`, `/api/teleport`, `/api/economy`, `/api/backup`, `/api/moderation`, `/api/cloud`, `/api/discord`, `/api/scoreboard`, `/api/leaderboard` are also **mixed** (read = AUTH, write = ADMIN) as tabled above. If building fine-grained UI permissions into the external dashboard, use these actual gates, not assumptions from the route name.
 - **Binary/non-JSON responses:** `/api/files/download` (octet-stream), `/api/backup/download` (zip), `/api/shops/csv/export` (text/csv). `/api/shops/csv/import` takes a **raw CSV body**, not JSON.
 - **Path-segment identity varies by endpoint group:** player GETs and moderation mutes/kicks/warns use **username**; moderation bans use **UUID**; economy accepts **either**; shops use an opaque **signKey**; permissions groups by **name**, users by **name** (offline-resolvable via Mojang API fallback).
