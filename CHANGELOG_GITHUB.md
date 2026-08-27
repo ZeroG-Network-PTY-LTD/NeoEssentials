@@ -38,6 +38,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   new event tracking needed. Exposes `{leaderboard_<board>:<rank>:name|value}` placeholders
   (usable in the new scoreboard's line config) and a read-only dashboard endpoint
   (`/api/leaderboard`).
+- **Leaderboard boards are now config-driven** (`leaderboard.json`), not hardcoded — admins
+  can register any vanilla-tracked per-player stat (blocks mined by type, mobs killed by
+  type, distance traveled, deaths, ...) as a board just by adding an entry, using the same
+  criteria-string format vanilla's own `/scoreboard objectives add` accepts. Also adds
+  "custom" boards — point totals nothing in Minecraft tracks, settable via
+  `/leaderboard admin set|add|reset|create|delete`, the dashboard, or another mod (see
+  `LeaderboardAPI`, a one-line integration surface for external mods to register their own
+  boards, mirroring `PlaceholderAPI`).
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
