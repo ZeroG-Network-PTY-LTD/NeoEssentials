@@ -17,6 +17,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   per-player stat (blocks mined, mobs killed, distance, etc.) as a board via config, plus
   "custom" point-total boards (`/leaderboard admin set|add|reset|create|delete`) and a
   `LeaderboardAPI` for other mods to register their own boards.
+- `/leaderboard hologram create <board> <id> [lines]` — generates a ranked leaderboard
+  hologram in one command; the lines keep updating live on their own.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected

@@ -10,11 +10,18 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.leaderboard.LeaderboardCache;
 import com.zerog.neoessentials.leaderboard.LeaderboardManager;
 import com.zerog.neoessentials.leaderboard.config.LeaderboardConfigLoader;
+import com.zerog.neoessentials.hologram.HologramData;
+import com.zerog.neoessentials.hologram.HologramLine;
+import com.zerog.neoessentials.hologram.HologramManager;
+import com.zerog.neoessentials.hologram.HologramRenderer;
+import com.zerog.neoessentials.util.LevelCompat;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -108,8 +115,69 @@ public class LeaderboardCommand {
                                 return 1;
                             })))
                 )
+
+                // ── /leaderboard hologram create <board> <id> [lines] ─────────────
+                // Convenience generator: holograms already resolve {placeholder} tokens live
+                // (HologramTextProcessor -> PlaceholderManager, refreshed on a per-hologram
+                // interval by HologramScheduler), so {leaderboard_<board>:<rank>:name|value}
+                // just works — this only saves typing N `/hologram addline` commands by hand.
+                .then(Commands.literal("hologram")
+                    .requires(adminCheck())
+                    .then(Commands.literal("create")
+                        .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
+                            .then(Commands.argument("id", StringArgumentType.word())
+                                .executes(ctx -> createHologram(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "board"),
+                                    StringArgumentType.getString(ctx, "id"), 10))
+                                .then(Commands.argument("lines", IntegerArgumentType.integer(1, 15))
+                                    .executes(ctx -> createHologram(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "board"),
+                                        StringArgumentType.getString(ctx, "id"),
+                                        IntegerArgumentType.getInteger(ctx, "lines")))))))
+                )
             );
         }
+    }
+
+    private static int createHologram(CommandSourceStack source, String boardId, String hologramId, int lineCount) {
+        if (!ConfigManager.isHologramModuleEnabled()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.holograms_disabled"));
+            return 0;
+        }
+        LeaderboardCache cache = LeaderboardManager.getInstance().getBoard(boardId);
+        if (cache == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.board_not_found", boardId));
+            return 0;
+        }
+        if (HologramManager.getInstance().exists(hologramId)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.hologram_exists", hologramId));
+            return 0;
+        }
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.hologram.player_only"));
+            return 0;
+        }
+
+        HologramData data = new HologramData();
+        data.id = hologramId.toLowerCase();
+        data.x = player.getX();
+        data.y = player.getY() + 1.5;
+        data.z = player.getZ();
+        data.world = HologramRenderer.dimensionKey(LevelCompat.of(player));
+        data.refreshInterval = 5;
+
+        data.lines.add(new HologramLine("&6&l" + cache.getDefinition().displayName() + " Leaderboard"));
+        for (int rank = 1; rank <= lineCount; rank++) {
+            data.lines.add(new HologramLine(
+                "&e#" + rank + " &f{leaderboard_" + boardId + ":" + rank + ":name} &7- &a{leaderboard_" + boardId + ":" + rank + ":value}"));
+        }
+
+        HologramManager.getInstance().registerHologram(data);
+        ServerLevel level = LevelCompat.of(player);
+        HologramRenderer.spawn(data, level);
+
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.hologram_created", hologramId, boardId, lineCount), true);
+        return 1;
     }
 
     private static java.util.function.Predicate<CommandSourceStack> adminCheck() {

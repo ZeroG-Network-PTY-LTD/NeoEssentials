@@ -46,6 +46,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `/leaderboard admin set|add|reset|create|delete`, the dashboard, or another mod (see
   `LeaderboardAPI`, a one-line integration surface for external mods to register their own
   boards, mirroring `PlaceholderAPI`).
+- **`/leaderboard hologram create <board> <id> [lines]`** — generates a hologram with ranked
+  leaderboard lines in one command instead of typing each line by hand. Holograms already
+  resolve `{placeholder}` tokens live on a refresh timer, so the generated
+  `{leaderboard_<board>:<rank>:name|value}` lines keep updating on their own — no new
+  rendering mechanism, just a convenience generator on top of the existing hologram system.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
