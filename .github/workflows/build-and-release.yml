@@ -19,13 +19,19 @@ on:
       - 1.21.x
       - 26.1.x
       - 26.2.x
-    # Changelog/wiki-only edits have no effect on the built jar — don't burn a build number
-    # or spam a Discord release notification for them.
+    # Doc-only edits (changelogs, wiki, README, API reference, any other markdown/docs asset)
+    # have no effect on the built jar — don't burn a build number or spam a Discord release
+    # notification for them. GitHub only skips the workflow when EVERY changed file in the
+    # push matches one of these patterns — a push that also touches a single non-matching file
+    # (e.g. README.md before it was added here) still runs the build, which is exactly what
+    # happened for the doc-update push that added ScoreboardSystem.md/LeaderboardSystem.md:
+    # docs/Wiki/** was covered, but README.md and docs/API.md weren't, so all three branches
+    # built anyway. '**/*.md' + 'docs/**' between them cover every markdown file anywhere in
+    # the repo (root-level changelogs/README, and everything under docs/, md or not — images,
+    # dashboard-scaffold, etc.) so this class of push stays fully non-triggering going forward.
     paths-ignore:
-      - 'CHANGELOG_GITHUB.md'
-      - 'CHANGELOG_CURSEFORGE.md'
-      - 'CHANGELOG_MODRINTH.md'
-      - 'docs/Wiki/**'
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
