@@ -89,6 +89,29 @@ Short-form aliases (legacy, no prefix) are also supported in most contexts.
 | `{newline}` | Line break (tablist header / footer only) |
 | `{bar}` | Horizontal separator bar |
 
+### LuckPerms / FTB Ranks Compatibility Placeholders
+
+A small set of compatibility-named placeholders, for text copied from a server that used to
+run LuckPerms's or FTB Ranks's own PlaceholderAPI expansion:
+
+| Placeholder | Description |
+|---|---|
+| `{luckperms_prefix}` | Permission group prefix |
+| `{luckperms_suffix}` | Permission group suffix |
+| `{luckperms_group}` / `{luckperms_primary_group}` | Primary permission group name |
+| `{luckperms_displayname}` | `prefix + name + suffix` |
+| `{ftbranks_prefix}` | Permission group prefix |
+| `{ftbranks_suffix}` | Permission group suffix |
+| `{ftbranks_rank}` / `{ftbranks_group}` | Primary permission group name |
+
+> **These are aliases into NeoEssentials' own permission system, not a live bridge to the
+> LuckPerms/FTB Ranks plugin's own placeholder expansion.** They resolve through
+> `PermissionAPI`, which checks whichever external adapter is actually active (LuckPerms, FTB
+> Ranks, or neither) and falls back to the internal permission system — so `{luckperms_prefix}`
+> works correctly even on a server that has never installed LuckPerms at all. The equivalent
+> `{neoessentials_prefix}`/`{neoessentials_group}` tokens above resolve identically; these
+> exist purely so pasted-in text using the other naming convention still works.
+
 ---
 
 ## Custom Placeholders (Java API)
