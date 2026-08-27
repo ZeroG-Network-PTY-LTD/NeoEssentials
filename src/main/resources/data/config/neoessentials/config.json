@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 44,
+  "_configVersion": 45,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -26,6 +26,7 @@
     "auctionHouseEnabled": true,
     "vaultEnabled": true,
     "tablistEnabled": true,
+    "scoreboardEnabled": true,
     "resourcePacksEnabled": true,
     "playerTagsEnabled": true,
     "discordIntegrationEnabled": true
@@ -118,6 +119,7 @@
     "powertool": true,
     "powertooltoggle": true,
     "tablist": true,
+    "scoreboard": true,
     "clearinventory": true,
     "enchant": true,
     "enchanthand": true,

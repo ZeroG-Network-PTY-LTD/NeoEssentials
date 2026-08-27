@@ -720,6 +720,12 @@ public class PermissionRegistry {
         register("neoessentials.moderation.jailinfo", "View jail location info", PermissionCategory.MODERATION, false);
         register("neoessentials.powertooltoggle", "Toggle all powertools on/off globally", PermissionCategory.ITEMS, true);
         register("neoessentials.tablist.admin", "Manage the custom tablist system", PermissionCategory.ADMIN, false);
+        register("neoessentials.scoreboard.admin", "Manage the sidebar scoreboard system", PermissionCategory.ADMIN, false);
+        register("neoessentials.scoreboard.toggle", "Toggle your own sidebar scoreboard on/off", PermissionCategory.PLAYER, true);
+        register("neoessentials.leaderboard.view", "View leaderboards (/leaderboard, /lb)", PermissionCategory.PLAYER, true);
+        register("neoessentials.leaderboard.kills.exempt", "Excluded from the kills leaderboard", PermissionCategory.PLAYER, false);
+        register("neoessentials.leaderboard.mob_kills.exempt", "Excluded from the mob kills leaderboard", PermissionCategory.PLAYER, false);
+        register("neoessentials.leaderboard.playtime.exempt", "Excluded from the playtime leaderboard", PermissionCategory.PLAYER, false);
 
         // ── Placeholder system ────────────────────────────────────────────────
         register("neoessentials.admin.placeholders", "Manage and test the placeholder system (/placeholder)", PermissionCategory.ADMIN, false);

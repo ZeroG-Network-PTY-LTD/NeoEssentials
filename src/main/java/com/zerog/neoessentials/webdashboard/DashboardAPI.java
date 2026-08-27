@@ -401,6 +401,8 @@ public class DashboardAPI {
         apiServer.createContext("/api/files", withAuth(new FileManagementHandler()));
         apiServer.createContext("/api/permissions", withAuth(new PermissionEndpoint(server)));
         apiServer.createContext("/api/motd", withAuth(new MotdEndpoint(server)));
+        apiServer.createContext("/api/scoreboard", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.ScoreboardEndpoint(server)));
+        apiServer.createContext("/api/leaderboard", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.LeaderboardEndpoint(server)));
         apiServer.createContext("/api/rules", withAuth(new com.zerog.neoessentials.webdashboard.endpoints.RulesEndpoint()));
         apiServer.createContext("/api/teleport", withAuth(new TeleportEndpoint(server)));
         apiServer.createContext("/api/placeholders", withAuth(new PlaceholderEndpoint(server)));

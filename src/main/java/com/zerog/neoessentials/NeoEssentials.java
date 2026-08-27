@@ -498,6 +498,39 @@ public class NeoEssentials {
                 LOGGER.error("Failed to initialize TablistManager: {}", e.getMessage());
             }
 
+            // Initialize sidebar Scoreboard system
+            try {
+                com.zerog.neoessentials.sidebar.ScoreboardManager.getInstance().loadConfig();
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "ScoreboardManager initialized successfully");
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize ScoreboardManager: {}", e.getMessage());
+            }
+
+            // Register the v1 leaderboard boards (money, kills, mob_kills, playtime) — kills/
+            // mob_kills/playtime read vanilla's own per-player stats.json files directly, no
+            // custom event tracking needed.
+            try {
+                var lbManager = com.zerog.neoessentials.leaderboard.LeaderboardManager.getInstance();
+                lbManager.registerBoard(
+                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("money", "Balance", "neoessentials.economy.baltop.exempt", true),
+                    new com.zerog.neoessentials.leaderboard.adapters.EconomyStatProvider());
+                lbManager.registerBoard(
+                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("kills", "Player Kills", "neoessentials.leaderboard.kills.exempt", true),
+                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
+                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAYER_KILLS), "minecraft:player_kills", false));
+                lbManager.registerBoard(
+                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("mob_kills", "Mob Kills", "neoessentials.leaderboard.mob_kills.exempt", true),
+                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
+                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.MOB_KILLS), "minecraft:mob_kills", false));
+                lbManager.registerBoard(
+                    new com.zerog.neoessentials.leaderboard.LeaderboardDefinition("playtime", "Playtime", "neoessentials.leaderboard.playtime.exempt", true),
+                    new com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider(
+                        net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME), "minecraft:play_time", true));
+                NeoLog.info(LOGGER, LogCategory.GENERAL, "LeaderboardManager initialized with {} board(s)", lbManager.getRegisteredBoardIds().size());
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize LeaderboardManager: {}", e.getMessage());
+            }
+
             // Spawn holograms in their respective levels and start the scheduler.
             //
             // Delayed by a few ticks: entities (unlike terrain chunks) are loaded from
@@ -1183,6 +1216,14 @@ public class NeoEssentials {
         // the passive per-tick header/footer rendering worked fine via TablistEventHandler.
         registry.registerCommandWithPermission("tablist", "Manage the player list header/footer/entries", "neoessentials.tablist.admin");
         com.zerog.neoessentials.tablist.TablistCommand.register(dispatcher);
+
+        // ========== SCOREBOARD COMMANDS ==========
+        registry.registerCommandWithPermission("scoreboard", "Manage the sidebar scoreboard", "neoessentials.scoreboard.admin");
+        com.zerog.neoessentials.sidebar.ScoreboardCommand.register(dispatcher);
+
+        // ========== LEADERBOARD COMMANDS ==========
+        registry.registerCommandWithPermission("leaderboard", "View ranked leaderboards (money, kills, playtime, ...)", "neoessentials.leaderboard.view", "lb");
+        com.zerog.neoessentials.leaderboard.commands.LeaderboardCommand.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
@@ -1235,6 +1276,10 @@ public class NeoEssentials {
                 NeoLog.debug(LOGGER, LogCategory.GENERAL, "Available placeholders: {}", 
                     com.zerog.neoessentials.api.PlaceholderAPI.getRegisteredPlaceholders());
                 
+                // Register the leaderboard placeholder expansion ({leaderboard_<board>:<rank>:name|value})
+                com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(
+                    new com.zerog.neoessentials.leaderboard.LeaderboardPlaceholderExpansion());
+
                 // Mark PlaceholderManager as initialized
                 ManagerRegistry.getInstance().markInitialized("PlaceholderManager");
             } else {
