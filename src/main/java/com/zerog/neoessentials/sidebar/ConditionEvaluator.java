@@ -39,7 +39,7 @@ public final class ConditionEvaluator {
             return PermissionAPI.hasPermission(player.getUUID(), c.substring("perm:".length()).trim());
         }
         if (c.startsWith("world:")) {
-            String world = LevelCompat.of(player).dimension().location().getPath();
+            String world = LevelCompat.of(player).dimension().identifier().getPath();
             return world.equalsIgnoreCase(c.substring("world:".length()).trim());
         }
 
