@@ -29,5 +29,7 @@ migration history) is not carried over.
 - `{luckperms_group}`/`{luckperms_primary_group}`/`{ftbranks_rank}`/`{ftbranks_group}`
   placeholders no longer resolve to an empty string when LuckPerms/FTB Ranks is actually
   active — `prefix`/`suffix`/`displayname` variants were unaffected.
+- Nicknamed players (`/nick`) now keep their permission-group prefix/suffix in the tab list —
+  a nickname used to silently drop it the instant it was set, on any group.
 
 ---
