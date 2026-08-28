@@ -73,5 +73,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   happened to be nicknamed lost their prefix). The override now always contains prefix +
   nickname + suffix, and stays in sync automatically if the prefix/suffix changes later
   (promotion, AFK toggle, config reload) without needing to re-run `/nick`.
+- **`PermissionAPI.getPrefix()`/`getSuffix()` now fall back to the internal permission system
+  when the active external adapter (LuckPerms/FTB Ranks) has no opinion**, matching the
+  fall-through contract `getGroupWeight()`/`getPrimaryGroup()` already correctly had. Two
+  concrete effects: FTB Ranks servers previously got no prefix/suffix through this mod at
+  all, ever (`FtbRanksAdapter` never implemented them, and the old code refused to fall back
+  once any external adapter was active) — now they correctly fall back to NeoEssentials' own
+  `permissions.json` prefix/suffix. And on LuckPerms, a group with no `prefix`/`suffix` meta
+  node set now also falls back to an internal prefix for that same group name if one's
+  configured, instead of silently showing nothing — this was very likely the cause of an
+  earlier "one group shows a prefix, another doesn't" report.
 
 ---

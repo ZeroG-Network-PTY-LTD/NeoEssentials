@@ -392,16 +392,26 @@ public class PermissionAPI {
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> PermissionAPI.getPrefix() called for UUID: {}", uuid);
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Using external adapter: {}", (externalAdapter != null ? externalAdapter.getName() : "NONE"));
 
-        // If external adapter is set, ONLY use it - do NOT fall back to internal
+        // Same fall-through contract as getGroupWeight()/getPrimaryGroup() below: the external
+        // adapter goes first, but a null response means "this adapter has no opinion" (e.g.
+        // FtbRanksAdapter.getPrefix() always returns null — FTB Ranks has no prefix concept in
+        // this integration at all — and a LuckPerms group with no "prefix" meta node set also
+        // returns null), not "this player has no prefix". This used to return "" immediately in
+        // that case ("do NOT fall back to internal when external is enabled"), which meant an
+        // FTB Ranks server could never show a prefix through this mod at all, and a LuckPerms
+        // group relying on NeoEssentials' own internal permissions.json prefix as a fallback for
+        // groups with no LuckPerms-side meta configured silently never got it either.
         if (externalAdapter != null) {
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Querying external adapter for prefix...");
             String prefix = externalAdapter.getPrefix(uuid);
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> External adapter returned: [{}]", prefix);
-            return prefix != null ? prefix : "";
+            if (prefix != null) return prefix;
+            // Adapter had no opinion — fall through to internal.
         }
 
-        // Only use internal system if NO external adapter is configured
-        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Using internal permission system (no external adapter)");
+        // Internal system: either no external adapter is configured, or the external adapter
+        // had no opinion for this player/group.
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, ">>> Using internal permission system");
 
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
@@ -477,15 +487,19 @@ public class PermissionAPI {
             return "";
         }
         
-        // If external adapter is set, ONLY use it - do NOT fall back to internal
+        // See getPrefix()'s comment above — same fall-through contract as
+        // getGroupWeight()/getPrimaryGroup(): a null response from the external adapter means
+        // "no opinion" (FTB Ranks never implements suffix; a LuckPerms group with no "suffix"
+        // meta node also returns null), not "this player has no suffix", so it must fall
+        // through to the internal system rather than returning "" immediately.
         if (externalAdapter != null) {
             String suffix = externalAdapter.getSuffix(uuid);
-            // Return what external system says, even if null/empty
-            // Do NOT fall back to internal when external is enabled
-            return suffix != null ? suffix : "";
+            if (suffix != null) return suffix;
+            // Adapter had no opinion — fall through to internal.
         }
 
-        // Only use internal system if NO external adapter is configured
+        // Internal system: either no external adapter is configured, or the external adapter
+        // had no opinion for this player/group.
         if (manager == null) {
             LOGGER.warn("PermissionAPI.getSuffix: PermissionManager is null");
             return "";
