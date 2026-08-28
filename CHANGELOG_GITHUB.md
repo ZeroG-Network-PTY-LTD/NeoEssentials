@@ -83,5 +83,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   node set now also falls back to an internal prefix for that same group name if one's
   configured, instead of silently showing nothing — this was very likely the cause of an
   earlier "one group shows a prefix, another doesn't" report.
+- **Five more places had the identical "goes straight to the internal-only permission manager"
+  bug** as the fixes above, found by auditing every remaining call site: the public
+  `NeoEssentialsAPI.getPermissionsService().getGroup()` contract, the `{group}`/
+  `{neoessentials_group}` placeholder (the most widely-used group token — chat, MOTD,
+  holograms), `TablistLayout`'s BTLP-style per-group column bucketing, chat badge group
+  gating, and player tags — all silently returned `""`/`"default"` for every player whenever
+  LuckPerms/FTB Ranks was active. All five now correctly check the active external adapter
+  first. Also hardened Discord-role permission sync to fail with a clear message instead of a
+  generic error when an external adapter is active (it writes to the internal group directly,
+  which has no external-adapter equivalent to redirect to).
 
 ---

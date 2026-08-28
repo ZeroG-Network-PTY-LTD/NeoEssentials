@@ -63,7 +63,22 @@ public class DiscordPermissionSync {
             // Sync permissions based on Discord roles
             int permissionsGranted = 0;
             com.zerog.neoessentials.permissions.PermissionManager permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            
+
+            // This writes Discord-role mappings straight to the INTERNAL PermissionUser's
+            // group — there's no generic "set the active external adapter's group" operation
+            // to call instead, so unlike other PermissionAPI.getManager() consumers this can't
+            // just be swapped for an adapter-aware call. When an external adapter (LuckPerms/
+            // FTB Ranks) is active, permManager is null and this used to fall through into the
+            // loop below, NPE on the first getUser() call, and get caught by the generic
+            // catch-all at the bottom of this method as an unhelpful "Error: null" — fail fast
+            // here instead with a message that actually explains what to do.
+            if (permManager == null) {
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD,
+                    "Discord permission sync skipped for {} — an external permission adapter is active; manage group membership there instead.",
+                    player.getName().getString());
+                return new SyncResult(false, "External permissions plugin (LuckPerms/FTB Ranks) is active — manage this player's group there instead.", 0);
+            }
+
             for (String role : discordUser.getDiscordRoles()) {
                 // Map Discord roles to permission groups
                 String permissionGroup = mapDiscordRoleToPermissionGroup(role);
