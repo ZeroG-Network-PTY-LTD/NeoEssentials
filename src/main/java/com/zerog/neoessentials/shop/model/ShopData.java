@@ -87,6 +87,11 @@ public class ShopData {
     /** Total number of successful transactions on this shop. */
     public long totalSalesCount = 0L;
 
+    /** Total money moved through this shop (buy+sell), in the smallest currency unit
+     *  (cents) — see {@link com.zerog.neoessentials.shop.ShopTransaction}, and the
+     *  {@code shop_sales} leaderboard board that ranks shops by this value. */
+    public long totalRevenueCents = 0L;
+
     /** Epoch-millis of the last sale, or 0 if never sold. */
     public long lastSaleTimestamp = 0L;
 

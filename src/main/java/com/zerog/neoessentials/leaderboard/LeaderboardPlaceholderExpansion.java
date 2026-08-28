@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Exposes leaderboard rank/name/value as placeholders:
- * {@code {leaderboard_<board>:<rank>:name}} / {@code {leaderboard_<board>:<rank>:value}}
+ * Exposes leaderboard rank/name/value/medal/rank-color as placeholders:
+ * {@code {leaderboard_<board>:<rank>:name}} / {@code :value} / {@code :medal} (🥇🥈🥉 on ranks
+ * 1-3, empty otherwise) / {@code :rankcolor} (a gold/silver/bronze color tag on ranks 1-3)
  * e.g. {@code {leaderboard_kills:1:name}}. Intended for consumption by the sidebar
  * scoreboard's line config, or anywhere else placeholders are supported.
  */
@@ -53,6 +54,8 @@ public class LeaderboardPlaceholderExpansion extends PlaceholderExpansion {
         return switch (field) {
             case "name" -> entry.name();
             case "value" -> cache.getProvider().formatValue(entry.value());
+            case "medal" -> LeaderboardStyle.medal(rank);
+            case "rankcolor" -> LeaderboardStyle.rankColorTag(rank);
             default -> null;
         };
     }

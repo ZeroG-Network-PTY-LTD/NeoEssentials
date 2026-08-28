@@ -1524,7 +1524,7 @@ public class ConfigManager {
         put(TABLIST_CONFIG, 5);        // v5  — migrated to // comment style
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
         put(SCOREBOARD_CONFIG, 1);     // v1  — initial sidebar scoreboard config
-        put(LEADERBOARD_CONFIG, 1);    // v1  — initial config-driven leaderboard boards
+        put(LEADERBOARD_CONFIG, 3);    // v3  — add entryFormat/headerFormat/icon board styling fields
     }};
 
     /**
@@ -2186,8 +2186,15 @@ public class ConfigManager {
             return; // No version tracking for this config
         }
 
-        try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
-            JsonObject onDisk = parseJsonWithComments(reader).getAsJsonObject();
+        try {
+            JsonObject onDisk;
+            // Read-and-close BEFORE any merge/rename below — Windows (unlike POSIX) refuses to
+            // rename a new file over configFile while this process still holds it open for
+            // reading (AccessDeniedException), so the reader must not still be open across the
+            // Files.move() further down.
+            try (FileReader reader = new FileReader(configFile, StandardCharsets.UTF_8)) {
+                onDisk = parseJsonWithComments(reader).getAsJsonObject();
+            }
 
             int currentVersion = 0;
             if (onDisk.has(CONFIG_VERSION_KEY)) {
@@ -2232,6 +2239,15 @@ public class ConfigManager {
                 // Never overwrite existing user values.
                 NeoLog.debug(LOGGER, LogCategory.CONFIG, "Merging missing keys from JAR template into {} (existing values preserved)", configName);
                 changed |= mergeNewKeys(jarTemplate, onDisk);
+
+                // mergeNewKeys() only adds a key that's missing entirely on disk — leaderboard.
+                // boards is a JSON array that already exists on every upgraded install, so a new
+                // default board shipped in a later version (e.g. shop_sales) would otherwise
+                // never reach existing servers even though the version bump itself succeeds.
+                if (LEADERBOARD_CONFIG.equals(configName) && mergeNewLeaderboardBoards(jarTemplate, onDisk)) {
+                    changed = true;
+                    NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: added new default leaderboard board(s) from the JAR template.", configName);
+                }
 
                 // Strip legacy comment keys (xxx_comment, _doc_*, _step*, etc.)
                 // from the user's file as part of this upgrade.
@@ -2395,6 +2411,45 @@ public class ConfigManager {
      *
      * @return true if at least one key was added
      */
+    /**
+     * Adds any board from the JAR template's {@code leaderboard.boards} array whose {@code id}
+     * isn't already present on disk (existing boards, including admin-edited ones, are left
+     * untouched — this only appends new ones). Complements {@link #mergeNewKeys}, which can't
+     * merge inside an already-present JSON array.
+     *
+     * @return {@code true} if at least one board was added
+     */
+    private static boolean mergeNewLeaderboardBoards(com.google.gson.JsonObject jarTemplate, com.google.gson.JsonObject onDisk) {
+        if (!jarTemplate.has("leaderboard") || !jarTemplate.get("leaderboard").isJsonObject()) return false;
+        com.google.gson.JsonObject jarLb = jarTemplate.getAsJsonObject("leaderboard");
+        if (!jarLb.has("boards") || !jarLb.get("boards").isJsonArray()) return false;
+
+        if (!onDisk.has("leaderboard") || !onDisk.get("leaderboard").isJsonObject()) return false;
+        com.google.gson.JsonObject onDiskLb = onDisk.getAsJsonObject("leaderboard");
+        com.google.gson.JsonArray onDiskBoards = onDiskLb.has("boards") && onDiskLb.get("boards").isJsonArray()
+            ? onDiskLb.getAsJsonArray("boards") : new com.google.gson.JsonArray();
+
+        java.util.Set<String> existingIds = new java.util.HashSet<>();
+        for (com.google.gson.JsonElement el : onDiskBoards) {
+            if (el.isJsonObject() && el.getAsJsonObject().has("id")) {
+                existingIds.add(el.getAsJsonObject().get("id").getAsString().toLowerCase());
+            }
+        }
+
+        boolean changed = false;
+        for (com.google.gson.JsonElement el : jarLb.getAsJsonArray("boards")) {
+            if (!el.isJsonObject() || !el.getAsJsonObject().has("id")) continue;
+            String id = el.getAsJsonObject().get("id").getAsString().toLowerCase();
+            if (existingIds.add(id)) {
+                onDiskBoards.add(el.deepCopy());
+                changed = true;
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "  + Added new default leaderboard board: {}", id);
+            }
+        }
+        if (changed) onDiskLb.add("boards", onDiskBoards);
+        return changed;
+    }
+
     private boolean mergeNewKeys(com.google.gson.JsonObject source, com.google.gson.JsonObject target) {
         boolean changed = false;
         for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : source.entrySet()) {

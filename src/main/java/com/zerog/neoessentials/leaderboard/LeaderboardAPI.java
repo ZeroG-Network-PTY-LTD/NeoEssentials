@@ -11,6 +11,13 @@ package com.zerog.neoessentials.leaderboard;
  * LeaderboardAPI.registerBoard(
  *     new LeaderboardDefinition("mymod_wins", "Arena Wins", "mymod.leaderboard.exempt", true),
  *     (server) -> myWinsMap()); // StatProvider: Map<UUID, Number> getAllValues(MinecraftServer)
+ *
+ * // Omitting refreshIntervalSeconds (the 4-arg constructor above) defaults to 60s, same as
+ * // every config-driven board. Pass it explicitly for an expensive-to-compute stat you don't
+ * // want rebuilt on every /leaderboard view:
+ * LeaderboardAPI.registerBoard(
+ *     new LeaderboardDefinition("mymod_wins", "Arena Wins", "mymod.leaderboard.exempt", true, 300),
+ *     (server) -> myWinsMap());
  * }</pre>
  *
  * @see StatProvider
