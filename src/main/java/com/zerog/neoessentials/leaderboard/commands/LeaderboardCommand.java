@@ -52,7 +52,9 @@ public class LeaderboardCommand {
                     .executes(ctx -> show(ctx.getSource(), StringArgumentType.getString(ctx, "board"), 1))
                     .then(Commands.argument("page", IntegerArgumentType.integer(1))
                         .executes(ctx -> show(ctx.getSource(), StringArgumentType.getString(ctx, "board"),
-                            IntegerArgumentType.getInteger(ctx, "page")))))
+                            IntegerArgumentType.getInteger(ctx, "page"))))
+                    .then(Commands.literal("gui")
+                        .executes(ctx -> openGui(ctx.getSource(), StringArgumentType.getString(ctx, "board")))))
 
                 .then(Commands.literal("reload")
                     .requires(adminCheck())
@@ -187,6 +189,20 @@ public class LeaderboardCommand {
         };
     }
 
+    private static int openGui(CommandSourceStack source, String boardId) {
+        LeaderboardCache cache = LeaderboardManager.getInstance().getBoard(boardId);
+        if (cache == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.board_not_found", boardId));
+            return 0;
+        }
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
+        com.zerog.neoessentials.leaderboard.gui.LeaderboardMenu.open(player, boardId);
+        return 1;
+    }
+
     private static int listBoards(CommandSourceStack source) {
         var ids = LeaderboardManager.getInstance().getRegisteredBoardIds();
         String msg = ids.isEmpty() ? "§7(none)" : "§e" + String.join("§7, §e", ids);
@@ -213,18 +229,40 @@ public class LeaderboardCommand {
         int totalPages = cache.getTotalPages(PAGE_SIZE);
         int clampedPage = Math.max(1, Math.min(page, totalPages));
         long ageSeconds = cache.getCacheAgeMs() / 1000L;
-        String displayName = cache.getDefinition().displayName();
+        var definition = cache.getDefinition();
+        String displayName = definition.displayName();
 
-        source.sendSuccess(() -> MessageUtil.success(
-            "commands.neoessentials.leaderboard.header", displayName, clampedPage, totalPages, ageSeconds), false);
+        String headerFormat = definition.headerFormat();
+        if (headerFormat != null) {
+            String rendered = headerFormat
+                .replace("{displayName}", displayName)
+                .replace("{page}", String.valueOf(clampedPage))
+                .replace("{totalPages}", String.valueOf(totalPages))
+                .replace("{age}", String.valueOf(ageSeconds));
+            source.sendSuccess(() -> com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(rendered), false);
+        } else {
+            source.sendSuccess(() -> MessageUtil.success(
+                "commands.neoessentials.leaderboard.header", displayName, clampedPage, totalPages, ageSeconds), false);
+        }
 
+        String entryFormat = definition.entryFormat();
         int startRank = (clampedPage - 1) * PAGE_SIZE + 1;
         int rank = startRank;
         for (var entry : pageEntries) {
             final int r = rank++;
             String formatted = cache.getProvider().formatValue(entry.value());
-            source.sendSuccess(() -> MessageUtil.info(
-                "commands.neoessentials.leaderboard.entry", r, entry.name(), formatted), false);
+            if (entryFormat != null) {
+                String rendered = entryFormat
+                    .replace("{rank}", String.valueOf(r))
+                    .replace("{name}", entry.name())
+                    .replace("{value}", formatted)
+                    .replace("{medal}", com.zerog.neoessentials.leaderboard.LeaderboardStyle.medal(r))
+                    .replace("{rankColor}", com.zerog.neoessentials.leaderboard.LeaderboardStyle.rankColorTag(r));
+                source.sendSuccess(() -> com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(rendered), false);
+            } else {
+                source.sendSuccess(() -> MessageUtil.info(
+                    "commands.neoessentials.leaderboard.entry", r, entry.name(), formatted), false);
+            }
         }
 
         if (cache.isBuilding()) {

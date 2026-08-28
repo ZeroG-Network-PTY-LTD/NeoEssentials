@@ -107,6 +107,7 @@ public final class ShopTransaction {
         }
 
         shop.totalSalesCount++;
+        shop.totalRevenueCents += price.movePointRight(2).longValue();
         shop.lastSaleTimestamp = System.currentTimeMillis();
         ShopManager.getInstance().registerShop(shop);
 
@@ -165,6 +166,7 @@ public final class ShopTransaction {
         guaranteedCredit(eco, seller.getUUID(), price, "SELL", shop);
 
         shop.totalSalesCount++;
+        shop.totalRevenueCents += price.movePointRight(2).longValue();
         shop.lastSaleTimestamp = System.currentTimeMillis();
         ShopManager.getInstance().registerShop(shop);
 

@@ -8,6 +8,7 @@ import com.zerog.neoessentials.leaderboard.LeaderboardDefinition;
 import com.zerog.neoessentials.leaderboard.LeaderboardManager;
 import com.zerog.neoessentials.leaderboard.adapters.CustomStatProvider;
 import com.zerog.neoessentials.leaderboard.adapters.EconomyStatProvider;
+import com.zerog.neoessentials.leaderboard.adapters.ShopSalesStatProvider;
 import com.zerog.neoessentials.leaderboard.adapters.VanillaStatProvider;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
@@ -75,8 +76,17 @@ public final class LeaderboardConfigLoader {
         boolean higherIsBetter = !b.has("higherIsBetter") || b.get("higherIsBetter").getAsBoolean();
         String exemptPermission = b.has("exemptPermission") && !b.get("exemptPermission").isJsonNull()
             ? b.get("exemptPermission").getAsString() : null;
+        int refreshInterval = b.has("refreshInterval") && !b.get("refreshInterval").isJsonNull()
+            ? Math.max(1, b.get("refreshInterval").getAsInt()) : LeaderboardDefinition.DEFAULT_REFRESH_INTERVAL_SECONDS;
+        String entryFormat = b.has("entryFormat") && !b.get("entryFormat").isJsonNull()
+            ? b.get("entryFormat").getAsString() : null;
+        String headerFormat = b.has("headerFormat") && !b.get("headerFormat").isJsonNull()
+            ? b.get("headerFormat").getAsString() : null;
+        String icon = b.has("icon") && !b.get("icon").isJsonNull()
+            ? b.get("icon").getAsString() : null;
 
-        LeaderboardDefinition definition = new LeaderboardDefinition(id, displayName, exemptPermission, higherIsBetter);
+        LeaderboardDefinition definition = new LeaderboardDefinition(
+            id, displayName, exemptPermission, higherIsBetter, refreshInterval, entryFormat, headerFormat, icon);
 
         switch (type) {
             case "economy" -> {
@@ -92,6 +102,10 @@ public final class LeaderboardConfigLoader {
                 var provider = VanillaStatProvider.fromStatKey(statKey, "time".equals(format));
                 if (provider.isEmpty()) return false; // already logged by fromStatKey
                 manager.registerBoard(definition, provider.get(), true);
+                return true;
+            }
+            case "shop_sales" -> {
+                manager.registerBoard(definition, new ShopSalesStatProvider(), true);
                 return true;
             }
             case "custom" -> {
@@ -128,6 +142,7 @@ public final class LeaderboardConfigLoader {
         entry.addProperty("displayName", displayName);
         entry.addProperty("format", "integer");
         entry.addProperty("higherIsBetter", true);
+        entry.addProperty("refreshInterval", LeaderboardDefinition.DEFAULT_REFRESH_INTERVAL_SECONDS);
         entry.addProperty("enabled", true);
         rebuilt.add(entry);
 

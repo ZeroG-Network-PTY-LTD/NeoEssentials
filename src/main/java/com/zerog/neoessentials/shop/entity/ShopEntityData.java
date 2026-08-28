@@ -37,6 +37,14 @@ public class ShopEntityData {
     /** Whether this shop accepts money from the built-in economy (always true for now). */
     public boolean economyEnabled = true;
 
+    /** Total number of successful transactions on this shop. */
+    public long totalSalesCount = 0L;
+
+    /** Total money moved through this shop (buy+sell), in the smallest currency unit
+     *  (cents) — see {@link com.zerog.neoessentials.shop.entity.NpcShopMenu}, and the
+     *  {@code shop_sales} leaderboard board that ranks shops by this value. */
+    public long totalRevenueCents = 0L;
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public void addListing(ShopListing listing) {
