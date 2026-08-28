@@ -101,7 +101,7 @@ public class ConfigSplitter {
                                         //       {neoessentials_username}/{neoessentials_name} so /nick
                                         //       actually shows up in chat (see
                                         //       ConfigManager.patchLegacyNicknameChatDefaults)
-        put("teleportation.json", 1);
+        put("teleportation.json", 2);  // v2 — RTP biome-select GUI fields (mode/biomeSearchRadius/etc)
         put("moderation.json",    1);
         put("items.json",         2);  // v2 — added "shop" section (shop.pricing — dynamic
                                         //       ChestShop/NPC-shop pricing was implemented

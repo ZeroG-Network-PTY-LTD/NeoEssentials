@@ -764,6 +764,26 @@
       "cacheThreshold": 10,
       // Cooldown in seconds between /tpr uses per player (0 = disabled)
       "cooldown": 60,
+      // "command" (default) = /tpr instantly teleports, exactly as before.
+      // "gui" = bare /tpr (no location argument) opens a chest-GUI biome picker instead —
+      // /tpr <locationName> still bypasses the GUI either way.
+      "mode": "command",
+      // Search radius/step (in blocks) used only by GUI biome-picker teleports — same engine
+      // /locate biome uses. Larger radius finds rarer biomes but is slower.
+      "biomeSearchRadius": 6400,
+      "biomeSearchStep": 32,
+      // GUI-only: pin specific biomes to fixed slots and/or override their icon.
+      //   slot — 0-44, page-1 slot to pin this biome to (0 = top-left box). Optional — omit to
+      //          leave the biome auto-positioned (alphabetical, like every other biome) while
+      //          still overriding just its icon.
+      //   item — icon item id override. Optional — omit to keep the built-in default icon
+      //          (that biome's sapling/dedicated block, or a generic fallback if unmapped).
+      // Pinned biomes are removed from the auto-listed pool (shown once, at their pinned slot);
+      // every unpinned biome — including any this mod doesn't recognize, e.g. from a biome mod —
+      // still fills the remaining slots automatically across page 1 and beyond.
+      "biomeMenuItems": [
+        // { "slot": 0, "biome": "minecraft:taiga", "item": "minecraft:spruce_sapling" }
+      ],
       // Biome resource locations excluded globally (e.g. "minecraft:ocean")
       "excludedBiomes": [],
       // Named location slots. Update centre in-game with /settpr <name>.

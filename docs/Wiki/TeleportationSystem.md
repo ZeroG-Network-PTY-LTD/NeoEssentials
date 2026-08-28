@@ -177,8 +177,66 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | `cooldown` | `60` | Seconds between uses per player |
 | `cacheThreshold` | `10` | Pre-computed location cache size |
 | `excludedBiomes` | `[]` | Biomes excluded globally (empty by default) |
+| `mode` | `"command"` | `"command"` = `/tpr` teleports instantly (unchanged default behavior). `"gui"` = bare `/tpr` (no location argument) opens a chest-GUI biome picker instead — see below |
+| `biomeSearchRadius` | `6400` | GUI-only — search radius in blocks for a biome-targeted teleport, same engine `/locate biome` uses |
+| `biomeSearchStep` | `32` | GUI-only — horizontal search step; larger = faster but coarser |
+| `biomeMenuItems` | `[]` | GUI-only — pin specific biomes to fixed slots and/or override their icon, see below |
 
 > The built-in `"default"` named location under `randomTeleportSettings.locations` additionally excludes all ocean variants and `minecraft:the_void` — configure per-location via `/settpr <name>`.
+
+### Biome-Select GUI (`mode: "gui"`)
+
+When enabled, bare `/tpr`/`/rtp` opens a paginated chest GUI instead of teleporting instantly:
+
+- **One slot per biome** the current dimension can actually generate — this is read live from
+  the dimension's own generator (`BiomeSource.possibleBiomes()`), so **modded biomes appear
+  automatically** with no configuration needed. 45 biomes per page, with prev/close/next nav
+  buttons.
+- **A dedicated "Random — Any Biome" button** (bottom-right) behaves exactly like plain
+  `/tpr` — no biome constraint, uses the normal cached random-teleport path.
+- Clicking a specific biome closes the GUI and searches for that biome using the same engine
+  `/locate biome` uses (`ServerLevel.findClosestBiome3d`) from a jittered center within the
+  configured range, then finds a safe Y the same way plain RTP does. If no match turns up
+  within `biomeSearchRadius` blocks **or** the match falls outside the world border, the
+  player gets a clear "could not find that biome within the server border" error instead of
+  being teleported somewhere unexpected.
+- `/tpr <locationName>` (an explicit location argument) always bypasses the GUI, even in
+  `"gui"` mode — the GUI only intercepts the bare, no-argument form.
+- Same `neoessentials.teleport.tpr` permission gates both the plain command and the GUI —
+  no separate permission node.
+
+#### Biome icons
+
+Every biome gets a default icon — a wooded biome shows its own sapling/propagule/fungus (the
+"growable" item, not the log), and biomes with no tree of their own show a block unique to
+that biome (sand for desert, water bucket for ocean, netherrack for nether wastes, etc.).
+Anything not in that built-in table (every biome from a mod that isn't specifically supported)
+falls back to a generic `minecraft:grass_block` icon.
+
+#### `biomeMenuItems` — pinning and icon overrides
+
+```jsonc
+"biomeMenuItems": [
+  // Pin to a fixed slot (0 = top-left box, 1 = next box, ... 44 = last box on page 1),
+  // keep the default icon (spruce_sapling, from the built-in table):
+  { "slot": 0, "biome": "minecraft:taiga" },
+
+  // Pin to a slot AND override the icon:
+  { "slot": 1, "biome": "minecraft:desert", "item": "minecraft:cactus" },
+
+  // Icon-only override, no slot — stays auto-positioned like any other biome,
+  // just with a custom icon (this is also how to support a biome mod's own
+  // saplings, since this mod can't auto-detect a modded biome's tree species):
+  { "biome": "biomesoplenty:redwood_forest", "item": "biomesoplenty:redwood_sapling" }
+]
+```
+
+Both `slot` and `item` are independently optional. A pin only reserves its slot **on page 1**;
+pinned biomes are removed from the auto-listed pool (shown once, at their pinned position) —
+every other biome, including unrecognized/modded ones, still fills the remaining slots
+automatically in alphabetical order, continuing onto later pages exactly as if no pins existed.
+A pin referencing a biome that doesn't exist in the current dimension, or a `slot` outside
+0-44, is silently skipped — it can't break the GUI.
 
 ---
 
