@@ -1442,7 +1442,9 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 45);          // v45 — added "modules.scoreboardEnabled" and
+        put(MAIN_CONFIG, 46);          // v46 — added randomTeleportSettings.mode/biomeSearchRadius/
+                                        //   biomeSearchStep/biomeMenuItems (RTP biome-select GUI)
+        // v45 — added "modules.scoreboardEnabled" and
                                        //        "commands.scoreboard": the new sidebar
                                        //        scoreboard system, same restart-required
                                        //        module/command toggle pattern as tablist.

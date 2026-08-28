@@ -400,11 +400,18 @@ public class DirectTeleportCommands {
     }
 
     /**
-     * /tpr [locationName] — delegates to RandomTeleportManager (Essentials-style RTP).
+     * /tpr [locationName] — delegates to RandomTeleportManager (Essentials-style RTP), or opens
+     * the biome-select GUI instead when {@code randomTeleportSettings.mode == "gui"} and no
+     * explicit location argument was given (an explicit location is a specific request and
+     * always bypasses the GUI, even in GUI mode).
      */
     private static int randomTeleport(CommandContext<CommandSourceStack> ctx, String locationName) {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
+            if (locationName.isEmpty() && RandomTeleportManager.getInstance().isGuiMode()) {
+                com.zerog.neoessentials.teleportation.DirectTeleport.gui.RandomTeleportMenu.open(player);
+                return 1;
+            }
             RandomTeleportManager.getInstance().randomTeleport(player, locationName);
             return 1;
         } catch (CommandSyntaxException e) {

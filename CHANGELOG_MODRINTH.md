@@ -27,6 +27,12 @@ migration history) is not carried over.
 - Leaderboard styling: automatic per-rank medal/color placeholders (`:medal`/`:rankcolor`),
   per-board `entryFormat`/`headerFormat` chat templates, and a new paginated GUI viewer
   (`/leaderboard <board> gui`) with real player heads and per-board icons.
+- `/tpr`/`/rtp` can open a biome-select chest GUI instead of teleporting instantly — opt-in
+  via `randomTeleportSettings.mode: "gui"` (default unchanged). Lists every biome the
+  dimension can generate (modded biomes included automatically), plus a "Random — Any Biome"
+  button; picks a real spot in that biome or shows a clear error if it can't find one within
+  the server border. Icons default to that biome's sapling/dedicated block; admins can pin
+  biomes to fixed slots and/or override icons via `biomeMenuItems`.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
