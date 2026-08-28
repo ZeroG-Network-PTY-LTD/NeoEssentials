@@ -19,6 +19,12 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   `LeaderboardAPI` for other mods to register their own boards.
 - `/leaderboard hologram create <board> <id> [lines]` — generates a ranked leaderboard
   hologram in one command; the lines keep updating live on their own.
+- Leaderboards can now rank non-players — a new `shop_sales` board ranks sign/chest and NPC
+  shops by total revenue, shown by shop name instead of a player name.
+- Per-board `refreshInterval` in `leaderboard.json` (was a fixed 60s for every board).
+- Leaderboard styling: automatic per-rank medal/color placeholders (`:medal`/`:rankcolor`),
+  per-board `entryFormat`/`headerFormat` chat templates, and a new paginated GUI viewer
+  (`/leaderboard <board> gui`) with real player heads and per-board icons.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
@@ -38,5 +44,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   remaining call site): the public `NeoEssentialsAPI` group lookup, the `{group}` placeholder,
   per-group tablist column bucketing, chat badge group gating, and player tags all silently
   fell back to `""`/`"default"` under LuckPerms/FTB Ranks — now fixed the same way.
+- Config-version upgrades (the merge that adds new default keys/boards to an existing config
+  on update) were silently failing on Windows — fixed. Also fixed new default boards (like
+  `shop_sales`) not reaching an already-upgraded install even after that fix.
 
 ---

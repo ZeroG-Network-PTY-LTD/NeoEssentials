@@ -3,7 +3,7 @@
 > **Config file:** `config/neoessentials/leaderboard.json`  
 > **Reload in-game:** `/leaderboard reload`  
 > **Commands:** `/leaderboard` (alias `/lb`) · **Admin permission:** `neoessentials.leaderboard.admin`  
-> **Introduced:** v1.0.6
+> **Introduced:** v1.0.6 (shop boards, styling & GUI added in a later v1.0.6 update)
 
 ---
 
@@ -18,8 +18,11 @@ is untouched — the leaderboard system is a superset built alongside it, not a 
 | **Economy boards** | Ranks by balance (same data `/baltop` uses) |
 | **Vanilla stat boards** | Blocks mined by type, mobs killed by type, distance traveled, deaths, playtime, ... — anything vanilla's own `/scoreboard objectives add` criteria grammar can reference |
 | **Custom boards** | Point totals nothing in Minecraft tracks — admin-settable, dashboard-settable, or fed by another mod |
+| **Shop-sales board** | Ranks shops (sign/chest **and** NPC) by total revenue, shown by shop/owner name — the first board that isn't ranking players at all, see [Non-Player Boards](#non-player-boards-shop_sales) |
+| **Per-board styling** | Custom chat/GUI line templates, per-rank medal/color, and a per-board GUI icon — see [Styling](#styling-templates-medals--the-gui-viewer) |
+| **GUI viewer** | `/leaderboard <board> gui` — a paginated chest-GUI browser, real player heads for player entries |
 | **`LeaderboardAPI`** | One-line board registration for other mods, mirroring `PlaceholderAPI` |
-| **Placeholders** | `{leaderboard_<board>:<rank>:name\|value}` — usable in chat, tablist, the sidebar scoreboard, or holograms |
+| **Placeholders** | `{leaderboard_<board>:<rank>:name\|value\|medal\|rankcolor}` — usable in chat, tablist, the sidebar scoreboard, or holograms |
 | **Hologram generator** | `/leaderboard hologram create <board> <id> [lines]` |
 | **Dashboard endpoint** | `/api/leaderboard` |
 
@@ -47,7 +50,7 @@ entry away from being a leaderboard.
 
 ```jsonc
 {
-  "_configVersion": 1,
+  "_configVersion": 3,
   "leaderboard": {
     "boards": [
       { "id": "money", "type": "economy", "displayName": "Balance", "format": "currency",
@@ -62,13 +65,18 @@ entry away from being a leaderboard.
         "displayName": "Mob Kills", "format": "integer", "higherIsBetter": true, "enabled": true },
 
       { "id": "playtime", "type": "vanilla_stat", "stat": "minecraft.custom:minecraft.play_time",
-        "displayName": "Playtime", "format": "time", "higherIsBetter": true, "enabled": true },
+        "displayName": "Playtime", "format": "time", "higherIsBetter": true,
+        "refreshInterval": 300, "enabled": true },
 
       { "id": "diamonds_mined", "type": "vanilla_stat", "stat": "minecraft.mined:minecraft.diamond_ore",
         "displayName": "Diamond Ore Mined", "format": "integer", "higherIsBetter": true, "enabled": false },
 
       { "id": "event_points", "type": "custom", "displayName": "Event Points", "format": "integer",
-        "higherIsBetter": true, "enabled": false }
+        "higherIsBetter": true, "enabled": false },
+
+      { "id": "shop_sales", "type": "shop_sales", "displayName": "Top Shops", "format": "currency",
+        "higherIsBetter": true, "refreshInterval": 120, "icon": "minecraft:emerald",
+        "entryFormat": "{rankColor}{medal} #{rank} &f{name} &8- &a{value}", "enabled": true }
     ]
   }
 }
@@ -79,11 +87,15 @@ entry away from being a leaderboard.
 | Field | Type | Description |
 |---|---|---|
 | `id` | string | Used in `/leaderboard <id>`, `/lb <id>`, and placeholders |
-| `type` | string | `"economy"` \| `"vanilla_stat"` \| `"custom"` |
+| `type` | string | `"economy"` \| `"vanilla_stat"` \| `"custom"` \| `"shop_sales"` |
 | `displayName` | string | Shown in the board's header |
 | `format` | string | `"integer"` \| `"time"` \| `"currency"` |
 | `higherIsBetter` | boolean | `true` for "top" boards; `false` ranks lowest-first |
-| `exemptPermission` | string | Players with this permission are excluded from the ranking |
+| `exemptPermission` | string | Players with this permission are excluded from the ranking (player-keyed boards only — ignored on `shop_sales`, which has no player to check) |
+| `refreshInterval` | integer | Seconds a cached ranking is served before rebuilding on next access. Default 60 if omitted; cheap boards can go lower, expensive ones (offline-stats scans, the shop board) may want it higher |
+| `entryFormat` | string | Optional custom line template for `/leaderboard`'s chat output **and** the GUI's item names — see [Styling](#styling-templates-medals--the-gui-viewer) |
+| `headerFormat` | string | Optional custom header-line template — same section |
+| `icon` | string | Item id (e.g. `"minecraft:emerald"`) used as the GUI icon for entries with no player (e.g. a shop). Omit for `minecraft:paper`. Player entries always show their real head regardless |
 | `enabled` | boolean | `false` hides the board without deleting its definition |
 | `stat` | string | **`vanilla_stat` only** — see below |
 
@@ -116,12 +128,90 @@ single-collection, write-immediately pattern as `PayToggleManager`.
 
 ---
 
+## Non-Player Boards (`shop_sales`)
+
+Every board type above ranks **players** — the entry's identity is a UUID, and its display
+name comes from a Mojang profile lookup on that UUID. `shop_sales` is the first board that
+doesn't: it ranks **shops** (sign/chest shops and NPC shops) by total revenue, shown by the
+shop's own name, not a player's.
+
+- Sign/chest shops are keyed by their `shopId` (or a position-derived key if a shop predates
+  that field); NPC shops by their own `shopId`. Neither goes through a Mojang lookup.
+- Revenue is tracked per-shop (`totalRevenueCents` on both shop data types), incremented on
+  every buy/sell — this data didn't exist before this board was added.
+- Shops with zero sales are omitted from the ranking rather than showing a $0.00 entry.
+- No `exemptPermission` applies (there's no player to check a permission against).
+
+This is built on a general extension point — `NamedStatProvider` — so any future non-player
+ranking (factions, guilds, anything with a stable id and its own name) can be added the same
+way without touching the core ranking/caching engine. See
+[`LeaderboardAPI`](#leaderboardapi--for-mod-developers) below for how a mod would use it.
+
+---
+
+## Styling: Templates, Medals & the GUI Viewer
+
+Three independent ways to customize how a board looks, all opt-in — every existing board
+keeps its original plain look until you add these fields.
+
+### Per-rank medals and colors (works everywhere placeholders do)
+
+Two new placeholder fields, available on **every** board with no config needed:
+
+```
+{leaderboard_<board>:<rank>:medal}      → 🥇 / 🥈 / 🥉 on ranks 1-3, empty string otherwise
+{leaderboard_<board>:<rank>:rankcolor}  → a gold/silver/bronze color tag on ranks 1-3, empty otherwise
+```
+
+Use these in a hologram line, a sidebar scoreboard line, or a tablist line exactly like
+`:name`/`:value` — e.g. `{leaderboard_money:1:rankcolor}{leaderboard_money:1:medal} {leaderboard_money:1:name}`.
+
+### Per-board line templates (`entryFormat` / `headerFormat`)
+
+Set `entryFormat` (and optionally `headerFormat`) on a board in `leaderboard.json` to replace
+its default plain line — this affects **both** `/leaderboard`'s chat output and the GUI's item
+names. Tokens:
+
+| Token | Where | Meaning |
+|---|---|---|
+| `{rank}` | entry | The rank number |
+| `{name}` | entry | Entry's display name |
+| `{value}` | entry | Formatted value (currency/time/integer per `format`) |
+| `{medal}` | entry | Same as the `:medal` placeholder above |
+| `{rankColor}` | entry | Same as the `:rankcolor` placeholder above |
+| `{displayName}` | header | The board's `displayName` |
+| `{page}` / `{totalPages}` | header | Current/total page number |
+| `{age}` | header | Seconds since the ranking was last refreshed |
+
+Templates support the same `&`-codes, hex, and gradient tags as tablist/scoreboard/hologram
+lines — no new syntax to learn. A board with no `entryFormat` set keeps rendering through the
+original lang-file line exactly as before. Example (from the shipped `shop_sales` board):
+
+```jsonc
+"entryFormat": "{rankColor}{medal} #{rank} &f{name} &8- &a{value}"
+```
+
+### GUI viewer
+
+```
+/leaderboard <board> gui
+```
+
+Opens a paginated chest GUI for that board — 45 entries per page, prev/close/next buttons.
+Player entries show the player's real head (resolved from their UUID, same technique as the
+`/skull` command); non-player entries (shops) show the board's configured `icon` item, or
+`minecraft:paper` if none is set. View-only — editing still goes through
+`/leaderboard admin set|add|reset` for custom boards.
+
+---
+
 ## Commands
 
 | Command | Permission | Description |
 |---|---|---|
 | `/leaderboard` / `/lb` | `neoessentials.leaderboard.view` | List registered boards |
 | `/leaderboard <board> [page]` | view | Show a page of rankings |
+| `/leaderboard <board> gui` | view | Open the paginated chest-GUI viewer (see [Styling](#styling-templates-medals--the-gui-viewer)) |
 | `/leaderboard reload` | `neoessentials.leaderboard.admin` | Reload `leaderboard.json` |
 | `/leaderboard admin set <board> <player> <value>` | admin | Set a **custom** board's value |
 | `/leaderboard admin add <board> <player> <delta>` | admin | Add to a **custom** board's value |
@@ -141,12 +231,15 @@ through this system at all, so nothing about existing setups changes.
 
 ## Placeholders
 
-`{leaderboard_<board>:<rank>:name}` / `{leaderboard_<board>:<rank>:value}`, e.g.:
+`{leaderboard_<board>:<rank>:name|value|medal|rankcolor}`, e.g.:
 
 ```
-{leaderboard_money:1:name}    → richest player's name
-{leaderboard_money:1:value}   → their formatted balance
-{leaderboard_kills:3:name}    → 3rd-place player kills
+{leaderboard_money:1:name}       → richest player's name
+{leaderboard_money:1:value}      → their formatted balance
+{leaderboard_kills:3:name}       → 3rd-place player kills
+{leaderboard_shop_sales:1:name}  → best-selling shop's name
+{leaderboard_money:1:medal}      → 🥇 (empty string past rank 3)
+{leaderboard_money:1:rankcolor}  → a gold color tag (empty string past rank 3)
 ```
 
 Works anywhere the placeholder system is resolved: chat, [Tablist](TablistSystem),
@@ -193,13 +286,33 @@ LeaderboardAPI.registerBoard(
 );
 ```
 
-`StatProvider` is a two-method functional-shaped interface:
+`StatProvider` is a two-method functional-shaped interface for **player**-keyed boards:
 
 ```java
 public interface StatProvider {
     Map<UUID, Number> getAllValues(MinecraftServer server);
     String formatValue(Number value);
 }
+```
+
+For a board that isn't ranking players (the same problem `shop_sales` solves — see
+[Non-Player Boards](#non-player-boards-shop_sales)), implement `NamedStatProvider` instead:
+
+```java
+public interface NamedStatProvider extends StatProvider {
+    record NamedEntry(String displayName, Number value) {}
+    Map<String, NamedEntry> getAllNamedValues(MinecraftServer server); // keyed by YOUR own stable id
+}
+```
+
+`LeaderboardDefinition` also has a `refreshIntervalSeconds` field (default 60) and optional
+`entryFormat`/`headerFormat`/`icon` styling fields — pass them via the full constructor, or
+omit for defaults:
+
+```java
+LeaderboardAPI.registerBoard(
+    new LeaderboardDefinition("mymod_wins", "Arena Wins", "mymod.leaderboard.exempt", true, 300),
+    (server) -> myWinsMap());
 ```
 
 ```java
@@ -212,8 +325,8 @@ LeaderboardCache cache = LeaderboardAPI.getBoard("mymod_wins"); // read current 
 - Boards registered this way are **in-memory only** — not written to `leaderboard.json`, and
   won't survive a `/leaderboard reload` unless you re-register on your own startup hook (same
   contract `PlaceholderExpansion` already has).
-- Once registered, the board immediately works everywhere: `/leaderboard`/`/lb`, the
-  `{leaderboard_...}` placeholder, and `/leaderboard hologram create`.
+- Once registered, the board immediately works everywhere: `/leaderboard`/`/lb`, `/leaderboard
+  <board> gui`, the `{leaderboard_...}` placeholder, and `/leaderboard hologram create`.
 
 ---
 
@@ -246,6 +359,16 @@ Write endpoints only accept `type: "custom"` boards — same restriction as the 
   entry, and tracks which board ids are actually `type: "custom"` (distinct from merely
   config-managed — an `economy`/`vanilla_stat` board is config-managed too, but isn't
   custom-editable).
+- **`NamedStatProvider`** — sibling interface to `StatProvider` for non-player boards; `LeaderboardCache`
+  checks for it before falling back to the UUID/profile-lookup path. `ShopSalesStatProvider`
+  (`leaderboard/adapters/`) is the only current implementation.
+- **`LeaderboardStyle`** — the single place rank→medal/color logic lives, shared by the
+  placeholder expansion, `/leaderboard`'s template rendering, and the GUI.
+- **A config-version note:** `leaderboard.json`'s array-merge (adding a new default board like
+  `shop_sales` to an already-upgraded install) only adds boards **missing by id** — it can't
+  retroactively add new fields (`entryFormat`/`icon`/etc.) to a board an install already has on
+  disk. New installs and newly-added board ids get every field; existing boards on upgraded
+  installs keep their on-disk shape until an admin edits the file by hand.
 
 ---
 

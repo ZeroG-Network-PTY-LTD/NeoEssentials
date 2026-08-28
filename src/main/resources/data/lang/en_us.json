@@ -889,6 +889,8 @@
     "commands.neoessentials.leaderboard.holograms_disabled": "§cThe holograms module is disabled (modules.hologramsEnabled in config.json).",
     "commands.neoessentials.leaderboard.hologram_exists": "§cA hologram named §e{0} §calready exists.",
     "commands.neoessentials.leaderboard.hologram_created": "§aCreated hologram §e{0} §afor leaderboard §e{1} §a(§f{2} §aranks). It updates automatically — see §e/hologram info {0}§a.",
+    "commands.neoessentials.leaderboard.gui.title": "{0} Leaderboard",
+    "commands.neoessentials.leaderboard.gui.value": "Value: {0}",
     "commands.neoessentials.powertooltoggle.enabled":  "§aPowertools §aenabled§a. All powertool bindings are active.",
     "commands.neoessentials.powertooltoggle.disabled":  "§ePowertools §cdisabled§e. Your bindings are saved but won\u0027t fire.",
     "commands.neoessentials.powertooltoggle.none":  "§eYou have no powertools bound. Use §f/powertool \u003ccmd\u003e§e to bind one first.",

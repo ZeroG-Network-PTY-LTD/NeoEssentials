@@ -51,6 +51,24 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   resolve `{placeholder}` tokens live on a refresh timer, so the generated
   `{leaderboard_<board>:<rank>:name|value}` lines keep updating on their own — no new
   rendering mechanism, just a convenience generator on top of the existing hologram system.
+- **Leaderboards can now rank things other than players.** Every board previously assumed its
+  entries were real Minecraft players (a UUID resolved to a name via a Mojang profile
+  lookup) — there was no way to build a "top shops by sales" board at all. Generalized the
+  entry/provider contract (new `NamedStatProvider` interface) so a board can be keyed by any
+  stable id with its own display name, and added a `shop_sales` board built on it, ranking
+  sign/chest and NPC shops by total revenue (a field that didn't exist before — shops only
+  tracked a sale count, not money moved, and NPC shops tracked nothing at all).
+- **Per-board refresh interval** — `leaderboard.json` boards can now set `refreshInterval`
+  (seconds a cached ranking is served before rebuilding), instead of every board sharing one
+  hardcoded 60s window. Applies to boards registered by external mods via `LeaderboardAPI`
+  too.
+- **Leaderboard styling** — three opt-in additions, all backward-compatible (a board with none
+  of these set looks exactly as before): automatic per-rank medal/color placeholders
+  (`{leaderboard_<board>:<rank>:medal|rankcolor}`, usable anywhere placeholders resolve —
+  holograms, scoreboard, tablist); per-board `entryFormat`/`headerFormat` line templates for
+  `/leaderboard`'s own chat output (same `&`/hex/gradient support as tablist/scoreboard
+  lines); and a new paginated chest-GUI viewer (`/leaderboard <board> gui`) with real player
+  heads for player entries and a configurable icon for non-player entries.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
@@ -93,5 +111,17 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   first. Also hardened Discord-role permission sync to fail with a clear message instead of a
   generic error when an external adapter is active (it writes to the internal group directly,
   which has no external-adapter equivalent to redirect to).
+- **Config-version upgrades (the mechanism that merges new default keys/boards into an
+  existing config file on update) were silently failing on Windows.** The merge held a file
+  reader open on the config file while trying to rename a new version over it — Windows
+  blocks that rename while the file's still open for reading (POSIX allows it, which is why
+  this never surfaced before). Every config using version-tracked upgrades was affected, not
+  just leaderboards.
+- **A new default board (like the `shop_sales` board above) never actually reached an
+  existing install even after that fix** — the generic config-merge logic only adds a key
+  that's missing entirely; it doesn't know how to merge a new entry into a JSON array that
+  already exists on disk (`leaderboard.json`'s `boards` list). Added a dedicated merge step
+  that appends new default boards by id without touching or duplicating any board an admin
+  already has, including ones they've customized.
 
 ---

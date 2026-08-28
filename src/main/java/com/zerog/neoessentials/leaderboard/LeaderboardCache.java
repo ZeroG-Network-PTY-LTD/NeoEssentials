@@ -18,17 +18,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Per-board async cache — the generalized lift of {@code BaltopCommand}'s static cache
  * fields into one instance per registered board, so N boards don't each duplicate their own
- * copy of the same caching machinery. Same 60s staleness window, same
+ * copy of the same caching machinery. Staleness window is per-board, configurable via
+ * {@link LeaderboardDefinition#refreshIntervalSeconds()} (default 60s); same
  * build-in-flight/rebuild-queued handling for invalidations that land mid-build.
  */
 public class LeaderboardCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(LeaderboardCache.class);
-    private static final long STALE_MS = 60_000L;
 
-    public record Entry(UUID uuid, String name, Number value) {}
+    /** {@code playerUuid} is {@code null} for entries from a {@link NamedStatProvider} (a
+     *  shop, or any other non-player entity) — anything player-specific (head icon, permission
+     *  exemption, teleport-to-player) must null-check it first. */
+    public record Entry(String key, String name, Number value, UUID playerUuid) {}
 
     private final LeaderboardDefinition definition;
     private final StatProvider provider;
+    private final long staleMs;
 
     private volatile List<Entry> cachedTop = Collections.emptyList();
     private volatile long cacheAge = 0L;
@@ -39,6 +43,7 @@ public class LeaderboardCache {
     public LeaderboardCache(LeaderboardDefinition definition, StatProvider provider) {
         this.definition = definition;
         this.provider = provider;
+        this.staleMs = Math.max(1, definition.refreshIntervalSeconds()) * 1000L;
     }
 
     public LeaderboardDefinition getDefinition() { return definition; }
@@ -48,7 +53,7 @@ public class LeaderboardCache {
 
     /** Current cached top list, refreshing asynchronously in the background if stale/empty. */
     public List<Entry> getTop(MinecraftServer server) {
-        if (System.currentTimeMillis() - cacheAge > STALE_MS || cachedTop.isEmpty()) {
+        if (System.currentTimeMillis() - cacheAge > staleMs || cachedTop.isEmpty()) {
             refreshAsync(server);
         }
         return cachedTop;
@@ -81,25 +86,31 @@ public class LeaderboardCache {
     private CompletableFuture<Void> runBuild(MinecraftServer server) {
         return CompletableFuture.runAsync(() -> {
             try {
-                Map<UUID, Number> all = provider.getAllValues(server);
                 List<Entry> entries = new CopyOnWriteArrayList<>();
 
-                for (Map.Entry<UUID, Number> e : all.entrySet()) {
-                    if (definition.exemptPermissionSuffix() != null
-                            && PermissionAPI.hasPermission(e.getKey(), definition.exemptPermissionSuffix())) {
-                        continue;
+                if (provider instanceof NamedStatProvider named) {
+                    for (Map.Entry<String, NamedStatProvider.NamedEntry> e : named.getAllNamedValues(server).entrySet()) {
+                        NamedStatProvider.NamedEntry ne = e.getValue();
+                        entries.add(new Entry(e.getKey(), ne.displayName(), ne.value(), null));
                     }
-                    String displayName = e.getKey().toString();
-                    try {
-                        var profile = server.getProfileCache().get(e.getKey());
-                        if (profile.isPresent() && profile.get().getName() != null) {
-                            displayName = profile.get().getName();
+                } else {
+                    for (Map.Entry<UUID, Number> e : provider.getAllValues(server).entrySet()) {
+                        if (definition.exemptPermissionSuffix() != null
+                                && PermissionAPI.hasPermission(e.getKey(), definition.exemptPermissionSuffix())) {
+                            continue;
                         }
-                    } catch (Exception ignored) {
-                        NeoLog.debug(LOGGER, LogCategory.GENERAL,
-                            "LeaderboardCache[{}]: failed to resolve name for {}", definition.id(), e.getKey(), ignored);
+                        String displayName = e.getKey().toString();
+                        try {
+                            var profile = server.getProfileCache().get(e.getKey());
+                            if (profile.isPresent() && profile.get().getName() != null) {
+                                displayName = profile.get().getName();
+                            }
+                        } catch (Exception ignored) {
+                            NeoLog.debug(LOGGER, LogCategory.GENERAL,
+                                "LeaderboardCache[{}]: failed to resolve name for {}", definition.id(), e.getKey(), ignored);
+                        }
+                        entries.add(new Entry(e.getKey().toString(), displayName, e.getValue(), e.getKey()));
                     }
-                    entries.add(new Entry(e.getKey(), displayName, e.getValue()));
                 }
 
                 entries.sort((a, b) -> {

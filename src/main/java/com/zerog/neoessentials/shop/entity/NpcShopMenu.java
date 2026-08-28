@@ -162,7 +162,8 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 listing.itemId().replace("minecraft:", ""),
                 eco.format(price)));
 
-        // Fire event using a synthetic ShopData stub so listeners can process it
+        recordSale(price);
+
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
                 null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, listing.quantity()));
     }
@@ -211,8 +212,20 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 listing.itemId().replace("minecraft:", ""),
                 eco.format(price)));
 
+        recordSale(price);
+
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
                 null, player.getUUID(), ShopTransactionEvent.Type.SELL, price, listing.quantity()));
+    }
+
+    /** Bumps this NPC shop's sale counters and persists them — {@link ShopTransactionEvent}
+     *  carries no shop reference for NPC shops (it's fired with {@code shop = null}, matching
+     *  the sign/chest shop event's {@code ShopData} type, which {@link ShopEntityData} isn't),
+     *  so the {@code shop_sales} leaderboard board reads these fields directly instead. */
+    private void recordSale(BigDecimal price) {
+        shopData.totalSalesCount++;
+        shopData.totalRevenueCents += price.movePointRight(2).longValue();
+        ShopEntityManager.getInstance().register(shopData);
     }
 
     // ── Virtual container builder ─────────────────────────────────────────────
