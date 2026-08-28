@@ -31,5 +31,10 @@ migration history) is not carried over.
   active — `prefix`/`suffix`/`displayname` variants were unaffected.
 - Nicknamed players (`/nick`) now keep their permission-group prefix/suffix in the tab list —
   a nickname used to silently drop it the instant it was set, on any group.
+- `PermissionAPI.getPrefix()`/`getSuffix()` now fall back to the internal permission system
+  when LuckPerms/FTB Ranks has no opinion, matching `getGroupWeight()`/`getPrimaryGroup()`'s
+  existing behavior. FTB Ranks servers previously got no prefix/suffix at all through this
+  mod, ever; LuckPerms groups with no `prefix`/`suffix` meta set now fall back to an internal
+  one too instead of showing nothing.
 
 ---
