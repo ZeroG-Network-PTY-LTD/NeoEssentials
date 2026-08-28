@@ -34,5 +34,9 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   existing behavior. FTB Ranks servers previously got no prefix/suffix at all through this
   mod, ever; LuckPerms groups with no `prefix`/`suffix` meta set now fall back to an internal
   one too instead of showing nothing.
+- Five more places had the identical internal-manager-only bug (found by auditing every
+  remaining call site): the public `NeoEssentialsAPI` group lookup, the `{group}` placeholder,
+  per-group tablist column bucketing, chat badge group gating, and player tags all silently
+  fell back to `""`/`"default"` under LuckPerms/FTB Ranks — now fixed the same way.
 
 ---

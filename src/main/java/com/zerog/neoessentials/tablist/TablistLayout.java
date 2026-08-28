@@ -361,13 +361,14 @@ public class TablistLayout {
         return 0;
     }
 
+    /** Same external-adapter-aware resolution as {@code TablistManager.getPermissionGroup()} —
+     *  going straight to {@code PermissionAPI.getManager()} (the internal-only manager, as this
+     *  used to) bucketed every player into "default" for {@code groupSections}/{@code
+     *  sectionHeaders} whenever LuckPerms/FTB Ranks was actually active. */
     private String getGroup(ServerPlayer player) {
         try {
-            var mgr = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
-            if (mgr == null) return "default";
-            var user = mgr.getUser(player.getUUID());
-            if (user != null && user.getGroup() != null) return user.getGroup();
-            return mgr.getDefaultGroup();
+            String group = com.zerog.neoessentials.api.permissions.PermissionAPI.getPrimaryGroup(player.getUUID());
+            if (group != null) return group;
         } catch (Exception e) {
             NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
                 "Failed to resolve permission group for {}", player.getName().getString(), e);

@@ -423,16 +423,14 @@ public class BadgeManager {
         return "after_name";
     }
 
+    // Must go through PermissionAPI.getPrimaryGroup() (checks the active external adapter
+    // first) rather than PermissionAPI.getManager() (internal-only) directly — the latter
+    // silently returned "default" for every player whenever LuckPerms/FTB Ranks was actually
+    // active, which meant group-gated badges silently stopped matching anyone.
     private String getPrimaryGroup(ServerPlayer player) {
         try {
-            // Try to get from PermissionAPI
-            var permManager = PermissionAPI.getManager();
-            if (permManager != null) {
-                var user = permManager.getUser(player.getUUID());
-                if (user != null) {
-                    return user.getGroup();
-                }
-            }
+            String group = PermissionAPI.getPrimaryGroup(player.getUUID());
+            if (group != null) return group;
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.CHAT, "Error getting primary group for player " + player.getGameProfile().getName(), e);
         }
