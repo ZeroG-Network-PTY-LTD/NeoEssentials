@@ -132,6 +132,9 @@ public class TablistManager {
     private final Map<UUID, String> lastTeamName   = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastTeamPrefix = new ConcurrentHashMap<>();
     private final Map<UUID, String> lastTeamSuffix = new ConcurrentHashMap<>();
+    // Same dirty-check idea, for the nickname tab-list display-name override — see
+    // updateNicknameOverridePacket()'s javadoc for why this exists at all.
+    private final Map<UUID, String> lastNicknameOverride = new ConcurrentHashMap<>();
 
     private TablistManager() {
         headerFrames.add("<gradient:FFD700-FF8C00>&l{server_name}&r &8| &e{online}&8/&e{max} &7players");
@@ -251,6 +254,7 @@ public class TablistManager {
             lastTeamName.clear();
             lastTeamPrefix.clear();
             lastTeamSuffix.clear();
+            lastNicknameOverride.clear();
 
             // Delegate to sub-system configs
             ProxyIntegration.getInstance().loadConfig();
@@ -420,6 +424,14 @@ public class TablistManager {
                 effectiveSuffix = suffix + afkSuffix;
             }
 
+            // Nicknamed players need their tab-list display-name override kept in sync with
+            // prefix/suffix independently of the team dirty-check below — a nickname change
+            // (or a prefix/suffix change while nicknamed) doesn't necessarily change the TEAM
+            // dirty-check's inputs, so this must run unconditionally every call, not just when
+            // that check finds something to do. See updateNicknameOverridePacket()'s javadoc
+            // for why this even needs to exist.
+            updateNicknameOverridePacket(player, server, prefix, effectiveSuffix);
+
             // BTLP-style: encode group weight (or, with groupSections on, the exact column-grid
             // slot) into the team name for client-side sort order.
             //
@@ -508,6 +520,65 @@ public class TablistManager {
             // API Mojang has reworked across 1.21.x versions elsewhere in this mod.
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Failed to update team for {}: {}", player.getName().getString(), e.getMessage());
         }
+    }
+
+    /**
+     * Keeps a nicknamed player's tab-list display-name override in sync with their
+     * (possibly-changing) prefix/suffix.
+     *
+     * <p><b>Why this exists:</b> {@code /nick} makes a player's tab-list row show a custom
+     * name by sending a raw {@code ClientboundPlayerInfoUpdatePacket} display-name override
+     * (see {@code NickCommand}). Vanilla's own tab-list rendering
+     * ({@code PlayerTabOverlay.getNameForDisplay}) only wraps a row with the scoreboard
+     * team's prefix/suffix when there is <em>no</em> display-name override at all — when one
+     * is set, the client uses it completely verbatim, with zero team involvement. So a
+     * nickname sent as a bare display-name override silently drops the player's permission
+     * group prefix/suffix from the tab list the instant a nickname is set, regardless of
+     * group, and stays that way until the nickname is cleared — this was reported by users as
+     * "the nickname overrides it and only shows the nickname in tab", and looked
+     * group-dependent purely because whichever test players happened to have a nickname set
+     * lost their prefix, not because of anything actually tied to their group.
+     *
+     * <p>The fix: whenever a player is nicknamed, the override text itself must already
+     * contain prefix + nickname + suffix (using the same {@link #formatLead}/
+     * {@link #formatBetweenPrefixPlayer}/{@link #formatBetweenPlayerSuffix}/{@link #formatTrail}
+     * literal segments the team-prefix path uses), and must be re-sent whenever that
+     * composed text changes — not just once at {@code /nick} time, since a later permission
+     * change, AFK toggle, or config reload can change the prefix/suffix without anyone
+     * re-running {@code /nick}.
+     */
+    private void updateNicknameOverridePacket(ServerPlayer player, MinecraftServer server, String prefix, String effectiveSuffix) {
+        UUID uuid = player.getUUID();
+        String nickname = com.zerog.neoessentials.util.commands.NickCommand.getNickname(uuid);
+        if (nickname == null || nickname.isEmpty()) {
+            // No nickname — nothing to override; NickCommand's own reset path already sends
+            // the null-revert packet, which hands rendering back to vanilla's normal
+            // team-wrapped path on its own.
+            lastNicknameOverride.remove(uuid);
+            return;
+        }
+
+        String raw = formatLead + prefix + formatBetweenPrefixPlayer + nickname + formatBetweenPlayerSuffix + effectiveSuffix + formatTrail;
+        if (raw.equals(lastNicknameOverride.get(uuid))) return; // unchanged — no packet needed
+        lastNicknameOverride.put(uuid, raw);
+
+        Component displayName = RichTextFormatter.processTablistText(raw);
+        com.zerog.neoessentials.util.commands.NickCommand.sendTabListDisplayName(player, displayName, server);
+    }
+
+    /**
+     * Public entry point for {@code NickCommand} to get the correctly prefix/suffix-wrapped
+     * override text immediately when a nickname is set — without waiting for the next
+     * periodic tick to fix it via {@link #updateNicknameOverridePacket}. Returns {@code null}
+     * if the player has no nickname (nothing to override).
+     */
+    public String resolveNicknameOverrideRaw(ServerPlayer player, MinecraftServer server) {
+        String nickname = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
+        if (nickname == null || nickname.isEmpty()) return null;
+        String prefix = getPermissionPrefix(player, server);
+        String suffix = getPermissionSuffix(player, server);
+        if (showAfkIndicator && isAfk(player)) suffix = suffix + afkSuffix;
+        return formatLead + prefix + formatBetweenPrefixPlayer + nickname + formatBetweenPlayerSuffix + suffix + formatTrail;
     }
 
     // ── Build header/footer (returns raw text for processTablistText) ─────────
@@ -1055,6 +1126,7 @@ public class TablistManager {
         lastTeamName.remove(uuid);
         lastTeamPrefix.remove(uuid);
         lastTeamSuffix.remove(uuid);
+        lastNicknameOverride.remove(uuid);
         ProxyIntegration.getInstance().onPlayerQuit(uuid);
         FakePlayerManager.getInstance().removeForPlayer(player);
         FakePlayerManager.getInstance().removeColumnSlotsForPlayer(player);

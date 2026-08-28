@@ -334,10 +334,23 @@ public class NickCommand {
         net.minecraft.server.MinecraftServer server = player.getServer();
         if (server == null) return;
 
-        // Build the tab-list display name: formatted nickname, or null to revert to real username
-        Component tabDisplayName = (nickname != null)
-            ? MessageUtil.coloredText(nickname.replace("&", "§"))
-            : null;
+        // Build the tab-list display name. IMPORTANT: this can't be just the bare nickname —
+        // vanilla's tab-list rendering (PlayerTabOverlay.getNameForDisplay) only wraps a row
+        // with the scoreboard team's prefix/suffix when there is NO display-name override; a
+        // raw override is shown completely verbatim, bypassing the team entirely. So the
+        // prefix/suffix must already be baked into the override text itself, or they silently
+        // vanish from the tab list the moment a nickname is set — see
+        // TablistManager.updateNicknameOverridePacket()'s javadoc for the full story. Falls
+        // back to the bare-nickname behavior only if TablistManager can't resolve it (e.g. the
+        // tablist system is disabled), which is strictly better than not nicknaming at all.
+        Component tabDisplayName = null;
+        if (nickname != null) {
+            String composed = com.zerog.neoessentials.tablist.TablistManager.getInstance()
+                .resolveNicknameOverrideRaw(player, server);
+            tabDisplayName = composed != null
+                ? com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(composed)
+                : MessageUtil.coloredText(nickname.replace("&", "§"));
+        }
 
         // Broadcast UPDATE_DISPLAY_NAME to every connected player (including the nick owner)
         broadcastTabListDisplayName(player, tabDisplayName, server);
@@ -345,12 +358,21 @@ public class NickCommand {
 
     /**
      * Sends a {@code ClientboundPlayerInfoUpdatePacket} that overwrites the tab-list
-     * display name for {@code subject} on every connected client.
+     * display name for {@code subject} on every connected client. Public so
+     * {@code TablistManager} can keep this in sync whenever a nicknamed player's
+     * permission-group prefix/suffix changes (promotion, AFK toggle, config reload, ...) —
+     * not just at the moment {@code /nick} is run.
      *
      * @param subject     the player whose tab entry should be updated
      * @param displayName the new name to show, or {@code null} to revert to the game-profile name
      * @param server      the running server instance
      */
+    public static void sendTabListDisplayName(ServerPlayer subject,
+                                                @Nullable Component displayName,
+                                                net.minecraft.server.MinecraftServer server) {
+        broadcastTabListDisplayName(subject, displayName, server);
+    }
+
     private static void broadcastTabListDisplayName(ServerPlayer subject,
                                                      @Nullable Component displayName,
                                                      net.minecraft.server.MinecraftServer server) {
