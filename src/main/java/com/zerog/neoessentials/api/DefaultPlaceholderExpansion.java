@@ -273,23 +273,20 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     }
     
     /**
-     * Get player's primary group from the permission system.
+     * Get player's primary group from the permission system — this backs the single most
+     * widely-used group placeholder ({@code {group}}/{@code {neoessentials_group}}, used in
+     * chat, MOTD, holograms, custom expansions). Must go through
+     * {@link PermissionAPI#getPrimaryGroup} (checks the active external adapter first) rather
+     * than {@link PermissionAPI#getManager()} (internal-only) directly — the latter silently
+     * bucketed every player into "default" whenever LuckPerms/FTB Ranks was actually active.
      */
     @Nullable
     private String getPlayerGroup(@Nullable ServerPlayer player) {
         if (player == null) return null;
-        
+
         try {
-            // Get the player's group through the PermissionManager
-            var manager = PermissionAPI.getManager();
-            if (manager != null) {
-                var user = manager.getUser(player.getUUID());
-                if (user != null && user.getGroup() != null) {
-                    return user.getGroup();
-                }
-                return manager.getDefaultGroup();
-            }
-            return "default";
+            String group = PermissionAPI.getPrimaryGroup(player.getUUID());
+            return group != null ? group : "default";
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting group for player {}: {}", player.getName().getString(), e.getMessage());
             return "default";

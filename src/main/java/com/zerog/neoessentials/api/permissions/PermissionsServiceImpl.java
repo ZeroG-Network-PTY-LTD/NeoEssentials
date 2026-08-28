@@ -52,10 +52,13 @@ public class PermissionsServiceImpl implements PermissionsService {
     @Override
     public String getGroup(UUID playerUuid) {
         try {
-            var mgr = PermissionAPI.getManager();
-            if (mgr == null) return "";
-            PermissionUser user = mgr.getUser(playerUuid);
-            return user != null ? user.getGroup() : mgr.getDefaultGroup();
+            // PermissionAPI.getPrimaryGroup() checks the active external adapter
+            // (LuckPerms/FTB Ranks) first, falling back to the internal manager — going
+            // straight to PermissionAPI.getManager() here (the internal-only manager) meant
+            // this public NeoEssentialsAPI contract returned "" for every player whenever an
+            // external adapter was active, silently lying to any third-party mod calling it.
+            String group = PermissionAPI.getPrimaryGroup(playerUuid);
+            return group != null ? group : "";
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "getGroup failed for {}: {}", playerUuid, e.getMessage());
             return "";
