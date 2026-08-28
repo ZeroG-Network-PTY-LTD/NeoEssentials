@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
@@ -136,6 +137,113 @@ public class RandomTeleportManager {
                 });
 
         return result;
+    }
+
+    /**
+     * Biome-targeted variant of {@link #randomTeleport} — used by the RTP GUI (see
+     * {@code RandomTeleportMenu}) when a player picks a specific biome instead of "any". Same
+     * cooldown/back-location/teleport-delay handling as the plain path; only the search step
+     * differs — it uses vanilla's own {@code ServerLevel.findClosestBiome3d} (the same engine
+     * {@code /locate biome} uses) instead of an unconstrained random offset.
+     */
+    public CompletableFuture<Boolean> randomTeleportToBiome(ServerPlayer player, ResourceKey<Biome> biomeKey) {
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "randomTeleportToBiome request: player={} biome={}",
+            player.getName().getString(), biomeKey.location());
+
+        int cooldownSecs = getTprCooldown();
+        if (cooldownSecs > 0) {
+            long last = cooldowns.getOrDefault(player.getUUID(), 0L);
+            long remaining = (last + cooldownSecs * 1000L) - System.currentTimeMillis();
+            if (remaining > 0) {
+                long secs = (remaining / 1000) + 1;
+                player.sendSystemMessage(MessageUtil.error(
+                        "commands.neoessentials.teleport.misc.tpr_cooldown", String.valueOf(secs)));
+                return CompletableFuture.completedFuture(false);
+            }
+        }
+
+        ServerLevel level = com.zerog.neoessentials.util.LevelCompat.of(player);
+        String name = resolveDefaultName(player);
+        player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.misc.tpr_searching"));
+
+        CompletableFuture<Boolean> result = new CompletableFuture<>();
+        CompletableFuture.supplyAsync(() -> findBiomeSafeLocation(level, name, biomeKey), level.getServer())
+                .thenAccept(loc -> {
+                    if (loc == null) {
+                        player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_biome_not_found"));
+                        result.complete(false);
+                        return;
+                    }
+
+                    com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
+
+                    int delayTicks = getTeleportDelaySecs() * 20;
+                    TeleportUtil.teleportPlayer(player, loc, delayTicks, false)
+                            .thenAccept(tpResult -> {
+                                if (tpResult.isSuccess()) {
+                                    cooldowns.put(player.getUUID(), System.currentTimeMillis());
+                                    player.sendSystemMessage(MessageUtil.success(
+                                            "commands.neoessentials.teleport.misc.tpr_success",
+                                            String.valueOf((int) loc.getX()),
+                                            String.valueOf((int) loc.getY()),
+                                            String.valueOf((int) loc.getZ())));
+                                    NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} randomly teleported into biome {} at ({}, {}, {})",
+                                            player.getName().getString(), biomeKey.location(),
+                                            (int) loc.getX(), (int) loc.getY(), (int) loc.getZ());
+                                    result.complete(true);
+                                } else {
+                                    player.sendSystemMessage(MessageUtil.error(
+                                            "commands.neoessentials.teleport.misc.tpr_failed", tpResult.getMessage()));
+                                    result.complete(false);
+                                }
+                            });
+                })
+                .exceptionally(ex -> {
+                    LOGGER.error("randomTeleportToBiome error for {}: {}", player.getName().getString(), ex.getMessage(), ex);
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.tpr_failed", ex.getMessage()));
+                    result.complete(false);
+                    return null;
+                });
+
+        return result;
+    }
+
+    /** Runs on the server thread (chunk/biome sampling requires it) — same jittered-center
+     *  approach as {@link #attemptFind}, but each attempt searches for the target biome via
+     *  vanilla's own biome-search engine instead of accepting whatever biome it lands on. */
+    private TeleportLocation findBiomeSafeLocation(ServerLevel level, String name, ResourceKey<Biome> biomeKey) {
+        double[] center = getCenter(level, name);
+        double minRange = getMinRange(name);
+        double maxRange = getMaxRange(level, name);
+        int attempts = getFindAttempts();
+        int radius = getBiomeSearchRadius();
+        int step = getBiomeSearchStep();
+
+        for (int i = 0; i < attempts; i++) {
+            double[] offset = randomOffset(minRange, maxRange);
+            double cx = clampToWorldBorder(level, center[0] + offset[0], true);
+            double cz = clampToWorldBorder(level, center[2] + offset[1], false);
+            BlockPos searchOrigin = new BlockPos((int) cx, (int) center[1], (int) cz);
+
+            var pair = level.findClosestBiome3d(holder -> holder.is(biomeKey), searchOrigin, radius, step, 64);
+            if (pair == null) continue;
+
+            BlockPos found = pair.getFirst();
+            if (!level.getWorldBorder().isWithinBounds(found)) continue;
+
+            TeleportLocation loc = findSafeY(level, found.getX(), found.getZ(), name);
+            if (loc != null) return loc;
+        }
+        return null;
+    }
+
+    /** Every biome the current dimension's generator can actually produce — used by the RTP
+     *  GUI to build its biome list (already correctly scoped per-dimension, and includes any
+     *  biome a mod registers into that dimension's generation, no extra plumbing needed). */
+    public List<net.minecraft.core.Holder<Biome>> getPossibleBiomes(ServerLevel level) {
+        return level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes().stream()
+                .sorted(Comparator.comparing(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("")))
+                .toList();
     }
 
     // -----------------------------------------------------------------------
@@ -472,6 +580,21 @@ public class RandomTeleportManager {
 
     private int getTprCooldown() {
         return (int) getConfigDouble("cooldown", 60);
+    }
+
+    /** Whether bare {@code /rtp} (no explicit location argument) should open the biome-select
+     *  GUI instead of instantly teleporting — off ("command") by default, byte-for-byte the
+     *  original behavior. */
+    public boolean isGuiMode() {
+        return "gui".equalsIgnoreCase(getConfigString("mode", "command"));
+    }
+
+    private int getBiomeSearchRadius() {
+        return (int) getConfigDouble("biomeSearchRadius", 6400);
+    }
+
+    private int getBiomeSearchStep() {
+        return (int) getConfigDouble("biomeSearchStep", 32);
     }
 
     private int getTeleportDelaySecs() {

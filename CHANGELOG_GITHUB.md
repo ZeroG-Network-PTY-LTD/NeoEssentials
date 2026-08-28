@@ -69,6 +69,18 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `/leaderboard`'s own chat output (same `&`/hex/gradient support as tablist/scoreboard
   lines); and a new paginated chest-GUI viewer (`/leaderboard <board> gui`) with real player
   heads for player entries and a configurable icon for non-player entries.
+- **`/tpr`/`/rtp` can now open a biome-select GUI instead of teleporting instantly** — opt-in
+  via `teleportation.randomTeleportSettings.mode: "gui"` (default `"command"` is unchanged
+  today's behavior). The GUI lists every biome the current dimension can generate — read live
+  from the dimension's own generator, so modded biomes show up automatically with zero
+  config — plus a "Random — Any Biome" button. Picking a biome searches for it using the same
+  engine `/locate biome` uses, then finds a safe spot the same way plain RTP does; if it can't
+  find that biome within the configured search radius or the world border, the player gets a
+  clear error instead of a bad teleport. Biome icons default to that biome's own
+  sapling/propagule/fungus (or a dedicated block for biomes with no tree), and admins can pin
+  specific biomes to fixed GUI slots and/or override their icon via a new
+  `biomeMenuItems` config list — everything not pinned still auto-fills the remaining slots,
+  including biomes this mod doesn't specifically recognize.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
