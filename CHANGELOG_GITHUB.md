@@ -64,5 +64,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   permission manager instead of checking the active external adapter first, exactly the
   scenario these placeholders exist for. `{luckperms_prefix}`/`{suffix}`/`{displayname}` and
   the `{ftbranks_}` equivalents were unaffected.
+- **Nicknamed players (`/nick`) now keep their permission-group prefix/suffix in the tab
+  list.** Vanilla's tab-list rendering only wraps a row with the scoreboard team's prefix/
+  suffix when there's no display-name override — a nickname was sent as a bare display-name
+  override, so it was shown completely verbatim with the prefix/suffix silently dropped the
+  instant a nickname was set (reported as "the nickname overrides it and only shows the
+  nickname in tab", and appeared group-dependent purely because whichever test player
+  happened to be nicknamed lost their prefix). The override now always contains prefix +
+  nickname + suffix, and stays in sync automatically if the prefix/suffix changes later
+  (promotion, AFK toggle, config reload) without needing to re-run `/nick`.
 
 ---
