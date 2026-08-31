@@ -29,7 +29,9 @@
     "scoreboardEnabled": true,
     "resourcePacksEnabled": true,
     "playerTagsEnabled": true,
-    "discordIntegrationEnabled": true
+    "discordIntegrationEnabled": true,
+    "votifierEnabled": true,
+    "cratesEnabled": true
   },
 
   // Per-subsystem logging control. For each category:
@@ -51,6 +53,8 @@
       "discord":       { "normal": true, "debug": false },
       "config":        { "normal": true, "debug": false },
       "commands":      { "normal": true, "debug": false },
+      "votifier":      { "normal": true, "debug": false },
+      "crates":        { "normal": true, "debug": false },
       "general":       { "normal": true, "debug": false }
     }
   },

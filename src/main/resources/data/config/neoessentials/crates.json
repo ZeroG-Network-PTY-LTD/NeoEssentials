@@ -1,0 +1,57 @@
+{
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 1,
+
+  /* ================================================================
+     NeoEssentials — Crates  (crates.json)
+     Reload in-game: /crate admin reload
+     Commands: /crate list|open|preview|keys, /crate admin create|delete|addreward|
+               setanimation|setkey|setblock|removeblock|reload, /crate key give|take
+  ================================================================ */
+
+  // Each entry is one crate, keyed by its id. Primarily authored here as a file — the
+  // in-game /crate admin commands are convenience helpers on top of this (e.g. addreward
+  // captures your currently-held item as a new reward), not a full editor.
+  //
+  //   displayName — shown in GUI titles/messages
+  //   block       — cosmetic only, which vanilla block a physical placement uses
+  //   animation   — "roulette" (CS:GO-style spinning strip) | "sequential" (a few quick
+  //                 flickers before settling) | "instant" (no animation)
+  //   keyItem     — the item given/held as this crate's key (full item, including any custom
+  //                 name/model data you've set on it) — set via /crate admin setkey
+  //   rewards     — weighted pool; "weight" is relative, doesn't need to sum to 100.
+  //                 broadcastRare (+ optional broadcastMessage, {player} substituted)
+  //                 announces server-wide when that specific reward is won.
+  "crates": {
+    "common": {
+      "displayName": "&7Common Crate",
+      "block": "minecraft:chest",
+      "animation": "roulette",
+      "keyItem": {
+        "item": "minecraft:tripwire_hook",
+        "count": 1
+      },
+      "rewards": [
+        {
+          "id": "diamonds",
+          "weight": 30,
+          "item": { "item": "minecraft:diamond", "count": 3 },
+          "broadcastRare": false
+        },
+        {
+          "id": "iron",
+          "weight": 50,
+          "item": { "item": "minecraft:iron_ingot", "count": 8 },
+          "broadcastRare": false
+        },
+        {
+          "id": "emerald_block",
+          "weight": 5,
+          "item": { "item": "minecraft:emerald_block", "count": 1 },
+          "broadcastRare": true,
+          "broadcastMessage": "&6{player} &7won an &aEmerald Block &7from a &7Common Crate&7!"
+        }
+      ]
+    }
+  }
+}
