@@ -18,7 +18,8 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 
 | File | Contains |
 |---|---|
-| `main.json` | `modules`, `logging`, `localization`, `permissions`, `kits` (settings), `economy` |
+| `main.json` | `modules`, `logging`, `storage` (json/yaml/sqlite/mysql backend selection), `localization`, `permissions`, `kits` (settings), `economy` |
+| `dashboard.json` | `webDashboard` (dashboard port, auth, UI settings) |
 | `commands.json` | `commands` (enable/disable toggles for every command) |
 | `chat.json` | `chat` (formatting, channels, anti-spam, badges, rich text) |
 | `teleportation.json` | `teleportation` (homes, warps, spawn, TPA, random TP) |
@@ -42,15 +43,6 @@ A `.split_configs` marker file in `config/neoessentials/` activates split mode. 
 > Kit *settings* (cooldowns, costs, auto-equip flags) live in `main.json` under the `kits` key
 > — this part of the split-config system is unaffected by the DataStore migration.
 
-> **Note — `webDashboard` is not part of the split system.** Unlike every other top-level
-> section, `webDashboard` (dashboard port, auth, UI settings) is **not** migrated to its own
-> split file by `ConfigSplitter` (see `ConfigSplitter.FILE_SECTIONS_MAP` in the source).
-> When split configs are enabled, the merged virtual config has no `webDashboard` section, so
-> `ConfigManager.getWebDashboardPort()` / `isWebDashboardEnabled()` / related getters silently
-> fall back to their hard-coded defaults (port `8080`, enabled `true`, etc.). If you need to
-> customise the web dashboard, do so **before** migrating to split configs, or edit it back into
-> `config.json` while running in monolithic mode.
-
 ---
 
 ## Migrating From Monolithic Config
@@ -68,6 +60,16 @@ This will:
 4. Create the `.split_configs` marker
 
 **No settings are lost** — the backup is always created first.
+
+> **If you split your config before this fix** (`webDashboard`/`storage` were previously
+> missing from `ConfigSplitter`'s section list entirely — see the changelog) your dashboard
+> and/or storage-backend settings were silently dropped during the split and are running on
+> defaults now, even after updating: the auto-repair on next startup creates `dashboard.json`
+> and adds `storage` to `main.json`, but only with **default** values, since neither ever
+> existed in any split file for it to recover them from. Your original customized values are
+> still in `config.json.backup` (created automatically by every `/neoe config split`) — open
+> it, find the `webDashboard`/`storage` sections, and copy the values you'd changed into the
+> newly-created `dashboard.json` / the `storage` section of `main.json`, then `/neoe reload`.
 
 ---
 
@@ -91,7 +93,8 @@ On a brand-new server where `config.json` has never existed, NeoEssentials autom
 ━━━━━━━━━ Config Status ━━━━━━━━━
 Mode: Split configs (recommended)
 Files:
-  ✔ main.json          — modules, logging, localization, permissions, kits, economy
+  ✔ main.json          — modules, logging, storage, localization, permissions, kits, economy
+  ✔ dashboard.json     — webDashboard
   ✔ commands.json      — commands
   ✔ chat.json          — chat
   ✔ teleportation.json — teleportation

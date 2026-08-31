@@ -150,5 +150,17 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   ("Teleporting in 3 second(s) — move to cancel.") — the move-to-cancel behavior already
   existed (same warmup every teleport command shares) but was never visible, reported as
   "no way of escaping it."
+- **Splitting your config (`/neoe config split`) silently dropped web dashboard settings and
+  your storage backend choice entirely** — reported as "settings reverted to default, can't
+  find them in any config file" after splitting. Root cause: `webDashboard` and `storage` were
+  never registered in `ConfigSplitter`'s section list at all, so neither was ever written to
+  any split file — every dashboard/storage getter just silently fell back to its hard-coded
+  default forever after (dashboard port/auth/UI settings back to defaults; storage backend
+  reverting to `"json"` regardless of a configured SQLite/MySQL setup). `webDashboard` now gets
+  its own dedicated `dashboard.json`; `storage` now lives in `main.json`. Existing split
+  installs get both auto-created/repaired on next startup (with default values, since neither
+  ever existed in a split file to recover real values from) — your original customized values
+  are still recoverable from `config.json.backup` (created automatically by every
+  `/neoe config split`), see the Split Config wiki page for the exact recovery steps.
 
 ---

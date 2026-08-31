@@ -18,7 +18,8 @@ import java.util.*;
  *
  * <p>File layout when split configs are enabled:
  * <pre>
- *   main.json         — modules, logging, permissions, kits, economy
+ *   main.json         — modules, logging, storage backend, permissions, kits, economy, localization
+ *   dashboard.json    — webDashboard (web dashboard/API settings)
  *   commands.json     — commands (enable/disable toggles)
  *   chat.json         — chat formatting, channels, anti-spam, badges
  *   teleportation.json— home, warp, spawn, tpa settings
@@ -47,10 +48,12 @@ public class ConfigSplitter {
     public static final Map<String, String> CONFIG_FILE_MAP = new LinkedHashMap<>() {{
         put("modules",       "main.json");
         put("logging",       "main.json");
+        put("storage",       "main.json");   // storage backend (json/yaml/sqlite/mysql) selection
         put("permissions",   "main.json");
         put("kits",          "main.json");   // kits SETTINGS; kits.json = kit definitions (JsonArray)
         put("economy",       "main.json");   // economy config settings
         put("localization",  "main.json");
+        put("webDashboard",  "dashboard.json");
         put("security",      "security.json");
         put("commands",      "commands.json");
         put("items",         "items.json");
@@ -70,7 +73,8 @@ public class ConfigSplitter {
      * This is the authoritative mapping used for generation and validation.
      */
     public static final Map<String, List<String>> FILE_SECTIONS_MAP = new LinkedHashMap<>() {{
-        put("main.json",          List.of("modules", "logging", "permissions", "kits", "economy", "localization"));
+        put("main.json",          List.of("modules", "logging", "storage", "permissions", "kits", "economy", "localization"));
+        put("dashboard.json",     Collections.singletonList("webDashboard"));
         put("commands.json",      Collections.singletonList("commands"));
         put("chat.json",          Collections.singletonList("chat"));
         put("teleportation.json", Collections.singletonList("teleportation"));
@@ -86,7 +90,19 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          3);  // v3 — added "localization" section: it was never actually
+        put("main.json",          4);  // v4 — added "storage" section: like webDashboard below, it
+                                        //       was never in FILE_SECTIONS_MAP at all, so splitting
+                                        //       your config silently discarded your storage backend
+                                        //       choice (sqlite/mysql/yaml) back to the "json" default —
+                                        //       reported as data/settings "reverting" after a split.
+        put("dashboard.json",     1);  // v1 — new file. "webDashboard" had the exact same bug as
+                                        //       "storage" above (missing from FILE_SECTIONS_MAP
+                                        //       entirely) — splitting silently dropped the ENTIRE
+                                        //       dashboard config section, reported as dashboard
+                                        //       settings "reverted to default" and "can't find them
+                                        //       in any config file" after splitting, since no split
+                                        //       file ever contained them.
+        // v3 — added "localization" section: it was never actually
                                         //       part of the top-level config.json sections (it lived
                                         //       under "chat" in the template, which nothing reads),
                                         //       so main.json could never contain it, permanently
