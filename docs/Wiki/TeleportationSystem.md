@@ -172,10 +172,11 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 | Key | Default | Description |
 |---|---|---|
 | `defaultMinRange` | `0` | Minimum distance from centre (global default) |
-| `defaultMaxRange` | `10000` | Maximum distance from centre (-1 = half the world border) |
-| `findAttempts` | `10` | Attempts to find a safe spot |
+| `defaultMaxRange` | `5000` | Maximum distance from centre (-1 = half the world border). See [Performance](#performance-why-rtp-could-lag-or-crash-a-server) below before raising this much on a server without pre-generated terrain |
+| `findAttempts` | `6` | Attempts to find a safe spot before giving up |
 | `cooldown` | `60` | Seconds between uses per player |
-| `cacheThreshold` | `10` | Pre-computed location cache size |
+| `cacheThreshold` | `5` | Pre-computed location cache size to maintain per named location |
+| `prewarmBatchSize` | `2` | Max NEW cache slots one `/tpr` use may force-generate in the background right after teleporting — see [Performance](#performance-why-rtp-could-lag-or-crash-a-server) |
 | `excludedBiomes` | `[]` | Biomes excluded globally (empty by default) |
 | `mode` | `"command"` | `"command"` = `/tpr` teleports instantly (unchanged default behavior). `"gui"` = bare `/tpr` (no location argument) opens a chest-GUI biome picker instead — see below |
 | `biomeSearchRadius` | `6400` | GUI-only — search radius in blocks for a biome-targeted teleport, same engine `/locate biome` uses |
@@ -237,6 +238,41 @@ every other biome, including unrecognized/modded ones, still fills the remaining
 automatically in alphabetical order, continuing onto later pages exactly as if no pins existed.
 A pin referencing a biome that doesn't exist in the current dimension, or a `slot` outside
 0-44, is silently skipped — it can't break the GUI.
+
+### Cancelling an in-progress `/tpr`
+
+`/tpr` runs through the same warmup as `/home`/`/warp`/`/tpa` (`teleportation.generalSettings.
+teleportDelay`, 3 seconds by default) — **just move and it cancels**, same as any other
+teleport (`generalSettings.cancelOnMovement`, on by default). `/tpr` now announces this
+("Teleporting in 3 second(s) — move to cancel.") when the warmup starts, so it's actually
+visible instead of a silent delay with no indication it could be interrupted. There's no
+separate `/tpr cancel` command — moving during the warmup already is the cancel.
+
+### Performance — why RTP could lag or crash a server
+
+Every teleport into terrain that hasn't been visited/generated before forces a **real, main-
+thread-blocking** chunk generation — there's no way around this for a genuinely random
+destination, but a naive implementation can force far more of these per `/tpr` than actually
+necessary, which is exactly what was happening before this was fixed:
+
+- The safety-preload step used to force-generate a 3×3 grid (9 chunks) around **every**
+  teleport destination unconditionally, even for RTP, which already verifies its own landing
+  spot and never reads the 8 neighbour chunks at all. Fixed — RTP now only force-loads the one
+  chunk it actually lands in.
+- Refilling the background location cache after a successful teleport used to fire the entire
+  gap up to `cacheThreshold` (up to 10 forced generations) as one burst immediately after the
+  teleport — a second lag spike stacked right on top of the teleport's own cost. Fixed via
+  `prewarmBatchSize` — now only a couple of new slots are force-generated per use, and the
+  cache tops back up gradually across several `/tpr` calls instead of all at once.
+- `defaultMaxRange`/`findAttempts`/`cacheThreshold` defaults were lowered (10000→5000,
+  10→6, 10→5) — smaller/fewer attempts by default means less chance of repeatedly pushing into
+  brand-new, ungenerated territory on a server that hasn't pre-generated terrain around itself.
+
+**If `/tpr` is still causing lag/crashes after updating:** pre-generate terrain out to your
+players' expected roaming radius (a chunk pre-generator mod, or just having players explore
+normally, both work — subsequent `/tpr` uses landing in already-generated terrain are cheap).
+Lowering `defaultMaxRange` further, or `findAttempts`, reduces worst-case cost at the expense
+of a higher "no safe location found" retry rate.
 
 ---
 

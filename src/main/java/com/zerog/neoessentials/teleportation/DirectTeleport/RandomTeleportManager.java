@@ -103,7 +103,15 @@ public class RandomTeleportManager {
                     com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance()
                             .saveBackLocation(player);
 
-                    int delayTicks = getTeleportDelaySecs() * 20;
+                    int delaySecs = getTeleportDelaySecs();
+                    if (delaySecs > 0) {
+                        // Neither this warmup nor its move-to-cancel behavior was ever
+                        // announced — players had no visible indication /tpr could be
+                        // cancelled at all, reported as "no way of escaping it".
+                        player.sendSystemMessage(MessageUtil.info(
+                                "commands.neoessentials.teleport.misc.tpr_warmup", String.valueOf(delaySecs)));
+                    }
+                    int delayTicks = delaySecs * 20;
                     TeleportUtil.teleportPlayer(player, loc, delayTicks, false /* we already ensured safety */)
                             .thenAccept(tpResult -> {
                                 if (tpResult.isSuccess()) {
@@ -177,7 +185,15 @@ public class RandomTeleportManager {
 
                     com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
 
-                    int delayTicks = getTeleportDelaySecs() * 20;
+                    int delaySecs = getTeleportDelaySecs();
+                    if (delaySecs > 0) {
+                        // Neither this warmup nor its move-to-cancel behavior was ever
+                        // announced — players had no visible indication /tpr could be
+                        // cancelled at all, reported as "no way of escaping it".
+                        player.sendSystemMessage(MessageUtil.info(
+                                "commands.neoessentials.teleport.misc.tpr_warmup", String.valueOf(delaySecs)));
+                    }
+                    int delayTicks = delaySecs * 20;
                     TeleportUtil.teleportPlayer(player, loc, delayTicks, false)
                             .thenAccept(tpResult -> {
                                 if (tpResult.isSuccess()) {
@@ -482,12 +498,22 @@ public class RandomTeleportManager {
         return locationCache.computeIfAbsent(name, k -> new ConcurrentLinkedQueue<>());
     }
 
+    /**
+     * Each fill attempt force-generates a full chunk on the main thread if the candidate
+     * spot isn't already loaded (there's no cheap way to check "generated but not currently
+     * loaded" — {@code ServerLevel.hasChunk}/{@code getChunkNow} only see chunks with an
+     * active in-memory ticket, not on-disk chunks near-nobody). Firing every missing slot
+     * (up to {@code cacheThreshold}, e.g. 10) as one burst right after a successful RTP was
+     * causing a second lag spike stacked directly after the teleport's own chunk-load cost —
+     * capping how many NEW fills one call kicks off spreads that cost across the next several
+     * {@code /tpr} calls instead of paying it all at once.
+     */
     private void prewarmCache(ServerLevel level, String name) {
         int threshold = getCacheThreshold();
         int current = getCache(name).size();
         if (current >= threshold) return;
 
-        int toFill = threshold - current;
+        int toFill = Math.min(threshold - current, getPrewarmBatchSize());
         double[] center = getCenter(level, name);
         double minRange = getMinRange(name);
         double maxRange = getMaxRange(level, name);
@@ -576,6 +602,10 @@ public class RandomTeleportManager {
 
     private int getCacheThreshold() {
         return (int) getConfigDouble("cacheThreshold", 10);
+    }
+
+    private int getPrewarmBatchSize() {
+        return Math.max(1, (int) getConfigDouble("prewarmBatchSize", 2));
     }
 
     private int getTprCooldown() {

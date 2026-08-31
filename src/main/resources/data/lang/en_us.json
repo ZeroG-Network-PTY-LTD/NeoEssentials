@@ -1079,6 +1079,7 @@
     "commands.neoessentials.teleport.misc.settpr_success":  "§aSet random teleport centre \u0027\u0027{0}\u0027\u0027 to ({1}, {2}, {3}).",
     "commands.neoessentials.teleport.misc.settpr_failed":  "§cFailed to set random teleport location: {0}",
     "commands.neoessentials.teleport.misc.tpr_biome_not_found":  "§cCould not find that biome within the server border. Please try again or pick a different biome.",
+    "commands.neoessentials.teleport.misc.tpr_warmup":  "§eTeleporting in {0} second(s) — move to cancel.",
     "commands.neoessentials.teleport.misc.rtp_gui_title":  "Random Teleport",
     "commands.neoessentials.teleport.misc.rtp_gui_any_biome":  "Random — Any Biome",
     "commands.neoessentials.teleport.misc.rtp_gui_click":  "Click to teleport here",
