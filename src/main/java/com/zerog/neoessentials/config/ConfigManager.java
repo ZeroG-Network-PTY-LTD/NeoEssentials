@@ -1436,6 +1436,8 @@ public class ConfigManager {
     public static final String ANIMATIONS_CONFIG = "animations.json";
     public static final String SCOREBOARD_CONFIG = "scoreboard.json";
     public static final String LEADERBOARD_CONFIG = "leaderboard.json";
+    public static final String VOTIFIER_CONFIG = "votifier.json";
+    public static final String CRATES_CONFIG = "crates.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
@@ -1529,6 +1531,8 @@ public class ConfigManager {
         put(ANIMATIONS_CONFIG, 2);     // v2  — migrated to // comment style
         put(SCOREBOARD_CONFIG, 1);     // v1  — initial sidebar scoreboard config
         put(LEADERBOARD_CONFIG, 3);    // v3  — add entryFormat/headerFormat/icon board styling fields
+        put(VOTIFIER_CONFIG, 1);       // v1  — initial Votifier vote-listener config
+        put(CRATES_CONFIG, 1);         // v1  — initial Crates config
     }};
 
     /**
@@ -2119,7 +2123,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG, VOTIFIER_CONFIG, CRATES_CONFIG
         };
 
         // Check if split configs are enabled
@@ -3175,6 +3179,36 @@ public class ConfigManager {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("resourcePacksEnabled")) {
                 return modules.get("resourcePacksEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the Votifier vote-listener module is enabled (modules.votifierEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isVotifierModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("votifierEnabled")) {
+                return modules.get("votifierEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the Crates module is enabled (modules.cratesEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isCratesModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("cratesEnabled")) {
+                return modules.get("cratesEnabled").getAsBoolean();
             }
         }
         return true;

@@ -1210,6 +1210,18 @@ public class NeoEssentials {
         // ========== LEADERBOARD COMMANDS ==========
         registry.registerCommandWithPermission("leaderboard", "View ranked leaderboards (money, kills, playtime, ...)", "neoessentials.leaderboard.view", "lb");
         com.zerog.neoessentials.leaderboard.commands.LeaderboardCommand.register(dispatcher);
+
+        // ========== VOTIFIER COMMANDS ==========
+        registry.registerCommandWithPermission("vote", "Show vote site links", "neoessentials.votifier.vote");
+        registry.registerCommandWithPermission("votes", "Show vote totals", "neoessentials.votifier.vote");
+        registry.registerCommandWithPermission("togglevotebroadcast", "Opt out of vote broadcasts", null);
+        registry.registerCommandWithPermission("voteparty", "Show vote party progress", "neoessentials.votifier.vote");
+        registry.registerCommandWithPermission("votifier", "Manage the Votifier vote listener", "neoessentials.votifier.admin");
+        com.zerog.neoessentials.votifier.commands.VotifierCommands.register(dispatcher);
+
+        // ========== CRATES COMMANDS ==========
+        registry.registerCommandWithPermission("crate", "Open and manage crates", "neoessentials.crate.open");
+        com.zerog.neoessentials.crates.commands.CrateCommands.register(dispatcher);
     }
         /*
          * All command registration and related logic that was previously outside of methods has been moved here as a block comment.
@@ -1265,6 +1277,14 @@ public class NeoEssentials {
                 // Register the leaderboard placeholder expansion ({leaderboard_<board>:<rank>:name|value})
                 com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(
                     new com.zerog.neoessentials.leaderboard.LeaderboardPlaceholderExpansion());
+
+                // {votifier_total} / {votifier_voteparty_progress} / {votifier_voteparty_required}
+                com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(
+                    new com.zerog.neoessentials.votifier.VotifierPlaceholderExpansion());
+
+                // {crate_keys:<crateId>}
+                com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(
+                    new com.zerog.neoessentials.crates.CratePlaceholderExpansion());
 
                 // Mark PlaceholderManager as initialized
                 ManagerRegistry.getInstance().markInitialized("PlaceholderManager");

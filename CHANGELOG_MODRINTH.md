@@ -33,6 +33,12 @@ migration history) is not carried over.
   button; picks a real spot in that biome or shows a clear error if it can't find one within
   the server border. Icons default to that biome's sapling/dedicated block; admins can pin
   biomes to fixed slots and/or override icons via `biomeMenuItems`.
+- Votifier vote listener — its own TCP port, both V1 (RSA) and V2 (NuVotifier-compatible)
+  protocols auto-detected, per-site reward config (commands/crate keys), offline vote queueing,
+  vote party, and `/vote`/`/votes`/`/voteparty` commands.
+- Crates — weighted reward-pool crates with a key balance system, opened via `/crate open` or
+  a physical block, three opening animations (roulette/sequential/instant), and full admin
+  commands to define crates/rewards in-game. Votifier can grant crate keys per vote site.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
