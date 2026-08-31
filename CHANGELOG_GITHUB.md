@@ -135,5 +135,20 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   already exists on disk (`leaderboard.json`'s `boards` list). Added a dedicated merge step
   that appends new default boards by id without touching or duplicating any board an admin
   already has, including ones they've customized.
+- **`/tpr`/`/rtp` could lag or watchdog-crash a server, especially one without pre-generated
+  terrain.** Reported as "every time I rtp it lags out the whole server, and then crash" — root
+  cause was excessive main-thread-blocking chunk generation per teleport: the safety-preload
+  step force-generated a 3×3 grid (9 chunks) around every destination unconditionally, even
+  for RTP, which already verifies its own exact landing spot and never reads the 8 neighbour
+  chunks — that's now skipped for RTP specifically. Refilling the background location cache
+  after a successful teleport also used to fire the entire gap up to `cacheThreshold` (up to
+  10 forced generations) as one burst immediately after teleporting, stacking a second lag
+  spike right on top of the first — now capped via a new `prewarmBatchSize` config (default 2),
+  spreading the refill across several `/tpr` uses instead of bursting it all at once. Also
+  lowered `defaultMaxRange`/`findAttempts`/`cacheThreshold` shipped defaults (10000→5000,
+  10→6, 10→5) for new installs, and `/tpr` now actually announces its warmup delay
+  ("Teleporting in 3 second(s) — move to cancel.") — the move-to-cancel behavior already
+  existed (same warmup every teleport command shares) but was never visible, reported as
+  "no way of escaping it."
 
 ---

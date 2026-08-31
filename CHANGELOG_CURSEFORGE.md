@@ -53,5 +53,11 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Config-version upgrades (the merge that adds new default keys/boards to an existing config
   on update) were silently failing on Windows — fixed. Also fixed new default boards (like
   `shop_sales`) not reaching an already-upgraded install even after that fix.
+- `/tpr`/`/rtp` could lag or crash a server, especially without pre-generated terrain — it was
+  force-generating far more chunks per teleport than necessary (an unneeded 9-chunk safety
+  grid for RTP specifically, plus a 10-chunk burst refilling the background cache right after
+  every teleport). Both fixed; new `prewarmBatchSize` config caps the refill burst, and lower
+  default range/attempts reduce worst-case cost on fresh servers. `/tpr` also now announces
+  its warmup delay and that moving cancels it — that already worked, it just wasn't visible.
 
 ---
