@@ -374,16 +374,24 @@ Make text clickable in chat:
 
 ## Rank Badges & Status Icons
 
-Config: `config.json` → `chat.badges`. Independent of `richText`/`enableChatEnhancements` — badges
-and status icons are inserted directly into the format template text, not the `<tag>` rich-text
-system.
+Config: `config.json` → `chat.badges` (split configs: `chat.json` → `chat.badges`). Independent
+of `richText`/`enableChatEnhancements` — badges and status icons are inserted directly into the
+format template text, not the `<tag>` rich-text system. This is the "badges" feature seen in
+config — the working part is **emoji/text badges**; see the callout below for the custom-PNG
+path, which isn't fully wired up yet.
 
 | Key | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Master switch for both rank badges and status icons |
 | `badgePosition` | `"before_prefix"` | Where the rank badge is inserted: `before_prefix` \| `after_prefix` \| `before_name` \| `after_name` |
-| `rankBadges` | *(per-group emoji map)* | Emoji/text badge shown for each permission group (looked up by the player's primary group, lowercased). A group with no entry (or an empty string) gets no badge |
-| `useCustomImages` | `false` | Use a PNG badge image (`config/neoessentials/badges/<rank>.png`) instead of the emoji from `rankBadges`, delivered via a resource pack — see `customImageSize`/`customImagePath`/`autoSendResourcePack`/`requireResourcePack`/`resourcePackUrl`/`resourcePackPrompt` below it in config.json |
+| `rankBadges` | *(per-group emoji map)* | Emoji/text badge shown for each permission group (looked up by the player's primary group, lowercased — this correctly checks LuckPerms/FTB Ranks first when one is active, same as every other group lookup in the mod). A group with no entry (or an empty string) gets no badge |
+| `useCustomImages` | `false` | See [Custom PNG Badge Images](#custom-png-badge-images-current-limitations) below — **not fully functional yet** |
+| `customImageSize` | `16` | Pixel size baked into the generated resource pack's font entries — `16`, `24`, or `32` |
+| `customImagePath` | `"config/neoessentials/badges"` | Where the mod looks for `<rank>.png` files and writes the generated pack |
+| `autoSendResourcePack` | `false` | See [Custom PNG Badge Images](#custom-png-badge-images-current-limitations) — does **not** actually push the pack to clients despite the name |
+| `requireResourcePack` | `false` | Reserved for when auto-send is implemented — currently unused |
+| `resourcePackUrl` | *(empty)* | Public URL to host the generated pack at, for manual `server.properties` setup — see below |
+| `resourcePackPrompt` | *(default prompt text)* | Reserved for when auto-send is implemented — currently unused |
 | `statusIcons.enabled` | `true` | Show AFK/vanished/muted status icons in chat |
 | `statusIcons.iconPosition` | `"after_name"` | Where the status icon is inserted: `before_name` \| `after_name` \| `after_message` |
 | `statusIcons.afk` | *(empty)* | Icon/text shown when the sender is AFK |
@@ -402,16 +410,56 @@ system.
 `{neoessentials_username}`) won't show anything. `after_message` always works regardless of which
 name token your template uses, since it just appends to the very end of the formatted line.
 
-**Example — a visible vanished icon:**
+**Full example — an emoji badge per rank, plus a vanished icon:**
 ```json
 "badges": {
+  "enabled": true,
+  "badgePosition": "before_prefix",
+  "rankBadges": {
+    "owner": "👑",
+    "admin": "⭐",
+    "moderator": "🛡️",
+    "helper": "🔧",
+    "vip": "💎",
+    "default": ""
+  },
   "statusIcons": {
     "enabled": true,
     "iconPosition": "after_name",
-    "vanished": "&7[Vanished]"
+    "afk": "&7[AFK]",
+    "vanished": "&7[Vanished]",
+    "muted": "&c[Muted]"
   }
 }
 ```
+This is the entire setup — no resource pack, no restart-sensitive asset files, just edit the
+JSON and `/neoe reload` (or restart). Any Unicode emoji or `&`-coded text string works.
+
+### Custom PNG Badge Images — current limitations
+
+`useCustomImages` is a genuinely bigger feature — swap the emoji for your own artwork — but as
+shipped today only the first half of that pipeline is finished:
+
+- ✅ **Works:** drop `<rank>.png` files into `config/neoessentials/badges/` (auto-created with a
+  `README.txt` the first time the server starts with the `playerTags` module enabled — a
+  separate toggle from `badges.enabled`, `modules.playerTagsEnabled`). With `useCustomImages: true`
+  and `autoSendResourcePack: true`, the mod generates a real resource pack —
+  `config/neoessentials/NeoEssentials-Badges.zip` plus a matching `.sha1` — mapping each PNG to
+  a font glyph, on next server start.
+- ❌ **Not implemented — the mod cannot push that pack to players.** Despite the name,
+  `autoSendResourcePack` does not send anything: on player join the mod only logs the URL/hash
+  and a reminder to configure it yourself. To actually deliver the pack you'd have to host the
+  generated ZIP somewhere public and set vanilla's own `resource-pack`/`resource-pack-sha1` in
+  `server.properties` — a manual, server-wide resource pack, unrelated to this mod's own
+  delivery (which doesn't exist yet).
+- ❌ **Even then, the custom image never actually appears in chat.** The chat badge shown is
+  always the `rankBadges` emoji/text, regardless of `useCustomImages` — nothing in the current
+  chat-formatting code inserts the generated pack's glyph character into a message. The
+  resource pack it generates is real and structurally valid, but nothing in live chat renders
+  it yet.
+
+**In short: stick to `rankBadges` emoji/text for now.** `useCustomImages` is safe to leave off;
+turning it on doesn't break anything, it just doesn't currently change what shows up in chat.
 
 ---
 
