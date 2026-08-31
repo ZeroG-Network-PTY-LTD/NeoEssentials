@@ -991,20 +991,28 @@
       "enabled": true,
       // Badge position: 'before_prefix' | 'after_prefix' | 'before_name' | 'after_name'
       "badgePosition": "before_prefix",
-      // Use custom PNG badge images from config/neoessentials/badges/ (named <rank>.png)
+      // NOT FULLY IMPLEMENTED YET — see docs/Wiki/ChatSystem.md#custom-png-badge-images-current-limitations.
+      // Generates a resource pack from config/neoessentials/badges/<rank>.png files, but (a) the
+      // pack is never actually pushed to players (autoSendResourcePack below doesn't send anything
+      // despite the name — you'd have to host it yourself and set server.properties manually) and
+      // (b) even then, chat always shows the rankBadges emoji below, never the custom image. Leave
+      // this false and use rankBadges (emoji/text) instead — that part fully works today.
       "useCustomImages": false,
-      // Badge image size in pixels (16, 24, or 32)
+      // Badge image size in pixels (16, 24, or 32) — only relevant once useCustomImages actually renders in chat
       "customImageSize": 16,
       // Path to badge images folder relative to server root
       "customImagePath": "config/neoessentials/badges",
-      // Auto-generate and send a resource pack on join (requires useCustomImages)
+      // Does NOT auto-send anything yet — only generates the pack + logs manual server.properties
+      // setup instructions on join. See the useCustomImages note above.
       "autoSendResourcePack": false,
-      // Force players to accept the resource pack to join
+      // Reserved for when auto-send is implemented — currently unused
       "requireResourcePack": false,
-      // Public URL where the resource pack is hosted. Leave empty to disable.
+      // Public URL where the resource pack is hosted, for the manual server.properties setup above.
       "resourcePackUrl": "",
+      // Reserved for when auto-send is implemented — currently unused
       "resourcePackPrompt": "This server uses custom badge images. Please accept the resource pack for the best experience!",
-      // Emoji badges per rank. If useCustomImages is true, looks for <rankname>.png instead.
+      // Emoji/text badge shown per rank (looked up by primary group, lowercased) — this is the
+      // part that actually works. A group with no entry, or an empty string, gets no badge.
       "rankBadges": {
         "owner": "",
         "admin": "⭐",

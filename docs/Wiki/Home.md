@@ -10,7 +10,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
 |---|---|
 | [**Commands Reference**](CommandsReference) | Every command — syntax, permission, aliases |
 | [Economy System](EconomySystem) | Balances, pay, baltop, ChestShop, Vault API |
-| [Chat System](ChatSystem) | Formatting, channels, rich text, AFK broadcasts |
+| [Chat System](ChatSystem) | Formatting, channels, rich text, AFK broadcasts, rank badges & status icons |
 | [AFK System](AFKSystem) | Auto-AFK, kick, tablist indicator, config |
 | [Moderation System](ModerationSystem) | Ban, mute, jail, freeze, vanish |
 | [Teleportation System](TeleportationSystem) | Home, warp, TPA, RTP, spawn, safe teleport |
