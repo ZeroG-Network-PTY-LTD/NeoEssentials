@@ -38,7 +38,8 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
 1. Drop `neoessentials-<version>.jar` into your server's `mods/` folder
 2. Start the server — config files are auto-generated in `config/neoessentials/`
 3. Key config files (split config mode — recommended):
-   - `main.json` — modules, logging (see [Logging System](Logging)), localization, permissions, kits settings, economy settings
+   - `main.json` — modules, logging (see [Logging System](Logging)), storage backend selection, localization, permissions, kits settings, economy settings
+   - `dashboard.json` — web dashboard port/auth/UI settings
    - `commands.json` — enable/disable individual commands
    - `chat.json` — chat formatting, channels, anti-spam
    - `teleportation.json` — homes, warps, spawn, TPA
@@ -48,7 +49,6 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
    - Player balances, permission groups/users, and kit definitions are **not** flat config files —
      they're persisted through the pluggable Storage Backend (JSON/YAML/SQLite/MySQL) instead;
      see [Storage Backend](Storage)
-   - `webDashboard` port/auth/UI settings currently live only in the monolithic `config.json` (not migrated to a split file — see [Split Config System](SplitConfigs))
    - See [Split Config System](SplitConfigs) for the complete reference
 4. Assign permissions to players/groups via `/permissions` or LuckPerms/FTBRanks
 
