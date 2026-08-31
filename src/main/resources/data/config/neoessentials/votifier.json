@@ -1,0 +1,60 @@
+{
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 1,
+
+  /* ================================================================
+     NeoEssentials — Votifier Vote Listener  (votifier.json)
+     Reload in-game: /votifier reload
+  ================================================================ */
+
+  "votifier": {
+    // Master switch — also see modules.votifierEnabled in config.json (that one requires a
+    // restart to take effect; this one is reloadable but only actually stops/starts the
+    // listener on the next server restart too, since the socket lifecycle is tied to server
+    // start/stop, not /neoe reload).
+    "enabled": true,
+    // Bind address for the vote-listener socket — separate from the Minecraft server port.
+    "host": "0.0.0.0",
+    "port": 8192,
+    // Auto-generated on first boot if empty — this is the shared secret used to verify
+    // Votifier PROTOCOL V2 (NuVotifier-compatible) votes via HMAC-SHA256. Paste this into your
+    // vote site's panel wherever it asks for a "Votifier v2 token"/"NuVotifier token". Leave
+    // untouched once generated — changing it invalidates any vote site already configured
+    // with the old value.
+    "v2Token": "",
+    // Per-vote-site reward configuration, keyed by the exact "serviceName" string the vote
+    // site sends (case-insensitive) — e.g. "PlanetMinecraft", "minecraftservers.org". A vote
+    // from a site with no matching entry here uses "default" instead.
+    "sites": {
+      "default": {
+        // Console commands run on vote, {player} replaced with the voter's username.
+        "commands": [
+          "eco give {player} 100"
+        ],
+        // Crate keys granted per vote, by crate id -> amount. Requires modules.cratesEnabled
+        // and a matching crate defined in crates.json — silently skipped otherwise.
+        "keys": {}
+      }
+    },
+    // Shown by /vote — plain links/instructions for where to vote, not used for anything else.
+    "voteLinks": {
+      "example-site": "https://example-vote-site.com/vote/YourServerName"
+    },
+    // Broadcast to the whole server when someone votes. Empty = no broadcast.
+    "broadcastMessage": "&a{player} &7voted for the server! Thanks for your support &c&l❤",
+    // Players can opt out of seeing (or causing) the broadcast via /togglevotebroadcast —
+    // this only controls whether IT'S SENT to a given player, not whether their own vote
+    // triggers one for everyone else.
+    "voteParty": {
+      "enabled": true,
+      // Total votes (server-wide, cumulative) needed to trigger the party
+      "votesRequired": 50,
+      "commands": [
+        "say &6&lVOTE PARTY! &r&7Everyone say thanks for the votes!"
+      ],
+      // false = the counter keeps counting across restarts toward the next party;
+      // true = it resets to 0 every time the server restarts
+      "resetOnRestart": false
+    }
+  }
+}

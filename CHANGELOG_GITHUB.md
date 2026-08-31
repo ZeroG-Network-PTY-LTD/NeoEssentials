@@ -81,6 +81,23 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   specific biomes to fixed GUI slots and/or override their icon via a new
   `biomeMenuItems` config list — everything not pinned still auto-fills the remaining slots,
   including biomes this mod doesn't specifically recognize.
+- **Votifier vote listener** — a TCP listener on its own port, compatible with both Votifier
+  protocol versions (V1/RSA and V2/NuVotifier-compatible, auto-detected per connection so vote
+  sites using either just work). Per-vote-site reward config (console commands, crate keys),
+  offline votes are queued and delivered on next login, a vote-party threshold bonus, and
+  `/vote`/`/votes`/`/togglevotebroadcast`/`/voteparty` player commands plus admin reload/
+  testvote/genkeys. Wire protocol verified byte-for-byte against a real reference
+  implementation and round-trip tested live (RSA-encrypted V1 vote and HMAC-signed V2 vote
+  both received, decrypted/verified, and rewarded correctly) rather than only unit-tested.
+- **Crates system** — weighted reward-pool crates opened with a key (a virtual per-player
+  balance, not just an item, so a duplicated key item alone can never grant an extra open),
+  either virtually (`/crate open`) or by right-clicking a physical crate block placed in the
+  world. Three opening animations (a CS:GO-style spinning-roulette reveal, a lighter sequential
+  flicker, or instant), full reward items (enchantments/custom names/etc., same serialization
+  `kits.json` already uses), rare-reward server broadcasts, a no-cost `/crate preview` odds
+  viewer, and admin commands to define crates/rewards/key items/animation/physical blocks
+  entirely in-game. Votifier can grant crate keys as a per-site vote reward — the common "vote
+  crate" server setup — but both systems work fully independently too.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful

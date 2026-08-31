@@ -16,6 +16,8 @@ public enum LogCategory {
     DISCORD("discord"),
     CONFIG("config"),
     COMMANDS("commands"),
+    VOTIFIER("votifier"),
+    CRATES("crates"),
     GENERAL("general");
 
     private final String configKey;
