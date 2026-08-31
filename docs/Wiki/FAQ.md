@@ -35,10 +35,11 @@ configure and restart.
 
 **Q: What config files exist?**
 By default everything lives in one `config.json`. There's also a "split config" mode
-(`/neoe config split`) that breaks it into `main.json`, `commands.json`, `chat.json`,
-`teleportation.json`, `moderation.json`, `tablist.json`, `security.json`, `economy.json`,
-`permissions.json`, `kits.json` — see the SplitConfigs wiki page. `webDashboard` settings
-currently only live in the monolithic `config.json`, not migrated to a split file yet.
+(`/neoe config split`) that breaks it into `main.json`, `dashboard.json`, `commands.json`,
+`chat.json`, `teleportation.json`, `moderation.json`, `tablist.json`, `security.json`,
+`economy.json`, `permissions.json`, `kits.json` — see the SplitConfigs wiki page.
+`webDashboard` settings live in `dashboard.json` under split configs (their own dedicated
+file — this was previously silently dropped by a real bug on split; now fixed).
 
 **Q: How do config files get updated when I update the mod?**
 Every config file has a `_configVersion` number. On boot, if the file on disk is older than the

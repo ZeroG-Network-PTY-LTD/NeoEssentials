@@ -59,5 +59,12 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   every teleport). Both fixed; new `prewarmBatchSize` config caps the refill burst, and lower
   default range/attempts reduce worst-case cost on fresh servers. `/tpr` also now announces
   its warmup delay and that moving cancels it — that already worked, it just wasn't visible.
+- Splitting your config (`/neoe config split`) silently dropped web dashboard settings and your
+  storage backend choice entirely — neither was ever registered in the split-config section
+  list, so both always fell back to defaults after splitting (dashboard settings, and storage
+  reverting to `"json"` even if you had SQLite/MySQL configured). Both fixed — `webDashboard`
+  now gets its own `dashboard.json`, `storage` now lives in `main.json`. See the Split Config
+  wiki page if you already hit this — your original values are recoverable from
+  `config.json.backup`.
 
 ---
