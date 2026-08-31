@@ -163,13 +163,18 @@ public class TeleportUtil {
             return future;
         }
 
-        // Force-load the target chunk AND its 8 neighbours (3×3 grid) BEFORE doing
-        // safety checks.  findSafeLocation() may search up to ±16 blocks in X/Z which
-        // can cross chunk boundaries, so just loading the centre chunk is not enough.
+        // Force-load the target chunk AND its 8 neighbours (3×3 grid) BEFORE doing safety
+        // checks — but ONLY when findSafe will actually run: findSafeLocation() may search up
+        // to ±16 blocks in X/Z which can cross chunk boundaries, so just loading the centre
+        // chunk isn't enough for THAT search. When findSafe is false (the caller — e.g.
+        // RandomTeleportManager — already verified the exact spot itself), the 8 neighbour
+        // chunks are never touched, so force-generating them was pure wasted cost: up to 8
+        // extra synchronous full chunk generations per teleport for nothing, which is exactly
+        // what was causing RTP to lag/watchdog-crash servers on ungenerated terrain.
         BlockPos targetBlockPos = new BlockPos((int) location.getX(),
                                               (int) location.getY(),
                                               (int) location.getZ());
-        preloadChunksForTeleport(targetLevel, targetBlockPos);
+        preloadChunksForTeleport(targetLevel, targetBlockPos, findSafe);
 
         // Find safe location if requested (surrounding chunks are now loaded)
         TeleportLocation finalLocation = location;
@@ -190,7 +195,7 @@ public class TeleportUtil {
             BlockPos safeBlockPos = new BlockPos((int) finalLocation.getX(),
                                                 (int) finalLocation.getY(),
                                                 (int) finalLocation.getZ());
-            preloadChunksForTeleport(targetLevel, safeBlockPos);
+            preloadChunksForTeleport(targetLevel, safeBlockPos, true);
         }
 
 
@@ -199,7 +204,7 @@ public class TeleportUtil {
         if (delayTicks > 0) {
             // Schedule delayed teleport
             player.level().getServer().execute(() -> {
-                scheduleDelayedTeleport(player, teleportTo, delayTicks, future);
+                scheduleDelayedTeleport(player, teleportTo, delayTicks, future, findSafe);
             });
         } else {
             // Immediate teleport
@@ -212,8 +217,8 @@ public class TeleportUtil {
     /**
      * Schedule a delayed teleport
      */
-    private static void scheduleDelayedTeleport(ServerPlayer player, TeleportLocation location, 
-                                              int delayTicks, CompletableFuture<TeleportResult> future) {
+    private static void scheduleDelayedTeleport(ServerPlayer player, TeleportLocation location,
+                                              int delayTicks, CompletableFuture<TeleportResult> future, boolean findSafe) {
         // Store original position to check for movement
         Vec3 originalPos = player.position();
         com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -272,7 +277,7 @@ public class TeleportUtil {
             ServerLevel execLevel = location.getLevel();
             if (execLevel != null) {
                 preloadChunksForTeleport(execLevel, new BlockPos(
-                    (int) location.getX(), (int) location.getY(), (int) location.getZ()));
+                    (int) location.getX(), (int) location.getY(), (int) location.getZ()), findSafe);
             }
             executeTeleport(player, location, future);
         });
@@ -407,9 +412,21 @@ public class TeleportUtil {
      * immediately accessible for block-state queries and teleportation.</p>
      */
     public static void preloadChunksForTeleport(ServerLevel level, BlockPos pos) {
+        preloadChunksForTeleport(level, pos, true);
+    }
+
+    /**
+     * @param grid3x3 {@code true} force-loads the target chunk plus its 8 neighbours (needed
+     *                whenever a ±16-block safe-location search might run against this spot);
+     *                {@code false} force-loads only the single target chunk — for callers that
+     *                already picked and verified an exact safe spot themselves (e.g. random
+     *                teleport), where the neighbour chunks are never actually read.
+     */
+    public static void preloadChunksForTeleport(ServerLevel level, BlockPos pos, boolean grid3x3) {
         ChunkPos center = ChunkPos.containing(pos);
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
+        int radius = grid3x3 ? 1 : 0;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos cp = new ChunkPos(center.x() + dx, center.z() + dz);
                 // Always add a fresh ticket to reset the 300-tick expiry counter.
                 level.getChunkSource().addTicketWithRadius(
