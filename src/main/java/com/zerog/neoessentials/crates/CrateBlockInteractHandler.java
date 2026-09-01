@@ -6,6 +6,7 @@ import com.zerog.neoessentials.crates.gui.CrateOpeningMenu;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,6 +27,7 @@ public class CrateBlockInteractHandler {
         if (crate == null) return;
 
         event.setCanceled(true);
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (!PermissionAPI.hasPermission(player.getUUID(), "neoessentials.crate.open")) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.general.no_permission"));
             return;
