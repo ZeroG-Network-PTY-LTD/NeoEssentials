@@ -909,6 +909,7 @@
     "commands.neoessentials.crate.list":  "§6§lCrates: §f{0}",
     "commands.neoessentials.crate.not_found":  "§cNo crate found named §e{0}§c.",
     "commands.neoessentials.crate.no_keys":  "§cYou don't have any keys for §e{0}§c.",
+    "commands.neoessentials.crate.no_rewards":  "§cCrate §e{0} §chas no rewards configured yet — ask an admin to add some with §e/crate admin addreward§c.",
     "commands.neoessentials.crate.opened":  "§aYou opened §e{0} §aand won: §f{1}",
     "commands.neoessentials.crate.keys_list":  "§e{0}'s §7keys: {1}",
     "commands.neoessentials.crate.keys_given":  "§aGave §e{0}x {1} §akey(s) to §e{2}§a.",

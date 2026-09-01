@@ -33,6 +33,11 @@ public class CrateBlockInteractHandler {
             return;
         }
 
+        if (!CrateManager.getInstance().hasAnyReward(crate)) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.displayName));
+            return;
+        }
+
         ItemStack held = player.getMainHandItem();
         String heldCrateId = CrateManager.getInstance().getKeyCrateId(held);
         boolean hasVirtualKey = CrateKeyManager.getInstance().getKeys(player.getUUID(), crate.id) > 0;
