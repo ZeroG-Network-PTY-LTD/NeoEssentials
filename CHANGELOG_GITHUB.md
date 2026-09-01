@@ -185,5 +185,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   visibly a duplicated "you don't have a key" error message, but it could also consume two keys
   and open two reward GUIs from one click. Now guarded the same way `ShopInteractHandler`
   already guards against the identical issue.
+- **A crate with no rewards configured yet silently ate a key and reported the misleading "no
+  keys" error.** Reported as "I gave myself a key but it still asks me to have a key" right
+  after creating a new crate — `/crate admin create` makes an empty crate (no rewards until
+  `/crate admin addreward` is used), and the open flow decremented the key balance *before*
+  picking a reward, so the empty pool's `null` result got reported as if the key had never
+  existed at all. Reordered to resolve the reward first — a key is now never spent unless a
+  reward actually exists — and added a distinct "no rewards configured yet" message so this no
+  longer looks identical to actually being out of keys.
 
 ---
