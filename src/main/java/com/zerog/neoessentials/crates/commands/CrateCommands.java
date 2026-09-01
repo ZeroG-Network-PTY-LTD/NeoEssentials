@@ -143,6 +143,10 @@ public class CrateCommands {
             source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
             return 0;
         }
+        if (!CrateManager.getInstance().hasAnyReward(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.displayName));
+            return 0;
+        }
         if (CrateKeyManager.getInstance().getKeys(player.getUUID(), crate.id) <= 0) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.displayName));
             return 0;
