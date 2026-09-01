@@ -70,6 +70,14 @@ public class CrateManager {
         return crates;
     }
 
+    /** Whether the crate has at least one reward with a positive weight — i.e. whether opening
+     *  it could actually resolve to something. Callers should check this before spending a key
+     *  so an empty crate gets a distinct "no rewards configured" message instead of eating a
+     *  key and reporting the misleading generic "no keys" error. */
+    public boolean hasAnyReward(CrateDefinition crate) {
+        return crate.rewards.stream().anyMatch(r -> r.weight > 0);
+    }
+
     // ── Physical block placement ────────────────────────────────────────────
 
     private static String posKey(ServerLevel level, BlockPos pos) {
@@ -119,8 +127,14 @@ public class CrateManager {
     // ── Opening ──────────────────────────────────────────────────────────────
 
     /** Consumes one key (physical item if given, else virtual balance) and returns the
-     *  resolved reward, or {@code null} if the player has no keys / the crate has no rewards. */
+     *  resolved reward, or {@code null} if the player has no keys or the crate has no
+     *  positively-weighted rewards (callers should check {@link #hasAnyReward} first to tell
+     *  those two cases apart for the player). The reward is resolved <b>before</b> any key is
+     *  consumed, so an empty/all-zero-weight reward pool never eats a key for nothing. */
     public CrateReward tryConsumeKeyAndPick(ServerPlayer player, CrateDefinition crate, ItemStack physicalKey) {
+        CrateReward picked = WeightedRandomPicker.pick(crate.rewards, r -> r.weight);
+        if (picked == null) return null;
+
         // The physical key item is only a representation — the virtual balance (kept in lockstep
         // with every give/consume of a physical key) is always what's actually decremented, so
         // an item duplicated by some other exploit can never grant more opens than were paid
@@ -133,7 +147,7 @@ public class CrateManager {
             physicalKey.shrink(1);
         }
 
-        return WeightedRandomPicker.pick(crate.rewards, r -> r.weight);
+        return picked;
     }
 
     public void grantReward(ServerPlayer player, CrateDefinition crate, CrateReward reward) {
