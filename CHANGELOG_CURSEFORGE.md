@@ -74,5 +74,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   `config.json.backup`.
 - Right-clicking a physical crate block ran the whole open flow twice per click (duplicated
   "no keys" message, could double-consume keys) — fixed.
+- A crate with no rewards configured yet silently ate a key and reported the misleading "no
+  keys" error instead of "no rewards configured" — fixed; the key is no longer spent unless a
+  reward actually exists.
 
 ---
