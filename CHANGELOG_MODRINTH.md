@@ -74,5 +74,7 @@ migration history) is not carried over.
   now gets its own `dashboard.json`, `storage` now lives in `main.json`. See the Split Config
   wiki page if you already hit this — your original values are recoverable from
   `config.json.backup`.
+- Right-clicking a physical crate block ran the whole open flow twice per click (duplicated
+  "no keys" message, could double-consume keys) — fixed.
 
 ---

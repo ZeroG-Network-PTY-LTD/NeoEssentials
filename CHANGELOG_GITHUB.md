@@ -179,5 +179,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   ever existed in a split file to recover real values from) — your original customized values
   are still recoverable from `config.json.backup` (created automatically by every
   `/neoe config split`), see the Split Config wiki page for the exact recovery steps.
+- **Right-clicking a physical crate block ran the whole open flow twice per click** —
+  `PlayerInteractEvent.RightClickBlock` fires once per hand for a single right-click, and the
+  handler wasn't filtering to the main hand, so every interaction was processed twice: most
+  visibly a duplicated "you don't have a key" error message, but it could also consume two keys
+  and open two reward GUIs from one click. Now guarded the same way `ShopInteractHandler`
+  already guards against the identical issue.
 
 ---
