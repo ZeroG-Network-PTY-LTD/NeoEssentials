@@ -1444,7 +1444,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 47);          // v47 — added randomTeleportSettings.prewarmBatchSize
+        put(MAIN_CONFIG, 48);          // v48 — added general.serverName
                                         //   (RTP chunk-load lag/crash fix)
         // v46 — added randomTeleportSettings.mode/biomeSearchRadius/
                                         //   biomeSearchStep/biomeMenuItems (RTP biome-select GUI)
@@ -3188,6 +3188,24 @@ public class ConfigManager {
      * Returns true if the Votifier vote-listener module is enabled (modules.votifierEnabled).
      * Defaults to true if not set.
      */
+    /**
+     * The plain, single-line server name from {@code general.serverName} — what the
+     * {@code {server_name}} placeholder shows. Deliberately independent of both
+     * server.properties' MOTD and NeoEssentials' own {@code /motd} system (see
+     * {@code {server_motd}} for that) — a scoreboard/tablist line can't sensibly hold a
+     * multi-line, heavily-formatted server-list banner.
+     */
+    public static String getServerName() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("general")) {
+            JsonObject general = config.getAsJsonObject("general");
+            if (general.has("serverName")) {
+                return general.get("serverName").getAsString();
+            }
+        }
+        return "My Server";
+    }
+
     public static boolean isVotifierModuleEnabled() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("modules")) {

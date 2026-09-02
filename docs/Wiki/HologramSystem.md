@@ -161,6 +161,7 @@ Common useful placeholders:
 | `{neoessentials_online_players}` | Current online player count |
 | `{neoessentials_max_players}` | Server max players |
 | `{neoessentials_server_name}` | Server name from config |
+| `{neoessentials_server_motd}` | Configured MOTD (`/motd` if set, otherwise `server.properties`) |
 | `{neoessentials_time}` | Current server time (12h) |
 | `{neoessentials_time_24}` | Current server time (24h) |
 | `{neoessentials_date}` | Current date |
