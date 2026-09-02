@@ -105,6 +105,9 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `/hologram` subcommand (text, scale, spin, background color, hover animation, etc.) instead of
   needing separate crate-specific appearance config. `removeblock` deletes it again; `reload`/
   `delete` sweep away any hologram left over a block whose crate no longer exists.
+- **Left-clicking a physical crate block now opens the no-cost reward-odds preview** (same as
+  `/crate preview`), matching the right-click-to-act/left-click-to-look pattern shop signs
+  already use. Shift+left-click still falls through as a normal break attempt.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
