@@ -79,5 +79,7 @@ migration history) is not carried over.
 - A crate with no rewards configured yet silently ate a key and reported the misleading "no
   keys" error instead of "no rewards configured" — fixed; the key is no longer spent unless a
   reward actually exists.
+- Tab-completion was silently missing on ~25 command arguments across 16 files (crate/hologram/
+  home/board/group names, item ids, player targets, etc.) — full audit, all fixed.
 
 ---
