@@ -345,6 +345,30 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_tablist", fMsg));
             }
 
+            // Reload ScoreboardManager (had the identical "config changed, /neoe reload does
+            // nothing" gap tablist just got fixed for above — ConfigManager.loadAll() only
+            // clears the JSON cache, it never told ScoreboardManager's own in-memory board
+            // list to re-parse scoreboard.json, so edited boards/titles/lines stayed stale
+            // until an explicit /scoreboard reload or a full restart).
+            totalCount++;
+            try {
+                com.zerog.neoessentials.sidebar.ScoreboardManager scoreboardMgr =
+                    com.zerog.neoessentials.sidebar.ScoreboardManager.getInstance();
+                scoreboardMgr.loadConfig();
+                // Push the updated boards to all online players immediately
+                net.minecraft.server.MinecraftServer scoreboardReloadServer =
+                    net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (scoreboardReloadServer != null) {
+                    scoreboardMgr.updateAll(scoreboardReloadServer);
+                }
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Scoreboard system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload scoreboard system: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_scoreboard", fMsg));
+            }
+
             // Reload WorthManager (item sell prices)
             totalCount++;
             try {

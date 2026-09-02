@@ -2003,6 +2003,7 @@
     "commands.neoessentials.root.reload_error_afk": "Failed to reload AFK system: {0}",
     "commands.neoessentials.root.reload_error_jail": "Failed to reload jail system: {0}",
     "commands.neoessentials.root.reload_error_tablist": "Failed to reload tablist system: {0}",
+    "commands.neoessentials.root.reload_error_scoreboard": "Failed to reload scoreboard system: {0}",
     "commands.neoessentials.root.reload_error_worth": "Failed to reload worth system: {0}",
     "commands.neoessentials.root.reload_error_rules": "Failed to reload rules: {0}",
     "commands.neoessentials.root.reload_complete_success": "NeoEssentials reload complete: {0}/{1} systems reloaded successfully",
