@@ -50,7 +50,10 @@ public class UtilityCommands {
         registerEffectCmd(dispatcher);
         registerSpawnMob(dispatcher);
         registerUnlimited(dispatcher);
-        registerCondense(dispatcher);
+        // /condense is registered by MiscItemCommands — this file used to duplicate that
+        // registration (dead weight that could only ever end up shadowed behind it, since
+        // Brigadier merges same-named nodes but keeps the first-registered suggestions
+        // provider), removed rather than kept in sync with two copies of the same command.
     }
 
     // ── /ptime [reset|<value>] [player] ──────────────────────────────────────
@@ -443,6 +446,8 @@ public class UtilityCommands {
                     .executes(ctx -> executeUnlimitedClear(ctx, StringArgumentType.getString(ctx, "target"))))
             )
             .then(Commands.argument("item", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    BuiltInRegistries.ITEM.keySet().stream().map(Identifier::getPath), b))
                 .executes(ctx -> executeUnlimitedToggle(ctx, StringArgumentType.getString(ctx, "item"), null))
                 .then(Commands.argument("target", StringArgumentType.word())
                     .suggests((ctx, b) -> SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
@@ -514,111 +519,6 @@ public class UtilityCommands {
         Set<String> items = unlimitedItems.get(uuid);
         return items != null && items.contains(itemId);
     }
-
-    // ── /condense [item] ──────────────────────────────────────────────────────
-    // Essentials: convert loose items to storage block equivalents using crafting recipes.
-    // We hard-code the most common condensable mappings (nugget→ingot→block pattern).
-    private static void registerCondense(CommandDispatcher<CommandSourceStack> d) {
-        d.register(Commands.literal("condense")
-            .requires(src -> { var p = src.getPlayer(); return p == null || PermissionAPI.hasPermission(p.getUUID(), "neoessentials.condense"); })
-            .executes(ctx -> executeCondense(ctx, null))
-            .then(Commands.argument("item", StringArgumentType.word())
-                .executes(ctx -> executeCondense(ctx, StringArgumentType.getString(ctx, "item")))
-            )
-        );
-    }
-
-    // Condense rules: item → (required count, result item, result count)
-    private static final List<CondenseRule> CONDENSE_RULES = List.of(
-        // Nuggets → Ingots
-        new CondenseRule("minecraft:iron_nugget", 9, "minecraft:iron_ingot", 1),
-        new CondenseRule("minecraft:gold_nugget", 9, "minecraft:gold_ingot", 1),
-        // Ingots → Blocks
-        new CondenseRule("minecraft:iron_ingot", 9, "minecraft:iron_block", 1),
-        new CondenseRule("minecraft:gold_ingot", 9, "minecraft:gold_block", 1),
-        new CondenseRule("minecraft:copper_ingot", 9, "minecraft:copper_block", 1),
-        new CondenseRule("minecraft:netherite_ingot", 9, "minecraft:netherite_block", 1),
-        new CondenseRule("minecraft:diamond", 9, "minecraft:diamond_block", 1),
-        new CondenseRule("minecraft:emerald", 9, "minecraft:emerald_block", 1),
-        new CondenseRule("minecraft:lapis_lazuli", 9, "minecraft:lapis_block", 1),
-        new CondenseRule("minecraft:redstone", 9, "minecraft:redstone_block", 1),
-        new CondenseRule("minecraft:coal", 9, "minecraft:coal_block", 1),
-        new CondenseRule("minecraft:quartz", 4, "minecraft:quartz_block", 1),
-        new CondenseRule("minecraft:wheat", 9, "minecraft:hay_block", 1),
-        new CondenseRule("minecraft:bone_meal", 9, "minecraft:bone_block", 1),
-        new CondenseRule("minecraft:snowball", 4, "minecraft:snow_block", 1),
-        new CondenseRule("minecraft:clay_ball", 4, "minecraft:clay", 1),
-        new CondenseRule("minecraft:glowstone_dust", 4, "minecraft:glowstone", 1),
-        new CondenseRule("minecraft:amethyst_shard", 4, "minecraft:amethyst_block", 1),
-        new CondenseRule("minecraft:raw_iron", 9, "minecraft:raw_iron_block", 1),
-        new CondenseRule("minecraft:raw_gold", 9, "minecraft:raw_gold_block", 1),
-        new CondenseRule("minecraft:raw_copper", 9, "minecraft:raw_copper_block", 1)
-    );
-
-    private static int executeCondense(CommandContext<CommandSourceStack> ctx, String filterItem) {
-        var src = ctx.getSource();
-        var player = src.getPlayer();
-        if (player == null) { src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only")); return 0; }
-
-        var inv = player.getInventory();
-        int converted = 0;
-
-        for (CondenseRule rule : CONDENSE_RULES) {
-            if (filterItem != null) {
-                String fid = filterItem.contains(":") ? filterItem : "minecraft:" + filterItem;
-                if (!rule.inputId.equals(fid)) continue;
-            }
-            // Count how many of the input item we have
-            int count = 0;
-            for (int i = 0; i < inv.getContainerSize(); i++) {
-                ItemStack s = inv.getItem(i);
-                if (!s.isEmpty() && com.zerog.neoessentials.economy.worth.WorthManager.getItemId(s).equals(rule.inputId)) {
-                    count += s.getCount();
-                }
-            }
-            if (count < rule.inputCount) continue;
-
-            int times = count / rule.inputCount;
-            // Remove inputs — inline count directly, no redundant intermediate variable
-            int remaining = times * rule.inputCount;
-            for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
-                ItemStack s = inv.getItem(i);
-                if (!s.isEmpty() && com.zerog.neoessentials.economy.worth.WorthManager.getItemId(s).equals(rule.inputId)) {
-                    int take = Math.min(s.getCount(), remaining);
-                    s.shrink(take);
-                    remaining -= take;
-                    if (s.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
-                }
-            }
-
-            // Add outputs
-            Identifier outLoc = Identifier.tryParse(rule.outputId);
-            if (outLoc != null) {
-                net.minecraft.world.item.Item outItem = BuiltInRegistries.ITEM.getValue(outLoc);
-                if (outItem != net.minecraft.world.item.Items.AIR) {
-                    int totalOut = times * rule.outputCount;
-                    int maxStack = new ItemStack(outItem).getMaxStackSize();
-                    while (totalOut > 0) {
-                        int give = Math.min(totalOut, maxStack);
-                        ItemStack out = new ItemStack(outItem, give);
-                        if (!inv.add(out)) player.drop(out, false);
-                        totalOut -= give;
-                    }
-                    converted++;
-                }
-            }
-        }
-
-        if (converted == 0) {
-            src.sendFailure(MessageUtil.error("commands.neoessentials.condense.nothing"));
-            return 0;
-        }
-        final int fc = converted;
-        src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.condense.success", fc), false);
-        return 1;
-    }
-
-    private record CondenseRule(String inputId, int inputCount, String outputId, int outputCount) {}
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     private static ServerPlayer resolveTarget(CommandSourceStack src, String targetName) {

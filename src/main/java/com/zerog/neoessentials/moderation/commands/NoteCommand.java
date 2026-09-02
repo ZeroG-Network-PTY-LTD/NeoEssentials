@@ -71,6 +71,8 @@ public class NoteCommand {
         dispatcher.register(Commands.literal("removenote")
             .requires(src -> PermissionValidator.validatePermission(src, "neoessentials.moderation.note").hasPermission())
             .then(Commands.argument("player", StringArgumentType.word())
+                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                    ctx.getSource().getServer().getPlayerNames(), b))
                 .then(Commands.argument("noteId", StringArgumentType.word())
                     .executes(ctx -> executeRemoveNote(ctx,
                         StringArgumentType.getString(ctx, "player"),

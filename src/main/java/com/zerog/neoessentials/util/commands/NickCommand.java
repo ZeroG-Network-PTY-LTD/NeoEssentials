@@ -122,6 +122,7 @@ public class NickCommand {
         dispatcher.register(
             Commands.literal("setnick")
                 .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                     .then(Commands.argument("nickname", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             PermissionValidator.PermissionResult permResult = 

@@ -41,12 +41,16 @@ public class ApiKeyCommand {
                 .then(Commands.argument("label", StringArgumentType.word())
                     .executes(ctx -> create(ctx, StringArgumentType.getString(ctx, "label"), User.Role.ADMIN))
                     .then(Commands.argument("role", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            java.util.Arrays.stream(User.Role.values()).map(Enum::name), b))
                         .executes(ctx -> create(ctx,
                             StringArgumentType.getString(ctx, "label"),
                             parseRole(ctx, StringArgumentType.getString(ctx, "role")))))))
             .then(Commands.literal("list").executes(ApiKeyCommand::list))
             .then(Commands.literal("revoke")
                 .then(Commands.argument("id", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        ApiKeyManager.getInstance().getAllKeys().stream().map(k -> k.id), b))
                     .executes(ctx -> revoke(ctx, StringArgumentType.getString(ctx, "id")))))
         );
     }
