@@ -193,5 +193,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   existed at all. Reordered to resolve the reward first — a key is now never spent unless a
   reward actually exists — and added a distinct "no rewards configured yet" message so this no
   longer looks identical to actually being out of keys.
+- **Tab-completion was silently missing on ~25 command arguments across 16 files** — anywhere
+  an argument required typing an exact name from a known set (crate id, hologram id/world/
+  billboard mode/spin axis, home name, scoreboard/tablist group or board, Vault economy
+  provider, API key id/role, leaderboard admin player, item id, MOTD profile, mail/nick/note
+  target player, shop price type, NPC shop id, sellable item) with no `.suggests(...)`, so
+  pressing Tab did nothing and the value had to be typed from memory. Full audit found and fixed
+  every instance of the class of bug just found in `/crate admin setanimation`. Also removed a
+  dead duplicate `/condense` command registration that could never have taken effect anyway
+  (Brigadier merges same-named nodes but keeps the first-registered suggestions provider).
 
 ---
