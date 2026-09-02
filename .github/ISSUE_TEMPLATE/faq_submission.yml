@@ -2,6 +2,7 @@ name: 📝 FAQ Submission
 description: Submit a question to be added to the FAQ
 title: "[FAQ]: "
 labels: ["faq"]
+assignees: []
 body:
   - type: markdown
     attributes:
