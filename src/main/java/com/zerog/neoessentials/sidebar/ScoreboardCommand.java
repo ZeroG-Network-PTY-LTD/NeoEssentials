@@ -140,6 +140,8 @@ public class ScoreboardCommand {
                 .requires(adminCheck())
                 .then(Commands.literal("title")
                     .then(Commands.argument("board", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            ScoreboardManager.getInstance().getBoardNames(), b))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> {
                                 String boardName = StringArgumentType.getString(ctx, "board");
@@ -153,6 +155,8 @@ public class ScoreboardCommand {
                 )
                 .then(Commands.literal("line")
                     .then(Commands.argument("board", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            ScoreboardManager.getInstance().getBoardNames(), b))
                         .then(Commands.argument("index", IntegerArgumentType.integer(0, 14))
                             .then(Commands.argument("text", StringArgumentType.greedyString())
                                 .executes(ctx -> {
@@ -232,6 +236,8 @@ public class ScoreboardCommand {
             .then(Commands.literal("group")
                 .requires(adminCheck())
                 .then(Commands.argument("group", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        PermissionAPI.getManager().getGroups().stream().map(g -> g.getName()), b))
                     .then(Commands.literal("title")
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> {

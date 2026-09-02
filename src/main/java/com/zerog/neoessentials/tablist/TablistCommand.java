@@ -258,6 +258,8 @@ public class TablistCommand {
             // ── /tablist group <group> header|footer|reset ───────────────────
             .then(Commands.literal("group")
                 .then(Commands.argument("group", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        PermissionAPI.getManager().getGroups().stream().map(g -> g.getName()), b))
                     .then(Commands.literal("header")
                         .then(Commands.argument("text", StringArgumentType.greedyString())
                             .executes(ctx -> {
@@ -418,6 +420,8 @@ public class TablistCommand {
                 )
                 .then(Commands.literal("remove")
                     .then(Commands.argument("id", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            FakePlayerManager.getInstance().getEntries().stream().map(FakePlayerManager.FakeEntry::slotId), b))
                         .executes(ctx -> {
                             String id = StringArgumentType.getString(ctx, "id");
                             boolean removed = FakePlayerManager.getInstance().removeEntry(id);
