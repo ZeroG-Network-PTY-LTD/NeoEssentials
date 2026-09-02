@@ -98,6 +98,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   viewer, and admin commands to define crates/rewards/key items/animation/physical blocks
   entirely in-game. Votifier can grant crate keys as a per-site vote reward — the common "vote
   crate" server setup — but both systems work fully independently too.
+- **`/crate admin setblock` now auto-creates a floating hologram above the crate block**
+  (display name + a "Right-click to open!" hint by default). It's a completely ordinary
+  hologram — same registry, same `/hologram` commands — just given a predictable id
+  (`crate_<dimension>_<x>_<y>_<z>`), so it's immediately customizable with any existing
+  `/hologram` subcommand (text, scale, spin, background color, hover animation, etc.) instead of
+  needing separate crate-specific appearance config. `removeblock` deletes it again; `reload`/
+  `delete` sweep away any hologram left over a block whose crate no longer exists.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
