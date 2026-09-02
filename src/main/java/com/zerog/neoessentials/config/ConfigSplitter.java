@@ -18,7 +18,7 @@ import java.util.*;
  *
  * <p>File layout when split configs are enabled:
  * <pre>
- *   main.json         — modules, logging, storage backend, permissions, kits, economy, localization
+ *   main.json         — server name, modules, logging, storage backend, permissions, kits, economy, localization
  *   dashboard.json    — webDashboard (web dashboard/API settings)
  *   commands.json     — commands (enable/disable toggles)
  *   chat.json         — chat formatting, channels, anti-spam, badges
@@ -46,6 +46,7 @@ public class ConfigSplitter {
     // ── Section → File mapping (kept for backwards-compat / external callers) ──
     @SuppressWarnings("unused")
     public static final Map<String, String> CONFIG_FILE_MAP = new LinkedHashMap<>() {{
+        put("general",       "main.json");   // general.serverName ({server_name} placeholder)
         put("modules",       "main.json");
         put("logging",       "main.json");
         put("storage",       "main.json");   // storage backend (json/yaml/sqlite/mysql) selection
@@ -73,7 +74,7 @@ public class ConfigSplitter {
      * This is the authoritative mapping used for generation and validation.
      */
     public static final Map<String, List<String>> FILE_SECTIONS_MAP = new LinkedHashMap<>() {{
-        put("main.json",          List.of("modules", "logging", "storage", "permissions", "kits", "economy", "localization"));
+        put("main.json",          List.of("general", "modules", "logging", "storage", "permissions", "kits", "economy", "localization"));
         put("dashboard.json",     Collections.singletonList("webDashboard"));
         put("commands.json",      Collections.singletonList("commands"));
         put("chat.json",          Collections.singletonList("chat"));
@@ -90,7 +91,10 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          4);  // v4 — added "storage" section: like webDashboard below, it
+        put("main.json",          5);  // v5 — added "general" section (general.serverName, the
+                                        //       {server_name} placeholder's own config, split out
+                                        //       from the MOTD system it used to be wrongly tied to)
+                                        // v4 — added "storage" section: like webDashboard below, it
                                         //       was never in FILE_SECTIONS_MAP at all, so splitting
                                         //       your config silently discarded your storage backend
                                         //       choice (sqlite/mysql/yaml) back to the "json" default —
@@ -135,7 +139,7 @@ public class ConfigSplitter {
      * Current monolithic config version — must stay in sync with the JAR's config.json
      * {@code _configVersion} field and {@code ConfigManager.EXPECTED_CONFIG_VERSIONS}.
      */
-    private static final int CURRENT_MAIN_VERSION = 43;
+    private static final int CURRENT_MAIN_VERSION = 48;
 
     // ── Marker ────────────────────────────────────────────────────────────────
 

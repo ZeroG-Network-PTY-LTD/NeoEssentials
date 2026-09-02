@@ -1,12 +1,22 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 47,
+  "_configVersion": 48,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
      Reload in-game: /neoessentials reload
   ================================================================ */
+
+  // Plain, single-line server name — used by the {server_name} placeholder (scoreboard,
+  // tablist, chat, etc). Deliberately separate from server.properties' "motd" (and from
+  // NeoEssentials' own /motd system): that MOTD is typically multi-line and heavily
+  // formatted for the multiplayer server list, which breaks when dropped into a single
+  // scoreboard/tablist line. Use {server_motd} instead if you actually want the configured
+  // MOTD text somewhere.
+  "general": {
+    "serverName": "My Server"
+  },
 
   // Enable or disable major mod subsystems (true = enabled, false = disabled).
   // RESTART REQUIRED — whether a command is registered at all (and whether a subsystem's

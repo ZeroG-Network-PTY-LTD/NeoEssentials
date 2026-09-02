@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <h2>Placeholder reference</h2>
  * <pre>
      * Standard : {player} {displayname} {online} {max} {ping} {world} {tps} {time}
-     *            {server_name} {x} {y} {z} {balance} {prefix} {suffix} {group}
+     *            {server_name} {server_motd} {x} {y} {z} {balance} {prefix} {suffix} {group}
      * BTLP-style: {network_online} {server_online:NAME} {current_server} {server_label}
      *             {rank_weight} {session_minutes} {session_hours}
      *             {level} {health} {max_health} {afk}
@@ -662,7 +662,8 @@ public class TablistManager {
                       : "&c" + String.format("%.1f", tps);
 
         String time = new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date());
-        String serverName = com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveServerName(server);
+        String serverName = com.zerog.neoessentials.config.ConfigManager.getServerName();
+        String serverMotd = com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveMotd(server);
 
         int x = player.getBlockX(), y = player.getBlockY(), z = player.getBlockZ();
 
@@ -724,6 +725,7 @@ public class TablistManager {
             .replace("{tps}", tpsStr)
             .replace("{time}", time)
             .replace("{server_name}", serverName)
+            .replace("{server_motd}", serverMotd)
             .replace("{x}", String.valueOf(x))
             .replace("{y}", String.valueOf(y))
             .replace("{z}", String.valueOf(z))
