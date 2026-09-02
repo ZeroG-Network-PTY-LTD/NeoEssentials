@@ -223,14 +223,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   everywhere those methods are called, not just crates — plus three crate-specific spots that
   built a raw `Component.literal(...)` directly instead (the key item's name, and the two crate
   GUI titles) got the same fix.
-- **`{server_name}` (scoreboard, tablist, and the `{neoessentials_server_name}` placeholder used
-  everywhere else) ignored a MOTD set via `/motd`.** Reported as "scoreboard.json doesn't
-  translate my MOTD with the server name placeholder" — every `{server_name}` call site
-  independently hardcoded vanilla `server.getMotd()` (the static `server.properties` value);
-  NeoEssentials' own `/motd` system (profiles, rotation, the web dashboard's MOTD editor) was
-  never wired to any of them, so a custom MOTD had zero effect on `{server_name}` anywhere.
-  Added a single shared `MotdManager.getEffectiveServerName()` (the configured MOTD if one's
-  set, otherwise the vanilla fallback — no behavior change for servers that never touch `/motd`)
-  and pointed all three implementations at it.
+- **`{server_name}` no longer means "MOTD," and there's a new `{server_motd}` for when you
+  actually want that.** `{server_name}` (scoreboard, tablist, and the
+  `{neoessentials_server_name}` placeholder used everywhere else) used to hardcode vanilla
+  `server.getMotd()` — a real `server.properties` MOTD is typically multi-line and heavily
+  §-formatted for the server list, which breaks when dropped into a single scoreboard/tablist
+  row. `{server_name}` is now a plain, independently-configurable string (`general.serverName`
+  in `config.json`/`main.json`) with no MOTD involvement at all. A new `{server_motd}`
+  placeholder covers the old behavior for anyone who actually wants the configured MOTD
+  somewhere — NeoEssentials' own `/motd` profile if one is set, otherwise the vanilla
+  `server.properties` value.
 
 ---
