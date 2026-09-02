@@ -403,7 +403,7 @@ public class ChatFormatter {
      * where each viewer sees their own ping).
      *
      * <p>Tokens already covered by {@code {neoessentials_*}} PlaceholderAPI expansions
-     * (prefix/suffix/group/balance/ping/world/x/y/z/level/health/afk/time/server_name)
+     * (prefix/suffix/group/balance/ping/world/x/y/z/level/health/afk/time/server_name/server_motd)
      * are intentionally NOT duplicated here — this only fills the gap.
      */
     private static String resolveShortPlaceholders(String text, ServerPlayer player, String resolvedChannel) {
@@ -474,6 +474,7 @@ public class ChatFormatter {
             .replace("{AFK}", "{neoessentials_afk}")
             .replace("{PING}", "{neoessentials_ping}")
             .replace("{SERVER_NAME}", "{neoessentials_server_name}")
+            .replace("{SERVER_MOTD}", "{neoessentials_server_motd}")
             .replace("{ONLINE_PLAYERS}", "{neoessentials_online_players}")
             .replace("{MAX_PLAYERS}", "{neoessentials_max_players}");
     }

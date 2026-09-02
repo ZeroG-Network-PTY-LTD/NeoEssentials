@@ -75,6 +75,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         
         // Server placeholders
         placeholders.add("server_name");
+        placeholders.add("server_motd");
         placeholders.add("online_players");
         placeholders.add("max_players");
         
@@ -167,6 +168,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 
                 // Server
                 case "server_name" -> getServerName(player);
+                case "server_motd" -> getServerMotd(player);
                 case "online_players" -> getOnlinePlayerCount(player);
                 case "max_players" -> getMaxPlayerCount(player);
                 
@@ -223,7 +225,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
      */
     private boolean requiresPlayer(String identifier) {
         return switch (identifier.toLowerCase()) {
-            case "server_name", "online_players", "max_players", "time", "time_24", "date" -> false;
+            case "server_name", "server_motd", "online_players", "max_players", "time", "time_24", "date" -> false;
             default -> true;
         };
     }
@@ -435,17 +437,31 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     }
     
     /**
-     * Get the server name (motd or configured name).
+     * Get the plain, admin-configured server name ({@code general.serverName}) — deliberately
+     * NOT the MOTD (server.properties or NeoEssentials' own {@code /motd}), which is typically
+     * multi-line and heavily formatted for the server list and doesn't fit a single line
+     * elsewhere. See {@link #getServerMotd} for that.
      */
     private String getServerName(@Nullable ServerPlayer player) {
         try {
-            if (player != null && player.level().getServer() != null) {
-                return com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveServerName(player.level().getServer());
-            }
+            return com.zerog.neoessentials.config.ConfigManager.getServerName();
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting server name: {}", e.getMessage());
         }
         return "Minecraft Server";
+    }
+
+    /** The configured MOTD (NeoEssentials' own {@code /motd} if one is set, otherwise the
+     *  vanilla server.properties MOTD) — see {@link com.zerog.neoessentials.util.motd.MotdManager#getEffectiveMotd}. */
+    private String getServerMotd(@Nullable ServerPlayer player) {
+        try {
+            if (player != null && player.level().getServer() != null) {
+                return com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveMotd(player.level().getServer());
+            }
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting server MOTD: {}", e.getMessage());
+        }
+        return "";
     }
     
     /**

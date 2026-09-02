@@ -76,7 +76,8 @@ Short-form aliases (legacy, no prefix) are also supported in most contexts.
 |---|---|---|
 | `{neoessentials_online_players}` | `{online}` | Number of online players |
 | `{neoessentials_max_players}` | `{max}` | Maximum player slots |
-| `{neoessentials_server_name}` | `{server_name}` | Server MOTD / name |
+| `{neoessentials_server_name}` | `{server_name}` | Plain server name (`general.serverName` in config.json) |
+| `{neoessentials_server_motd}` | `{server_motd}` | The configured MOTD (`/motd` if set, otherwise `server.properties`) — usually multi-line/heavily formatted, not meant for a single scoreboard/tablist line |
 | `{neoessentials_time}` | `{time}` | Server time (12-hour format) |
 | `{neoessentials_time_24}` | — | Server time (24-hour format) |
 | `{neoessentials_date}` | — | Current date (`yyyy-MM-dd`) |

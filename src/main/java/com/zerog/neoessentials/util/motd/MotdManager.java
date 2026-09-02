@@ -210,12 +210,14 @@ public class MotdManager {
         return !getActiveMotd().isEmpty();
     }
 
-    /** The value {@code {server_name}} (scoreboard/tablist/chat placeholders) should show:
+    /** The value {@code {server_motd}} (scoreboard/tablist/chat placeholders) should show:
      *  the mod's own configured MOTD if one is set, otherwise the vanilla server.properties
-     *  MOTD. Centralized here so every {@code {server_name}} call site stays in sync instead
-     *  of each independently hardcoding {@code server.getMotd()} and never reflecting
-     *  whatever was set via {@code /motd}. */
-    public String getEffectiveServerName(net.minecraft.server.MinecraftServer server) {
+     *  MOTD. Centralized here so every {@code {server_motd}} call site stays in sync instead
+     *  of each independently hardcoding {@code server.getMotd()}. Deliberately separate from
+     *  {@code {server_name}} ({@link com.zerog.neoessentials.config.ConfigManager#getServerName()})
+     *  — a MOTD is typically multi-line and heavily formatted for the server list, which
+     *  doesn't fit into a single scoreboard/tablist line the way a plain server name does. */
+    public String getEffectiveMotd(net.minecraft.server.MinecraftServer server) {
         String custom = getActiveMotd();
         if (!custom.isEmpty()) return custom;
         return server != null ? server.getMotd() : "";

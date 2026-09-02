@@ -170,7 +170,8 @@ Shorthand tokens (matching tablist's convention):
 | `{balance}` | Economy balance |
 | `{prefix}` `{suffix}` `{group}` | Permission group data |
 | `{x}` `{y}` `{z}` | Block coordinates |
-| `{server_name}` | Server MOTD |
+| `{server_name}` | Plain server name (`general.serverName` in config.json) |
+| `{server_motd}` | Configured MOTD (`/motd` if set, otherwise `server.properties`) — usually multi-line/formatted for the server list, not a great fit for a scoreboard row |
 | `{time}` | Server time (`HH:mm`) |
 
 Plus `{animation:NAME}` (from `animations.json`, shared with the [Tablist System](TablistSystem)),

@@ -93,7 +93,8 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
 | `{world}` | Current dimension path (`overworld`, `the_nether`, `the_end`) |
 | `{tps}` | Server TPS — auto-coloured green/yellow/red |
 | `{time}` | Server real-world time (`HH:mm`) |
-| `{server_name}` | Server MOTD from `server.properties` |
+| `{server_name}` | Plain server name (`general.serverName` in config.json) |
+| `{server_motd}` | Configured MOTD (`/motd` if set, otherwise `server.properties`) |
 | `{x}` `{y}` `{z}` | Viewing player's block coordinates |
 | `{balance}` | Economy balance (requires EconomyManager) |
 | `{prefix}` | Permission group prefix |
