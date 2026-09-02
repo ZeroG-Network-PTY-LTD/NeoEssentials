@@ -202,5 +202,16 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   every instance of the class of bug just found in `/crate admin setanimation`. Also removed a
   dead duplicate `/condense` command registration that could never have taken effect anyway
   (Brigadier merges same-named nodes but keeps the first-registered suggestions provider).
+- **A crate's `&`-coded display name (e.g. `"&7Common Crate"`) showed up as the literal text
+  `&7Common Crate` in chat, GUI titles, and the key item's name** instead of being colored.
+  Root cause: `MessageUtil.success()`/`error()`/`warning()`/`info()`/`component()` — used for
+  essentially every command reply in the mod — built their message via a plain
+  `Component.literal(...)`, which never translates `&`-codes; any config-supplied display name
+  with its own color code (crate names being the first real-world case to actually hit it) just
+  showed the raw code. All five now route through the same `&`-code parser
+  (`ChatComponentUtil.parseColorCodes`) chat/tablist/hologram text already uses, so this is fixed
+  everywhere those methods are called, not just crates — plus three crate-specific spots that
+  built a raw `Component.literal(...)` directly instead (the key item's name, and the two crate
+  GUI titles) got the same fix.
 
 ---
