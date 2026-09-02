@@ -100,11 +100,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   crate" server setup — but both systems work fully independently too.
 - **`/crate admin setblock` now auto-creates a floating hologram above the crate block**
   (display name + a "Right-click to open!" hint by default). It's a completely ordinary
-  hologram — same registry, same `/hologram` commands — just given a predictable id
-  (`crate_<dimension>_<x>_<y>_<z>`), so it's immediately customizable with any existing
-  `/hologram` subcommand (text, scale, spin, background color, hover animation, etc.) instead of
-  needing separate crate-specific appearance config. `removeblock` deletes it again; `reload`/
-  `delete` sweep away any hologram left over a block whose crate no longer exists.
+  hologram — same registry, same `/hologram` commands — just given a predictable id based on
+  the crate's own name (`crate_<crateId>`, e.g. `crate_common`, disambiguated with a numeric
+  suffix if that crate has more than one physical block), so it's actually findable in
+  `/hologram` tab-completion and immediately customizable with any existing `/hologram`
+  subcommand (text, scale, spin, background color, hover animation, etc.) instead of needing
+  separate crate-specific appearance config. The block ↔ hologram link is tracked internally, so
+  it stays correct even after moving the hologram with `/hologram moveto`/`movehere`.
+  `removeblock` deletes it again; `reload`/`delete` sweep away any hologram left over a block
+  whose crate no longer exists.
 - **Left-clicking a physical crate block now opens the no-cost reward-odds preview** (same as
   `/crate preview`), matching the right-click-to-act/left-click-to-look pattern shop signs
   already use. Shift+left-click still falls through as a normal break attempt.
