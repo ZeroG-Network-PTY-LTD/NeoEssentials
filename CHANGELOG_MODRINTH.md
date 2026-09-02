@@ -41,6 +41,8 @@ migration history) is not carried over.
   commands to define crates/rewards in-game. Votifier can grant crate keys per vote site.
 - `/crate admin setblock` now auto-creates a hologram above the block, fully customizable via
   any `/hologram` subcommand.
+- Left-clicking a physical crate block now opens the no-cost reward-odds preview (shift+click to
+  still break it).
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
