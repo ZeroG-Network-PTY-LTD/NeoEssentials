@@ -233,5 +233,12 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   placeholder covers the old behavior for anyone who actually wants the configured MOTD
   somewhere — NeoEssentials' own `/motd` profile if one is set, otherwise the vanilla
   `server.properties` value.
+- **`/neoe reload` silently did nothing for the scoreboard system.** Reported as "changed
+  scoreboard.json, `/neoe reload` did nothing." `ConfigManager.loadAll()` only clears the JSON
+  cache — it never told `ScoreboardManager`'s own in-memory board list to actually re-parse
+  `scoreboard.json`, so edited boards/titles/lines stayed stale until an explicit
+  `/scoreboard reload` or a full restart. Tablist had this exact same gap once (already fixed,
+  visible in the code as a "was missing" comment) but the identical fix was never applied to
+  scoreboard — it now reloads and pushes to all online players the same way.
 
 ---
