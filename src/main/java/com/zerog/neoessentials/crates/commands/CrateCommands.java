@@ -112,6 +112,7 @@ public class CrateCommands {
                 .then(Commands.literal("reload").executes(ctx -> {
                     ConfigManager.getInstance().clearCache();
                     CrateManager.getInstance().load();
+                    com.zerog.neoessentials.crates.CrateHologramManager.cleanOrphanedCrateHolograms();
                     ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.reloaded"), false);
                     return 1;
                 }))
@@ -257,6 +258,11 @@ public class CrateCommands {
             source.sendFailure(MessageUtil.error("commands.neoessentials.crate.not_found", id));
             return 0;
         }
+        // Any physical blocks pointing at this now-gone crate lose their hologram too —
+        // the block-position mapping itself is left alone (matches how a deleted crate's
+        // blocks already just silently stop responding to right-click) but a stale
+        // hologram floating over nothing would be confusing.
+        com.zerog.neoessentials.crates.CrateHologramManager.cleanOrphanedCrateHolograms();
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.deleted", id), false);
         return 1;
     }
@@ -335,6 +341,7 @@ public class CrateCommands {
             return 0;
         }
         CrateManager.getInstance().setBlock(level, pos, crate.id);
+        com.zerog.neoessentials.crates.CrateHologramManager.createOrUpdateCrateHologram(crate, level, pos);
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.block_set", crate.displayName), false);
         return 1;
     }
@@ -349,6 +356,7 @@ public class CrateCommands {
             source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_block_in_sight"));
             return 0;
         }
+        com.zerog.neoessentials.crates.CrateHologramManager.deleteCrateHologram(level, pos);
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.block_removed"), false);
         return 1;
     }

@@ -144,6 +144,15 @@ position as a live instance of the crate — right-clicking it (with a key, phys
 opens it. `/crate admin removeblock` unregisters. This is a position-mapping (like a
 ChestShop sign), not a new custom block type — any vanilla block works, purely cosmetic.
 
+`setblock` also auto-creates a floating [Hologram](HologramSystem) above the block (default:
+the crate's display name + "Right-click to open!"), requires `modules.hologramEnabled`.
+It's a completely ordinary hologram — same registry, same `/hologram` commands — just given a
+predictable id (`crate_<dimension>_<x>_<y>_<z>`) so you can immediately customize it further:
+`/hologram setline crate_minecraft_overworld_100_64_200 2 &6Rare loot inside!`, plus scale,
+spin, background color, hover animation, or anything else `/hologram` supports. `removeblock`
+removes it again; `/crate admin reload` and `/crate admin delete` sweep away any hologram left
+over a block whose crate no longer exists.
+
 ### Commands
 
 | Command | Permission | Description |
