@@ -662,7 +662,7 @@ public class TablistManager {
                       : "&c" + String.format("%.1f", tps);
 
         String time = new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date());
-        String serverName = server.getMotd();
+        String serverName = com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveServerName(server);
 
         int x = player.getBlockX(), y = player.getBlockY(), z = player.getBlockZ();
 

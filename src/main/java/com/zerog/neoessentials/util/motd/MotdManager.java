@@ -210,6 +210,17 @@ public class MotdManager {
         return !getActiveMotd().isEmpty();
     }
 
+    /** The value {@code {server_name}} (scoreboard/tablist/chat placeholders) should show:
+     *  the mod's own configured MOTD if one is set, otherwise the vanilla server.properties
+     *  MOTD. Centralized here so every {@code {server_name}} call site stays in sync instead
+     *  of each independently hardcoding {@code server.getMotd()} and never reflecting
+     *  whatever was set via {@code /motd}. */
+    public String getEffectiveServerName(net.minecraft.server.MinecraftServer server) {
+        String custom = getActiveMotd();
+        if (!custom.isEmpty()) return custom;
+        return server != null ? server.getMotd() : "";
+    }
+
     // ── Profile management ─────────────────────────────────────────────────────
 
     /** Returns an unmodifiable view of all profiles. */
