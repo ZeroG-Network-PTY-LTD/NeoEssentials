@@ -79,5 +79,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   reward actually exists.
 - Tab-completion was silently missing on ~25 command arguments across 16 files (crate/hologram/
   home/board/group names, item ids, player targets, etc.) — full audit, all fixed.
+- A crate's `&`-coded display name showed up as literal text (e.g. `&7Common Crate`) instead of
+  being colored, in chat, GUI titles, and the key item's name — fixed mod-wide (every command
+  reply built via `MessageUtil`, not just crates).
 
 ---
