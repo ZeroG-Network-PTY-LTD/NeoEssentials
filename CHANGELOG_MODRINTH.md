@@ -91,5 +91,7 @@ migration history) is not carried over.
 - `{server_name}` is now a plain, independently-configurable name (`general.serverName`), no
   longer tied to any MOTD — a new `{server_motd}` placeholder covers the "show the actual
   configured MOTD" case instead.
+- `/neoe reload` silently did nothing for the scoreboard system (only tablist was fixed for
+  this before) — scoreboard.json edits now actually take effect on reload.
 
 ---
