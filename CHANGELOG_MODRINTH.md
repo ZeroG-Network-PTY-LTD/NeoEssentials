@@ -88,5 +88,7 @@ migration history) is not carried over.
 - A crate's `&`-coded display name showed up as literal text (e.g. `&7Common Crate`) instead of
   being colored, in chat, GUI titles, and the key item's name — fixed mod-wide (every command
   reply built via `MessageUtil`, not just crates).
+- `{server_name}` (scoreboard, tablist, and everywhere else) ignored a MOTD set via `/motd` and
+  always showed the static server.properties value instead — fixed.
 
 ---
