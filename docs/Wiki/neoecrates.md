@@ -77,11 +77,16 @@ a new custom block type — any vanilla block works, purely cosmetic.
 `setblock` also auto-creates a floating [Hologram](HologramSystem) above the block (default:
 the crate's display name + "Right-click to open!"), requires `modules.hologramEnabled`.
 It's a completely ordinary hologram — same registry, same `/hologram` commands — just given a
-predictable id (`crate_<dimension>_<x>_<y>_<z>`) so you can immediately customize it further:
-`/hologram setline crate_minecraft_overworld_100_64_200 2 &6Rare loot inside!`, plus scale,
-spin, background color, hover animation, or anything else `/hologram` supports. `removeblock`
-removes it again; `/crate admin reload` and `/crate admin delete` sweep away any hologram left
-over a block whose crate no longer exists.
+predictable id based on the crate's own name (`crate_<crateId>`, e.g. `crate_common`) so it's
+actually findable in `/hologram` tab-completion, not an opaque coordinate string. If that crate
+already has another physical block's hologram using the base name, later ones get a numeric
+suffix (`crate_common_2`, `crate_common_3`, ...) — the block → hologram link is tracked
+internally, so this stays correct even if you move the hologram elsewhere with
+`/hologram moveto`/`movehere`. Customize it with any `/hologram` subcommand:
+`/hologram setline crate_common 2 &6Rare loot inside!`, plus scale, spin, background color,
+hover animation, or anything else `/hologram` supports. `removeblock` removes it again;
+`/crate admin reload` and `/crate admin delete` sweep away any hologram left over a block whose
+crate no longer exists.
 
 ## Commands
 
