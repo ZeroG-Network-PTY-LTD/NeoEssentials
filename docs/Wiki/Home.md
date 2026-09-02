@@ -30,7 +30,8 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
 | [Storage Backend](Storage) | Pluggable JSON/YAML/SQLite/MySQL storage covering the whole mod |
 | [Dashboard Connectivity](DashboardConnectivity) | Internal vs. external dashboard hosting, `webDashboard.mode`, connection troubleshooting |
 | [Logging System](Logging) | Per-subsystem `normal`/`debug` logging toggles, categories, `logs/debug.log` |
-| [Votifier & Crates](VotifierAndCrates) | Vote-listener (V1 RSA + V2 NuVotifier protocols), weighted-reward crates with keys, physical blocks, and animated GUI opening |
+| [Votifier](votifier) | Vote-listener compatible with both Votifier protocols (V1 RSA + V2 NuVotifier) |
+| [Crates](neoecrates) | Weighted-reward crates with keys, physical blocks, hologram, and animated GUI opening |
 
 ---
 
