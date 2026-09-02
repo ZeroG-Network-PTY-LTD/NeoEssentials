@@ -37,6 +37,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Crates — weighted reward-pool crates with a key balance system, opened via `/crate open` or
   a physical block, three opening animations (roulette/sequential/instant), and full admin
   commands to define crates/rewards in-game. Votifier can grant crate keys per vote site.
+- `/crate admin setblock` now auto-creates a hologram above the block, fully customizable via
+  any `/hologram` subcommand.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
