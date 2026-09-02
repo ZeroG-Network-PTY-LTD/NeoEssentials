@@ -42,3 +42,13 @@ body:
     attributes:
       label: Logs
       render: shell
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I am using the latest version of the mod.
+          required: true
+        - label: I have searched existing issues to avoid duplicates.
+          required: true
