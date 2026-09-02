@@ -440,7 +440,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     private String getServerName(@Nullable ServerPlayer player) {
         try {
             if (player != null && player.getServer() != null) {
-                return player.getServer().getMotd();
+                return com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveServerName(player.getServer());
             }
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Error getting server name: {}", e.getMessage());

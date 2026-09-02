@@ -406,7 +406,7 @@ public class ScoreboardManager {
             .replace("{x}", String.valueOf(player.getBlockX()))
             .replace("{y}", String.valueOf(player.getBlockY()))
             .replace("{z}", String.valueOf(player.getBlockZ()))
-            .replace("{server_name}", server.getMotd())
+            .replace("{server_name}", com.zerog.neoessentials.util.motd.MotdManager.getInstance().getEffectiveServerName(server))
             .replace("{time}", new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date()));
 
         result = AnimationManager.getInstance().resolveAnimations(result);
