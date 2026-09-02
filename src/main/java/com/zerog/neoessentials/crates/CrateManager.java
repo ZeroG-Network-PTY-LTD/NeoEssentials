@@ -111,8 +111,8 @@ public class CrateManager {
         var tag = new net.minecraft.nbt.CompoundTag();
         tag.putString(KEY_NBT_TAG, crate.id);
         stack.set(DataComponents.CUSTOM_NAME,
-            net.minecraft.network.chat.Component.literal(crate.displayName + " Key")
-                .withStyle(net.minecraft.ChatFormatting.GOLD));
+            com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+                crate.displayName + " Key", net.minecraft.network.chat.Style.EMPTY.withColor(net.minecraft.ChatFormatting.GOLD)));
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return stack;
     }

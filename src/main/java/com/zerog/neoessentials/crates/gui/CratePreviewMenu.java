@@ -55,7 +55,8 @@ public class CratePreviewMenu extends AbstractContainerMenu {
     public static void open(ServerPlayer player, CrateDefinition crate) {
         player.openMenu(new MenuProvider() {
             @Override public Component getDisplayName() {
-                return Component.literal(MessageUtil.localize("commands.neoessentials.crate.gui.preview_title", crate.displayName));
+                return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+                    MessageUtil.localize("commands.neoessentials.crate.gui.preview_title", crate.displayName));
             }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {
                 return new CratePreviewMenu(id, inv, crate);

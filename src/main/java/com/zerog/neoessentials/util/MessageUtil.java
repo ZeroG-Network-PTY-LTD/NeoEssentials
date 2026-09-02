@@ -748,39 +748,43 @@ public class MessageUtil {
         if (debugMode) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Component created - Key: {}, Message: '{}'", key, message);
         }
-        return Component.literal(message);
+        // Template args (e.g. a crate/kit/board display name from config, which routinely
+        // carries its own "&"-coded color) need the same &-code parsing as the rest of the
+        // template text — a plain Component.literal() left them showing up as raw "&7" in
+        // chat instead of being rendered as color.
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(message);
     }
 
     /**
      * Create a success message component (soft green, vanilla-matching — same RGB as §a).
      */
     public static Component success(String key, Object... args) {
-        return Component.literal(TAG_PREFIX + localize(key, args))
-            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
     }
 
     /**
      * Create an error message component (soft red, vanilla-matching — same RGB as §c).
      */
     public static Component error(String key, Object... args) {
-        return Component.literal(TAG_PREFIX + localize(key, args))
-            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
     }
 
     /**
      * Create a warning message component (soft yellow, vanilla-matching — same RGB as §e).
      */
     public static Component warning(String key, Object... args) {
-        return Component.literal(TAG_PREFIX + localize(key, args))
-            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
     }
 
     /**
      * Create an info message component (soft aqua, vanilla-matching — same RGB as §b).
      */
     public static Component info(String key, Object... args) {
-        return Component.literal(TAG_PREFIX + localize(key, args))
-            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
     }
 
     /**
