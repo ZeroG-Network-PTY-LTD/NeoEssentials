@@ -37,6 +37,7 @@ public class WhoisCommand {
                 .executes(WhoisCommand::whoisPlayer)
             )
             .then(Commands.argument("playername", StringArgumentType.word())
+                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                 .executes(WhoisCommand::whoisPlayerByName)
             )
         );

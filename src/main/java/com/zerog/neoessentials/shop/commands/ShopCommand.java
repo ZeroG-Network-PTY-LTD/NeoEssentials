@@ -72,6 +72,8 @@ public class ShopCommand {
                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "z")))))))
             .then(Commands.literal("setprice")
                 .then(Commands.argument("type", StringArgumentType.word())   // buy|sell|both
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        java.util.List.of("buy", "sell", "both"), b))
                     .then(Commands.argument("price", DoubleArgumentType.doubleArg(0))
                         .executes(ctx -> executeSetPrice(ctx.getSource(),
                             StringArgumentType.getString(ctx, "type"),

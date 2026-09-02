@@ -528,7 +528,7 @@ public class HomeCommands {
             .requires(src -> src.getPlayer() == null
                 || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_RENAMEHOME))
             // /renamehome <old> <new>
-            .then(Commands.argument("oldname", StringArgumentType.word())
+            .then(Commands.argument("oldname", StringArgumentType.word()).suggests(HOME_SUGGESTIONS)
                 .then(Commands.argument("newname", StringArgumentType.word())
                     .executes(ctx -> executeRenameHome(ctx,
                         StringArgumentType.getString(ctx, "oldname"),

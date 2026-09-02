@@ -57,6 +57,7 @@ public class NpcShopCommand {
                         .executes(ctx -> executeRemove(ctx.getSource())))
                 .then(Commands.literal("additem")
                         .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
                                 .then(Commands.argument("item", StringArgumentType.word())
                                         .then(Commands.argument("buyPrice", DoubleArgumentType.doubleArg(-1))
                                                 .then(Commands.argument("sellPrice", DoubleArgumentType.doubleArg(-1))
@@ -69,6 +70,7 @@ public class NpcShopCommand {
                                                                         IntegerArgumentType.getInteger(ctx, "quantity")))))))))
                 .then(Commands.literal("removeitem")
                         .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
                                 .then(Commands.argument("index", IntegerArgumentType.integer(0))
                                         .executes(ctx -> executeRemoveItem(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "shopId"),
@@ -77,17 +79,26 @@ public class NpcShopCommand {
                         .executes(ctx -> executeList(ctx.getSource())))
                 .then(Commands.literal("info")
                         .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
                                 .executes(ctx -> executeInfo(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "shopId")))))
                 .then(Commands.literal("reload")
                         .executes(ctx -> executeReload(ctx.getSource())))
                 .then(Commands.literal("respawn")
                         .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
                                 .executes(ctx -> executeRespawn(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "shopId")))))
                 .executes(ctx -> executeHelp(ctx.getSource()));
 
         dispatcher.register(node);
+    }
+
+    private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestShopIds(
+            com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx,
+            com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+        return net.minecraft.commands.SharedSuggestionProvider.suggest(
+            ShopEntityManager.getInstance().getAll().stream().map(d -> d.shopId.toString()), builder);
     }
 
     // ── /npcshop create <name> ────────────────────────────────────────────────

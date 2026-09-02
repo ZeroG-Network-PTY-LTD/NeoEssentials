@@ -171,6 +171,7 @@ public class MailCommand {
             // /mail send <player> <message>
             .then(Commands.literal("send")
                 .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                     .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             if (!checkPerm(ctx.getSource(), "neoessentials.mail.send")) return 0;
@@ -186,6 +187,7 @@ public class MailCommand {
             // /mail sendtemp <player> <duration> <message>
             .then(Commands.literal("sendtemp")
                 .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                     .then(Commands.argument("duration", StringArgumentType.word())
                         .then(Commands.argument("message", StringArgumentType.greedyString())
                             .executes(ctx -> {

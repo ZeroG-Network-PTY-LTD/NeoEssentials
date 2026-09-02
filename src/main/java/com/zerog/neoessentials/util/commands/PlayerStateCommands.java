@@ -450,6 +450,9 @@ public class PlayerStateCommands {
             .then(Commands.argument("target", StringArgumentType.word())
                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                 .then(Commands.argument("item", StringArgumentType.word())
+                    .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM.keySet().stream()
+                            .map(net.minecraft.resources.ResourceLocation::getPath), b))
                     .executes(ctx -> executeGive(ctx, StringArgumentType.getString(ctx, "target"), StringArgumentType.getString(ctx, "item"), 1))
                     .then(Commands.argument("amount", IntegerArgumentType.integer(1, 3456))
                         .executes(ctx -> executeGive(ctx,

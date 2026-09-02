@@ -94,6 +94,9 @@ public class HologramCommand {
                                     DoubleArgumentType.getDouble(ctx, "z"),
                                     null))
                                 .then(Commands.argument("world", StringArgumentType.word())
+                                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                        java.util.stream.StreamSupport.stream(ctx.getSource().getServer().getAllLevels().spliterator(), false)
+                                            .map(l -> l.dimension().location().getPath()), b))
                                     .executes(ctx -> cmdCreate(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "id"),
                                         DoubleArgumentType.getDouble(ctx, "x"),
@@ -204,12 +207,16 @@ public class HologramCommand {
             .then(Commands.literal("billboard")
                 .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("mode", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            List.of("fixed", "vertical", "horizontal", "center"), b))
                         .executes(ctx -> cmdBillboard(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "mode"))))))
             .then(Commands.literal("textalign")
                 .then(Commands.argument("id", StringArgumentType.word()).suggests(HologramCommand::suggestHologramIds)
                     .then(Commands.argument("align", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            List.of("center", "left", "right"), b))
                         .executes(ctx -> cmdTextAlign(ctx.getSource(),
                             StringArgumentType.getString(ctx, "id"),
                             StringArgumentType.getString(ctx, "align"))))))
@@ -225,6 +232,8 @@ public class HologramCommand {
                                 StringArgumentType.getString(ctx, "id"),
                                 FloatArgumentType.getFloat(ctx, "speed"), "Y"))
                             .then(Commands.argument("axis", StringArgumentType.word())
+                                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                    List.of("X", "Y", "Z"), b))
                                 .executes(ctx -> cmdSpinOn(ctx.getSource(),
                                     StringArgumentType.getString(ctx, "id"),
                                     FloatArgumentType.getFloat(ctx, "speed"),

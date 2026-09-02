@@ -99,6 +99,8 @@ public class MotdCommand {
                     )
                     .then(Commands.literal("delete")
                         .then(Commands.argument("name", StringArgumentType.word())
+                            .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                MotdManager.getInstance().getProfiles().keySet(), b))
                             .executes(ctx -> {
                                 if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
                                 return deleteProfile(ctx.getSource(), StringArgumentType.getString(ctx, "name"));
@@ -107,6 +109,8 @@ public class MotdCommand {
                     )
                     .then(Commands.literal("switch")
                         .then(Commands.argument("name", StringArgumentType.word())
+                            .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                MotdManager.getInstance().getProfiles().keySet(), b))
                             .executes(ctx -> {
                                 if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
                                 return switchProfile(ctx.getSource(), StringArgumentType.getString(ctx, "name"));
@@ -119,6 +123,8 @@ public class MotdCommand {
                             return profileInfo(ctx.getSource(), null);
                         })
                         .then(Commands.argument("name", StringArgumentType.word())
+                            .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                MotdManager.getInstance().getProfiles().keySet(), b))
                             .executes(ctx -> {
                                 if (!checkPerm(ctx.getSource(), "neoessentials.motd.profile")) return 0;
                                 return profileInfo(ctx.getSource(), StringArgumentType.getString(ctx, "name"));

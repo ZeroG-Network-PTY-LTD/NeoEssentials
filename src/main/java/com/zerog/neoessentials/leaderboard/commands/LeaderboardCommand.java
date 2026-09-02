@@ -71,6 +71,7 @@ public class LeaderboardCommand {
                     .then(Commands.literal("set")
                         .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
                             .then(Commands.argument("player", StringArgumentType.word())
+                                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                                 .then(Commands.argument("value", LongArgumentType.longArg())
                                     .executes(ctx -> adminSet(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "board"),
@@ -79,6 +80,7 @@ public class LeaderboardCommand {
                     .then(Commands.literal("add")
                         .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
                             .then(Commands.argument("player", StringArgumentType.word())
+                                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                                 .then(Commands.argument("delta", LongArgumentType.longArg())
                                     .executes(ctx -> adminAdd(ctx.getSource(),
                                         StringArgumentType.getString(ctx, "board"),
@@ -87,6 +89,7 @@ public class LeaderboardCommand {
                     .then(Commands.literal("reset")
                         .then(Commands.argument("board", StringArgumentType.word()).suggests(BOARD_SUGGESTIONS)
                             .then(Commands.argument("player", StringArgumentType.word())
+                                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
                                 .executes(ctx -> adminSet(ctx.getSource(),
                                     StringArgumentType.getString(ctx, "board"),
                                     StringArgumentType.getString(ctx, "player"), 0L)))))

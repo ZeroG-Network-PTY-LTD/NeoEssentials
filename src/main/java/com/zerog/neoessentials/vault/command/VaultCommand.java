@@ -40,7 +40,13 @@ public class VaultCommand {
                 .executes(ctx -> executeInfo(ctx.getSource())))
             .then(Commands.literal("convert")
                 .then(Commands.argument("from", StringArgumentType.word())
+                    .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        VaultServiceRegistry.getInstance().getEconomyProviders().stream()
+                            .map(r -> r.provider.getName().replace(" ", "")), b))
                     .then(Commands.argument("to", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            VaultServiceRegistry.getInstance().getEconomyProviders().stream()
+                                .map(r -> r.provider.getName().replace(" ", "")), b))
                         .executes(ctx -> executeConvert(
                             ctx.getSource(),
                             StringArgumentType.getString(ctx, "from"),

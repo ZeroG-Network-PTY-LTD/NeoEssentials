@@ -94,6 +94,8 @@ public class SellCommand {
                 .executes(SellCommand::executeSellAll)
             )
             .then(Commands.argument("item", StringArgumentType.word())
+                .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                    WorthManager.getInstance().getAllPrices().keySet(), b))
                 .executes(ctx -> executeSellItem(ctx, StringArgumentType.getString(ctx, "item"), 0))
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                     .executes(ctx -> executeSellItem(ctx,
