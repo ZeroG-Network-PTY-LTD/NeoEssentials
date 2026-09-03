@@ -6,11 +6,11 @@ import com.zerog.neoessentials.crates.CrateManager;
 import com.zerog.neoessentials.crates.CrateReward;
 import com.zerog.neoessentials.crates.WeightedRandomPicker;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.ReadOnlyContainer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -43,7 +43,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
     private static final int TARGET_INDEX = 40; // lands with a few slots of "runway" after it
     private static final Random RANDOM = new Random();
 
-    private final SimpleContainer display = new SimpleContainer(54);
+    private final ReadOnlyContainer display = new ReadOnlyContainer(54);
     private final ServerPlayer viewer;
     private final CrateDefinition crate;
     private final CrateReward wonReward;
