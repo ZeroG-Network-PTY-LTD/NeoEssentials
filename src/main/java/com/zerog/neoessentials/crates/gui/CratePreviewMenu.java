@@ -73,15 +73,15 @@ public class CratePreviewMenu extends AbstractContainerMenu {
         for (int i = 0; i < PAGE_SIZE; i++) {
             int idx = start + i;
             if (idx >= rewards.size()) break;
-            display.setItem(i, buildRewardStack(rewards.get(idx), totalWeight));
+            display.forceSetItem(i, buildRewardStack(rewards.get(idx), totalWeight));
         }
 
         int totalPages = Math.max(1, (int) Math.ceil(rewards.size() / (double) PAGE_SIZE));
-        for (int i = 45; i < 54; i++) display.setItem(i, ItemStack.EMPTY);
-        display.setItem(48, page > 0             ? AuctionGuiHelper.prevPageItem() : AuctionGuiHelper.prevPageBlockedItem());
-        display.setItem(49, AuctionGuiHelper.closeItem());
-        display.setItem(50, page + 1 < totalPages ? AuctionGuiHelper.nextPageItem() : AuctionGuiHelper.nextPageBlockedItem());
-        for (int i : new int[]{45, 46, 47, 51, 52, 53}) display.setItem(i, AuctionGuiHelper.fillerItem());
+        for (int i = 45; i < 54; i++) display.forceSetItem(i, ItemStack.EMPTY);
+        display.forceSetItem(48, page > 0             ? AuctionGuiHelper.prevPageItem() : AuctionGuiHelper.prevPageBlockedItem());
+        display.forceSetItem(49, AuctionGuiHelper.closeItem());
+        display.forceSetItem(50, page + 1 < totalPages ? AuctionGuiHelper.nextPageItem() : AuctionGuiHelper.nextPageBlockedItem());
+        for (int i : new int[]{45, 46, 47, 51, 52, 53}) display.forceSetItem(i, AuctionGuiHelper.fillerItem());
         broadcastChanges();
     }
 
