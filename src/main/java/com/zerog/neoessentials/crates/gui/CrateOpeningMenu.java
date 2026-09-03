@@ -109,7 +109,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
                 server.execute(() -> {
                     ItemStack shown = last ? displayStack(wonReward) : displayStack(randomReward());
                     for (int slot : new int[]{20, 21, 22, 23, 24, 29, 30, 31, 32, 33}) {
-                        display.setItem(slot, shown);
+                        display.forceSetItem(slot, shown);
                     }
                     broadcastChanges();
                     if (last) finish();
@@ -155,14 +155,14 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
         for (int i = 0; i < 9; i++) {
             int reelIdx = centerIndex - 4 + i;
             ItemStack stack = (reelIdx >= 0 && reelIdx < reel.size()) ? displayStack(reel.get(reelIdx)) : ItemStack.EMPTY;
-            display.setItem(9 + i, stack); // second row, so the "pointer" row is visually centered
+            display.forceSetItem(9 + i, stack); // second row, so the "pointer" row is visually centered
         }
         broadcastChanges();
     }
 
     private void finish() {
-        for (int i = 0; i < 54; i++) display.setItem(i, ItemStack.EMPTY);
-        display.setItem(22, displayStack(wonReward));
+        for (int i = 0; i < 54; i++) display.forceSetItem(i, ItemStack.EMPTY);
+        display.forceSetItem(22, displayStack(wonReward));
         broadcastChanges();
 
         CrateManager.getInstance().grantReward(viewer, crate, wonReward);
