@@ -4,12 +4,12 @@ import com.zerog.neoessentials.auctionhouse.gui.AuctionGuiHelper;
 import com.zerog.neoessentials.crates.CrateDefinition;
 import com.zerog.neoessentials.crates.CrateReward;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.ReadOnlyContainer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -25,7 +25,7 @@ import java.util.List;
 public class CratePreviewMenu extends AbstractContainerMenu {
     private static final int PAGE_SIZE = 45;
 
-    private final SimpleContainer display = new SimpleContainer(54);
+    private final ReadOnlyContainer display = new ReadOnlyContainer(54);
     private final ServerPlayer viewer;
     private final CrateDefinition crate;
     private int page = 0;
