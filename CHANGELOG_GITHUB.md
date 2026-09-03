@@ -248,11 +248,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   could steal items straight out of `/crate preview` and the crate-opening reveal GUI**,
   duplicating them from nothing — those slots were only ever meant to be look-at-only reward
   icons. The existing protections (`Slot#mayPickup` returning false, an overridden
-  `quickMoveStack()`, a no-op `clicked()`) only cover the normal click-packet path; several
-  inventory mods pull from "whatever container is behind the currently open GUI" through a
-  capability or other route that never touches a `Slot` at all. Both crate GUIs' backing
-  container is now a `ReadOnlyContainer` whose `removeItem`/`removeItemNoUpdate` always refuse —
-  the one choke point every extraction path has to go through — closing this regardless of which
-  mod or mechanism is doing the pulling.
+  `quickMoveStack()`, a no-op `clicked()`) only cover the normal click-packet path, and an initial
+  fix that also refused `Container#removeItem`/`removeItemNoUpdate` still wasn't enough — the mod
+  was actually reading a slot's item and then blanking it via `Container#setItem`, the same path
+  `Slot#set()` uses, which neither of those covers. Both crate GUIs' backing container is now a
+  `ReadOnlyContainer` whose `removeItem`/`removeItemNoUpdate`/`setItem` all refuse from the
+  outside — the owning menu redraws through a separate `forceSetItem` the container exposes only
+  to itself — closing every mutation path a container has, regardless of which mod or mechanism
+  is doing the pulling.
 
 ---
