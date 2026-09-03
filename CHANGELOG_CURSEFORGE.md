@@ -91,5 +91,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   configured MOTD" case instead.
 - `/neoe reload` silently did nothing for the scoreboard system (only tablist was fixed for
   this before) — scoreboard.json edits now actually take effect on reload.
+- Some inventory-utility client mods' "pull items from the open GUI" button could steal (and
+  duplicate) items straight out of `/crate preview`/the opening reveal GUI — fixed at the
+  container level, closing it regardless of which mod is doing the pulling.
 
 ---
