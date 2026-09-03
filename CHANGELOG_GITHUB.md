@@ -244,5 +244,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `/scoreboard reload` or a full restart. Tablist had this exact same gap once (already fixed,
   visible in the code as a "was missing" comment) but the identical fix was never applied to
   scoreboard — it now reloads and pushes to all online players the same way.
+- **An inventory-utility client mod's "pull items out of the current chest/storage GUI" button
+  could steal items straight out of `/crate preview` and the crate-opening reveal GUI**,
+  duplicating them from nothing — those slots were only ever meant to be look-at-only reward
+  icons. The existing protections (`Slot#mayPickup` returning false, an overridden
+  `quickMoveStack()`, a no-op `clicked()`) only cover the normal click-packet path; several
+  inventory mods pull from "whatever container is behind the currently open GUI" through a
+  capability or other route that never touches a `Slot` at all. Both crate GUIs' backing
+  container is now a `ReadOnlyContainer` whose `removeItem`/`removeItemNoUpdate` always refuse —
+  the one choke point every extraction path has to go through — closing this regardless of which
+  mod or mechanism is doing the pulling.
 
 ---
