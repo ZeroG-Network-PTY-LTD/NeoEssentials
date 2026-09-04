@@ -392,15 +392,4 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   full NBT/data components included, via the same serializer crate rewards use. No restriction to
   a fixed item list.
 
-### Added
-- **Live action-bar preview for `{animation:NAME}` typed directly in chat.** A chat message
-  containing `{animation:NAME}` already resolved to that animation's current frame at send time
-  (see above), but stayed frozen on that one frame forever afterward — chat has no packet to
-  repaint an already-delivered line, unlike tablist/scoreboard/holograms, which get continuously
-  re-sent. Sending one such message now also briefly flashes the same content through a few more
-  frames via the action bar right after it's sent, so it visibly animates without adding a single
-  extra line to chat history — the one real chat line already sent is still the only thing ever
-  logged/kept. New `chat.animationPreview` config (`enabled`/`frameCount`/`intervalMs`, on by
-  default) controls it.
-
 ---
