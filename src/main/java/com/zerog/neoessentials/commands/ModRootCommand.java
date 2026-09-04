@@ -224,7 +224,22 @@ public class ModRootCommand {
             // Reload permissions if enabled
             totalCount++;
             try {
-                com.zerog.neoessentials.api.permissions.PermissionAPI.reload();
+                // PermissionAPI.reload() only re-reads data into an ALREADY-initialized manager
+                // (or external adapter) — it throws if neither exists. That's exactly the state
+                // a boot-time initialization failure (e.g. a config that couldn't be parsed yet)
+                // leaves things in, and it's permanent: every prefix/suffix/permission check
+                // keeps silently failing for the rest of the session with no way to recover
+                // short of a full restart. If reload() finds nothing to work with, fall back to
+                // a full re-initialization instead — it re-runs the same external/internal
+                // detection initialize() does at boot, so a config fixed after the fact (or a
+                // permission plugin that finished loading late) actually gets picked up.
+                if (com.zerog.neoessentials.api.permissions.PermissionAPI.getManager() == null
+                        && !com.zerog.neoessentials.api.permissions.PermissionAPI.isUsingExternal()) {
+                    NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Permission system was never fully initialized — re-initializing from scratch instead of a plain reload");
+                    com.zerog.neoessentials.permissions.PermissionSystem.reinitialize();
+                } else {
+                    com.zerog.neoessentials.api.permissions.PermissionAPI.reload();
+                }
                 NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Permission system reloaded");
                 successCount++;
             } catch (Exception e) {

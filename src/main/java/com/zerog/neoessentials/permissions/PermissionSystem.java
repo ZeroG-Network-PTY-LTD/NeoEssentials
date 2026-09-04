@@ -25,6 +25,27 @@ public class PermissionSystem {
             NeoLog.warn(LOGGER, LogCategory.PERMISSIONS,"Permission system already initialized, skipping");
             return;
         }
+        initializeInternal();
+    }
+
+    /**
+     * Forces a full re-initialization even if {@link #initialize()} already ran (successfully
+     * or not). Used by {@code /neoe reload} to recover from a permission system that never
+     * finished initializing at boot — e.g. a transient config-parse failure at startup left
+     * {@link PermissionAPI}'s manager permanently {@code null}, with no external adapter either,
+     * so every {@code getPrefix}/{@code getSuffix}/{@code hasPermission} call kept silently
+     * failing (logged as "PermissionManager is null") for the rest of that server session.
+     * {@link PermissionAPI#reload()} alone can't fix this: it only re-reads data into an
+     * <em>existing</em> manager, and throws if there isn't one yet. This re-runs the same
+     * detection/setup {@link #initialize()} does from scratch, so a config fixed after boot
+     * (or a permission plugin that loaded late) can be picked up without a full server restart.
+     */
+    public static void reinitialize() {
+        initialized = false;
+        initializeInternal();
+    }
+
+    private static void initializeInternal() {
 
         try {
             NeoLog.info(LOGGER, LogCategory.PERMISSIONS,"═══════════════════════════════════════════════════════════");
