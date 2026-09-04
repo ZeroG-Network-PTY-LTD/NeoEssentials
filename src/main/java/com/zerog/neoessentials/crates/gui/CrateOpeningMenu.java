@@ -201,6 +201,6 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
         super.removed(player);
         if (scheduler != null) scheduler.shutdown();
         ghostGuard.shutdown();
-        CrateGhostItemGuard.sweep(viewer);
+        CrateGhostItemGuard.sweepWithGracePeriod(viewer);
     }
 }

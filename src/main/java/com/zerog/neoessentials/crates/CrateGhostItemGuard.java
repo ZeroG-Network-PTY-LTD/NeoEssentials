@@ -26,13 +26,22 @@ import java.util.concurrent.TimeUnit;
  * <p>So instead of trying to stop the copy, every ghost stack this mod displays carries a hidden
  * marker, and {@link #sweep} strips any stack carrying it out of a player's real inventory —
  * wherever it came from, however it got there. Both crate GUIs run a sweep on a short timer
- * while open and once more the instant they close, so an exfiltrated copy never survives long
- * enough to be useful. This is deliberately mod-agnostic: it doesn't matter which mod or
- * mechanism did the copying.
+ * while open, then {@link #sweepWithGracePeriod} a few more times over the couple of seconds
+ * after they close, so an exfiltrated copy never survives long enough to be useful. This is
+ * deliberately mod-agnostic: it doesn't matter which mod or mechanism did the copying.
+ *
+ * <p>The grace period exists because closing the GUI stops the periodic sweep immediately, but
+ * doesn't guarantee the extraction itself has already been fully processed server-side — a
+ * player clicking a pull button and then immediately hitting E/Esc to close could still win the
+ * race and keep a copy that lands a tick or two after the close-triggered sweep already ran,
+ * with no menu left open for the next periodic sweep to ever catch it.
  */
 public final class CrateGhostItemGuard {
     private static final String GHOST_TAG = "neoessentials_crate_ghost";
     private static final long SWEEP_INTERVAL_MS = 250L;
+    /** Extra one-off sweeps after the GUI closes, catching an extraction that resolves
+     *  server-side slightly after the close-triggered sweep already ran. */
+    private static final long[] GRACE_SWEEP_DELAYS_MS = {200L, 500L, 1000L, 2000L, 4000L};
 
     private CrateGhostItemGuard() {}
 
@@ -63,7 +72,8 @@ public final class CrateGhostItemGuard {
 
     /** Starts a short-interval background sweep of {@code player}'s inventory for as long as a
      *  crate preview/opening GUI is open — the caller must {@code shutdown()} the returned
-     *  scheduler (and call {@link #sweep} once more directly) when the menu closes. */
+     *  scheduler and call {@link #sweepWithGracePeriod} (not just {@link #sweep}) when the menu
+     *  closes. */
     public static ScheduledExecutorService startWatch(ServerPlayer player) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "Crate-Ghost-Guard");
@@ -76,5 +86,26 @@ public final class CrateGhostItemGuard {
             server.execute(() -> sweep(player));
         }, SWEEP_INTERVAL_MS, SWEEP_INTERVAL_MS, TimeUnit.MILLISECONDS);
         return scheduler;
+    }
+
+    /** Sweeps immediately, then again a few more times over the next several seconds — call this
+     *  (instead of a single {@link #sweep}) when a crate GUI closes, to catch an extraction that
+     *  resolves server-side just after the close itself. */
+    public static void sweepWithGracePeriod(ServerPlayer player) {
+        sweep(player);
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "Crate-Ghost-Guard-Grace");
+            t.setDaemon(true);
+            return t;
+        });
+        for (long delay : GRACE_SWEEP_DELAYS_MS) {
+            scheduler.schedule(() -> {
+                var server = player.getServer();
+                if (server == null) return;
+                server.execute(() -> sweep(player));
+            }, delay, TimeUnit.MILLISECONDS);
+        }
+        long lastDelay = GRACE_SWEEP_DELAYS_MS[GRACE_SWEEP_DELAYS_MS.length - 1];
+        scheduler.schedule(scheduler::shutdown, lastDelay + 100L, TimeUnit.MILLISECONDS);
     }
 }
