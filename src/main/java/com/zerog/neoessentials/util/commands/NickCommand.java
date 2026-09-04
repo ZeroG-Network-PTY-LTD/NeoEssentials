@@ -562,10 +562,23 @@ public class NickCommand {
 
     /**
      * Called when a player joins the server.
-     * Restores their tab-list display name if they had a nickname before logging out.
+     *
+     * <p>Restores the joining player's own tab-list display name if they had a nickname before
+     * logging out (broadcast to everyone, including themselves). But that alone isn't enough:
+     * every <em>other</em> already-nicknamed online player's override packet was only ever sent
+     * to whoever was connected <em>at the time</em> {@code /nick} last changed something for
+     * them — a player who joins afterward was never part of that broadcast and never receives
+     * it, so their client falls back to showing that player's raw game-profile name (the bug
+     * reported as "I see their real IGN in tab instead of the nick" for a specific other
+     * player). So every join also re-sends every currently-nicknamed player's override, which
+     * reaches the new joiner along with everyone else already in sync (a harmless no-op packet
+     * for them).
      */
     public static void onPlayerJoin(ServerPlayer player) {
-        if (NICKNAMES.containsKey(player.getUUID())) {
+        var server = player.getServer();
+        if (server != null) {
+            applyNicknamesToOnlinePlayers(server);
+        } else if (NICKNAMES.containsKey(player.getUUID())) {
             updatePlayerDisplayName(player);
         }
     }
