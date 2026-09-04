@@ -119,5 +119,8 @@ migration history) is not carried over.
   scratch when that happens instead of failing the same way forever.
 - The "config splitting available"/"legacy data files" admin notices nagged on every single
   restart forever — each now shows once per install instead of once per session.
+- Closing the crate GUI immediately after using a pull-mod extraction button could still win the
+  race and keep the item — closing now sweeps a few more times over the next ~4 seconds instead
+  of just once, closing the timing window entirely.
 
 ---
