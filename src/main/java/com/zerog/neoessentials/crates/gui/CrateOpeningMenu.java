@@ -79,7 +79,12 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
     public static void open(ServerPlayer player, CrateDefinition crate, CrateReward wonReward) {
         player.openMenu(new MenuProvider() {
             @Override public Component getDisplayName() {
-                return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+                // processTablistText (not the plain parseColorCodes this used to use) so a
+                // {animation:NAME}/<gradient:...> in crate.displayName actually resolves in the
+                // GUI title bar, matching the crate key item's name — same "snapshot at the
+                // moment the menu opens" caveat applies (a GUI title has no live-update channel
+                // once shown, same as an item name).
+                return com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(
                     MessageUtil.localize("commands.neoessentials.crate.gui.opening_title", crate.displayName));
             }
             @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player p) {

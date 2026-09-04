@@ -122,6 +122,20 @@ public class CrateManager {
         // a plain name with no color of its own still defaults to gold, same as before.
         stack.set(DataComponents.CUSTOM_NAME,
             com.zerog.neoessentials.chat.RichTextFormatter.processTablistText("&6" + crate.displayName + " Key"));
+
+        // The key item's TEMPLATE (crate.keyItem, set via /crate admin setkey) can carry its own
+        // lore — copyWithCount() above copies it byte-for-byte, completely unprocessed, so a
+        // {animation:NAME}/<gradient:...> tag an admin put in the hover text never resolved,
+        // same bug the name had before the fix above. Every lore line gets the same treatment.
+        if (stack.has(DataComponents.LORE)) {
+            var oldLore = stack.get(DataComponents.LORE);
+            java.util.List<net.minecraft.network.chat.Component> newLines = new java.util.ArrayList<>();
+            for (var line : oldLore.lines()) {
+                newLines.add(com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(line.getString()));
+            }
+            stack.set(DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(newLines));
+        }
+
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return stack;
     }
