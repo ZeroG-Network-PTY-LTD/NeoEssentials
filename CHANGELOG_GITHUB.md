@@ -289,5 +289,27 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   *else's* already-active overrides to them. Every join now re-broadcasts every currently
   nicknamed player's override (a harmless no-op for clients already in sync), the same sweep
   already used on server start.
+- **`/neoe reload` (and `/scoreboard reload`) could kick every player currently seeing the
+  sidebar scoreboard with a fatal "Network Protocol Error"** — reload cleared the server-side
+  tracking of which clients already had the "ne_sidebar" objective registered, along with the
+  content caches, so the very next update thought those clients needed the objective added for
+  the first time and sent a duplicate `METHOD_ADD` — vanilla's client throws on that and
+  disconnects. The tracking now survives reload; only the content caches are cleared, so a
+  reload correctly refreshes what's displayed without re-adding anything.
+- **The permission system had no way to recover from a failed boot initialization without a
+  full server restart.** If `PermissionSystem.initialize()` failed partway through at boot (e.g.
+  a config that couldn't be parsed yet), the internal manager stayed permanently `null` with no
+  external adapter either — every prefix/suffix/permission check kept silently failing all
+  session (logged repeatedly as `PermissionManager is null`), and `/neoe reload`'s call into
+  `PermissionAPI.reload()` could never fix it, since that only re-reads data into an
+  *already-initialized* manager. `/neoe reload` now falls back to a full re-initialization
+  (re-running the same detection `initialize()` does at boot) specifically when there's nothing
+  to reload into yet.
+- The "config splitting available" and "legacy data file(s) no longer read" admin startup
+  notices were queued unconditionally on every single boot for as long as the underlying
+  condition held — for a server that hasn't acted on either yet, that's the same multi-line chat
+  block on every restart forever. Each is now persisted once actually shown to an admin
+  (`neoessentials/admin_notices_shown.json`) and never queued again after that; the underlying
+  state is still checkable anytime via the relevant status command.
 
 ---
