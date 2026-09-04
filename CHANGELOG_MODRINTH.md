@@ -47,6 +47,12 @@ migration history) is not carried over.
   items — no virtual balance required to redeem one.
 - Tablist `header`/`footer` frames can now be written as their own JSON array of lines instead
   of hand-escaping `\n` inside one long string — e.g. `["Line 1", "Line 2"]` as one frame.
+- Crate key item names now support `{animation:NAME}`/gradients/rainbow, not just `&`-codes —
+  matching what already worked in the crate's hologram text (a snapshot per-item, since a held
+  item can't be live-repainted the way a hologram can).
+- Hologram refresh/animation tick rates were hardcoded — now configurable via
+  `hologram.refreshInterval`/`animationInterval` in `config.json`, same convention as tablist/
+  scoreboard's `refreshInterval`. Applies with `/neoe reload`.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
