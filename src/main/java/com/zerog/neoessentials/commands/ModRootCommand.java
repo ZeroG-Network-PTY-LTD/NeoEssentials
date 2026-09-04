@@ -384,6 +384,25 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_scoreboard", fMsg));
             }
 
+            // Recover EconomyManager if it never finished initializing at boot (e.g. a config
+            // that couldn't be parsed yet at the moment the singleton was first touched) — see
+            // EconomyManager.initializeIfEnabled()'s javadoc. Unlike permissions this has no
+            // loud failure mode: balances keep working perfectly in memory, they just silently
+            // never persist, so there's nothing to visibly "fail to reload" — only something to
+            // quietly recover if it's actually broken.
+            totalCount++;
+            try {
+                if (com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().reinitialize()) {
+                    NeoLog.warn(LOGGER, LogCategory.COMMANDS, "Economy system was never fully initialized — re-initialized from scratch");
+                }
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Economy system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload economy system: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_economy", fMsg));
+            }
+
             // Reload HologramScheduler's tick rates (hologram.refreshInterval/animationInterval)
             totalCount++;
             try {
