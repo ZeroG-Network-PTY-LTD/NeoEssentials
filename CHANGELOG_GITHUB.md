@@ -112,6 +112,10 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 - **Left-clicking a physical crate block now opens the no-cost reward-odds preview** (same as
   `/crate preview`), matching the right-click-to-act/left-click-to-look pattern shop signs
   already use. Shift+left-click still falls through as a normal break attempt.
+- **`/crate key giveitem <player> <crate> <amount>`** — gives real, physical crate key items.
+  Holding a valid one is enough on its own to open that crate (right-click a crate block, or
+  hold it when using `/crate open`) with no virtual balance required, so keys can now genuinely
+  be given away, dropped, or traded between players.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
@@ -256,5 +260,10 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   outside — the owning menu redraws through a separate `forceSetItem` the container exposes only
   to itself — closing every mutation path a container has, regardless of which mod or mechanism
   is doing the pulling.
+- Physical crate key items were effectively non-functional — `CrateManager.buildKeyItem` had no
+  command that ever called it, so there was no way to actually get one into a player's
+  inventory, and even a key item obtained some other way still silently required virtual
+  balance to redeem — a traded or gifted key wouldn't have worked for whoever received it. Both
+  fixed: see `/crate key giveitem` above.
 
 ---
