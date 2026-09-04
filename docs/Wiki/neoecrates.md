@@ -17,14 +17,22 @@ crate" server setup — but the two systems work fully independently too.
 
 ---
 
-## Keys — virtual balance, not just an item
+## Keys — two independent wallets
 
-A player's key count is a **virtual balance** (`CrateKeyManager`, mirrors how the economy
-balance works) — the actual source of truth. A physical key **item** is a convenience
-representation: giving one (`/crate key give`) and redeeming one (right-clicking a crate block,
-or holding it when using `/crate open`) both move the matching virtual balance in lockstep, so
-an item duplicated by some other exploit can never grant more opens than were actually paid
-for — the balance is always what's checked and decremented, never the item alone.
+A player can hold crate keys two ways, fully independently of each other:
+
+- **Virtual balance** (`/crate key give\|take`) — a non-transferable per-player count
+  (`CrateKeyManager`, mirrors how the economy balance works). Can't be given away, dropped, or
+  stolen; only ever spent by that specific player.
+- **Physical key item** (`/crate key giveitem`) — a real, giveable `ItemStack` tagged to one
+  crate. Holding a valid one is by itself enough to open that crate (right-clicking a crate
+  block, or holding it when using `/crate open`) — it doesn't touch or require any virtual
+  balance. Consuming the item (shrinking the stack by one) is what prevents reuse, so it's safe
+  to give, drop, or trade between players like any other item; whoever ends up holding it can
+  redeem it.
+
+Right-clicking a crate block prefers a valid physical key in your hand first, and only falls
+back to your virtual balance if you aren't holding one.
 
 ## Config (`crates.json`)
 
@@ -97,6 +105,7 @@ crate no longer exists.
 | `/crate preview <crate>` | `neoessentials.crate.preview` | Show the reward pool + odds, no key cost |
 | `/crate keys [player]` | `neoessentials.crate.open` | Show key balances |
 | `/crate key give\|take <player> <crate> <amount>` | `neoessentials.crate.admin` | Adjust a player's virtual key balance |
+| `/crate key giveitem <player> <crate> <amount>` | `neoessentials.crate.admin` | Give real, tradeable physical key item(s) |
 | `/crate admin create <id> <displayName>` | `neoessentials.crate.admin` | Define a new crate |
 | `/crate admin delete <crate>` | `neoessentials.crate.admin` | Delete a crate |
 | `/crate admin addreward <crate> <weight>` | `neoessentials.crate.admin` | Add your held item as a reward |

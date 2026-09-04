@@ -104,8 +104,10 @@ public class CrateManager {
     // ── Key items ────────────────────────────────────────────────────────────
 
     /** Builds a real, giveable key ItemStack for a crate — tagged so it can only ever be
-     *  redeemed for keys of that specific crate (redemption still decrements the virtual
-     *  balance in {@link CrateKeyManager}, this tag is just what identifies which crate). */
+     *  redeemed for keys of that specific crate. Unlike the virtual balance, this item is a
+     *  self-contained key: holding one is by itself enough to open the crate (see
+     *  {@link #tryConsumeKeyAndPick}), so it can be freely given, dropped, or traded between
+     *  players like any other item. */
     public ItemStack buildKeyItem(CrateDefinition crate, int count) {
         ItemStack stack = crate.keyItem.copyWithCount(count);
         var tag = new net.minecraft.nbt.CompoundTag();
@@ -117,6 +119,20 @@ public class CrateManager {
         return stack;
     }
 
+    /** Gives {@code count} physical key items for {@code crate} to the player, split across
+     *  stacks that respect the key item's own max stack size, dropping at their feet if their
+     *  inventory can't hold it all. This is the only place that mints physical key items. */
+    public void giveKeyItems(ServerPlayer player, CrateDefinition crate, int count) {
+        int max = Math.max(1, crate.keyItem.getMaxStackSize());
+        int remaining = count;
+        while (remaining > 0) {
+            int chunk = Math.min(max, remaining);
+            ItemStack stack = buildKeyItem(crate, chunk);
+            if (!player.getInventory().add(stack)) player.drop(stack, false);
+            remaining -= chunk;
+        }
+    }
+
     /** The crate id a held key item represents, or {@code null} if it isn't a crate key. */
     public String getKeyCrateId(ItemStack stack) {
         if (stack.isEmpty() || !stack.has(DataComponents.CUSTOM_DATA)) return null;
@@ -126,25 +142,29 @@ public class CrateManager {
 
     // ── Opening ──────────────────────────────────────────────────────────────
 
-    /** Consumes one key (physical item if given, else virtual balance) and returns the
-     *  resolved reward, or {@code null} if the player has no keys or the crate has no
-     *  positively-weighted rewards (callers should check {@link #hasAnyReward} first to tell
-     *  those two cases apart for the player). The reward is resolved <b>before</b> any key is
-     *  consumed, so an empty/all-zero-weight reward pool never eats a key for nothing. */
+    /** Consumes one key (a valid physical item for this crate if given, else one from the
+     *  virtual balance) and returns the resolved reward, or {@code null} if the player has no
+     *  key by either means or the crate has no positively-weighted rewards (callers should check
+     *  {@link #hasAnyReward} first to tell those two cases apart for the player). The reward is
+     *  resolved <b>before</b> any key is consumed, so an empty/all-zero-weight reward pool never
+     *  eats a key for nothing.
+     *
+     * <p>A valid physical key is sufficient on its own — it does not also require virtual
+     * balance — so a key item given, dropped, or traded between players works standalone for
+     * whoever ends up holding it. Consuming the item itself (shrinking the stack) is what
+     * prevents reuse; the virtual balance is a separate, non-transferable source of keys, only
+     * checked when no valid physical key is in hand. */
     public CrateReward tryConsumeKeyAndPick(ServerPlayer player, CrateDefinition crate, ItemStack physicalKey) {
         CrateReward picked = WeightedRandomPicker.pick(crate.rewards, r -> r.weight);
         if (picked == null) return null;
 
-        // The physical key item is only a representation — the virtual balance (kept in lockstep
-        // with every give/consume of a physical key) is always what's actually decremented, so
-        // an item duplicated by some other exploit can never grant more opens than were paid
-        // for. If the balance is somehow out of sync with the item, the open correctly fails
-        // even though the player is holding what looks like a valid key.
-        boolean consumed = CrateKeyManager.getInstance().removeKeys(player.getUUID(), crate.id, 1);
-        if (!consumed) return null;
+        boolean validPhysicalKey = physicalKey != null && !physicalKey.isEmpty()
+            && crate.id.equalsIgnoreCase(getKeyCrateId(physicalKey));
 
-        if (physicalKey != null && !physicalKey.isEmpty() && crate.id.equalsIgnoreCase(getKeyCrateId(physicalKey))) {
+        if (validPhysicalKey) {
             physicalKey.shrink(1);
+        } else if (!CrateKeyManager.getInstance().removeKeys(player.getUUID(), crate.id, 1)) {
+            return null;
         }
 
         return picked;
