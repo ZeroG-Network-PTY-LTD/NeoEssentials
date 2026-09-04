@@ -384,6 +384,18 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_scoreboard", fMsg));
             }
 
+            // Reload HologramScheduler's tick rates (hologram.refreshInterval/animationInterval)
+            totalCount++;
+            try {
+                com.zerog.neoessentials.hologram.HologramScheduler.restart();
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Hologram scheduler reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload hologram scheduler: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_hologram", fMsg));
+            }
+
             // Reload WorthManager (item sell prices)
             totalCount++;
             try {

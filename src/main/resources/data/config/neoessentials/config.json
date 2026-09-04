@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 48,
+  "_configVersion": 49,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -16,6 +16,18 @@
   // MOTD text somewhere.
   "general": {
     "serverName": "My Server"
+  },
+
+  // How often holograms recompute (refreshInterval, in server ticks — 20 = once/second) and
+  // animate/spin/hover (animationInterval, in ticks — 1 = every tick, the fastest possible,
+  // matches the tablist/scoreboard "refreshInterval" convention). refreshInterval covers
+  // slower/heavier placeholders ({balance}, permission lookups, etc); animationInterval only
+  // covers {animation:NAME} frame advancement, /hologram addframes cycling, and spin/hover
+  // motion — there's no benefit setting it below 1, since an animation's own frameDuration is
+  // already clamped to a 50ms (1-tick) minimum. Apply changes with "/neoe reload".
+  "hologram": {
+    "refreshInterval": 20,
+    "animationInterval": 1
   },
 
   // Enable or disable major mod subsystems (true = enabled, false = disabled).
