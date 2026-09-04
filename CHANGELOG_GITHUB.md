@@ -344,5 +344,23 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `{animation:...}` text unformatted) until a `/tablist reload` also happened to run. Holograms
   needed no separate fix — they already read `AnimationManager` live with no caching of their
   own, so they pick this up automatically too.
+- **`/eco give|set|take` and `/pay` never invalidated the generalized leaderboard system's
+  "money" board** — only `/baltop`'s own dedicated cache — so a balance change updated `/baltop`
+  immediately but left any `{leaderboard_money:...}` placeholder (e.g. a scoreboard "richest
+  player" line) showing stale data for up to that board's own 60s refresh interval. Reported as
+  "the scoreboard shows the wrong richest player." Centralized the fix so every existing (and
+  future) balance-changing command gets it for free.
+- **`/baltop` and `/leaderboard <board>` both reported "no data"/"no entries" on the very first
+  call ever**, even with real balances/stats present — both kick off an async cache rebuild when
+  the cache is empty, then immediately read the still-empty cache and report it as genuinely
+  empty rather than "still building." Both now distinguish the two cases.
+- **`EconomyManager` had no way to recover if it never finished initializing at boot** (same
+  class of bug already fixed for `PermissionSystem` earlier — audited for economy on request).
+  If `modules.economyEnabled` happened to read as disabled at the exact moment the lazy
+  singleton was first touched (e.g. `config.json` not finished parsing yet during a rocky boot),
+  balances kept working perfectly *in memory* for the rest of that session, with no error of any
+  kind — they just silently never persisted, reverting every account to its starting balance on
+  the next restart. `/neoe reload` now retries initialization if it never completed, alongside
+  the existing permission self-heal.
 
 ---
