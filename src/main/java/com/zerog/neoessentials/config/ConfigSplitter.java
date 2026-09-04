@@ -120,10 +120,7 @@ public class ConfigSplitter {
                                         //       per-subsystem toggles (see
                                         //       ConfigManager.migrateLoggingCategories)
         put("commands.json",      1);
-        put("chat.json",          3);  // v3 — added "animationPreview" section (enabled/frameCount/
-                                        //       intervalMs — the action-bar chat animation flash
-                                        //       for messages containing {animation:NAME})
-                                        // v2 — chat-format/formatTemplates defaults patched to use
+        put("chat.json",          2);  // v2 — chat-format/formatTemplates defaults patched to use
                                         //       {neoessentials_displayname} instead of
                                         //       {neoessentials_username}/{neoessentials_name} so /nick
                                         //       actually shows up in chat (see
@@ -146,7 +143,7 @@ public class ConfigSplitter {
      * Current monolithic config version — must stay in sync with the JAR's config.json
      * {@code _configVersion} field and {@code ConfigManager.EXPECTED_CONFIG_VERSIONS}.
      */
-    private static final int CURRENT_MAIN_VERSION = 50;
+    private static final int CURRENT_MAIN_VERSION = 49;
 
     // ── Marker ────────────────────────────────────────────────────────────────
 

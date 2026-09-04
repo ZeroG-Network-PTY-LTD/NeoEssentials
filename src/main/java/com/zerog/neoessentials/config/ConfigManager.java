@@ -1455,8 +1455,7 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 50);          // v50 — added chat.animationPreview (enabled/frameCount/intervalMs)
-        // v49 — added hologram.refreshInterval/animationInterval
+        put(MAIN_CONFIG, 49);          // v49 — added hologram.refreshInterval/animationInterval
                                         // v48 — added general.serverName
                                         //   (RTP chunk-load lag/crash fix)
         // v46 — added randomTeleportSettings.mode/biomeSearchRadius/
@@ -2639,48 +2638,6 @@ public class ConfigManager {
             }
         }
         return true;
-    }
-
-    /**
-     * Returns true if the chat "live" animation action-bar preview (chat.animationPreview.enabled)
-     * is on. Defaults to true if not set.
-     */
-    public static boolean isChatAnimationPreviewEnabled() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("chat")) {
-            JsonObject chat = config.getAsJsonObject("chat");
-            if (chat.has("animationPreview")) {
-                JsonObject preview = chat.getAsJsonObject("animationPreview");
-                if (preview.has("enabled")) return preview.get("enabled").getAsBoolean();
-            }
-        }
-        return true;
-    }
-
-    /** chat.animationPreview.frameCount — total action-bar frames to flash. Defaults to 5. */
-    public static int getChatAnimationPreviewFrameCount() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("chat")) {
-            JsonObject chat = config.getAsJsonObject("chat");
-            if (chat.has("animationPreview")) {
-                JsonObject preview = chat.getAsJsonObject("animationPreview");
-                if (preview.has("frameCount")) return Math.max(1, preview.get("frameCount").getAsInt());
-            }
-        }
-        return 5;
-    }
-
-    /** chat.animationPreview.intervalMs — delay between action-bar flashes. Defaults to 200ms. */
-    public static long getChatAnimationPreviewIntervalMs() {
-        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
-        if (config.has("chat")) {
-            JsonObject chat = config.getAsJsonObject("chat");
-            if (chat.has("animationPreview")) {
-                JsonObject preview = chat.getAsJsonObject("animationPreview");
-                if (preview.has("intervalMs")) return Math.max(50L, preview.get("intervalMs").getAsLong());
-            }
-        }
-        return 200L;
     }
 
     /**
