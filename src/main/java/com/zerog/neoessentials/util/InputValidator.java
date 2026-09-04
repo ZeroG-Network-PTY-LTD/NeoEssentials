@@ -72,11 +72,21 @@ public class InputValidator {
      * Validates an economic amount for transactions.
      */
     public static ValidationResult validateEconomyAmount(double amount) {
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isInputValidationEnabled()) {
-            return ValidationResult.success(amount);
-        }
+        // NaN/infinite is checked even with validation disabled below — BigDecimal.valueOf()
+        // itself throws NumberFormatException on either, a crash this method exists to turn
+        // into an ordinary failure result instead of letting propagate uncaught.
         if (Double.isNaN(amount) || Double.isInfinite(amount)) {
             return ValidationResult.failure("Invalid amount: not a valid number");
+        }
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isInputValidationEnabled()) {
+            // Every caller of this method calls getValue(BigDecimal.class) unconditionally —
+            // this used to return the raw double (boxed to Double) here when validation was
+            // disabled, so ClassCastException: Double cannot be cast to BigDecimal crashed
+            // /pay and /eco give|take on every single use whenever an admin turned off
+            // security.enableInputValidation, with no indication of why. Still skips the
+            // actual min/max/positivity checks below (that's what "disabled" means), just
+            // returns the correct type either way.
+            return ValidationResult.success(BigDecimal.valueOf(amount));
         }
         if (amount <= 0) {
             return ValidationResult.failure("Amount must be positive");
