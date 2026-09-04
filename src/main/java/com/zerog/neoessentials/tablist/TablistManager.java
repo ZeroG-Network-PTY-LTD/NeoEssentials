@@ -962,11 +962,36 @@ public class TablistManager {
         return 0;
     }
 
-    /** Load a header/footer frame list from a JsonElement (array or single string). */
+    /**
+     * Load a header/footer frame list from a JsonElement (array or single string).
+     *
+     * <p>The outer array is always a list of animation frames — each element becomes one frame
+     * shown in turn. An element is normally a plain string (one line), but can also be its own
+     * JSON array of strings, joined with {@code \n} into a single multi-line frame — vanilla's
+     * tab list header/footer already renders embedded newlines as real line breaks, this just
+     * gives config authors a way to write multi-line text without hand-escaping {@code \n}
+     * inside a JSON string. A flat array of plain strings keeps meaning what it always has
+     * (multiple single-line animation frames), so existing configs are unaffected.
+     *
+     * <pre>{@code
+     * "header": [
+     *   ["&6Line 1 of frame A", "&bLine 2 of frame A"],
+     *   ["&6Line 1 of frame B", "&bLine 2 of frame B"]
+     * ]
+     * }</pre>
+     */
     private static List<String> loadFrames(JsonElement el) {
         List<String> frames = new ArrayList<>();
         if (el.isJsonArray()) {
-            for (JsonElement e : el.getAsJsonArray()) frames.add(e.getAsString());
+            for (JsonElement e : el.getAsJsonArray()) {
+                if (e.isJsonArray()) {
+                    List<String> lines = new ArrayList<>();
+                    for (JsonElement lineEl : e.getAsJsonArray()) lines.add(lineEl.getAsString());
+                    frames.add(String.join("\n", lines));
+                } else {
+                    frames.add(e.getAsString());
+                }
+            }
         } else {
             frames.add(el.getAsString());
         }
