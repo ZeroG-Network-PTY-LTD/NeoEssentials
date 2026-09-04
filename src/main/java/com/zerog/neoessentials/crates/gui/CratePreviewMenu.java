@@ -2,6 +2,7 @@ package com.zerog.neoessentials.crates.gui;
 
 import com.zerog.neoessentials.auctionhouse.gui.AuctionGuiHelper;
 import com.zerog.neoessentials.crates.CrateDefinition;
+import com.zerog.neoessentials.crates.CrateGhostItemGuard;
 import com.zerog.neoessentials.crates.CrateReward;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.ReadOnlyContainer;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 /** Read-only reward-odds viewer — {@code /crate preview <name>}, no key cost. */
 public class CratePreviewMenu extends AbstractContainerMenu {
@@ -28,12 +30,14 @@ public class CratePreviewMenu extends AbstractContainerMenu {
     private final ReadOnlyContainer display = new ReadOnlyContainer(54);
     private final ServerPlayer viewer;
     private final CrateDefinition crate;
+    private final ScheduledExecutorService ghostGuard;
     private int page = 0;
 
     private CratePreviewMenu(int containerId, Inventory playerInv, CrateDefinition crate) {
         super(MenuType.GENERIC_9x6, containerId);
         this.viewer = (ServerPlayer) playerInv.player;
         this.crate = crate;
+        this.ghostGuard = CrateGhostItemGuard.startWatch(viewer);
 
         for (int i = 0; i < 54; i++) {
             addSlot(new Slot(display, i, 0, 0) {
@@ -92,6 +96,7 @@ public class CratePreviewMenu extends AbstractContainerMenu {
         stack.set(DataComponents.LORE, new ItemLore(List.of(
             Component.literal(String.format("%.2f%% chance", chance)).withStyle(ChatFormatting.GRAY)
         )));
+        CrateGhostItemGuard.mark(stack);
         return stack;
     }
 
@@ -114,4 +119,11 @@ public class CratePreviewMenu extends AbstractContainerMenu {
 
     @Override public ItemStack quickMoveStack(Player player, int i) { return ItemStack.EMPTY; }
     @Override public boolean stillValid(Player player) { return true; }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        ghostGuard.shutdown();
+        CrateGhostItemGuard.sweep(viewer);
+    }
 }

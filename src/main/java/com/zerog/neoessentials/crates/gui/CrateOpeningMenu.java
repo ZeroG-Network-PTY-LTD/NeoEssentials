@@ -2,6 +2,7 @@ package com.zerog.neoessentials.crates.gui;
 
 import com.zerog.neoessentials.crates.CrateAnimation;
 import com.zerog.neoessentials.crates.CrateDefinition;
+import com.zerog.neoessentials.crates.CrateGhostItemGuard;
 import com.zerog.neoessentials.crates.CrateManager;
 import com.zerog.neoessentials.crates.CrateReward;
 import com.zerog.neoessentials.crates.WeightedRandomPicker;
@@ -47,6 +48,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
     private final ServerPlayer viewer;
     private final CrateDefinition crate;
     private final CrateReward wonReward;
+    private final ScheduledExecutorService ghostGuard;
     private ScheduledExecutorService scheduler;
 
     private CrateOpeningMenu(int containerId, Inventory playerInv, CrateDefinition crate, CrateReward wonReward) {
@@ -54,6 +56,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
         this.viewer = (ServerPlayer) playerInv.player;
         this.crate = crate;
         this.wonReward = wonReward;
+        this.ghostGuard = CrateGhostItemGuard.startWatch(viewer);
 
         for (int i = 0; i < 54; i++) {
             addSlot(new Slot(display, i, 0, 0) {
@@ -181,6 +184,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
         if (reward == null || reward.item.isEmpty()) return ItemStack.EMPTY;
         ItemStack stack = reward.item.copy();
         stack.set(DataComponents.CUSTOM_NAME, stack.getHoverName().copy());
+        CrateGhostItemGuard.mark(stack);
         return stack;
     }
 
@@ -196,5 +200,7 @@ public class CrateOpeningMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         if (scheduler != null) scheduler.shutdown();
+        ghostGuard.shutdown();
+        CrateGhostItemGuard.sweep(viewer);
     }
 }
