@@ -369,5 +369,9 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   economy system for bugs/gaps after the fixes above. Still guards against `NaN`/infinite input
   (which `BigDecimal.valueOf()` itself throws on) either way; only the actual min/max/positivity
   checks are skipped when validation is disabled, which is what "disabled" is supposed to mean.
+- Deleted two dead economy classes (`EconomyCache`, `EconomyLeaderboard`) found during the same
+  audit — early prototypes with zero references anywhere, both fully superseded before ever
+  being wired up (by `EconomyManager`'s own balance cache, and by `BaltopCommand`'s async
+  cached/paginated leaderboard, respectively). No behavior change.
 
 ---
