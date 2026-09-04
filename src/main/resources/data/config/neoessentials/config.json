@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 49,
+  "_configVersion": 50,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -1228,6 +1228,22 @@
 
     "enable-chat-formatting": true,
     "enable-color-codes": true,
+
+    // "Live" chat animation preview. {animation:NAME} in a chat message already resolves to
+    // that animation's current frame once, at send time — chat has no channel to repaint an
+    // already-delivered line the way tablist/scoreboard/holograms do, so it can't animate
+    // in place. This instead briefly flashes the message through a few more frames via the
+    // action bar (NOT the chat log) right after it's sent, so it visibly animates without
+    // adding any duplicate lines to chat history — only the original single line is ever
+    // logged/kept. Only applies to messages that actually contain {animation:NAME}.
+    "animationPreview": {
+      "enabled": true,
+      // How many frames to flash total (including the one already shown in chat).
+      "frameCount": 5,
+      // Milliseconds between each action-bar flash.
+      "intervalMs": 200
+    },
+
     // Log all chat messages to console/log. false = suppress chat from console entirely.
     "logChatToConsole": true,
     // Commands blocked when a player is muted
