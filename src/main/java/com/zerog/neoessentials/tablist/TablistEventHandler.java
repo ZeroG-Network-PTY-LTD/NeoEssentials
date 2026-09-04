@@ -35,6 +35,16 @@ public class TablistEventHandler {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        // AnimationManager must keep advancing regardless of whether the tablist MODULE is
+        // enabled — {animation:NAME} is shared by scoreboard/hologram/chat/crate keys, none of
+        // which should go dark just because a server doesn't use tablist customization. This
+        // used to be gated behind isTablistModuleEnabled() below (this was the ONLY call site
+        // driving AnimationManager's clock at all), so any server with modules.tablistEnabled
+        // set to false silently froze every animation mod-wide on its very first frame forever
+        // — no hologram/scoreboard refresh-interval setting could ever fix that, since the
+        // underlying animation clock itself was never advancing in the first place.
+        TablistManager.getInstance().tickAnimationsOnly();
+
         if (!com.zerog.neoessentials.config.ConfigManager.isTablistModuleEnabled()) return;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
