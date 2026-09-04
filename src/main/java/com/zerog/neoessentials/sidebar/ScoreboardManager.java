@@ -95,6 +95,13 @@ public class ScoreboardManager {
 
     // ── Config loading ───────────────────────────────────────────────────────
     public void loadConfig() {
+        // Scoreboard lines/titles can reference {animation:NAME} tokens, but animations.json
+        // is a shared resource also used by tablist/holograms/chat — TablistManager.loadConfig()
+        // already refreshes it, but /scoreboard reload (and the scoreboard-only block in
+        // /neoe reload) called ONLY this method, never touching AnimationManager at all. So
+        // editing animations.json and reloading via the scoreboard command specifically left
+        // the in-memory animation frames stale until a /tablist reload also happened to run.
+        AnimationManager.getInstance().loadConfig();
         try {
             JsonObject root = ConfigManager.getInstance().getConfig(ConfigManager.SCOREBOARD_CONFIG);
             JsonObject sb = (root != null && root.has("scoreboard")) ? root.getAsJsonObject("scoreboard") : null;
