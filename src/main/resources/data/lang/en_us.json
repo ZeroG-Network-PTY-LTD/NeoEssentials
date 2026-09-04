@@ -914,6 +914,7 @@
     "commands.neoessentials.crate.keys_list":  "§e{0}'s §7keys: {1}",
     "commands.neoessentials.crate.keys_given":  "§aGave §e{0}x {1} §akey(s) to §e{2}§a.",
     "commands.neoessentials.crate.keys_taken":  "§aTook §e{0}x {1} §akey(s) from §e{2}§a.",
+    "commands.neoessentials.crate.key_item_given":  "§aGave §e{0}x {1} Key §aitem(s) to §e{2}§a.",
     "commands.neoessentials.crate.already_exists":  "§cA crate named §e{0} §calready exists.",
     "commands.neoessentials.crate.created":  "§aCreated crate §e{0}§a.",
     "commands.neoessentials.crate.deleted":  "§aDeleted crate §e{0}§a.",

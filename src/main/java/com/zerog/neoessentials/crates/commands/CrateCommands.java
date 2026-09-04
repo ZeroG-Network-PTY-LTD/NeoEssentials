@@ -78,6 +78,15 @@ public class CrateCommands {
                                 .executes(ctx -> takeKeys(ctx.getSource(),
                                     StringArgumentType.getString(ctx, "player"),
                                     StringArgumentType.getString(ctx, "crate"),
+                                    IntegerArgumentType.getInteger(ctx, "amount")))))))
+                .then(Commands.literal("giveitem")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .suggests((ctx, b) -> SharedSuggestionProvider.suggest(ctx.getSource().getServer().getPlayerNames(), b))
+                        .then(Commands.argument("crate", StringArgumentType.word()).suggests(CRATE_SUGGESTIONS)
+                            .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                                .executes(ctx -> giveKeyItems(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "player"),
+                                    StringArgumentType.getString(ctx, "crate"),
                                     IntegerArgumentType.getInteger(ctx, "amount"))))))))
             .then(Commands.literal("admin")
                 .requires(adminCheck())
@@ -237,6 +246,22 @@ public class CrateCommands {
         }
         CrateKeyManager.getInstance().removeKeys(online.getUUID(), crate.id, amount);
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.keys_taken", amount, crate.displayName, playerName), true);
+        return 1;
+    }
+
+    private static int giveKeyItems(CommandSourceStack source, String playerName, String crateId, int amount) {
+        CrateDefinition crate = CrateManager.getInstance().getCrate(crateId);
+        if (crate == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.not_found", crateId));
+            return 0;
+        }
+        var online = source.getServer().getPlayerList().getPlayerByName(playerName);
+        if (online == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_not_found", playerName));
+            return 0;
+        }
+        CrateManager.getInstance().giveKeyItems(online, crate, amount);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_given", amount, crate.displayName, playerName), true);
         return 1;
     }
 

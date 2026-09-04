@@ -7,11 +7,11 @@ import com.zerog.neoessentials.storage.StorageManager;
 import java.util.UUID;
 
 /**
- * Virtual per-player key balances — {@code (playerUuid, crateId) -> count}, mirroring
- * {@code EconomyManager}'s balance model. This is the source of truth for how many keys a
- * player holds; a physical key item (see {@link CrateManager}) is only a convenience
- * representation that redeems back into a decrement here, never trusted on its own — avoids
- * the classic dupe-exploit risk of an NBT-tagged item being the sole source of truth.
+ * Virtual, non-transferable per-player key balances — {@code (playerUuid, crateId) -> count},
+ * mirroring {@code EconomyManager}'s balance model. This is one of two independent ways a
+ * player can hold crate keys; the other is a physical key item (see
+ * {@link CrateManager#buildKeyItem}), which is self-sufficient on its own and does not touch
+ * this balance at all — see {@link CrateManager#tryConsumeKeyAndPick}.
  */
 public class CrateKeyManager {
     private static final String COLLECTION = "crate_keys";
