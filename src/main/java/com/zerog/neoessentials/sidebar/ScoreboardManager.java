@@ -138,7 +138,8 @@ public class ScoreboardManager {
                             lines.add(new ScoreboardLine(frames, condition));
                         }
                     }
-                    loaded.add(new ScoreboardBoard(name, priority, conditions, titleFrames, lines));
+                    int refreshMultiplier = b.has("refreshMultiplier") ? b.get("refreshMultiplier").getAsInt() : 1;
+                    loaded.add(new ScoreboardBoard(name, priority, conditions, titleFrames, lines, refreshMultiplier));
                 }
             }
             // Highest priority first; a no-condition board should be given priority 0 so it
@@ -234,6 +235,7 @@ public class ScoreboardManager {
         if (tickCounter < refreshIntervalTicks) return;
         tickCounter = 0;
         animFrame++;
+        for (ScoreboardBoard board : boards) board.tickOwnFrame();
         updateAll(server);
     }
 
@@ -289,7 +291,12 @@ public class ScoreboardManager {
         try {
             Override ov = overrideFor(player);
 
-            String rawTitle = ov.title != null ? ov.title : board.currentTitleFrame(animFrame);
+            // The board's own frame index (advanced once per global refresh cycle, but at
+            // 1/refreshMultiplier the rate — see ScoreboardBoard.tickOwnFrame()), not the
+            // manager's shared `animFrame`, so a board configured with refreshMultiplier > 1
+            // actually cycles its title/line frames slower than the rest.
+            int frame = board.getOwnAnimFrame();
+            String rawTitle = ov.title != null ? ov.title : board.currentTitleFrame(frame);
             String title = resolveText(rawTitle, player, server);
 
             List<String> visibleLines = new ArrayList<>();
@@ -300,7 +307,7 @@ public class ScoreboardManager {
                         line.getCondition() != null ? List.of(line.getCondition()) : List.of(), player)) {
                     continue;
                 }
-                String raw = ov.lines.containsKey(i) ? ov.lines.get(i) : line.currentFrame(animFrame);
+                String raw = ov.lines.containsKey(i) ? ov.lines.get(i) : line.currentFrame(frame);
                 visibleLines.add(resolveText(raw, player, server));
             }
 
