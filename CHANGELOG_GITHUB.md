@@ -121,6 +121,15 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `["Line 1", "Line 2"]` as one element of the outer frames array. A flat array of plain strings
   keeps meaning what it always has (multiple single-line frames); the existing `{newline}`
   placeholder still works too.
+- Crate key item names now support `{animation:NAME}`/`<gradient:...>`/`<rainbow>`, not just
+  `&`-codes — matching what already worked in the crate's hologram text. A held item can't be
+  live-repainted the way a hologram/tablist/scoreboard can, so an animated name is a snapshot of
+  whichever frame was current the moment that specific key item was minted, not something that
+  visibly animates while held.
+- Holograms' placeholder-refresh and animation/spin/hover tick rates were hardcoded (1s / 50ms)
+  — now configurable via `hologram.refreshInterval`/`animationInterval` in `config.json` (in
+  server ticks, same convention as tablist/scoreboard's `refreshInterval`), defaulting to `20`/
+  `1` to match the previous hardcoded behavior exactly. Applies with `/neoe reload`.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
