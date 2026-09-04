@@ -273,13 +273,20 @@ public class TablistManager {
     }
 
     // ── Tick ──────────────────────────────────────────────────────────────────
-    public void onTick(MinecraftServer server) {
-        // Tick animations unconditionally, even when the tablist system itself is disabled —
-        // {animation:name} tokens are also usable in chat/permission-prefix contexts now
-        // (via RichTextFormatter.processTablistText), so frame timing must keep advancing
-        // regardless of `tablist.enabled`.
+    /**
+     * Advances {@link AnimationManager}'s frame clock — the single call site for the entire
+     * mod, since {@code {animation:NAME}} is shared by tablist/scoreboard/hologram/chat/crate
+     * keys. Called every server tick by {@link TablistEventHandler#onServerTick} regardless of
+     * whether the tablist module itself is enabled — extracted out of {@link #onTick} (which
+     * only runs when the tablist module is on) specifically so a server that disables tablist
+     * customization but still uses holograms/scoreboard doesn't have every animation freeze on
+     * its first frame forever.
+     */
+    public void tickAnimationsOnly() {
         AnimationManager.getInstance().tick(System.currentTimeMillis());
+    }
 
+    public void onTick(MinecraftServer server) {
         if (!enabled) return;
         tickCounter++;
         if (tickCounter < refreshIntervalTicks) return;
