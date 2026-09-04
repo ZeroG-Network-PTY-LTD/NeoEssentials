@@ -155,5 +155,9 @@ migration history) is not carried over.
   matching the key's name (fixed earlier) — same one-time-snapshot behavior.
 - Confirmed, not a bug: crate keys (`/crate admin setkey`) already support any vanilla or modded
   item, full NBT/data included — no fixed item list.
+- An animation frame's gradient/rainbow tags were silently stripped in chat unless
+  `chat.richText.enabled` was separately turned on (off by default) — tablist/hologram always
+  rendered them regardless of that setting. Fixed — animation gradients/rainbow now always render
+  in chat too; the config still gates a player typing raw gradient tags themselves.
 
 ---
