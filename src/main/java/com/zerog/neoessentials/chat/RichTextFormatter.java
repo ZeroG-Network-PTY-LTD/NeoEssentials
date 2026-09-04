@@ -198,6 +198,45 @@ public class RichTextFormatter {
     }
 
     /**
+     * Resolves {@code {animation:NAME}} tokens to their current frame, then gradients and
+     * rainbow, into plain {@code &}-coded/hex text — nothing else (no named-color tags, format
+     * tags, or hover/click markers are touched).
+     *
+     * <p>Meant to be layered in <em>front of</em> a caller's own existing
+     * {@code ChatComponentUtil.parseColorCodes(...)} call, not as a replacement for it — e.g.
+     * {@link com.zerog.neoessentials.util.MessageUtil}'s {@code success}/{@code error}/{@code
+     * warning}/{@code info}/{@code component} builders call this on the raw message text before
+     * their own existing {@code parseColorCodes(text, baseStyle)} call, so every command reply
+     * mod-wide gains {@code {animation:...}}/gradient/rainbow support (this was the actual bug
+     * behind "a crate's `{animation:...}` display name shows up literally in chat when you
+     * right-click it" — {@code parseColorCodes} on its own only ever understood {@code &}-codes
+     * and hex, never animation tokens or gradients) without changing anything about those
+     * methods' existing color-inheritance/base-style behavior, which a wholesale swap to {@link
+     * #processTablistText} would have risked.
+     *
+     * <p>A sent chat message can't be "animated" the way a tablist/scoreboard/hologram line can
+     * — those are continuously re-sent to a live packet channel; a chat message is one line
+     * appended to an append-only log, gone the instant it's delivered, with no channel to ever
+     * update it again. So this — like the crate key item name/lore fix — only ever resolves a
+     * <em>snapshot</em> of whichever frame is current the moment the message is actually sent,
+     * not something that visibly animates in someone's chat log afterward. There is no
+     * equivalent of tablist/scoreboard's configurable {@code refreshInterval} to add here for
+     * that reason — it wouldn't have anything to apply to.
+     */
+    public static String resolveDynamicTags(String text) {
+        if (text == null) return null;
+        try {
+            text = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(text);
+            text = processGradients(text);
+            text = processRainbow(text);
+            return text;
+        } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Error resolving dynamic (animation/gradient/rainbow) tags", e);
+            return text;
+        }
+    }
+
+    /**
      * Process rich text formatting tags and convert to colored Component.
      * Used when {@code enableChatEnhancements} is {@code false}.
      * <p>

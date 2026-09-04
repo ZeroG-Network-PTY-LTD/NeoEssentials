@@ -31,16 +31,31 @@ A player can hold crate keys two ways, fully independently of each other:
   to give, drop, or trade between players like any other item; whoever ends up holding it can
   redeem it.
 
-The key item's name (the crate's `displayName` + " Key") supports the same `&`-codes,
-`<gradient:...>`/`<rainbow>`, and `{animation:NAME}` tokens as the crate's hologram text. There's
-no way for a held item to visibly animate in real time the way a hologram/tablist/scoreboard
-does — Minecraft has no channel to keep repainting an item sitting in someone's inventory — so an
-animated name is a snapshot of whichever frame was current the moment that specific key was
-minted, not something that animates while held. Give out a batch of keys over time and each one
-can show a different frame.
+`/crate admin setkey <crate>` sets the key item to *whatever you're holding* — any vanilla or
+modded item, with its full NBT/components (enchantments, custom model data, existing lore, etc)
+preserved, the same way crate rewards support modded items. There's no restriction to a fixed
+item list.
+
+The key item's name (the crate's `displayName` + " Key") and any lore/hover text the item
+already had support the same `&`-codes, `<gradient:...>`/`<rainbow>`, and `{animation:NAME}`
+tokens as the crate's hologram text and GUI titles. There's no way for a held item to visibly
+animate in real time the way a hologram/tablist/scoreboard does — Minecraft has no channel to
+keep repainting an item sitting in someone's inventory — so an animated name/lore is a snapshot
+of whichever frame was current the moment that specific key was minted, not something that
+animates while held. Give out a batch of keys over time and each one can show a different frame.
 
 Right-clicking a crate block prefers a valid physical key in your hand first, and only falls
 back to your virtual balance if you aren't holding one.
+
+### Animations in chat
+
+`{animation:NAME}`/`<gradient:...>`/`<rainbow>` also resolve in every chat message this mod
+sends (crate open/error messages, and every other command reply mod-wide) — not just tablist/
+scoreboard/holograms. The same real-time-animation limit applies here too, though, more
+strictly: a chat message is one line appended to an append-only log, delivered once and never
+touched again — there's no packet channel to "animate" it afterward the way a tablist/scoreboard
+line can be continuously re-sent, so there's no equivalent `refreshInterval` to configure for
+chat. Each message just resolves whichever frame is current at the exact moment it's sent.
 
 ## Config (`crates.json`)
 
