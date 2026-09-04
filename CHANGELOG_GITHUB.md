@@ -391,5 +391,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   vanilla **or modded** item as a crate's key — it copies the exact `ItemStack` you're holding,
   full NBT/data components included, via the same serializer crate rewards use. No restriction to
   a fixed item list.
+- **An animation frame's `<gradient:...>`/`<rainbow>` syntax was silently stripped in chat** unless
+  `chat.richText.enabled` was separately turned on (off by default) — that config exists to gate a
+  *player* typing raw tag syntax directly into their own message, but was also blocking
+  admin-authored `animations.json` content, which tablist/hologram have always rendered
+  unconditionally. An animation using gradients would render correctly in the tablist/hologram it
+  was also used in, but show up flattened/stripped the moment the same `{animation:NAME}` was used
+  in chat. Fixed — animation-frame gradients/rainbow now always render in chat, matching
+  tablist/hologram; the config still gates a player's own raw `<gradient:...>` typed directly.
 
 ---
