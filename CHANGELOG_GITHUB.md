@@ -130,6 +130,16 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   — now configurable via `hologram.refreshInterval`/`animationInterval` in `config.json` (in
   server ticks, same convention as tablist/scoreboard's `refreshInterval`), defaulting to `20`/
   `1` to match the previous hardcoded behavior exactly. Applies with `/neoe reload`.
+- New per-board `refreshMultiplier` (`scoreboard.json`, default `1`) lets one scoreboard board
+  cycle its own title/line animation frames slower than every other board (e.g. `3` = a third as
+  often) without touching the global `refreshInterval` that still governs everything else — the
+  same per-item override precedent `animations.json`'s per-animation `frameDuration` and
+  `leaderboard.json`'s per-board `refreshInterval` already set. Holograms already had an
+  equivalent per-hologram `refreshInterval`/`refreshinterval` command and per-line
+  `animFrameIntervalTicks` (`/hologram addframes`) — nothing new needed there.
+- Default `refreshInterval` for tablist/scoreboard/hologram tightened from 20 ticks (1/sec) to 10
+  ticks (2/sec) — noticeably smoother out of the box, still cheap. Only affects fresh installs;
+  an existing config keeps whatever value it already has, same as any other config default.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
@@ -399,5 +409,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   was also used in, but show up flattened/stripped the moment the same `{animation:NAME}` was used
   in chat. Fixed — animation-frame gradients/rainbow now always render in chat, matching
   tablist/hologram; the config still gates a player's own raw `<gradient:...>` typed directly.
+- **`/neoe reload` never actually reloaded `leaderboard.json`** — every sibling system's refresh
+  interval/config was already live-reloadable via `/neoe reload` (tablist, scoreboard, hologram),
+  but leaderboard boards only picked up config edits via the separate `/leaderboard reload`
+  command. Editing a board's `refreshInterval` (or anything else in `leaderboard.json`) and
+  running `/neoe reload` silently did nothing until `/leaderboard reload` was run specifically.
+  Fixed — `/neoe reload` now reloads leaderboard config too.
 
 ---

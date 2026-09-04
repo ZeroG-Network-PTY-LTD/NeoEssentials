@@ -51,6 +51,10 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Hologram refresh/animation tick rates were hardcoded — now configurable via
   `hologram.refreshInterval`/`animationInterval` in `config.json`, same convention as tablist/
   scoreboard's `refreshInterval`. Applies with `/neoe reload`.
+- New per-board `refreshMultiplier` in `scoreboard.json` (default 1) lets one board cycle its
+  animation frames slower than the rest without touching the global refresh rate. Default
+  `refreshInterval` for tablist/scoreboard/hologram tightened from 20 to 10 ticks (smoother out
+  of the box) — only affects fresh installs, existing configs are untouched.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
@@ -157,5 +161,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   `chat.richText.enabled` was separately turned on (off by default) — tablist/hologram always
   rendered them regardless of that setting. Fixed — animation gradients/rainbow now always render
   in chat too; the config still gates a player typing raw gradient tags themselves.
+- `/neoe reload` never actually reloaded `leaderboard.json` (only the dedicated `/leaderboard
+  reload` did) — every sibling system's refresh interval already worked via `/neoe reload` except
+  this one. Fixed.
 
 ---
