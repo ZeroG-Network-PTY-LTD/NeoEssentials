@@ -158,11 +158,18 @@ public class ScoreboardManager {
                 }
             }
 
-            // Force a fresh send for everyone after reload — same reasoning as
-            // TablistManager.loadConfig() clearing its dirty cache.
+            // Force a fresh send of CONTENT for everyone after reload — same reasoning as
+            // TablistManager.loadConfig() clearing its dirty cache. Deliberately does NOT
+            // clear `active`: that map tracks whether a player's client already has the
+            // "ne_sidebar" objective registered, which reload doesn't change. Clearing it too
+            // used to make the very next update think every currently-displayed player needed
+            // a fresh METHOD_ADD — but the client already has that objective from before, and
+            // vanilla's ClientPacketListener.handleAddObjective throws (disconnecting the
+            // player with "Network Protocol Error") when told to add one that already exists.
+            // Leaving `active` alone makes the next update correctly take the METHOD_CHANGE +
+            // per-slot diff path instead, refreshing content without re-adding anything.
             lastTitle.clear();
             lastLines.clear();
-            active.clear();
             tickCounter = 0;
             animFrame = 0;
 
