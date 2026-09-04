@@ -112,5 +112,12 @@ migration history) is not carried over.
 - A nicknamed player still showed their real IGN in tab to anyone who joined the server after
   the nickname was set — every join now re-syncs everyone's nickname overrides, not just the
   joining player's own.
+- `/neoe reload` (and `/scoreboard reload`) could kick every player seeing the sidebar
+  scoreboard with a fatal "Network Protocol Error" — fixed.
+- The permission system couldn't recover from a failed boot init without a full restart (kept
+  logging `PermissionManager is null` all session) — `/neoe reload` now re-initializes it from
+  scratch when that happens instead of failing the same way forever.
+- The "config splitting available"/"legacy data files" admin notices nagged on every single
+  restart forever — each now shows once per install instead of once per session.
 
 ---
