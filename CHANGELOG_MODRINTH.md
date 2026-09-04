@@ -122,5 +122,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   of just once, closing the timing window entirely.
 - `/crate admin create` didn't say where the new crate went — now points to
   `config/neoessentials/crates.json`.
+- `/scoreboard reload` never refreshed `animations.json` — only `/tablist reload` did. Editing
+  an animation and reloading via the scoreboard command left the old frames showing (raw
+  `{animation:...}`/gradient text, unformatted) until a `/tablist reload` also happened to run.
 
 ---

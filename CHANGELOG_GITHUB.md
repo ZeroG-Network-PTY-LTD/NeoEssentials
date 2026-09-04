@@ -323,5 +323,12 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   to `config/neoessentials/crates.json` (a standalone file, unaffected by split-config mode),
   separate from the runtime data (keys/blocks/history) under `neoessentials/store/`. The success
   message now says so.
+- `/scoreboard reload` (and the scoreboard-only block inside `/neoe reload`) never refreshed
+  `animations.json` — only `/tablist reload` did, since that's the only place that happened to
+  call `AnimationManager.loadConfig()`. Editing an animation's frames and reloading specifically
+  via the scoreboard command left the old frames in memory (showing the raw `<gradient:...>` /
+  `{animation:...}` text unformatted) until a `/tablist reload` also happened to run. Holograms
+  needed no separate fix — they already read `AnimationManager` live with no caching of their
+  own, so they pick this up automatically too.
 
 ---
