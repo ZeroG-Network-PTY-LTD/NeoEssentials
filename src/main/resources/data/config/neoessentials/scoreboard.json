@@ -13,7 +13,7 @@
     "enabled": true,
 
     // How often the scoreboard updates in ticks (20 = 1s). Lower = smoother, more traffic.
-    "refreshInterval": 20,
+    "refreshInterval": 10,
 
     // Ticks to wait after a player joins before showing them a board (avoids a flash of
     // content during the join sequence).
@@ -39,6 +39,12 @@
      * always matches, so give it priority 0 and keep it last to act as the fallback.
      * Condition grammar: "perm:some.node", "world:name", "{placeholder} == value",
      * "{placeholder} != value" — see ConditionEvaluator for the exact rules.
+     *
+     * Optional per-board "refreshMultiplier" (integer, default 1): this board's own
+     * title/line animation frames only advance once every N global refresh cycles instead
+     * of every cycle — e.g. 3 on a board built from an expensive placeholder cycles its
+     * frames a third as often as every other board, without slowing the whole scoreboard
+     * system down (that's still controlled by the top-level "refreshInterval" above).
      */
     "boards": [
       {

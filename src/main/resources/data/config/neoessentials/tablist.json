@@ -20,7 +20,7 @@
     "independentMode": true,
 
     // How often the tablist header/footer updates in ticks (20 = 1 s). Lower = smoother, more traffic.
-    "refreshInterval": 20,
+    "refreshInterval": 10,
 
     /* Color / formatting reference:
      *   &0–&9, &a–&f    legacy color codes (black → white)

@@ -26,7 +26,7 @@
   // motion — there's no benefit setting it below 1, since an animation's own frameDuration is
   // already clamped to a 50ms (1-tick) minimum. Apply changes with "/neoe reload".
   "hologram": {
-    "refreshInterval": 20,
+    "refreshInterval": 10,
     "animationInterval": 1
   },
 
