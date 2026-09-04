@@ -415,6 +415,21 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_hologram", fMsg));
             }
 
+            // Reload LeaderboardConfigLoader (leaderboard.json — was missing, so editing a
+            // board's refreshInterval/definition and running /neoe reload silently did nothing;
+            // only the dedicated /leaderboard reload picked it up, unlike every sibling system
+            // above which /neoe reload already covers).
+            totalCount++;
+            try {
+                com.zerog.neoessentials.leaderboard.config.LeaderboardConfigLoader.load();
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Leaderboard config reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload leaderboard config: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_leaderboard", fMsg));
+            }
+
             // Reload WorthManager (item sell prices)
             totalCount++;
             try {

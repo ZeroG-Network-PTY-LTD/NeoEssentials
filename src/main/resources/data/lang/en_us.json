@@ -2008,6 +2008,7 @@
     "commands.neoessentials.root.reload_error_tablist": "Failed to reload tablist system: {0}",
     "commands.neoessentials.root.reload_error_scoreboard": "Failed to reload scoreboard system: {0}",
     "commands.neoessentials.root.reload_error_hologram": "Failed to reload hologram scheduler: {0}",
+    "commands.neoessentials.root.reload_error_leaderboard": "Failed to reload leaderboard config: {0}",
     "commands.neoessentials.root.reload_error_economy": "Failed to reload economy system: {0}",
     "commands.neoessentials.root.reload_error_worth": "Failed to reload worth system: {0}",
     "commands.neoessentials.root.reload_error_rules": "Failed to reload rules: {0}",
