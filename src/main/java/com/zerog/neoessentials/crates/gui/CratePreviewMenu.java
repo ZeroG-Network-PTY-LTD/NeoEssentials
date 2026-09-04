@@ -82,11 +82,23 @@ public class CratePreviewMenu extends AbstractContainerMenu {
 
         int totalPages = Math.max(1, (int) Math.ceil(rewards.size() / (double) PAGE_SIZE));
         for (int i = 45; i < 54; i++) display.forceSetItem(i, ItemStack.EMPTY);
-        display.forceSetItem(48, page > 0             ? AuctionGuiHelper.prevPageItem() : AuctionGuiHelper.prevPageBlockedItem());
-        display.forceSetItem(49, AuctionGuiHelper.closeItem());
-        display.forceSetItem(50, page + 1 < totalPages ? AuctionGuiHelper.nextPageItem() : AuctionGuiHelper.nextPageBlockedItem());
-        for (int i : new int[]{45, 46, 47, 51, 52, 53}) display.forceSetItem(i, AuctionGuiHelper.fillerItem());
+        setGhostItem(48, page > 0             ? AuctionGuiHelper.prevPageItem() : AuctionGuiHelper.prevPageBlockedItem());
+        setGhostItem(49, AuctionGuiHelper.closeItem());
+        setGhostItem(50, page + 1 < totalPages ? AuctionGuiHelper.nextPageItem() : AuctionGuiHelper.nextPageBlockedItem());
+        for (int i : new int[]{45, 46, 47, 51, 52, 53}) setGhostItem(i, AuctionGuiHelper.fillerItem());
         broadcastChanges();
+    }
+
+    /** Same as {@code display.forceSetItem}, but also marks the stack as a ghost first — for
+     *  the nav-button/filler stacks built by {@link AuctionGuiHelper}, which (unlike reward
+     *  icons via {@link #buildRewardStack}) don't already go through {@link CrateGhostItemGuard}
+     *  on their own. Without this, those buttons were real, un-marked items the ghost sweep
+     *  never touched — a client-side "pull items out of the open GUI" mod could steal (and
+     *  duplicate) a close/prev/next button or a filler pane just as easily as a reward icon. */
+    private void setGhostItem(int slot, ItemStack stack) {
+        stack = stack.copy();
+        CrateGhostItemGuard.mark(stack);
+        display.forceSetItem(slot, stack);
     }
 
     private ItemStack buildRewardStack(CrateReward reward, double totalWeight) {
