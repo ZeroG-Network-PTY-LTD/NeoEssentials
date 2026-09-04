@@ -103,6 +103,29 @@ All color and formatting tags are supported in `header`, `footer`, `playerFormat
 | `{newline}` | Line break `\n` |
 | `{bar}` | Decorative strikethrough separator |
 
+### Multi-line frames
+
+Vanilla's tab list header/footer already renders embedded `\n` as a real line break — you can
+either drop `{newline}` into a plain string frame:
+
+```json
+"header": "&6&lWelcome!{newline}&7{online}/{max} online"
+```
+
+or, for a frame with several lines, write it as its own JSON array of lines instead of one long
+string — the outer array is still the list of animation frames (unchanged), but any *element* of
+it can itself be an array of lines, which get joined with `\n` for you:
+
+```json
+"header": [
+  ["&6&lWelcome!", "&7{online}/{max} online"],
+  ["&b&lHave fun!", "&7TPS: {tps}"]
+]
+```
+
+That's two animation frames, each two lines tall. A flat array of plain strings (no nesting)
+keeps meaning exactly what it always has — multiple single-line frames, not lines of one frame.
+
 ### BTLP-Style (Proxy & Network)
 
 | Placeholder | Description |
@@ -243,8 +266,8 @@ Any `{neoessentials_*}` token registered with the PlaceholderAPI system is also 
 | `enabled` | boolean | `true` | Enable/disable the whole system |
 | `refreshInterval` | int | `20` | Update interval in ticks (20 = 1 s) |
 | `independentMode` | boolean | `true` | NeoEssentials owns the tablist entirely |
-| `header` | string or array | — | Header frame(s) |
-| `footer` | string or array | — | Footer frame(s) |
+| `header` | string or array | — | Header frame(s) — see [Multi-line frames](#multi-line-frames) |
+| `footer` | string or array | — | Footer frame(s) — see [Multi-line frames](#multi-line-frames) |
 | `playerFormat` | string | `"&f{prefix}&r{player}{suffix}"` | Player row display format |
 | `hideVanished` | boolean | `true` | Exclude vanished players from `{online}` |
 | `showAfkIndicator` | boolean | `true` | Append `afkSuffix` to AFK players |
