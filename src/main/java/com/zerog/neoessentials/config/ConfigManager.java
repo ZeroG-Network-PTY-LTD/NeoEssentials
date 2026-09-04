@@ -1358,7 +1358,7 @@ public class ConfigManager {
                         configCache.put(configName, fileObj);
                         LOGGER.debug("Config '{}' loaded directly from {}.json (flat layout fallback)", configName, configName);
                         return fileObj;
-                    } catch (IOException fallbackEx) {
+                    } catch (IOException | com.google.gson.JsonParseException fallbackEx) {
                         LOGGER.warn("Could not read fallback config file {}.json: {}", configName, fallbackEx.getMessage());
                     }
                 }
@@ -1374,8 +1374,19 @@ public class ConfigManager {
             JsonObject obj = parseJsonWithComments(reader).getAsJsonObject();
             configCache.put(configName, obj);
             return obj;
-        } catch (IOException e) {
-            LOGGER.error("Failed to read config file {}: {}", configName, e.getMessage());
+        } catch (IOException | com.google.gson.JsonParseException e) {
+            // A malformed config file (stray comma, unterminated brace/object from a manual
+            // edit, a crash mid-write, etc.) must never take the whole server down with it —
+            // this used to only catch IOException, but Gson's parser throws JsonSyntaxException
+            // (a JsonParseException, not an IOException) for malformed JSON, which went uncaught
+            // all the way up through whichever caller happened to read this config, crashing the
+            // server on the very next server tick for any config read every tick (e.g. the
+            // scoreboard module-enabled check). Falling back to an empty config just quietly
+            // disables whatever that config drives instead.
+            LOGGER.error("Failed to parse config file {} — it may contain invalid JSON (check the exact " +
+                "location in the error below). Falling back to defaults for it until this is fixed; a " +
+                "'.backup' copy from the last successful config upgrade may exist next to it. {}",
+                configName, e.getMessage());
             JsonObject empty = new JsonObject();
             configCache.put(configName, empty);
             return empty;
