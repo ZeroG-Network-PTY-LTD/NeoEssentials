@@ -272,5 +272,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   inventory, and even a key item obtained some other way still silently required virtual
   balance to redeem — a traded or gifted key wouldn't have worked for whoever received it. Both
   fixed: see `/crate key giveitem` above.
+- **A malformed config file (e.g. a stray/unterminated brace from a manual edit) could crash the
+  entire server**, repeatedly, on the very next tick — `ConfigManager.getConfig()` only caught
+  `IOException` around the JSON parse, but Gson throws `JsonSyntaxException` (a
+  `JsonParseException`, not an `IOException`) for invalid JSON, which went uncaught all the way
+  up through whatever caller happened to read that config. For a config read every tick (the
+  scoreboard module-enabled check), that meant an unrecoverable crash loop. It now falls back to
+  an empty config for whatever that file drives and logs a clear, actionable error instead of
+  bringing the server down.
 
 ---

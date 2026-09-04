@@ -105,5 +105,8 @@ migration history) is not carried over.
 - Physical crate key items were never actually giveable, and even a key item obtained some
   other way still required virtual balance to redeem — both fixed (see `/crate key giveitem`
   above).
+- A malformed config file (e.g. a stray brace from a manual edit) could crash the entire server
+  repeatedly — a JSON parse error now falls back to defaults for whatever that file drives
+  instead of taking the server down.
 
 ---
