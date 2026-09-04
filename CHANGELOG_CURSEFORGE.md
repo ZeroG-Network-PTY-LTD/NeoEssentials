@@ -142,5 +142,16 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   same as the permission system's existing self-heal.
 - `/pay` and `/eco give|take` crashed on every use whenever `security.enableInputValidation`
   was turned off — a validator returned the wrong type in that bypass path — fixed.
+- `{animation:NAME}`/gradient/rainbow tags never resolved in chat — every command reply used a
+  color-code-only parser that didn't know those tags existed, so they showed as raw literal text
+  (reported for a crate's name showing `{animation:animation}` unresolved when opened). Fixed
+  mod-wide at the shared message-building code, not just for crates. Note: a sent chat message is
+  a permanent snapshot of whichever animation frame was current the instant it was sent — chat
+  has no live-update channel like tablist/scoreboard/holograms do, so there's no
+  `intervalMs`/`refreshInterval` equivalent for it.
+- Crate GUI titles and a crate key's lore/hover text now also resolve animation/gradient tags,
+  matching the key's name (fixed earlier) — same one-time-snapshot behavior.
+- Confirmed, not a bug: crate keys (`/crate admin setkey`) already support any vanilla or modded
+  item, full NBT/data included — no fixed item list.
 
 ---
