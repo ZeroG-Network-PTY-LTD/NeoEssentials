@@ -136,6 +136,6 @@ public class CratePreviewMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         ghostGuard.shutdown();
-        CrateGhostItemGuard.sweep(viewer);
+        CrateGhostItemGuard.sweepWithGracePeriod(viewer);
     }
 }
