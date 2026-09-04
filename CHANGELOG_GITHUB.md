@@ -282,5 +282,12 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   scoreboard module-enabled check), that meant an unrecoverable crash loop. It now falls back to
   an empty config for whatever that file drives and logs a clear, actionable error instead of
   bringing the server down.
+- **A nicknamed player still showed their real IGN in tab to anyone who joined the server after
+  the nickname was set** (or after their last prefix/suffix change) — the tab-list override
+  packet was only ever broadcast to whoever was already connected at that moment, and a
+  player's own `onPlayerJoin` handler only restored *their own* nickname, never re-sent everyone
+  *else's* already-active overrides to them. Every join now re-broadcasts every currently
+  nicknamed player's override (a harmless no-op for clients already in sync), the same sweep
+  already used on server start.
 
 ---

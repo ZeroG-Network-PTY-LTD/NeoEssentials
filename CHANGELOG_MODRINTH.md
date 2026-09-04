@@ -107,5 +107,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - A malformed config file (e.g. a stray brace from a manual edit) could crash the entire server
   repeatedly — a JSON parse error now falls back to defaults for whatever that file drives
   instead of taking the server down.
+- A nicknamed player still showed their real IGN in tab to anyone who joined the server after
+  the nickname was set — every join now re-syncs everyone's nickname overrides, not just the
+  joining player's own.
 
 ---
