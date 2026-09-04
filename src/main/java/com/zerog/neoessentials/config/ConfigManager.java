@@ -1455,7 +1455,8 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 48);          // v48 — added general.serverName
+        put(MAIN_CONFIG, 49);          // v49 — added hologram.refreshInterval/animationInterval
+                                        // v48 — added general.serverName
                                         //   (RTP chunk-load lag/crash fix)
         // v46 — added randomTeleportSettings.mode/biomeSearchRadius/
                                         //   biomeSearchStep/biomeMenuItems (RTP biome-select GUI)
@@ -3215,6 +3216,32 @@ public class ConfigManager {
             }
         }
         return "My Server";
+    }
+
+    /** How often holograms recompute placeholders, in server ticks. Default/minimum 1. */
+    public static int getHologramRefreshIntervalTicks() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("hologram")) {
+            JsonObject hologram = config.getAsJsonObject("hologram");
+            if (hologram.has("refreshInterval")) {
+                return Math.max(1, hologram.get("refreshInterval").getAsInt());
+            }
+        }
+        return 20;
+    }
+
+    /** How often holograms advance {@code {animation:NAME}} frames and spin/hover motion, in
+     *  server ticks. Default/minimum 1 — an animation's own frame duration is already clamped
+     *  to a 50ms (1-tick) minimum, so nothing below 1 would ever be visible anyway. */
+    public static int getHologramAnimationIntervalTicks() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("hologram")) {
+            JsonObject hologram = config.getAsJsonObject("hologram");
+            if (hologram.has("animationInterval")) {
+                return Math.max(1, hologram.get("animationInterval").getAsInt());
+            }
+        }
+        return 1;
     }
 
     public static boolean isVotifierModuleEnabled() {

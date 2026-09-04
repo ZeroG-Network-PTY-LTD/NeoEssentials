@@ -47,6 +47,7 @@ public class ConfigSplitter {
     @SuppressWarnings("unused")
     public static final Map<String, String> CONFIG_FILE_MAP = new LinkedHashMap<>() {{
         put("general",       "main.json");   // general.serverName ({server_name} placeholder)
+        put("hologram",      "main.json");   // hologram.refreshInterval/animationInterval
         put("modules",       "main.json");
         put("logging",       "main.json");
         put("storage",       "main.json");   // storage backend (json/yaml/sqlite/mysql) selection
@@ -74,7 +75,7 @@ public class ConfigSplitter {
      * This is the authoritative mapping used for generation and validation.
      */
     public static final Map<String, List<String>> FILE_SECTIONS_MAP = new LinkedHashMap<>() {{
-        put("main.json",          List.of("general", "modules", "logging", "storage", "permissions", "kits", "economy", "localization"));
+        put("main.json",          List.of("general", "hologram", "modules", "logging", "storage", "permissions", "kits", "economy", "localization"));
         put("dashboard.json",     Collections.singletonList("webDashboard"));
         put("commands.json",      Collections.singletonList("commands"));
         put("chat.json",          Collections.singletonList("chat"));
@@ -91,7 +92,10 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          5);  // v5 — added "general" section (general.serverName, the
+        put("main.json",          6);  // v6 — added "hologram" section (refreshInterval/
+                                        //       animationInterval, /neoe reload-able hologram
+                                        //       scheduler tick rates)
+                                        // v5 — added "general" section (general.serverName, the
                                         //       {server_name} placeholder's own config, split out
                                         //       from the MOTD system it used to be wrongly tied to)
                                         // v4 — added "storage" section: like webDashboard below, it
@@ -139,7 +143,7 @@ public class ConfigSplitter {
      * Current monolithic config version — must stay in sync with the JAR's config.json
      * {@code _configVersion} field and {@code ConfigManager.EXPECTED_CONFIG_VERSIONS}.
      */
-    private static final int CURRENT_MAIN_VERSION = 48;
+    private static final int CURRENT_MAIN_VERSION = 49;
 
     // ── Marker ────────────────────────────────────────────────────────────────
 
