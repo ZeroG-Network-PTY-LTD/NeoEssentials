@@ -223,6 +223,24 @@ public class RichTextFormatter {
      * equivalent of tablist/scoreboard's configurable {@code refreshInterval} to add here for
      * that reason — it wouldn't have anything to apply to.
      */
+    /**
+     * Unconditionally processes {@code <gradient:...>}/{@code <rainbow>} syntax — {@code
+     * chat.richText.enabled}/{@code allowGradients}/{@code allowRainbow} gate a PLAYER typing
+     * raw tag syntax directly into their own message (a deliberate spam/performance control,
+     * checked later by {@link #preprocessTags}), not admin-authored content that already made
+     * it into the message via {@code {animation:NAME}} resolution — that should render exactly
+     * like tablist/hologram animation frames do, which have always processed gradients/rainbow
+     * unconditionally (see {@link #processTablistText}). Without this, an animation frame
+     * containing {@code <gradient:...>} silently showed up stripped/literal in chat on any
+     * server that hadn't separately turned richText.enabled on, even though the exact same
+     * animation rendered correctly in the tablist/hologram it was also used in.
+     */
+    public static String processAnimationFrameGradients(String text) {
+        text = processGradients(text);
+        text = processRainbow(text);
+        return text;
+    }
+
     public static String resolveDynamicTags(String text) {
         if (text == null) return null;
         try {
