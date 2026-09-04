@@ -101,7 +101,8 @@ migration history) is not carried over.
   container is locked down, closing it regardless of which mod is doing the pulling. Confirmed
   (via Quark) that some mods don't even need a mutation method — they just read and copy the
   item — so both crate GUIs now also mark every displayed item and sweep it out of your real
-  inventory if it ever ends up there, regardless of how it got there.
+  inventory if it ever ends up there, regardless of how it got there. The preview's close/prev/
+  next buttons and filler panes were missed by the first pass of that marking; fixed too.
 - Physical crate key items were never actually giveable, and even a key item obtained some
   other way still required virtual balance to redeem — both fixed (see `/crate key giveitem`
   above).
