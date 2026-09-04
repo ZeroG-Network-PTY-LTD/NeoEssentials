@@ -140,5 +140,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - The economy system had no way to recover if it never finished initializing at boot (silently
   stopped persisting balances for the rest of that session) — `/neoe reload` now retries it,
   same as the permission system's existing self-heal.
+- `/pay` and `/eco give|take` crashed on every use whenever `security.enableInputValidation`
+  was turned off — a validator returned the wrong type in that bypass path — fixed.
 
 ---

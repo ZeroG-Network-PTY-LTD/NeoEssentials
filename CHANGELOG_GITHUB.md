@@ -362,5 +362,12 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   kind — they just silently never persisted, reverting every account to its starting balance on
   the next restart. `/neoe reload` now retries initialization if it never completed, alongside
   the existing permission self-heal.
+- **`/pay` and `/eco give|take` crashed with a `ClassCastException` on every single use whenever
+  `security.enableInputValidation` was turned off in config.** The bypass path in
+  `InputValidator.validateEconomyAmount()` returned the raw input as a `Double`, but every
+  caller unconditionally reads it back as a `BigDecimal` — found while auditing the rest of the
+  economy system for bugs/gaps after the fixes above. Still guards against `NaN`/infinite input
+  (which `BigDecimal.valueOf()` itself throws on) either way; only the actual min/max/positivity
+  checks are skipped when validation is disabled, which is what "disabled" is supposed to mean.
 
 ---
