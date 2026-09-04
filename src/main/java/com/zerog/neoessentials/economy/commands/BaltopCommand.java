@@ -78,13 +78,26 @@ public class BaltopCommand {
         }
 
         // If cache is stale (>60 s) or empty, rebuild asynchronously
+        boolean triggeredBuild = false;
         if (System.currentTimeMillis() - cacheAge > 60_000L || cachedTop.isEmpty()) {
             refreshCacheAsync(source.getServer());
+            triggeredBuild = true;
         }
 
         List<BaltopEntry> top = cachedTop;
 
         if (top.isEmpty()) {
+            // Distinguish "genuinely no economy data exists yet" from "the cache has simply
+            // never been built before, and the rebuild just kicked off above hasn't finished
+            // yet" — the two were conflated into the same "no data" message, which is actively
+            // misleading on the very first /baltop ever run on a server: the async rebuild is
+            // still in flight (a completely normal, ~instant background task), so the balances
+            // that DO exist just haven't been read into cachedTop yet. Telling the admin
+            // "no data" here reads as "the economy is broken," not "try again in a second."
+            if (triggeredBuild && cacheBuilding.get()) {
+                source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.baltop.building"), false);
+                return 1;
+            }
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.baltop.empty"), false);
             return 1;
         }
@@ -194,6 +207,22 @@ public class BaltopCommand {
         MinecraftServer server = lastServer;
         if (server != null) {
             refreshCacheAsync(server);
+        }
+
+        // The generalized leaderboard system's "money" board (used by {leaderboard_money:...}
+        // placeholders — e.g. a scoreboard/tablist "richest player" line) wraps this exact same
+        // balance data through its own, entirely separate cache (LeaderboardCache), which no
+        // economy-mutating command ever invalidated — only this /baltop-specific cache did. So
+        // a balance change via /eco give|set|take or /pay updated /baltop immediately but left
+        // any {leaderboard_money:...} placeholder showing stale data for up to that board's own
+        // refreshIntervalSeconds (default 60s), reported as "the scoreboard shows the wrong
+        // richest player." Piggybacking the same invalidation here covers every caller of this
+        // method, not just the ones that happen to also touch LeaderboardManager directly.
+        try {
+            var moneyBoard = com.zerog.neoessentials.leaderboard.LeaderboardManager.getInstance().getBoard("money");
+            if (moneyBoard != null) moneyBoard.invalidate();
+        } catch (Exception ignored) {
+            // Leaderboard system not initialized/enabled — nothing to invalidate.
         }
     }
 }
