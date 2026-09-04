@@ -222,9 +222,15 @@ public class LeaderboardCommand {
 
         var pageEntries = cache.getPage(source.getServer(), page, PAGE_SIZE);
         if (pageEntries.isEmpty()) {
-            // Same behavior as the original /baltop: an empty cache reads as "no entries yet"
-            // even on the very first call (where the async rebuild just kicked off and hasn't
-            // finished) — a re-run a moment later shows the real data once the build completes.
+            // getPage() -> getTop() itself kicked off an async rebuild if the cache was stale/
+            // empty (a very first call always is) — that build is typically near-instant but
+            // hasn't necessarily landed yet, so distinguish "genuinely no entries" from
+            // "still building" instead of telling the admin "no entries" when real data exists
+            // and just hasn't been read into the cache yet.
+            if (cache.isBuilding()) {
+                source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.leaderboard.building"), false);
+                return 1;
+            }
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.leaderboard.empty"), false);
             return 1;
         }
