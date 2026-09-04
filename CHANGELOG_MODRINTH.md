@@ -51,6 +51,11 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Hologram refresh/animation tick rates were hardcoded — now configurable via
   `hologram.refreshInterval`/`animationInterval` in `config.json`, same convention as tablist/
   scoreboard's `refreshInterval`. Applies with `/neoe reload`.
+- Live action-bar preview for `{animation:NAME}` typed directly in chat — a message using it
+  already resolved to the current frame at send time but stayed frozen forever after (chat has
+  no way to repaint an already-sent line). Now briefly flashes through a few more frames via the
+  action bar right after sending, so it visibly animates with zero extra chat-history lines —
+  only the one real message is ever logged. Configurable via `chat.animationPreview`.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
