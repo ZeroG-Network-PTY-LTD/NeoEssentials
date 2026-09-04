@@ -109,5 +109,8 @@ migration history) is not carried over.
 - A malformed config file (e.g. a stray brace from a manual edit) could crash the entire server
   repeatedly — a JSON parse error now falls back to defaults for whatever that file drives
   instead of taking the server down.
+- A nicknamed player still showed their real IGN in tab to anyone who joined the server after
+  the nickname was set — every join now re-syncs everyone's nickname overrides, not just the
+  joining player's own.
 
 ---
