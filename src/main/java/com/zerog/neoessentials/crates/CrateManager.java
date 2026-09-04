@@ -112,9 +112,16 @@ public class CrateManager {
         ItemStack stack = crate.keyItem.copyWithCount(count);
         var tag = new net.minecraft.nbt.CompoundTag();
         tag.putString(KEY_NBT_TAG, crate.id);
+        // RichTextFormatter (not the plain ChatComponentUtil.parseColorCodes this used to use)
+        // so crate.displayName can use {animation:NAME}/<gradient:...>/<rainbow>, not just
+        // &-codes — matching what already works in the crate's GUI title and reward messages.
+        // A held item has no live-update channel the way tablist/scoreboard/holograms do,
+        // though — an item sitting in someone's inventory can't be repainted every tick, so an
+        // animated name is a snapshot of whichever frame was current the moment this specific
+        // item was minted, not something that visibly animates while held. "&6" is prefixed so
+        // a plain name with no color of its own still defaults to gold, same as before.
         stack.set(DataComponents.CUSTOM_NAME,
-            com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-                crate.displayName + " Key", net.minecraft.network.chat.Style.EMPTY.withColor(net.minecraft.ChatFormatting.GOLD)));
+            com.zerog.neoessentials.chat.RichTextFormatter.processTablistText("&6" + crate.displayName + " Key"));
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return stack;
     }
