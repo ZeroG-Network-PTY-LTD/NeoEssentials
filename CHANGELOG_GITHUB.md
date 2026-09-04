@@ -266,7 +266,9 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   displayed reward stack in both crate GUIs is now tagged with a hidden marker, and both GUIs
   sweep the viewer's real inventory for marked stacks on a short timer while open plus once more
   on close, deleting any that made it out — mod-agnostic by design, since it doesn't matter which
-  mod or mechanism did the copying.
+  mod or mechanism did the copying. The close/prev/next buttons and filler panes in
+  `/crate preview` (built separately from the reward icons) were missed by the first pass of
+  this marking and were just as stealable — now marked too.
 - Physical crate key items were effectively non-functional — `CrateManager.buildKeyItem` had no
   command that ever called it, so there was no way to actually get one into a player's
   inventory, and even a key item obtained some other way still silently required virtual
