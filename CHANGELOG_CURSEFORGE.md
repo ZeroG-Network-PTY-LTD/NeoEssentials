@@ -120,5 +120,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Closing the crate GUI immediately after using a pull-mod extraction button could still win the
   race and keep the item — closing now sweeps a few more times over the next ~4 seconds instead
   of just once, closing the timing window entirely.
+- `/crate admin create` didn't say where the new crate went — now points to
+  `config/neoessentials/crates.json`.
 
 ---
