@@ -103,5 +103,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Physical crate key items were never actually giveable, and even a key item obtained some
   other way still required virtual balance to redeem — both fixed (see `/crate key giveitem`
   above).
+- A malformed config file (e.g. a stray brace from a manual edit) could crash the entire server
+  repeatedly — a JSON parse error now falls back to defaults for whatever that file drives
+  instead of taking the server down.
 
 ---
