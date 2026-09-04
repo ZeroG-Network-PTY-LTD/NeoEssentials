@@ -31,6 +31,14 @@ A player can hold crate keys two ways, fully independently of each other:
   to give, drop, or trade between players like any other item; whoever ends up holding it can
   redeem it.
 
+The key item's name (the crate's `displayName` + " Key") supports the same `&`-codes,
+`<gradient:...>`/`<rainbow>`, and `{animation:NAME}` tokens as the crate's hologram text. There's
+no way for a held item to visibly animate in real time the way a hologram/tablist/scoreboard
+does — Minecraft has no channel to keep repainting an item sitting in someone's inventory — so an
+animated name is a snapshot of whichever frame was current the moment that specific key was
+minted, not something that animates while held. Give out a batch of keys over time and each one
+can show a different frame.
+
 Right-clicking a crate block prefers a valid physical key in your hand first, and only falls
 back to your virtual balance if you aren't holding one.
 
