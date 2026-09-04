@@ -916,7 +916,7 @@
     "commands.neoessentials.crate.keys_taken":  "§aTook §e{0}x {1} §akey(s) from §e{2}§a.",
     "commands.neoessentials.crate.key_item_given":  "§aGave §e{0}x {1} Key §aitem(s) to §e{2}§a.",
     "commands.neoessentials.crate.already_exists":  "§cA crate named §e{0} §calready exists.",
-    "commands.neoessentials.crate.created":  "§aCreated crate §e{0}§a.",
+    "commands.neoessentials.crate.created":  "§aCreated crate §e{0}§a. Saved to §econfig/neoessentials/crates.json§a — edit rewards there, or with §e/crate admin addreward§a.",
     "commands.neoessentials.crate.deleted":  "§aDeleted crate §e{0}§a.",
     "commands.neoessentials.crate.hold_item":  "§cHold the item you want to use in your main hand first.",
     "commands.neoessentials.crate.reward_added":  "§aAdded your held item as a reward for §e{0}§a.",
