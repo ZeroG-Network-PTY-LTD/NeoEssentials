@@ -373,5 +373,23 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   audit — early prototypes with zero references anywhere, both fully superseded before ever
   being wired up (by `EconomyManager`'s own balance cache, and by `BaltopCommand`'s async
   cached/paginated leaderboard, respectively). No behavior change.
+- **`{animation:NAME}`/`<gradient:...>`/`<rainbow>` tags never resolved in chat** — every command
+  reply (`/pay`, `/crate open`, etc.) built its message through a color-code-only parser that had
+  no idea those tags existed, so they showed up in chat as raw literal text instead of animating.
+  Reported specifically for a crate's `displayName` (set to `{animation:animation}`) showing
+  unresolved when a crate was opened. Fixed at the shared message-building foundation used by
+  nearly every command in the mod, so this is fixed mod-wide, not just for crates — each message
+  now resolves to whichever animation frame is current at the exact moment it's sent. Chat has no
+  live-update channel (unlike tablist/scoreboard/holograms, which get continuously re-sent), so a
+  sent message is a permanent snapshot of that instant, not a continuously-animating one — there's
+  no `intervalMs`/`refreshInterval` equivalent for chat, and there can't be.
+- Crate GUI titles (preview and opening screens) and a crate key item's lore/hover text now also
+  resolve `{animation:NAME}`/gradients, matching the key item's name (fixed earlier). Same
+  one-time-snapshot caveat as above applies — the title/lore is fixed to whatever frame was
+  current the moment the GUI opened or the key was minted.
+- Confirmed (not a bug, documented for clarity): `/crate admin setkey` already supports any
+  vanilla **or modded** item as a crate's key — it copies the exact `ItemStack` you're holding,
+  full NBT/data components included, via the same serializer crate rewards use. No restriction to
+  a fixed item list.
 
 ---
