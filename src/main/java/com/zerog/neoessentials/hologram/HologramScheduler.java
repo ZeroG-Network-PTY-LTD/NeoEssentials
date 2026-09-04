@@ -24,16 +24,26 @@ public class HologramScheduler {
     });
     private static ScheduledFuture<?> refreshTask;
     private static ScheduledFuture<?> animTask;
-    /** Start periodic refresh (every second) and animation ticking (every 50ms = 1 tick). */
+    /** Start periodic refresh and animation ticking, at the tick rates configured under
+     *  {@code hologram.refreshInterval}/{@code animationInterval} in config.json (1 tick = 50ms;
+     *  defaults 20/1, matching the previous hardcoded 1s/50ms behavior exactly). */
     public static void start() {
         stop();
-        refreshTask = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2, 1, TimeUnit.SECONDS);
-        animTask    = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, 50, TimeUnit.MILLISECONDS);
-        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started.");
+        long refreshMs = com.zerog.neoessentials.config.ConfigManager.getHologramRefreshIntervalTicks() * 50L;
+        long animMs = com.zerog.neoessentials.config.ConfigManager.getHologramAnimationIntervalTicks() * 50L;
+        refreshTask = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
+        animTask    = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
+        NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started (refresh every {}ms, animation every {}ms).", refreshMs, animMs);
     }
     public static void stop() {
         if (refreshTask != null) { refreshTask.cancel(false); refreshTask = null; }
         if (animTask    != null) { animTask.cancel(false);    animTask    = null; }
+    }
+    /** Restarts the scheduler so a changed {@code hologram.refreshInterval}/{@code
+     *  animationInterval} takes effect without a full server restart — used by {@code /neoe
+     *  reload}. */
+    public static void restart() {
+        start();
     }
     // ── Refresh (placeholder resolution) ─────────────────────────────────────
     private static void runRefresh() {
