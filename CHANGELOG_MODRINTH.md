@@ -43,6 +43,8 @@ migration history) is not carried over.
   findable in tab-completion), fully customizable via any `/hologram` subcommand.
 - Left-clicking a physical crate block now opens the no-cost reward-odds preview (shift+click to
   still break it).
+- `/crate key giveitem <player> <crate> <amount>` gives real, tradeable physical crate key
+  items — no virtual balance required to redeem one.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected
@@ -97,5 +99,8 @@ migration history) is not carried over.
   duplicate) items straight out of `/crate preview`/the opening reveal GUI — an initial fix
   missed the exact method these mods use to blank the slot; now every mutation path on the
   container is locked down, closing it regardless of which mod is doing the pulling.
+- Physical crate key items were never actually giveable, and even a key item obtained some
+  other way still required virtual balance to redeem — both fixed (see `/crate key giveitem`
+  above).
 
 ---
