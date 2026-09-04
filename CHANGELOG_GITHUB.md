@@ -311,5 +311,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   block on every restart forever. Each is now persisted once actually shown to an admin
   (`neoessentials/admin_notices_shown.json`) and never queued again after that; the underlying
   state is still checkable anytime via the relevant status command.
+- **Closing the crate GUI immediately after using a pull-mod extraction button could still win
+  the race and keep the item.** The ghost-item sweep from the previous fix stops the instant the
+  GUI closes, and the single sweep that ran at close time assumed the extraction was already
+  fully processed server-side by then — pressing E/Esc right after clicking a pull button could
+  land the copy a tick or two *after* that close-triggered sweep, with no menu left open for the
+  periodic sweep to ever catch it. Closing now runs a few extra sweeps over the following ~4
+  seconds instead of just one, closing the window regardless of how fast the close follows the
+  extraction.
 
 ---
