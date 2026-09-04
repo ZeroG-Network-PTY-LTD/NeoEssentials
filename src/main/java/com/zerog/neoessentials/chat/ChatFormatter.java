@@ -144,6 +144,13 @@ public class ChatFormatter {
             // have no {neoessentials_*} equivalent — lets tablist/hologram snippets be reused in chat.
             formatted = resolveShortPlaceholders(formatted, player, resolvedChannel);
             formatted = com.zerog.neoessentials.tablist.AnimationManager.getInstance().resolveAnimations(formatted);
+            // Gradients/rainbow that came IN via an animation frame are admin-authored content
+            // (from animations.json), not something the player typed — render them the same way
+            // tablist/hologram already do, regardless of chat.richText.enabled (that config only
+            // gates a player's own raw <gradient:...> typed directly, handled later below by
+            // preprocessTags()). Without this an animation using gradients showed up stripped in
+            // chat on any server that hadn't separately opted into richText.enabled.
+            formatted = RichTextFormatter.processAnimationFrameGradients(formatted);
             if (debugEnabled) {
                 NeoLog.info(LOGGER, LogCategory.CHAT, "After short-form placeholders/animations: [{}]", formatted);
             }
