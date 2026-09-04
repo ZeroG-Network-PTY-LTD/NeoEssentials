@@ -135,5 +135,12 @@ migration history) is not carried over.
 - `/scoreboard reload` never refreshed `animations.json` — only `/tablist reload` did. Editing
   an animation and reloading via the scoreboard command left the old frames showing (raw
   `{animation:...}`/gradient text, unformatted) until a `/tablist reload` also happened to run.
+- `/eco give|set|take`/`/pay` never invalidated the leaderboard "money" board (only `/baltop`'s
+  own cache), so a balance change could leave a scoreboard "richest player" line stale for up
+  to 60s — fixed. `/baltop` and `/leaderboard <board>` also both misreported "no data" on the
+  very first call ever, even with real data present — fixed.
+- The economy system had no way to recover if it never finished initializing at boot (silently
+  stopped persisting balances for the rest of that session) — `/neoe reload` now retries it,
+  same as the permission system's existing self-heal.
 
 ---
