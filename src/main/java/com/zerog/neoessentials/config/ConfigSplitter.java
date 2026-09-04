@@ -550,6 +550,7 @@ public class ConfigSplitter {
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Run:  /neoe config status  to see the current config state.");
             NeoLog.info(LOGGER, LogCategory.CONFIG, "════════════════════════════════════════════════════════");
             com.zerog.neoessentials.util.AdminNotices.queue(
+                "config_split",
                 "commands.neoessentials.admin_notice.config_split.title",
                 "commands.neoessentials.admin_notice.config_split.large_config",
                 "commands.neoessentials.admin_notice.config_split.benefit",
