@@ -74,7 +74,28 @@ public class EconomyManager {
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
 
     private EconomyManager() {
-        // Check global config for module enable
+        initializeIfEnabled();
+    }
+
+    /**
+     * Loads balances and schedules the periodic maintenance tasks — factored out of the
+     * constructor so {@link #reinitialize()} can retry it later without needing to recreate
+     * the singleton (impossible: {@code store}/the legacy file handles/etc are already final).
+     *
+     * <p>If {@link ConfigManager#isEconomyEnabled()} happens to read {@code false} at the exact
+     * moment this singleton is first touched — e.g. because {@code config.json} hadn't finished
+     * being parsed yet during a rocky boot — {@link #initialized} is left {@code false}
+     * <em>permanently</em>, since a singleton only ever constructs once. Every balance mutation
+     * method still works after that (they only touch the in-memory {@code balancesCache}), but
+     * {@link #queueAsyncSave} silently no-ops whenever {@code !initialized} — so the economy
+     * would look completely normal in-game for the rest of that server's uptime while never
+     * persisting a single balance change, and every account would revert to its starting
+     * balance on the next restart. This has no loud failure mode of its own (unlike
+     * {@code PermissionSystem}'s "EMERGENCY MODE" banner), which is exactly why it needs the
+     * same kind of {@code /neoe reload}-triggered recovery path that permissions already got.
+     */
+    private void initializeIfEnabled() {
+        if (initialized) return;
         if (!ConfigManager.isEconomyEnabled()) {
             // Economy is globally disabled, do not load balances or settings.
             // balancesCache is still a valid (empty) map thanks to the field initializer —
@@ -82,7 +103,6 @@ public class EconomyManager {
             return;
         }
         // Configuration is loaded automatically by ConfigManager
-        balancesCache = new ConcurrentHashMap<>();
         migrateLegacyFilesIfNeeded();
         loadBalances();
 
@@ -91,6 +111,23 @@ public class EconomyManager {
         // Schedule inactive account cleanup every hour (no time window)
         saveExecutor.scheduleAtFixedRate(this::cleanupInactiveAccounts, 1, 1, TimeUnit.HOURS);
         initialized = true;
+    }
+
+    /**
+     * Retries {@link #initializeIfEnabled()} if the economy system never actually finished
+     * initializing (see that method's javadoc) — a no-op if it's already initialized, or if
+     * economy is still/genuinely disabled. Used by {@code /neoe reload} so a config problem
+     * fixed after boot can be picked up without a full server restart, matching
+     * {@code PermissionSystem.reinitialize()}'s equivalent recovery path.
+     *
+     * @return {@code true} if this call actually completed initialization (i.e. it had
+     *         previously failed to and is now fixed), {@code false} if it was already
+     *         initialized or economy is still disabled.
+     */
+    public boolean reinitialize() {
+        if (initialized) return false;
+        initializeIfEnabled();
+        return initialized;
     }
 
     // ── Load / persist ───────────────────────────────────────────────────────
