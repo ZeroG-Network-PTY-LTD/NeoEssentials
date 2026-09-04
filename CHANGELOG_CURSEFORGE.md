@@ -166,5 +166,10 @@ migration history) is not carried over.
 - `/neoe reload` never actually reloaded `leaderboard.json` (only the dedicated `/leaderboard
   reload` did) — every sibling system's refresh interval already worked via `/neoe reload` except
   this one. Fixed.
+- `{animation:NAME}` froze on its first frame forever, mod-wide (holograms, scoreboard, chat,
+  crate keys), on any server with the tablist module disabled — the only thing that ever advanced
+  the animation clock was tablist's own tick handler, which never ran once tablist was off. No
+  hologram/scoreboard interval setting could fix this since the clock itself never moved. Fixed —
+  animations now advance every tick regardless of whether tablist is enabled.
 
 ---
