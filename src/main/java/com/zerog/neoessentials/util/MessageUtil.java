@@ -749,10 +749,12 @@ public class MessageUtil {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Component created - Key: {}, Message: '{}'", key, message);
         }
         // Template args (e.g. a crate/kit/board display name from config, which routinely
-        // carries its own "&"-coded color) need the same &-code parsing as the rest of the
-        // template text — a plain Component.literal() left them showing up as raw "&7" in
-        // chat instead of being rendered as color.
-        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(message);
+        // carries its own "&"-coded color, {animation:NAME} token, or <gradient:...>) need the
+        // same resolution as the rest of the template text — a plain Component.literal() left
+        // colors showing up as raw "&7" in chat, and resolveDynamicTags() (added alongside the
+        // other four builders below) covers {animation:...}/gradients/rainbow the same way.
+        return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
+            com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(message));
     }
 
     /**
@@ -760,7 +762,8 @@ public class MessageUtil {
      */
     public static Component success(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
+            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
     }
 
     /**
@@ -768,7 +771,8 @@ public class MessageUtil {
      */
     public static Component error(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
+            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
     }
 
     /**
@@ -776,7 +780,8 @@ public class MessageUtil {
      */
     public static Component warning(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
+            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
     }
 
     /**
@@ -784,7 +789,8 @@ public class MessageUtil {
      */
     public static Component info(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + localize(key, args), Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
+            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
     }
 
     /**
