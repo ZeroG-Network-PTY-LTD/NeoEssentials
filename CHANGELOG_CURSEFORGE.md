@@ -45,6 +45,8 @@ migration history) is not carried over.
   still break it).
 - `/crate key giveitem <player> <crate> <amount>` gives real, tradeable physical crate key
   items — no virtual balance required to redeem one.
+- Tablist `header`/`footer` frames can now be written as their own JSON array of lines instead
+  of hand-escaping `\n` inside one long string — e.g. `["Line 1", "Line 2"]` as one frame.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer shows a raw "unexpected

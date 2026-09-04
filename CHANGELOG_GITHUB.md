@@ -116,6 +116,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   Holding a valid one is enough on its own to open that crate (right-click a crate block, or
   hold it when using `/crate open`) with no virtual balance required, so keys can now genuinely
   be given away, dropped, or traded between players.
+- Tablist `header`/`footer` frames can now be written as their own JSON array of lines (joined
+  with `\n` automatically) instead of hand-escaping `\n` inside one long string — e.g.
+  `["Line 1", "Line 2"]` as one element of the outer frames array. A flat array of plain strings
+  keeps meaning what it always has (multiple single-line frames); the existing `{newline}`
+  placeholder still works too.
 
 ### Fixed
 - `/permissions group <group> setprefix|setsuffix` no longer surfaces a raw, unhelpful
