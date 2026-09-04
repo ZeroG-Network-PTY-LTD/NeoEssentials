@@ -319,5 +319,9 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   periodic sweep to ever catch it. Closing now runs a few extra sweeps over the following ~4
   seconds instead of just one, closing the window regardless of how fast the close follows the
   extraction.
+- `/crate admin create` didn't say where the new crate's definition actually went — it's saved
+  to `config/neoessentials/crates.json` (a standalone file, unaffected by split-config mode),
+  separate from the runtime data (keys/blocks/history) under `neoessentials/store/`. The success
+  message now says so.
 
 ---
