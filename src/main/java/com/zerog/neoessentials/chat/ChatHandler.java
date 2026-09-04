@@ -313,11 +313,6 @@ public class ChatHandler {
                 @SuppressWarnings("ConstantConditions") // Defensive null check
                 var playerList = server != null ? server.getPlayerList() : null;
 
-                // Every recipient that actually receives the real chat line below — reused to
-                // target the {@link ChatAnimationPreview} action-bar flashes at the exact same
-                // audience (and nobody else), whichever routing branch below ends up taken.
-                java.util.List<ServerPlayer> recipients = new java.util.ArrayList<>();
-
                 if (playerList != null) {
                     if (isTeamBased) {
                         // Team channel — only reaches players on the sender's team (FTB Teams
@@ -339,7 +334,6 @@ public class ChatHandler {
                                 }
                                 if (senderTeamId.equals(teamManager.getTeamId(target.getUUID()))) {
                                     target.sendSystemMessage(formattedMessage);
-                                    recipients.add(target);
                                 }
                             }
                             if (isConsoleLoggingEnabled()) {
@@ -363,7 +357,6 @@ public class ChatHandler {
                             var targetLevel = target.level();
                             if (targetLevel.dimension().equals(playerLevel.dimension()) && target.position().distanceTo(playerPos) <= radius) {
                                 target.sendSystemMessage(formattedMessage);
-                                recipients.add(target);
                             }
                         }
                         // Always log to server console so chat appears in logs
@@ -375,7 +368,6 @@ public class ChatHandler {
                         for (ServerPlayer target : playerList.getPlayers()) {
                             if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(target.getUUID(), requiredPermission)) {
                                 target.sendSystemMessage(formattedMessage);
-                                recipients.add(target);
                             }
                         }
                         // Always log to server console
@@ -386,7 +378,6 @@ public class ChatHandler {
                         // Global channel (no radius, no permission)
                         for (ServerPlayer target : playerList.getPlayers()) {
                             target.sendSystemMessage(formattedMessage);
-                            recipients.add(target);
                         }
                         // Always log to server console
                         if (isConsoleLoggingEnabled()) {
@@ -398,15 +389,6 @@ public class ChatHandler {
                     // Do NOT call server.sendSystemMessage(formattedMessage) here — it would
                     // route the formatted Component through vanilla's MinecraftServer logger
                     // producing a duplicate (and potentially unresolved-placeholder) log line.
-
-                    // The real chat line above is the one and only thing that gets logged/kept
-                    // in chat history. If it referenced {animation:NAME}, ChatAnimationPreview
-                    // additionally flashes it through a few more frames via the action bar for
-                    // the same recipients — a visible "it's animating" cue with zero extra chat
-                    // history/log lines.
-                    if (ChatAnimationPreview.referencesAnimation(message)) {
-                        ChatAnimationPreview.schedule(player, recipients, chatFormat, message, channel);
-                    }
                 }
 
                 // Send message to Discord integration (if available and enabled for this channel)
