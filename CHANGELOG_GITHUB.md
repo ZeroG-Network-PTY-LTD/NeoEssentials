@@ -415,5 +415,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   command. Editing a board's `refreshInterval` (or anything else in `leaderboard.json`) and
   running `/neoe reload` silently did nothing until `/leaderboard reload` was run specifically.
   Fixed — `/neoe reload` now reloads leaderboard config too.
+- **`{animation:NAME}` froze on its first frame forever, mod-wide (holograms, scoreboard, chat,
+  crate keys), on any server with `modules.tablistEnabled: false`.** The single clock driving
+  every animation's frame timing was only ever advanced from inside the tablist system's own
+  per-tick handler — which itself never ran at all once the tablist *module* was disabled, a
+  perfectly reasonable choice for a server that only wants holograms/scoreboard, not custom
+  tablist. No `refreshInterval`/`animationInterval` setting on any other system could ever fix
+  this, since the underlying frame clock itself was never advancing in the first place — lowering
+  a hologram's poll rate just polled a permanently frozen state faster. Fixed — the animation
+  clock now advances every server tick unconditionally, independent of the tablist module.
 
 ---
