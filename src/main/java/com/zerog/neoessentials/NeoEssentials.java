@@ -248,6 +248,7 @@ public class NeoEssentials {
             body.add("commands.neoessentials.admin_notice.legacy_data.explain");
             body.add("commands.neoessentials.admin_notice.legacy_data.use_instead");
             com.zerog.neoessentials.util.AdminNotices.queue(
+                "legacy_data",
                 "commands.neoessentials.admin_notice.legacy_data.title",
                 body.toArray(new String[0])
             );
