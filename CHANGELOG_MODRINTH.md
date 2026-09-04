@@ -98,7 +98,10 @@ migration history) is not carried over.
 - Some inventory-utility client mods' "pull items from the open GUI" button could steal (and
   duplicate) items straight out of `/crate preview`/the opening reveal GUI — an initial fix
   missed the exact method these mods use to blank the slot; now every mutation path on the
-  container is locked down, closing it regardless of which mod is doing the pulling.
+  container is locked down, closing it regardless of which mod is doing the pulling. Confirmed
+  (via Quark) that some mods don't even need a mutation method — they just read and copy the
+  item — so both crate GUIs now also mark every displayed item and sweep it out of your real
+  inventory if it ever ends up there, regardless of how it got there.
 - Physical crate key items were never actually giveable, and even a key item obtained some
   other way still required virtual balance to redeem — both fixed (see `/crate key giveitem`
   above).

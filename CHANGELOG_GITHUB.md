@@ -259,7 +259,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   `ReadOnlyContainer` whose `removeItem`/`removeItemNoUpdate`/`setItem` all refuse from the
   outside — the owning menu redraws through a separate `forceSetItem` the container exposes only
   to itself — closing every mutation path a container has, regardless of which mod or mechanism
-  is doing the pulling.
+  is doing the pulling. Confirmed (via Quark's own item-pull feature) that even this wasn't the
+  full story: it doesn't call any `Container` mutation method at all, it just reads a slot's item
+  and copies it straight into the player's real inventory — a path no container-level defense can
+  close without also breaking the ability to render the preview in the first place. Every
+  displayed reward stack in both crate GUIs is now tagged with a hidden marker, and both GUIs
+  sweep the viewer's real inventory for marked stacks on a short timer while open plus once more
+  on close, deleting any that made it out — mod-agnostic by design, since it doesn't matter which
+  mod or mechanism did the copying.
 - Physical crate key items were effectively non-functional — `CrateManager.buildKeyItem` had no
   command that ever called it, so there was no way to actually get one into a player's
   inventory, and even a key item obtained some other way still silently required virtual
