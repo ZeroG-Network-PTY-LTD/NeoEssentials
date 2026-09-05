@@ -50,6 +50,11 @@ migration history) is not carried over.
 - Crate key item names now support `{animation:NAME}`/gradients/rainbow, not just `&`-codes —
   matching what already worked in the crate's hologram text (a snapshot per-item, since a held
   item can't be live-repainted the way a hologram can).
+- Crates now support separate display names for chat and the key item —
+  `chatDisplayName`/`crateKeyDisplayName` (`crates.json`), plus `/crate admin
+  setchatname`/`setkeyname`, both falling back to `displayName` if unset. Previously an animated
+  `displayName` flashed a different random snapshot frame in every chat message with no way to
+  opt chat out of it specifically.
 - Hologram refresh/animation tick rates were hardcoded — now configurable via
   `hologram.refreshInterval`/`animationInterval` in `config.json`, same convention as tablist/
   scoreboard's `refreshInterval`. Applies with `/neoe reload`.
