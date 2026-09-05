@@ -36,26 +36,33 @@ modded item, with its full NBT/components (enchantments, custom model data, exis
 preserved, the same way crate rewards support modded items. There's no restriction to a fixed
 item list.
 
-The key item's name (the crate's `displayName` + " Key") and any lore/hover text the item
-already had support the same `&`-codes, `<gradient:...>`/`<rainbow>`, and `{animation:NAME}`
-tokens as the crate's hologram text and GUI titles. There's no way for a held item to visibly
-animate in real time the way a hologram/tablist/scoreboard does — Minecraft has no channel to
-keep repainting an item sitting in someone's inventory — so an animated name/lore is a snapshot
-of whichever frame was current the moment that specific key was minted, not something that
-animates while held. Give out a batch of keys over time and each one can show a different frame.
+### Display names — `displayName` vs `chatDisplayName` vs `crateKeyDisplayName`
+
+A crate has three separate display-name concepts, because each is shown through a different
+channel with different animation capabilities:
+
+- **`displayName`** — the crate's visual identity, shown in its hologram line (via
+  `/crate admin setblock`'s auto-created hologram) and its GUI titles (open/preview menus). These
+  can genuinely re-render, so `{animation:NAME}`/`<gradient:...>`/`<rainbow>` here actually
+  animate/refresh live, same as any other hologram text.
+- **`chatDisplayName`** *(optional, `/crate admin setchatname <crate> <name>`)* — used in every
+  chat/command-feedback message (no keys, no rewards, reward-added, keys given/taken, block set,
+  the "won a rare reward" broadcast, etc). A chat message is one line appended to an append-only
+  log, delivered once and never touched again — there's no packet channel to "animate" it
+  afterward the way a hologram/tablist/scoreboard line can be continuously re-sent. If
+  `displayName` uses `{animation:NAME}`, reusing it here would resolve a *different* random
+  snapshot frame in every single message, which reads as inconsistent/flickery rather than
+  animated. Falls back to `displayName` if not set (existing crates keep working unchanged) —
+  set this explicitly to a plain colored string whenever `displayName` is animated.
+- **`crateKeyDisplayName`** *(optional, `/crate admin setkeyname <crate> <name>`)* — the physical
+  key item's name. Same one-shot-snapshot limitation as chat: an item sitting in someone's
+  inventory can't be repainted, so an animated name here is a snapshot of whichever frame was
+  current the moment that specific key was minted, not something that animates while held — give
+  out a batch of keys over time and each one can show a different frame. Falls back to
+  `"&6" + displayName + " Key"` if not set.
 
 Right-clicking a crate block prefers a valid physical key in your hand first, and only falls
 back to your virtual balance if you aren't holding one.
-
-### Animations in chat
-
-`{animation:NAME}`/`<gradient:...>`/`<rainbow>` also resolve in every chat message this mod
-sends (crate open/error messages, and every other command reply mod-wide) — not just tablist/
-scoreboard/holograms. The same real-time-animation limit applies here too, though, more
-strictly: a chat message is one line appended to an append-only log, delivered once and never
-touched again — there's no packet channel to "animate" it afterward the way a tablist/scoreboard
-line can be continuously re-sent, so there's no equivalent `refreshInterval` to configure for
-chat. Each message just resolves whichever frame is current at the exact moment it's sent.
 
 ## Config (`crates.json`)
 
@@ -66,6 +73,8 @@ commands are convenience helpers on top, not a full editor:
 "crates": {
   "common": {
     "displayName": "&7Common Crate",
+    // "chatDisplayName": "&7Common Crate",     // optional, see Display names above
+    // "crateKeyDisplayName": "&7Common Key",   // optional, see Display names above
     "block": "minecraft:chest",          // cosmetic only
     "animation": "roulette",              // "roulette" | "sequential" | "instant"
     "keyItem": { "item": "minecraft:tripwire_hook", "count": 1 },
@@ -133,6 +142,8 @@ crate no longer exists.
 | `/crate admin delete <crate>` | `neoessentials.crate.admin` | Delete a crate |
 | `/crate admin addreward <crate> <weight>` | `neoessentials.crate.admin` | Add your held item as a reward |
 | `/crate admin setkey <crate>` | `neoessentials.crate.admin` | Set the crate's key item to your held item |
+| `/crate admin setchatname <crate> <name>` | `neoessentials.crate.admin` | Set the plain chat-message display name |
+| `/crate admin setkeyname <crate> <name>` | `neoessentials.crate.admin` | Set the key item's display name |
 | `/crate admin setanimation <crate> <type>` | `neoessentials.crate.admin` | `roulette`\|`sequential`\|`instant` |
 | `/crate admin setblock` / `removeblock` | `neoessentials.crate.admin` | Physical block placement (see above) |
 | `/crate admin reload` | `neoessentials.crate.admin` | Reload `crates.json` |
