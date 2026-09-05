@@ -107,10 +107,16 @@ public class HologramScheduler {
                 }
                 // {animation:NAME} placeholder tokens don't change the raw template text —
                 // only what they resolve to — so tickAnimation() alone can't see them
-                // advance. Re-resolve any line that might reference one and compare
-                // against its last resolved value to detect a frame change.
+                // advance. Re-resolve any line that might reference one and compare against
+                // its last resolved value to detect a frame change. Uses resolveRaw(), NOT
+                // processStatic(...).getString() — getString() strips all color/formatting, so
+                // a color-only frame change (e.g. a gradient cycling hex stops over the same
+                // literal words) resolved to the identical plain string on every frame and was
+                // never detected as a change, freezing the hologram on its first frame forever
+                // even though the shared animation clock kept advancing correctly (tablist/
+                // scoreboard don't do this string-diff optimization, so they never had the bug).
                 if (line.mayContainAnimationPlaceholder()) {
-                    String resolved = HologramTextProcessor.processStatic(line.currentText()).getString();
+                    String resolved = HologramTextProcessor.resolveRaw(line.currentText());
                     if (!resolved.equals(line.lastResolvedText)) {
                         line.lastResolvedText = resolved;
                         textChanged = true;
