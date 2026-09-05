@@ -126,6 +126,13 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   live-repainted the way a hologram/tablist/scoreboard can, so an animated name is a snapshot of
   whichever frame was current the moment that specific key item was minted, not something that
   visibly animates while held.
+- **Crates now support separate display names for chat and the key item** —
+  `chatDisplayName`/`crateKeyDisplayName` (`crates.json`), each falling back to `displayName` if
+  not set, plus `/crate admin setchatname`/`setkeyname` to edit them in-game. Previously every
+  chat/command-feedback message (no keys, reward added, etc.) reused the same `displayName` as
+  the hologram — fine for a plain name, but an animated `{animation:NAME}` `displayName` meant
+  every chat message resolved a different random snapshot frame, reading as inconsistent flicker
+  rather than animation with no way to opt chat out of it specifically.
 - Holograms' placeholder-refresh and animation/spin/hover tick rates were hardcoded (1s / 50ms)
   — now configurable via `hologram.refreshInterval`/`animationInterval` in `config.json` (in
   server ticks, same convention as tablist/scoreboard's `refreshInterval`), defaulting to `20`/
