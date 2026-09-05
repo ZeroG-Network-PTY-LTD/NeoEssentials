@@ -215,17 +215,20 @@ public class CrateCommands {
             return 0;
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (String id : CrateManager.getInstance().getAllCrates().keySet()) {
-            int keys = CrateKeyManager.getInstance().getKeys(target, id);
-            if (keys > 0) {
-                if (!sb.isEmpty()) sb.append("§7, ");
-                sb.append("§e").append(id).append(" §7x§f").append(keys);
-            }
+        var crates = CrateManager.getInstance().getAllCrates();
+        if (crates.isEmpty()) {
+            source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.crate.keys_none_configured"), false);
+            return 1;
         }
-        String result = sb.isEmpty() ? "§7(none)" : sb.toString();
+
+        final UUID fTarget = target;
         final String fDisplayName = displayName;
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.crate.keys_list", fDisplayName, result), false);
+        source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.crate.keys_header", fDisplayName), false);
+        for (CrateDefinition crate : crates.values()) {
+            String crateName = crate.getChatDisplayName();
+            int keys = CrateKeyManager.getInstance().getKeys(fTarget, crate.id);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.crate.keys_line", crateName, keys), false);
+        }
         return 1;
     }
 
