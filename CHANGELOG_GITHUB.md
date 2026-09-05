@@ -133,6 +133,10 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   the hologram — fine for a plain name, but an animated `{animation:NAME}` `displayName` meant
   every chat message resolved a different random snapshot frame, reading as inconsistent flicker
   rather than animation with no way to opt chat out of it specifically.
+- `/crate keys [player]` now lists every registered crate on its own line, including any crate
+  the player has zero keys for — previously it comma-joined only the crates they actually held
+  keys for onto one line, so a crate you had none of didn't show up at all, making it unclear
+  whether it existed. Also now uses each crate's chat display name for consistency.
 - Holograms' placeholder-refresh and animation/spin/hover tick rates were hardcoded (1s / 50ms)
   — now configurable via `hologram.refreshInterval`/`animationInterval` in `config.json` (in
   server ticks, same convention as tablist/scoreboard's `refreshInterval`), defaulting to `20`/
