@@ -42,13 +42,23 @@ public class HologramScheduler {
     private static ScheduledFuture<?> animTask;
     /** Start periodic refresh and animation ticking, at the tick rates configured under
      *  {@code hologram.pollIntervalTicks}/{@code animationInterval} in config.json (1 tick = 50ms;
-     *  defaults 20/1, matching the previous hardcoded 1s/50ms behavior exactly). */
+     *  defaults 20/1, matching the previous hardcoded 1s/50ms behavior exactly).
+     *
+     *  <p>Uses {@code scheduleWithFixedDelay}, not {@code scheduleAtFixedRate} — a cycle that
+     *  runs long should be skipped, not queued: {@code scheduleAtFixedRate} anchors to the
+     *  ORIGINAL schedule and fires back-to-back to catch up once something delays it (a slow
+     *  refresh cycle, a main-thread hiccup the queued {@code server.execute()} work is waiting
+     *  on, etc.), which is exactly what a visible animation "jump" looks like.
+     *  {@code scheduleWithFixedDelay} instead waits the full delay from when the PREVIOUS run
+     *  finished — it can never build up a backlog to burst through, at the cost of drifting
+     *  slightly off wall-clock cadence under sustained load, which is imperceptible for a
+     *  text/spin animation and far preferable to bursting. */
     public static void start() {
         stop();
         long refreshMs = com.zerog.neoessentials.config.ConfigManager.getHologramPollIntervalTicks() * 50L;
         long animMs = com.zerog.neoessentials.config.ConfigManager.getHologramAnimationIntervalTicks() * 50L;
-        refreshTask = REFRESH_EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
-        animTask    = ANIM_EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
+        refreshTask = REFRESH_EXECUTOR.scheduleWithFixedDelay(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
+        animTask    = ANIM_EXECUTOR.scheduleWithFixedDelay(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
         NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started (refresh every {}ms, animation every {}ms).", refreshMs, animMs);
     }
     public static void stop() {
