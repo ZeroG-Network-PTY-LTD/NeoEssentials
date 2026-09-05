@@ -114,6 +114,18 @@ public class CrateCommands {
                 .then(Commands.literal("setkey")
                     .then(Commands.argument("crate", StringArgumentType.word()).suggests(CRATE_SUGGESTIONS)
                         .executes(ctx -> setKeyItem(ctx.getSource(), StringArgumentType.getString(ctx, "crate")))))
+                .then(Commands.literal("setchatname")
+                    .then(Commands.argument("crate", StringArgumentType.word()).suggests(CRATE_SUGGESTIONS)
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                            .executes(ctx -> setChatDisplayName(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "crate"),
+                                StringArgumentType.getString(ctx, "name"))))))
+                .then(Commands.literal("setkeyname")
+                    .then(Commands.argument("crate", StringArgumentType.word()).suggests(CRATE_SUGGESTIONS)
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                            .executes(ctx -> setCrateKeyDisplayName(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "crate"),
+                                StringArgumentType.getString(ctx, "name"))))))
                 .then(Commands.literal("setblock")
                     .then(Commands.argument("crate", StringArgumentType.word()).suggests(CRATE_SUGGESTIONS)
                         .executes(ctx -> setBlock(ctx.getSource(), StringArgumentType.getString(ctx, "crate")))))
@@ -154,16 +166,16 @@ public class CrateCommands {
             return 0;
         }
         if (!CrateManager.getInstance().hasAnyReward(crate)) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.displayName));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.getChatDisplayName()));
             return 0;
         }
         if (CrateKeyManager.getInstance().getKeys(player.getUUID(), crate.id) <= 0) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.displayName));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.getChatDisplayName()));
             return 0;
         }
         CrateReward won = CrateManager.getInstance().tryConsumeKeyAndPick(player, crate, null);
         if (won == null) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.displayName));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.getChatDisplayName()));
             return 0;
         }
         CrateOpeningMenu.open(player, crate, won);
@@ -229,7 +241,7 @@ public class CrateCommands {
             return 0;
         }
         CrateKeyManager.getInstance().addKeys(online.getUUID(), crate.id, amount);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.keys_given", amount, crate.displayName, playerName), true);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.keys_given", amount, crate.getChatDisplayName(), playerName), true);
         return 1;
     }
 
@@ -245,7 +257,7 @@ public class CrateCommands {
             return 0;
         }
         CrateKeyManager.getInstance().removeKeys(online.getUUID(), crate.id, amount);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.keys_taken", amount, crate.displayName, playerName), true);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.keys_taken", amount, crate.getChatDisplayName(), playerName), true);
         return 1;
     }
 
@@ -261,7 +273,7 @@ public class CrateCommands {
             return 0;
         }
         CrateManager.getInstance().giveKeyItems(online, crate, amount);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_given", amount, crate.displayName, playerName), true);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_given", amount, crate.getChatDisplayName(), playerName), true);
         return 1;
     }
 
@@ -313,7 +325,7 @@ public class CrateCommands {
         reward.item = held.copy();
         crate.rewards.add(reward);
         CrateManager.getInstance().saveCrate(crate);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.reward_added", crate.displayName), false);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.reward_added", crate.getChatDisplayName()), false);
         return 1;
     }
 
@@ -325,7 +337,31 @@ public class CrateCommands {
         }
         crate.animation = CrateAnimation.parse(animation);
         CrateManager.getInstance().saveCrate(crate);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.animation_set", crate.displayName, crate.animation.name().toLowerCase()), false);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.animation_set", crate.getChatDisplayName(), crate.animation.name().toLowerCase()), false);
+        return 1;
+    }
+
+    private static int setChatDisplayName(CommandSourceStack source, String crateId, String name) {
+        CrateDefinition crate = CrateManager.getInstance().getCrate(crateId);
+        if (crate == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.not_found", crateId));
+            return 0;
+        }
+        crate.chatDisplayName = name;
+        CrateManager.getInstance().saveCrate(crate);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.chat_name_set", crate.getChatDisplayName()), false);
+        return 1;
+    }
+
+    private static int setCrateKeyDisplayName(CommandSourceStack source, String crateId, String name) {
+        CrateDefinition crate = CrateManager.getInstance().getCrate(crateId);
+        if (crate == null) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.not_found", crateId));
+            return 0;
+        }
+        crate.crateKeyDisplayName = name;
+        CrateManager.getInstance().saveCrate(crate);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_name_set", crate.getCrateKeyDisplayName()), false);
         return 1;
     }
 
@@ -346,7 +382,7 @@ public class CrateCommands {
         }
         crate.keyItem = held.copy();
         CrateManager.getInstance().saveCrate(crate);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_set", crate.displayName), false);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_set", crate.getChatDisplayName()), false);
         return 1;
     }
 
@@ -367,7 +403,7 @@ public class CrateCommands {
         }
         CrateManager.getInstance().setBlock(level, pos, crate.id);
         com.zerog.neoessentials.crates.CrateHologramManager.createOrUpdateCrateHologram(crate, level, pos);
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.block_set", crate.displayName), false);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.block_set", crate.getChatDisplayName()), false);
         return 1;
     }
 
