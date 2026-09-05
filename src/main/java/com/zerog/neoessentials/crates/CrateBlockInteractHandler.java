@@ -73,7 +73,7 @@ public class CrateBlockInteractHandler {
         }
 
         if (!CrateManager.getInstance().hasAnyReward(crate)) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.displayName));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.getChatDisplayName()));
             return;
         }
 
@@ -83,13 +83,13 @@ public class CrateBlockInteractHandler {
         boolean hasPhysicalKey = crate.id.equalsIgnoreCase(heldCrateId);
 
         if (!hasVirtualKey && !hasPhysicalKey) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.displayName));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.getChatDisplayName()));
             return;
         }
 
         CrateReward won = CrateManager.getInstance().tryConsumeKeyAndPick(player, crate, hasPhysicalKey ? held : null);
         if (won == null) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.displayName));
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.no_keys", crate.getChatDisplayName()));
             return;
         }
         CrateOpeningMenu.open(player, crate, won);

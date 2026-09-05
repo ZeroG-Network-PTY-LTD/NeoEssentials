@@ -924,6 +924,8 @@
     "commands.neoessentials.crate.reward_added":  "§aAdded your held item as a reward for §e{0}§a.",
     "commands.neoessentials.crate.animation_set":  "§aSet §e{0}'s §aopening animation to §e{1}§a.",
     "commands.neoessentials.crate.key_item_set":  "§aSet §e{0}'s §akey item to your held item.",
+    "commands.neoessentials.crate.chat_name_set":  "§aSet chat display name to §e{0}§a.",
+    "commands.neoessentials.crate.key_name_set":  "§aSet key item display name to §e{0}§a.",
     "commands.neoessentials.crate.no_block_in_sight":  "§cYou need to be looking directly at a block.",
     "commands.neoessentials.crate.block_set":  "§aThat block is now a physical §e{0}§a.",
     "commands.neoessentials.crate.block_removed":  "§aRemoved the crate block link.",

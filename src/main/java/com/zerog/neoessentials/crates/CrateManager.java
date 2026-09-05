@@ -113,15 +113,15 @@ public class CrateManager {
         var tag = new net.minecraft.nbt.CompoundTag();
         tag.putString(KEY_NBT_TAG, crate.id);
         // RichTextFormatter (not the plain ChatComponentUtil.parseColorCodes this used to use)
-        // so crate.displayName can use {animation:NAME}/<gradient:...>/<rainbow>, not just
-        // &-codes — matching what already works in the crate's GUI title and reward messages.
-        // A held item has no live-update channel the way tablist/scoreboard/holograms do,
-        // though — an item sitting in someone's inventory can't be repainted every tick, so an
-        // animated name is a snapshot of whichever frame was current the moment this specific
-        // item was minted, not something that visibly animates while held. "&6" is prefixed so
-        // a plain name with no color of its own still defaults to gold, same as before.
+        // so crate.getCrateKeyDisplayName() can use {animation:NAME}/<gradient:...>/<rainbow>,
+        // not just &-codes — matching what already works in the crate's GUI title and reward
+        // messages. A held item has no live-update channel the way tablist/scoreboard/holograms
+        // do, though — an item sitting in someone's inventory can't be repainted every tick, so
+        // an animated name is a snapshot of whichever frame was current the moment this specific
+        // item was minted, not something that visibly animates while held. getCrateKeyDisplayName()
+        // defaults to "&6" + displayName + " Key" when not explicitly overridden.
         stack.set(DataComponents.CUSTOM_NAME,
-            com.zerog.neoessentials.chat.RichTextFormatter.processTablistText("&6" + crate.displayName + " Key"));
+            com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(crate.getCrateKeyDisplayName()));
 
         // The key item's TEMPLATE (crate.keyItem, set via /crate admin setkey) can carry its own
         // lore — copyWithCount() above copies it byte-for-byte, completely unprocessed, so a
@@ -205,7 +205,7 @@ public class CrateManager {
         if (reward.broadcastRare) {
             String template = reward.broadcastMessage != null && !reward.broadcastMessage.isEmpty()
                 ? reward.broadcastMessage
-                : "&6{player} &7won a rare reward from &6" + crate.displayName + "&7!";
+                : "&6{player} &7won a rare reward from &6" + crate.getChatDisplayName() + "&7!";
             String message = template.replace("{player}", player.getName().getString());
             var component = com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(message);
             for (ServerPlayer p : server.getPlayerList().getPlayers()) p.sendSystemMessage(component);
