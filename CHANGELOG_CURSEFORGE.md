@@ -53,6 +53,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   setchatname`/`setkeyname`, both falling back to `displayName` if unset. Previously an animated
   `displayName` flashed a different random snapshot frame in every chat message with no way to
   opt chat out of it specifically.
+- `/crate keys [player]` now lists every registered crate on its own line, including ones you
+  have zero keys for, instead of only comma-joining the crates you actually held keys for.
 - Hologram refresh/animation tick rates were hardcoded — now configurable via
   `hologram.refreshInterval`/`animationInterval` in `config.json`, same convention as tablist/
   scoreboard's `refreshInterval`. Applies with `/neoe reload`.
