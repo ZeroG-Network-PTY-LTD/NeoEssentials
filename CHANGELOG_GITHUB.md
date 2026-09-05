@@ -451,5 +451,11 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   looks like it should (it runs inline when already on the server thread, not on a later tick).
   Fixed by running crate loading after the registry binding, unconditionally, regardless of
   listener registration order.
+- **Hologram animations could still advance in visible bursts under load, even after the
+  refresh/animation thread split above.** The scheduler used `scheduleAtFixedRate`, which
+  anchors to its original schedule and fires back-to-back to catch up once a cycle is delayed
+  (a slow refresh pass, a main-thread hiccup) — exactly what a visible "jump" looks like. Now
+  uses `scheduleWithFixedDelay`, which waits the full delay from when the previous cycle actually
+  finished instead, so a delay can never build into a backlog to burst through.
 
 ---
