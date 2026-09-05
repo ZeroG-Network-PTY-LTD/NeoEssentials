@@ -171,8 +171,14 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   animations now advance every tick regardless of whether tablist is enabled.
 - Renamed `hologram.refreshInterval` (`config.json`) to `hologram.pollIntervalTicks` — it was
   easy to confuse with each hologram's own, separate, seconds-based `refreshInterval`
-  (`/hologram refreshinterval`), which is the one that actually controls how often placeholders
+  (`/hologram setrefresh`), which is the one that actually controls how often placeholders
   refresh. Lowering the old key below that value did nothing visible. Existing values carry over
   automatically on upgrade.
+- Hologram animations advanced in visible bursts ("jumpy"/slow) no matter how low the animation's
+  own `frameDuration` was set, even though the same change applied instantly and smoothly in
+  tablist/scoreboard — hologram refresh and animation ticking shared one background thread, so a
+  slow refresh cycle delayed the next animation tick behind it. Fixed — they now run on
+  independent threads. Also promoted a silently-swallowed hologram render error to a visible
+  warning.
 
 ---
