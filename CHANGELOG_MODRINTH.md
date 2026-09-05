@@ -171,5 +171,10 @@ migration history) is not carried over.
   the animation clock was tablist's own tick handler, which never ran once tablist was off. No
   hologram/scoreboard interval setting could fix this since the clock itself never moved. Fixed —
   animations now advance every tick regardless of whether tablist is enabled.
+- Renamed `hologram.refreshInterval` (`config.json`) to `hologram.pollIntervalTicks` — it was
+  easy to confuse with each hologram's own, separate, seconds-based `refreshInterval`
+  (`/hologram refreshinterval`), which is the one that actually controls how often placeholders
+  refresh. Lowering the old key below that value did nothing visible. Existing values carry over
+  automatically on upgrade.
 
 ---
