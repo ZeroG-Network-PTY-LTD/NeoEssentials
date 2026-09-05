@@ -18,15 +18,18 @@
     "serverName": "My Server"
   },
 
-  // How often holograms recompute (refreshInterval, in server ticks — 20 = once/second) and
-  // animate/spin/hover (animationInterval, in ticks — 1 = every tick, the fastest possible,
-  // matches the tablist/scoreboard "refreshInterval" convention). refreshInterval covers
-  // slower/heavier placeholders ({balance}, permission lookups, etc); animationInterval only
-  // covers {animation:NAME} frame advancement, /hologram addframes cycling, and spin/hover
+  // How often the hologram scheduler POLLS every hologram to see if it's due for a refresh
+  // (pollIntervalTicks, in server ticks — 20 = once/second) and advances animation/spin/hover
+  // (animationInterval, in ticks — 1 = every tick, the fastest possible). pollIntervalTicks is
+  // NOT how often placeholders actually refresh — that's each hologram's own refreshInterval
+  // (in SECONDS, default 5, set via "/hologram refreshinterval <id> <seconds>"). Lowering
+  // pollIntervalTicks below that per-hologram gate does nothing visible; it only exists so the
+  // gate itself gets checked promptly rather than up to a full poll cycle late. animationInterval
+  // only covers {animation:NAME} frame advancement, /hologram addframes cycling, and spin/hover
   // motion — there's no benefit setting it below 1, since an animation's own frameDuration is
   // already clamped to a 50ms (1-tick) minimum. Apply changes with "/neoe reload".
   "hologram": {
-    "refreshInterval": 10,
+    "pollIntervalTicks": 10,
     "animationInterval": 1
   },
 
