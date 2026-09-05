@@ -183,5 +183,9 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - Crate rewards/keys with saved item components (custom name, lore, enchantments) could silently
   lose that data on server start due to a startup ordering race between two separate listeners.
   Fixed — crate loading now always happens after the fix that binds the registry access it needs.
+- Hologram animations could still burst under load even after the thread split above — the
+  scheduler caught up on a delayed cycle by firing back-to-back instead of skipping. Fixed by
+  switching to a schedule that waits from when the previous cycle finished, so it can never
+  build a backlog to burst through.
 
 ---
