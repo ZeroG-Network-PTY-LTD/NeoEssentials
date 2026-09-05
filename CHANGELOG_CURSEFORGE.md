@@ -187,5 +187,9 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   scheduler caught up on a delayed cycle by firing back-to-back instead of skipping. Fixed by
   switching to a schedule that waits from when the previous cycle finished, so it can never
   build a backlog to burst through.
+- A color-only `{animation:NAME}` (a gradient cycling hex stops over the same literal words —
+  the most common animation shape) could freeze on its first frame forever in holograms
+  specifically, even with the fixes above. The change-detection compared plain text, which a
+  color-only change never affects, so it never saw a change to react to. Fixed.
 
 ---

@@ -457,5 +457,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   (a slow refresh pass, a main-thread hiccup) — exactly what a visible "jump" looks like. Now
   uses `scheduleWithFixedDelay`, which waits the full delay from when the previous cycle actually
   finished instead, so a delay can never build into a backlog to burst through.
+- **A color-only `{animation:NAME}` — a gradient cycling through hex stops over the same
+  literal words, the single most common animation shape — could freeze on its first frame
+  forever in holograms specifically**, even with the fixes above and every interval already at
+  its fastest setting. The hologram's frame-change detection compared each frame's plain-text
+  content to decide whether to re-render, but a color-only change resolves to the exact same
+  plain text on every frame, so the comparison never saw anything change — the shared animation
+  clock kept advancing correctly the entire time, tablist/scoreboard never had this bug (they
+  don't do this comparison at all), only holograms' extra "did it actually change" check did.
+  Fixed to compare the pre-color-stripped resolved text instead.
 
 ---
