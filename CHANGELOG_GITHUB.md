@@ -426,10 +426,21 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   clock now advances every server tick unconditionally, independent of the tablist module.
 - **Renamed `hologram.refreshInterval` (`config.json`) to `hologram.pollIntervalTicks`** — the
   old name was too easy to confuse with each hologram's own, unrelated, seconds-based
-  `refreshInterval` (`/hologram refreshinterval`), which is the one that actually gates
+  `refreshInterval` (`/hologram setrefresh`), which is the one that actually gates
   placeholder refresh; this key only controls how often the scheduler polls to check that gate.
   Lowering it below the per-hologram value did nothing visible, reported as "reducing the tick
   doesn't do proper animation." Existing custom values are carried over automatically to the new
   key name on upgrade.
+- **Hologram animations advanced in visible bursts ("jumpy"/slow) no matter how low the
+  animation's own `frameDuration` was set** — reported after lowering an animation from 100ms to
+  50ms fixed it instantly in the tablist and scoreboard but not in holograms. Root cause:
+  hologram placeholder-refresh and animation-tick both ran on the *same* single background
+  thread; any refresh cycle that took a non-trivial amount of time (external placeholder
+  providers, gradient/rainbow parsing) delayed the next animation tick behind it, since a
+  fixed-rate schedule on one thread runs a late task immediately after the one blocking it
+  rather than in parallel. The animation clock itself was always ticking correctly — delivery to
+  the hologram entity was what stalled and caught up in bursts. Fixed — refresh and animation now
+  run on two independent threads. Also promoted a silently-swallowed per-cycle error log to a
+  visible warning, so any further hologram render failure shows up without enabling debug logging.
 
 ---
