@@ -180,5 +180,8 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
   slow refresh cycle delayed the next animation tick behind it. Fixed — they now run on
   independent threads. Also promoted a silently-swallowed hologram render error to a visible
   warning.
+- Crate rewards/keys with saved item components (custom name, lore, enchantments) could silently
+  lose that data on server start due to a startup ordering race between two separate listeners.
+  Fixed — crate loading now always happens after the fix that binds the registry access it needs.
 
 ---
