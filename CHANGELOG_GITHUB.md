@@ -424,5 +424,12 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   this, since the underlying frame clock itself was never advancing in the first place — lowering
   a hologram's poll rate just polled a permanently frozen state faster. Fixed — the animation
   clock now advances every server tick unconditionally, independent of the tablist module.
+- **Renamed `hologram.refreshInterval` (`config.json`) to `hologram.pollIntervalTicks`** — the
+  old name was too easy to confuse with each hologram's own, unrelated, seconds-based
+  `refreshInterval` (`/hologram refreshinterval`), which is the one that actually gates
+  placeholder refresh; this key only controls how often the scheduler polls to check that gate.
+  Lowering it below the per-hologram value did nothing visible, reported as "reducing the tick
+  doesn't do proper animation." Existing custom values are carried over automatically to the new
+  key name on upgrade.
 
 ---
