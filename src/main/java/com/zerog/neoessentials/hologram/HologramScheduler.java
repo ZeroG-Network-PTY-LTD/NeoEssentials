@@ -12,13 +12,29 @@ import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 /**
  * Drives placeholder refresh and animation ticking for all active holograms.
- * Uses a single daemon thread; all entity mutations are marshalled back onto
- * the Minecraft server thread via {@code server.execute()}.
+ * All entity mutations are marshalled back onto the Minecraft server thread via
+ * {@code server.execute()}.
  */
 public class HologramScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(HologramScheduler.class);
-    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "NeoEssentials-HologramScheduler");
+    // Two SEPARATE single-thread executors, not one shared between refresh and animation.
+    // Both used to run on the same thread via scheduleAtFixedRate — fine when refresh work
+    // is cheap, but PlaceholderManager.setPlaceholders()/RichTextFormatter processing inside
+    // runRefresh() can take a non-trivial amount of time (external placeholder providers,
+    // gradient/rainbow parsing, etc). On a single shared thread, ANY refresh cycle that runs
+    // long enough delays the next animation tick behind it (scheduleAtFixedRate on one thread
+    // never runs two tasks concurrently — a late task just runs back-to-back with the next
+    // one once free), which shows up as the animation frame catching up in visible bursts
+    // ("jumpy"/"slow") no matter how short the animation's own frameDuration is set — the
+    // frame clock (AnimationManager) was always ticking correctly, delivery to the hologram
+    // was what stalled. Splitting these onto independent threads removes that contention.
+    private static final ScheduledExecutorService REFRESH_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "NeoEssentials-HologramScheduler-Refresh");
+        t.setDaemon(true);
+        return t;
+    });
+    private static final ScheduledExecutorService ANIM_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "NeoEssentials-HologramScheduler-Animation");
         t.setDaemon(true);
         return t;
     });
@@ -31,8 +47,8 @@ public class HologramScheduler {
         stop();
         long refreshMs = com.zerog.neoessentials.config.ConfigManager.getHologramPollIntervalTicks() * 50L;
         long animMs = com.zerog.neoessentials.config.ConfigManager.getHologramAnimationIntervalTicks() * 50L;
-        refreshTask = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
-        animTask    = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
+        refreshTask = REFRESH_EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
+        animTask    = ANIM_EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
         NeoLog.info(LOGGER, LogCategory.GENERAL, "[Hologram] Scheduler started (refresh every {}ms, animation every {}ms).", refreshMs, animMs);
     }
     public static void stop() {
@@ -60,7 +76,7 @@ public class HologramScheduler {
                         HologramRenderer.refreshAllLines(data, level, null);
                     }
                 } catch (Exception e) {
-                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] refresh error for '{}': {}", data.id, e.getMessage());
+                    NeoLog.warn(LOGGER, LogCategory.GENERAL, "[Hologram] refresh error for '{}': {}", data.id, e.getMessage());
                 }
             });
         }
@@ -134,7 +150,7 @@ public class HologramScheduler {
                         }
                     }
                 } catch (Exception e) {
-                    NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] animation error for '{}': {}", fd.id, e.getMessage());
+                    NeoLog.warn(LOGGER, LogCategory.GENERAL, "[Hologram] animation error for '{}': {}", fd.id, e.getMessage());
                 }
             });
         }
