@@ -47,7 +47,7 @@ public class ConfigSplitter {
     @SuppressWarnings("unused")
     public static final Map<String, String> CONFIG_FILE_MAP = new LinkedHashMap<>() {{
         put("general",       "main.json");   // general.serverName ({server_name} placeholder)
-        put("hologram",      "main.json");   // hologram.refreshInterval/animationInterval
+        put("hologram",      "main.json");   // hologram.pollIntervalTicks/animationInterval
         put("modules",       "main.json");
         put("logging",       "main.json");
         put("storage",       "main.json");   // storage backend (json/yaml/sqlite/mysql) selection

@@ -82,13 +82,15 @@ This cycles the top line (line 1) every 10 ticks (0.5 s) through three coloured 
 | `/hologram info <id>` | Detailed info including all visual/animation settings and line contents. |
 
 `setrefresh`'s seconds value is a per-hologram *minimum* — how often that specific hologram
-checks for updates is also capped by the global scheduler's own tick rate, set once for every
-hologram via `hologram.refreshInterval`/`animationInterval` in `config.json` (both in server
-ticks; defaults `20`/`1`, matching the previous fixed 1-second/50ms behavior). `refreshInterval`
-covers regular placeholder recomputation ({balance}, permission lookups, etc); `animationInterval`
-covers only `{animation:NAME}` frame advancement, `/hologram addframes` cycling, and spin/hover
-motion — there's no benefit setting it below `1`, since an animation's own frame duration is
-already clamped to a 50ms (1-tick) minimum. Apply changes with `/neoe reload`.
+checks for updates is also capped by the global scheduler's own poll rate, set once for every
+hologram via `hologram.pollIntervalTicks`/`animationInterval` in `config.json` (both in server
+ticks; defaults `20`/`1`, matching the previous fixed 1-second/50ms behavior). `pollIntervalTicks`
+only controls how often the scheduler *checks* whether a hologram is due for a refresh — it is
+not itself the refresh rate, and lowering it below your `setrefresh` seconds value does nothing
+visible; `animationInterval` covers only `{animation:NAME}` frame advancement,
+`/hologram addframes` cycling, and spin/hover motion — there's no benefit setting it below `1`,
+since an animation's own frame duration is already clamped to a 50ms (1-tick) minimum. Apply
+changes with `/neoe reload`.
 
 ### Billboard Mode
 

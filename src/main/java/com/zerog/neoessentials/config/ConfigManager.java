@@ -1455,7 +1455,12 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 49);          // v49 — added hologram.refreshInterval/animationInterval
+        put(MAIN_CONFIG, 50);          // v50 — renamed hologram.refreshInterval to
+                                        //       pollIntervalTicks for clarity (it was being
+                                        //       confused with each hologram's own, unrelated,
+                                        //       seconds-based refreshInterval); see
+                                        //       migrateHologramPollInterval()
+        // v49 — added hologram.refreshInterval/animationInterval
                                         // v48 — added general.serverName
                                         //   (RTP chunk-load lag/crash fix)
         // v46 — added randomTeleportSettings.mode/biomeSearchRadius/
@@ -2255,6 +2260,14 @@ public class ConfigManager {
                     NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: migrated logging.enableDebugLogging into per-category logging.categories.*.", configName);
                 }
 
+                // Carry an admin's existing hologram.refreshInterval value over to the renamed
+                // hologram.pollIntervalTicks key, BEFORE mergeNewKeys would otherwise fill
+                // pollIntervalTicks in with the plain default and silently discard it.
+                if (MAIN_CONFIG.equals(configName) && migrateHologramPollInterval(onDisk)) {
+                    changed = true;
+                    NeoLog.info(LOGGER, LogCategory.CONFIG, "Config file {}: migrated hologram.refreshInterval to hologram.pollIntervalTicks.", configName);
+                }
+
                 // Deep-merge: add keys that exist in JAR but are missing on disk.
                 // Never overwrite existing user values.
                 NeoLog.debug(LOGGER, LogCategory.CONFIG, "Merging missing keys from JAR template into {} (existing values preserved)", configName);
@@ -2422,6 +2435,30 @@ public class ConfigManager {
             categories.add(category.configKey(), entry);
         }
         logging.add("categories", categories);
+        return true;
+    }
+
+    /**
+     * One-time migration from the old {@code hologram.refreshInterval} key to its clearer
+     * replacement {@code hologram.pollIntervalTicks} (v50) — the old name was easy to confuse
+     * with each hologram's own, unrelated, seconds-based {@code refreshInterval} (set via
+     * {@code /hologram refreshinterval}), which actually gates placeholder refresh; this one
+     * only controls how often the scheduler polls to check that gate. Must run BEFORE
+     * {@link #mergeNewKeys} — it detects "not yet migrated" by the absence of
+     * {@code hologram.pollIntervalTicks}, which mergeNewKeys would otherwise fill in with the
+     * plain default first, discarding whatever the admin had customized the old key to.
+     * The old key itself is left on disk (unused but harmless), matching how this migration
+     * system doesn't otherwise strip stale keys.
+     *
+     * @return {@code true} if {@code hologram.pollIntervalTicks} was added by this migration
+     */
+    static boolean migrateHologramPollInterval(com.google.gson.JsonObject onDisk) {
+        if (!onDisk.has("hologram") || !onDisk.get("hologram").isJsonObject()) return false;
+        com.google.gson.JsonObject hologram = onDisk.getAsJsonObject("hologram");
+        if (hologram.has("pollIntervalTicks")) return false;
+        if (!hologram.has("refreshInterval") || !hologram.get("refreshInterval").isJsonPrimitive()) return false;
+
+        hologram.addProperty("pollIntervalTicks", hologram.get("refreshInterval").getAsInt());
         return true;
     }
 
@@ -3218,13 +3255,17 @@ public class ConfigManager {
         return "My Server";
     }
 
-    /** How often holograms recompute placeholders, in server ticks. Default/minimum 1. */
-    public static int getHologramRefreshIntervalTicks() {
+    /** How often the hologram scheduler polls every hologram to check whether it's due for a
+     *  refresh, in server ticks. Default/minimum 1. This is NOT how often placeholders actually
+     *  refresh — that's each hologram's own {@code refreshInterval} (in seconds, set via
+     *  {@code /hologram refreshinterval}); this only controls how promptly that per-hologram
+     *  gate gets checked. */
+    public static int getHologramPollIntervalTicks() {
         JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("hologram")) {
             JsonObject hologram = config.getAsJsonObject("hologram");
-            if (hologram.has("refreshInterval")) {
-                return Math.max(1, hologram.get("refreshInterval").getAsInt());
+            if (hologram.has("pollIntervalTicks")) {
+                return Math.max(1, hologram.get("pollIntervalTicks").getAsInt());
             }
         }
         return 20;
