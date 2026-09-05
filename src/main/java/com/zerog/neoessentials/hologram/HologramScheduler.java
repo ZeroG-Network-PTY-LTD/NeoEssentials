@@ -25,11 +25,11 @@ public class HologramScheduler {
     private static ScheduledFuture<?> refreshTask;
     private static ScheduledFuture<?> animTask;
     /** Start periodic refresh and animation ticking, at the tick rates configured under
-     *  {@code hologram.refreshInterval}/{@code animationInterval} in config.json (1 tick = 50ms;
+     *  {@code hologram.pollIntervalTicks}/{@code animationInterval} in config.json (1 tick = 50ms;
      *  defaults 20/1, matching the previous hardcoded 1s/50ms behavior exactly). */
     public static void start() {
         stop();
-        long refreshMs = com.zerog.neoessentials.config.ConfigManager.getHologramRefreshIntervalTicks() * 50L;
+        long refreshMs = com.zerog.neoessentials.config.ConfigManager.getHologramPollIntervalTicks() * 50L;
         long animMs = com.zerog.neoessentials.config.ConfigManager.getHologramAnimationIntervalTicks() * 50L;
         refreshTask = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runRefresh, 2000, refreshMs, TimeUnit.MILLISECONDS);
         animTask    = EXECUTOR.scheduleAtFixedRate(HologramScheduler::runAnimation, 2000, animMs, TimeUnit.MILLISECONDS);
@@ -39,7 +39,7 @@ public class HologramScheduler {
         if (refreshTask != null) { refreshTask.cancel(false); refreshTask = null; }
         if (animTask    != null) { animTask.cancel(false);    animTask    = null; }
     }
-    /** Restarts the scheduler so a changed {@code hologram.refreshInterval}/{@code
+    /** Restarts the scheduler so a changed {@code hologram.pollIntervalTicks}/{@code
      *  animationInterval} takes effect without a full server restart — used by {@code /neoe
      *  reload}. */
     public static void restart() {

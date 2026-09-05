@@ -403,7 +403,7 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_economy", fMsg));
             }
 
-            // Reload HologramScheduler's tick rates (hologram.refreshInterval/animationInterval)
+            // Reload HologramScheduler's tick rates (hologram.pollIntervalTicks/animationInterval)
             totalCount++;
             try {
                 com.zerog.neoessentials.hologram.HologramScheduler.restart();
