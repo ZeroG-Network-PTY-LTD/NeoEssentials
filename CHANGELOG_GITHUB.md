@@ -442,5 +442,14 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   the hologram entity was what stalled and caught up in bursts. Fixed — refresh and animation now
   run on two independent threads. Also promoted a silently-swallowed per-cycle error log to a
   visible warning, so any further hologram render failure shows up without enabling debug logging.
+- **Crate rewards/keys with saved item components (custom name, lore, enchantments, etc.) could
+  silently lose that data on server start**, throwing "[AuctionHouse] Server not set on
+  ComponentSerializer" once per affected reward in the log. Crate loading and the line that binds
+  the registry access needed to deserialize those components were two separate
+  `ServerStartedEvent` listeners racing each other — whichever fired first won, and
+  `event.getServer().execute(...)` doesn't actually defer past sibling listeners the way it
+  looks like it should (it runs inline when already on the server thread, not on a later tick).
+  Fixed by running crate loading after the registry binding, unconditionally, regardless of
+  listener registration order.
 
 ---
