@@ -171,9 +171,17 @@ public class TeleportUtil {
         // chunks are never touched, so force-generating them was pure wasted cost: up to 8
         // extra synchronous full chunk generations per teleport for nothing, which is exactly
         // what was causing RTP to lag/watchdog-crash servers on ungenerated terrain.
-        BlockPos targetBlockPos = new BlockPos((int) location.getX(),
-                                              (int) location.getY(),
-                                              (int) location.getZ());
+        // Math.floor (not a raw (int) cast) — truncation rounds toward zero, which picks
+        // the wrong block (and potentially the wrong CHUNK) for any negative coordinate
+        // with a fractional part, e.g. (int) -0.3 == 0 instead of the correct -1. Right at
+        // a chunk border on the negative side, that off-by-one silently force-loads the
+        // neighbouring chunk instead of the actual target chunk, leaving the real
+        // destination unloaded when isSafe() (which floors correctly) checks it — this is
+        // exactly what was causing "unsafe location" failures for players near a chunk
+        // border on /spawn, /home, etc.
+        BlockPos targetBlockPos = new BlockPos((int) Math.floor(location.getX()),
+                                              (int) Math.floor(location.getY()),
+                                              (int) Math.floor(location.getZ()));
         preloadChunksForTeleport(targetLevel, targetBlockPos, findSafe);
 
         // Find safe location if requested (surrounding chunks are now loaded)
@@ -183,7 +191,7 @@ public class TeleportUtil {
             finalLocation = location.findSafeLocation();
             if (finalLocation == null) {
                 String worldName = location.getWorldName();
-                int bx = (int) location.getX(), by = (int) location.getY(), bz = (int) location.getZ();
+                int bx = (int) Math.floor(location.getX()), by = (int) Math.floor(location.getY()), bz = (int) Math.floor(location.getZ());
                 LOGGER.warn("No safe teleport location found at ({},{},{}) in '{}' — area may be solid, flooded, or over the void",
                     bx, by, bz, worldName);
                 future.complete(TeleportResult.failure(MessageUtil.localize(
@@ -192,9 +200,9 @@ public class TeleportUtil {
             }
             // Ensure the safe-landing chunk is also loaded (it is covered by the 3×3
             // grid if the safe location is within ±1 chunk, but preload just in case).
-            BlockPos safeBlockPos = new BlockPos((int) finalLocation.getX(),
-                                                (int) finalLocation.getY(),
-                                                (int) finalLocation.getZ());
+            BlockPos safeBlockPos = new BlockPos((int) Math.floor(finalLocation.getX()),
+                                                (int) Math.floor(finalLocation.getY()),
+                                                (int) Math.floor(finalLocation.getZ()));
             preloadChunksForTeleport(targetLevel, safeBlockPos, true);
         }
 
@@ -277,7 +285,7 @@ public class TeleportUtil {
             ServerLevel execLevel = location.getLevel();
             if (execLevel != null) {
                 preloadChunksForTeleport(execLevel, new BlockPos(
-                    (int) location.getX(), (int) location.getY(), (int) location.getZ()), findSafe);
+                    (int) Math.floor(location.getX()), (int) Math.floor(location.getY()), (int) Math.floor(location.getZ())), findSafe);
             }
             executeTeleport(player, location, future);
         });
