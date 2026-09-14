@@ -475,8 +475,12 @@ public class HomeManager {
         // can cross chunk boundaries, so loading only the centre chunk is insufficient.
         net.minecraft.server.level.ServerLevel homeLevel = home.getLevel();
         if (homeLevel != null) {
+            // Math.floor, not a raw (int) cast — truncation rounds toward zero, silently
+            // picking the wrong chunk for a negative coordinate right at a chunk border
+            // (e.g. (int) -0.3 == 0 instead of the correct -1) and leaving the real
+            // target chunk unloaded for the isSafe() check just below.
             net.minecraft.core.BlockPos homeBlockPos = new net.minecraft.core.BlockPos(
-                (int) home.getX(), (int) home.getY(), (int) home.getZ());
+                (int) Math.floor(home.getX()), (int) Math.floor(home.getY()), (int) Math.floor(home.getZ()));
             NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Pre-loading 3x3 chunk grid around ({},{}) for home teleport to '{}'.",
                 homeBlockPos.getX() >> 4, homeBlockPos.getZ() >> 4, homeName);
             TeleportUtil.preloadChunksForTeleport(homeLevel, homeBlockPos);
