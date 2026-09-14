@@ -237,8 +237,12 @@ public class SpawnManager {
         // the configured spawn location was perfectly fine.
         net.minecraft.server.level.ServerLevel spawnLevel = spawnLocation.getLevel();
         if (spawnLevel != null) {
+            // Math.floor, not a raw (int) cast — truncation rounds toward zero, silently
+            // picking the wrong chunk for a negative coordinate right at a chunk border
+            // (e.g. (int) -0.3 == 0 instead of the correct -1) and leaving the real
+            // target chunk unloaded for the isSafe() check just below.
             net.minecraft.core.BlockPos spawnBlockPos = new net.minecraft.core.BlockPos(
-                (int) spawnLocation.getX(), (int) spawnLocation.getY(), (int) spawnLocation.getZ());
+                (int) Math.floor(spawnLocation.getX()), (int) Math.floor(spawnLocation.getY()), (int) Math.floor(spawnLocation.getZ()));
             NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Pre-loading 3x3 chunk grid around ({},{}) for spawn teleport.",
                 spawnBlockPos.getX() >> 4, spawnBlockPos.getZ() >> 4);
             TeleportUtil.preloadChunksForTeleport(spawnLevel, spawnBlockPos);
