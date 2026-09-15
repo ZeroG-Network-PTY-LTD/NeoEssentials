@@ -200,3 +200,54 @@ jobs:
             echo "::error::Failed to upload release asset (HTTP $asset_code)"
             exit 1
           fi
+
+      # Posts a rich embed to a Discord channel via webhook, linking straight to the Forgejo
+      # release asset above — same pattern as the GitHub workflow's own "Post build to
+      # Discord" step, adapted to Forgejo's API (browser_download_url straight from the asset
+      # upload response, rather than reconstructing the URL by hand).
+      # Requires a repo secret DISCORD_BUILDS_WEBHOOK_URL (Discord channel -> Edit Channel ->
+      # Integrations -> Webhooks -> Copy URL). Skipped (not failed) if unset, so this workflow
+      # doesn't break for anyone who hasn't configured it.
+      # continue-on-error: a Discord outage shouldn't fail the actual release.
+      - name: Post build to Discord
+        continue-on-error: true
+        env:
+          DISCORD_BUILDS_WEBHOOK_URL: ${{ secrets.DISCORD_BUILDS_WEBHOOK_URL }}
+          BRANCH: ${{ github.ref_name }}
+          MOD_VERSION: ${{ steps.mod_version.outputs.value }}
+          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
+          JAR_NAME: ${{ steps.jar.outputs.name }}
+          JAR_PATH: ${{ steps.jar.outputs.path }}
+        run: |
+          if [ -z "$DISCORD_BUILDS_WEBHOOK_URL" ]; then
+            echo "DISCORD_BUILDS_WEBHOOK_URL not set - skipping Discord notification."
+            exit 0
+          fi
+
+          DOWNLOAD_URL=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/asset.json','utf8')).browser_download_url)")
+          SIZE_MB=$(node -e "console.log((require('fs').statSync(process.env.JAR_PATH).size / 1048576).toFixed(2))")
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          payload=$(DOWNLOAD_URL="$DOWNLOAD_URL" SIZE_MB="$SIZE_MB" TIMESTAMP="$TIMESTAMP" node -e "
+            const branch = process.env.BRANCH;
+            const releaseTitle = process.env.MOD_VERSION + ' — ' + branch + ' — build ' + process.env.BUILD_NUMBER;
+            const jarName = process.env.JAR_NAME;
+            const url = process.env.DOWNLOAD_URL;
+            const size = process.env.SIZE_MB + ' MB';
+            console.log(JSON.stringify({
+              embeds: [{
+                author: { name: 'NeoEssentials (Forgejo)' },
+                title: '🆕 Dev Release',
+                color: 5793266,
+                url: url,
+                fields: [ { name: 'Branch', value: branch, inline: true } ],
+                description: '**' + releaseTitle + '**\n[' + jarName + '](' + url + ')\n' + size + ' • [Download](' + url + ')',
+                timestamp: process.env.TIMESTAMP
+              }]
+            }));
+          ")
+
+          curl -sS -f \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_BUILDS_WEBHOOK_URL"
