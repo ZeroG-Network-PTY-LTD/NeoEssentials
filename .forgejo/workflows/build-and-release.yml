@@ -187,9 +187,14 @@ jobs:
           fi
           echo "release_id=$release_id"
 
+          # The jar filename contains a literal "+" (e.g. "...+build.70-all.jar") - confirmed
+          # live that an un-encoded "+" in the ?name= query param gets interpreted as a space
+          # by Forgejo, landing the asset as "...  build.70-all.jar" instead. encodeURIComponent
+          # it properly rather than interpolating the raw name into the URL.
+          jar_name_encoded=$(node -e "console.log(encodeURIComponent(process.env.JAR_NAME))")
           asset_code=$(curl -s -o /tmp/asset.json -w "%{http_code}" -X POST -H "Authorization: token $TOKEN" \
             -F "attachment=@${JAR_PATH};filename=${JAR_NAME}" \
-            "$FORGEJO_API/repos/$REPO/releases/$release_id/assets?name=${JAR_NAME}")
+            "$FORGEJO_API/repos/$REPO/releases/$release_id/assets?name=${jar_name_encoded}")
           echo "POST upload asset -> HTTP $asset_code"; cat /tmp/asset.json; echo
           if [ "$asset_code" != "201" ]; then
             echo "::error::Failed to upload release asset (HTTP $asset_code)"
