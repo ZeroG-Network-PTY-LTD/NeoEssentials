@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 49,
+  "_configVersion": 54,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -56,7 +56,8 @@
     "playerTagsEnabled": true,
     "discordIntegrationEnabled": true,
     "votifierEnabled": true,
-    "cratesEnabled": true
+    "cratesEnabled": true,
+    "pvpEnabled": true
   },
 
   // Per-subsystem logging control. For each category:
@@ -369,7 +370,8 @@
     "npcshop": true,
     "ah": true,
     "auctionhouse": true,
-    "vault": true
+    "vault": true,
+    "pvp": true
   },
 
   /* ----------------------------------------------------------------
@@ -854,6 +856,36 @@
       "teleportDelay": 3,
       // Cooldown between /back uses in seconds (0 = disabled)
       "backCooldown": 0
+    }
+  },
+
+  /* ----------------------------------------------------------------
+     PvP  —  /pvp on|off|toggle  (PvPManager-style port)
+  ---------------------------------------------------------------- */
+  "pvp": {
+    // Master PvP switch. Runtime state (set via /pvp on|off) is persisted separately and
+    // survives restarts — this value is only the STARTUP default the very first time the
+    // server runs with no persisted state yet.
+    "enabledByDefault": true,
+    // Let individual players opt themselves out of PvP via /pvp toggle, even while the
+    // server-wide switch above is on. Opting out is mutual — an opted-out player can
+    // neither be hit by nor deal damage to another player, so it can't be used to attack
+    // risk-free.
+    "allowPerPlayerToggle": true,
+    // Send a "PvP is disabled" style message to both the attacker and the target whenever
+    // a hit is blocked, instead of silently negating the damage.
+    "notifyOnBlockedHit": true,
+    "newbieProtection": {
+      // Grants a temporary mutual PvP immunity window starting from a player's first time
+      // ever seen by this system (independent of vanilla's own "has played before" flag).
+      "enabled": true,
+      "durationSeconds": 60
+    },
+    "safeZoneIntegration": {
+      // Reuses teleportation.generalSettings.protectedAreas (the same YAWP region list
+      // already used to block teleportation into protected areas) — PvP is also blocked
+      // between two players when EITHER stands inside one of those named regions.
+      "enabled": true
     }
   },
 
