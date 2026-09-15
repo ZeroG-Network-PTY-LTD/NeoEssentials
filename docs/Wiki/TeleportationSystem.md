@@ -1,6 +1,6 @@
 # Teleportation System
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
+> **Version:** 1.0.6+build.70 · **Config:** `config.json` → `teleportation` / `generalSettings` sections
 
 ---
 
@@ -49,6 +49,37 @@ If chunk loading itself fails (e.g., the target dimension is unavailable or the 
 | `enableWarpSafety` | `warpSettings` | Disables safety scan; chunks still preloaded |
 | `enableSpawnSafety` | `spawnSettings` | Disables safety scan; chunks still preloaded |
 | `teleportDelay` (`generalSettings`) | `generalSettings` | Chunks are preloaded at warmup start, not at fire time |
+
+---
+
+## Combat Lock
+
+Setting `teleportation.generalSettings.allowTeleportInCombat` to `false` (the default) blocks
+`/home`, `/warp`, `/spawn`, `/tpa`/`/tpahere`/`/tpaccept`, and `/back` while a player is "in
+combat" — the classic anti-combat-log measure. `CombatTracker` marks a player in combat for 5
+seconds after either **attacking** any living entity or **taking damage** from one (environmental
+damage — fall, fire, drowning, hunger — never counts).
+
+### `combatLockPvpOnly` — when PvE combat shouldn't count
+
+By default, combat with a **mob** locks teleportation exactly like combat with another
+**player** — this is deliberate, so a player can't `/home` away from a losing fight against a
+real hostile mob either. The trade-off: some automation mods that farm mobs (e.g. Mob Grinding
+Utils' Mob Masher) attribute their kills to the owning player, for loot/XP/looting-enchant
+purposes — that attribution is indistinguishable from the player manually attacking the mob, so
+it locks their teleport too, with no actual combat happening. **Any mod that routes automated
+kills through the same attack/damage attribution path will trip this same false lock**, not
+just Mob Grinding Utils specifically.
+
+Set `combatLockPvpOnly: true` (default `false`) to restrict the lock to real player-vs-player
+hits only — reusing the exact same `ServerPlayer`-vs-`ServerPlayer` detection the [PvP
+System](PvpSystem) uses. With this enabled, no PvE combat of any kind (real fights included)
+locks teleportation, only actual PvP does.
+
+| Key | Default | Description |
+|---|---|---|
+| `allowTeleportInCombat` | `false` | Allow teleporting while in combat — `true` disables the combat lock entirely |
+| `combatLockPvpOnly` | `false` | When the lock is active, restrict it to real player-vs-player hits only (see above) |
 
 ---
 
