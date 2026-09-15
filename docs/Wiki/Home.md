@@ -14,6 +14,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
 | [AFK System](AFKSystem) | Auto-AFK, kick, tablist indicator, config |
 | [Moderation System](ModerationSystem) | Ban, mute, jail, freeze, vanish |
 | [Teleportation System](TeleportationSystem) | Home, warp, TPA, RTP, spawn, safe teleport |
+| [PvP System](PvpSystem) | Server-wide/per-player PvP toggle, newbie protection, safe zones |
 | [Kit Management](KitManagement) | Kits, cooldowns, give-to-others, kitreset |
 | [Item Management](ItemManagement) | Repair, enchant, powertool, clearinv, condense |
 | [Utility Systems](UtilitySystems) | Ptime, pweather, effects, spawnmob, unlimited, MOTD |
