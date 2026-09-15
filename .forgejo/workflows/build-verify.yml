@@ -64,8 +64,12 @@ jobs:
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
 
+      # v3, not v4 — v4 uses GitHub's newer internal Artifacts API and refuses to run at all
+      # against any non-github.com backend (confirmed live: "GHESNotSupportedError:
+      # @actions/artifact v2.0.0+, upload-artifact@v4+ ... are not currently supported on
+      # GHES"). v3 still uses the older API Forgejo actually implements.
       - name: Upload jar artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.jar.outputs.name }}
           path: ${{ steps.jar.outputs.path }}
