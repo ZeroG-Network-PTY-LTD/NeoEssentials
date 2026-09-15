@@ -48,6 +48,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Fails in seconds instead of discovering a bad/missing secret only after a ~20min
+      # build, at the Bump/Publish steps' own API calls (confirmed live: those steps treat a
+      # failed auth check as "no data" and silently continue instead of stopping, wasting a
+      # full build cycle before the real error surfaces).
+      - name: Verify CI_RELEASE_TOKEN
+        env:
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "TOKEN length: ${#TOKEN} (expect 40 for a Forgejo access token; 0 means the secret isn't reaching this job)"
+          code=$(curl -s -o /tmp/whoami.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
+          echo "Auth check -> HTTP $code"; cat /tmp/whoami.json; echo
+          if [ "$code" != "200" ]; then
+            echo "::error::CI_RELEASE_TOKEN failed to authenticate (HTTP $code) - check the secret's value in Settings > Actions > Secrets"
+            exit 1
+          fi
+
       - name: Set up JDK
         # Only launches the Gradle wrapper itself (confirmed live: without ANY java on PATH,
         # gradlew fails immediately with "JAVA_HOME is not set and no 'java' command could be
@@ -82,6 +101,7 @@ jobs:
           MARKER: ${{ github.ref_name }}
         run: |
           set -e
+          echo "TOKEN length: ${#TOKEN} (expect 40 for a Forgejo access token; 0 means the secret isn't reaching this job)"
 
           var_code=$(curl -s -o /tmp/var.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
             "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
