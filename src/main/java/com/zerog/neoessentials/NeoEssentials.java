@@ -983,6 +983,7 @@ public class NeoEssentials {
         com.zerog.neoessentials.util.commands.SuicideCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.WhoisCommand.register(dispatcher);
         com.zerog.neoessentials.util.commands.GamemodeCommand.register(dispatcher);
+        com.zerog.neoessentials.pvp.commands.PvpCommand.register(dispatcher);
         
 
         // ========== ITEM COMMANDS ==========

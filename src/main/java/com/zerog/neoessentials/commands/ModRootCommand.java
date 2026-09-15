@@ -296,6 +296,18 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_spawn", fMsg));
             }
 
+            // Reload PvpManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.pvp.PvpManager.getInstance().reload();
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ PvP system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload PvP system: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_pvp", fMsg));
+            }
+
             // Reload ChatManager configuration
             totalCount++;
             try {
