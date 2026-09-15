@@ -2010,6 +2010,7 @@
     "commands.neoessentials.root.reload_error_homes": "Failed to reload homes: {0}",
     "commands.neoessentials.root.reload_error_warps": "Failed to reload warps: {0}",
     "commands.neoessentials.root.reload_error_spawn": "Failed to reload spawn: {0}",
+    "commands.neoessentials.root.reload_error_pvp": "Failed to reload PvP: {0}",
     "commands.neoessentials.root.reload_error_chat": "Failed to reload chat configuration: {0}",
     "commands.neoessentials.root.reload_error_afk": "Failed to reload AFK system: {0}",
     "commands.neoessentials.root.reload_error_jail": "Failed to reload jail system: {0}",
@@ -2304,5 +2305,20 @@
     "commands.neoessentials.teleport.home.unsafe_location": "§cNo safe location found for this home.",
     "commands.neoessentials.teleport.home.updated": "§aHome '{0}' updated to {1}.",
     "commands.neoessentials.teleport.home.teleport_cooldown": "§cYou must wait {0} more second(s) before teleporting to a home again.",
-    "commands.neoessentials.motd.reloaded": "§aMOTD reloaded."
+    "commands.neoessentials.motd.reloaded": "§aMOTD reloaded.",
+
+    "commands.neoessentials.pvp.state_enabled": "§aenabled",
+    "commands.neoessentials.pvp.state_disabled": "§cdisabled",
+    "commands.neoessentials.pvp.status_global": "§6PvP is currently {0}§6 server-wide.",
+    "commands.neoessentials.pvp.status_self": "§7Your own PvP is {0}§7.",
+    "commands.neoessentials.pvp.status_newbie_protection": "§7You have newbie protection for {0} more second(s).",
+    "commands.neoessentials.pvp.global_enabled": "§aPvP is now enabled server-wide.",
+    "commands.neoessentials.pvp.global_disabled": "§cPvP is now disabled server-wide.",
+    "commands.neoessentials.pvp.broadcast_enabled": "§6[PvP] §aPvP has been enabled server-wide.",
+    "commands.neoessentials.pvp.broadcast_disabled": "§6[PvP] §cPvP has been disabled server-wide.",
+    "commands.neoessentials.pvp.self_enabled": "§aYou have opted back into PvP.",
+    "commands.neoessentials.pvp.self_disabled": "§cYou have opted out of PvP. You can no longer hit or be hit by other players.",
+    "commands.neoessentials.pvp.per_player_toggle_disabled": "§cSelf-toggling PvP is disabled on this server.",
+    "commands.neoessentials.pvp.hit_blocked_attacker": "§cYou cannot attack §f{0}§c right now — PvP is disabled.",
+    "commands.neoessentials.pvp.hit_blocked_target": "§7{0}§7's attack was blocked — PvP is disabled."
 }

@@ -1456,7 +1456,19 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 53);          // v53 — added per-event-type nested objects
+        put(MAIN_CONFIG, 54);          // v54 — added the top-level "pvp" section
+                                        //       (enabledByDefault/allowPerPlayerToggle/
+                                        //       notifyOnBlockedHit/newbieProtection/
+                                        //       safeZoneIntegration), modules.pvpEnabled,
+                                        //       and commands.pvp for the new /pvp on|off|toggle
+                                        //       command. NOTE: the on-disk JAR template's
+                                        //       _configVersion was found stuck at 49 despite
+                                        //       this constant already being 53 (pre-existing
+                                        //       drift, not caused by this bump) — 54 is set on
+                                        //       both to guarantee this merges into every
+                                        //       existing config.json regardless of which of the
+                                        //       two stale values it was actually created at.
+                                        //       v53 — added per-event-type nested objects
                                         //       (join/leave/mute/afk/advancement) under
                                         //       discordEmbedTemplate, each with its own
                                         //       enabled/description/color/showTimestamp — SDLink's
@@ -3203,6 +3215,80 @@ public class ConfigManager {
             if (modules.has("vaultEnabled")) {
                 return modules.get("vaultEnabled").getAsBoolean();
             }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the PvP module is enabled (modules.pvpEnabled). Defaults to true.
+     */
+    public static boolean isPvpModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("pvpEnabled")) {
+                return modules.get("pvpEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    private static JsonObject getPvpSection() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        return config.has("pvp") ? config.getAsJsonObject("pvp") : new JsonObject();
+    }
+
+    /**
+     * Startup default for the global PvP switch (pvp.enabledByDefault) — only used the very
+     * first time the server runs with no persisted PvpManager state yet. Defaults to true.
+     */
+    public static boolean isPvpEnabledByDefault() {
+        JsonObject pvp = getPvpSection();
+        return !pvp.has("enabledByDefault") || pvp.get("enabledByDefault").getAsBoolean();
+    }
+
+    /** Returns true if players may opt themselves out via /pvp toggle (pvp.allowPerPlayerToggle). */
+    public static boolean isPvpPerPlayerToggleAllowed() {
+        JsonObject pvp = getPvpSection();
+        return !pvp.has("allowPerPlayerToggle") || pvp.get("allowPerPlayerToggle").getAsBoolean();
+    }
+
+    /** Returns true if a blocked PvP hit should message both players (pvp.notifyOnBlockedHit). */
+    public static boolean isPvpNotifyOnBlockedHitEnabled() {
+        JsonObject pvp = getPvpSection();
+        return !pvp.has("notifyOnBlockedHit") || pvp.get("notifyOnBlockedHit").getAsBoolean();
+    }
+
+    /** Returns true if new players get temporary mutual PvP immunity (pvp.newbieProtection.enabled). */
+    public static boolean isPvpNewbieProtectionEnabled() {
+        JsonObject pvp = getPvpSection();
+        if (pvp.has("newbieProtection")) {
+            JsonObject np = pvp.getAsJsonObject("newbieProtection");
+            if (np.has("enabled")) return np.get("enabled").getAsBoolean();
+        }
+        return true;
+    }
+
+    /** Newbie-protection window length in seconds (pvp.newbieProtection.durationSeconds). */
+    public static int getPvpNewbieProtectionDurationSeconds() {
+        JsonObject pvp = getPvpSection();
+        if (pvp.has("newbieProtection")) {
+            JsonObject np = pvp.getAsJsonObject("newbieProtection");
+            if (np.has("durationSeconds")) return np.get("durationSeconds").getAsInt();
+        }
+        return 60;
+    }
+
+    /**
+     * Returns true if PvP is also blocked inside {@link #getProtectedAreas()} regions
+     * (pvp.safeZoneIntegration.enabled) — reuses the same YAWP region list already used to
+     * block teleportation into protected areas.
+     */
+    public static boolean isPvpSafeZoneIntegrationEnabled() {
+        JsonObject pvp = getPvpSection();
+        if (pvp.has("safeZoneIntegration")) {
+            JsonObject sz = pvp.getAsJsonObject("safeZoneIntegration");
+            if (sz.has("enabled")) return sz.get("enabled").getAsBoolean();
         }
         return true;
     }

@@ -54,6 +54,8 @@
         "neoessentials.teleport.request.cancel",
         "neoessentials.teleport.back",
         "neoessentials.teleport.top",
+        "neoessentials.pvp.status",
+        "neoessentials.pvp.toggle",
         "neoessentials.info",
         "neoessentials.help"
       ],
@@ -106,7 +108,8 @@
         "neoessentials.moderation.jailinfo",
         "neoessentials.moderation.notifications",
         "neoessentials.moderation.warn",
-        "neoessentials.moderation.warnings"
+        "neoessentials.moderation.warnings",
+        "neoessentials.pvp.admin"
       ],
       "inherits": ["default"]
     },
