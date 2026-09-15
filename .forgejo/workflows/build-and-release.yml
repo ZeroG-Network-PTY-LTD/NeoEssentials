@@ -107,7 +107,11 @@ jobs:
             "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
           echo "GET BUILD_NUMBER -> HTTP $var_code"; cat /tmp/var.json; echo
           if [ "$var_code" = "200" ]; then
-            current=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/var.json','utf8')).value)")
+            # Forgejo's variable API returns the value under "data", not "value" like GitHub's
+            # equivalent (confirmed live: {"owner_id":0,"repo_id":2,"name":"BUILD_NUMBER","data":"70"})
+            # - reading .value here silently produced the string "undefined", which then broke
+            # Gradle's own toInteger() parse of build_number.txt with a config-evaluation crash.
+            current=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/var.json','utf8')).data)")
           else
             current=0
           fi
