@@ -8,10 +8,12 @@ name: Build & Release Jar (Forgejo)
 #
 # Build numbering is tracked independently HERE, via this repo's own "BUILD_NUMBER" Forgejo
 # Actions variable — Forgejo has no way to reach GitHub's own Actions variable, so this one
-# was seeded to continue from GitHub's last known value (69) the day this workflow was added,
-# specifically so numbers don't collide once GitHub's CI is unblocked again. If GitHub CI
-# and this one both publish for a while, keep them in sync by hand (or just let this workflow
-# fall out of use again once GitHub is fixed).
+# was seeded to 70 (GitHub's NEXT number, not its last-used 69 — Forgejo has never actually
+# published anything, so seeding it to 69 would make the "reuse if not already used" check
+# below reuse 69 forever, since Forgejo itself never marks 69 as used) the day this workflow
+# was added, specifically so numbers don't collide once GitHub's CI is unblocked again. If
+# GitHub CI and this one both publish for a while, keep them in sync by hand (or just let this
+# workflow fall out of use again once GitHub is fixed).
 #
 # Requires a repo secret CI_RELEASE_TOKEN — a Forgejo access token with read/write access to
 # this repo (Actions variables + repo contents/releases) — add it manually via this repo's
@@ -80,20 +82,35 @@ jobs:
           MARKER: ${{ github.ref_name }}
         run: |
           set -e
-          current=$(curl -sf -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER" \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).value)}catch(e){console.log('0')}})" \
-            || echo 0)
 
-          has_marker=$(curl -s -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/releases/tags/${MOD_VERSION}-build-${current}" \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log((j.assets||[]).some(a=>a.name.includes(process.env.MARKER))?'yes':'no')}catch(e){console.log('no')}})")
+          var_code=$(curl -s -o /tmp/var.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
+          echo "GET BUILD_NUMBER -> HTTP $var_code"; cat /tmp/var.json; echo
+          if [ "$var_code" = "200" ]; then
+            current=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/var.json','utf8')).value)")
+          else
+            current=0
+          fi
+
+          rel_code=$(curl -s -o /tmp/rel.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/releases/tags/${MOD_VERSION}-build-${current}")
+          if [ "$rel_code" = "200" ]; then
+            has_marker=$(node -e "const j=JSON.parse(require('fs').readFileSync('/tmp/rel.json','utf8'));console.log((j.assets||[]).some(a=>a.name.includes(process.env.MARKER))?'yes':'no')")
+          else
+            has_marker=no
+          fi
+          echo "current=$current has_marker=$has_marker"
 
           if [ "$has_marker" = "yes" ]; then
             next=$((current + 1))
-            curl -sf -X PUT -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+            put_code=$(curl -s -o /tmp/put.json -w "%{http_code}" -X PUT -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
               -d "{\"value\":\"$next\"}" \
-              "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER" > /dev/null
+              "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
+            echo "PUT BUILD_NUMBER -> HTTP $put_code"; cat /tmp/put.json; echo
+            if [ "$put_code" != "200" ] && [ "$put_code" != "204" ]; then
+              echo "::error::Failed to bump BUILD_NUMBER (HTTP $put_code)"
+              exit 1
+            fi
           else
             next=$current
           fi
@@ -126,17 +143,31 @@ jobs:
           JAR_NAME: ${{ steps.jar.outputs.name }}
         run: |
           set -e
-          existing=$(curl -s -H "Authorization: token $TOKEN" "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
 
-          if echo "$existing" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{JSON.parse(d).id?process.exit(0):process.exit(1)}catch(e){process.exit(1)}})"; then
-            release_id=$(echo "$existing" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).id))")
+          existing_code=$(curl -s -o /tmp/existing.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
+          echo "GET release tag $TAG -> HTTP $existing_code"; cat /tmp/existing.json; echo
+
+          if [ "$existing_code" = "200" ]; then
+            release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/existing.json','utf8')).id)")
           else
-            release_id=$(curl -sf -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+            create_code=$(curl -s -o /tmp/created.json -w "%{http_code}" -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
               -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"\`$BRANCH\`: commit $SHA.\",\"target_commitish\":\"$SHA\",\"prerelease\":true}" \
-              "$FORGEJO_API/repos/$REPO/releases" \
-              | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).id))")
+              "$FORGEJO_API/repos/$REPO/releases")
+            echo "POST create release -> HTTP $create_code"; cat /tmp/created.json; echo
+            if [ "$create_code" != "201" ]; then
+              echo "::error::Failed to create release (HTTP $create_code)"
+              exit 1
+            fi
+            release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/created.json','utf8')).id)")
           fi
+          echo "release_id=$release_id"
 
-          curl -sf -X POST -H "Authorization: token $TOKEN" \
+          asset_code=$(curl -s -o /tmp/asset.json -w "%{http_code}" -X POST -H "Authorization: token $TOKEN" \
             -F "attachment=@${JAR_PATH};filename=${JAR_NAME}" \
-            "$FORGEJO_API/repos/$REPO/releases/$release_id/assets?name=${JAR_NAME}" > /dev/null
+            "$FORGEJO_API/repos/$REPO/releases/$release_id/assets?name=${JAR_NAME}")
+          echo "POST upload asset -> HTTP $asset_code"; cat /tmp/asset.json; echo
+          if [ "$asset_code" != "201" ]; then
+            echo "::error::Failed to upload release asset (HTTP $asset_code)"
+            exit 1
+          fi
