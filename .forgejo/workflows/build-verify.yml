@@ -11,7 +11,12 @@ name: Build Verify
 # gradlew fails immediately with "JAVA_HOME is not set and no 'java' command
 # could be found"); the correct per-branch JDK actually used to COMPILE (21 for
 # 1.21.x/26.1.x's MC versions, 25 for 26.2.x) is auto-provisioned separately by
-# Gradle's own toolchain resolver, same as the GitHub workflow.
+# Gradle's own toolchain resolver, same as the GitHub workflow. Installed via apt
+# rather than actions/setup-java@v4 — this Forgejo instance's action mirror
+# (code.forgejo.org) only carries a curated subset of GitHub's actions and
+# doesn't have setup-java (confirmed: 404), and pointing at the real
+# github.com/actions/setup-java instead would add an external dependency this
+# internal verify workflow doesn't need.
 
 on:
   push:
@@ -41,10 +46,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq openjdk-21-jdk-headless
+          echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> "$GITHUB_ENV"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
