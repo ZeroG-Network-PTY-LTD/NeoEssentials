@@ -832,6 +832,32 @@ public class ConfigManager {
         }
         return false;
     }
+
+    /**
+     * Returns true if only real player-vs-player hits should lock teleportation, instead of
+     * any combat with a living entity. (teleportation.generalSettings.combatLockPvpOnly)
+     *
+     * <p>Some automation mods (mob farms/grinders) attribute their kills to the owning player
+     * for loot/XP/looting-enchant purposes, which looks identical to that player manually
+     * attacking a mob to {@link com.zerog.neoessentials.teleportation.CombatEventHandler} and
+     * permanently locks their teleport with no real combat happening. Defaults to
+     * {@code false} (original behavior: any combat locks) so existing servers relying on PvE
+     * combat-log prevention see no change.
+     */
+    public boolean isCombatLockPvpOnly() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("generalSettings")) {
+                JsonObject general = tp.getAsJsonObject("generalSettings");
+                if (general.has("combatLockPvpOnly")) {
+                    return general.get("combatLockPvpOnly").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Returns true if logTeleportRequests is enabled in teleportation.teleportRequestSettings config section.
      * (teleportation.teleportRequestSettings.logTeleportRequests)

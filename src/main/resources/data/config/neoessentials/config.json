@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 54,
+  "_configVersion": 55,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -770,6 +770,16 @@
       "enableTeleportWarmup": true,
       // Allow teleportation while in combat (requires combat system)
       "allowTeleportInCombat": false,
+      // When allowTeleportInCombat is false, this decides what counts as "in combat":
+      // false (default) = any hit to/from a living entity locks teleport, including PvE
+      //   fights against mobs (the original anti-combat-log behavior).
+      // true = only a real player-vs-player hit locks teleport. Some automation mods (mob
+      //   farms/grinders, e.g. Mob Grinding Utils' Mob Masher) attribute their kills to the
+      //   owning player for loot/XP/looting-enchant purposes, which looks identical to that
+      //   player manually attacking a mob and permanently locks their teleport with no real
+      //   combat happening. Any mod that does this will trip the same false lock — set this
+      //   to true if that's affecting your server.
+      "combatLockPvpOnly": false,
       // Maximum teleport distance in blocks (-1 = unlimited)
       "maxTeleportDistance": -1,
       // Show particle effects at source / destination
