@@ -6,9 +6,12 @@ name: Build Verify
 # NeoEssentials' project memory for that issue. It only verifies the build
 # and stores a jar; it does not create releases, touch GitHub in any way, or
 # post to Discord — those stay owned by .github/workflows/build-and-release.yml
-# on GitHub. The JDK image below only launches Gradle; the correct per-branch
-# JDK (21 for 1.21.x/26.1.x's MC versions, 25 for 26.2.x) is auto-provisioned
-# by Gradle's own toolchain resolver, same as the GitHub workflow.
+# on GitHub. The "Set up JDK" step below only launches the Gradle wrapper itself
+# (which needs SOME java on PATH just to bootstrap — confirmed live: without it,
+# gradlew fails immediately with "JAVA_HOME is not set and no 'java' command
+# could be found"); the correct per-branch JDK actually used to COMPILE (21 for
+# 1.21.x/26.1.x's MC versions, 25 for 26.2.x) is auto-provisioned separately by
+# Gradle's own toolchain resolver, same as the GitHub workflow.
 
 on:
   push:
@@ -24,19 +27,24 @@ on:
 jobs:
   build:
     runs-on: docker
-    # NOT a JDK image — the runner here executes Actions via Node.js (actions/checkout,
+    # NOT a JDK-only image — the runner here executes Actions via Node.js (actions/checkout,
     # actions/upload-artifact are JS actions run with `node dist/index.js` directly), so the
-    # container needs node + git, not a JDK. eclipse-temurin:21-jdk has neither, which made
-    # even the checkout step fail with "node: executable file not found in $PATH" before the
-    # build ever ran. catthehacker/ubuntu:act-* is the standard image for self-hosted
-    # Forgejo/Gitea Actions runners for exactly this reason. Gradle's own toolchain resolver
-    # (see build.gradle) downloads whatever JDK each branch actually needs regardless of what
-    # the container image ships, so no JDK needs to be preinstalled here at all.
+    # container needs node + git too, not just a JDK. eclipse-temurin:21-jdk has neither,
+    # which made even the checkout step fail with "node: executable file not found in $PATH"
+    # before the build ever ran. catthehacker/ubuntu:act-* is the standard image for
+    # self-hosted Forgejo/Gitea Actions runners for exactly this reason — it still needs a
+    # JDK added explicitly below for gradlew itself to run at all.
     container:
       image: catthehacker/ubuntu:act-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
