@@ -1,0 +1,142 @@
+name: Build & Release Jar (Forgejo)
+
+# Forgejo Actions stand-in for GitHub's own .github/workflows/build-and-release.yml, while
+# that one is blocked repo-wide by an org Actions policy (see NeoEssentials' project memory
+# for that issue). Same shape: one shared GitHub-style release PER BUILD NUMBER, with all
+# three branches' jars attached as separate assets on that same release rather than one
+# release each — whichever branch runs first creates it, the others just add their jar.
+#
+# Build numbering is tracked independently HERE, via this repo's own "BUILD_NUMBER" Forgejo
+# Actions variable — Forgejo has no way to reach GitHub's own Actions variable, so this one
+# was seeded to continue from GitHub's last known value (69) the day this workflow was added,
+# specifically so numbers don't collide once GitHub's CI is unblocked again. If GitHub CI
+# and this one both publish for a while, keep them in sync by hand (or just let this workflow
+# fall out of use again once GitHub is fixed).
+#
+# Requires a repo secret CI_RELEASE_TOKEN — a Forgejo access token with read/write access to
+# this repo (Actions variables + repo contents/releases) — add it manually via this repo's
+# Settings > Actions > Secrets. Forgejo's own built-in Actions token isn't used for this, for
+# the same reason GitHub's workflow uses a dedicated CI_BUILD_NUMBER_PAT instead of the
+# default GITHUB_TOKEN: the default token doesn't reliably have variable-write permission.
+
+on:
+  push:
+    branches:
+      - 1.21.x
+      - 26.1.x
+      - 26.2.x
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: docker
+    # NOT a JDK-only image — the runner here executes Actions via Node.js (actions/checkout,
+    # actions/upload-artifact are JS actions run with `node dist/index.js` directly), so the
+    # container needs node + git too, not just a JDK. eclipse-temurin:21-jdk has neither,
+    # which made even the checkout step fail with "node: executable file not found in $PATH"
+    # before the build ever ran. catthehacker/ubuntu:act-* is the standard image for
+    # self-hosted Forgejo/Gitea Actions runners for exactly this reason — it still needs a
+    # JDK added explicitly below for gradlew itself to run at all.
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        # Only launches the Gradle wrapper itself (confirmed live: without ANY java on PATH,
+        # gradlew fails immediately with "JAVA_HOME is not set and no 'java' command could be
+        # found"); the actual per-branch compile JDK (21 for 1.21.x/26.1.x, 25 for 26.2.x) is
+        # auto-provisioned separately by Gradle's own toolchain resolver, same as GitHub's
+        # workflow. Installed via apt rather than actions/setup-java@v4 — this instance's
+        # action mirror (code.forgejo.org) doesn't carry setup-java (confirmed 404).
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq openjdk-21-jdk-headless
+          echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> "$GITHUB_ENV"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Read mod version
+        id: mod_version
+        run: echo "value=$(sed -n 's/^mod_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+
+      # Same "reuse if this branch hasn't published under the current number yet, otherwise
+      # bump" logic as the GitHub workflow's own "Bump shared build number" step — see that
+      # step's comments for the full rationale. Adapted here to Forgejo's REST API instead of
+      # `gh`/GitHub's Variables API, using node (already present in the container image, since
+      # actions/checkout needs it too) to parse JSON rather than assuming jq is installed.
+      - name: Bump shared build number
+        id: build_number
+        env:
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+          MOD_VERSION: ${{ steps.mod_version.outputs.value }}
+          MARKER: ${{ github.ref_name }}
+        run: |
+          set -e
+          current=$(curl -sf -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).value)}catch(e){console.log('0')}})" \
+            || echo 0)
+
+          has_marker=$(curl -s -H "Authorization: token $TOKEN" \
+            "$FORGEJO_API/repos/$REPO/releases/tags/${MOD_VERSION}-build-${current}" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log((j.assets||[]).some(a=>a.name.includes(process.env.MARKER))?'yes':'no')}catch(e){console.log('no')}})")
+
+          if [ "$has_marker" = "yes" ]; then
+            next=$((current + 1))
+            curl -sf -X PUT -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+              -d "{\"value\":\"$next\"}" \
+              "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER" > /dev/null
+          else
+            next=$current
+          fi
+
+          echo "$next" > build_number.txt
+          echo "value=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Build jar
+        run: ./gradlew build -x test --console=plain
+
+      - name: Locate built jar
+        id: jar
+        run: |
+          jar_path=$(ls -t build/libs/*.jar | head -n 1)
+          echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
+
+      # One release per build number, shared by all three branches — mirrors the GitHub
+      # workflow's own softprops/action-gh-release step, done here via Forgejo's REST API
+      # directly since that action is GitHub-specific.
+      - name: Publish build release
+        env:
+          FORGEJO_API: ${{ github.server_url }}/api/v1
+          TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.mod_version.outputs.value }}-build-${{ steps.build_number.outputs.value }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          JAR_PATH: ${{ steps.jar.outputs.path }}
+          JAR_NAME: ${{ steps.jar.outputs.name }}
+        run: |
+          set -e
+          existing=$(curl -s -H "Authorization: token $TOKEN" "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
+
+          if echo "$existing" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{JSON.parse(d).id?process.exit(0):process.exit(1)}catch(e){process.exit(1)}})"; then
+            release_id=$(echo "$existing" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).id))")
+          else
+            release_id=$(curl -sf -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"\`$BRANCH\`: commit $SHA.\",\"target_commitish\":\"$SHA\",\"prerelease\":true}" \
+              "$FORGEJO_API/repos/$REPO/releases" \
+              | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).id))")
+          fi
+
+          curl -sf -X POST -H "Authorization: token $TOKEN" \
+            -F "attachment=@${JAR_PATH};filename=${JAR_NAME}" \
+            "$FORGEJO_API/repos/$REPO/releases/$release_id/assets?name=${JAR_NAME}" > /dev/null
