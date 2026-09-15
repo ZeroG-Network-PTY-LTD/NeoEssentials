@@ -24,8 +24,16 @@ on:
 jobs:
   build:
     runs-on: docker
+    # NOT a JDK image — the runner here executes Actions via Node.js (actions/checkout,
+    # actions/upload-artifact are JS actions run with `node dist/index.js` directly), so the
+    # container needs node + git, not a JDK. eclipse-temurin:21-jdk has neither, which made
+    # even the checkout step fail with "node: executable file not found in $PATH" before the
+    # build ever ran. catthehacker/ubuntu:act-* is the standard image for self-hosted
+    # Forgejo/Gitea Actions runners for exactly this reason. Gradle's own toolchain resolver
+    # (see build.gradle) downloads whatever JDK each branch actually needs regardless of what
+    # the container image ships, so no JDK needs to be preinstalled here at all.
     container:
-      image: eclipse-temurin:21-jdk
+      image: catthehacker/ubuntu:act-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
