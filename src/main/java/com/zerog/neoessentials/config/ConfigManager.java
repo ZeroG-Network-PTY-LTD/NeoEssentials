@@ -1483,7 +1483,11 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 57);          // v57 — added modules.commandPermissionGateEnabled: toggles the
+        put(MAIN_CONFIG, 58);          // v58 — added permissionsAutoPromote: config-driven
+                                        //       auto-promotion from one permission group to
+                                        //       another based on /playtime (default: guest ->
+                                        //       member after 24h). See AutoPromoteManager.
+                                        // v57 — added modules.commandPermissionGateEnabled: toggles the
                                         //       third-party command permission gate (see
                                         //       command_permissions.json / ThirdPartyCommandGate). Unlike
                                         //       most module toggles this one is re-checked live, so it can
@@ -1608,7 +1612,12 @@ public class ConfigManager {
                                        //        afk tablist-indicator keys, and webDashboard.serviceAccount
                                        //        (superseded by the /dashboard pair handshake)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
-        put(PERMISSIONS_CONFIG, 7);    // v7  — removed _configVersion_comment
+        put(PERMISSIONS_CONFIG, 8);    // v8  — seed groups replaced with the guest/member/vip/
+                                        //       vipplus/mod/admin/owner ladder (only affects a
+                                        //       brand-new server's first boot; see the file's
+                                        //       own header for the migration commands to bring
+                                        //       an already-initialized server's groups up to it)
+                                        // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
         put(DISCORD_AUTH_CONFIG, 11);  // v11 — fixed dangling trailing comma after permissionMappings'
                                        //        closing brace (malformed JSON, broke JAR-template
@@ -3104,6 +3113,38 @@ public class ConfigManager {
             }
         }
         return true;
+    }
+
+    private static JsonObject getAutoPromoteConfig() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("permissionsAutoPromote")) {
+            return config.getAsJsonObject("permissionsAutoPromote");
+        }
+        return new JsonObject();
+    }
+
+    /** Returns true if guest -> member playtime auto-promotion is enabled. Defaults to true if not set. */
+    public static boolean isPermissionsAutoPromoteEnabled() {
+        JsonObject ap = getAutoPromoteConfig();
+        return !ap.has("enabled") || ap.get("enabled").getAsBoolean();
+    }
+
+    /** The permission group auto-promotion promotes FROM (permissionsAutoPromote.fromGroup). Defaults to "guest". */
+    public static String getAutoPromoteFromGroup() {
+        JsonObject ap = getAutoPromoteConfig();
+        return ap.has("fromGroup") ? ap.get("fromGroup").getAsString() : "guest";
+    }
+
+    /** The permission group auto-promotion promotes TO (permissionsAutoPromote.toGroup). Defaults to "member". */
+    public static String getAutoPromoteToGroup() {
+        JsonObject ap = getAutoPromoteConfig();
+        return ap.has("toGroup") ? ap.get("toGroup").getAsString() : "member";
+    }
+
+    /** Hours of /playtime required before auto-promotion (permissionsAutoPromote.requiredPlaytimeHours). Defaults to 24. */
+    public static double getAutoPromoteRequiredPlaytimeHours() {
+        JsonObject ap = getAutoPromoteConfig();
+        return ap.has("requiredPlaytimeHours") ? ap.get("requiredPlaytimeHours").getAsDouble() : 24.0;
     }
 
     /**

@@ -289,6 +289,7 @@
     "commands.neoessentials.msg.no_permission":  "You do not have permission to use /msg.",
     "commands.neoessentials.nick.no_color_permission":  "§cYou don\u0027t have permission to use color codes in nicknames",
     "commands.neoessentials.no_permission":  "You do not have permission to use this command.",
+    "commands.neoessentials.permissions.auto_promoted": "§aYou've played for {0}+ hours and have been promoted to §f{1}§a!",
     "commands.neoessentials.permissions.category.header":  "§6{0} Permissions ({1}):",
     "commands.neoessentials.permissions.category.permission_details":  "§7- §f{0} {1}§7 - {2}",
     "commands.neoessentials.permissions.category.unknown":  "§cUnknown category: {0}",
