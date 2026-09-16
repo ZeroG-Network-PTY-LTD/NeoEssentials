@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 57,
+  "_configVersion": 58,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -590,7 +590,7 @@
   "permissions": {
     // Use an external permission system (LuckPerms etc.) instead of the built-in one
     "useExternalPermissions": true,
-    "defaultGroup": "default",
+    "defaultGroup": "guest",
     // Allow server operators (OP level) to bypass permission checks
     "opsBypassPermissions": true,
     "vanillaOpFallback": true,
@@ -616,6 +616,25 @@
     "permissionCacheExpiryMinutes": 30,
     // Log all permission grant/revoke actions
     "auditLogging": true
+  },
+
+  /* ----------------------------------------------------------------
+     Permission Group Auto-Promotion
+     Promotes a player from one permission group to another once they
+     cross a /playtime threshold. Checked every 5 minutes for online
+     players only (see AutoPromoteManager) — no restart needed to change
+     these values, "/neoe reload" picks them up immediately. Only the
+     internal permission system is affected (permissions.useExternalPermissions:
+     false) — this does nothing when an external adapter (LuckPerms etc.)
+     is active, since NeoEssentials doesn't own group assignment there.
+  ---------------------------------------------------------------- */
+  "permissionsAutoPromote": {
+    "enabled": true,
+    // Player must currently be in this group to be considered for promotion
+    "fromGroup": "guest",
+    // Group they're moved into once requiredPlaytimeHours is reached
+    "toGroup": "member",
+    "requiredPlaytimeHours": 24
   },
 
   /* ----------------------------------------------------------------

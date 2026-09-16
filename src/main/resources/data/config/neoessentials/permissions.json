@@ -1,6 +1,6 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
-  "_configVersion": 7,
+  "_configVersion": 8,
 
   /* ================================================================
      NeoEssentials — Permissions  (permissions.json)
@@ -14,16 +14,34 @@
      reload, does nothing. Once a server has real permission data, manage
      groups/permissions with the /permissions in-game commands or the
      dashboard instead; they write straight to the active backend.
+
+     A server that was already running before this file changed keeps
+     whatever groups it already has (default/moderator/admin) — the ladder
+     below only applies to a brand-new server. To bring an existing server
+     up to this 7-tier ladder, run once in-game:
+       /permissions group rename default guest
+       /permissions group rename moderator mod
+       /permissions group create member
+       /permissions group create vip
+       /permissions group create vipplus
+       /permissions group create owner
+     then set each new group's inherits/permissions/priority/prefix to
+     match the groups array below (group setinherit / group addperm /
+     group setpriority / group setprefix).
   ================================================================ */
 
   // The group assigned to players with no explicit group
-  "defaultGroup": "default",
+  "defaultGroup": "guest",
 
+  // Ladder: guest -> member -> vip -> vipplus -> mod -> admin -> owner.
+  // Only guest -> member promotes automatically (see permissionsAutoPromote
+  // in config.json); vip/vipplus/mod/admin/owner are always assigned manually.
   "groups": [
     {
-      "name": "default",
+      "name": "guest",
       "prefix": "&7",
       "suffix": "",
+      "priority": 0,
       "permissions": [
         "neoessentials.economy.balance",
         "neoessentials.economy.pay",
@@ -62,9 +80,42 @@
       "inherits": []
     },
     {
-      "name": "moderator",
+      "name": "member",
+      "prefix": "&f",
+      "suffix": "",
+      "priority": 1,
+      // Auto-promoted from guest after 24h /playtime (permissionsAutoPromote in config.json).
+      // A few more home slots than guest as the first rung's reward.
+      "permissions": [
+        "neoessentials.home.5"
+      ],
+      "inherits": ["guest"]
+    },
+    {
+      "name": "vip",
+      "prefix": "&b[VIP] ",
+      "suffix": "",
+      "priority": 2,
+      "permissions": [
+        "neoessentials.home.7"
+      ],
+      "inherits": ["member"]
+    },
+    {
+      "name": "vipplus",
+      "prefix": "&d[VIP+] ",
+      "suffix": "",
+      "priority": 3,
+      "permissions": [
+        "neoessentials.home.10"
+      ],
+      "inherits": ["vip"]
+    },
+    {
+      "name": "mod",
       "prefix": "&2[Mod] ",
       "suffix": "",
+      "priority": 4,
       "permissions": [
         "neoessentials.economy.balance.others",
         "neoessentials.economy.admin",
@@ -111,16 +162,28 @@
         "neoessentials.moderation.warnings",
         "neoessentials.pvp.admin"
       ],
-      "inherits": ["default"]
+      // Staff inherit every donor perk on top of their moderation permissions.
+      "inherits": ["vipplus"]
     },
     {
       "name": "admin",
       "prefix": "&c[Admin] ",
       "suffix": "",
+      "priority": 5,
       "permissions": [
         "neoessentials.*"
       ],
-      "inherits": ["moderator"]
+      "inherits": ["mod"]
+    },
+    {
+      "name": "owner",
+      "prefix": "&6[Owner] ",
+      "suffix": "",
+      "priority": 6,
+      "permissions": [
+        "neoessentials.*"
+      ],
+      "inherits": ["admin"]
     }
   ]
 }
