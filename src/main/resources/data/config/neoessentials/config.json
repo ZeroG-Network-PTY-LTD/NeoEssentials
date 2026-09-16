@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 55,
+  "_configVersion": 56,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -865,7 +865,15 @@
       // Warm-up delay for /back in seconds (0 = instant, overrides generalSettings.teleportDelay)
       "teleportDelay": 3,
       // Cooldown between /back uses in seconds (0 = disabled)
-      "backCooldown": 0
+      "backCooldown": 0,
+      // /back now keeps a proper undo-stack of up to this many locations (death locations
+      // included, in whatever order they actually happened) instead of remembering only the
+      // single most recent one — e.g. /tpa, /spawn, /home leaves 3 entries; /back goes to
+      // the pre-/home spot, /back again goes to the pre-/spawn spot, and so on. Purely
+      // in-memory — it does NOT persist across a disconnect or server restart, on purpose,
+      // so a stale history from days ago never resurfaces. Oldest entry is dropped once a
+      // player's history exceeds this size.
+      "maxBackHistory": 10
     }
   },
 
