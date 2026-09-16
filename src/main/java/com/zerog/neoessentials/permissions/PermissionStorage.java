@@ -199,6 +199,10 @@ public class PermissionStorage {
         group.getConditions().forEach(conditions::addProperty);
         g.add("conditions", conditions);
 
+        JsonObject meta = new JsonObject();
+        group.getMetaMap().forEach(meta::addProperty);
+        g.add("meta", meta);
+
         return g;
     }
 
@@ -237,6 +241,11 @@ public class PermissionStorage {
         if (g.has("conditions") && g.get("conditions").isJsonObject()) {
             for (Map.Entry<String, JsonElement> ce : g.getAsJsonObject("conditions").entrySet()) {
                 if (!ce.getValue().isJsonNull()) group.setCondition(ce.getKey(), ce.getValue().getAsString());
+            }
+        }
+        if (g.has("meta") && g.get("meta").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> me : g.getAsJsonObject("meta").entrySet()) {
+                if (!me.getValue().isJsonNull()) group.setMeta(me.getKey(), me.getValue().getAsString());
             }
         }
         return group;
