@@ -31,6 +31,12 @@ import org.slf4j.LoggerFactory;
  * collections match exactly — including deleting any group/user record that no longer exists
  * in-memory (e.g. a deleted group or a user reset to defaults), since {@link DataStore} has no
  * "replace whole collection" primitive.
+ *
+ * <p>{@code permissions.json} is a live source of truth, not a one-time seed: every group it
+ * defines is re-applied on every {@link #load} — at server start and on every
+ * {@code /permissions reload}/{@code /neoe reload} — via {@link #syncSeedGroupsFromConfig},
+ * overwriting that group's permissions/inherits/prefix/suffix/priority to match the file.
+ * Groups not mentioned in the file, and all user data, are left alone.
  */
 public class PermissionStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionStorage.class);
@@ -106,11 +112,55 @@ public class PermissionStorage {
             manager.addGroup(groupFromJson(g));
         }
 
+        // Re-apply permissions.json's groups on top of whatever the store had — config always
+        // wins for any group defined there (permissions/inherits/prefix/suffix/priority reset
+        // to exactly what's in the file). Runs on every load, not just a server's first boot,
+        // so editing permissions.json and running /neoe reload (or restarting) actually takes
+        // effect. Groups NOT mentioned in the file are left completely alone.
+        syncSeedGroupsFromConfig(manager);
+
         for (JsonObject u : store.getAll(USER_COLLECTION).values()) {
             manager.addUser(userFromJson(u));
         }
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Loaded permission state: {} group(s), {} user(s)",
                 manager.getGroups().size(), manager.getUsers().size());
+
+        // Persist the merged result so the store (and any dashboard/SQL view of it) reflects
+        // what's actually active, not just what was there before the sync.
+        try {
+            save(manager);
+        } catch (IOException e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist permission state after seed-config sync: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Re-applies every group defined in {@code permissions.json} onto {@code manager}'s
+     * in-memory group table, overwriting that group's permissions/inherits/prefix/suffix/
+     * priority (and the overall default group) to match the file exactly. Groups not
+     * mentioned in the file, and all user data, are left untouched.
+     */
+    private static void syncSeedGroupsFromConfig(PermissionManager manager) {
+        if (!Files.exists(FILE_PATH)) return;
+        try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
+            com.google.gson.stream.JsonReader jsonReader = new com.google.gson.stream.JsonReader(reader);
+            jsonReader.setLenient(true);
+            JsonObject root = JsonParser.parseReader(jsonReader).getAsJsonObject();
+
+            if (root.has("defaultGroup") && !root.get("defaultGroup").isJsonNull()) {
+                manager.setDefaultGroup(root.get("defaultGroup").getAsString());
+            }
+            if (root.has("groups")) {
+                int synced = 0;
+                for (JsonElement ge : root.getAsJsonArray("groups")) {
+                    manager.addGroup(groupFromJson(ge.getAsJsonObject()));
+                    synced++;
+                }
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Synced {} group(s) from permissions.json seed config", synced);
+            }
+        } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to sync groups from permissions.json seed config: {}", e.getMessage(), e);
+        }
     }
 
     // ── JSON conversion ─────────────────────────────────────────────────────────
@@ -264,37 +314,28 @@ public class PermissionStorage {
     }
 
     /**
-     * One-time import of the legacy {@code permissions.json} (groups + a possible embedded
-     * {@code users} array from very old installs) and {@code permissions/playerdata.json}
-     * (users) into the active DataStore, if the group/user collections are still empty and
-     * {@code storage.autoMigrate} is enabled. Old files are left in place, untouched.
+     * One-time import of a possible embedded {@code users} array from very old installs
+     * (permissions.json used to allow embedding users directly) and
+     * {@code permissions/playerdata.json} (users) into the active DataStore, if the user
+     * collection is still empty and {@code storage.autoMigrate} is enabled. Old files are
+     * left in place, untouched.
+     *
+     * <p>Group/defaultGroup import is NOT handled here any more — see
+     * {@link #syncSeedGroupsFromConfig}, which re-applies permissions.json's groups on
+     * every load (not just once), so editing that file and reloading actually takes effect.</p>
      */
     private static void migrateLegacyFilesIfNeeded(DataStore store) {
-        if (store.hasAnyData(GROUP_COLLECTION) || store.hasAnyData(USER_COLLECTION) || store.hasAnyData(META_COLLECTION)) {
+        if (store.hasAnyData(USER_COLLECTION)) {
             return;
         }
         if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isStorageAutoMigrateEnabled()) return;
 
-        int migratedGroups = 0;
         int migratedUsers = 0;
 
         try {
             if (Files.exists(FILE_PATH)) {
                 try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
                     JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                    if (root.has("defaultGroup") && !root.get("defaultGroup").isJsonNull()) {
-                        JsonObject meta = new JsonObject();
-                        meta.addProperty("defaultGroup", root.get("defaultGroup").getAsString());
-                        store.put(META_COLLECTION, "global", meta);
-                    }
-                    if (root.has("groups")) {
-                        for (JsonElement ge : root.getAsJsonArray("groups")) {
-                            JsonObject g = ge.getAsJsonObject().deepCopy();
-                            String name = g.get("name").getAsString();
-                            store.put(GROUP_COLLECTION, name, g);
-                            migratedGroups++;
-                        }
-                    }
                     // Very old installs embedded users directly in permissions.json.
                     if (root.has("users")) {
                         for (JsonElement ue : root.getAsJsonArray("users")) {
@@ -321,9 +362,9 @@ public class PermissionStorage {
             NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to migrate legacy permission files: {}", e.getMessage(), e);
         }
 
-        if (migratedGroups > 0 || migratedUsers > 0) {
-            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "PermissionStorage: migrated {} group(s) and {} user(s) from legacy files into the '{}' storage backend.",
-                migratedGroups, migratedUsers, StorageManager.getInstance().getActiveType());
+        if (migratedUsers > 0) {
+            NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "PermissionStorage: migrated {} user(s) from legacy files into the '{}' storage backend.",
+                migratedUsers, StorageManager.getInstance().getActiveType());
         }
     }
 
