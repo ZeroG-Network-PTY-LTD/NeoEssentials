@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 56,
+  "_configVersion": 57,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -57,7 +57,11 @@
     "discordIntegrationEnabled": true,
     "votifierEnabled": true,
     "cratesEnabled": true,
-    "pvpEnabled": true
+    "pvpEnabled": true,
+    // Unlike every other flag in this section, this one IS re-checked live (no restart needed
+    // to turn it OFF, see command_permissions.json) — enabling it after booting disabled still
+    // needs a restart, since which commands get instrumented is decided once at boot.
+    "commandPermissionGateEnabled": true
   },
 
   // Per-subsystem logging control. For each category:

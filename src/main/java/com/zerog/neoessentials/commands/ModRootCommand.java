@@ -466,6 +466,20 @@ public class ModRootCommand {
                 source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_rules", fMsg));
             }
 
+            // Reload the third-party command permission gate's mappings (command_permissions.json).
+            // Note: this only refreshes which permission node an already-wrapped command path
+            // requires — it can't wrap NEW command paths that weren't covered at boot.
+            totalCount++;
+            try {
+                com.zerog.neoessentials.api.permissions.commandgate.ThirdPartyCommandGate.reloadConfig();
+                NeoLog.info(LOGGER, LogCategory.COMMANDS, "✓ Command permission gate mappings reloaded");
+                successCount++;
+            } catch (Exception e) {
+                NeoLog.error(LOGGER, LogCategory.COMMANDS, "✗ Failed to reload command permission gate mappings: {}", e.getMessage(), e);
+                final String fMsg = e.getMessage();
+                source.sendFailure(MessageUtil.warning("commands.neoessentials.root.reload_error_commandgate", fMsg));
+            }
+
             // Build success message
             final int fSuccessCount = successCount, fTotalCount = totalCount;
 

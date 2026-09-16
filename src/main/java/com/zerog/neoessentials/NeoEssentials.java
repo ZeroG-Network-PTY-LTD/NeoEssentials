@@ -6,6 +6,7 @@ import com.zerog.neoessentials.permissions.PermissionSystem;
 import net.neoforged.fml.common.Mod;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -715,7 +716,21 @@ public class NeoEssentials {
 
             registerAllCommands(dispatcher, registry);
         }
-        
+
+        /**
+         * Runs after every default-priority RegisterCommandsEvent listener (ours and every
+         * other installed mod's), so third-party commands already exist in the shared
+         * dispatcher and can be found/wrapped by the command permission gate.
+         */
+        @SubscribeEvent(priority = EventPriority.LOWEST)
+        public static void onRegisterCommandsLate(RegisterCommandsEvent event) {
+            if (!com.zerog.neoessentials.config.ConfigManager.isCommandPermissionGateEnabled()) {
+                return;
+            }
+            com.zerog.neoessentials.api.permissions.commandgate.ThirdPartyCommandGate
+                .installOnRegisteredCommands(event.getDispatcher());
+        }
+
         /**
          * Remove a vanilla command from the dispatcher to allow overriding
          */

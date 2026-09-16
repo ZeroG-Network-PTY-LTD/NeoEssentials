@@ -1,0 +1,48 @@
+{
+  // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
+  "_configVersion": 1,
+
+  /* ================================================================
+     NeoEssentials — Third-Party Command Permission Gate
+     (command_permissions.json)
+
+     Lets you require a NeoEssentials permission node to run commands added
+     by OTHER mods (or a vanilla command you haven't otherwise removed or
+     overridden). A player without the mapped permission is blocked with
+     the same "no permission" message NeoEssentials' own commands show.
+
+     Requires "modules.commandPermissionGateEnabled": true in config.json
+     (enabled by default). Reload with "/neoe reload" after editing — an
+     EXISTING mapping's permission node can be changed live this way. Adding
+     a mapping under a top-level command that wasn't already covered by
+     another mapping at server start needs a full restart, since which
+     commands get instrumented is decided once, at boot.
+  ================================================================ */
+
+  // Each entry maps a command path to a permission node.
+  //   "path"       — space-separated node names from the command root, e.g.
+  //                  "someothermod sub1" targets `/someothermod sub1`.
+  //                  Argument nodes are addressed by their declared argument
+  //                  name (check that mod's own /help or source if unsure).
+  //   "permission" — the NeoEssentials permission node required to run it.
+  //
+  // Granularity / precedence:
+  //   - Pointing "path" at a whole top-level command (e.g. "someothermod")
+  //     gates EVERY subcommand under it at once.
+  //   - Pointing "path" at a specific subcommand (e.g. "someothermod sub1")
+  //     gates only that subcommand.
+  //   - If both are configured, the MORE SPECIFIC (deeper) path always wins
+  //     for that exact subcommand — e.g. "someothermod" -> permA plus
+  //     "someothermod sub1" -> permB means sub1 needs permB, every other
+  //     subcommand under someothermod needs permA.
+  //
+  // If a configured path doesn't match any currently-registered command
+  // (typo, mod not installed, mod not loaded yet), a warning is logged at
+  // startup and that entry is simply skipped — the server will not crash.
+  "mappings": [
+    // Example (commented out by default — installing NeoEssentials should
+    // never silently gate anyone else's commands):
+    // { "path": "someothermod", "permission": "neoessentials.thirdparty.someothermod" },
+    // { "path": "someothermod sub1", "permission": "neoessentials.thirdparty.someothermod.sub1" }
+  ]
+}
