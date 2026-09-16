@@ -5,29 +5,23 @@
   /* ================================================================
      NeoEssentials — Permissions  (permissions.json)
 
-     IMPORTANT: this file is only read ONCE, on first boot, to seed the
-     active storage backend (json/yaml/sqlite/mysql, see storage.type in
-     config.json) with these starter groups — and only when using the
-     internal permission system (permissions.useExternalPermissions:
-     false in config.json). After that one-time import, this file is
-     never read again — editing it later, then running /permissions
-     reload, does nothing. Once a server has real permission data, manage
-     groups/permissions with the /permissions in-game commands or the
-     dashboard instead; they write straight to the active backend.
+     This is the LIVE source of truth for every group listed below — read
+     on every server start AND every "/permissions reload" / "/neoe reload"
+     (only when using the internal permission system: permissions.
+     useExternalPermissions: false in config.json). Edit a group's
+     permissions/inherits/prefix/suffix/priority here, reload, and it
+     takes effect immediately — CONFIG ALWAYS WINS: any changes made
+     in-game via "/permissions group ..." commands to a group defined
+     here are overwritten back to whatever this file says on the next
+     reload or restart. Manage these groups by editing this file, not
+     with in-game commands, or your in-game changes won't stick.
 
-     A server that was already running before this file changed keeps
-     whatever groups it already has (default/moderator/admin) — the ladder
-     below only applies to a brand-new server. To bring an existing server
-     up to this 7-tier ladder, run once in-game:
-       /permissions group rename default guest
-       /permissions group rename moderator mod
-       /permissions group create member
-       /permissions group create vip
-       /permissions group create vipplus
-       /permissions group create owner
-     then set each new group's inherits/permissions/priority/prefix to
-     match the groups array below (group setinherit / group addperm /
-     group setpriority / group setprefix).
+     "defaultGroup" is likewise re-applied on every load.
+
+     A group NOT listed here (an entirely custom group you created
+     in-game with a name that doesn't appear below) is left completely
+     alone — this only overwrites groups that exist in this file.
+     User-to-group assignments are never touched by this sync either.
   ================================================================ */
 
   // The group assigned to players with no explicit group
