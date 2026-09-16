@@ -34,6 +34,17 @@ public interface ExternalPermissionAdapter {
     void reload();
 
     /**
+     * Resolves a valued permission node (e.g. {@code ftbchunks.max_claimed}) for the user, for
+     * permission systems that expect a number/string rather than a plain grant. Default
+     * implementation reports "no opinion" — override this in an adapter that actually has a
+     * meta-value concept (e.g. LuckPerms' own meta nodes).
+     * @return the value as a string, or {@code null} if this adapter has no opinion.
+     */
+    default String getMetaValue(UUID uuid, String node) {
+        return null;
+    }
+
+    /**
      * @return The name of the external system (e.g., "LuckPerms").
      */
     String getName();

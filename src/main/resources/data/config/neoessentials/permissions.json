@@ -1,6 +1,6 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
-  "_configVersion": 8,
+  "_configVersion": 9,
 
   /* ================================================================
      NeoEssentials — Permissions  (permissions.json)
@@ -22,6 +22,18 @@
      in-game with a name that doesn't appear below) is left completely
      alone — this only overwrites groups that exist in this file.
      User-to-group assignments are never touched by this sync either.
+
+     A group's optional "meta" object holds VALUED permission nodes —
+     for a mod that expects a number/string rather than a plain yes/no
+     (e.g. FTB Chunks' ftbchunks.max_claimed / ftbchunks.max_force_loaded
+     claim limits below). This only takes effect for a third-party mod
+     that queries permissions through NeoForge's own PermissionAPI with
+     a typed PermissionNode<Integer>/PermissionNode<String> — if a mod
+     instead reads its limits from its own separate config/rank system
+     (e.g. FTB Ranks' ranks.json when not bridged to an external
+     provider), "meta" here has no effect on it; set values there
+     instead. The example values below are illustrative starting
+     points, not any mod's "official" default — tune freely.
   ================================================================ */
 
   // The group assigned to players with no explicit group
@@ -71,6 +83,10 @@
         "neoessentials.info",
         "neoessentials.help"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "50",
+        "ftbchunks.max_force_loaded": "1"
+      },
       "inherits": []
     },
     {
@@ -83,6 +99,10 @@
       "permissions": [
         "neoessentials.home.5"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "100",
+        "ftbchunks.max_force_loaded": "2"
+      },
       "inherits": ["guest"]
     },
     {
@@ -93,6 +113,10 @@
       "permissions": [
         "neoessentials.home.7"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "150",
+        "ftbchunks.max_force_loaded": "4"
+      },
       "inherits": ["member"]
     },
     {
@@ -103,6 +127,10 @@
       "permissions": [
         "neoessentials.home.10"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "250",
+        "ftbchunks.max_force_loaded": "6"
+      },
       "inherits": ["vip"]
     },
     {
@@ -156,6 +184,10 @@
         "neoessentials.moderation.warnings",
         "neoessentials.pvp.admin"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "400",
+        "ftbchunks.max_force_loaded": "10"
+      },
       // Staff inherit every donor perk on top of their moderation permissions.
       "inherits": ["vipplus"]
     },
@@ -167,6 +199,10 @@
       "permissions": [
         "neoessentials.*"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "1000",
+        "ftbchunks.max_force_loaded": "20"
+      },
       "inherits": ["mod"]
     },
     {
@@ -177,6 +213,10 @@
       "permissions": [
         "neoessentials.*"
       ],
+      "meta": {
+        "ftbchunks.max_claimed": "5000",
+        "ftbchunks.max_force_loaded": "50"
+      },
       "inherits": ["admin"]
     }
   ]

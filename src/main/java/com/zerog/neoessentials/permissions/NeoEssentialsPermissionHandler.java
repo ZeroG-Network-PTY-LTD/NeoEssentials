@@ -102,9 +102,40 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
                             nodeName, player.getScoreboardName(), e.getMessage(), e);
                 }
             }
+        } else if (node.getType().equals(PermissionTypes.INTEGER) || node.getType().equals(PermissionTypes.STRING)) {
+            T typed = resolveMetaTyped(player.getUUID(), node);
+            if (typed != null) return typed;
         }
         // Fall back to the node's built-in resolver (usually OP-level check)
         return node.getDefaultResolver().resolve(player, player.getUUID(), context);
+    }
+
+    /**
+     * Resolves an {@link PermissionTypes#INTEGER}/{@link PermissionTypes#STRING} node's group
+     * meta value (e.g. {@code ftbchunks.max_claimed} -> {@code "150"} for the "vip" group),
+     * parsing it to the node's expected type. Returns {@code null} if nothing is configured
+     * (or the configured value fails to parse), so the caller falls through to the node's
+     * default resolver exactly as if this branch didn't exist.
+     */
+    @SuppressWarnings("unchecked")
+    private <T> T resolveMetaTyped(UUID uuid, PermissionNode<T> node) {
+        if (!PermissionSystem.isInitialized()) return null;
+        String nodeName = node.getNodeName();
+        String value = PermissionAPI.getMetaValue(uuid, nodeName);
+        if (value == null) return null;
+        try {
+            if (node.getType().equals(PermissionTypes.INTEGER)) {
+                T typed = (T) Integer.valueOf(value.trim());
+                NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] {} -> {} : {}", uuid, nodeName, typed);
+                return typed;
+            }
+            T typed = (T) value;
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] {} -> {} : {}", uuid, nodeName, typed);
+            return typed;
+        } catch (NumberFormatException e) {
+            NeoLog.warn(LOGGER, LogCategory.PERMISSIONS, "[NeoForgePermHandler] Invalid meta value '{}' for node '{}', falling back to default resolver", value, nodeName);
+            return null;
+        }
     }
 
     /**
@@ -130,6 +161,9 @@ public class NeoEssentialsPermissionHandler implements IPermissionHandler {
                             nodeName, playerUUID, e.getMessage(), e);
                 }
             }
+        } else if (node.getType().equals(PermissionTypes.INTEGER) || node.getType().equals(PermissionTypes.STRING)) {
+            T typed = resolveMetaTyped(playerUUID, node);
+            if (typed != null) return typed;
         }
         return node.getDefaultResolver().resolve(null, playerUUID, context);
     }

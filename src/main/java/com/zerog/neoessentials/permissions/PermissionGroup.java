@@ -25,6 +25,15 @@ public class PermissionGroup {
      * Per-node condition expressions (node → condition string).
      */
     private final Map<String, String> conditions = new ConcurrentHashMap<>();
+    /**
+     * Valued permission nodes (node → string value), for permission systems that expect a
+     * number/string rather than a plain grant (e.g. a third-party mod's
+     * {@code PermissionNode<Integer>} queried through NeoForge's Permission API — see
+     * {@link NeoEssentialsPermissionHandler}). Callers parse the string to whatever type they
+     * expect. Not consulted by {@link PermissionManager#hasPermission}; a separate lookup,
+     * {@link PermissionManager#getMetaValue}.
+     */
+    private final Map<String, String> meta = new ConcurrentHashMap<>();
 
     public PermissionGroup(String name) {
         this.name = name;
@@ -134,5 +143,23 @@ public class PermissionGroup {
 
     public Map<String, String> getConditions() {
         return Collections.unmodifiableMap(conditions);
+    }
+
+    // ── Meta values (valued permission nodes) ───────────────────────────────────
+
+    public void setMeta(String node, String value) {
+        meta.put(node.toLowerCase().trim(), value);
+    }
+
+    public boolean removeMeta(String node) {
+        return meta.remove(node.toLowerCase().trim()) != null;
+    }
+
+    public String getMeta(String node) {
+        return meta.get(node.toLowerCase().trim());
+    }
+
+    public Map<String, String> getMetaMap() {
+        return Collections.unmodifiableMap(meta);
     }
 }
