@@ -1482,7 +1482,15 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 54);          // v54 — added the top-level "pvp" section
+        put(MAIN_CONFIG, 56);          // v56 — added teleportation.backSettings.maxBackHistory
+                                        //       (/back is now a bounded in-memory undo-stack
+                                        //       instead of a single remembered location)
+                                        // v55 — added teleportation.generalSettings.combatLockPvpOnly
+                                        //       (restrict the existing combat-lock-blocks-teleport
+                                        //       check to real PvP hits only, so PvE-only combat
+                                        //       from mob farms/grinders no longer falsely locks
+                                        //       out /home, /spawn, /warp, /tpa, /back)
+        // v54 — added the top-level "pvp" section
                                         //       (enabledByDefault/allowPerPlayerToggle/
                                         //       notifyOnBlockedHit/newbieProtection/
                                         //       safeZoneIntegration), modules.pvpEnabled,
@@ -3938,6 +3946,29 @@ public class ConfigManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns the max number of locations kept in each player's /back undo-stack.
+     * (teleportation.backSettings.maxBackHistory). Default: 10.
+     */
+    public int getMaxBackHistory() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("backSettings")) {
+                JsonObject bs = tp.getAsJsonObject("backSettings");
+                if (bs.has("maxBackHistory")) {
+                    try {
+                        int val = bs.get("maxBackHistory").getAsInt();
+                        if (val >= 1) return val;
+                    } catch (Exception e) {
+                        NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for teleportation.backSettings.maxBackHistory, using default 10", e);
+                    }
+                }
+            }
+        }
+        return 10;
     }
 
     /**

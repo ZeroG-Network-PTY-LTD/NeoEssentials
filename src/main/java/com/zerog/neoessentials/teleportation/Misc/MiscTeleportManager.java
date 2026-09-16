@@ -1,13 +1,11 @@
 package com.zerog.neoessentials.teleportation.Misc;
 
-import com.google.gson.JsonObject;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
-import com.zerog.neoessentials.util.PlayerDataStore;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -16,6 +14,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,19 +36,14 @@ public class MiscTeleportManager {
         return SingletonHolder.INSTANCE;
     }
     
-    // Storage for back locations (in-memory cache; backed by PlayerDataStore on disk)
-    private final Map<UUID, TeleportLocation> backLocations = new ConcurrentHashMap<>();
-    private final Map<UUID, TeleportLocation> deathLocations = new ConcurrentHashMap<>();
+    // Per-player /back undo-stack — most recent push is next to pop. Deliberately in-memory
+    // only (no disk persistence): a stale history from a previous session shouldn't resurface
+    // after a disconnect/reconnect or a server restart. Bounded to maxBackHistory, oldest
+    // entry dropped first once a push would exceed that size.
+    private final Map<UUID, Deque<TeleportLocation>> backHistory = new ConcurrentHashMap<>();
 
-    // Timestamps (ms) for when each location type was last saved — used to pick the most recent one
-    private final Map<UUID, Long> backLocationTimestamps = new ConcurrentHashMap<>();
-    private final Map<UUID, Long> deathLocationTimestamps = new ConcurrentHashMap<>();
-
-    // Persistent storage — survives server restarts
-    private final PlayerDataStore dataStore = new PlayerDataStore("back_locations");
-    
     // Configuration (loaded lazily from ConfigManager)
-    private int maxBackHistory = 5;
+    private int maxBackHistory = 10;
     private int teleportDelay = 3;
     private boolean enableDeathBack = true;
     private boolean enableTeleportBack = true;
@@ -57,7 +52,11 @@ public class MiscTeleportManager {
 
     // Cooldown tracking for /back
     private final Map<UUID, Long> lastBackTimestamps = new ConcurrentHashMap<>();
-    
+
+    // Players whose most recent history push was a death location — consulted once on
+    // respawn to decide whether to show the "use /back to return" hint, then cleared.
+    private final java.util.Set<UUID> pendingDeathHints = ConcurrentHashMap.newKeySet();
+
     private MiscTeleportManager() {
         loadConfig();
     }
@@ -72,6 +71,7 @@ public class MiscTeleportManager {
             enableDeathBack = cfg.isDeathBackEnabled();
             enableTeleportBack = cfg.isTeleportBackEnabled();
             enableBackSafety = cfg.isBackTeleportSafetyEnabled();
+            maxBackHistory = cfg.getMaxBackHistory();
             // Read back cooldown from config (check backSettings first, then legacy miscSettings)
             try {
                 com.google.gson.JsonObject config = cfg.getConfig(ConfigManager.MAIN_CONFIG);
@@ -102,163 +102,90 @@ public class MiscTeleportManager {
         }
     }
 
-    // ── Persistence helpers ───────────────────────────────────────────────────
+    // ── History stack helpers ────────────────────────────────────────────────
 
-    /**
-     * Return the death location for {@code playerId}, loading from disk if not in memory.
-     */
-    private TeleportLocation loadDeathLocation(UUID playerId) {
-        TeleportLocation inMemory = deathLocations.get(playerId);
-        if (inMemory != null) return inMemory;
-
-        JsonObject data = dataStore.load(playerId);
-        if (data.has("deathLocation") && data.get("deathLocation").isJsonObject()) {
-            TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("deathLocation"));
-            if (loc != null) {
-                deathLocations.put(playerId, loc);
-                // Restore persisted timestamp if available
-                if (data.has("deathLocationTs")) {
-                    deathLocationTimestamps.put(playerId, data.get("deathLocationTs").getAsLong());
-                }
+    /** Pushes {@code location} onto {@code playerId}'s undo-stack, evicting the oldest entry if over the cap. */
+    private void pushHistory(UUID playerId, TeleportLocation location) {
+        Deque<TeleportLocation> stack = backHistory.computeIfAbsent(playerId, id -> new ArrayDeque<>());
+        synchronized (stack) {
+            stack.addLast(location);
+            while (stack.size() > maxBackHistory) {
+                stack.removeFirst();
             }
-            return loc;
         }
-        return null;
     }
 
-    /**
-     * Return the back location for {@code playerId}, loading from disk if not in memory.
-     */
-    private TeleportLocation loadBackLocation(UUID playerId) {
-        TeleportLocation inMemory = backLocations.get(playerId);
-        if (inMemory != null) return inMemory;
-
-        JsonObject data = dataStore.load(playerId);
-        if (data.has("backLocation") && data.get("backLocation").isJsonObject()) {
-            TeleportLocation loc = TeleportLocation.fromJson(data.getAsJsonObject("backLocation"));
-            if (loc != null) {
-                backLocations.put(playerId, loc);
-                // Restore persisted timestamp if available
-                if (data.has("backLocationTs")) {
-                    backLocationTimestamps.put(playerId, data.get("backLocationTs").getAsLong());
-                }
-            }
-            return loc;
+    /** Pops (removes and returns) the most recent entry from {@code playerId}'s undo-stack, or {@code null} if empty. */
+    private TeleportLocation popHistory(UUID playerId) {
+        Deque<TeleportLocation> stack = backHistory.get(playerId);
+        if (stack == null) return null;
+        synchronized (stack) {
+            return stack.pollLast();
         }
-        return null;
     }
 
-    /**
-     * Persist the current in-memory back + death locations for {@code playerId} to disk.
-     */
-    private void persistLocations(UUID playerId) {
-        try {
-            JsonObject data = dataStore.load(playerId);
-            TeleportLocation backLoc  = backLocations.get(playerId);
-            TeleportLocation deathLoc = deathLocations.get(playerId);
-
-            if (backLoc != null) {
-                data.add("backLocation", backLoc.toJson());
-                Long ts = backLocationTimestamps.get(playerId);
-                if (ts != null) data.addProperty("backLocationTs", ts);
-            } else {
-                data.remove("backLocation");
-                data.remove("backLocationTs");
-            }
-            if (deathLoc != null) {
-                data.add("deathLocation", deathLoc.toJson());
-                Long ts = deathLocationTimestamps.get(playerId);
-                if (ts != null) data.addProperty("deathLocationTs", ts);
-            } else {
-                data.remove("deathLocation");
-                data.remove("deathLocationTs");
-            }
-            dataStore.save(playerId, data);
-        } catch (Exception e) {
-            LOGGER.error("Failed to persist back/death locations for {}: {}", playerId, e.getMessage());
+    /** Peeks the most recent entry from {@code playerId}'s undo-stack without removing it, or {@code null} if empty. */
+    private TeleportLocation peekHistory(UUID playerId) {
+        Deque<TeleportLocation> stack = backHistory.get(playerId);
+        if (stack == null) return null;
+        synchronized (stack) {
+            return stack.peekLast();
         }
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Save a player's current location as their back location.
-     * Also records a timestamp so that /back always uses whichever location
-     * (death or teleport) was saved most recently — matching Essentials' behaviour.
+     * Push a player's current location onto their /back undo-stack.
      */
     public void saveBackLocation(ServerPlayer player) {
         if (!enableTeleportBack) {
             return;
         }
-        
+
         UUID playerId = player.getUUID();
         TeleportLocation backLocation = new TeleportLocation(player);
-        
-        backLocations.put(playerId, backLocation);
-        backLocationTimestamps.put(playerId, System.currentTimeMillis());
-        persistLocations(playerId);
+        pushHistory(playerId, backLocation);
 
         NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Saved back location for {}: {}",
                     player.getName().getString(), backLocation);
     }
-    
+
     /**
-     * Save a player's death location.
-     * Also records a timestamp so /back picks whichever location was saved most recently.
+     * Push a player's death location onto their /back undo-stack.
      */
     public void saveDeathLocation(ServerPlayer player) {
         if (!enableDeathBack) {
             return;
         }
-        
+
         UUID playerId = player.getUUID();
         TeleportLocation deathLocation = new TeleportLocation(player);
-        
-        deathLocations.put(playerId, deathLocation);
-        deathLocationTimestamps.put(playerId, System.currentTimeMillis());
-        persistLocations(playerId);
+        pushHistory(playerId, deathLocation);
+        pendingDeathHints.add(playerId);
 
         // Do NOT send a chat message here — LivingDeathEvent fires while the player is
         // transitioning to the death screen, so they cannot read it.  The "use /back to
         // return to death location" hint is sent on respawn instead (see onPlayerRespawn).
-        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Saved death location for {}: {}", 
+        NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Saved death location for {}: {}",
                    player.getName().getString(), deathLocation);
     }
-    
+
     /**
-     * Teleport player back to their previous location or death location.
+     * Teleport player back through their undo-stack, one hop per call.
      *
-     * <p>Uses the <em>most recently saved</em> location — either a death point
-     * (saved on death) or a teleport origin (saved by /tp, /tpa, /home, etc.).
-     * This mirrors Essentials' behaviour where {@code setLastLocation()} is called
-     * by both the death listener and the teleport listener, and whichever happened
-     * last is the one used by {@code /back}.</p>
-     *
-     * <p>Disk-backed: loads persisted locations if not in memory so /back
-     * continues to work after a server restart.</p>
+     * <p>Each teleport (home/warp/spawn/tpa/death/etc.) pushes the player's prior
+     * location onto a per-player LIFO stack; /back simply pops the most recent
+     * entry. The stack is purely in-memory — it does not persist across a
+     * disconnect/reconnect or a server restart.</p>
      */
     public boolean teleportBack(ServerPlayer player) {
         UUID playerId = player.getUUID();
         NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportBack request: player={}", player.getName().getString());
-        // Load from disk if not in memory (survives server restarts)
-        TeleportLocation deathLocation = loadDeathLocation(playerId);
-        TeleportLocation backLocation  = loadBackLocation(playerId);
-        TeleportLocation targetLocation;
-        final boolean usedDeath;
 
-        // Pick the most recently saved location. If timestamps are missing (e.g.
-        // loaded from a pre-fix save) fall back to death-first for safety.
-        long deathTs = deathLocationTimestamps.getOrDefault(playerId, 0L);
-        long backTs  = backLocationTimestamps.getOrDefault(playerId, 0L);
-
-        if (deathLocation != null && (backLocation == null || deathTs >= backTs)) {
-            targetLocation = deathLocation;
-            usedDeath = true;
-        } else if (backLocation != null) {
-            targetLocation = backLocation;
-            usedDeath = false;
-        } else {
-            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportBack: {} has no back or death location", player.getName().getString());
+        TeleportLocation targetLocation = popHistory(playerId);
+        if (targetLocation == null) {
+            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportBack: {} has no back location", player.getName().getString());
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_back_location"));
             return false;
         }
@@ -274,24 +201,15 @@ public class MiscTeleportManager {
                 if (elapsed < backCooldownSeconds) {
                     long wait = backCooldownSeconds - elapsed;
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_cooldown", wait));
+                    // Put the popped entry back — the /back attempt didn't actually happen.
+                    pushHistory(playerId, targetLocation);
                     return false;
                 }
                 lastBackTimestamps.put(playerId, now);
             }
         }
 
-        // Capture current location BEFORE teleporting — this becomes the new back
-        // location so the player can /back again to undo the /back.
-        TeleportLocation currentLocation = new TeleportLocation(player);
         final TeleportLocation finalTargetLocation = targetLocation;
-
-        // Snapshot timestamp of the back location we consumed — used later to detect
-        // whether another teleport overwrote the back slot while we were warming up.
-        // If another teleport DID save a newer location during warmup, we still store
-        // the /back-undo position but we do NOT discard the newer back entry that was
-        // saved by the intervening teleport (both are important for the chain).
-        final long backTsAtDispatch = backLocationTimestamps.getOrDefault(playerId, 0L);
-        final long deathTsAtDispatch = deathLocationTimestamps.getOrDefault(playerId, 0L);
 
         // Bypass warmup for players with the permission
         boolean bypassWarmup = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.teleport.bypass.warmup")
@@ -302,41 +220,12 @@ public class MiscTeleportManager {
         }
         TeleportUtil.teleportPlayer(player, finalTargetLocation, delayTicks, enableBackSafety).thenAccept(result -> {
             if (result.isSuccess()) {
-                // Check if another teleport updated the back slot during our warmup.
-                boolean interveningTeleport =
-                    backLocationTimestamps.getOrDefault(playerId, 0L) != backTsAtDispatch
-                    || deathLocationTimestamps.getOrDefault(playerId, 0L) != deathTsAtDispatch;
-
-                if (!interveningTeleport) {
-                    // Normal case: store where player was (undo-/back position)
-                    backLocations.put(playerId, currentLocation);
-                    backLocationTimestamps.put(playerId, System.currentTimeMillis());
-                } else {
-                    // Another teleport ran during warmup (e.g. player accepted a TPA
-                    // from someone else).  That teleport already saved the correct back
-                    // location.  We still want the player to be able to undo THIS /back,
-                    // so we save currentLocation at a timestamp just ONE millisecond
-                    // older than the intervening save so it won't overshadow it.
-                    long interveningTs = Math.max(
-                        backLocationTimestamps.getOrDefault(playerId, 0L),
-                        deathLocationTimestamps.getOrDefault(playerId, 0L));
-                    backLocations.put(playerId, currentLocation);
-                    backLocationTimestamps.put(playerId, interveningTs - 1);
-                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} had an intervening teleport during /back warmup; undo-back stored with prior-timestamp.",
-                        player.getName().getString());
-                }
-
-                if (usedDeath) {
-                    // Clear the death location after a successful /back to it
-                    deathLocations.remove(playerId);
-                    deathLocationTimestamps.remove(playerId);
-                    player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
-                } else {
-                    player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
-                }
-                persistLocations(playerId);
+                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.back_success"));
                 NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported back to {}", player.getName().getString(), finalTargetLocation);
             } else {
+                // Teleport failed (e.g. blocked destination) — restore the popped entry
+                // so the player doesn't lose a step of history for a no-op /back.
+                pushHistory(playerId, finalTargetLocation);
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.back_failed", result.getMessage()));
                 LOGGER.warn("Failed back teleport for {}: {}", player.getName().getString(), result.getMessage());
             }
@@ -356,103 +245,56 @@ public class MiscTeleportManager {
     }
 
     /**
-     * Teleport player to their death location
-     */
-    public boolean teleportToDeathLocation(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToDeathLocation request: player={}", player.getName().getString());
-
-        // Load from disk if not in memory (survives server restarts)
-        TeleportLocation deathLocation = loadDeathLocation(playerId);
-        if (deathLocation == null) {
-            NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "teleportToDeathLocation: {} has no death location", player.getName().getString());
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.no_death_location"));
-            return false;
-        }
-        
-        // Save current location as back location (with timestamp)
-        backLocations.put(playerId, new TeleportLocation(player));
-        backLocationTimestamps.put(playerId, System.currentTimeMillis());
-        
-        // Perform the teleport
-        int delayTicks = teleportDelay * 20;
-        TeleportUtil.teleportPlayer(player, deathLocation, delayTicks, enableBackSafety).thenAccept(result -> {
-            if (result.isSuccess()) {
-                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.misc.death_teleport_success"));
-                
-                // Clear death location after successful teleport
-                deathLocations.remove(playerId);
-                deathLocationTimestamps.remove(playerId);
-                persistLocations(playerId);
-                
-                NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Player {} teleported to death location: {}", 
-                           player.getName().getString(), deathLocation);
-            } else {
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.misc.death_teleport_failed", result.getMessage()));
-                
-                LOGGER.warn("Failed death teleport for {}: {}", 
-                           player.getName().getString(), result.getMessage());
-            }
-        });
-        
-        return true;
-    }
-    
-    /**
-     * Clear a player's back location (memory + disk)
+     * Clear a player's /back undo-stack.
      */
     public void clearBackLocation(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        backLocations.remove(playerId);
-        deathLocations.remove(playerId);
-        backLocationTimestamps.remove(playerId);
-        deathLocationTimestamps.remove(playerId);
-        dataStore.delete(playerId);
-        
+        backHistory.remove(playerId);
+        pendingDeathHints.remove(playerId);
+
         NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Cleared back locations for {}", player.getName().getString());
     }
-    
+
     /**
-     * Check if player has a back location (checks disk if not in memory)
+     * Check if player has any /back history.
      */
     public boolean hasBackLocation(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        if (backLocations.containsKey(playerId) || deathLocations.containsKey(playerId)) {
-            return true;
-        }
-        // Check disk
-        JsonObject data = dataStore.load(playerId);
-        return data.has("backLocation") || data.has("deathLocation");
+        Deque<TeleportLocation> stack = backHistory.get(player.getUUID());
+        return stack != null && !stack.isEmpty();
     }
-    
+
     /**
-     * Get back location info for a player
+     * Get info about the top of a player's /back undo-stack.
      */
     public String getBackLocationInfo(ServerPlayer player) {
-        UUID playerId = player.getUUID();
-        
-        TeleportLocation backLocation = loadBackLocation(playerId);
-        if (backLocation != null) {
-            return MessageUtil.localize("commands.neoessentials.teleport.misc.back_info", 
-                                       backLocation.getWorldName(), 
-                                       String.format("%.1f %.1f %.1f", backLocation.getX(), backLocation.getY(), backLocation.getZ()));
+        TeleportLocation location = peekHistory(player.getUUID());
+        if (location != null) {
+            return MessageUtil.localize("commands.neoessentials.teleport.misc.back_info",
+                                       location.getWorldName(),
+                                       String.format("%.1f %.1f %.1f", location.getX(), location.getY(), location.getZ()));
         }
-        
-        TeleportLocation deathLocation = loadDeathLocation(playerId);
-        if (deathLocation != null) {
-            return MessageUtil.localize("commands.neoessentials.teleport.misc.death_info", 
-                                       deathLocation.getWorldName(), 
-                                       String.format("%.1f %.1f %.1f", deathLocation.getX(), deathLocation.getY(), deathLocation.getZ()));
-        }
-        
+
         return MessageUtil.localize("commands.neoessentials.teleport.misc.no_back_location");
     }
-    
+
     /**
-     * Handle player disconnect - no-op since data is persisted to disk
+     * Handle player disconnect — clears the in-memory /back history since it is
+     * deliberately not persisted (a stale history shouldn't resurface on rejoin).
      */
     public void onPlayerDisconnect(ServerPlayer player) {
-        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} disconnected; back/death locations are persisted to disk.", player.getName().getString());
+        UUID playerId = player.getUUID();
+        backHistory.remove(playerId);
+        pendingDeathHints.remove(playerId);
+        NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Player {} disconnected; cleared in-memory /back history.", player.getName().getString());
+    }
+
+    /**
+     * Event handler: clear a player's /back history on disconnect.
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        MiscTeleportManager.getInstance().onPlayerDisconnect(player);
     }
     
     /**
@@ -490,7 +332,7 @@ public class MiscTeleportManager {
         if (!mgr.enableDeathBack) return;
         // Only show the hint if this respawn was due to death (not /kill or end-portal return)
         UUID playerId = player.getUUID();
-        if (mgr.deathLocations.containsKey(playerId) || mgr.deathLocationTimestamps.containsKey(playerId)) {
+        if (mgr.pendingDeathHints.remove(playerId)) {
             net.minecraft.server.MinecraftServer server = player.getServer();
             if (server == null) return;
             // Delay one tick so the hint arrives after vanilla respawn messages
@@ -539,8 +381,8 @@ public class MiscTeleportManager {
      * Get statistics
      */
     public String getStatistics() {
-        return String.format("MiscTeleport Statistics: %d back locations (in-memory), %d death locations (in-memory), delay=%ds", 
-                           backLocations.size(), deathLocations.size(), teleportDelay);
+        return String.format("MiscTeleport Statistics: %d players with /back history (in-memory), delay=%ds",
+                           backHistory.size(), teleportDelay);
     }
     
     /**
@@ -730,11 +572,8 @@ public class MiscTeleportManager {
      * Clear all data (for server shutdown)
      */
     public void clearAllData() {
-        dataStore.flushAll();
-        backLocations.clear();
-        deathLocations.clear();
-        backLocationTimestamps.clear();
-        deathLocationTimestamps.clear();
+        backHistory.clear();
+        pendingDeathHints.clear();
         NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "Cleared all misc teleport data");
     }
 
