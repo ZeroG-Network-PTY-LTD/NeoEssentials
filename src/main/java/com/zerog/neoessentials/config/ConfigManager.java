@@ -1476,13 +1476,21 @@ public class ConfigManager {
     public static final String VOTIFIER_CONFIG = "votifier.json";
     public static final String CRATES_CONFIG = "crates.json";
     public static final String DISCORD_ROLE_SYNC_CONFIG = "discordrolesync.json";
+    public static final String COMMAND_PERMISSIONS_CONFIG = "command_permissions.json";
 
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 56);          // v56 — added teleportation.backSettings.maxBackHistory
+        put(MAIN_CONFIG, 57);          // v57 — added modules.commandPermissionGateEnabled: toggles the
+                                        //       third-party command permission gate (see
+                                        //       command_permissions.json / ThirdPartyCommandGate). Unlike
+                                        //       most module toggles this one is re-checked live, so it can
+                                        //       be flipped with /neoe reload, no restart needed to disable
+                                        //       (enabling it after starting disabled still needs a restart,
+                                        //       since which commands get instrumented is decided at boot).
+                                        // v56 — added teleportation.backSettings.maxBackHistory
                                         //       (/back is now a bounded in-memory undo-stack
                                         //       instead of a single remembered location)
                                         // v55 — added teleportation.generalSettings.combatLockPvpOnly
@@ -1615,6 +1623,7 @@ public class ConfigManager {
         put(VOTIFIER_CONFIG, 1);       // v1  — initial Votifier vote-listener config
         put(CRATES_CONFIG, 1);         // v1  — initial Crates config
         put(DISCORD_ROLE_SYNC_CONFIG, 1); // v1 — initial Discord role sync config
+        put(COMMAND_PERMISSIONS_CONFIG, 1); // v1 — initial third-party command permission gate config
     }};
 
     /**
@@ -2205,7 +2214,7 @@ public class ConfigManager {
      */
     private void ensureDefaultConfigs() {
         String[] requiredConfigs = new String[] {
-            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG, VOTIFIER_CONFIG, CRATES_CONFIG, DISCORD_ROLE_SYNC_CONFIG
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG, VOTIFIER_CONFIG, CRATES_CONFIG, DISCORD_ROLE_SYNC_CONFIG, COMMAND_PERMISSIONS_CONFIG
         };
 
         // Check if split configs are enabled
@@ -3071,6 +3080,27 @@ public class ConfigManager {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("chatEnabled")) {
                 return modules.get("chatEnabled").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the third-party command permission gate module is enabled
+     * (modules.commandPermissionGateEnabled). Defaults to true if not set.
+     *
+     * <p>Unlike most module toggles, this one is re-checked live on every gated command
+     * invocation (not just once at boot) — see {@code ThirdPartyCommandGate} — so turning it
+     * OFF plus {@code /neoe reload} takes effect immediately with no restart. Turning it back
+     * ON after having booted with it OFF still needs a restart, since which command nodes get
+     * instrumented is decided once, when commands are first registered.</p>
+     */
+    public static boolean isCommandPermissionGateEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("commandPermissionGateEnabled")) {
+                return modules.get("commandPermissionGateEnabled").getAsBoolean();
             }
         }
         return true;
