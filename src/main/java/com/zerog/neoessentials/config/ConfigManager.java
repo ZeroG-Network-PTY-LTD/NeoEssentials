@@ -1612,11 +1612,12 @@ public class ConfigManager {
                                        //        afk tablist-indicator keys, and webDashboard.serviceAccount
                                        //        (superseded by the /dashboard pair handshake)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
-        put(PERMISSIONS_CONFIG, 8);    // v8  — seed groups replaced with the guest/member/vip/
-                                        //       vipplus/mod/admin/owner ladder (only affects a
-                                        //       brand-new server's first boot; see the file's
-                                        //       own header for the migration commands to bring
-                                        //       an already-initialized server's groups up to it)
+        put(PERMISSIONS_CONFIG, 8);    // v8  — replaced the seed groups with the guest/member/
+                                        //       vip/vipplus/mod/admin/owner ladder. Also: this
+                                        //       file is no longer a one-time seed — every group
+                                        //       it defines is now re-applied on every load/reload
+                                        //       (config always wins over in-game group edits),
+                                        //       see PermissionStorage.syncSeedGroupsFromConfig
                                         // v7  — removed _configVersion_comment
         put(KITS_CONFIG, 2);           // v2  — removed _configVersion_comment
         put(DISCORD_AUTH_CONFIG, 11);  // v11 — fixed dangling trailing comma after permissionMappings'
