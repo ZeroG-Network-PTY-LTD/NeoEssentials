@@ -382,6 +382,24 @@ public class PermissionAPI {
         return manager;
     }
 
+    /**
+     * Resolves a valued permission node (e.g. {@code ftbchunks.max_claimed}) for {@code uuid},
+     * for permission systems that expect a number/string rather than a plain grant — see
+     * {@link com.zerog.neoessentials.permissions.NeoEssentialsPermissionHandler}. The external
+     * adapter is queried first (if configured); a {@code null} response means "no opinion", not
+     * "no value", so it falls through to the internal manager same as {@link #getPrefix}.
+     * Returns {@code null} if nothing defines the node.
+     */
+    public static String getMetaValue(UUID uuid, String node) {
+        if (uuid == null || node == null) return null;
+        if (externalAdapter != null) {
+            String value = externalAdapter.getMetaValue(uuid, node);
+            if (value != null) return value;
+        }
+        if (manager == null) return null;
+        return manager.getMetaValue(uuid, node);
+    }
+
     public static String getPrefix(UUID uuid) {
         // Validate input parameters
         if (uuid == null) {

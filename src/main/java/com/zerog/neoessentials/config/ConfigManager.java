@@ -1612,7 +1612,13 @@ public class ConfigManager {
                                        //        afk tablist-indicator keys, and webDashboard.serviceAccount
                                        //        (superseded by the /dashboard pair handshake)
         put(ECONOMY_CONFIG, 3);        // v3  — removed _configVersion_comment
-        put(PERMISSIONS_CONFIG, 8);    // v8  — replaced the seed groups with the guest/member/
+        put(PERMISSIONS_CONFIG, 9);    // v9  — added a "meta" object per group (valued
+                                        //       permission nodes, e.g. ftbchunks.max_claimed)
+                                        //       for the ladder's FTB Chunks claim-limit perks.
+                                        //       See PermissionGroup.getMeta / getMetaValue and
+                                        //       NeoEssentialsPermissionHandler's INTEGER/STRING
+                                        //       PermissionType branches.
+                                        // v8  — replaced the seed groups with the guest/member/
                                         //       vip/vipplus/mod/admin/owner ladder. Also: this
                                         //       file is no longer a one-time seed — every group
                                         //       it defines is now re-applied on every load/reload

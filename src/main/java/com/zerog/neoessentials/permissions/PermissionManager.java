@@ -188,6 +188,33 @@ public class PermissionManager {
         return result;
     }
 
+    /**
+     * Resolves a valued permission node (e.g. {@code ftbchunks.max_claimed}) for {@code uuid}'s
+     * current group, walking the inheritance chain the same way {@link #hasPermission} does —
+     * the closest (child-most) group that defines the node wins over an ancestor's value.
+     * Returns {@code null} if no group in the chain defines it.
+     */
+    public String getMetaValue(UUID uuid, String node) {
+        PermissionUser user = getUser(uuid);
+        String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : defaultGroup;
+        return resolveGroupMeta(groupName, node.toLowerCase().trim(), new HashSet<>());
+    }
+
+    private String resolveGroupMeta(String groupName, String node, Set<String> visited) {
+        if (groupName == null || visited.contains(groupName.toLowerCase())) return null;
+        visited.add(groupName.toLowerCase());
+        PermissionGroup group = getGroup(groupName);
+        if (group == null) return null;
+
+        String value = group.getMeta(node);
+        if (value != null) return value;
+
+        for (String parent : sortedInherits(group)) {
+            String parentValue = resolveGroupMeta(parent, node, visited);
+            if (parentValue != null) return parentValue;
+        }
+        return null;
+    }
 
     private boolean computePermission(UUID uuid, String permission, PermissionContext context) {
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Computing permission '{}' for UUID {} (context={})", permission, uuid,
