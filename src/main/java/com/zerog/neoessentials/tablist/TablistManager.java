@@ -1161,6 +1161,24 @@ public class TablistManager {
         lastTeamPrefix.remove(uuid);
         lastTeamSuffix.remove(uuid);
         lastNicknameOverride.remove(uuid);
+
+        // Remove them from whatever "ne_*" team they were last assigned (e.g. one whose
+        // suffix had the AFK tag baked in, if they disconnected while AFK) — ServerScoreboard
+        // team membership is tracked by player NAME, not by this live ServerPlayer instance, so
+        // it survives a disconnect untouched. Without this, a returning player's scoreboard team
+        // (and anything that reads their team-wrapped display name server-side, e.g. vanilla's
+        // own "X joined the game" broadcast or a {"selector":"@s"} text component) still shows
+        // whatever was last applied in their PREVIOUS session, until the next updatePlayerTeam()
+        // call corrects it a moment later — too late for the join broadcast itself, which fires
+        // before any of our event handlers get a chance to run. Clearing the dirty-check cache
+        // above without removing the actual team membership only fixes the SERVER-side bookkeeping,
+        // not what's still visibly attached to the player's name.
+        ServerScoreboard scoreboard = server.getScoreboard();
+        PlayerTeam current = scoreboard.getPlayersTeam(player.getName().getString());
+        if (current != null && current.getName().startsWith("ne_")) {
+            scoreboard.removePlayerFromTeam(player.getName().getString(), current);
+        }
+
         ProxyIntegration.getInstance().onPlayerQuit(uuid);
         FakePlayerManager.getInstance().removeForPlayer(player);
         FakePlayerManager.getInstance().removeColumnSlotsForPlayer(player);
