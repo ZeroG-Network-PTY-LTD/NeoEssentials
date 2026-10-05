@@ -166,8 +166,26 @@ jobs:
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
 
+      # Retried because createMinecraftArtifacts downloads the Minecraft client/server jars from
+      # Mojang mid-build, and this runner's network drops out intermittently — confirmed live
+      # (runs 51/52): "java.net.ConnectException: Network is unreachable" partway through those
+      # downloads, while other downloads in the same run succeeded. A retry in the same job
+      # reuses everything already downloaded, so it only re-fetches what failed.
+      # JAVA_TOOL_OPTIONS (not GRADLE_OPTS) so it also reaches the separate JVM NeoForm's
+      # runtime forks for those downloads: Mojang's hosts publish IPv6 addresses, and a Docker
+      # container without an IPv6 route fails exactly this way if one gets picked.
       - name: Build jar
-        run: ./gradlew build -x test --console=plain
+        env:
+          JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew build -x test --console=plain; then
+              exit 0
+            fi
+            echo "Build attempt $attempt failed"
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          exit 1
 
       - name: Locate built jar
         id: jar
