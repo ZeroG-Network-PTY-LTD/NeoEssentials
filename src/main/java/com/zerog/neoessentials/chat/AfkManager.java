@@ -203,6 +203,29 @@ public class AfkManager {
             }
         }
 
+        // Push the new AFK state onto the player's scoreboard team right away instead of
+        // waiting for TablistManager's next periodic refresh tick. Chat/tablist already read
+        // isAfk() live on every render, so they were never stale — but anything that resolves
+        // the player's name server-side through their scoreboard team (vanilla's own join
+        // broadcast on a relog, or a {"selector":"@s"} text component in e.g. /tellraw) only
+        // sees a corrected prefix/suffix once updatePlayerTeam() actually runs — which, left to
+        // the periodic tick alone, could be several seconds behind every single AFK transition,
+        // not just a one-off case on login.
+        if (afk != wasAfk) {
+            try {
+                net.minecraft.server.MinecraftServer srv = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (srv != null) {
+                    ServerPlayer p = srv.getPlayerList().getPlayer(playerUuid);
+                    if (p != null) {
+                        srv.execute(() -> com.zerog.neoessentials.tablist.TablistManager.getInstance().updatePlayerTeam(p, srv));
+                    }
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.logging.NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.CHAT,
+                    "Failed to immediately refresh scoreboard team after AFK transition for {}", playerUuid, e);
+            }
+        }
+
         queueSaveAfkData();
     }
     
