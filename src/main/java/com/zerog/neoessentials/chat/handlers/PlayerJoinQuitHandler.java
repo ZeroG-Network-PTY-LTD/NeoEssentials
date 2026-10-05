@@ -8,6 +8,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -22,6 +23,33 @@ import org.slf4j.LoggerFactory;
 @EventBusSubscriber(modid = "neoessentials")
 public class PlayerJoinQuitHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerJoinQuitHandler.class);
+
+    /**
+     * Whether a system broadcast is vanilla's own join/leave message that a configured custom
+     * join/quit message replaces. Called from {@link com.zerog.neoessentials.mixin.PlayerListMixin}
+     * for every PlayerList system broadcast; this mod's own custom messages are literal
+     * components, so they never match and are never suppressed by this.
+     */
+    public static boolean shouldSuppressVanillaMessage(Component message) {
+        if (!(message.getContents() instanceof TranslatableContents translatable)) {
+            return false;
+        }
+        String key = translatable.getKey();
+        boolean isJoin = key.equals("multiplayer.player.joined") || key.equals("multiplayer.player.joined.renamed");
+        boolean isQuit = key.equals("multiplayer.player.left");
+        if (!isJoin && !isQuit) {
+            return false;
+        }
+        ChatManager chatManager = ChatAPI.getChatManager();
+        if (chatManager == null) {
+            return false;
+        }
+        return isCustomMessageSet(isJoin ? chatManager.getCustomJoinMessage() : chatManager.getCustomQuitMessage());
+    }
+
+    private static boolean isCustomMessageSet(String message) {
+        return message != null && !message.equals("none") && !message.trim().isEmpty();
+    }
 
     /**
      * Handles player join events and displays custom join messages.
@@ -149,11 +177,9 @@ public class PlayerJoinQuitHandler {
             // Get custom join message from config
             String customJoinMessage = chatManager.getCustomJoinMessage();
             
-            // Only apply custom message if configured (not "none")
-            if (customJoinMessage != null && !customJoinMessage.equals("none") && !customJoinMessage.trim().isEmpty()) {
-                // Cancel the default join message by setting it to null
-                // Note: This doesn't cancel the event, just modifies the message
-                
+            // Only apply custom message if configured (not "none"). Vanilla's own join message
+            // is suppressed separately, by PlayerListMixin via shouldSuppressVanillaMessage().
+            if (isCustomMessageSet(customJoinMessage)) {
                 // Format the custom message with placeholders using PlaceholderAPI
                 String resolvedMessage = PlaceholderAPI.setPlaceholders(player, customJoinMessage);
                 
@@ -214,8 +240,9 @@ public class PlayerJoinQuitHandler {
             // Get custom quit message from config
             String customQuitMessage = chatManager.getCustomQuitMessage();
             
-            // Only apply custom message if configured (not "none")
-            if (customQuitMessage != null && !customQuitMessage.equals("none") && !customQuitMessage.trim().isEmpty()) {
+            // Only apply custom message if configured (not "none"). Vanilla's own leave message
+            // is suppressed separately, by PlayerListMixin via shouldSuppressVanillaMessage().
+            if (isCustomMessageSet(customQuitMessage)) {
                 // Format the custom message with placeholders using PlaceholderAPI
                 String resolvedMessage = PlaceholderAPI.setPlaceholders(player, customQuitMessage);
                 
