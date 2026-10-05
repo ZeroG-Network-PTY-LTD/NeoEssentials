@@ -89,6 +89,34 @@ public final class HologramRenderer {
         return level.dimension().location().toString();
     }
     /**
+     * Respawns a hologram only if its chunk is <em>currently loaded</em> — never forces a load.
+     *
+     * <p>Called from the periodic refresh/animation tick (and from {@code updateLineText}) when
+     * a tracked entity can't be resolved via {@code level.getEntity(uuid)}. The overwhelmingly
+     * common reason for that is simply that nobody is near the hologram, so its chunk — and the
+     * entity along with it — unloaded; vanilla already saved that entity into the chunk's NBT
+     * with the same UUID, so it reappears on its own, no action needed, whenever a player walks
+     * back into range and the chunk loads naturally.
+     *
+     * <p>Calling {@link #spawn} unconditionally here instead (as this used to do) force-loads the
+     * chunk via {@link #despawn}'s own force-load guard, discards the "missing" entity, and
+     * creates a brand-new one — for every animated/refreshing hologram, every scheduler tick,
+     * for as long as nobody is nearby. On a world with several (or orphaned/leftover) holograms
+     * this is a constant stream of chunk loads plus entity churn purely to animate something no
+     * one can see, which compounds into severe tick lag and can leave duplicate/stale entities
+     * behind in that chunk if a respawn ever raced with the chunk unloading again right after.
+     * Gating on {@link ServerLevel#isLoaded} keeps the one-time, deliberate force-load paths —
+     * {@link #spawnAllForWorld}, {@code /hologram} commands — intact, since those aren't called
+     * every tick.
+     */
+    private static void respawnIfLoaded(HologramData data, ServerLevel level) {
+        net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(data.x, data.y, data.z);
+        if (level.isLoaded(pos)) {
+            spawn(data, level);
+        }
+    }
+
+    /**
      * Spawn all {@link Display.TextDisplay} entities for the hologram.
      * Removes any previously tracked entities first to avoid duplicates.
      */
@@ -173,7 +201,7 @@ public final class HologramRenderer {
     public static void updateRotationsAndPositions(HologramData data, ServerLevel level) {
         if (data.entityUUIDs == null || data.entityUUIDs.isEmpty()) return;
         if (data.entityUUIDs.size() != data.lines.size()) {
-            spawn(data, level);
+            respawnIfLoaded(data, level);
             return;
         }
         // For Y-axis spin with player tracking: refresh the heading angle so the
@@ -186,7 +214,7 @@ public final class HologramRenderer {
                 UUID uuid = data.entityUUIDs.get(i);
                 net.minecraft.world.entity.Entity raw = level.getEntity(uuid);
                 if (!(raw instanceof Display.TextDisplay entity)) {
-                    spawn(data, level);
+                    respawnIfLoaded(data, level);
                     return;
                 }
                 // Hover: update entity Y position
@@ -313,7 +341,7 @@ public final class HologramRenderer {
      */
     public static void refreshAllLines(HologramData data, ServerLevel level, @Nullable ServerPlayer player) {
         if (data.entityUUIDs == null || data.entityUUIDs.size() != data.lines.size()) {
-            spawn(data, level);
+            respawnIfLoaded(data, level);
             return;
         }
         ServerPlayer effectivePlayer = player != null ? player : findNearestPlayer(data, level);
@@ -328,7 +356,7 @@ public final class HologramRenderer {
      */
     public static void updateLineText(HologramData data, int lineIndex, Component text, ServerLevel level) {
         if (data.entityUUIDs == null || lineIndex >= data.entityUUIDs.size()) {
-            spawn(data, level);
+            respawnIfLoaded(data, level);
             return;
         }
         try {
@@ -337,7 +365,7 @@ public final class HologramRenderer {
             if (entity instanceof Display.TextDisplay td) {
                 applyText(td, text, data);
             } else {
-                spawn(data, level);
+                respawnIfLoaded(data, level);
             }
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "[Hologram] updateLineText failed for '{}'[{}]: {}", data.id, lineIndex, e.getMessage());
