@@ -74,10 +74,34 @@ jobs:
         # auto-provisioned separately by Gradle's own toolchain resolver, same as GitHub's
         # workflow. Installed via apt rather than actions/setup-java@v4 — this instance's
         # action mirror (code.forgejo.org) doesn't carry setup-java (confirmed 404).
+        # Retried, then falls back to Adoptium's Temurin tarball: confirmed live (runs 48-50)
+        # that a transient archive.ubuntu.com outage makes `apt-get update` "succeed" with stale
+        # or no indexes, so the install then fails with "Unable to locate package" / "held
+        # broken packages" — killing all three branches' builds at once. The timeout caps each
+        # attempt; without it those runs sat ~8 minutes on connect timeouts before failing.
         run: |
-          apt-get update -qq
-          apt-get install -y -qq openjdk-21-jdk-headless
-          echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> "$GITHUB_ENV"
+          installed=no
+          for attempt in 1 2 3; do
+            if apt-get -o Acquire::http::Timeout=20 update -qq \
+               && apt-get -o Acquire::http::Timeout=20 install -y -qq openjdk-21-jdk-headless; then
+              installed=yes
+              break
+            fi
+            echo "apt attempt $attempt failed, retrying in 15s"
+            sleep 15
+          done
+
+          if [ "$installed" = "yes" ]; then
+            echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> "$GITHUB_ENV"
+          else
+            echo "apt unavailable - falling back to Temurin 21 from Adoptium"
+            mkdir -p /opt/jdk
+            curl -fsSL --retry 5 --retry-delay 10 \
+              "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+              | tar -xz -C /opt/jdk --strip-components=1
+            echo "JAVA_HOME=/opt/jdk" >> "$GITHUB_ENV"
+            echo "/opt/jdk/bin" >> "$GITHUB_PATH"
+          fi
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -179,11 +203,23 @@ jobs:
               -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"\`$BRANCH\`: commit $SHA.\",\"target_commitish\":\"$SHA\",\"prerelease\":true}" \
               "$FORGEJO_API/repos/$REPO/releases")
             echo "POST create release -> HTTP $create_code"; cat /tmp/created.json; echo
-            if [ "$create_code" != "201" ]; then
-              echo "::error::Failed to create release (HTTP $create_code)"
-              exit 1
+            if [ "$create_code" = "201" ]; then
+              release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/created.json','utf8')).id)")
+            else
+              # All three branches push together and finish within seconds of each other, so
+              # another branch can create this release between our GET and POST — confirmed
+              # live (run 47): Forgejo answers that with HTTP 500 "tag ... already exists".
+              # Re-read the release the other run just made and attach our jar to it instead.
+              sleep 5
+              retry_code=$(curl -s -o /tmp/existing.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
+                "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
+              echo "Re-GET release tag $TAG -> HTTP $retry_code"; cat /tmp/existing.json; echo
+              if [ "$retry_code" != "200" ]; then
+                echo "::error::Failed to create release (HTTP $create_code) and none exists for $TAG"
+                exit 1
+              fi
+              release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/existing.json','utf8')).id)")
             fi
-            release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/created.json','utf8')).id)")
           fi
           echo "release_id=$release_id"
 
