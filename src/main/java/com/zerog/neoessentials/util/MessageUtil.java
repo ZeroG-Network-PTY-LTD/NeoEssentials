@@ -734,11 +734,20 @@ public class MessageUtil {
     /**
      * Short branded tag prefixed onto every success/error/warning/info command-feedback
      * message so players can tell at a glance which mod a message came from, especially on
-     * servers running several plugins/mods with similarly-colored chat output. Plain "§"
-     * codes (not routed through coloredText()) — same convention as every localized template,
-     * which the client's text renderer already honors for raw literal Component text.
+     * servers running several plugins/mods with similarly-colored chat output. Configurable via
+     * {@code general.messagePrefix} ("&"-coded, parsed along with the rest of the message; ""
+     * disables it). The trailing "§r" stops the tag's own colors bleeding into the message.
      */
-    private static final String TAG_PREFIX = "§8[§bNE§8] §r";
+    public static String tagPrefix() {
+        String prefix;
+        try {
+            prefix = com.zerog.neoessentials.config.ConfigManager.getMessagePrefix();
+        } catch (Exception e) {
+            // Config not loaded yet (very early startup) - keep the original tag.
+            prefix = com.zerog.neoessentials.config.ConfigManager.DEFAULT_MESSAGE_PREFIX;
+        }
+        return prefix.isEmpty() ? "" : prefix + "§r";
+    }
 
     /**
      * Create a Component from a localized message (standard approach)
@@ -762,7 +771,7 @@ public class MessageUtil {
      */
     public static Component success(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            tagPrefix() + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
             Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55)));
     }
 
@@ -771,7 +780,7 @@ public class MessageUtil {
      */
     public static Component error(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            tagPrefix() + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
             Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)));
     }
 
@@ -780,7 +789,7 @@ public class MessageUtil {
      */
     public static Component warning(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            tagPrefix() + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
             Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55)));
     }
 
@@ -789,7 +798,7 @@ public class MessageUtil {
      */
     public static Component info(String key, Object... args) {
         return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(
-            TAG_PREFIX + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
+            tagPrefix() + com.zerog.neoessentials.chat.RichTextFormatter.resolveDynamicTags(localize(key, args)),
             Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF)));
     }
 

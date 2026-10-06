@@ -1483,7 +1483,11 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 58);          // v58 — added permissionsAutoPromote: config-driven
+        put(MAIN_CONFIG, 59);          // v59 — added general.messagePrefix: the "[NE]" tag in
+                                        //       front of command feedback and admin notices is
+                                        //       now configurable ("" disables it). See
+                                        //       getMessagePrefix() / MessageUtil.tagPrefix().
+                                        // v58 — added permissionsAutoPromote: config-driven
                                         //       auto-promotion from one permission group to
                                         //       another based on /playtime (default: guest ->
                                         //       member after 24h). See AutoPromoteManager.
@@ -3470,6 +3474,25 @@ public class ConfigManager {
             }
         }
         return "My Server";
+    }
+
+    /** Default for {@link #getMessagePrefix()} — the original hardcoded "[NE]" tag. */
+    public static final String DEFAULT_MESSAGE_PREFIX = "&8[&bNE&8] ";
+
+    /**
+     * The tag NeoEssentials puts in front of its command feedback and admin notices, from
+     * {@code general.messagePrefix} — still "&"-coded (callers parse colors). An empty string
+     * means no tag at all; a missing key falls back to {@link #DEFAULT_MESSAGE_PREFIX}.
+     */
+    public static String getMessagePrefix() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("general")) {
+            JsonObject general = config.getAsJsonObject("general");
+            if (general.has("messagePrefix")) {
+                return general.get("messagePrefix").getAsString();
+            }
+        }
+        return DEFAULT_MESSAGE_PREFIX;
     }
 
     /** How often the hologram scheduler polls every hologram to check whether it's due for a
