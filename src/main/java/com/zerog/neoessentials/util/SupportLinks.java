@@ -48,8 +48,8 @@ public final class SupportLinks {
     /** Clickable in-game chat message for {@link #queueGeneralHelpNotice()} — same three links
      *  as {@link #chatMessage()}, worded for "just checking in" rather than "something broke". */
     private static Component generalHelpChatMessage() {
-        MutableComponent msg = Component.literal("[NE] ")
-            .withStyle(ChatFormatting.GOLD)
+        MutableComponent msg = Component.empty()
+            .append(ChatComponentUtil.parseColorCodes(MessageUtil.tagPrefix()))
             .append(Component.literal("Found a bug, or have a question? ")
                 .withStyle(ChatFormatting.YELLOW));
         msg.append(link("[Support]", SUPPORT_URL));
@@ -82,8 +82,8 @@ public final class SupportLinks {
 
     /** Clickable in-game chat message shown to the first admin joining after a detected problem. */
     public static Component chatMessage() {
-        MutableComponent msg = Component.literal("[NE] ")
-            .withStyle(ChatFormatting.GOLD)
+        MutableComponent msg = Component.empty()
+            .append(ChatComponentUtil.parseColorCodes(MessageUtil.tagPrefix()))
             .append(Component.literal("NeoEssentials ran into a problem on startup — need help? ")
                 .withStyle(ChatFormatting.YELLOW));
         msg.append(link("[Support]", SUPPORT_URL));
