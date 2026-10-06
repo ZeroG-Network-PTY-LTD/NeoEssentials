@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 58,
+  "_configVersion": 59,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -15,7 +15,11 @@
   // scoreboard/tablist line. Use {server_motd} instead if you actually want the configured
   // MOTD text somewhere.
   "general": {
-    "serverName": "My Server"
+    "serverName": "My Server",
+    // Tag shown in front of NeoEssentials' command feedback (success/error/warning/info
+    // messages) and its admin notices. Supports "&" color codes and "&#RRGGBB" hex colors,
+    // e.g. "&6[MyServer] ". Set to "" to show no tag at all.
+    "messagePrefix": "&8[&bNE&8] "
   },
 
   // How often the hologram scheduler POLLS every hologram to see if it's due for a refresh

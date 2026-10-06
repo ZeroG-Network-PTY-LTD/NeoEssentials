@@ -93,7 +93,9 @@ public class ConfigSplitter {
 
     // Version for each split config file
     private static final Map<String, Integer> SPLIT_CONFIG_VERSIONS = new HashMap<>() {{
-        put("main.json",          6);  // v6 — added "hologram" section (refreshInterval/
+        put("main.json",          7);  // v7 — added general.messagePrefix (configurable "[NE]"
+                                        //       command-feedback tag)
+                                        // v6 — added "hologram" section (refreshInterval/
                                         //       animationInterval, /neoe reload-able hologram
                                         //       scheduler tick rates)
                                         // v5 — added "general" section (general.serverName, the
