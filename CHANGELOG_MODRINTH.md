@@ -84,6 +84,7 @@ migration history) is not carried over.
   of the box) — only affects fresh installs, existing configs are untouched.
 
 ### Fixed
+- **2026-10-06** — Build 81 ([`731b1640`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/731b1640d2265d5302a4f6d141e842eeea2c432c)) — Holograms no longer force-load chunks nobody is near; animated holograms in unloaded chunks were reloading their chunk and re-creating their entities every tick, causing heavy lag.
 - **2026-10-06** — Build 80 ([`d5aaa260`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d5aaa260756b799d502c5dee49096575b33b92f8)) — Custom join/quit messages (`customJoinMessage`/`customQuitMessage`) now replace vanilla's "X joined/left the game" message instead of showing alongside it. Leaving them at `"none"` keeps the vanilla message.
 - **2026-10-05** — Build 79 ([`bafc62cf`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bafc62cfd8972dc7da12b5004bb8c9eac1c26d4b)) — Fixed a stale [AFK] tag surviving logout/login (issue #73): AFK state resets on login, and `@s` names in `/tellraw` no longer keep a stale [AFK] tag.
 - **2026-09-06** — ([`7e5e58fb`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/7e5e58fb6802e66df1f2d0802ef0e740a95692b8), docs only) — Documented `nametagSettings.enabled: false` in `tablist.json` as the fix for Discord chat-bridge mods (e.g. SimpleDiscordLink) showing the rank prefix twice. In-game chat is unaffected; no code change needed.
