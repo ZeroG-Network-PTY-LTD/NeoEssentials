@@ -4,7 +4,8 @@ name: Build & Release Jar (Forgejo)
 # that one is blocked repo-wide by an org Actions policy (see NeoEssentials' project memory
 # for that issue). Same shape: one shared GitHub-style release PER BUILD NUMBER, with all
 # three branches' jars attached as separate assets on that same release rather than one
-# release each — whichever branch runs first creates it, the others just add their jar.
+# release each — one number per push (see "Bump shared build number" for how the three
+# branches' cherry-picks of one change find each other).
 #
 # Build numbering is tracked independently HERE, via this repo's own "BUILD_NUMBER" Forgejo
 # Actions variable — Forgejo has no way to reach GitHub's own Actions variable, so this one
@@ -110,11 +111,23 @@ jobs:
         id: mod_version
         run: echo "value=$(sed -n 's/^mod_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
 
-      # Same "reuse if this branch hasn't published under the current number yet, otherwise
-      # bump" logic as the GitHub workflow's own "Bump shared build number" step — see that
-      # step's comments for the full rationale. Adapted here to Forgejo's REST API instead of
-      # `gh`/GitHub's Variables API, using node (already present in the container image, since
-      # actions/checkout needs it too) to parse JSON rather than assuming jq is installed.
+      # One build number PER PUSH, shared by all three branches. The old "reuse the current
+      # number unless this branch already has a jar on it" logic raced: each branch read the
+      # counter whenever its (variable-length) JDK setup finished, so one push got split across
+      # two numbers — confirmed live with runs 54-56, where 1.21.x landed on 78 but 26.1.x and
+      # 26.2.x on 79.
+      #
+      # A push is identified by its "wave": a hash of the commit's author timestamp + subject.
+      # Cherry-picks keep both (only the committer/SHA differ per branch), so all three
+      # branches' copies of one change hash the same. The first branch to get here claims the
+      # next number by creating that release up front, with the wave in its body; siblings find
+      # it by wave and join it instead of bumping. Release creation doubles as the lock: if two
+      # branches race to create the same tag, the loser re-reads it and joins when the wave
+      # matches, or moves on to the next number when another push owns it.
+      # A re-run of a commit whose jar is already on its wave's release claims a fresh number.
+      # Uses node's built-in fetch (node is already in the image for actions/checkout) rather
+      # than assuming jq is installed. Forgejo's variable API returns the value under "data",
+      # not "value" like GitHub's (confirmed live: {"name":"BUILD_NUMBER","data":"70"}).
       - name: Bump shared build number
         id: build_number
         env:
@@ -123,46 +136,74 @@ jobs:
           REPO: ${{ github.repository }}
           MOD_VERSION: ${{ steps.mod_version.outputs.value }}
           MARKER: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -e
           echo "TOKEN length: ${#TOKEN} (expect 40 for a Forgejo access token; 0 means the secret isn't reaching this job)"
+          export WAVE="$(git log -1 --format='%at %s' | sha1sum | cut -c1-12)"
+          export SUBJECT="$(git log -1 --format='%s')"
+          echo "wave=$WAVE ($SUBJECT)"
 
-          var_code=$(curl -s -o /tmp/var.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
-          echo "GET BUILD_NUMBER -> HTTP $var_code"; cat /tmp/var.json; echo
-          if [ "$var_code" = "200" ]; then
-            # Forgejo's variable API returns the value under "data", not "value" like GitHub's
-            # equivalent (confirmed live: {"owner_id":0,"repo_id":2,"name":"BUILD_NUMBER","data":"70"})
-            # - reading .value here silently produced the string "undefined", which then broke
-            # Gradle's own toInteger() parse of build_number.txt with a config-evaluation crash.
-            current=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/var.json','utf8')).data)")
-          else
-            current=0
-          fi
+          next=$(node <<'JS'
+          const api = process.env.FORGEJO_API + '/repos/' + process.env.REPO;
+          const headers = { Authorization: 'token ' + process.env.TOKEN, 'Content-Type': 'application/json' };
+          const prefix = process.env.MOD_VERSION + '-build-';
+          const log = (...a) => console.error(...a);
+          const hasWave = (rel, wave) => (rel.body || '').includes('wave: ' + wave);
 
-          rel_code=$(curl -s -o /tmp/rel.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/releases/tags/${MOD_VERSION}-build-${current}")
-          if [ "$rel_code" = "200" ]; then
-            has_marker=$(node -e "const j=JSON.parse(require('fs').readFileSync('/tmp/rel.json','utf8'));console.log((j.assets||[]).some(a=>a.name.includes(process.env.MARKER))?'yes':'no')")
-          else
-            has_marker=no
-          fi
-          echo "current=$current has_marker=$has_marker"
+          async function getJson(path) {
+            const r = await fetch(api + path, { headers });
+            log('GET ' + path + ' -> HTTP ' + r.status);
+            return r.ok ? r.json() : null;
+          }
 
-          if [ "$has_marker" = "yes" ]; then
-            next=$((current + 1))
-            put_code=$(curl -s -o /tmp/put.json -w "%{http_code}" -X PUT -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
-              -d "{\"value\":\"$next\"}" \
-              "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
-            echo "PUT BUILD_NUMBER -> HTTP $put_code"; cat /tmp/put.json; echo
-            if [ "$put_code" != "200" ] && [ "$put_code" != "204" ]; then
-              echo "::error::Failed to bump BUILD_NUMBER (HTTP $put_code)"
-              exit 1
-            fi
-          else
-            next=$current
-          fi
+          (async () => {
+            let wave = process.env.WAVE;
+            const recent = (await getJson('/releases?limit=30')) || [];
+            const mine = recent.find(r => r.tag_name.startsWith(prefix) && hasWave(r, wave));
+            if (mine) {
+              if (!(mine.assets || []).some(a => a.name.includes(process.env.MARKER))) {
+                log('Joining ' + mine.tag_name + ', already claimed for this push by another branch');
+                console.log(mine.tag_name.slice(prefix.length));
+                return;
+              }
+              log(mine.tag_name + ' already has a ' + process.env.MARKER + ' jar (re-run) - claiming a fresh number');
+              wave += '-run' + process.env.RUN_ID;
+            }
 
+            const v = await getJson('/actions/variables/BUILD_NUMBER');
+            let n = (parseInt(v && v.data, 10) || 0) + 1;
+            for (let tries = 0; tries < 20; tries++, n++) {
+              const tag = prefix + n;
+              const created = await fetch(api + '/releases', {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                  tag_name: tag, name: tag, target_commitish: process.env.SHA, prerelease: true,
+                  body: 'Build ' + n + ': ' + process.env.SUBJECT + '\n\nwave: ' + wave,
+                }),
+              });
+              log('POST create release ' + tag + ' -> HTTP ' + created.status);
+              if (created.status === 201) {
+                log('Claimed ' + tag + ' for this push');
+              } else {
+                const existing = await getJson('/releases/tags/' + tag);
+                if (!existing || !hasWave(existing, wave)) continue; // another push owns it
+                log('Joining ' + tag + ', claimed for this push by another branch a moment ago');
+              }
+              const put = await fetch(api + '/actions/variables/BUILD_NUMBER', {
+                method: 'PUT', headers, body: JSON.stringify({ value: String(n) }),
+              });
+              log('PUT BUILD_NUMBER=' + n + ' -> HTTP ' + put.status);
+              console.log(n);
+              return;
+            }
+            throw new Error('Could not claim a build number after 20 attempts');
+          })().catch(e => { log(e); process.exit(1); });
+          JS
+          )
+
+          echo "build number: $next"
           echo "$next" > build_number.txt
           echo "value=$next" >> "$GITHUB_OUTPUT"
 
