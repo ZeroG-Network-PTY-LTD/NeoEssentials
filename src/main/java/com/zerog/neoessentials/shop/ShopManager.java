@@ -230,6 +230,14 @@ public class ShopManager {
         o.addProperty("hologramOffsetX", s.hologramOffsetX);
         o.addProperty("hologramOffsetY", s.hologramOffsetY);
         o.addProperty("hologramOffsetZ", s.hologramOffsetZ);
+        if (s.isCommandShop()) {
+            com.google.gson.JsonArray cmds = new com.google.gson.JsonArray();
+            s.commands.forEach(cmds::add);
+            o.add("commands", cmds);
+            o.addProperty("runAsPlayer", s.runAsPlayer);
+            o.addProperty("requiredPermission", s.requiredPermission);
+            o.addProperty("commandLabel", s.commandLabel);
+        }
         return o;
     }
 
@@ -261,6 +269,13 @@ public class ShopManager {
         s.hologramOffsetX = o.has("hologramOffsetX") ? o.get("hologramOffsetX").getAsDouble() : 0.5;
         s.hologramOffsetY = o.has("hologramOffsetY") ? o.get("hologramOffsetY").getAsDouble() : 1.8;
         s.hologramOffsetZ = o.has("hologramOffsetZ") ? o.get("hologramOffsetZ").getAsDouble() : 0.5;
+        if (o.has("commands") && o.get("commands").isJsonArray()) {
+            s.commands = new ArrayList<>();
+            for (JsonElement c : o.getAsJsonArray("commands")) s.commands.add(c.getAsString());
+            s.runAsPlayer = o.has("runAsPlayer") && o.get("runAsPlayer").getAsBoolean();
+            s.requiredPermission = str(o, "requiredPermission");
+            s.commandLabel = str(o, "commandLabel");
+        }
         return s;
     }
 
