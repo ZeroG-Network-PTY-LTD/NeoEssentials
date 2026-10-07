@@ -88,7 +88,9 @@ public class NpcShopMenu extends AbstractContainerMenu {
             if (slotId < shopData.listings.size() && clickType == ContainerInput.PICKUP
                     && player instanceof ServerPlayer sp) {
                 ShopListing listing = shopData.listings.get(slotId);
-                if (button == 1) {
+                if (button == 1 && listing.isCommandListing()) {
+                    executeBuyCommandListing(sp, listing);
+                } else if (button == 1) {
                     executeBuyListing(sp, listing);
                 } else if (button == 0) {
                     executeSellListing(sp, listing);
@@ -168,6 +170,31 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, listing.quantity()));
     }
 
+    /** Command listing — pay, then its commands run (see {@link com.zerog.neoessentials.shop.CommandShopPurchase}). */
+    private void executeBuyCommandListing(ServerPlayer player, ShopListing listing) {
+        if (!listing.canBuy()) {
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_not_for_sale"));
+            return;
+        }
+        boolean bought = com.zerog.neoessentials.shop.CommandShopPurchase.purchase(player, listing.buyPrice(),
+                listing.commands(), listing.runAsPlayer(), listing.permission(), listingLabel(listing));
+        if (!bought) return;
+
+        BigDecimal price = listing.buyPrice().setScale(2, RoundingMode.HALF_UP);
+        recordSale(price);
+        NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
+                null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, 1));
+    }
+
+    /** Plain-text name of a listing for chat messages — its custom display name, else the item's name. */
+    public static String listingLabel(ShopListing listing) {
+        if (listing.displayName() != null && !listing.displayName().isBlank()) {
+            return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(listing.displayName()).getString();
+        }
+        ItemStack icon = ShopTransaction.resolveItem(listing.itemId());
+        return icon.isEmpty() ? listing.itemId() : icon.getHoverName().getString();
+    }
+
     /**
      * Sell path — the NPC shop has no linked chest (items are sunk, not stored, same as an
      * admin ChestShop with unlimited stock), so this only needs to check the player actually
@@ -237,9 +264,14 @@ public class NpcShopMenu extends AbstractContainerMenu {
             if (i >= SHOP_SLOTS) break;
             ItemStack template = ShopTransaction.resolveItem(listing.itemId());
             if (!template.isEmpty()) {
-                ItemStack display = template.copyWithCount(listing.quantity());
+                ItemStack display = template.copyWithCount(Math.max(1, listing.quantity()));
+                if (listing.displayName() != null && !listing.displayName().isBlank()) {
+                    display.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+                            com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(listing.displayName()));
+                }
                 // Encode buy/sell price info as item lore
                 List<Component> lore = new java.util.ArrayList<>();
+                if (listing.isCommandListing()) lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_command"));
                 if (listing.canBuy())  lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_buy", listing.buyPrice().toPlainString()));
                 if (listing.canSell()) lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_sell", listing.sellPrice().toPlainString()));
                 if (listing.canBuy() && listing.canSell()) {

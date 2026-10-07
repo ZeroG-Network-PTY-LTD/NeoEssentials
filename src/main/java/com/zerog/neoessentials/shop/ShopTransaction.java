@@ -121,6 +121,30 @@ public final class ShopTransaction {
         return ok(price, shop.quantity);
     }
 
+    // ── BUY (command shop) ────────────────────────────────────────────────────
+
+    /**
+     * Buys from a {@code [Command]} admin sign: charges the buyer and runs the shop's commands
+     * via {@link CommandShopPurchase}, which also sends the buyer every outcome message. Records
+     * the sale the same way an item buy does. Returns true if the purchase went through.
+     */
+    public static boolean executeCommandBuy(ServerPlayer buyer, ShopData shop) {
+        if (!shop.canBuy()) return false;
+        boolean bought = CommandShopPurchase.purchase(buyer, shop.buyPrice, shop.commands,
+                shop.runAsPlayer, shop.requiredPermission, shop.commandLabel);
+        if (!bought) return false;
+
+        BigDecimal price = shop.buyPrice.setScale(2, RoundingMode.HALF_UP);
+        shop.totalSalesCount++;
+        shop.totalRevenueCents += price.movePointRight(2).longValue();
+        shop.lastSaleTimestamp = System.currentTimeMillis();
+        ShopManager.getInstance().registerShop(shop);
+
+        NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
+                shop, buyer.getUUID(), ShopTransactionEvent.Type.BUY, price, 1));
+        return true;
+    }
+
     // ── SELL ──────────────────────────────────────────────────────────────────
 
     public static TransactionResult executeSell(ServerPlayer seller, ShopData shop, ServerLevel level) {

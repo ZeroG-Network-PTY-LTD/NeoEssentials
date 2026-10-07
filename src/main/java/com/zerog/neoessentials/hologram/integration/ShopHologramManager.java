@@ -383,6 +383,10 @@ public class ShopHologramManager {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_sell_price"));
             return;
         }
+        if (shop.isCommandShop()) {
+            ShopTransaction.executeCommandBuy(player, shop); // sends its own messages
+            return;
+        }
         TransactionResult result = ShopTransaction.executeBuy(player, shop, com.zerog.neoessentials.util.LevelCompat.of(player));
         sendTransactionResult(player, result, shop, true);
     }
@@ -604,9 +608,13 @@ public class ShopHologramManager {
     private static java.util.List<HologramLine> buildShopLines(ShopData shop) {
         java.util.List<HologramLine> lines = new ArrayList<>();
         // Line 1: Item name (solves the "too long for sign" problem)
-        String itemName = shop.itemId != null ? shop.itemId.replace("minecraft:", "") : "?";
         String ownerDisplay = shop.isAdminShop() ? "&6[Admin Shop]" : ("&e" + shop.ownerName);
-        lines.add(new HologramLine(ownerDisplay + " &7| &f" + itemName + " &8x" + shop.quantity));
+        if (shop.isCommandShop()) {
+            lines.add(new HologramLine(ownerDisplay + " &7| &d" + shop.commandLabel));
+        } else {
+            String itemName = shop.itemId != null ? shop.itemId.replace("minecraft:", "") : "?";
+            lines.add(new HologramLine(ownerDisplay + " &7| &f" + itemName + " &8x" + shop.quantity));
+        }
         // Line 2: Buy / Sell prices
         String buyStr  = shop.canBuy()  ? "&aBuy: &f$" + shop.buyPrice.toPlainString()   : "";
         String sellStr = shop.canSell() ? "&cSell: &f$" + shop.sellPrice.toPlainString() : "";

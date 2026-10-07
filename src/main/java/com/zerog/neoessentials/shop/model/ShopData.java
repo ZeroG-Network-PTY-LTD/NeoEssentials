@@ -101,6 +101,29 @@ public class ShopData {
      */
     public int stockLowThreshold = 0;
 
+    // ── Command shops ([Command] admin signs) ─────────────────────────────────
+
+    /** Sign line 1 that turns an Admin Shop sign into a paid command shop. */
+    public static final String COMMAND_MARKER = "[Command]";
+
+    /**
+     * Non-null = this is a command shop: buying runs these commands instead of handing over an
+     * item ({player}/{uuid} placeholders). Empty while still being set up with
+     * {@code /chestshop command add}. Null for every normal item shop.
+     */
+    public java.util.List<String> commands = null;
+
+    /** Command shop only: run the commands as the buyer instead of from the console. */
+    public boolean runAsPlayer = false;
+
+    /** Command shop only: permission node required to buy; null = anyone with shop access. */
+    public String requiredPermission = null;
+
+    /** Command shop only: what's being sold, from sign line 3 (e.g. "VIP Rank"). */
+    public String commandLabel = null;
+
+    public boolean isCommandShop() { return commands != null; }
+
     // ── Hologram integration ──────────────────────────────────────────────────
 
     /**

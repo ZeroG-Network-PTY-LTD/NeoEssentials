@@ -173,6 +173,14 @@ public class ShopEntityManager {
             lo.addProperty("buyPrice", l.buyPrice() != null ? l.buyPrice().toPlainString() : null);
             lo.addProperty("sellPrice", l.sellPrice() != null ? l.sellPrice().toPlainString() : null);
             lo.addProperty("quantity", l.quantity());
+            if (l.displayName() != null) lo.addProperty("displayName", l.displayName());
+            if (l.isCommandListing()) {
+                JsonArray cmds = new JsonArray();
+                l.commands().forEach(cmds::add);
+                lo.add("commands", cmds);
+                lo.addProperty("runAsPlayer", l.runAsPlayer());
+                if (l.permission() != null) lo.addProperty("permission", l.permission());
+            }
             listings.add(lo);
         }
         o.add("listings", listings);
@@ -196,11 +204,20 @@ public class ShopEntityManager {
         if (o.has("listings") && o.get("listings").isJsonArray()) {
             for (JsonElement el : o.getAsJsonArray("listings")) {
                 JsonObject lo = el.getAsJsonObject();
+                List<String> commands = null; // absent = plain item listing
+                if (lo.has("commands") && lo.get("commands").isJsonArray()) {
+                    commands = new ArrayList<>();
+                    for (JsonElement c : lo.getAsJsonArray("commands")) commands.add(c.getAsString());
+                }
                 d.listings.add(new ShopListing(
                     str(lo, "itemId"),
                     has(lo, "buyPrice") ? new BigDecimal(lo.get("buyPrice").getAsString()) : null,
                     has(lo, "sellPrice") ? new BigDecimal(lo.get("sellPrice").getAsString()) : null,
-                    lo.has("quantity") ? lo.get("quantity").getAsInt() : 0
+                    lo.has("quantity") ? lo.get("quantity").getAsInt() : 0,
+                    str(lo, "displayName"),
+                    commands,
+                    lo.has("runAsPlayer") && lo.get("runAsPlayer").getAsBoolean(),
+                    str(lo, "permission")
                 ));
             }
         }

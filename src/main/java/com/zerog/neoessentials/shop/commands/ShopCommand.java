@@ -78,6 +78,25 @@ public class ShopCommand {
                         .executes(ctx -> executeSetPrice(ctx.getSource(),
                             StringArgumentType.getString(ctx, "type"),
                             DoubleArgumentType.getDouble(ctx, "price"))))))
+            .then(Commands.literal("command")
+                .then(Commands.literal("add")
+                    .then(Commands.argument("command", StringArgumentType.greedyString())
+                        .executes(ctx -> executeCommandEdit(ctx.getSource(), "add",
+                            StringArgumentType.getString(ctx, "command")))))
+                .then(Commands.literal("clear")
+                    .executes(ctx -> executeCommandEdit(ctx.getSource(), "clear", null)))
+                .then(Commands.literal("list")
+                    .executes(ctx -> executeCommandEdit(ctx.getSource(), "list", null)))
+                .then(Commands.literal("runas")
+                    .then(Commands.argument("mode", StringArgumentType.word())
+                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                            java.util.List.of("console", "player"), b))
+                        .executes(ctx -> executeCommandEdit(ctx.getSource(), "runas",
+                            StringArgumentType.getString(ctx, "mode")))))
+                .then(Commands.literal("permission")
+                    .then(Commands.argument("node", StringArgumentType.word())
+                        .executes(ctx -> executeCommandEdit(ctx.getSource(), "permission",
+                            StringArgumentType.getString(ctx, "node"))))))
             .then(Commands.literal("stats")
                 .executes(ctx -> executeStats(ctx.getSource())))
             .then(Commands.literal("limit")
@@ -173,7 +192,8 @@ public class ShopCommand {
                         s.signDimension.replace("minecraft:", ""),
                         s.signX, s.signY, s.signZ,
                         s.quantity,
-                        s.itemId.replace("minecraft:", ""),
+                        s.isCommandShop() ? "[Command] " + s.commandLabel
+                            : s.itemId != null ? s.itemId.replace("minecraft:", "") : "?",
                         s.buyPrice  != null ? currency + s.buyPrice.toPlainString()  : "§7—",
                         s.sellPrice != null ? currency + s.sellPrice.toPlainString() : "§7—"
                     ), false);
@@ -211,8 +231,13 @@ public class ShopCommand {
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_header"), false);
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_owner",
                 shop.ownerName, shop.isAdminShop() ? " §2[Admin]" : ""), false);
-            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_item",
-                shop.quantity, shop.itemId.replace("minecraft:", "")), false);
+            if (shop.isCommandShop()) {
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_command",
+                    shop.commandLabel, shop.commands.size()), false);
+            } else {
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_item",
+                    shop.quantity, shop.itemId != null ? shop.itemId.replace("minecraft:", "") : "?"), false);
+            }
             if (shop.buyPrice  != null) src.sendSuccess(() -> MessageUtil.component(
                 "commands.neoessentials.chestshop.info_buy", currency, shop.buyPrice.toPlainString()), false);
             if (shop.sellPrice != null) src.sendSuccess(() -> MessageUtil.component(
@@ -389,6 +414,60 @@ public class ShopCommand {
                     com.zerog.neoessentials.shop.ShopParser.formatSignLines(shop));
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.setprice_success",
                     type, EconomyManager.getInstance().getCurrencySymbol(), bd.toPlainString()), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop command <add|clear|list|runas|permission> ─────────────────
+
+    /** Configures the {@code [Command]} admin sign the player is looking at. */
+    private static int executeCommandEdit(CommandSourceStack src, String action, String value) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            ShopData shop = getShopFromLookAt(player);
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign")); return 0; }
+            if (!shop.isCommandShop()) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.cmd_not_command_shop"));
+                return 0;
+            }
+            if (!com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(src, 3) && !isShopOwner(player, shop)) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.no_permission"));
+                return 0;
+            }
+
+            switch (action) {
+                case "list" -> {
+                    src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_header",
+                        shop.commandLabel, shop.runAsPlayer ? "player" : "console",
+                        shop.requiredPermission != null ? shop.requiredPermission : "none"), false);
+                    if (shop.commands.isEmpty()) {
+                        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_empty"), false);
+                    }
+                    for (int i = 0; i < shop.commands.size(); i++) {
+                        final int idx = i;
+                        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_entry",
+                            idx, shop.commands.get(idx)), false);
+                    }
+                    return 1;
+                }
+                case "add" -> shop.commands.add(value);
+                case "clear" -> shop.commands.clear();
+                case "runas" -> {
+                    String mode = value.toLowerCase();
+                    if (!mode.equals("console") && !mode.equals("player")) {
+                        src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.editlisting_bad_runas"));
+                        return 0;
+                    }
+                    shop.runAsPlayer = mode.equals("player");
+                }
+                default -> shop.requiredPermission = value.equalsIgnoreCase("none") ? null : value;
+            }
+            ShopManager.getInstance().registerShop(shop);
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_edit_success",
+                action, shop.commands.size()), false);
             return 1;
         } catch (Exception e) {
             src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
@@ -682,6 +761,7 @@ public class ShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_list"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_info"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_setprice"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_command"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_stats"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_limit"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_pricing"), false);
