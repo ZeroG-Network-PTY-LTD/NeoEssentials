@@ -83,6 +83,11 @@ public final class ShopParser {
         }
         shop.ownerName = ownerLine;
 
+        // ── "[Command]" on line 1 → paid command shop (admin signs only) ──────
+        if (ShopData.COMMAND_MARKER.equalsIgnoreCase(strip(lines[ShopData.QUANTITY_LINE]))) {
+            return parseCommandShop(lines, shop, signPos, dimension);
+        }
+
         // ── Line 1: quantity ──────────────────────────────────────────────────
         String qtyStr = strip(lines[ShopData.QUANTITY_LINE]);
         int quantity;
@@ -170,6 +175,35 @@ public final class ShopParser {
             }
         }
         return parse(lines, signPos, dimension, level, ownerUUID, name);
+    }
+
+    /**
+     * Command shop sign: {@code Admin Shop / [Command] / B <price> / <label>}. Buy-only, no
+     * item and no chest — buying runs the commands added with {@code /chestshop command add},
+     * so the shop starts with an empty command list.
+     */
+    private static Optional<ShopData> parseCommandShop(String[] lines, ShopData shop, BlockPos signPos, String dimension) {
+        if (!shop.isAdminShop()) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] [Command] sign at {} is not an Admin Shop", signPos);
+            return Optional.empty();
+        }
+        String priceLine = strip(lines[ShopData.PRICE_LINE]).toUpperCase();
+        if (!parsePriceLine(priceLine, shop) || shop.buyPrice == null || shop.sellPrice != null) {
+            NeoLog.debug(LOGGER, LogCategory.GENERAL, "[ChestShop] [Command] sign at {} needs a buy-only price, got '{}'", signPos, priceLine);
+            return Optional.empty();
+        }
+        String label = strip(lines[ShopData.ITEM_LINE]);
+        shop.commandLabel = label.isEmpty() ? "Command" : label;
+        shop.commands     = new java.util.ArrayList<>();
+        shop.quantity     = 1;
+        shop.itemId       = null;
+        shop.itemPending  = false;
+        shop.hasChest     = false;
+        shop.signDimension = dimension;
+        shop.signX = signPos.getX();
+        shop.signY = signPos.getY();
+        shop.signZ = signPos.getZ();
+        return Optional.of(shop);
     }
 
     // ── Price line parser ─────────────────────────────────────────────────────
@@ -326,6 +360,16 @@ public final class ShopParser {
         String ownerLine = shop.isAdminShop()
             ? "§2" + ShopData.ADMIN_SHOP_NAME  // dark green
             : "§b" + shop.ownerName;           // aqua
+
+        if (shop.isCommandShop()) {
+            String label = shop.commandLabel != null ? shop.commandLabel : "Command";
+            return new String[] {
+                ownerLine,
+                "§d" + ShopData.COMMAND_MARKER,
+                "§aB " + shop.buyPrice.toPlainString(),
+                label.length() > 16 ? label.substring(0, 15) + "…" : label
+            };
+        }
 
         StringBuilder priceBuilder = new StringBuilder();
         if (shop.buyPrice  != null) priceBuilder.append("§aB ").append(shop.buyPrice.toPlainString());

@@ -77,6 +77,36 @@ public class NpcShopCommand {
                                                                         DoubleArgumentType.getDouble(ctx, "buyPrice"),
                                                                         DoubleArgumentType.getDouble(ctx, "sellPrice"),
                                                                         IntegerArgumentType.getInteger(ctx, "quantity")))))))))
+                .then(Commands.literal("addcommand")
+                        .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
+                                .then(Commands.argument("icon", StringArgumentType.word())
+                                        .then(Commands.argument("price", DoubleArgumentType.doubleArg(0))
+                                                .then(Commands.argument("command", StringArgumentType.greedyString())
+                                                        .executes(ctx -> executeAddCommand(ctx.getSource(),
+                                                                StringArgumentType.getString(ctx, "shopId"),
+                                                                StringArgumentType.getString(ctx, "icon"),
+                                                                DoubleArgumentType.getDouble(ctx, "price"),
+                                                                StringArgumentType.getString(ctx, "command"))))))))
+                .then(Commands.literal("editlisting")
+                        .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
+                                .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                                        .then(Commands.literal("name")
+                                                .then(Commands.argument("name", StringArgumentType.greedyString())
+                                                        .executes(ctx -> editListing(ctx.getSource(), ctx, "name"))))
+                                        .then(Commands.literal("addcommand")
+                                                .then(Commands.argument("command", StringArgumentType.greedyString())
+                                                        .executes(ctx -> editListing(ctx.getSource(), ctx, "addcommand"))))
+                                        .then(Commands.literal("clearcommands")
+                                                .executes(ctx -> editListing(ctx.getSource(), ctx, "clearcommands")))
+                                        .then(Commands.literal("runas")
+                                                .then(Commands.argument("runas", StringArgumentType.word())
+                                                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(List.of("console", "player"), b))
+                                                        .executes(ctx -> editListing(ctx.getSource(), ctx, "runas"))))
+                                        .then(Commands.literal("permission")
+                                                .then(Commands.argument("permission", StringArgumentType.word())
+                                                        .executes(ctx -> editListing(ctx.getSource(), ctx, "permission")))))))
                 .then(Commands.literal("removeitem")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
@@ -213,6 +243,72 @@ public class NpcShopCommand {
         return 1;
     }
 
+    // ── /npcshop addcommand <shopId> <icon> <price> <command> ─────────────────
+
+    /** Adds a paid command listing — {@code <icon>} is just the item shown in the GUI. */
+    private static int executeAddCommand(CommandSourceStack src, String shopIdStr, String icon, double price, String command) {
+        ShopEntityData shop = resolve(src, shopIdStr);
+        if (shop == null) return 0;
+
+        String iconId = icon.contains(":") ? icon : "minecraft:" + icon;
+        if (com.zerog.neoessentials.shop.ShopTransaction.resolveItem(iconId).isEmpty()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.addcommand_bad_icon", icon));
+            return 0;
+        }
+        if (shop.listings.size() >= 54) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.shop_full"));
+            return 0;
+        }
+
+        shop.addListing(ShopListing.command(iconId, BigDecimal.valueOf(price), command));
+        ShopEntityManager.getInstance().register(shop);
+        int index = shop.listings.size() - 1;
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.addcommand_success",
+                shop.shopName, index, shop.shopId.toString().substring(0, 8)), false);
+        return 1;
+    }
+
+    // ── /npcshop editlisting <shopId> <index> <name|addcommand|clearcommands|runas|permission> ──
+
+    private static int editListing(CommandSourceStack src, com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx, String field) {
+        ShopEntityData shop = resolve(src, StringArgumentType.getString(ctx, "shopId"));
+        if (shop == null) return 0;
+        int index = IntegerArgumentType.getInteger(ctx, "index");
+        if (index >= shop.listings.size()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.removeitem_invalid_index",
+                    index, shop.listings.size()));
+            return 0;
+        }
+        ShopListing listing = shop.listings.get(index);
+        if (!field.equals("name") && !listing.isCommandListing()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.editlisting_not_command", index));
+            return 0;
+        }
+
+        ShopListing updated;
+        switch (field) {
+            case "name" -> updated = listing.withDisplayName(StringArgumentType.getString(ctx, "name"));
+            case "addcommand" -> updated = listing.withAddedCommand(StringArgumentType.getString(ctx, "command"));
+            case "clearcommands" -> updated = listing.withNoCommands();
+            case "runas" -> {
+                String mode = StringArgumentType.getString(ctx, "runas").toLowerCase();
+                if (!mode.equals("console") && !mode.equals("player")) {
+                    src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.editlisting_bad_runas"));
+                    return 0;
+                }
+                updated = listing.withRunAsPlayer(mode.equals("player"));
+            }
+            default -> {
+                String node = StringArgumentType.getString(ctx, "permission");
+                updated = listing.withPermission(node.equalsIgnoreCase("none") ? null : node);
+            }
+        }
+        shop.listings.set(index, updated);
+        ShopEntityManager.getInstance().register(shop);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.editlisting_success", index, field), false);
+        return 1;
+    }
+
     // ── /npcshop removeitem ───────────────────────────────────────────────────
 
     private static int executeRemoveItem(CommandSourceStack src, String shopIdStr, int index) {
@@ -263,6 +359,17 @@ public class NpcShopCommand {
         for (int i = 0; i < shop.listings.size(); i++) {
             ShopListing l = shop.listings.get(i);
             final int idx = i;
+            if (l.isCommandListing()) {
+                src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_command_listing",
+                        idx, NpcShopMenu.listingLabel(l),
+                        l.canBuy() ? l.buyPrice().toPlainString() : "§7—",
+                        l.runAsPlayer() ? "player" : "console",
+                        l.permission() != null ? l.permission() : "none"), false);
+                for (String cmd : l.commands()) {
+                    src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_command_line", cmd), false);
+                }
+                continue;
+            }
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_listing",
                     idx, l.quantity(), l.itemId().replace("minecraft:", ""),
                     l.canBuy()  ? l.buyPrice().toPlainString()  : "§7—",
@@ -377,6 +484,8 @@ public class NpcShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_create"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_remove"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_additem"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_addcommand"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_editlisting"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_removeitem"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_list"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_info"), false);

@@ -154,6 +154,11 @@ public class ShopInteractHandler {
                 return;
             }
 
+            if (shop.isCommandShop()) {
+                ShopTransaction.executeCommandBuy(player, shop); // sends its own messages
+                return;
+            }
+
             TransactionResult result = ShopTransaction.executeBuy(player, shop, level);
             sendTransactionResult(player, result, shop, true);
 

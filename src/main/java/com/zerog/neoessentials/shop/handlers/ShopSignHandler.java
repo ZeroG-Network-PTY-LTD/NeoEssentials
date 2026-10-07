@@ -237,10 +237,21 @@ public class ShopSignHandler {
             return;
         }
 
+        boolean commandSign = ShopData.COMMAND_MARKER.equalsIgnoreCase(
+            lines[ShopData.QUANTITY_LINE].replaceAll("§[0-9a-fA-FkKlLmMnNoOrRiI]", "").trim());
+        if (commandSign && !wantsAdmin) {
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.cmd_sign_admin_only"));
+            return;
+        }
+
         Optional<ShopData> parsed = ShopParser.parse(
             lines, pos, dimension, level, player.getUUID(), player.getName().getString());
 
         if (parsed.isEmpty()) {
+            if (commandSign) {
+                player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.cmd_sign_invalid"));
+                return;
+            }
             if (!wantsAdmin && ShopParser.findAdjacentChest(pos, level) == null) {
                 player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_chest"));
             } else {
@@ -255,7 +266,10 @@ public class ShopSignHandler {
         // Rewrite sign lines with colour formatting
         writeSignLines(level, pos, ShopParser.formatSignLines(shop));
 
-        if (shop.itemPending) {
+        if (shop.isCommandShop()) {
+            // Registered, but does nothing until commands are added
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.cmd_sign_created"));
+        } else if (shop.itemPending) {
             // Shop is registered but non-functional — item still needed
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.frame_created"));
         } else {
