@@ -2233,6 +2233,9 @@ public class ConfigManager {
      * Internal permissions.json is not generated if external permissions are enabled.
      */
     private void ensureDefaultConfigs() {
+        // Clear pre-upgrade backups older versions left next to the live configs.
+        ConfigBackups.tidyUp();
+
         String[] requiredConfigs = new String[] {
             MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG, TABLIST_CONFIG, ANIMATIONS_CONFIG, SCOREBOARD_CONFIG, LEADERBOARD_CONFIG, VOTIFIER_CONFIG, CRATES_CONFIG, DISCORD_ROLE_SYNC_CONFIG, COMMAND_PERMISSIONS_CONFIG
         };
@@ -2661,19 +2664,12 @@ public class ConfigManager {
     }
 
     /**
-     * Create a timestamped backup of a config file.
+     * Create a timestamped backup of a config file in the backups/ folder (see {@link ConfigBackups}).
      */
     private void createConfigBackup(File configFile, int oldVersion) {
         try {
-            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
-            String backupName = configFile.getName().replace(".json",
-                String.format("_v%d_backup_%s.json", oldVersion, timestamp));
-            File backupFile = new File(configFile.getParentFile(), backupName);
-
-            java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(),
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-
-            NeoLog.info(LOGGER, LogCategory.CONFIG, "Created backup of old config: {}", backupFile.getName());
+            File backupFile = ConfigBackups.backup(configFile, oldVersion);
+            NeoLog.info(LOGGER, LogCategory.CONFIG, "Created backup of old config: backups/{}", backupFile.getName());
         } catch (Exception e) {
             LOGGER.error("Failed to create backup for {}: {}", configFile.getName(), e.getMessage());
         }
