@@ -85,15 +85,17 @@ public class NpcShopMenu extends AbstractContainerMenu {
     @Override
     public void clicked(int slotId, int button, @Nonnull ClickType clickType, @Nonnull Player player) {
         if (slotId >= 0 && slotId < SHOP_SLOTS) {
-            if (slotId < shopData.listings.size() && clickType == ClickType.PICKUP
+            // Shift-click (QUICK_MOVE, either button) trades up to a full stack at once.
+            boolean stack = clickType == ClickType.QUICK_MOVE;
+            if (slotId < shopData.listings.size() && (clickType == ClickType.PICKUP || stack)
                     && player instanceof ServerPlayer sp) {
                 ShopListing listing = shopData.listings.get(slotId);
                 if (button == 1 && listing.isCommandListing()) {
-                    executeBuyCommandListing(sp, listing);
+                    executeBuyCommandListing(sp, listing, slotId);
                 } else if (button == 1) {
-                    executeBuyListing(sp, listing);
+                    executeBuyListing(sp, listing, slotId, stack);
                 } else if (button == 0) {
-                    executeSellListing(sp, listing);
+                    executeSellListing(sp, listing, stack);
                 }
             }
             // never move items out of the display
@@ -123,7 +125,13 @@ public class NpcShopMenu extends AbstractContainerMenu {
 
     // ── Transaction logic ─────────────────────────────────────────────────────
 
-    private void executeBuyListing(ServerPlayer player, ShopListing listing) {
+    /** How many listing-quantities one click trades: 1, or up to a full stack on shift-click. */
+    private static int timesFor(ShopListing listing, ItemStack template, boolean stack) {
+        if (!stack) return 1;
+        return Math.max(1, template.getMaxStackSize() / Math.max(1, listing.quantity()));
+    }
+
+    private void executeBuyListing(ServerPlayer player, ShopListing listing, int slot, boolean stack) {
         ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
 
         if (!listing.canBuy()) {
@@ -131,7 +139,16 @@ public class NpcShopMenu extends AbstractContainerMenu {
             return;
         }
 
-        BigDecimal price = listing.buyPrice().setScale(2, RoundingMode.HALF_UP);
+        ItemStack template = ShopTransaction.resolveItem(listing.itemId(), listing.itemNbt());
+        if (template.isEmpty()) {
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_unresolved"));
+            return;
+        }
+
+        int times = timesFor(listing, template, stack);
+        int units = listing.quantity() * times;
+        BigDecimal price = listing.buyPrice().multiply(BigDecimal.valueOf(times)).setScale(2, RoundingMode.HALF_UP);
+        String label = listingLabel(listing);
 
         if (!eco.hasBalance(player.getUUID(), price)) {
             player.sendSystemMessage(MessageUtil.component(
@@ -139,15 +156,14 @@ public class NpcShopMenu extends AbstractContainerMenu {
             return;
         }
 
-        ItemStack template = ShopTransaction.resolveItem(listing.itemId());
-        if (template.isEmpty()) {
-            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_unresolved"));
+        ItemStack give = template.copyWithCount(units);
+        if (!ShopTransaction.hasSpaceInContainer(player.getInventory(), give, units)) {
+            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.inventory_full"));
             return;
         }
 
-        ItemStack give = template.copyWithCount(listing.quantity());
-        if (!ShopTransaction.hasSpaceInContainer(player.getInventory(), give, listing.quantity())) {
-            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.inventory_full"));
+        if (!com.zerog.neoessentials.shop.ShopConfirm.confirmed(player,
+                shopData.toKey() + ":" + slot + ":" + times, price, units + "x " + label)) {
             return;
         }
 
@@ -159,21 +175,22 @@ public class NpcShopMenu extends AbstractContainerMenu {
         ShopTransaction.giveItems(player, give);
 
         player.sendSystemMessage(MessageUtil.component(
-                "commands.neoessentials.shop.npc_bought",
-                listing.quantity(),
-                listing.itemId().replace("minecraft:", ""),
-                eco.format(price)));
+                "commands.neoessentials.shop.npc_bought", units, label, eco.format(price)));
 
         recordSale(price);
 
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
-                null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, listing.quantity()));
+                null, player.getUUID(), ShopTransactionEvent.Type.BUY, price, units));
     }
 
     /** Command listing — pay, then its commands run (see {@link com.zerog.neoessentials.shop.CommandShopPurchase}). */
-    private void executeBuyCommandListing(ServerPlayer player, ShopListing listing) {
+    private void executeBuyCommandListing(ServerPlayer player, ShopListing listing, int slot) {
         if (!listing.canBuy()) {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_not_for_sale"));
+            return;
+        }
+        if (!com.zerog.neoessentials.shop.ShopConfirm.confirmed(player,
+                shopData.toKey() + ":" + slot, listing.buyPrice(), listingLabel(listing))) {
             return;
         }
         boolean bought = com.zerog.neoessentials.shop.CommandShopPurchase.purchase(player, listing.buyPrice(),
@@ -191,7 +208,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
         if (listing.displayName() != null && !listing.displayName().isBlank()) {
             return com.zerog.neoessentials.util.ChatComponentUtil.parseColorCodes(listing.displayName()).getString();
         }
-        ItemStack icon = ShopTransaction.resolveItem(listing.itemId());
+        ItemStack icon = ShopTransaction.resolveItem(listing.itemId(), listing.itemNbt());
         return icon.isEmpty() ? listing.itemId() : icon.getHoverName().getString();
     }
 
@@ -200,7 +217,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
      * admin ChestShop with unlimited stock), so this only needs to check the player actually
      * holds enough of the item, then swap it for money.
      */
-    private void executeSellListing(ServerPlayer player, ShopListing listing) {
+    private void executeSellListing(ServerPlayer player, ShopListing listing, boolean stack) {
         ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
 
         if (!listing.canSell()) {
@@ -208,25 +225,28 @@ public class NpcShopMenu extends AbstractContainerMenu {
             return;
         }
 
-        ItemStack template = ShopTransaction.resolveItem(listing.itemId());
+        ItemStack template = ShopTransaction.resolveItem(listing.itemId(), listing.itemNbt());
         if (template.isEmpty()) {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.item_unresolved"));
             return;
         }
 
-        if (ShopTransaction.countItems(player.getInventory(), template) < listing.quantity()) {
+        // Shift-click sells as many sets as the player holds, up to a stack's worth.
+        int held = ShopTransaction.countItems(player.getInventory(), template);
+        int times = Math.min(timesFor(listing, template, stack), held / Math.max(1, listing.quantity()));
+        if (times < 1) {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.npc_not_enough_items"));
             return;
         }
-
-        BigDecimal price = listing.sellPrice().setScale(2, RoundingMode.HALF_UP);
+        int units = listing.quantity() * times;
+        BigDecimal price = listing.sellPrice().multiply(BigDecimal.valueOf(times)).setScale(2, RoundingMode.HALF_UP);
 
         if (!eco.credit(player.getUUID(), price)) {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.payment_failed"));
             return;
         }
 
-        if (!ShopTransaction.removeItems(player.getInventory(), template, listing.quantity())) {
+        if (!ShopTransaction.removeItems(player.getInventory(), template, units)) {
             // Shouldn't happen since we just counted, but don't leave the player paid-but-not-charged.
             eco.debit(player.getUUID(), price);
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.npc_not_enough_items"));
@@ -234,15 +254,12 @@ public class NpcShopMenu extends AbstractContainerMenu {
         }
 
         player.sendSystemMessage(MessageUtil.component(
-                "commands.neoessentials.shop.npc_sold",
-                listing.quantity(),
-                listing.itemId().replace("minecraft:", ""),
-                eco.format(price)));
+                "commands.neoessentials.shop.npc_sold", units, listingLabel(listing), eco.format(price)));
 
         recordSale(price);
 
         NeoForge.EVENT_BUS.post(new ShopTransactionEvent(
-                null, player.getUUID(), ShopTransactionEvent.Type.SELL, price, listing.quantity()));
+                null, player.getUUID(), ShopTransactionEvent.Type.SELL, price, units));
     }
 
     /** Bumps this NPC shop's sale counters and persists them — {@link ShopTransactionEvent}
@@ -262,7 +279,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
         int i = 0;
         for (ShopListing listing : listings) {
             if (i >= SHOP_SLOTS) break;
-            ItemStack template = ShopTransaction.resolveItem(listing.itemId());
+            ItemStack template = ShopTransaction.resolveItem(listing.itemId(), listing.itemNbt());
             if (!template.isEmpty()) {
                 ItemStack display = template.copyWithCount(Math.max(1, listing.quantity()));
                 if (listing.displayName() != null && !listing.displayName().isBlank()) {
@@ -280,6 +297,9 @@ public class NpcShopMenu extends AbstractContainerMenu {
                     lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_click"));
                 } else if (listing.canSell()) {
                     lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_click_sell"));
+                }
+                if (!listing.isCommandListing() && (listing.canBuy() || listing.canSell())) {
+                    lore.add(MessageUtil.component("commands.neoessentials.shop.npc_lore_shift"));
                 }
                 display.set(net.minecraft.core.component.DataComponents.LORE,
                         new net.minecraft.world.item.component.ItemLore(lore));
@@ -308,15 +328,20 @@ public class NpcShopMenu extends AbstractContainerMenu {
      */
     public static class NpcShopMenuProvider implements MenuProvider {
         private final ShopEntityData shopData;
+        private final ServerPlayer viewer;
 
-        public NpcShopMenuProvider(ShopEntityData shopData) {
+        public NpcShopMenuProvider(ShopEntityData shopData, ServerPlayer viewer) {
             this.shopData = shopData;
+            this.viewer = viewer;
         }
 
+        /** Shop name plus the viewer's balance as of opening (the title can't change while open). */
         @Override
         @Nonnull
         public Component getDisplayName() {
-            return Component.literal("§6" + shopData.shopName);
+            ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
+            return Component.literal("§6" + shopData.shopName + " §8| §7"
+                    + eco.format(eco.getBalance(viewer.getUUID())));
         }
 
         @Nullable

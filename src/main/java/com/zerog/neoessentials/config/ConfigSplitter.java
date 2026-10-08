@@ -133,7 +133,8 @@ public class ConfigSplitter {
                                         //       ConfigManager.patchLegacyNicknameChatDefaults)
         put("teleportation.json", 3);  // v3 — added randomTeleportSettings.prewarmBatchSize (RTP fix)
         put("moderation.json",    1);
-        put("items.json",         2);  // v2 — added "shop" section (shop.pricing — dynamic
+        put("items.json",         3);  // v3 — added shop.confirmAbove
+                                        // v2 — added "shop" section (shop.pricing — dynamic
                                         //       ChestShop/NPC-shop pricing was implemented
                                         //       and reachable in code but had no discoverable
                                         //       config path at all; see PricingEngine)

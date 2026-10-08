@@ -170,6 +170,7 @@ public class ShopEntityManager {
         for (ShopListing l : d.listings) {
             JsonObject lo = new JsonObject();
             lo.addProperty("itemId", l.itemId());
+            if (l.itemNbt() != null) lo.addProperty("itemNbt", l.itemNbt());
             lo.addProperty("buyPrice", l.buyPrice() != null ? l.buyPrice().toPlainString() : null);
             lo.addProperty("sellPrice", l.sellPrice() != null ? l.sellPrice().toPlainString() : null);
             lo.addProperty("quantity", l.quantity());
@@ -211,6 +212,7 @@ public class ShopEntityManager {
                 }
                 d.listings.add(new ShopListing(
                     str(lo, "itemId"),
+                    str(lo, "itemNbt"),
                     has(lo, "buyPrice") ? new BigDecimal(lo.get("buyPrice").getAsString()) : null,
                     has(lo, "sellPrice") ? new BigDecimal(lo.get("sellPrice").getAsString()) : null,
                     lo.has("quantity") ? lo.get("quantity").getAsInt() : 0,

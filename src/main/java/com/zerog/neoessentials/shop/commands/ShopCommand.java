@@ -234,6 +234,17 @@ public class ShopCommand {
             if (shop.isCommandShop()) {
                 src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_command",
                     shop.commandLabel, shop.commands.size()), false);
+                // The commands themselves only to whoever can manage the sign — they may reveal ranks/permissions.
+                if (src.hasPermission(3) || isShopOwner(player, shop)) {
+                    src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_header",
+                        shop.commandLabel, shop.runAsPlayer ? "player" : "console",
+                        shop.requiredPermission != null ? shop.requiredPermission : "none"), false);
+                    for (int i = 0; i < shop.commands.size(); i++) {
+                        final int idx = i;
+                        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_entry",
+                            idx + 1, shop.commands.get(idx)), false);
+                    }
+                }
             } else {
                 src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.info_item",
                     shop.quantity, shop.itemId != null ? shop.itemId.replace("minecraft:", "") : "?"), false);
@@ -449,7 +460,7 @@ public class ShopCommand {
                     for (int i = 0; i < shop.commands.size(); i++) {
                         final int idx = i;
                         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.cmd_list_entry",
-                            idx, shop.commands.get(idx)), false);
+                            idx + 1, shop.commands.get(idx)), false);
                     }
                     return 1;
                 }
