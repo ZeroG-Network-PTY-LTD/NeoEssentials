@@ -274,14 +274,15 @@ public final class ShopTransaction {
 
     // ── Inventory helpers ──────────────────────────────────────────────────────
 
+    /**
+     * Worth-file aliases first, then the item registry — so any registered item works, including
+     * modded ones with no worth.yml entry (previously only the worth file was checked, which made
+     * e.g. mekanism:osmium_ingot "unknown" to /npcshop additem). Same lookup as ShopParser's.
+     */
     public static ItemStack resolveItem(String itemId) {
-        try {
-            ItemStack result = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(itemId);
-            if (result != null && !result.isEmpty()) return result;
-        } catch (Exception e) {
-            NeoLog.debug(LOGGER, LogCategory.GENERAL, "WorthManager.resolveItem failed for '{}'", itemId, e);
-        }
-        return ItemStack.EMPTY;
+        if (itemId == null || itemId.isBlank()) return ItemStack.EMPTY;
+        ItemStack result = ShopParser.resolveItem(itemId);
+        return result != null ? result : ItemStack.EMPTY;
     }
 
     /**
