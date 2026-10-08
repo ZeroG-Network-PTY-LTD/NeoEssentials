@@ -1552,7 +1552,7 @@
     "commands.neoessentials.npcshop.help_info": "§e/npcshop info <id>                         §7— Detailed info",
     "commands.neoessentials.npcshop.help_reload": "§e/npcshop reload                            §7— Reload from disk",
     "commands.neoessentials.npcshop.help_respawn": "§e/npcshop respawn <id>                      §7— Re-summon a lost NPC entity",
-    "commands.neoessentials.npcshop.help_entitytype": "§e/npcshop entitytype <id> <type> <ai>       §7— Change entity type/AI, then respawn",
+    "commands.neoessentials.npcshop.help_entitytype": "§e/npcshop entitytype <shop> <type> [ai] §7— Change entity type (any mod's, e.g. minecraft:villager) and optionally AI",
     "commands.neoessentials.npcshop.help_additemhand": "§e/npcshop additemhand <shop> <buy> <sell> §7— Sell the item in your hand (keeps its data)",
     "commands.neoessentials.npcshop.help_shop_arg": "§7<shop> = shop name, id, or §fthis§7 (the shop NPC you're next to). Slots start at 1.",
     "commands.neoessentials.npcshop.additemhand_empty": "§cHold the item you want to sell in your main hand.",
