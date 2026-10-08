@@ -67,13 +67,16 @@ public class NpcShopCommand {
                 .then(Commands.literal("additem")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
-                                .then(Commands.argument("item", StringArgumentType.word())
+                                // An id argument, not word(): word() stops at ':' so "modid:item" couldn't be typed at all.
+                                .then(Commands.argument("item", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                                                net.minecraft.core.registries.BuiltInRegistries.ITEM.keySet(), b))
                                         .then(Commands.argument("buyPrice", DoubleArgumentType.doubleArg(-1))
                                                 .then(Commands.argument("sellPrice", DoubleArgumentType.doubleArg(-1))
                                                         .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
                                                                 .executes(ctx -> executeAddItem(ctx.getSource(),
                                                                         StringArgumentType.getString(ctx, "shopId"),
-                                                                        StringArgumentType.getString(ctx, "item"),
+                                                                        net.minecraft.commands.arguments.ResourceLocationArgument.getId(ctx, "item").toString(),
                                                                         DoubleArgumentType.getDouble(ctx, "buyPrice"),
                                                                         DoubleArgumentType.getDouble(ctx, "sellPrice"),
                                                                         IntegerArgumentType.getInteger(ctx, "quantity")))))))))
@@ -89,12 +92,14 @@ public class NpcShopCommand {
                 .then(Commands.literal("addcommand")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
-                                .then(Commands.argument("icon", StringArgumentType.word())
+                                .then(Commands.argument("icon", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                                        .suggests((ctx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                                                net.minecraft.core.registries.BuiltInRegistries.ITEM.keySet(), b))
                                         .then(Commands.argument("price", DoubleArgumentType.doubleArg(0))
                                                 .then(Commands.argument("command", StringArgumentType.greedyString())
                                                         .executes(ctx -> executeAddCommand(ctx.getSource(),
                                                                 StringArgumentType.getString(ctx, "shopId"),
-                                                                StringArgumentType.getString(ctx, "icon"),
+                                                                net.minecraft.commands.arguments.ResourceLocationArgument.getId(ctx, "icon").toString(),
                                                                 DoubleArgumentType.getDouble(ctx, "price"),
                                                                 StringArgumentType.getString(ctx, "command"))))))))
                 .then(Commands.literal("editlisting")
@@ -144,13 +149,18 @@ public class NpcShopCommand {
                 .then(Commands.literal("entitytype")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
-                                .then(Commands.argument("entityType", StringArgumentType.word())
-                                        .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                                                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(Object::toString), builder))
+                                .then(Commands.argument("entityType", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                                        .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                                                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.keySet(), builder))
+                                        // <ai> is optional — leaving it out keeps the shop's current AI setting
+                                        .executes(ctx -> executeEntityType(ctx.getSource(),
+                                                StringArgumentType.getString(ctx, "shopId"),
+                                                net.minecraft.commands.arguments.ResourceLocationArgument.getId(ctx, "entityType").toString(),
+                                                null))
                                         .then(Commands.argument("ai", BoolArgumentType.bool())
                                                 .executes(ctx -> executeEntityType(ctx.getSource(),
                                                         StringArgumentType.getString(ctx, "shopId"),
-                                                        StringArgumentType.getString(ctx, "entityType"),
+                                                        net.minecraft.commands.arguments.ResourceLocationArgument.getId(ctx, "entityType").toString(),
                                                         BoolArgumentType.getBool(ctx, "ai")))))))
                 .executes(ctx -> executeHelp(ctx.getSource()));
 
@@ -512,9 +522,10 @@ public class NpcShopCommand {
      * settings at the same position, so the change is visible without a separate
      * {@code /npcshop respawn}.
      */
-    private static int executeEntityType(CommandSourceStack src, String shopIdStr, String entityTypeId, boolean aiEnabled) {
+    private static int executeEntityType(CommandSourceStack src, String shopIdStr, String entityTypeId, Boolean aiArg) {
         ShopEntityData shop = resolve(src, shopIdStr);
         if (shop == null) return 0;
+        boolean aiEnabled = aiArg != null ? aiArg : shop.aiEnabled;
 
         if (!ShopNpcEntity.isValidEntityTypeId(entityTypeId)) {
             src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.entitytype_unknown", entityTypeId));
