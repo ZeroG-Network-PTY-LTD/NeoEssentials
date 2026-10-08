@@ -77,6 +77,15 @@ public class NpcShopCommand {
                                                                         DoubleArgumentType.getDouble(ctx, "buyPrice"),
                                                                         DoubleArgumentType.getDouble(ctx, "sellPrice"),
                                                                         IntegerArgumentType.getInteger(ctx, "quantity")))))))))
+                .then(Commands.literal("additemhand")
+                        .then(Commands.argument("shopId", StringArgumentType.word())
+                                .suggests(NpcShopCommand::suggestShopIds)
+                                .then(Commands.argument("buyPrice", DoubleArgumentType.doubleArg(-1))
+                                        .then(Commands.argument("sellPrice", DoubleArgumentType.doubleArg(-1))
+                                                .executes(ctx -> executeAddItemHand(ctx.getSource(),
+                                                        StringArgumentType.getString(ctx, "shopId"),
+                                                        DoubleArgumentType.getDouble(ctx, "buyPrice"),
+                                                        DoubleArgumentType.getDouble(ctx, "sellPrice")))))))
                 .then(Commands.literal("addcommand")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
@@ -91,7 +100,11 @@ public class NpcShopCommand {
                 .then(Commands.literal("editlisting")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
-                                .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                                .then(Commands.argument("index", IntegerArgumentType.integer(1))
+                                        .then(Commands.literal("price")
+                                                .then(Commands.argument("buyPrice", DoubleArgumentType.doubleArg(-1))
+                                                        .then(Commands.argument("sellPrice", DoubleArgumentType.doubleArg(-1))
+                                                                .executes(ctx -> editListing(ctx.getSource(), ctx, "price")))))
                                         .then(Commands.literal("name")
                                                 .then(Commands.argument("name", StringArgumentType.greedyString())
                                                         .executes(ctx -> editListing(ctx.getSource(), ctx, "name"))))
@@ -110,7 +123,7 @@ public class NpcShopCommand {
                 .then(Commands.literal("removeitem")
                         .then(Commands.argument("shopId", StringArgumentType.word())
                                 .suggests(NpcShopCommand::suggestShopIds)
-                                .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                                .then(Commands.argument("index", IntegerArgumentType.integer(1))
                                         .executes(ctx -> executeRemoveItem(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "shopId"),
                                                 IntegerArgumentType.getInteger(ctx, "index"))))))
@@ -147,8 +160,13 @@ public class NpcShopCommand {
     private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestShopIds(
             com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx,
             com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
-        return net.minecraft.commands.SharedSuggestionProvider.suggest(
-            ShopEntityManager.getInstance().getAll().stream().map(d -> d.shopId.toString()), builder);
+        java.util.List<String> options = new java.util.ArrayList<>();
+        options.add("this");
+        for (ShopEntityData d : ShopEntityManager.getInstance().getAll()) {
+            if (d.shopName != null && !d.shopName.contains(" ")) options.add(d.shopName);
+            options.add(d.shopId.toString().substring(0, 8));
+        }
+        return net.minecraft.commands.SharedSuggestionProvider.suggest(options, builder);
     }
 
     // ── /npcshop create <name> ────────────────────────────────────────────────
@@ -236,10 +254,61 @@ public class NpcShopCommand {
             return 0;
         }
 
-        shop.addListing(new ShopListing("minecraft:" + itemId.replace("minecraft:", ""), buy, sell, qty));
+        // Keep a modded namespace as-is; only bare names get "minecraft:".
+        String fullId = itemId.contains(":") ? itemId : "minecraft:" + itemId;
+        if (com.zerog.neoessentials.shop.ShopTransaction.resolveItem(fullId).isEmpty()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.addcommand_bad_icon", itemId));
+            return 0;
+        }
+        if (shop.listings.size() >= 54) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.shop_full"));
+            return 0;
+        }
+        shop.addListing(new ShopListing(fullId, null, buy, sell, qty));
         ShopEntityManager.getInstance().register(shop);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.additem_success",
-                itemId, shop.shopName, shop.listings.size() - 1), false);
+                itemId, shop.shopName, shop.listings.size()), false);
+        return 1;
+    }
+
+    // ── /npcshop additemhand <shop> <buy> <sell> ─────────────────────────────
+
+    /** Adds the item in the admin's main hand — with its data (name, enchantments, modded NBT) and stack size. */
+    private static int executeAddItemHand(CommandSourceStack src, String shopIdStr, double buyPrice, double sellPrice) {
+        ServerPlayer player;
+        try {
+            player = src.getPlayerOrException();
+        } catch (Exception e) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.error", e.getMessage()));
+            return 0;
+        }
+        ShopEntityData shop = resolve(src, shopIdStr);
+        if (shop == null) return 0;
+
+        net.minecraft.world.item.ItemStack held = player.getMainHandItem();
+        if (held.isEmpty()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.additemhand_empty"));
+            return 0;
+        }
+        BigDecimal buy  = buyPrice  >= 0 ? BigDecimal.valueOf(buyPrice)  : null;
+        BigDecimal sell = sellPrice >= 0 ? BigDecimal.valueOf(sellPrice) : null;
+        if (buy == null && sell == null) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.additem_both_disabled"));
+            return 0;
+        }
+        if (shop.listings.size() >= 54) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.shop_full"));
+            return 0;
+        }
+
+        shop.addListing(new ShopListing(
+                com.zerog.neoessentials.economy.worth.WorthManager.getItemId(held),
+                com.zerog.neoessentials.shop.ShopParser.captureComponents(held),
+                buy, sell, held.getCount()));
+        ShopEntityManager.getInstance().register(shop);
+        String name = held.getHoverName().getString();
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.additem_success",
+                held.getCount() + "x " + name, shop.shopName, shop.listings.size()), false);
         return 1;
     }
 
@@ -262,9 +331,9 @@ public class NpcShopCommand {
 
         shop.addListing(ShopListing.command(iconId, BigDecimal.valueOf(price), command));
         ShopEntityManager.getInstance().register(shop);
-        int index = shop.listings.size() - 1;
+        int slot = shop.listings.size();
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.addcommand_success",
-                shop.shopName, index, shop.shopId.toString().substring(0, 8)), false);
+                shop.shopName, slot, shop.shopId.toString().substring(0, 8)), false);
         return 1;
     }
 
@@ -273,21 +342,28 @@ public class NpcShopCommand {
     private static int editListing(CommandSourceStack src, com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx, String field) {
         ShopEntityData shop = resolve(src, StringArgumentType.getString(ctx, "shopId"));
         if (shop == null) return 0;
-        int index = IntegerArgumentType.getInteger(ctx, "index");
+        int slot = IntegerArgumentType.getInteger(ctx, "index"); // 1-based, as shown in /npcshop info
+        int index = slot - 1;
         if (index >= shop.listings.size()) {
             src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.removeitem_invalid_index",
-                    index, shop.listings.size()));
+                    slot, shop.listings.size()));
             return 0;
         }
         ShopListing listing = shop.listings.get(index);
-        if (!field.equals("name") && !listing.isCommandListing()) {
-            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.editlisting_not_command", index));
+        boolean anyListing = field.equals("name") || field.equals("price");
+        if (!anyListing && !listing.isCommandListing()) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.editlisting_not_command", slot));
             return 0;
         }
 
         ShopListing updated;
         switch (field) {
             case "name" -> updated = listing.withDisplayName(StringArgumentType.getString(ctx, "name"));
+            case "price" -> {
+                double b = DoubleArgumentType.getDouble(ctx, "buyPrice");
+                double s = DoubleArgumentType.getDouble(ctx, "sellPrice");
+                updated = listing.withPrices(b >= 0 ? BigDecimal.valueOf(b) : null, s >= 0 ? BigDecimal.valueOf(s) : null);
+            }
             case "addcommand" -> updated = listing.withAddedCommand(StringArgumentType.getString(ctx, "command"));
             case "clearcommands" -> updated = listing.withNoCommands();
             case "runas" -> {
@@ -305,22 +381,22 @@ public class NpcShopCommand {
         }
         shop.listings.set(index, updated);
         ShopEntityManager.getInstance().register(shop);
-        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.editlisting_success", index, field), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.editlisting_success", slot, field), false);
         return 1;
     }
 
     // ── /npcshop removeitem ───────────────────────────────────────────────────
 
-    private static int executeRemoveItem(CommandSourceStack src, String shopIdStr, int index) {
+    private static int executeRemoveItem(CommandSourceStack src, String shopIdStr, int slot) {
         ShopEntityData shop = resolve(src, shopIdStr);
         if (shop == null) return 0;
-        if (!shop.removeListing(index)) {
+        if (!shop.removeListing(slot - 1)) { // 1-based, as shown in /npcshop info
             src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.removeitem_invalid_index",
-                    index, shop.listings.size()));
+                    slot, shop.listings.size()));
             return 0;
         }
         ShopEntityManager.getInstance().register(shop);
-        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.removeitem_success", index), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.removeitem_success", slot), false);
         return 1;
     }
 
@@ -358,7 +434,7 @@ public class NpcShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_items", shop.listings.size()), false);
         for (int i = 0; i < shop.listings.size(); i++) {
             ShopListing l = shop.listings.get(i);
-            final int idx = i;
+            final int idx = i + 1; // 1-based slots, matching editlisting/removeitem
             if (l.isCommandListing()) {
                 src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_command_listing",
                         idx, NpcShopMenu.listingLabel(l),
@@ -371,7 +447,7 @@ public class NpcShopCommand {
                 continue;
             }
             src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.info_listing",
-                    idx, l.quantity(), l.itemId().replace("minecraft:", ""),
+                    idx, l.quantity(), NpcShopMenu.listingLabel(l),
                     l.canBuy()  ? l.buyPrice().toPlainString()  : "§7—",
                     l.canSell() ? l.sellPrice().toPlainString() : "§7—"
             ), false);
@@ -484,6 +560,7 @@ public class NpcShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_create"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_remove"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_additem"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_additemhand"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_addcommand"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_editlisting"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_removeitem"), false);
@@ -493,23 +570,57 @@ public class NpcShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_respawn"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_entitytype"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_price_hint"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.npcshop.help_shop_arg"), false);
         return 1;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * Finds a shop by {@code this} (the shop NPC nearest the player, within 5 blocks), its full
+     * id, an id prefix (the 8 characters shown in /npcshop list), or its name (case-insensitive).
+     */
     private static ShopEntityData resolve(CommandSourceStack src, String shopIdStr) {
-        ShopEntityData shop = ShopEntityManager.getInstance().getByShopId(shopIdStr);
+        ShopEntityData shop = null;
+        if (shopIdStr.equalsIgnoreCase("this")) {
+            shop = nearestShop(src);
+            if (shop == null) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.remove_none_nearby"));
+                return null;
+            }
+            return shop;
+        }
+        shop = ShopEntityManager.getInstance().getByShopId(shopIdStr);
         if (shop == null) {
-            // Allow prefix matching (first 8 chars)
+            // Allow prefix matching (first 8 chars), then the shop's name
             for (ShopEntityData d : ShopEntityManager.getInstance().getAll()) {
                 if (d.shopId.toString().startsWith(shopIdStr)) { shop = d; break; }
+            }
+        }
+        if (shop == null) {
+            for (ShopEntityData d : ShopEntityManager.getInstance().getAll()) {
+                if (shopIdStr.equalsIgnoreCase(d.shopName)) { shop = d; break; }
             }
         }
         if (shop == null) {
             src.sendFailure(MessageUtil.component("commands.neoessentials.npcshop.not_found", shopIdStr));
         }
         return shop;
+    }
+
+    /** The registered shop whose NPC is closest to the command's player, within 5 blocks. */
+    private static ShopEntityData nearestShop(CommandSourceStack src) {
+        ServerPlayer player = src.getPlayer();
+        if (player == null) return null;
+        List<Entity> nearby = com.zerog.neoessentials.util.LevelCompat.of(player).getEntitiesOfClass(
+                Entity.class, player.getBoundingBox().inflate(5), ShopNpcEntity::isShopNpc);
+        return nearby.stream()
+                .sorted(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(player)))
+                .map(ShopNpcEntity::getShopId)
+                .filter(java.util.Objects::nonNull)
+                .map((UUID id) -> ShopEntityManager.getInstance().getByShopId(id))
+                .filter(java.util.Objects::nonNull)
+                .findFirst().orElse(null);
     }
 }
 

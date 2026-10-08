@@ -80,7 +80,7 @@ public class ShopEntityRegistry {
             return;
         }
 
-        sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData),
+        sp.openMenu(new NpcShopMenu.NpcShopMenuProvider(shopData, sp),
                 buf -> buf.writeUtf(shopId.toString()));
     }
 

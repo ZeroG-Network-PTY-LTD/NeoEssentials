@@ -383,6 +383,7 @@ public class ShopHologramManager {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_sell_price"));
             return;
         }
+        if (!ShopTransaction.confirmBuy(player, shop)) return;
         if (shop.isCommandShop()) {
             ShopTransaction.executeCommandBuy(player, shop); // sends its own messages
             return;

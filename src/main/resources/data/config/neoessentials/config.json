@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 59,
+  "_configVersion": 60,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -551,6 +551,10 @@
      shops otherwise just use their fixed configured buy/sell price)
   ---------------------------------------------------------------- */
   "shop": {
+    // Buying anything that costs more than this (NPC shops and sign shops) needs a second
+    // click within 5 seconds to confirm, so a misclick can't spend a fortune. 0 = never ask.
+    "confirmAbove": 1000,
+
     "pricing": {
       // Master switch. false = every shop uses its raw configured buy/sell price, no
       // computation overhead at all. All the sub-sections below are ignored while off.
