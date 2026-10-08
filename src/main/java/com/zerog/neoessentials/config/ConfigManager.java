@@ -1483,7 +1483,9 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 59);          // v59 — added general.messagePrefix: the "[NE]" tag in
+        put(MAIN_CONFIG, 60);          // v60 — added shop.confirmAbove (second-click confirmation
+                                        //       for expensive shop purchases, see ShopConfirm)
+                                        // v59 — added general.messagePrefix: the "[NE]" tag in
                                         //       front of command feedback and admin notices is
                                         //       now configurable ("" disables it). See
                                         //       getMessagePrefix() / MessageUtil.tagPrefix().

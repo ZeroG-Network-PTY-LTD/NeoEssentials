@@ -121,6 +121,14 @@ public final class ShopTransaction {
         return ok(price, shop.quantity);
     }
 
+    /** Second-click confirmation for an expensive sign-shop buy (see {@link ShopConfirm}); true = go ahead. */
+    public static boolean confirmBuy(ServerPlayer buyer, ShopData shop) {
+        if (shop.buyPrice == null) return true;
+        String label = shop.isCommandShop() ? shop.commandLabel
+            : shop.quantity + "x " + ShopParser.buildFullItemDisplayName(shop);
+        return ShopConfirm.confirmed(buyer, shop.toKey(), shop.buyPrice, label);
+    }
+
     // ── BUY (command shop) ────────────────────────────────────────────────────
 
     /**
@@ -284,16 +292,21 @@ public final class ShopTransaction {
      * (legacy shops, or shops whose item genuinely has no non-default components).
      */
     public static ItemStack resolveItem(ShopData shop) {
-        ItemStack base = resolveItem(shop.itemId);
-        if (base.isEmpty() || shop.itemNbt == null || shop.itemNbt.isBlank()) return base;
+        return resolveItem(shop.itemId, shop.itemNbt);
+    }
+
+    /** {@link #resolveItem(String)} plus stored data components (see {@link ShopData#itemNbt}) — also used by NPC shop listings. */
+    public static ItemStack resolveItem(String itemId, String itemNbt) {
+        ItemStack base = resolveItem(itemId);
+        if (base.isEmpty() || itemNbt == null || itemNbt.isBlank()) return base;
         try {
-            com.google.gson.JsonElement json = com.google.gson.JsonParser.parseString(shop.itemNbt);
+            com.google.gson.JsonElement json = com.google.gson.JsonParser.parseString(itemNbt);
             net.minecraft.core.component.DataComponentMap components =
                 com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer.deserialize(json);
             base.applyComponents(components);
         } catch (Exception e) {
             LOGGER.warn("[ChestShop] Failed to apply stored components for shop item '{}': {}",
-                shop.itemId, e.getMessage());
+                itemId, e.getMessage());
         }
         return base;
     }
