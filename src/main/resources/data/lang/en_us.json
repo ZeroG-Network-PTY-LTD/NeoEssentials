@@ -1645,6 +1645,7 @@
     "commands.neoessentials.shop.npc_lore_click": "§7Right-click to buy",
     "commands.neoessentials.shop.npc_lore_click_sell": "§7Left-click to sell",
     "commands.neoessentials.shop.npc_lore_shift": "§7Shift-click to buy/sell a stack",
+    "commands.neoessentials.shop.npc_balance_item": "§6Balance: §f{0}",
     "commands.neoessentials.shop.confirm_prompt": "§eBuy §f{0} §efor §f{1}§e? Click again within 5 seconds to confirm.",
     "commands.neoessentials.shop.npc_lore_command": "§dRuns a command when bought",
     "commands.neoessentials.shop.cmd_bought": "§aYou bought §f{0} §afor §f{1}§a.",

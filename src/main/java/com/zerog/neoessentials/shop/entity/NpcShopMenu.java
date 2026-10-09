@@ -42,7 +42,11 @@ public class NpcShopMenu extends AbstractContainerMenu {
     private static final int SHOP_ROWS           = 6;
     private static final int SHOP_SLOTS          = SHOP_ROWS * 9; // 54
 
+    /** Bottom-right slot — shows the viewer's balance when no listing uses it. */
+    private static final int BALANCE_SLOT        = SHOP_SLOTS - 1;
+
     private final ShopEntityData shopData;
+    private final Container shopContainer;
 
     // ── Constructor (server-side) ─────────────────────────────────────────────
 
@@ -51,7 +55,8 @@ public class NpcShopMenu extends AbstractContainerMenu {
         this.shopData = shopData;
 
         // Build a read-only virtual container populated with listing items
-        Container shopContainer = buildShopContainer(shopData.listings);
+        this.shopContainer = buildShopContainer(shopData.listings);
+        updateBalanceSlot(playerInventory.player);
 
         // Add shop display slots (locked — see overrideSlot)
         for (int row = 0; row < SHOP_ROWS; row++) {
@@ -97,6 +102,7 @@ public class NpcShopMenu extends AbstractContainerMenu {
                 } else if (button == 0) {
                     executeSellListing(sp, listing, stack);
                 }
+                updateBalanceSlot(sp);
             }
             // never move items out of the display
             return;
@@ -272,6 +278,21 @@ public class NpcShopMenu extends AbstractContainerMenu {
         ShopEntityManager.getInstance().register(shopData);
     }
 
+    /**
+     * Puts a gold ingot showing the player's current balance in the bottom-right slot (when no
+     * listing occupies it) and pushes it to the client — a window title can't change while the
+     * window is open, so this is what keeps the balance live after each buy/sell.
+     */
+    private void updateBalanceSlot(Player player) {
+        if (shopData.listings.size() > BALANCE_SLOT) return;
+        ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
+        ItemStack info = new ItemStack(net.minecraft.world.item.Items.GOLD_INGOT);
+        info.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, MessageUtil.component(
+                "commands.neoessentials.shop.npc_balance_item", eco.format(eco.getBalance(player.getUUID()))));
+        shopContainer.setItem(BALANCE_SLOT, info);
+        broadcastChanges();
+    }
+
     // ── Virtual container builder ─────────────────────────────────────────────
 
     private static Container buildShopContainer(List<ShopListing> listings) {
@@ -335,13 +356,11 @@ public class NpcShopMenu extends AbstractContainerMenu {
             this.viewer = viewer;
         }
 
-        /** Shop name plus the viewer's balance as of opening (the title can't change while open). */
+        /** Just the shop name — the live balance is shown in the window's balance slot instead. */
         @Override
         @Nonnull
         public Component getDisplayName() {
-            ShopEconomyAdapter eco = ShopEconomyRegistry.getInstance().getAdapter();
-            return Component.literal("§6" + shopData.shopName + " §8| §7"
-                    + eco.format(eco.getBalance(viewer.getUUID())));
+            return Component.literal("§6" + shopData.shopName);
         }
 
         @Nullable
