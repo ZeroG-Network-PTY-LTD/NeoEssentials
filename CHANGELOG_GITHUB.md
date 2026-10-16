@@ -15,9 +15,15 @@ All notable changes to NeoEssentials are documented here, starting from
 Format: `[version+build] — date`  
 Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.1.2 (`26.1.x`) · Minecraft 26.2 (`26.2.x`)**
 
-> The build counter was reset alongside the v1.0.6 bump, so build numbers here start
-> back at 0/1, and the shared CI build number was reset to match — no more offset
-> between branches.
+> The build counter was reset alongside the v1.0.7 bump (and again, before it, for
+> v1.0.6), so build numbers here start back at 0/1, and the shared CI build number was
+> reset to match — no more offset between branches.
+
+---
+
+## [1.0.7] — 2026-10-16
+
+### Added
 
 ---
 

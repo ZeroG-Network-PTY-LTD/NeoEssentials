@@ -6,6 +6,12 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 
 ---
 
+## [1.0.7] — 2026-10-16
+
+### Added
+
+---
+
 ## [1.0.6] — 2026-08-27
 
 ### Added
