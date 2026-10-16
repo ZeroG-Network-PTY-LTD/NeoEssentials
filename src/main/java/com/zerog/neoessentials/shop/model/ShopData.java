@@ -29,6 +29,24 @@ public class ShopData {
     /** Owner name used for admin shops (matches ChestShop default). */
     public static final String ADMIN_SHOP_NAME = "Admin Shop";
 
+    /**
+     * True if {@code line} names the Admin Shop owner slot. Accepts both the documented
+     * plain form ("Admin Shop") and a bracketed form ("[Admin Shop]") — players commonly
+     * write the latter by analogy with the {@code [Shop]}/{@code [Command]} markers, which
+     * DO use literal brackets, so the wiki's plain-text convention for this one is an easy
+     * trap. Without this, a bracketed sign silently fails to register as any kind of shop
+     * (admin shops need no chest, so the "missing chest" fallback path also misfires), and
+     * right-clicking it just reopens vanilla's sign-edit screen instead of doing anything.
+     */
+    public static boolean isAdminShopHeader(String line) {
+        if (line == null) return false;
+        String trimmed = line.trim();
+        if (trimmed.length() >= 2 && trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+        }
+        return ADMIN_SHOP_NAME.equalsIgnoreCase(trimmed);
+    }
+
     // ── Fields ────────────────────────────────────────────────────────────────
 
     /** UUID of the shop owner; {@code null} for admin shops. */
@@ -152,8 +170,7 @@ public class ShopData {
         if (shopType == ShopType.SIGN_ADMIN) return true;
         if (shopType == ShopType.SIGN_PLAYER || shopType == ShopType.NPC) return false;
         // Legacy: derive from ownerUUID / ownerName
-        return ownerUUID == null ||
-               ADMIN_SHOP_NAME.equalsIgnoreCase(ownerName != null ? ownerName.trim() : "");
+        return ownerUUID == null || isAdminShopHeader(ownerName);
     }
 
     /** Resolved shop type, never null. */
