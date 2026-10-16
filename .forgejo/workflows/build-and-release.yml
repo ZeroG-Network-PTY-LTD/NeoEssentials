@@ -73,29 +73,25 @@ jobs:
         # gradlew fails immediately with "JAVA_HOME is not set and no 'java' command could be
         # found"); the actual per-branch compile JDK (21 for 1.21.x/26.1.x, 25 for 26.2.x) is
         # auto-provisioned separately by Gradle's own toolchain resolver, same as GitHub's
-        # workflow. Installed via apt rather than actions/setup-java@v4 — this instance's
-        # action mirror (code.forgejo.org) doesn't carry setup-java (confirmed 404).
-        # Retried, then falls back to Adoptium's Temurin tarball: confirmed live (runs 48-50)
-        # that a transient archive.ubuntu.com outage makes `apt-get update` "succeed" with stale
-        # or no indexes, so the install then fails with "Unable to locate package" / "held
-        # broken packages" — killing all three branches' builds at once. The timeout caps each
-        # attempt; without it those runs sat ~8 minutes on connect timeouts before failing.
+        # workflow — so ANY java on PATH here is sufficient, not specifically JDK 21.
+        #
+        # Checks for an already-installed java first (free if the runner image ships one) before
+        # doing any network install. If not found, skips apt entirely and goes straight to
+        # Adoptium's Temurin tarball — apt was tried first historically (since this instance's
+        # action mirror, code.forgejo.org, doesn't carry actions/setup-java@v4, confirmed 404),
+        # but `apt-get update` against archive.ubuntu.com on a cold container with no local
+        # package cache was the slowest, flakiest option: confirmed live (runs 48-50) that a
+        # transient mirror outage makes `apt-get update` "succeed" with stale/no indexes, so the
+        # install then fails with "Unable to locate package" / "held broken packages" after
+        # burning the full retry budget (~8 min/attempt on connect timeouts) — slower AND less
+        # reliable than just downloading a known-good tarball directly.
         run: |
-          installed=no
-          for attempt in 1 2 3; do
-            if apt-get -o Acquire::http::Timeout=20 update -qq \
-               && apt-get -o Acquire::http::Timeout=20 install -y -qq openjdk-21-jdk-headless; then
-              installed=yes
-              break
-            fi
-            echo "apt attempt $attempt failed, retrying in 15s"
-            sleep 15
-          done
-
-          if [ "$installed" = "yes" ]; then
-            echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))" >> "$GITHUB_ENV"
+          if command -v java >/dev/null 2>&1; then
+            echo "Using pre-installed java: $(java -version 2>&1 | head -n1)"
+            java_bin="$(readlink -f "$(command -v java)")"
+            echo "JAVA_HOME=$(dirname "$(dirname "$java_bin")")" >> "$GITHUB_ENV"
           else
-            echo "apt unavailable - falling back to Temurin 21 from Adoptium"
+            echo "No pre-installed java found - fetching Temurin 21 from Adoptium"
             mkdir -p /opt/jdk
             curl -fsSL --retry 5 --retry-delay 10 \
               "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
