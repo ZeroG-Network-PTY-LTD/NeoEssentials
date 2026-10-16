@@ -8,6 +8,12 @@ migration history) is not carried over.
 
 ---
 
+## [1.0.7] — 2026-10-16
+
+### Added
+
+---
+
 ## [1.0.6] — 2026-08-27
 
 ### Added
