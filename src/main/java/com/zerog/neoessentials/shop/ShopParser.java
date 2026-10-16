@@ -76,8 +76,9 @@ public final class ShopParser {
             ownerLine = ownerName;
         }
 
-        if (ShopData.ADMIN_SHOP_NAME.equalsIgnoreCase(ownerLine)) {
+        if (ShopData.isAdminShopHeader(ownerLine)) {
             shop.ownerUUID = null; // admin shop
+            ownerLine = ShopData.ADMIN_SHOP_NAME; // canonicalize (accepts "[Admin Shop]" too)
         } else {
             shop.ownerUUID = ownerUUID;
         }

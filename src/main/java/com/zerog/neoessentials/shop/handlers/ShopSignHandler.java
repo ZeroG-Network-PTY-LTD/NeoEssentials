@@ -208,7 +208,11 @@ public class ShopSignHandler {
             lines[ShopData.NAME_LINE] = ownerLine;
         }
 
-        boolean wantsAdmin = ShopData.ADMIN_SHOP_NAME.equalsIgnoreCase(ownerLine);
+        boolean wantsAdmin = ShopData.isAdminShopHeader(ownerLine);
+        if (wantsAdmin) {
+            ownerLine = ShopData.ADMIN_SHOP_NAME; // canonicalize (accepts "[Admin Shop]" too)
+            lines[ShopData.NAME_LINE] = ownerLine;
+        }
 
         if (wantsAdmin && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")) {
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.no_permission_admin"));
