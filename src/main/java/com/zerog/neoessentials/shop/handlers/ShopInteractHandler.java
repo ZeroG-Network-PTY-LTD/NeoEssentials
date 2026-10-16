@@ -122,7 +122,14 @@ public class ShopInteractHandler {
             // (rather than "?") never goes through it, so there was previously no way to
             // attach/update NBT-bearing item data on an already-configured shop at all.
             boolean isOwner = shop.ownerUUID != null && shop.ownerUUID.equals(player.getUUID());
-            if (isOwner && player.isShiftKeyDown()) {
+            // Admin shops always have ownerUUID == null, so isOwner alone would never let an
+            // admin reassign an already-configured admin shop's item (only the one-time "?"
+            // flow above, gated separately on the admin-create permission, could) — mirror
+            // that same permission check here instead of ownership for admin shops.
+            boolean canReassign = shop.isAdminShop()
+                    ? PermissionAPI.hasPermission(player.getUUID(), "neoessentials.shop.create.admin")
+                    : isOwner;
+            if (canReassign && player.isShiftKeyDown()) {
                 net.minecraft.world.item.ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
                 if (held.isEmpty()) {
                     player.sendSystemMessage(MessageUtil.component(
