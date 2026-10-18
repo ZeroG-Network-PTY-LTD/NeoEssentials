@@ -24,6 +24,10 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 ## [1.0.7] — 2026-10-16
 
 ### Added
+- **2026-10-17** — Build 5 ([`c73d350d`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/c73d350d4f870af1526567ec1645645f2e877091)) — `/chestshop hologram move` now also accepts zero arguments, moving the hologram to wherever you're currently standing (relative to the sign) instead of requiring an exact offset. Added `/chestshop hologram movepos <signX> <signY> <signZ>` to do the same move-to-your-position without needing to look at the sign — the coordinates come from `/chestshop list`. Also raised the hologram's max offset from the sign from ±4.5 (9×9×9) to ±16 (32×32×32), so it can be placed on a decorative structure away from the actual sign/chest.
+
+### Fixed
+- **2026-10-17** — Build 5 ([`c73d350d`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/c73d350d4f870af1526567ec1645645f2e877091)) — **`/tp` silently required real vanilla op status instead of any NeoEssentials permission** — even a full `neoessentials.*` wildcard admin got "Unknown or incomplete command". `/tp` shared its name with vanilla's own command (a redirect to `/teleport`), and Brigadier's node-merge on same-named commands keeps the first-registered node's permission check/redirect, silently discarding ours. Fixed by removing vanilla's `/tp` before registering ours, the same pattern already used for `/msg`/`/ban`/etc.
 
 ---
 
