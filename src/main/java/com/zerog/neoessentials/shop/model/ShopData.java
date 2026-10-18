@@ -154,8 +154,8 @@ public class ShopData {
     /**
      * Hologram position offset relative to the sign block, in blocks.
      * Defaults to (0.5, 1.8, 0.5) — centred above the sign.
-     * Limited to ±4.5 in X/Z and ±4.5 in Y from the sign position so the hologram
-     * stays within a 9×9×9 cube around the sign/chest.
+     * Limited to ±16 in X/Z and ±16 in Y from the sign position so the hologram
+     * stays within a 32×32×32 cube around the sign/chest.
      */
     public double hologramOffsetX = 0.5;
     public double hologramOffsetY = 1.8;
