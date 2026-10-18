@@ -11,6 +11,10 @@ migration history) is not carried over.
 ## [1.0.7] — 2026-10-16
 
 ### Added
+- **2026-10-17** — Build 5 ([`b9e71500`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b9e715001c7c4bea917828b4814b4aa772261f1a)) — `/chestshop hologram move` now also works with no arguments (moves it to wherever you're standing), plus a new `/chestshop hologram movepos <signX> <signY> <signZ>` that does the same without needing to look at the sign. Max offset from the sign raised from ±4.5 to ±16 blocks.
+
+### Fixed
+- **2026-10-17** — Build 5 ([`b9e71500`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b9e715001c7c4bea917828b4814b4aa772261f1a)) — `/tp` silently required real vanilla op status instead of any NeoEssentials permission (even a full wildcard admin got "Unknown or incomplete command") — it collided with vanilla's own `/tp`, whose permission check Brigadier's command-merging kept instead of ours.
 
 ---
 
