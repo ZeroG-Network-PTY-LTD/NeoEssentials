@@ -714,6 +714,18 @@ public class NeoEssentials {
             removeVanillaCommand(dispatcher, "pardon");
             removeVanillaCommand(dispatcher, "pardon-ip");
 
+            // Same node-merge problem as above: vanilla registers "tp" as its own command
+            // (redirecting to /teleport) with its own requires(source.hasPermission(2)) check
+            // baked directly onto that node. Brigadier's merge keeps the FIRST-registered node's
+            // requirement/redirect and only folds the second registration's children into it, so
+            // without this removal, our own DirectTeleportCommands "tp" registration's
+            // requires(neoessentials.teleport.tp) was silently discarded — the live command tree
+            // still required real vanilla op status, so no NeoEssentials permission (not even a
+            // bare "neoessentials.*" wildcard) could ever satisfy it, reported as "/tp" giving
+            // "Unknown or incomplete command" for a non-opped admin. "teleport" itself is left
+            // alone since we don't register our own command under that name.
+            removeVanillaCommand(dispatcher, "tp");
+
             registerAllCommands(dispatcher, registry);
         }
 

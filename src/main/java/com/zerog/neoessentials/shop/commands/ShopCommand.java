@@ -128,15 +128,28 @@ public class ShopCommand {
                                     IntegerArgumentType.getInteger(ctx, "x"),
                                     IntegerArgumentType.getInteger(ctx, "y"),
                                     IntegerArgumentType.getInteger(ctx, "z")))))))
-                // Move hologram: offsets relative to sign block, clamped to 9×9×9 (±4.5)
+                // Move hologram: offsets relative to sign block, clamped to 32×32×32 (±16).
+                // No coordinates given → move it to wherever the player is currently standing.
                 .then(Commands.literal("move")
-                    .then(Commands.argument("x", DoubleArgumentType.doubleArg(-4.5, 4.5))
-                        .then(Commands.argument("y", DoubleArgumentType.doubleArg(-4.5, 4.5))
-                            .then(Commands.argument("z", DoubleArgumentType.doubleArg(-4.5, 4.5))
+                    .executes(ctx -> executeHologramMoveToPlayer(ctx.getSource()))
+                    .then(Commands.argument("x", DoubleArgumentType.doubleArg(-16.0, 16.0))
+                        .then(Commands.argument("y", DoubleArgumentType.doubleArg(-16.0, 16.0))
+                            .then(Commands.argument("z", DoubleArgumentType.doubleArg(-16.0, 16.0))
                                 .executes(ctx -> executeHologramMove(ctx.getSource(),
                                     DoubleArgumentType.getDouble(ctx, "x"),
                                     DoubleArgumentType.getDouble(ctx, "y"),
-                                    DoubleArgumentType.getDouble(ctx, "z"))))))))
+                                    DoubleArgumentType.getDouble(ctx, "z")))))))
+                // Move hologram to wherever the player is currently standing, targeting the
+                // shop by its SIGN's world coordinates (from /chestshop list) instead of
+                // requiring the player to be looking at it — same idea as "enablepos" above.
+                .then(Commands.literal("movepos")
+                    .then(Commands.argument("x", IntegerArgumentType.integer())
+                        .then(Commands.argument("y", IntegerArgumentType.integer())
+                            .then(Commands.argument("z", IntegerArgumentType.integer())
+                                .executes(ctx -> executeHologramMovePosToPlayer(ctx.getSource(),
+                                    IntegerArgumentType.getInteger(ctx, "x"),
+                                    IntegerArgumentType.getInteger(ctx, "y"),
+                                    IntegerArgumentType.getInteger(ctx, "z"))))))))
             .executes(ctx -> executeHelp(ctx.getSource()));
 
         if (chestshopEnabled) {
@@ -646,11 +659,92 @@ public class ShopCommand {
         }
     }
 
+    // ── /chestshop hologram move (no coordinates) ────────────────────────────
+
+    /**
+     * Move the hologram to wherever the player is currently standing, instead of requiring
+     * them to type exact offsets. Computed as the player's position minus the sign's block
+     * position, so it ends up being the same relative-offset move {@link #executeHologramMove}
+     * does — {@link com.zerog.neoessentials.hologram.integration.ShopHologramManager#moveShopHologram}
+     * still clamps it to ±16 per axis.
+     */
+    private static int executeHologramMoveToPlayer(CommandSourceStack src) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            ShopData shop = getShopFromLookAt(player);
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.look_at_sign")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_move"));
+                return 0;
+            }
+            if (!shop.hologramEnabled) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_not_enabled"));
+                return 0;
+            }
+            double ox = player.getX() - shop.signX;
+            double oy = player.getY() - shop.signY;
+            double oz = player.getZ() - shop.signZ;
+            boolean moved = ShopHologramManager.moveShopHologram(shop, ox, oy, oz);
+            if (!moved) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_move_failed"));
+                return 0;
+            }
+            double cx = shop.hologramOffsetX, cy = shop.hologramOffsetY, cz = shop.hologramOffsetZ;
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_moved",
+                String.format("%.2f", cx), String.format("%.2f", cy), String.format("%.2f", cz)), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
+            return 0;
+        }
+    }
+
+    // ── /chestshop hologram movepos <signX> <signY> <signZ> ─────────────────
+
+    /**
+     * Same as {@link #executeHologramMoveToPlayer} (moves the hologram to wherever the player
+     * is currently standing), but targets the shop by its sign's world coordinates instead of
+     * requiring the player to be looking at it — those coordinates come straight out of
+     * {@code /chestshop list}'s output, which doubles as the shop's "unique identifier" without
+     * needing a separate id system.
+     */
+    private static int executeHologramMovePosToPlayer(CommandSourceStack src, int x, int y, int z) {
+        try {
+            ServerPlayer player = src.getPlayerOrException();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+            ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
+            if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_no_shop_at_pos")); return 0; }
+            if (!isShopOwner(player, shop)) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_owner_only_move"));
+                return 0;
+            }
+            if (!shop.hologramEnabled) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_not_enabled"));
+                return 0;
+            }
+            double ox = player.getX() - shop.signX;
+            double oy = player.getY() - shop.signY;
+            double oz = player.getZ() - shop.signZ;
+            boolean moved = ShopHologramManager.moveShopHologram(shop, ox, oy, oz);
+            if (!moved) {
+                src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_move_failed"));
+                return 0;
+            }
+            double cx = shop.hologramOffsetX, cy = shop.hologramOffsetY, cz = shop.hologramOffsetZ;
+            src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.hologram_moved",
+                String.format("%.2f", cx), String.format("%.2f", cy), String.format("%.2f", cz)), false);
+            return 1;
+        } catch (Exception e) {
+            src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.error", e.getMessage()));
+            return 0;
+        }
+    }
+
     // ── /chestshop hologram move <x> <y> <z> ─────────────────────────────────
 
     /**
      * Move the hologram to a new position offset (in blocks) relative to the sign block.
-     * Clamped to ±4.5 blocks per axis (9×9×9 cube around the sign).
+     * Clamped to ±16 blocks per axis (32×32×32 cube around the sign).
      * Player must be looking at their shop sign.
      */
     private static int executeHologramMove(CommandSourceStack src, double ox, double oy, double oz) {
@@ -779,6 +873,7 @@ public class ShopCommand {
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_enable"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_disable"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_move"), false);
+        src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_hologram_movepos"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_export"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_import"), false);
         src.sendSuccess(() -> MessageUtil.component("commands.neoessentials.chestshop.help_convert"), false);
