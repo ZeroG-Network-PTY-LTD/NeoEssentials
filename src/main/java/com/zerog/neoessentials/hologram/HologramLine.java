@@ -52,6 +52,19 @@ public class HologramLine {
      */
     public transient String lastResolvedText = null;
 
+    /**
+     * Cache for {@link #mayContainAnimationPlaceholder()} — the fields below remember the exact
+     * String reference last checked and its result, so a static line (the common case: its
+     * {@link #text}/{@link #frames} content never changes after creation) short-circuits on a
+     * reference comparison instead of re-running {@code toLowerCase().contains(...)} on every
+     * animation tick (default every 50ms) for as long as the hologram exists. Invalidates itself
+     * automatically the moment {@link #currentText()} returns a different String object — which
+     * it always does on a real edit or frame advance, since Java Strings are immutable. Not
+     * persisted.
+     */
+    private transient String cachedPlaceholderCheckText = null;
+    private transient boolean cachedPlaceholderCheckResult = false;
+
     // ── Constructors ─────────────────────────────────────────────────────────
 
     public HologramLine() {}
@@ -86,6 +99,9 @@ public class HologramLine {
     /** Cheap pre-check for whether this line's raw template might reference an {@code {animation:NAME}} token. */
     public boolean mayContainAnimationPlaceholder() {
         String t = currentText();
-        return t != null && t.toLowerCase().contains("{animation:");
+        if (t == cachedPlaceholderCheckText) return cachedPlaceholderCheckResult;
+        cachedPlaceholderCheckText = t;
+        cachedPlaceholderCheckResult = t != null && t.toLowerCase().contains("{animation:");
+        return cachedPlaceholderCheckResult;
     }
 }
