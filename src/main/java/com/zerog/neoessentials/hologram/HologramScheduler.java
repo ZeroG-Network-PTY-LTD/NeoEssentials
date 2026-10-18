@@ -4,6 +4,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -76,15 +78,21 @@ public class HologramScheduler {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         long now = System.currentTimeMillis();
+        // Resolved once per cycle instead of once per hologram — getLevelForDimension was a
+        // linear scan over every loaded dimension, repeated for EVERY hologram on EVERY cycle.
+        // A server's dimension count is small and effectively static between cycles, so caching
+        // it here (and skipping server.execute() entirely for a hologram whose dimension isn't
+        // currently loaded, instead of scheduling a main-thread round trip just to find that out
+        // inside the lambda) cuts pure overhead without touching any visible behavior.
+        Map<String, ServerLevel> levelsByDimension = buildLevelCache(server);
         for (HologramData data : HologramManager.getInstance().getAllHolograms()) {
             if (!data.visible) continue;
             if (!data.needsRefresh(now)) continue;
+            ServerLevel level = levelsByDimension.get(data.world);
+            if (level == null) continue;
             server.execute(() -> {
                 try {
-                    ServerLevel level = getLevelForDimension(server, data.world);
-                    if (level != null) {
-                        HologramRenderer.refreshAllLines(data, level, null);
-                    }
+                    HologramRenderer.refreshAllLines(data, level, null);
                 } catch (Exception e) {
                     NeoLog.warn(LOGGER, LogCategory.GENERAL, "[Hologram] refresh error for '{}': {}", data.id, e.getMessage());
                 }
@@ -95,6 +103,7 @@ public class HologramScheduler {
     private static void runAnimation() {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
+        Map<String, ServerLevel> levelsByDimension = buildLevelCache(server);
         for (HologramData data : HologramManager.getInstance().getAllHolograms()) {
             if (!data.visible) continue;
 
@@ -140,15 +149,15 @@ public class HologramScheduler {
 
             if (!textChanged && !spinChanged && !hoverChanged) continue;
 
+            ServerLevel level = levelsByDimension.get(data.world);
+            if (level == null) continue;
+
             final HologramData fd       = data;
             final boolean       fText   = textChanged;
             final boolean       fMotion = spinChanged || hoverChanged;
 
             server.execute(() -> {
                 try {
-                    ServerLevel level = getLevelForDimension(server, fd.world);
-                    if (level == null) return;
-
                     // Update rotation / position (spin + hover)
                     if (fMotion) {
                         HologramRenderer.updateRotationsAndPositions(fd, level);
@@ -172,10 +181,11 @@ public class HologramScheduler {
         }
     }
     // ── Helper ────────────────────────────────────────────────────────────────
-    private static ServerLevel getLevelForDimension(MinecraftServer server, String dimensionKey) {
+    private static Map<String, ServerLevel> buildLevelCache(MinecraftServer server) {
+        Map<String, ServerLevel> levels = new HashMap<>();
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.dimension().identifier().toString().equals(dimensionKey)) return level;
+            levels.put(level.dimension().identifier().toString(), level);
         }
-        return null;
+        return levels;
     }
 }
