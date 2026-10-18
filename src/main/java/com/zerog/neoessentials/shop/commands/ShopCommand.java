@@ -711,7 +711,7 @@ public class ShopCommand {
     private static int executeHologramMovePosToPlayer(CommandSourceStack src, int x, int y, int z) {
         try {
             ServerPlayer player = src.getPlayerOrException();
-            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().location().toString();
+            String dimension = com.zerog.neoessentials.util.LevelCompat.of(player).dimension().identifier().toString();
             ShopData shop = ShopManager.getInstance().getShopBySign(dimension, new BlockPos(x, y, z));
             if (shop == null) { src.sendFailure(MessageUtil.component("commands.neoessentials.chestshop.hologram_no_shop_at_pos")); return 0; }
             if (!isShopOwner(player, shop)) {
