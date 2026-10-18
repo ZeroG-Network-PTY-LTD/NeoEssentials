@@ -124,6 +124,23 @@ neoForge {
             client()
         }
 
+        // ── Two-client Admin Shop repro setup ───────────────────────────────
+        // Separate fixed offline username/UUID + separate gameDirectory per client so
+        // both can run at once against the shared `server` run below without fighting
+        // over options.txt/instance locks. server.properties already has online-mode=
+        // false, so these fake identities connect fine.
+        clientAdmin {
+            client()
+            gameDirectory = project.file('run-clientAdmin')
+            programArguments.addAll '--username', 'TesterAdmin', '--uuid', '00000000-0000-0000-0000-00000000a001'
+        }
+
+        clientPlayer {
+            client()
+            gameDirectory = project.file('run-clientPlayer')
+            programArguments.addAll '--username', 'TesterPlayer', '--uuid', '00000000-0000-0000-0000-00000000a002'
+        }
+
         server {
             server()
             programArgument '--nogui'
