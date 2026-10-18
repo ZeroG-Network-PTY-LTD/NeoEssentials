@@ -45,7 +45,7 @@ public class ShopHologramManager {
     /** Prefix for all shop-auto-holograms so they can be identified / cleaned up. */
     public static final String SHOP_HOLOGRAM_PREFIX = "shop_";
     /** Maximum offset (in blocks) in any axis from the sign that the hologram may be moved. */
-    public static final double MAX_OFFSET = 4.5;
+    public static final double MAX_OFFSET = 16.0;
 
     /**
      * NBT key placed on each TextDisplay entity so we can recover the sign position
@@ -93,7 +93,7 @@ public class ShopHologramManager {
             HologramData data = new HologramData();
             data.id = id;
             data.world = dimensionKey;
-            // Position uses owner-defined offsets (clamped to 9×9×9 around the sign)
+            // Position uses owner-defined offsets (clamped to a 32×32×32 cube around the sign)
             data.x = shop.signX + clampOffset(shop.hologramOffsetX);
             data.y = shop.signY + clampOffset(shop.hologramOffsetY);
             data.z = shop.signZ + clampOffset(shop.hologramOffsetZ);
@@ -136,7 +136,7 @@ public class ShopHologramManager {
     /**
      * Move the hologram to a new position relative to the sign block.
      * Offsets are clamped to [{@code -MAX_OFFSET}, {@code MAX_OFFSET}] in each axis,
-     * keeping the hologram inside a 9×9×9 cube centred on the sign.
+     * keeping the hologram inside a 32×32×32 cube centred on the sign.
      *
      * @param shop    the shop whose hologram should be moved
      * @param offsetX new X offset relative to sign block
