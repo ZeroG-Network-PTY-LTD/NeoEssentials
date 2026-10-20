@@ -78,7 +78,7 @@ export default function Users() {
     if (!confirm(`Generate a new temporary password for '${uname}'?`)) return;
     try {
       const result = await mcApi.setModUserPassword(id);
-      const tempPassword = (result as { password?: string }).password;
+      const tempPassword = (result as { tempPassword?: string }).tempPassword;
       showToast(tempPassword ? `New temp password for ${uname}: ${tempPassword}` : `Password reset for ${uname}.`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Reset failed.', true);
