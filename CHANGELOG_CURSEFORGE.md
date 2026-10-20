@@ -16,6 +16,7 @@ migration history) is not carried over.
 ### Fixed
 - **2026-10-17** — Build 8 ([`e5813336`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e5813336d2c00cb888197ceca2cd72cf417e4186)) — `/tp` silently required real vanilla op status instead of any NeoEssentials permission (even a full wildcard admin got "Unknown or incomplete command") — it collided with vanilla's own `/tp`, whose permission check Brigadier's command-merging kept instead of ours.
 - **2026-10-18** — Build 10 ([`cdc57180`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/cdc57180f8a70630c5e423cb4d6143c7a0d8cf48)) — Reduced hologram scheduler overhead with no behavior change — dimension lookups are cached once per cycle instead of rescanned per hologram, and static (non-animated) lines no longer re-run a string search on every animation tick.
+- **2026-10-20** — Build 11 ([`5db3e01c`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/5db3e01cec4c6e24a214c26c01e3eba7e68b1a92)) — Dashboard "Reset password" now actually shows the generated temporary password in its toast instead of a generic "Password reset for X." message. Fixes #75.
 
 ---
 
