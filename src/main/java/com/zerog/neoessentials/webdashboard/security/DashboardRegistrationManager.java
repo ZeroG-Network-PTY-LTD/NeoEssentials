@@ -122,9 +122,14 @@ public class DashboardRegistrationManager {
     }
 
     /**
-     * Complete registration with username and password
+     * Complete registration with a username. The player never types a password here — any
+     * command argument gets echoed verbatim into the server console log (vanilla's "issued
+     * server command" line), so a password typed as a command argument would leak there just
+     * as badly as into chat history. Instead this generates a random temp password server-side
+     * (same {@code requiresPasswordChange}/{@code isTempPassword} flow already used for
+     * admin-issued password resets) and returns it so the caller can show it once in chat.
      */
-    public DashboardAccountRegistration completeRegistration(String token, String dashboardUsername, String password) {
+    public RegistrationResult completeRegistration(String token, String dashboardUsername) {
         // Get pending registration
         PendingRegistration pending = pendingRegistrations.get(token);
         if (pending == null) {
@@ -145,18 +150,15 @@ public class DashboardRegistrationManager {
             return null;
         }
 
-        // Validate password strength
-        if (password == null || password.length() < 8) {
-            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Password too weak for dashboard registration: {}", pending.getMinecraftUsername());
-            return null;
-        }
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+        String tempPassword = authManager.generateHumanReadablePassword();
 
         // Create registration
         DashboardAccountRegistration registration = new DashboardAccountRegistration(
             pending.getMinecraftUuid(),
             pending.getMinecraftUsername(),
             dashboardUsername,
-            hashPassword(password),
+            hashPassword(tempPassword),
             System.currentTimeMillis()
         );
 
@@ -165,16 +167,20 @@ public class DashboardRegistrationManager {
 
         saveRegistration(registration);
 
-        // Create user account in AuthenticationManager
+        // Create user account in AuthenticationManager, flagged to force a password change on
+        // first login — same mechanism as AuthenticationManager.generateTempPassword()'s
+        // admin-issued resets.
         try {
-            AuthenticationManager authManager = AuthenticationManager.getInstance();
             User.Role role = determineRole(pending.getMinecraftUuid());
-            authManager.createUser(dashboardUsername, password, null, role);
+            User user = authManager.createUser(dashboardUsername, tempPassword, null, role);
+            user.setTempPassword(true);
+            user.setRequiresPasswordChange(true);
+            authManager.saveUsers();
 
             NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Completed dashboard registration for {} (Minecraft: {})",
                 dashboardUsername, pending.getMinecraftUsername());
 
-            return registration;
+            return new RegistrationResult(registration, tempPassword);
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to create user account for registration", e);
             // Rollback registration
@@ -188,7 +194,7 @@ public class DashboardRegistrationManager {
      * Complete registration by UUID (for in-game command use)
      * Looks up pending registration by player UUID instead of requiring token
      */
-    public DashboardAccountRegistration completeRegistrationByUuid(UUID playerUuid, String dashboardUsername, String password) {
+    public RegistrationResult completeRegistrationByUuid(UUID playerUuid, String dashboardUsername) {
         // Find pending registration for this player
         PendingRegistration pending = pendingRegistrations.values().stream()
             .filter(p -> p.getMinecraftUuid().equals(playerUuid))
@@ -201,8 +207,11 @@ public class DashboardRegistrationManager {
         }
 
         // Use the existing complete registration method
-        return completeRegistration(pending.getToken(), dashboardUsername, password);
+        return completeRegistration(pending.getToken(), dashboardUsername);
     }
+
+    /** The newly-created registration plus the one-time temp password to show the player. */
+    public record RegistrationResult(DashboardAccountRegistration registration, String tempPassword) {}
 
     /**
      * Register a dashboard account directly via Discord (SDLink-linked account).

@@ -67,8 +67,7 @@ public class DashboardRegisterCommand {
                 .executes(DashboardRegisterCommand::startRegistration))
             .then(Commands.literal("complete")
                 .then(Commands.argument("username", StringArgumentType.word())
-                    .then(Commands.argument("password", StringArgumentType.greedyString())
-                        .executes(DashboardRegisterCommand::completeRegistration))))
+                    .executes(DashboardRegisterCommand::completeRegistration)))
             .then(Commands.literal("status")
                 .executes(DashboardRegisterCommand::checkStatus))
         );
@@ -191,7 +190,7 @@ public class DashboardRegisterCommand {
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.example_label"), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.example_command"), false);
         source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.password_length_warning"), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.temp_password_note"), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
 
         return 1;
@@ -207,7 +206,6 @@ public class DashboardRegisterCommand {
 
         ServerPlayer player = (ServerPlayer) source.getEntity();
         String username = StringArgumentType.getString(context, "username");
-        String password = StringArgumentType.getString(context, "password");
 
         DashboardRegistrationManager manager = DashboardRegistrationManager.getInstance();
 
@@ -223,23 +221,19 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
-        // Validate password
-        if (password.length() < 8) {
-            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.password_length_error"), false);
-            return 0;
-        }
-
         // For security, we need to get the token from the pending registration
         // Since we can't pass it securely, we'll lookup by UUID
         // This requires a small modification to complete registration
 
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.processing_registration"), false);
 
-        // Try to complete registration
-        DashboardAccountRegistration registration = completeRegistrationByUuid(
-            player.getUUID(), username, password);
+        // Try to complete registration — no password argument: a password typed into a command
+        // gets echoed verbatim into the server console log (vanilla's "issued server command"
+        // line) same as into chat, so the mod generates a one-time temp password instead.
+        DashboardRegistrationManager.RegistrationResult result = completeRegistrationByUuid(
+            player.getUUID(), username);
 
-        if (registration == null) {
+        if (result == null) {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.reg_failed_generic"), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.possible_reasons_header"), false);
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.reason_token_expired"), false);
@@ -249,12 +243,17 @@ public class DashboardRegisterCommand {
             return 0;
         }
 
+        DashboardAccountRegistration registration = result.registration();
+
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.reg_success_title"), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
         source.sendSuccess(() -> Component.literal(""), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.dashboard_username_line", registration.getDashboardUsername()), false);
         source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.linked_to_line", player.getName().getString()), false);
+        source.sendSuccess(() -> Component.literal(""), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.temp_password_line", result.tempPassword()), false);
+        source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.temp_password_warning"), false);
         source.sendSuccess(() -> Component.literal(""), false);
 
         // Auto-link Discord if SDLink is available and the player has a linked account
@@ -333,14 +332,11 @@ public class DashboardRegisterCommand {
      * Helper method to complete registration by UUID
      * This allows us to avoid passing the token through chat
      */
-    private static DashboardAccountRegistration completeRegistrationByUuid(
-            java.util.UUID playerUuid, String username, String password) {
+    private static DashboardRegistrationManager.RegistrationResult completeRegistrationByUuid(
+            java.util.UUID playerUuid, String username) {
 
         DashboardRegistrationManager manager = DashboardRegistrationManager.getInstance();
-
-        // Find pending registration by UUID
-        // We need to add this method to DashboardRegistrationManager
-        return manager.completeRegistrationByUuid(playerUuid, username, password);
+        return manager.completeRegistrationByUuid(playerUuid, username);
     }
 
     /**
