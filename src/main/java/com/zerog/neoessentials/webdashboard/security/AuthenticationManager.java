@@ -450,6 +450,18 @@ public class AuthenticationManager {
     }
 
     /**
+     * A random password a human is actually meant to type in once (e.g. shown in chat to a
+     * player who just registered via {@code /dashboardregister complete}) — shorter than
+     * {@link #generateSecureRandomPassword()} for that reason. Not persisted or hashed by
+     * this method; the caller passes it straight to {@code createUser} and flags the account
+     * {@code requiresPasswordChange}/{@code isTempPassword} the same way {@link
+     * #generateTempPassword} already does for admin-issued resets.
+     */
+    public String generateHumanReadablePassword() {
+        return generateRandomPassword(12);
+    }
+
+    /**
      * Generate random password with letters, numbers, and special characters
      */
     private String generateRandomPassword(int length) {
