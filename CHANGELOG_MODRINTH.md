@@ -12,7 +12,7 @@ migration history) is not carried over.
 
 ### Added
 - **2026-10-17** — Build 8 ([`e5813336`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e5813336d2c00cb888197ceca2cd72cf417e4186)) — `/chestshop hologram move` now also works with no arguments (moves it to wherever you're standing), plus a new `/chestshop hologram movepos <signX> <signY> <signZ>` that does the same without needing to look at the sign. Max offset from the sign raised from ±4.5 to ±16 blocks.
-- **2026-10-24** — Build 13 ([`84def15a`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/84def15aa5d40f5239c072083929b7f39b90f49b)) — `/dashboardregister` now shows a clickable link to the paired external dashboard's own `/register` page when one is configured, instead of only the in-game token flow. Internal-only servers are unaffected. Relates to #75.
+- **2026-10-24** — Build 14 ([`84def15a`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/84def15aa5d40f5239c072083929b7f39b90f49b)) — `/dashboardregister` now shows a clickable link to the paired external dashboard's own `/register` page when one is configured, instead of only the in-game token flow. Internal-only servers are unaffected. Relates to #75.
 
 ### Fixed
 - **2026-10-17** — Build 8 ([`e5813336`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e5813336d2c00cb888197ceca2cd72cf417e4186)) — `/tp` silently required real vanilla op status instead of any NeoEssentials permission (even a full wildcard admin got "Unknown or incomplete command") — it collided with vanilla's own `/tp`, whose permission check Brigadier's command-merging kept instead of ours.
