@@ -3,6 +3,8 @@ package com.zerog.neoessentials.commands.utility;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.ClickEventCompat;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.webdashboard.security.DashboardRegistrationManager;
@@ -13,7 +15,9 @@ import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +55,14 @@ public class DashboardRegisterCommand {
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_title"), false);
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
                 source.sendSuccess(() -> Component.literal(""), false);
+
+                String websiteUrl = getWebsiteRegisterUrl();
+                if (websiteUrl != null) {
+                    source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_website_hint"), false);
+                    source.sendSuccess(() -> websiteLinkComponent(websiteUrl), false);
+                    source.sendSuccess(() -> Component.literal(""), false);
+                }
+
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_available_commands"), false);
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_discord_line"), false);
                 source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_start_line"), false);
@@ -164,6 +176,20 @@ public class DashboardRegisterCommand {
             source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.already_registered_hint_creds"), false);
             NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Dashboard registration aborted — player {} already registered", player.getName().getString());
             return 0;
+        }
+
+        // If this server is paired with an external dashboard, its own "/register" page is a
+        // full registration flow on its own (standard Laravel signup, see
+        // RegisteredUserController) — the in-game token below exists only to drive the
+        // in-game /dashboardregister complete flow, which is pointless busywork for a player
+        // who's just going to use the website instead.
+        String websiteUrl = getWebsiteRegisterUrl();
+        if (websiteUrl != null) {
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.help_website_hint"), false);
+            source.sendSuccess(() -> websiteLinkComponent(websiteUrl), false);
+            source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.dashboardregister.separator"), false);
+            return 1;
         }
 
         // Start registration
@@ -337,6 +363,28 @@ public class DashboardRegisterCommand {
 
         DashboardRegistrationManager manager = DashboardRegistrationManager.getInstance();
         return manager.completeRegistrationByUuid(playerUuid, username);
+    }
+
+    /**
+     * The paired external dashboard's own "/register" page, or null if this server has no
+     * external dashboard paired (internal-only — there's no separate website to point players
+     * at, so the in-game flow below stays the only option).
+     */
+    private static String getWebsiteRegisterUrl() {
+        String base = ConfigManager.getExternalDashboardUrl();
+        if (base == null || base.isBlank()) return null;
+        base = base.trim();
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        return base + "/register";
+    }
+
+    /** Clickable "open the registration page" line for {@code url}. */
+    private static Component websiteLinkComponent(String url) {
+        return MessageUtil.component("commands.neoessentials.dashboardregister.website_link_text")
+            .copy()
+            .withStyle(s -> s.withClickEvent(ClickEventCompat.create(ClickEvent.Action.OPEN_URL, url)))
+            .withStyle(s -> s.withHoverEvent(com.zerog.neoessentials.util.HoverEventCompat.create(HoverEvent.Action.SHOW_TEXT,
+                MessageUtil.component("commands.neoessentials.dashboardregister.website_link_hover"))));
     }
 
     /**
