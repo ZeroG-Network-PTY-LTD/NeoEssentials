@@ -18,6 +18,7 @@ migration history) is not carried over.
 - **2026-10-18** — Build 10 ([`bce90de2`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bce90de22ebfc5df7223e3dd1711b4c323a46917)) — Reduced hologram scheduler overhead with no behavior change — dimension lookups are cached once per cycle instead of rescanned per hologram, and static (non-animated) lines no longer re-run a string search on every animation tick.
 - **2026-10-20** — Build 11 ([`d18e49df`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d18e49dfff7721dc7f53a53fd1191b23f3a901e3)) — Dashboard "Reset password" now actually shows the generated temporary password in its toast instead of a generic "Password reset for X." message. Fixes #75.
 - **2026-10-24** — Build 12 ([`f00a89a5`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/f00a89a5e04898e6da367d86152c1bf30d0a969c)) — `/dashboardregister complete` no longer takes a password argument (it leaked into the server console log like any command does) — it now generates a one-time temp password and shows it in chat instead. Fixes #75.
+- **2026-10-24** — Build 13 ([`116a6a58`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/116a6a589a061e04f74048a5483944129f9980e4)) — `/dashboardregister` now shows a clickable link to the paired external dashboard's own `/register` page when one is configured, instead of only the in-game token flow. Internal-only servers are unaffected. Relates to #75.
 
 ---
 
