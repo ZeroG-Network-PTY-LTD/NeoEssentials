@@ -132,3 +132,24 @@ body {
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* Small lift on hover for buttons/links that aren't full dash-cards (which
+   already get their own border-glow hover via .dash-card-interactive) —
+   same "instrument panel, not flat SaaS box" direction, just for controls.
+   Ported from the external dashboard's theme.css for consistency. */
+.hover-lift {
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
+}
+.hover-lift:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift, .hover-lift:hover, .hover-lift:active { transform: none; transition: none; }
+}
