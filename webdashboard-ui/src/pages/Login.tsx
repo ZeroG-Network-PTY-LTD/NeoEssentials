@@ -32,13 +32,13 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--mc-bg-base)] px-4 py-10">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <div className="flex items-center gap-2 text-[var(--mc-text-primary)]">
         <img src="/logo.png" alt="" className="h-8 w-8 object-contain" />
         <span className="font-display text-lg font-semibold tracking-tight">NeoEssentials</span>
       </div>
 
-      <div className="mt-8 w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--mc-border)] bg-[var(--mc-bg-surface)] px-6 py-8 shadow-2xl shadow-black/40 sm:max-w-md">
+      <div className="dash-card mt-8 w-full overflow-hidden px-6 py-8 shadow-2xl shadow-black/40 sm:max-w-md">
         <h1 className="font-display text-xl font-semibold text-[var(--mc-text-primary)]">Welcome back</h1>
         <p className="mt-1 text-sm text-[var(--mc-text-secondary)]">Log in to manage your server.</p>
 
@@ -82,7 +82,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="btn-pop rounded-[var(--radius)] bg-[var(--mc-cyan-500)] px-4 py-2 text-[13px] font-medium text-[#0a1620] hover:bg-[var(--mc-cyan-400)] disabled:opacity-50 transition-colors"
+              className="btn-pop hover-lift rounded-[var(--radius)] bg-[var(--mc-cyan-500)] px-4 py-2 text-[13px] font-medium text-[#0a1620] hover:bg-[var(--mc-cyan-400)] disabled:opacity-50 transition-colors"
             >
               {submitting ? 'Logging in…' : 'Log in'}
             </button>
