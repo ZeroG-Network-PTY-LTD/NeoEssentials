@@ -477,8 +477,8 @@ See [Moderation System](ModerationSystem) for full details on history/audit trai
 
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/dashboard` | `/dashboard start\|stop\|restart\|status\|url\|pair "<url>" <code>\|unpair` | `neoessentials.admin.dashboard` | 🔒 | Manage the web dashboard's REST API/WebSocket server |
-| `/dashboardregister` | `/dashboardregister start\|complete <username> <password>\|discord\|status` | `neoessentials.dashboard.access` | 🔒 | Register a web dashboard account in-game |
+| `/dashboard` | `/dashboard start\|stop\|restart\|status\|url\|pair "<url>" <code>\|unpair\|tunnel status\|tunnel enable <token>\|tunnel disable` | `neoessentials.admin.dashboard` | 🔒 | Manage the web dashboard's REST API/WebSocket server, external pairing, and the mod-managed Cloudflare Tunnel for the internal dashboard |
+| `/dashboardregister` | `/dashboardregister start\|complete <username>\|discord\|status` | `neoessentials.dashboard.access` | 🔒 | Register a web dashboard account in-game (temp password is generated server-side and shown to the player, not supplied as an argument) |
 | `/apikey` | `/apikey create <label> [role]\|list\|revoke <id>` | `neoessentials.dashboard.apikeys` | 🔒 | Manage long-lived API keys for external dashboard integrations |
 | `/linkaccount` | `/linkaccount <code>` | none | ✅ | Link your Minecraft account to an existing dashboard account, using a code from that account's Settings page |
 

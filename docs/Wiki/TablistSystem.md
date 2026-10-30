@@ -575,6 +575,8 @@ All sub-commands require `neoessentials.tablist.admin` (or operator level 4).
 |---------|-------------|
 | `/tablist player <name> header <text>` | Set custom header for a player |
 | `/tablist player <name> footer <text>` | Set custom footer for a player |
+| `/tablist player <name> nametag prefix <text>` | Set a player's above-head nametag prefix |
+| `/tablist player <name> nametag suffix <text>` | Set a player's above-head nametag suffix |
 | `/tablist player <name> reset` | Clear all per-player overrides |
 
 ### Per-Group Overrides
@@ -582,6 +584,8 @@ All sub-commands require `neoessentials.tablist.admin` (or operator level 4).
 |---------|-------------|
 | `/tablist group <group> header <text>` | Set header for all players in a group |
 | `/tablist group <group> footer <text>` | Set footer for all players in a group |
+| `/tablist group <group> nametag prefix <text>` | Set the above-head nametag prefix for a group |
+| `/tablist group <group> nametag suffix <text>` | Set the above-head nametag suffix for a group |
 | `/tablist group <group> reset` | Clear group overrides |
 
 ### Proxy (BTLP-style)
@@ -602,9 +606,15 @@ All sub-commands require `neoessentials.tablist.admin` (or operator level 4).
 | Command | Description |
 |---------|-------------|
 | `/tablist layout info` | Show columns, sort, server config |
+| `/tablist layout sort` | Toggle sort-by-group-weight without a full reload |
 | `/tablist independent` | Show current independent mode state |
 | `/tablist independent on` | NeoEssentials owns the tablist |
 | `/tablist independent off` | Hand tablist control to proxy plugin |
+
+### Animations
+| Command | Description |
+|---------|-------------|
+| `/tablist animations list` | List all configured header/footer/nametag animations and their frame counts |
 
 > Runtime overrides via `/tablist player` and `/tablist group` are **not persisted** to disk.
 > Add them to `tablist.json → players` / `tablist.json → groups` to survive reloads.

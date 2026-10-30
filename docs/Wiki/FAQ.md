@@ -177,8 +177,9 @@ needing `/dashboard start`).
 `/dashboard restart`, `/dashboard status`, `/dashboard url`.
 
 **Q: How do I get a dashboard account?**
-Several ways: (1) `/dashboardregister start` then `/dashboardregister complete <username>
-<password>` in-game (or `/dashboardregister discord` if Simple Discord Link is linked); (2) the
+Several ways: (1) `/dashboardregister start` then `/dashboardregister complete <username>`
+in-game — the temp password is generated server-side and shown only to you, never typed as a
+command argument (or `/dashboardregister discord` if Simple Discord Link is linked); (2) the
 default `admin` account auto-created on first boot with a **random** temporary password printed
 once to the server console/log (there is no fixed default like `admin123` — check the boot log,
 you'll be required to change it on first login); (3) log in with just your Minecraft username (no
@@ -265,6 +266,11 @@ Reachable from both the landing page nav and, when logged in, the dashboard's ow
 NeoEssentials' own internal permission manager (default), or external LuckPerms/FTB Ranks if
 either is installed (auto-detected). `/permissions` (alias `/pex`) manages groups/nodes when
 using the internal system.
+
+**Q: A moderator has the right permission node but `/tp` still fails for them — why?**
+Fixed — `/tp` used to silently require vanilla operator status on top of its permission node,
+so a non-op moderator with the correct permission could still be denied with no useful error.
+This is no longer the case; a permission grant alone is enough.
 
 ---
 

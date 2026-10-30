@@ -1,6 +1,6 @@
 # Split Configuration System
 
-> **Version:** 1.0.5+build.54 · **Config dir:** `config/neoessentials/`
+> **Version:** 1.0.7 · **Config dir:** `config/neoessentials/`
 
 ---
 

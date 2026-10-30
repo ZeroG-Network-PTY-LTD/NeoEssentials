@@ -1,13 +1,13 @@
 # Logging System
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `logging` section
+> **Version:** 1.0.7 · **Config:** `config.json` → `logging` section
 
 ---
 
 ## Overview
 
 NeoEssentials logs through a per-subsystem system instead of one all-or-nothing debug switch.
-Every log call in the mod is routed through one of 12 **categories**, and each category has two
+Every log call in the mod is routed through one of 14 **categories**, and each category has two
 independent toggles:
 
 ```json
@@ -24,7 +24,9 @@ independent toggles:
     "discord":       { "normal": true, "debug": false },
     "config":        { "normal": true, "debug": false },
     "commands":      { "normal": true, "debug": false },
-    "general":       { "normal": true, "debug": false }
+    "general":       { "normal": true, "debug": false },
+    "votifier":      { "normal": true, "debug": false },
+    "crates":        { "normal": true, "debug": false }
   }
 }
 ```
@@ -60,6 +62,8 @@ that reaches the console and `logs/latest.log`. There's no NeoEssentials-specifi
 | Config | `config` | Config file load/migration/version-check/split-config decisions |
 | Commands | `commands` | Command registration/dispatch tracing, **and** (as of build.61) a "PlayerName issued command: /..." console line for every player command — set `commands.normal: false` to turn that line off |
 | General | `general` | Everything else: database/storage, scheduler, security, items, inventory, holograms, tags, teams, resource packs, shop, vault, localization |
+| Votifier | `votifier` | Vote listener, vote broadcasting, vote party, key generation — see [Votifier](votifier) |
+| Crates | `crates` | Crate open/preview/reward rolls, key give/take, admin crate management — see [NeoEcrates](neoecrates) |
 
 ---
 
