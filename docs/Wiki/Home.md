@@ -1,6 +1,6 @@
 # NeoEssentials Wiki
 
-Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1–1.21.10 (this is the primary development branch — see [`26.1.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.1.x) for the pinned Minecraft 26.1-26.1.2 build, or [`26.2.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.2.x) for the pinned Minecraft 26.2 build).
+Welcome to the official documentation hub for **NeoEssentials v1.0.7** — a comprehensive NeoForge server essentials mod for Minecraft 1.21.1–1.21.10 (this is the primary development branch — see [`26.1.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.1.x) for the pinned Minecraft 26.1-26.1.2 build, or [`26.2.x`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/tree/26.2.x) for the pinned Minecraft 26.2 build).
 
 ---
 
@@ -33,6 +33,7 @@ Welcome to the official documentation hub for **NeoEssentials v1.0.5** — a com
 | [Logging System](Logging) | Per-subsystem `normal`/`debug` logging toggles, categories, `logs/debug.log` |
 | [Votifier](votifier) | Vote-listener compatible with both Votifier protocols (V1 RSA + V2 NuVotifier) |
 | [Crates](neoecrates) | Weighted-reward crates with keys, physical blocks, hologram, and animated GUI opening |
+| [FAQ](FAQ) | Common questions and troubleshooting across every system |
 
 ---
 
@@ -75,4 +76,4 @@ All optional — NeoEssentials runs fully standalone without any of them.
 
 ---
 
-*NeoEssentials v1.0.5 · Minecraft 1.21.1–1.21.10 · NeoForge 21.1.179+ · build.54*
+*NeoEssentials v1.0.7 · Minecraft 1.21.1–1.21.10 · NeoForge 21.1.179+*

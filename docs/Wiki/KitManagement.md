@@ -1,6 +1,6 @@
 # Kit Management
 
-> **Version:** 1.0.5+build.54 · **Last verified:** 2026-08-25 · **Config:** `config.json` → `kits` section (kit definitions themselves live in the DataStore, not `kits.json` — see below)
+> **Version:** 1.0.7 · **Last verified:** 2026-08-25 · **Config:** `config.json` → `kits` section (kit definitions themselves live in the DataStore, not `kits.json` — see below)
 
 ---
 
@@ -89,6 +89,15 @@ There is no `commands` field — kits only grant items, they do not run server c
 > only read once, automatically, to migrate its contents into the DataStore `kits` collection —
 > never written to again afterward. If it still exists alongside DataStore data, editing it has
 > no effect; `/neoe` startup logs (and `isLegacyKitsFileNowInert()`) flag this case.
+
+> **Known issue — `starter` kit item fails to deserialize at boot.** On every server start you
+> may see `Failed to deserialize item entry in kit 'starter'; item will be missing from the
+> kit` with a `NullPointerException: Components not bound yet` in the log (`Kit.java`'s item
+> deserialization, around the `components`/`nbt` handling above). This happens when a kit's
+> items are loaded before Minecraft's item-component registry has fully bound — the affected
+> item is simply skipped (the kit still claims, just missing that one item) rather than
+> crashing anything. Not yet fixed; if it affects a kit you rely on, re-save that kit's item
+> list via `/createkit` once the server is fully up.
 
 ---
 

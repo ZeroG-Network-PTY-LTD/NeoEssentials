@@ -1,6 +1,6 @@
 # Chat Channels
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `chat.channels` section
+> **Version:** 1.0.7 · **Config:** `config.json` → `chat.channels` section
 
 ---
 

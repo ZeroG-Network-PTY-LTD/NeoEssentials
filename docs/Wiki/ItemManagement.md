@@ -1,6 +1,6 @@
 # Item Management
 
-> **Version:** 1.0.5+build.54 · **Last verified:** 2026-08-25
+> **Version:** 1.0.7 · **Last verified:** 2026-08-25
 
 ---
 

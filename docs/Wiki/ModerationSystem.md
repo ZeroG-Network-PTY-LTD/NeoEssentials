@@ -1,6 +1,6 @@
 # Moderation System
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `moderation` / `storage` sections
+> **Version:** 1.0.7 · **Config:** `config.json` → `moderation` / `storage` sections
 
 ---
 

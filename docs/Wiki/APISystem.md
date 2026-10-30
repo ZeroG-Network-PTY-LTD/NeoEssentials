@@ -1,6 +1,6 @@
 # API & Placeholder System
 
-> **Version:** 1.0.5+build.54 · **API Version:** 1.2.0
+> **Version:** 1.0.7 · **API Version:** 1.2.0
 
 ---
 
@@ -396,6 +396,8 @@ curl http://localhost:8080/api/placeholders/list \
 | `/api/users` | Dashboard account management + external-dashboard user sync (see below) |
 | `/api/moderation`, `/api/public/moderation` | Bans/mutes/kicks/warns/notes/reports (public variant is unauthenticated, privacy-limited) |
 | `/api/kits`, `/api/holograms`, `/api/warps` | Read/manage kits (read-only), holograms, warps (holograms/warps ADMIN-gated for writes) |
+| `/api/scoreboard` | Read/manage scoreboards and their lines — see [Scoreboard System](ScoreboardSystem) |
+| `/api/leaderboard` | Leaderboard rankings for economy/stats providers — see [Leaderboard System](LeaderboardSystem) |
 | `/api/commands` | Run arbitrary server commands (blocklist applies) |
 | `/api/economy` | Balance lookups + admin give/take/set |
 | `/api/stats` | Economy/activity/performance dashboards, 60-min history |
