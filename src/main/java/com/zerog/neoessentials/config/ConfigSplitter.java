@@ -571,17 +571,13 @@ public class ConfigSplitter {
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Run:  /neoe config split  to migrate to split files.");
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Run:  /neoe config status  to see the current config state.");
             NeoLog.info(LOGGER, LogCategory.CONFIG, "════════════════════════════════════════════════════════");
-            com.zerog.neoessentials.util.AdminNotices.queue(
-                "config_split",
-                "commands.neoessentials.admin_notice.config_split.title",
-                "commands.neoessentials.admin_notice.config_split.large_config",
-                "commands.neoessentials.admin_notice.config_split.benefit",
-                "commands.neoessentials.admin_notice.config_split.benefit_easy",
-                "commands.neoessentials.admin_notice.config_split.benefit_safe",
-                "commands.neoessentials.admin_notice.config_split.benefit_organized",
-                "commands.neoessentials.admin_notice.config_split.benefit_backup",
-                "commands.neoessentials.admin_notice.config_split.run_command"
-            );
+            // Console-only, deliberately: this used to also go through AdminNotices (a chat
+            // block shown to the first joining admin), but that delivery is fragile — it only
+            // marks itself "shown" after a 2-second post-join delay actually completes, so a
+            // quick join/leave (or any failure writing admin_notices_shown.json) makes it queue
+            // again next boot, and it then shows up in chat repeatedly. The console lines above
+            // already say the same thing, unconditionally, every boot — that's sufficient and
+            // doesn't have this fragility, so there's no need to also nag in chat.
         }
     }
 
