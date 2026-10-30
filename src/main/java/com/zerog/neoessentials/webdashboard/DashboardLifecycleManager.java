@@ -74,6 +74,8 @@ public class DashboardLifecycleManager {
                 NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start WebSocket server: {}", wsEx.getMessage(), wsEx);
             }
 
+            CloudflaredTunnelManager.getInstance().startIfConfigured();
+
             NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Dashboard auto-started successfully");
         } catch (Throwable e) {
             NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to auto-start dashboard", e);
@@ -86,6 +88,7 @@ public class DashboardLifecycleManager {
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         PermissionRoleSyncTask.stop();
+        CloudflaredTunnelManager.getInstance().stop();
         try {
             if (DashboardAPI.getInstance().isRunning()) {
                 NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Server stopping - shutting down Dashboard...");
@@ -145,6 +148,8 @@ public class DashboardLifecycleManager {
                 NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to start WebSocket server (manual): {}", wsEx.getMessage(), wsEx);
             }
 
+            CloudflaredTunnelManager.getInstance().startIfConfigured();
+
             manuallyDisabled = false;
             return true;
         } catch (Exception e) {
@@ -172,9 +177,11 @@ public class DashboardLifecycleManager {
                 NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Error stopping WebSocket server (manual): {}", wsEx.getMessage());
             }
 
+            CloudflaredTunnelManager.getInstance().stop();
+
             // Shutdown data collector
             DataCollector.getInstance().shutdown();
-            
+
             manuallyDisabled = true;
             return true;
         } catch (Exception e) {
