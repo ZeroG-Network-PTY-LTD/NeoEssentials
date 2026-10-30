@@ -1,6 +1,6 @@
 # Web Dashboard
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
+> **Version:** 1.0.7 · **Config:** `config.json` → `webDashboard` section (dashboard on/off is controlled by **both** `webDashboard.enabled` **and** `modules.webDashboardEnabled` — either one set to `false` disables it)
 
 ---
 
@@ -40,8 +40,10 @@ against and reads/writes through the API.
      `/apikey create <label> [role]` — and give the printed token to that dashboard's server
      config. See [API System → Authentication](APISystem#authentication) for the full picture.
    - **A human dashboard account:** register in-game via `/dashboardregister start` then
-     `/dashboardregister complete <username> <password>` (or `/dashboardregister discord` if
-     Simple Discord Link is linked) — or use one of the other paths below.
+     `/dashboardregister complete <username>` (or `/dashboardregister discord` if
+     Simple Discord Link is linked) — or use one of the other paths below. The temp password is
+     generated server-side and shown only to the registering player, never passed as a command
+     argument (so it never ends up in the server console log).
 5. Point your external dashboard app at `http://<server-ip>:<port>/api/...` (`port` from step 2)
    using the API key or session token as a Bearer token.
 
@@ -55,8 +57,16 @@ registering.
 
 ```
 /dashboardregister start
-/dashboardregister complete <username> <password>
+/dashboardregister complete <username>
 ```
+
+The server generates a temporary password and shows it only to the registering player — it's
+never a command argument, so it can't leak into the console log.
+
+If this server is paired with an external dashboard (see `/dashboard pair` under
+[Commands](#commands) below), `/dashboardregister` and `/dashboardregister start` instead point
+the player at that dashboard's own website `/register` page and skip this in-game token flow
+entirely.
 
 Or, if Simple Discord Link, Mc2Discord, or DCIntegration is installed and the player has linked their Discord account:
 
@@ -205,6 +215,9 @@ is unaffected.
 | `roleSync.intervalSeconds` | `300` | How often the periodic reconciliation sweep runs, in addition to an immediate check on join |
 | `roleSync.adminPermission` | `"neoessentials.admin.dashboard"` | A player with this permission node is granted the dashboard `ADMIN` role |
 | `roleSync.adminGroup` | `"admin"` | A player in this permission group is granted the dashboard `ADMIN` role (checked in addition to, i.e. OR'd with, `adminPermission`) |
+| `tunnel.enabled` | `false` | Opt-in: have the mod launch and manage a Cloudflare Tunnel connector for the internal dashboard — see [Cloudflare Tunnel](#cloudflare-tunnel-internal-dashboard) below |
+| `tunnel.cloudflaredPath` | `"cloudflared"` | Path to the `cloudflared` executable, resolved against the server process's own `PATH` if not absolute |
+| `tunnel.token` | `""` | The tunnel's token from Cloudflare's Zero Trust dashboard. Stored encrypted at rest, same as `externalDashboard.token` |
 
 The dashboard's on/off switch is now split across two keys that both have to allow it:
 `webDashboard.enabled` (this section) **and** `modules.webDashboardEnabled` (the mod-wide
@@ -215,6 +228,34 @@ Either one set to `false` disables the whole dashboard.
 > earlier documentation do not exist in the current codebase — the dashboard's security-related
 > settings live entirely under `securitySettings`, and there is no config option to disable REST
 > endpoints or config editing independently.
+
+---
+
+## Cloudflare Tunnel (Internal Dashboard)
+
+The mod can launch and supervise a [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+connector (`cloudflared`) for the **internal** bundled dashboard (`mode: "internal"`/`"both"`),
+so it's reachable at a public hostname without port-forwarding. This mirrors the separate
+`NeoEssentials-Dashboard` app's own Docker-based `cloudflared` sidecar, just as a plain subprocess
+instead of a container, since the mod runs inside the Minecraft server process rather than its
+own container.
+
+**This does not download or install `cloudflared`** — you install the binary yourself (same as
+you would for any other Cloudflare Tunnel deployment) and point the mod at it.
+
+Setup:
+1. Install `cloudflared` on the machine running the server, and create a tunnel on the
+   [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/) (Networks → Tunnels),
+   copying its token.
+2. Add a public-hostname rule on that tunnel pointing at this server's internal dashboard —
+   e.g. `http://localhost:<webDashboard.port>`.
+3. Run `/dashboard tunnel enable <token>` — this stores the token (encrypted at rest) and
+   immediately starts the connector. `/dashboard tunnel status` shows whether it's
+   enabled/running/configured; `/dashboard tunnel disable` stops it and turns the feature off.
+
+The connector starts automatically whenever the dashboard itself starts (auto-start on boot,
+manual `/dashboard start`) if `webDashboard.tunnel.enabled` is `true`, and stops whenever the
+dashboard stops (including server shutdown) — see `CloudflaredTunnelManager`.
 
 ---
 
@@ -358,9 +399,12 @@ gated by `neoessentials.dashboard.access`.
 | `/dashboard url` | `neoessentials.admin.dashboard` | Show the API base URL |
 | `/dashboard pair "<dashboardUrl>" <code>` | `neoessentials.dashboard.pair` | Complete the pairing handshake with an external dashboard — see [API System → Pairing](APISystem#pairing) |
 | `/dashboard unpair` | `neoessentials.dashboard.pair` | Clear the paired connection and revoke its API key |
+| `/dashboard tunnel status` | `neoessentials.admin.dashboard` | Show whether the mod-managed Cloudflare Tunnel is enabled/running/configured |
+| `/dashboard tunnel enable <token>` | `neoessentials.admin.dashboard` | Store a Cloudflare Tunnel token and launch `cloudflared` to expose the internal dashboard publicly |
+| `/dashboard tunnel disable` | `neoessentials.admin.dashboard` | Stop the connector and turn the feature back off |
 | `/dashboardregister` | `neoessentials.dashboard.access` | Show registration help |
 | `/dashboardregister start` | `neoessentials.dashboard.access` | Begin manual registration (issues a 5-minute token) |
-| `/dashboardregister complete <username> <password>` | `neoessentials.dashboard.access` | Finish manual registration |
+| `/dashboardregister complete <username>` | `neoessentials.dashboard.access` | Finish manual registration — the temp password is generated server-side and shown to the player, not passed as an argument |
 | `/dashboardregister discord` | `neoessentials.dashboard.access` | Register instantly using a linked Discord account (via SDLink, Mc2Discord, or DCIntegration) |
 | `/dashboardregister status` | `neoessentials.dashboard.access` | Check your registration status |
 | `/apikey create <label> [role]` | `neoessentials.dashboard.apikeys` | Create an API key for an external dashboard backend — prints the token once, as a click-to-copy chat component |

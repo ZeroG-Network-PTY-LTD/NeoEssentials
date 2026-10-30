@@ -1,6 +1,6 @@
 # NeoEssentials — Permission System
 
-> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28 (Mail permission-node section re-verified 2026-08-25 against v1.0.5+build.54 — the rest of this ~1500-line reference has not had a full node-by-node re-audit since the version above; treat other sections as probably-but-not-recently-verified accurate)
+> **Last updated:** 2026-04-01 · **Version:** 1.0.2.6+build.28 (Mail permission-node section re-verified 2026-08-25 against v1.0.7 — the rest of this ~1500-line reference has not had a full node-by-node re-audit since the version above; treat other sections as probably-but-not-recently-verified accurate)
 > **Source of truth:** `PermissionRegistry.registerAllPermissions()` in the mod source.  
 > All nodes listed here are **actively registered** and recognised by the permission engine.  
 > Nodes marked `✅ default` are granted to every player automatically (including non-OP).  

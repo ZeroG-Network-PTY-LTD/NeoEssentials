@@ -1,6 +1,6 @@
 # Storage Backend
 
-> **Version:** 1.0.5+build.54 · **Config:** `config.json` → `storage` section
+> **Version:** 1.0.7 · **Config:** `config.json` → `storage` section
 
 ---
 

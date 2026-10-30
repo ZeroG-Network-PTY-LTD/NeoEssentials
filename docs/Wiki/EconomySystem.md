@@ -1,6 +1,6 @@
 # Economy System
 
-> **Version:** 1.0.5+build.54 · **Config files:** `economy.json`, `config.json` → `economy` section
+> **Version:** 1.0.7 · **Config files:** `economy.json`, `config.json` → `economy` section
 
 ---
 
@@ -211,6 +211,13 @@ Requires `neoessentials.shop.use`, same permission as ChestShop.
 | `/npcshop create <name>` | Spawn a new NPC shop at your current position |
 | `/npcshop remove` | Remove the nearest NPC shop (within 5 blocks) |
 | `/npcshop additem <shopId> <item> <buyPrice> <sellPrice> <qty>` | Add a listing (`-1` disables that side) |
+| `/npcshop addcommand <shopId> <icon> <price> <command>` | Add a **paid command listing** — `icon` is just the item shown in the GUI, buying it runs `command` (console-run by default; see `editlisting runas` below) |
+| `/npcshop editlisting <shopId> <index> addcommand <command>` | Append another command to a command listing (a listing can run more than one) |
+| `/npcshop editlisting <shopId> <index> clearcommands` | Remove every command from a listing |
+| `/npcshop editlisting <shopId> <index> runas <player\|console>` | Whether a command listing's commands run as the buying player or as the console |
+| `/npcshop editlisting <shopId> <index> name <text>` | Rename a listing |
+| `/npcshop editlisting <shopId> <index> price <buyPrice> <sellPrice>` | Change a listing's prices (`-1` disables that side) |
+| `/npcshop editlisting <shopId> <index> permission <node\|none>` | Require a permission node to buy this listing, or `none` to clear it |
 | `/npcshop removeitem <shopId> <index>` | Remove a listing by its index (see `/npcshop info`) |
 | `/npcshop list` | List all NPC shops |
 | `/npcshop info <shopId>` | Show a shop's name, ID, position, and listings |
