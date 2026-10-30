@@ -1860,6 +1860,107 @@ public class ConfigManager {
     }
 
     /**
+     * Whether the mod should launch and manage a Cloudflare Tunnel (`cloudflared`) connector for
+     * the internal dashboard ({@code webDashboard.tunnel.enabled}). Off by default — this doesn't
+     * download/install cloudflared itself, only launches an already-installed binary (see
+     * {@link #getWebDashboardTunnelCloudflaredPath()}) when the dashboard starts, same as the
+     * external dashboard's own Docker-based cloudflared sidecar.
+     */
+    public static boolean isWebDashboardTunnelEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("tunnel")) {
+                JsonObject tunnel = dashboard.getAsJsonObject("tunnel");
+                if (tunnel.has("enabled")) return tunnel.get("enabled").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Path to the {@code cloudflared} executable ({@code webDashboard.tunnel.cloudflaredPath}).
+     * Defaults to bare {@code "cloudflared"}, resolved against the server process's own PATH.
+     */
+    public static String getWebDashboardTunnelCloudflaredPath() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("tunnel")) {
+                JsonObject tunnel = dashboard.getAsJsonObject("tunnel");
+                if (tunnel.has("cloudflaredPath")) {
+                    String val = tunnel.get("cloudflaredPath").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val.trim();
+                }
+            }
+        }
+        return "cloudflared";
+    }
+
+    /** Fields whose stored value is a real credential, not just an identifier/path. */
+    private static final java.util.Set<String> ENCRYPTED_DASHBOARD_TUNNEL_FIELDS = java.util.Set.of("token");
+
+    /** The tunnel's token ({@code webDashboard.tunnel.token}), stored encrypted at rest via
+     *  {@link com.zerog.neoessentials.webdashboard.security.ConfigSecretCipher} — same handling
+     *  as {@link #getExternalDashboardToken()}, since this is just as much a live credential. */
+    public static String getWebDashboardTunnelToken() {
+        return getDashboardTunnelField("token");
+    }
+
+    public static void setWebDashboardTunnelToken(String token) {
+        setDashboardTunnelField("token", token);
+    }
+
+    public static void setWebDashboardTunnelEnabled(boolean enabled) {
+        ConfigManager instance = getInstance();
+        JsonObject config = instance.getConfig(MAIN_CONFIG);
+        JsonObject dashboard = config.has("webDashboard") ? config.getAsJsonObject("webDashboard") : new JsonObject();
+        JsonObject tunnel = dashboard.has("tunnel") ? dashboard.getAsJsonObject("tunnel") : new JsonObject();
+        tunnel.addProperty("enabled", enabled);
+        dashboard.add("tunnel", tunnel);
+        config.add("webDashboard", dashboard);
+        instance.saveConfig(MAIN_CONFIG, config);
+    }
+
+    private static String getDashboardTunnelField(String field) {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("tunnel")) {
+                JsonObject tunnel = dashboard.getAsJsonObject("tunnel");
+                if (tunnel.has(field)) {
+                    String stored = tunnel.get(field).getAsString();
+                    if (!ENCRYPTED_DASHBOARD_TUNNEL_FIELDS.contains(field)) return stored;
+
+                    String decrypted = com.zerog.neoessentials.webdashboard.security.ConfigSecretCipher.decrypt(stored);
+                    if (decrypted != null) return decrypted;
+
+                    // Leftover plaintext from before encryption was added — use it once, then
+                    // transparently migrate it to an encrypted value so it isn't re-read as
+                    // plaintext next time.
+                    setDashboardTunnelField(field, stored);
+                    return stored;
+                }
+            }
+        }
+        return "";
+    }
+
+    private static void setDashboardTunnelField(String field, String value) {
+        ConfigManager instance = getInstance();
+        JsonObject config = instance.getConfig(MAIN_CONFIG);
+        JsonObject dashboard = config.has("webDashboard") ? config.getAsJsonObject("webDashboard") : new JsonObject();
+        JsonObject tunnel = dashboard.has("tunnel") ? dashboard.getAsJsonObject("tunnel") : new JsonObject();
+        String toStore = ENCRYPTED_DASHBOARD_TUNNEL_FIELDS.contains(field)
+            ? com.zerog.neoessentials.webdashboard.security.ConfigSecretCipher.encrypt(value)
+            : value;
+        tunnel.addProperty(field, toStore);
+        dashboard.add("tunnel", tunnel);
+        config.add("webDashboard", dashboard);
+        instance.saveConfig(MAIN_CONFIG, config);
+    }
+
+    /**
      * Whether the permission-driven dashboard role-sync task ({@code webDashboard.roleSync.enabled})
      * is turned on. Off by default — this reconciles a dashboard account's role against the
      * player's actual in-game permission/group, so it should be an explicit opt-in rather than

@@ -41,6 +41,11 @@ import java.time.Duration;
  *   The URL must be quoted — Brigadier's unquoted string parsing can't contain ':' or '/',
  *   which every URL does.
  * - /dashboard unpair    — clear the paired connection and revoke its API key
+ * - /dashboard tunnel enable &lt;token&gt;  — store a Cloudflare Tunnel token and launch the
+ *   already-installed {@code cloudflared} binary (see {@link com.zerog.neoessentials.webdashboard.CloudflaredTunnelManager})
+ *   to expose this dashboard publicly, mirroring the external dashboard's Docker sidecar setup
+ * - /dashboard tunnel disable — stop the connector and turn the feature back off
+ * - /dashboard tunnel status  — show whether it's enabled/running/configured
  */
 public class DashboardCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardCommand.class);
@@ -76,6 +81,15 @@ public class DashboardCommand {
             .then(Commands.literal("unpair")
                 .requires(source -> PermissionValidator.validatePermission(source, "neoessentials.dashboard.pair").hasPermission())
                 .executes(DashboardCommand::unpair))
+            .then(Commands.literal("tunnel")
+                .requires(source -> PermissionValidator.validateAdminPermission(source, "neoessentials.admin.dashboard").hasPermission())
+                .then(Commands.literal("status")
+                    .executes(DashboardCommand::tunnelStatus))
+                .then(Commands.literal("enable")
+                    .then(Commands.argument("token", StringArgumentType.greedyString())
+                        .executes(ctx -> tunnelEnable(ctx, StringArgumentType.getString(ctx, "token")))))
+                .then(Commands.literal("disable")
+                    .executes(DashboardCommand::tunnelDisable)))
         );
         NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Registered /dashboard command");
     }
@@ -160,6 +174,49 @@ public class DashboardCommand {
         ConfigManager.clearExternalDashboard();
 
         source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aUnpaired from " + url + " and revoked its API key."), false);
+        return 1;
+    }
+
+    // ── Cloudflare Tunnel for the internal dashboard ────────────────────────────
+
+    private static int tunnelEnable(CommandContext<CommandSourceStack> ctx, String token) {
+        CommandSourceStack source = ctx.getSource();
+        if (token.isBlank()) {
+            source.sendFailure(Component.literal("§cNo token given. Get one from the Cloudflare Zero Trust dashboard (Networks > Tunnels)."));
+            return 0;
+        }
+
+        ConfigManager.setWebDashboardTunnelToken(token);
+        ConfigManager.setWebDashboardTunnelEnabled(true);
+        boolean started = com.zerog.neoessentials.webdashboard.CloudflaredTunnelManager.getInstance().startIfConfigured();
+
+        if (started) {
+            source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aCloudflare Tunnel enabled and connector started."), false);
+        } else {
+            source.sendFailure(Component.literal("§cTunnel enabled but the connector failed to start — check that '"
+                + ConfigManager.getWebDashboardTunnelCloudflaredPath() + "' is installed and on PATH. See server logs."));
+        }
+        NeoLog.debug(LOGGER, LogCategory.COMMANDS, "Dashboard tunnel enabled by {}", source.getTextName());
+        return started ? 1 : 0;
+    }
+
+    private static int tunnelDisable(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        ConfigManager.setWebDashboardTunnelEnabled(false);
+        com.zerog.neoessentials.webdashboard.CloudflaredTunnelManager.getInstance().stop();
+        source.sendSuccess(() -> Component.literal("§8[§bNE§8] §r§aCloudflare Tunnel disabled and connector stopped."), false);
+        return 1;
+    }
+
+    private static int tunnelStatus(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        boolean enabled = ConfigManager.isWebDashboardTunnelEnabled();
+        boolean running = com.zerog.neoessentials.webdashboard.CloudflaredTunnelManager.getInstance().isRunning();
+        boolean hasToken = !ConfigManager.getWebDashboardTunnelToken().isBlank();
+
+        source.sendSuccess(() -> Component.literal("§7Tunnel enabled: " + (enabled ? "§ayes" : "§cno")), false);
+        source.sendSuccess(() -> Component.literal("§7Connector running: " + (running ? "§ayes" : "§cno")), false);
+        source.sendSuccess(() -> Component.literal("§7Token configured: " + (hasToken ? "§ayes" : "§cno")), false);
         return 1;
     }
 
