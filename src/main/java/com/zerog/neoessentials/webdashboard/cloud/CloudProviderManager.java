@@ -38,7 +38,7 @@ public class CloudProviderManager {
         loadTokens();
     }
 
-    public static CloudProviderManager getInstance() {
+    public static synchronized CloudProviderManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new CloudProviderManager();
         }

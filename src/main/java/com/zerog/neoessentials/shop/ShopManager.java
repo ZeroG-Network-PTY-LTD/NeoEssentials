@@ -39,7 +39,7 @@ public class ShopManager {
     // ── Singleton ─────────────────────────────────────────────────────────────
 
     private static ShopManager instance;
-    public static ShopManager getInstance() {
+    public static synchronized ShopManager getInstance() {
         if (instance == null) instance = new ShopManager();
         return instance;
     }
@@ -82,7 +82,9 @@ public class ShopManager {
                 + shop.chestX + "," + shop.chestY + "," + shop.chestZ;
             shopsByChest.put(chestKey, shop);
         }
-        store.put(COLLECTION, shop.toKey(), toJson(shop));
+        if (!store.put(COLLECTION, shop.toKey(), toJson(shop))) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, shop.toKey());
+        }
         // Auto-create / update hologram above this shop sign
         try {
             com.zerog.neoessentials.hologram.integration.ShopHologramManager
@@ -188,7 +190,9 @@ public class ShopManager {
             List<ShopData> shops = GSON.fromJson(r, listType);
             if (shops != null) {
                 for (ShopData s : shops) {
-                    store.put(COLLECTION, s.toKey(), toJson(s));
+                    if (!store.put(COLLECTION, s.toKey(), toJson(s))) {
+                        NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, s.toKey());
+                    }
                     migrated++;
                 }
             }

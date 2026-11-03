@@ -21,7 +21,7 @@ public class PlayerSessionTracker {
     
     private PlayerSessionTracker() {}
     
-    public static PlayerSessionTracker getInstance() {
+    public static synchronized PlayerSessionTracker getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new PlayerSessionTracker();
         }

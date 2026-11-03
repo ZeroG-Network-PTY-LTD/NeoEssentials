@@ -53,7 +53,7 @@ public class TaskManager {
         }
     }
     
-    public static TaskManager getInstance() {
+    public static synchronized TaskManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new TaskManager();
         }
