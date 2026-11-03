@@ -147,8 +147,9 @@ public class CloudStorageManager {
         }
     }
 
-    /** Persist current credentials to disk. */
-    public synchronized void saveConfig() {
+    /** Persist current credentials to disk.
+     *  @return true if the write actually succeeded. */
+    public synchronized boolean saveConfig() {
         try {
             Files.createDirectories(CONFIG_FILE.getParent());
             JsonObject root = new JsonObject();
@@ -174,8 +175,10 @@ public class CloudStorageManager {
 
             Files.writeString(CONFIG_FILE, GSON.toJson(root), StandardCharsets.UTF_8);
             NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Cloud storage config saved");
+            return true;
         } catch (Exception e) {
             LOGGER.error("Failed to save cloud storage config: {}", e.getMessage());
+            return false;
         }
     }
 

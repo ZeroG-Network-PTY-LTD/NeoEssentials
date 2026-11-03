@@ -202,7 +202,13 @@ public class CrateManager {
         }
         for (String cmd : reward.commands) {
             String finalCmd = (cmd.startsWith("/") ? cmd.substring(1) : cmd).replace("{player}", player.getName().getString());
-            server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), finalCmd));
+            server.execute(() -> {
+                try {
+                    server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), finalCmd);
+                } catch (Exception e) {
+                    NeoLog.error(LOGGER, LogCategory.CRATES, "Reward command failed for crate '{}' reward '{}': {}", crate.id, reward.id, finalCmd, e);
+                }
+            });
         }
         if (reward.broadcastRare) {
             String template = reward.broadcastMessage != null && !reward.broadcastMessage.isEmpty()
@@ -232,13 +238,18 @@ public class CrateManager {
 
     // ── Persistence (admin commands) ────────────────────────────────────────
 
-    public void saveCrate(CrateDefinition def) {
+    /** @return true if the crate definition was actually persisted to disk. */
+    public boolean saveCrate(CrateDefinition def) {
         crates.put(def.id.toLowerCase(), def);
         JsonObject root = ConfigManager.getInstance().getConfig(ConfigManager.CRATES_CONFIG);
         JsonObject cratesJson = root.has("crates") ? root.getAsJsonObject("crates") : new JsonObject();
         cratesJson.add(def.id, def.toJson());
         root.add("crates", cratesJson);
-        ConfigManager.getInstance().saveConfig(ConfigManager.CRATES_CONFIG, root);
+        boolean saved = ConfigManager.getInstance().saveConfig(ConfigManager.CRATES_CONFIG, root);
+        if (!saved) {
+            NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist crate '{}' to crates.json - the in-memory change will be lost on restart.", def.id);
+        }
+        return saved;
     }
 
     public boolean deleteCrate(String id) {
@@ -252,7 +263,9 @@ public class CrateManager {
                 if (!key.equalsIgnoreCase(id)) rebuilt.add(key, cratesJson.get(key));
             }
             root.add("crates", rebuilt);
-            ConfigManager.getInstance().saveConfig(ConfigManager.CRATES_CONFIG, root);
+            if (!ConfigManager.getInstance().saveConfig(ConfigManager.CRATES_CONFIG, root)) {
+                NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist deletion of crate '{}' to crates.json - it may reappear on restart.", id);
+            }
         }
         return true;
     }

@@ -4280,15 +4280,19 @@ public class ConfigManager {
 
     /**
      * Save config changes. If split configs are enabled, only write to split files, never to config.json.
+     *
+     * @return true on success, false if the write failed (disk full, permission denied, a locked
+     *         file, etc.) - callers that report "saved"/"updated" to a command sender or the
+     *         dashboard must check this instead of assuming the write always succeeds.
      */
-    public void saveConfig(String configName, JsonObject config) {
+    public boolean saveConfig(String configName, JsonObject config) {
         lock.writeLock().lock();
         try {
             if (ConfigSplitter.isSplittingEnabled() && configName.equals(MAIN_CONFIG)) {
                 NeoLog.info(LOGGER, LogCategory.CONFIG, "Split configs enabled - writing changes to split files instead of config.json");
                 ConfigSplitter.saveMergedConfigToSplitFiles(config);
                 configCache.put(configName, config);
-                return;
+                return true;
             }
             File file = ResourceUtil.getConfigFile(configName);
             // Atomic temp-file + rename, same pattern as JsonFileDataStore — a crash/disk-full
@@ -4301,8 +4305,10 @@ public class ConfigManager {
             java.nio.file.Files.move(tmp.toPath(), file.toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
             configCache.put(configName, config);
+            return true;
         } catch (IOException e) {
             LOGGER.error("Failed to save config file {}: {}", configName, e.getMessage());
+            return false;
         } finally {
             lock.writeLock().unlock();
         }

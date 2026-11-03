@@ -456,7 +456,10 @@ public class DirectTeleportCommands {
             tprSettings.add("locations", locations);
             teleportation.add("randomTeleportSettings", tprSettings);
             config.add("teleportation", teleportation);
-            ConfigManager.getInstance().saveConfig(ConfigManager.MAIN_CONFIG, config);
+            if (!ConfigManager.getInstance().saveConfig(ConfigManager.MAIN_CONFIG, config)) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.save_failed"));
+                return 0;
+            }
 
             RandomTeleportManager.getInstance().clearCache(name);
 
