@@ -69,29 +69,38 @@ public class KitManager {
         try {
             NeoLog.info(LOGGER, LogCategory.KITS, "Initializing Kit Manager...");
             migrateLegacyFilesIfNeeded();
-            loadKits();
+            // loadKits() is deliberately NOT called here. initialize() runs during
+            // RegisterCommandsEvent, well before Minecraft's own item-registry Holders are
+            // bound (that settles by ServerStartedEvent) — constructing ANY `new ItemStack(...)`
+            // this early throws "Components not bound yet" (a vanilla Holder$Reference check),
+            // not something this mod's code can work around, since it happens inside
+            // ItemStack's own constructor before a single line of kit-specific deserialization
+            // runs. Every item in every kit would fail and get silently dropped on this pass,
+            // logging a scary (and, before this fix, misleadingly worded) ERROR per item, on
+            // every single boot. reloadKitItemsAfterServerStart() below is the ONLY load that
+            // actually populates `kits` with real items — called once from ServerStartedEvent,
+            // after Holders are bound. Nothing reads `kits` between RegisterCommandsEvent and
+            // ServerStartedEvent (verified: no command registration, dashboard endpoint, or
+            // other caller runs before a server/player can exist), so leaving it empty here is
+            // safe.
             loadPlayerData();
             initialized = true;
-            NeoLog.info(LOGGER, LogCategory.KITS, "Kit Manager initialized with {} kits", kits.size());
+            NeoLog.info(LOGGER, LogCategory.KITS, "Kit Manager initialized (kit items load after server start — see reloadKitItemsAfterServerStart)");
         } catch (Throwable e) {
             LOGGER.error("Failed to initialize Kit Manager: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
-     * Re-deserializes every kit's items from storage. {@link #initialize()} runs during
-     * {@code RegisterCommandsEvent}, which fires before {@code AuctionComponentSerializer}'s
-     * server reference is set (that happens at {@code ServerStartedEvent}) — so any kit item
-     * carrying saved {@code DataComponentMap} data (enchantments, custom names, etc.) silently
-     * fails to deserialize on that first load and is dropped from the kit. Call this once the
-     * server has started to re-load every kit with components now correctly bound; loadKits()
-     * naturally overwrites each kit's map entry in place, so this is safe to call even if the
-     * first load already partially succeeded.
+     * The actual (and only) kit-items load. Called once from {@code ServerStartedEvent}, after
+     * Minecraft's item-registry Holders are bound — see the comment in {@link #initialize()}
+     * for why loading any earlier isn't possible, not just component-data-lossy.
      */
     public void reloadKitItemsAfterServerStart() {
         if (!initialized) return;
-        NeoLog.debug(LOGGER, LogCategory.KITS, "Re-loading kits now that item components are bound...");
+        NeoLog.debug(LOGGER, LogCategory.KITS, "Loading kits now that item registries are bound...");
         loadKits();
+        NeoLog.info(LOGGER, LogCategory.KITS, "Kit Manager loaded {} kits", kits.size());
     }
 
     /**

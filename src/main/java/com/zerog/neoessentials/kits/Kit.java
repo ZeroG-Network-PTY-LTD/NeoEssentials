@@ -268,14 +268,27 @@ public class Kit {
                     // Preferred: full DataComponentMap (see toJson() — covers enchantments,
                     // custom name, dyed color, etc., not just raw NBT).
                     if (itemJson.has("components")) {
-                        try {
-                            var components = com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer
-                                .deserialize(itemJson.get("components"));
-                            stack.applyComponents(components);
-                        } catch (Exception e) {
-                            // Skip invalid/unresolvable component data
-                            NeoLog.error(LOGGER, LogCategory.KITS,
-                                "Failed to apply saved components to item '" + itemString + "' in kit '" + name + "'; item components may be incomplete", e);
+                        if (!com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer.isServerBound()) {
+                            // KitManager.initialize() runs this eager first pass during
+                            // RegisterCommandsEvent, well before ServerStartedEvent sets the
+                            // server reference AuctionComponentSerializer needs — deserializing
+                            // components is guaranteed to fail right now, not because the data
+                            // is bad. KitManager.reloadKitItemsAfterServerStart() re-runs this
+                            // whole load correctly once the server IS bound, so this item isn't
+                            // actually going to end up missing — just skip the doomed attempt
+                            // quietly instead of logging a scary (and misleading) ERROR for it.
+                            NeoLog.debug(LOGGER, LogCategory.KITS,
+                                "Deferring component deserialization for item '" + itemString + "' in kit '" + name + "' — server not bound yet, will retry after ServerStartedEvent");
+                        } else {
+                            try {
+                                var components = com.zerog.neoessentials.auctionhouse.AuctionComponentSerializer
+                                    .deserialize(itemJson.get("components"));
+                                stack.applyComponents(components);
+                            } catch (Exception e) {
+                                // Skip invalid/unresolvable component data
+                                NeoLog.error(LOGGER, LogCategory.KITS,
+                                    "Failed to apply saved components to item '" + itemString + "' in kit '" + name + "'; item components may be incomplete", e);
+                            }
                         }
                     } else if (itemJson.has("nbt")) {
                         // Legacy format (kits saved before this fix) — CUSTOM_DATA only.
