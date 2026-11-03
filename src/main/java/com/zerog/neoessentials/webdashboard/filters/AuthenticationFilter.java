@@ -158,12 +158,25 @@ public class AuthenticationFilter extends Filter {
      */
     private boolean checkPermissions(String path, String method, Session session) {
         User.Role role = session.getRole();
-        
+
         // ADMIN has access to everything
         if (role == User.Role.ADMIN) {
             return true;
         }
-        
+
+        // CUSTOM-role users (see User.Role.CUSTOM) are gated entirely by their own stored
+        // tab-permission set, not by any of the fixed-tier branches below — admin-only/
+        // operator-only endpoints are still always denied for them, same as every non-ADMIN role.
+        if (role == User.Role.CUSTOM) {
+            if (requiresAdminAccess(path, method)) return false;
+            String tabId = com.zerog.neoessentials.webdashboard.security.DashboardTab.tabForPath(path);
+            if (tabId == null) return false; // Unregistered tab — no CUSTOM grant can ever cover it.
+            User user = AuthenticationManager.getInstance().getUser(session.getUserId());
+            if (user == null) return false;
+            boolean isWrite = !"GET".equals(method);
+            return user.hasTabPermission(tabId, isWrite);
+        }
+
         // Check admin-only endpoints
         if (requiresAdminAccess(path, method)) {
             return false;

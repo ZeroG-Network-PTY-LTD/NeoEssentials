@@ -16,7 +16,7 @@ import { MessageCircle, Radio, ScrollText, Send, Settings2, Trash2, PlugZap } fr
  * which has no equivalent here. */
 
 export default function Discord() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, can } = useAuth();
   const { showToast } = useToast();
   const [status, setStatus] = useState<DiscordStatus | null>(null);
   const [events, setEvents] = useState<DiscordEvent[]>([]);
@@ -37,7 +37,7 @@ export default function Discord() {
     const promises: [Promise<DiscordStatus>, Promise<DiscordEvent[]>, Promise<DiscordAuthConfig | null>] = [
       mcApi.discordStatus(),
       mcApi.discordEvents(),
-      isAdmin ? mcApi.discordAuthConfig() : Promise.resolve(null),
+      isAdmin || can('discord', true) ? mcApi.discordAuthConfig() : Promise.resolve(null),
     ];
     Promise.all(promises)
       .then(([s, e, cfg]) => {
@@ -155,7 +155,7 @@ export default function Discord() {
             icon={ScrollText}
             accent="purple"
             action={
-              isAdmin && (
+              (isAdmin || can('discord', true)) && (
                 <button
                   onClick={clearEvents}
                   className="flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-[var(--radius)] bg-[var(--mc-ember-500)] text-white transition-colors hover:bg-[var(--mc-ember-600,var(--mc-ember-500))]"
@@ -179,7 +179,7 @@ export default function Discord() {
         </div>
 
         <div className="flex flex-col gap-5">
-          {isAdmin && (
+          {(isAdmin || can('discord', true)) && (
             <Card title="Send test message" icon={Send} accent="cyan" padded>
               <form onSubmit={sendTest} className="flex flex-col gap-3">
                 <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">
@@ -215,7 +215,7 @@ export default function Discord() {
             </Card>
           )}
 
-          {isAdmin && authConfig && (
+          {(isAdmin || can('discord', true)) && authConfig && (
             <Card title="Account-linking config" icon={Settings2} accent="purple" padded>
               <form onSubmit={saveConfig} className="flex flex-col gap-3">
                 <p className="text-[12px] text-[var(--mc-text-muted)] -mt-1 mb-1">

@@ -104,7 +104,7 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export default function Permissions() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, can } = useAuth();
   const { showToast } = useToast();
 
   const [overview, setOverview] = useState<PermissionOverview | null>(null);
@@ -354,7 +354,7 @@ export default function Permissions() {
           overview.usingExternal ? ' · management disabled while an external permission plugin is active' : ''
         }`}
         action={
-          isAdmin &&
+          (isAdmin || can('permissions', true)) &&
           !overview.usingExternal && (
             <button
               onClick={reload}
@@ -413,13 +413,13 @@ export default function Permissions() {
                               </button>
                             </>
                           ) : (
-                            isAdmin && (
+                            (isAdmin || can('permissions', true)) && (
                               <button onClick={() => startRename(g.name)} className="text-[11px] text-[var(--mc-text-muted)] underline transition-colors hover:text-[var(--mc-cyan-400)]">
                                 rename group
                               </button>
                             )
                           )}
-                          {isAdmin && (
+                          {(isAdmin || can('permissions', true)) && (
                             <button
                               onClick={() => deleteGroup(g.name)}
                               className="ml-auto text-[12px] px-2.5 py-1 rounded-[var(--radius)] bg-[var(--mc-ember-500)] text-white transition-colors hover:bg-[var(--mc-ember-600,var(--mc-ember-500))]"
@@ -429,7 +429,7 @@ export default function Permissions() {
                           )}
                         </div>
 
-                        {isAdmin && (
+                        {(isAdmin || can('permissions', true)) && (
                           <div className="flex flex-wrap items-center gap-4 mb-3 p-3 rounded-[8px] bg-[var(--mc-bg-surface-raised)] border border-[var(--mc-border)] text-[12px] text-[var(--mc-text-secondary)]">
                             <label className="flex items-center gap-1.5">
                               Prefix
@@ -505,10 +505,10 @@ export default function Permissions() {
                           <PermissionPills
                             permissions={g.permissions ?? []}
                             catalog={nodeCatalog}
-                            onRemove={isAdmin ? (p) => removeGroupPermission(g.name, p) : undefined}
+                            onRemove={isAdmin || can('permissions', true) ? (p) => removeGroupPermission(g.name, p) : undefined}
                           />
                         </div>
-                        {isAdmin && (
+                        {(isAdmin || can('permissions', true)) && (
                           <div className="flex gap-1.5">
                             <NodeInput
                               value={newPerm[`group:${g.name}`] ?? ''}
@@ -533,7 +533,7 @@ export default function Permissions() {
               )}
             </Card>
 
-            {isAdmin && (
+            {(isAdmin || can('permissions', true)) && (
               <Card title="Create group" icon={Plus} accent="purple" padded className="h-fit">
                 <form onSubmit={createGroup} className="flex flex-col gap-3">
                   <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">
@@ -613,7 +613,7 @@ export default function Permissions() {
 
                   {open && (
                     <div className="px-4 pb-4">
-                      {isAdmin && (
+                      {(isAdmin || can('permissions', true)) && (
                         <label className="flex items-center gap-2 mb-3 text-[12px] text-[var(--mc-text-secondary)]">
                           Group
                           <select
@@ -631,10 +631,10 @@ export default function Permissions() {
                         <PermissionPills
                           permissions={u.permissions ?? []}
                           catalog={nodeCatalog}
-                          onRemove={isAdmin ? (p) => removeUserPermission(u.username, p) : undefined}
+                          onRemove={isAdmin || can('permissions', true) ? (p) => removeUserPermission(u.username, p) : undefined}
                         />
                       </div>
-                      {isAdmin && (
+                      {(isAdmin || can('permissions', true)) && (
                         <div className="flex gap-1.5">
                           <NodeInput
                             value={newPerm[`user:${u.username}`] ?? ''}
@@ -656,7 +656,7 @@ export default function Permissions() {
             })}
           </Card>
 
-          {isAdmin && (
+          {(isAdmin || can('permissions', true)) && (
             <Card title="Manage another player" icon={Search} accent="purple">
               <div className="px-4 py-3 border-b border-[var(--mc-border)]">
                 <form onSubmit={runLookup} className="flex gap-1.5">
@@ -733,7 +733,7 @@ export default function Permissions() {
                   <span className="flex-1">
                     {alias} &rarr; {canonical}
                   </span>
-                  {isAdmin && (
+                  {(isAdmin || can('permissions', true)) && (
                     <button
                       onClick={() => deleteAlias(alias)}
                       className="text-[12px] px-2.5 py-1 rounded-[var(--radius)] bg-[var(--mc-ember-500)] text-white transition-colors hover:bg-[var(--mc-ember-600,var(--mc-ember-500))]"
@@ -745,7 +745,7 @@ export default function Permissions() {
               ))}
             </Card>
 
-            {isAdmin && (
+            {(isAdmin || can('permissions', true)) && (
               <Card title="Add alias" icon={Key} accent="purple" padded className="h-fit">
                 <form onSubmit={createAlias} className="flex flex-col gap-3">
                   <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">

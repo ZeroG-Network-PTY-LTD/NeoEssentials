@@ -57,7 +57,7 @@ public class PermissionEndpoint implements HttpHandler {
 
             switch (method) {
                 case "GET":
-                    response = handleGet(path);
+                    response = handleGet(path, exchange);
                     break;
                 case "POST":
                     response = handlePost(path, exchange);
@@ -82,7 +82,7 @@ public class PermissionEndpoint implements HttpHandler {
         }
     }
 
-    private JsonObject handleGet(String path) {
+    private JsonObject handleGet(String path, HttpExchange exchange) {
         if (path.equals("/overview") || path.equals("")) {
             return getPermissionOverview();
         } else if (path.equals("/groups")) {
@@ -113,6 +113,8 @@ public class PermissionEndpoint implements HttpHandler {
             return getSystemStatus();
         } else if (path.equals("/aliases")) {
             return listAliases();
+        } else if (path.startsWith("/dashboard-mapping")) {
+            return getDashboardMapping(exchange);
         }
 
         return createErrorResponse("Unknown endpoint: " + path);
@@ -469,6 +471,76 @@ public class PermissionEndpoint implements HttpHandler {
 
         response.add("categories", categories);
         response.addProperty("success", true);
+        return response;
+    }
+
+    /**
+     * {@code GET /api/permissions/dashboard-mapping?group=<groupName>} — resolves a Minecraft
+     * in-game permission group to its configured dashboard tab permissions
+     * ({@code webDashboard.groupPermissions[]}), for the external Laravel dashboard (which has
+     * no direct Java access and authenticates only via the API-key Bearer auth this whole
+     * {@code /api/permissions} prefix is already wrapped in — see {@code DashboardAPI.withAuth}).
+     * Case-insensitive match on {@code group}, same convention as the existing
+     * {@code roleSync.adminGroup} comparison.
+     */
+    private JsonObject getDashboardMapping(HttpExchange exchange) {
+        JsonObject response = new JsonObject();
+        String query = exchange.getRequestURI().getQuery();
+        String group = null;
+        if (query != null) {
+            for (String param : query.split("&")) {
+                int eq = param.indexOf('=');
+                if (eq < 0) continue;
+                String key = param.substring(0, eq);
+                if ("group".equals(key)) {
+                    String value = param.substring(eq + 1);
+                    try {
+                        group = java.net.URLDecoder.decode(value, StandardCharsets.UTF_8);
+                    } catch (Exception e) {
+                        group = value;
+                    }
+                    break;
+                }
+            }
+        }
+
+        JsonArray tabs = new JsonArray();
+        if (group == null || group.isBlank()) {
+            response.addProperty("success", true);
+            response.addProperty("found", false);
+            response.add("tabs", tabs);
+            return response;
+        }
+
+        java.util.List<com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping> mappings =
+            com.zerog.neoessentials.config.ConfigManager.getGroupPermissionMappings();
+
+        com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping match = null;
+        for (com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping mapping : mappings) {
+            if (mapping.getGroup().equalsIgnoreCase(group)) {
+                match = mapping;
+                break;
+            }
+        }
+
+        if (match == null) {
+            response.addProperty("success", true);
+            response.addProperty("found", false);
+            response.add("tabs", tabs);
+            return response;
+        }
+
+        for (com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping.TabGrant grant : match.getTabs()) {
+            JsonObject tabObj = new JsonObject();
+            tabObj.addProperty("tab", grant.getTab());
+            tabObj.addProperty("canRead", true);
+            tabObj.addProperty("canWrite", grant.isWrite());
+            tabs.add(tabObj);
+        }
+
+        response.addProperty("success", true);
+        response.addProperty("found", true);
+        response.add("tabs", tabs);
         return response;
     }
 
