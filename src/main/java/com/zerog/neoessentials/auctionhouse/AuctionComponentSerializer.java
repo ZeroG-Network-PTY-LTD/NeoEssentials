@@ -23,6 +23,14 @@ public class AuctionComponentSerializer {
         server = s;
     }
 
+    /** Whether {@link #setServer} has run yet — lets a caller that knows it might run before
+     *  ServerStartedEvent (e.g. Kit.java's eager first load pass) skip straight to a quiet
+     *  "not ready yet" path instead of calling {@link #deserialize}/{@link #serialize} only to
+     *  hit the {@link IllegalStateException} below. */
+    public static boolean isServerBound() {
+        return server != null;
+    }
+
     private static RegistryOps<JsonElement> ops() {
         if (server == null) throw new IllegalStateException("[AuctionHouse] Server not set on ComponentSerializer");
         return RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
