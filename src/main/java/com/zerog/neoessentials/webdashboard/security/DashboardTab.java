@@ -8,8 +8,9 @@ import java.util.Map;
  * entry pairs a short id (what an admin writes in {@code webDashboard.groupPermissions[].tabs[].tab})
  * with the REST API path prefix it actually gates, mirroring the {@code createContext("/api/...")}
  * calls in {@link com.zerog.neoessentials.webdashboard.DashboardAPI}. Single source of truth for
- * both directions of the lookup: {@link AuthenticationFilter} resolves an incoming request path to
- * a tab id to check against a CUSTOM-role user's granted permissions, and the
+ * both directions of the lookup: {@link com.zerog.neoessentials.webdashboard.DashboardAPI#withAuth}
+ * resolves an incoming request path to a tab id to check against a CUSTOM-role user's granted
+ * permissions, and the
  * {@code /api/auth/my-permissions}-style responses resolve the other way (tab id to "can I see
  * this nav item") for both frontends.
  *
