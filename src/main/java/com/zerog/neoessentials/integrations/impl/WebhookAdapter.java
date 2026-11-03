@@ -147,20 +147,14 @@ public class WebhookAdapter implements ChatIntegrationAdapter {
     public void onPlayerMute(ServerPlayer player, String reason, boolean isMuted, String discordChannelId) {
         String webhookUrl = resolveEventWebhook("mute");
         if (webhookUrl == null) return;
-        String action = isMuted ? "muted" : "unmuted";
-        String text = String.format("%s has been %s%s", player.getName().getString(), action,
-            reason != null && !reason.isEmpty() ? " (Reason: " + reason + ")" : "");
-        postWebhook(webhookUrl, "Server", null, text);
+        postWebhook(webhookUrl, "Server", null, DiscordTextSanitizer.formatMuteEvent(player.getName().getString(), isMuted, reason));
     }
 
     @Override
     public void onAfkStatusChange(ServerPlayer player, boolean isAfk, String reason, String discordChannelId) {
         String webhookUrl = resolveEventWebhook("afk");
         if (webhookUrl == null) return;
-        String status = isAfk ? "is now AFK" : "is no longer AFK";
-        String text = String.format("%s %s%s", player.getName().getString(), status,
-            (isAfk && reason != null && !reason.isEmpty()) ? " (" + reason + ")" : "");
-        postWebhook(webhookUrl, "Server", null, text);
+        postWebhook(webhookUrl, "Server", null, DiscordTextSanitizer.formatAfkEvent(player.getName().getString(), isAfk, reason));
     }
 
     @Override
@@ -168,7 +162,7 @@ public class WebhookAdapter implements ChatIntegrationAdapter {
         String webhookUrl = resolveEventWebhook("advancement");
         if (webhookUrl == null) return;
         postWebhook(webhookUrl, player.getName().getString(), avatarFor(player),
-            player.getName().getString() + " earned the advancement " + advancementName);
+            DiscordTextSanitizer.formatAdvancementEvent(player.getName().getString(), advancementName));
     }
 
     @Override

@@ -128,11 +128,10 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public void onPlayerAdvancement(ServerPlayer player, String advancementName, String discordChannelId) {
         if (!isReady() || discordChannelId == null || discordChannelId.isBlank()) return;
         try {
-            String safeAdvancementName = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(advancementName,
-                com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
             NeoLog.debug(LOGGER, LogCategory.DISCORD, "DCIntegration: relaying advancement for '{}' to Discord channel '{}' (additive override — native relay untouched)",
                 player.getName().getString(), discordChannelId);
-            sendToChannel(discordChannelId, DiscordIdentityFormatter.resolveNameWithRank(player) + " earned the advancement " + safeAdvancementName);
+            sendToChannel(discordChannelId, com.zerog.neoessentials.integrations.DiscordTextSanitizer.formatAdvancementEvent(
+                DiscordIdentityFormatter.resolveNameWithRank(player), advancementName));
         } catch (Throwable e) {
             NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay advancement event via DCIntegration", e);
         }
@@ -150,11 +149,8 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public void onPlayerMute(ServerPlayer player, String reason, boolean isMuted, String discordChannelId) {
         if (!isReady() || discordChannelId == null || discordChannelId.isBlank()) return;
         try {
-            String action = isMuted ? "muted" : "unmuted";
-            String safeReason = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(reason,
-                com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s has been %s%s", DiscordIdentityFormatter.resolveNameWithRank(player), action,
-                safeReason != null && !safeReason.isEmpty() ? " (Reason: " + safeReason + ")" : "");
+            String text = com.zerog.neoessentials.integrations.DiscordTextSanitizer.formatMuteEvent(
+                DiscordIdentityFormatter.resolveNameWithRank(player), isMuted, reason);
             sendToChannel(discordChannelId, text);
         } catch (Throwable e) {
             NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay mute event via DCIntegration", e);
@@ -166,11 +162,8 @@ public class DCIntegrationAdapter implements ChatIntegrationAdapter {
     public void onAfkStatusChange(ServerPlayer player, boolean isAfk, String reason, String discordChannelId) {
         if (!isReady() || discordChannelId == null || discordChannelId.isBlank()) return;
         try {
-            String status = isAfk ? "is now AFK" : "is no longer AFK";
-            String safeReason = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(reason,
-                com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s %s%s", DiscordIdentityFormatter.resolveNameWithRank(player), status,
-                (isAfk && safeReason != null && !safeReason.isEmpty()) ? " (" + safeReason + ")" : "");
+            String text = com.zerog.neoessentials.integrations.DiscordTextSanitizer.formatAfkEvent(
+                DiscordIdentityFormatter.resolveNameWithRank(player), isAfk, reason);
             sendToChannel(discordChannelId, text);
         } catch (Throwable e) {
             NeoLog.error(LOGGER, LogCategory.DISCORD, "Failed to relay AFK event via DCIntegration", e);
