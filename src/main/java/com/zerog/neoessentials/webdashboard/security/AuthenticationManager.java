@@ -212,6 +212,21 @@ public class AuthenticationManager {
                 "Session invalidated: " + sessionId);
         }
     }
+
+    /**
+     * Revoke a session by its {@link Session#getSessionRef()} rather than the raw bearer
+     * sessionId — used by the admin-facing sessions listing, which must never echo back the
+     * real session id (that IS the live credential) but still needs a way to revoke a session
+     * a listing row refers to.
+     */
+    public void logoutByRef(String sessionRef) {
+        for (Session session : sessions.values()) {
+            if (session.getSessionRef().equals(sessionRef)) {
+                logout(session.getSessionId());
+                return;
+            }
+        }
+    }
     
     /**
      * Create new user account
@@ -698,7 +713,9 @@ public class AuthenticationManager {
      */
     public void saveUsers() {
         for (User user : users.values()) {
-            store.put(COLLECTION, user.getId(), userToJson(user));
+            if (!store.put(COLLECTION, user.getId(), userToJson(user))) {
+                NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, user.getId());
+            }
         }
     }
 
@@ -751,7 +768,9 @@ public class AuthenticationManager {
                 for (JsonElement element : root.getAsJsonArray("users")) {
                     JsonObject userJson = element.getAsJsonObject().deepCopy();
                     if (!userJson.has("id")) continue;
-                    store.put(COLLECTION, userJson.get("id").getAsString(), userJson);
+                    if (!store.put(COLLECTION, userJson.get("id").getAsString(), userJson)) {
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, userJson.get("id").getAsString());
+                    }
                     migrated++;
                 }
             }
