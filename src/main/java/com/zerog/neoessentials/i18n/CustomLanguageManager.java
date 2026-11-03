@@ -57,7 +57,7 @@ public class CustomLanguageManager {
         NeoLog.info(LOGGER, LogCategory.GENERAL, "[LANG] Overrides file set to: {}", this.overridesFile.toAbsolutePath());
     }
 
-    public static CustomLanguageManager getInstance() {
+    public static synchronized CustomLanguageManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new CustomLanguageManager();
         }
@@ -545,7 +545,9 @@ public class CustomLanguageManager {
             for (Map.Entry<String, String> entry : overrides.entrySet()) {
                 doc.addProperty(entry.getKey(), entry.getValue());
             }
-            store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
+            if (!store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc)) {
+                NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", OVERRIDES_COLLECTION, OVERRIDES_ID);
+            }
             NeoLog.info(LOGGER, LogCategory.GENERAL, "Saved {} admin translation override(s) to storage", overrides.size());
         } catch (Exception e) {
             LOGGER.error("Failed to save translation overrides: {}", e.getMessage(), e);
@@ -571,7 +573,9 @@ public class CustomLanguageManager {
                 for (Map.Entry<String, String> entry : loaded.entrySet()) {
                     doc.addProperty(entry.getKey(), entry.getValue());
                 }
-                store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc);
+                if (!store.put(OVERRIDES_COLLECTION, OVERRIDES_ID, doc)) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", OVERRIDES_COLLECTION, OVERRIDES_ID);
+                }
                 NeoLog.info(LOGGER, LogCategory.GENERAL, "CustomLanguageManager: migrated {} admin translation override(s) from legacy overrides.json into the '{}' storage backend.",
                     loaded.size(), com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
             }
