@@ -490,6 +490,22 @@
       "adminGroup": "admin"
     },
 
+    // Maps arbitrary in-game permission groups (not just the one roleSync.adminGroup above) to a
+    // set of dashboard tab permissions — e.g. a "VIP" group that can view (or edit) only specific
+    // tabs instead of the full admin/operator/moderator/viewer tiers. Empty by default (no effect
+    // until you add entries). Checked by the same roleSync task, only after the adminGroup/
+    // adminPermission check above finds no match, so an admin-group member is never downgraded
+    // to a custom tab set even if they'd also match an entry here. Each tab's "access" is "read"
+    // or "write" (write implies read). Tab ids match the dashboard's own section names: admin,
+    // apikeys, backups, cloud, commands, discord, economy, files, game, holograms, kits,
+    // leaderboard, logging, moderation, motd, permissions, placeholders, players, rules,
+    // scoreboard, server, shops, stats, teleport, users, warps.
+    // Example:
+    // "groupPermissions": [
+    //   { "group": "VIP", "tabs": [ { "tab": "players", "access": "read" }, { "tab": "economy", "access": "write" } ] }
+    // ],
+    "groupPermissions": [],
+
     "securitySettings": {
       // Require Bearer token authentication on all API endpoints (strongly recommended)
       "requireAuthentication": true,

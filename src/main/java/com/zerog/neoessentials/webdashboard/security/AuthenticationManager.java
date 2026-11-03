@@ -298,7 +298,37 @@ public class AuthenticationManager {
             "Role changed from " + oldRole + " to " + newRole);
         DashboardUserSyncWebhook.notify("user_updated", user);
     }
-    
+
+    /**
+     * Sets a user to {@link User.Role#CUSTOM} with an explicit tab-permission set, atomically —
+     * used by {@link PermissionRoleSyncTask} when a player's in-game group matches a
+     * {@code webDashboard.groupPermissions} entry (rather than the single admin group, which
+     * still goes through the plain {@link #updateUserRole} above). Replaces the user's entire
+     * {@code permissions} set with exactly {@code tabPermissions} — this method is CUSTOM-role's
+     * only writer, so stale entries from a previous, different group match never linger.
+     */
+    public void updateUserRoleAndPermissions(String userId, java.util.Set<String> tabPermissions, boolean syncManaged) {
+        User user = users.get(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        User.Role oldRole = user.getRole();
+        user.setRole(User.Role.CUSTOM);
+        user.setRoleSyncManaged(syncManaged);
+        for (String existing : user.getPermissions()) {
+            user.removePermission(existing);
+        }
+        for (String granted : tabPermissions) {
+            user.addPermission(granted);
+        }
+        saveUsers();
+
+        logAuditEvent("ROLE_CHANGED", user.getUsername(), syncManaged ? "permission-sync" : "system",
+            "Role changed from " + oldRole + " to CUSTOM (" + tabPermissions.size() + " tab permission(s))");
+        DashboardUserSyncWebhook.notify("user_updated", user);
+    }
+
     /**
      * Links a Minecraft account to a dashboard user — called by {@link MinecraftAccountLinkManager}
      * once its code-based verification succeeds. Same webhook-notify pattern as

@@ -786,11 +786,34 @@ public class AuthenticationHandler implements HttpHandler {
         User user = authManager.getUser(session.getUserId());
         if (user != null) {
             response.add("user", user.toJson());
+            // Only meaningful for User.Role.CUSTOM (see webDashboard.groupPermissions) — empty
+            // for the 4 fixed roles, which both frontends still gate purely on isAdmin/role name
+            // as before. Lets a CUSTOM-role frontend know which tabs to show without guessing
+            // from the role name, using the exact same per-tab check AuthenticationFilter itself
+            // enforces server-side (User.hasTabPermission), so this list can never drift from
+            // what's actually allowed.
+            response.add("tabs", buildCustomTabPermissions(user));
         }
 
         sendJsonResponse(exchange, 200, response);
     }
-    
+
+    private JsonArray buildCustomTabPermissions(User user) {
+        JsonArray tabsArray = new JsonArray();
+        if (user.getRole() != User.Role.CUSTOM) return tabsArray;
+        for (String tabId : com.zerog.neoessentials.webdashboard.security.DashboardTab.allTabIds()) {
+            boolean canRead = user.hasTabPermission(tabId, false);
+            boolean canWrite = user.hasTabPermission(tabId, true);
+            if (!canRead && !canWrite) continue;
+            JsonObject tabObj = new JsonObject();
+            tabObj.addProperty("tab", tabId);
+            tabObj.addProperty("canRead", canRead);
+            tabObj.addProperty("canWrite", canWrite);
+            tabsArray.add(tabObj);
+        }
+        return tabsArray;
+    }
+
     /**
      * GET /api/auth/users
      * Requires ADMIN role

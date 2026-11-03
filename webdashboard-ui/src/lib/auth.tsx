@@ -2,9 +2,19 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 const TOKEN_KEY = 'ne_session_token';
 
+/** One entry of a CUSTOM-role user's per-tab access, from /api/auth/validate's "tabs" field —
+ *  see webDashboard.groupPermissions (config.json) / AuthenticationFilter.java (mod source) for
+ *  where this is actually enforced server-side; this list exists purely so the UI doesn't have
+ *  to guess, it mirrors exactly what the server will or won't allow. */
+export interface AuthTabPermission {
+  tab: string;
+  canRead: boolean;
+  canWrite: boolean;
+}
+
 export interface AuthUser {
   username: string;
-  role: 'ADMIN' | 'OPERATOR' | 'MODERATOR' | 'VIEWER' | string;
+  role: 'ADMIN' | 'OPERATOR' | 'MODERATOR' | 'VIEWER' | 'CUSTOM' | string;
   mcUuid?: string | null;
   mcUsername?: string | null;
 }
@@ -16,6 +26,17 @@ interface AuthContextValue {
   loading: boolean;
   login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  /**
+   * Whether the current user can see (write=false) or act on (write=true) a given dashboard
+   * tab id (see DashboardTab.java for the canonical list: economy, players, backups, etc).
+   * ADMIN always true. The 4 other fixed roles (OPERATOR/MODERATOR/VIEWER, and the pre-CUSTOM-
+   * feature default of just checking isAdmin) are left to each page's own existing checks —
+   * this only adds real signal for CUSTOM-role accounts, which have no other way to know what
+   * they're allowed to see. Returns false for every tab on a non-CUSTOM, non-ADMIN role, which
+   * is intentionally conservative: those roles should keep using their existing isAdmin/role
+   * checks instead of this function until/unless they're also given explicit per-tab data.
+   */
+  can: (tab: string, write?: boolean) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -29,6 +50,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [tabs, setTabs] = useState<AuthTabPermission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     fetch('/api/auth/validate', { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-      .then((data) => setUser(data.user ?? { username: data.username, role: data.role }))
+      .then((data) => {
+        setUser(data.user ?? { username: data.username, role: data.role });
+        setTabs(Array.isArray(data.tabs) ? data.tabs : []);
+      })
       .catch(() => {
         sessionStorage.removeItem(TOKEN_KEY);
         setToken(null);
@@ -61,6 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(TOKEN_KEY, data.sessionId);
     setToken(data.sessionId);
     setUser(data.user ?? { username: data.username, role: data.role });
+    // The login response doesn't include "tabs" yet (only /api/auth/validate does) — clear any
+    // stale value from a previous session rather than show it momentarily; the token-change
+    // effect above re-fetches validate right after this and fills it in correctly.
+    setTabs(Array.isArray(data.tabs) ? data.tabs : []);
     return { success: true };
   };
 
@@ -71,6 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
+    setTabs([]);
+  };
+
+  const can = (tab: string, write = false) => {
+    if (user?.role === 'ADMIN') return true;
+    if (user?.role !== 'CUSTOM') return false;
+    const entry = tabs.find((t) => t.tab === tab);
+    if (!entry) return false;
+    return write ? entry.canWrite : entry.canRead;
   };
 
   const value = useMemo<AuthContextValue>(
@@ -81,9 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       logout,
+      can,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [token, user, loading],
+    [token, user, tabs, loading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -24,9 +24,14 @@ import java.util.concurrent.TimeUnit;
  * longer do, unless the current role was set manually (see {@link User#isRoleSyncManaged()}) —
  * this task only ever adjusts a role it granted itself, never an admin's deliberate override.
  *
- * <p>Only ever operates on players who already linked a dashboard account via
- * {@code /dashboardregister} ({@link DashboardRegistrationManager#getAllRegistrations()}) —
- * never auto-creates a dashboard account for someone who hasn't opted in.
+ * <p>Only ever operates on players who already have a dashboard account with a linked Minecraft
+ * UUID ({@link User#getMcUuid()}) — never auto-creates a dashboard account for someone who
+ * hasn't opted in. Originally this only covered accounts registered via {@code /dashboardregister}
+ * ({@link DashboardRegistrationManager}), missing any account that got its {@code mcUuid} some
+ * other way (login-time auto-registration, or the Settings page's "link Minecraft account" flow
+ * on an account that was never run through {@code /dashboardregister} at all) — those never had
+ * their role synced, ever. Scoped to {@link AuthenticationManager#getAllUsers()} directly now,
+ * which covers every real account regardless of how it came to have an {@code mcUuid}.
  *
  * <p>Runs a periodic sweep (self-heals any permission change made outside this server, e.g. a
  * raw LuckPerms edit) plus an immediate check on player join, since {@link PermissionAPI} has no
@@ -74,8 +79,14 @@ public class PermissionRoleSyncTask {
 
     private static void syncAll() {
         try {
-            for (DashboardAccountRegistration registration : DashboardRegistrationManager.getInstance().getAllRegistrations()) {
-                syncPlayer(registration.getMinecraftUuid());
+            for (User user : AuthenticationManager.getInstance().getAllUsers()) {
+                String mcUuid = user.getMcUuid();
+                if (mcUuid == null || mcUuid.isBlank()) continue;
+                try {
+                    syncPlayer(UUID.fromString(mcUuid));
+                } catch (IllegalArgumentException malformed) {
+                    NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Skipping role sync for '{}': malformed mcUuid '{}'", user.getUsername(), mcUuid);
+                }
             }
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Permission role-sync sweep failed", e);
@@ -84,26 +95,60 @@ public class PermissionRoleSyncTask {
 
     private static void syncPlayer(UUID minecraftUuid) {
         try {
-            DashboardAccountRegistration registration = DashboardRegistrationManager.getInstance().getRegistration(minecraftUuid);
-            if (registration == null) return; // Not linked to a dashboard account — nothing to sync.
+            User user = AuthenticationManager.getInstance().getUserByMcUuid(minecraftUuid.toString());
+            if (user == null) return; // Not linked to a dashboard account — nothing to sync.
 
-            User user = AuthenticationManager.getInstance().getUserByUsername(registration.getDashboardUsername());
-            if (user == null) return;
-
-            boolean shouldBeAdmin = isInGameAdmin(minecraftUuid);
             User.Role currentRole = user.getRole();
 
-            if (shouldBeAdmin && currentRole != User.Role.ADMIN) {
-                AuthenticationManager.getInstance().updateUserRole(user.getId(), User.Role.ADMIN, true);
-                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: granted ADMIN to dashboard user '{}' (in-game permission match)", user.getUsername());
-            } else if (!shouldBeAdmin && currentRole == User.Role.ADMIN && user.isRoleSyncManaged()) {
-                // Only downgrade a role this task granted itself — never a manually-set ADMIN.
+            if (isInGameAdmin(minecraftUuid)) {
+                if (currentRole != User.Role.ADMIN) {
+                    AuthenticationManager.getInstance().updateUserRole(user.getId(), User.Role.ADMIN, true);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: granted ADMIN to dashboard user '{}' (in-game permission match)", user.getUsername());
+                }
+                return;
+            }
+
+            // Not admin-matched — check webDashboard.groupPermissions next, same unconditional-
+            // grant-on-match philosophy as the ADMIN branch above (a real in-game group match is
+            // always reflected, regardless of what the account's role happened to be before).
+            java.util.Set<String> matchedTabPermissions = matchGroupPermissions(minecraftUuid);
+            if (matchedTabPermissions != null) {
+                boolean upToDate = currentRole == User.Role.CUSTOM && user.getPermissions().equals(matchedTabPermissions);
+                if (!upToDate) {
+                    AuthenticationManager.getInstance().updateUserRoleAndPermissions(user.getId(), matchedTabPermissions, true);
+                    NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: set CUSTOM tab permissions for dashboard user '{}' ({} tab grant(s), in-game group match)", user.getUsername(), matchedTabPermissions.size());
+                }
+                return;
+            }
+
+            // No admin match, no group match — only revert a role this task granted itself,
+            // never a manually-set ADMIN/CUSTOM.
+            if ((currentRole == User.Role.ADMIN || currentRole == User.Role.CUSTOM) && user.isRoleSyncManaged()) {
                 AuthenticationManager.getInstance().updateUserRole(user.getId(), User.Role.VIEWER, true);
-                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: revoked ADMIN from dashboard user '{}' (no longer matches in-game permission)", user.getUsername());
+                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Role sync: reverted dashboard user '{}' to VIEWER (no longer matches any configured in-game group)", user.getUsername());
             }
         } catch (Exception e) {
             NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Permission role-sync failed for {}: {}", minecraftUuid, e.getMessage());
         }
+    }
+
+    /** @return the tab-permission strings for the first {@code webDashboard.groupPermissions}
+     *          entry whose group matches this player's in-game primary group, or null if none
+     *          match (including when no mappings are configured at all). */
+    private static java.util.Set<String> matchGroupPermissions(UUID uuid) {
+        String primaryGroup = PermissionAPI.getPrimaryGroup(uuid);
+        if (primaryGroup == null || primaryGroup.isBlank()) return null;
+
+        for (GroupPermissionMapping mapping : ConfigManager.getGroupPermissionMappings()) {
+            if (primaryGroup.equalsIgnoreCase(mapping.getGroup())) {
+                java.util.Set<String> perms = new java.util.HashSet<>();
+                for (GroupPermissionMapping.TabGrant grant : mapping.getTabs()) {
+                    perms.add(grant.toPermissionString());
+                }
+                return perms;
+            }
+        }
+        return null;
     }
 
     private static boolean isInGameAdmin(UUID uuid) {

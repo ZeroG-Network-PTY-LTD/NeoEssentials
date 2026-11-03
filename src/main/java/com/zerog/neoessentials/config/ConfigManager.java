@@ -2018,6 +2018,42 @@ public class ConfigManager {
     }
 
     /**
+     * Parses {@code webDashboard.groupPermissions[]} — maps arbitrary in-game groups (not just
+     * the single {@link #getRoleSyncAdminGroup()}) to a set of dashboard tab permissions. Purely
+     * additive and empty by default (no entries = no behavior change for existing deployments);
+     * evaluated by {@link com.zerog.neoessentials.webdashboard.security.PermissionRoleSyncTask}
+     * only after the existing admin-group/permission check finds no match, so an admin-group
+     * member is never downgraded to a CUSTOM role even if they'd also match an entry here.
+     */
+    public static java.util.List<com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping> getGroupPermissionMappings() {
+        java.util.List<com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping> mappings = new ArrayList<>();
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (!config.has("webDashboard")) return mappings;
+        JsonObject dashboard = config.getAsJsonObject("webDashboard");
+        if (!dashboard.has("groupPermissions")) return mappings;
+
+        com.google.gson.JsonArray groupsArray = dashboard.getAsJsonArray("groupPermissions");
+        for (com.google.gson.JsonElement groupEl : groupsArray) {
+            if (!groupEl.isJsonObject()) continue;
+            JsonObject groupObj = groupEl.getAsJsonObject();
+            if (!groupObj.has("group") || !groupObj.has("tabs")) continue;
+
+            String groupName = groupObj.get("group").getAsString();
+            java.util.List<com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping.TabGrant> tabs = new ArrayList<>();
+            for (com.google.gson.JsonElement tabEl : groupObj.getAsJsonArray("tabs")) {
+                if (!tabEl.isJsonObject()) continue;
+                JsonObject tabObj = tabEl.getAsJsonObject();
+                if (!tabObj.has("tab")) continue;
+                String tabId = tabObj.get("tab").getAsString();
+                boolean write = tabObj.has("access") && "write".equalsIgnoreCase(tabObj.get("access").getAsString());
+                tabs.add(new com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping.TabGrant(tabId, write));
+            }
+            mappings.add(new com.zerog.neoessentials.webdashboard.security.GroupPermissionMapping(groupName, tabs));
+        }
+        return mappings;
+    }
+
+    /**
      * Returns the web dashboard HTTP port (webDashboard.port). Defaults to 8080.
      */
     public int getWebDashboardPort() {

@@ -34,7 +34,14 @@ public class User {
         ADMIN,
         OPERATOR,
         MODERATOR,
-        VIEWER
+        VIEWER,
+        /** Access is defined entirely by this user's {@link #permissions} set (see
+         *  {@link DashboardPermission}), not by one of the 4 fixed tiers above — granted by
+         *  {@link PermissionRoleSyncTask} when a player's in-game group matches a
+         *  {@code webDashboard.groupPermissions} entry rather than the single admin group/node.
+         *  Added last (not inserted among the existing 4) so any code that happened to rely on
+         *  those enum constants' ordinals stays unaffected. */
+        CUSTOM
     }
 
     // Constructor for new user
@@ -78,6 +85,22 @@ public class User {
             return true;
         }
         return permissions.contains(permission) || permissions.contains("*");
+    }
+
+    /**
+     * CUSTOM-role tab/action check — see {@link DashboardPermission}. ADMIN always passes (same
+     * as {@link #hasPermission(String)}); a non-CUSTOM, non-ADMIN role (OPERATOR/MODERATOR/VIEWER)
+     * never has tab-string permissions stored, so this correctly returns false for them — those
+     * 3 roles are gated by {@link AuthenticationFilter}'s existing hardcoded branches instead,
+     * not by this method.
+     */
+    public boolean hasTabPermission(String tabId, boolean requireWrite) {
+        if (role == Role.ADMIN) return true;
+        if (role != Role.CUSTOM) return false;
+        for (String granted : permissions) {
+            if (DashboardPermission.satisfies(granted, tabId, requireWrite)) return true;
+        }
+        return false;
     }
 
     public void addPermission(String permission) {
