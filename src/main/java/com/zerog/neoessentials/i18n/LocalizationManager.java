@@ -47,7 +47,7 @@ public class LocalizationManager {
         initialize();
     }
     
-    public static LocalizationManager getInstance() {
+    public static synchronized LocalizationManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new LocalizationManager();
         }

@@ -28,7 +28,7 @@ public class AuthenticationManager {
 
     private AuthenticationManager() {}
 
-    public static AuthenticationManager getInstance() {
+    public static synchronized AuthenticationManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new AuthenticationManager();
         }

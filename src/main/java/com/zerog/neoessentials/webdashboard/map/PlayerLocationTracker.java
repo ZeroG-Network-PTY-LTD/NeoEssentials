@@ -28,7 +28,7 @@ public class PlayerLocationTracker {
     private PlayerLocationTracker() {
     }
     
-    public static PlayerLocationTracker getInstance() {
+    public static synchronized PlayerLocationTracker getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new PlayerLocationTracker();
         }

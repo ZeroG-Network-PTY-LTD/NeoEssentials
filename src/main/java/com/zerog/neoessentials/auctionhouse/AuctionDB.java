@@ -56,7 +56,7 @@ public final class AuctionDB {
 
     private AuctionDB() {}
 
-    public static AuctionDB getInstance() {
+    public static synchronized AuctionDB getInstance() {
         if (instance == null) instance = new AuctionDB();
         return instance;
     }
@@ -106,7 +106,9 @@ public final class AuctionDB {
         try {
             int id = nextId.getAndIncrement();
             JsonObject obj = toJson(playerUuid, owner, nbt, itemKey, count, price, secondsLeft);
-            store.put(ACTIVE_COLLECTION, String.valueOf(id), obj);
+            if (!store.put(ACTIVE_COLLECTION, String.valueOf(id), obj)) {
+                NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Failed to persist {}/{} to storage - this change may be lost on restart.", ACTIVE_COLLECTION, String.valueOf(id));
+            }
             return id;
         } catch (Exception e) {
             LOGGER.error("[AuctionHouse] Failed to insert listing", e);
@@ -124,7 +126,9 @@ public final class AuctionDB {
         JsonObject obj = store.get(ACTIVE_COLLECTION, String.valueOf(id));
         if (obj == null) return;
         obj.addProperty("secondsLeft", secondsLeft);
-        store.put(ACTIVE_COLLECTION, String.valueOf(id), obj);
+        if (!store.put(ACTIVE_COLLECTION, String.valueOf(id), obj)) {
+            NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Failed to persist {}/{} to storage - this change may be lost on restart.", ACTIVE_COLLECTION, String.valueOf(id));
+        }
     }
 
     /** Count how many active listings a player currently has. */
@@ -155,7 +159,9 @@ public final class AuctionDB {
         removeActive(item.getId());
         JsonObject obj = toJson(item.getUuid(), item.getOwner(), item.getNbt(), item.getItemKey(),
             item.getCount(), item.getPrice(), 0L);
-        store.put(EXPIRED_COLLECTION, String.valueOf(item.getId()), obj);
+        if (!store.put(EXPIRED_COLLECTION, String.valueOf(item.getId()), obj)) {
+            NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Failed to persist {}/{} to storage - this change may be lost on restart.", EXPIRED_COLLECTION, String.valueOf(item.getId()));
+        }
     }
 
     /** Delete an expired item once the player has collected it. */
@@ -254,7 +260,9 @@ public final class AuctionDB {
                     rs.getInt("count"),
                     rs.getDouble("price"),
                     hasSecondsLeft ? rs.getLong("secondsLeft") : 0L);
-                store.put(collection, String.valueOf(rs.getInt("id")), obj);
+                if (!store.put(collection, String.valueOf(rs.getInt("id")), obj)) {
+                    NeoLog.error(LOGGER, LogCategory.AUCTION_HOUSE, "Failed to persist {}/{} to storage - this change may be lost on restart.", collection, String.valueOf(rs.getInt("id")));
+                }
                 count++;
             }
         }

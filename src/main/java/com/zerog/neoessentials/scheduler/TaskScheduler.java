@@ -24,14 +24,14 @@ public class TaskScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskScheduler.class);
     private static TaskScheduler INSTANCE;
     
-    private static MinecraftServer server;
-    private static int tickCounter = 0;
+    private static volatile MinecraftServer server;
+    private static volatile int tickCounter = 0;
     private static final int CHECK_INTERVAL = 20; // Check every second (20 ticks)
     
     private TaskScheduler() {
     }
     
-    public static TaskScheduler getInstance() {
+    public static synchronized TaskScheduler getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new TaskScheduler();
         }
