@@ -239,7 +239,7 @@ public class RandomTeleportManager {
             double[] offset = randomOffset(minRange, maxRange);
             double cx = clampToWorldBorder(level, center[0] + offset[0], true);
             double cz = clampToWorldBorder(level, center[2] + offset[1], false);
-            BlockPos searchOrigin = new BlockPos((int) cx, (int) center[1], (int) cz);
+            BlockPos searchOrigin = new BlockPos((int) Math.floor(cx), (int) center[1], (int) Math.floor(cz));
 
             var pair = level.findClosestBiome3d(holder -> holder.is(biomeKey), searchOrigin, radius, step, 64);
             if (pair == null) continue;
@@ -332,8 +332,8 @@ public class RandomTeleportManager {
     private TeleportLocation findSafeY(ServerLevel level, double x, double z, String locationName) {
         try {
             // Force-load the chunk
-            int chunkX = (int) x >> 4;
-            int chunkZ = (int) z >> 4;
+            int chunkX = ((int) Math.floor(x)) >> 4;
+            int chunkZ = ((int) Math.floor(z)) >> 4;
             LevelChunk chunk = level.getChunk(chunkX, chunkZ);
 
             boolean isNether = level.dimension() == net.minecraft.world.level.Level.NETHER;
@@ -468,7 +468,7 @@ public class RandomTeleportManager {
         if (locationName != null) {
             List<String> excluded = getExcludedBiomes(locationName);
             if (!excluded.isEmpty()) {
-                BlockPos pos = new BlockPos((int) loc.getX(), (int) loc.getY(), (int) loc.getZ());
+                BlockPos pos = new BlockPos((int) Math.floor(loc.getX()), (int) Math.floor(loc.getY()), (int) Math.floor(loc.getZ()));
                 String biomeName = getBiomeName(level, pos);
                 if (biomeName != null && excluded.contains(biomeName.toLowerCase())) {
                     return false;
