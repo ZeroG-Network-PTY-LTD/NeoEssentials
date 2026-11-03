@@ -93,7 +93,9 @@ public class ApiKeyEndpoint implements HttpHandler {
         }
 
         String label = data.get("label").getAsString();
-        User.Role role = User.Role.ADMIN;
+        // Default to the lowest role, not ADMIN - an omitted "role" field (e.g. a client bug, or
+        // copy-pasted request missing the field) should never silently mint a full-admin key.
+        User.Role role = User.Role.VIEWER;
         if (data.has("role")) {
             try {
                 role = User.Role.valueOf(data.get("role").getAsString().toUpperCase());
