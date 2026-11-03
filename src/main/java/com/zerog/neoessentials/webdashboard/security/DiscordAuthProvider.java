@@ -70,6 +70,14 @@ public class DiscordAuthProvider {
 
     /**
      * Get linked Discord account by Minecraft UUID, checking whichever adapter is ready.
+     *
+     * <p>{@code discordUsername} is filled with the raw Discord snowflake ID — none of the
+     * companion-mod adapters (SDLink/Mc2Discord/DCIntegration) expose a resolved display name
+     * through {@link com.zerog.neoessentials.integrations.ChatIntegrationAdapter}, only
+     * {@code getLinkedDiscordId}, so there's nothing else to put there without new API surface
+     * on all three adapters. {@code minecraftUsername}, unlike that, IS resolvable locally (the
+     * server already knows every online/cached player's name for a UUID), so it's looked up
+     * properly instead of also falling back to the UUID string.
      */
     public DiscordUser getLinkedAccountByUuid(UUID minecraftUuid) {
         Optional<String> discordId = ChatIntegrationManager.findLinkedDiscordId(minecraftUuid);
@@ -79,7 +87,23 @@ public class DiscordAuthProvider {
         }
 
         List<String> discordRoles = ChatIntegrationManager.findDiscordRoleIds(minecraftUuid);
-        return new DiscordUser(discordId.get(), discordId.get(), minecraftUuid.toString(), minecraftUuid.toString(), discordRoles);
+        String minecraftUsername = resolveMinecraftUsername(minecraftUuid);
+        return new DiscordUser(discordId.get(), discordId.get(), minecraftUsername, minecraftUuid.toString(), discordRoles);
+    }
+
+    /** Resolves a UUID to its player name via the server's own player list/profile cache,
+     *  falling back to the UUID string only if neither has it (e.g. the player has never
+     *  joined this server). */
+    private static String resolveMinecraftUsername(UUID minecraftUuid) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return minecraftUuid.toString();
+
+        ServerPlayer player = server.getPlayerList().getPlayer(minecraftUuid);
+        if (player != null) return player.getName().getString();
+
+        return server.services().nameToIdCache().get(minecraftUuid)
+            .map(net.minecraft.server.players.NameAndId::name)
+            .orElse(minecraftUuid.toString());
     }
 
     /**

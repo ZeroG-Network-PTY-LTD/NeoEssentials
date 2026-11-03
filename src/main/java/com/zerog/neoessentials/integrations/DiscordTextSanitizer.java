@@ -2,7 +2,7 @@ package com.zerog.neoessentials.integrations;
 
 /**
  * Shared text sanitization for player-supplied content relayed to Discord by any
- * {@link ChatIntegrationAdapter} implementation (SDLink, Mc2Discord, DCIntegration).
+ * {@link ChatIntegrationAdapter} implementation (SDLink, Mc2Discord, DCIntegration, Webhook).
  */
 public final class DiscordTextSanitizer {
     private DiscordTextSanitizer() {}
@@ -44,5 +44,39 @@ public final class DiscordTextSanitizer {
             .replace("@everyone", "@​everyone")
             .replace("@here", "@​here")
             .replaceAll("<(@[!&]?\\d+)>", "<​$1>");
+    }
+
+    /**
+     * "{@code <name> has been muted/unmuted (Reason: <reason>)}" — shared by every adapter
+     * (SDLink/Mc2Discord/DCIntegration/Webhook) so the sanitize+truncate step for a player-typed
+     * mute reason can't be forgotten on one of them again (see git history — it was, four times).
+     */
+    public static String formatMuteEvent(String displayName, boolean isMuted, String reason) {
+        String action = isMuted ? "muted" : "unmuted";
+        String safeReason = (reason != null && !reason.isEmpty()) ? truncate(sanitizeMentions(reason), DISCORD_TEXT_LIMIT) : null;
+        return String.format("%s has been %s%s", displayName, action, safeReason != null ? " (Reason: " + safeReason + ")" : "");
+    }
+
+    /**
+     * "{@code <name> is now/no longer AFK (<reason>)}" — same sharing rationale as
+     * {@link #formatMuteEvent}; the reason only ever shows when going AFK, never on return.
+     */
+    public static String formatAfkEvent(String displayName, boolean isAfk, String reason) {
+        String status = isAfk ? "is now AFK" : "is no longer AFK";
+        String safeReason = (isAfk && reason != null && !reason.isEmpty()) ? truncate(sanitizeMentions(reason), DISCORD_TEXT_LIMIT) : null;
+        return String.format("%s %s%s", displayName, status, safeReason != null ? " (" + safeReason + ")" : "");
+    }
+
+    /**
+     * "{@code <name> earned the advancement <advancementName>}" — same sharing rationale as
+     * {@link #formatMuteEvent}. An advancement's title is normally server/datapack-defined, not
+     * player-typed, but some setups (e.g. FTB Quests custom rewards, a datapack reading a
+     * scoreboard/NBT string into a title) let it carry player-influenced text — sanitize it the
+     * same as every other relayed string on general principle, since none of the chat-bridge
+     * mods' own send APIs restrict mention types either way.
+     */
+    public static String formatAdvancementEvent(String displayName, String advancementName) {
+        String safeName = truncate(sanitizeMentions(advancementName), DISCORD_TEXT_LIMIT);
+        return String.format("%s earned the advancement %s", displayName, safeName);
     }
 }

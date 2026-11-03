@@ -260,8 +260,8 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public void onPlayerAdvancement(ServerPlayer player, String advancementName, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String text = DiscordIdentityFormatter.resolveNameWithRank(player) + " earned the advancement " +
-                DiscordTextSanitizer.truncate(advancementName, DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
+            String text = DiscordTextSanitizer.formatAdvancementEvent(
+                DiscordIdentityFormatter.resolveNameWithRank(player), advancementName);
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 sendToChannel(discordChannelId, text);
             } else if (!nativeAdvancementEnabled) {
@@ -276,10 +276,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public void onPlayerMute(ServerPlayer player, String reason, boolean isMuted, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String action = isMuted ? "muted" : "unmuted";
-            String safeReason = DiscordTextSanitizer.truncate(reason, DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s has been %s%s", DiscordIdentityFormatter.resolveNameWithRank(player), action,
-                safeReason != null && !safeReason.isEmpty() ? " (Reason: " + safeReason + ")" : "");
+            String text = DiscordTextSanitizer.formatMuteEvent(DiscordIdentityFormatter.resolveNameWithRank(player), isMuted, reason);
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 sendToChannel(discordChannelId, text);
             } else {
@@ -294,10 +291,7 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     public void onAfkStatusChange(ServerPlayer player, boolean isAfk, String reason, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String status = isAfk ? "is now AFK" : "is no longer AFK";
-            String safeReason = DiscordTextSanitizer.truncate(reason, DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s %s%s", DiscordIdentityFormatter.resolveNameWithRank(player), status,
-                (isAfk && safeReason != null && !safeReason.isEmpty()) ? " (" + safeReason + ")" : "");
+            String text = DiscordTextSanitizer.formatAfkEvent(DiscordIdentityFormatter.resolveNameWithRank(player), isAfk, reason);
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 sendToChannel(discordChannelId, text);
             } else {

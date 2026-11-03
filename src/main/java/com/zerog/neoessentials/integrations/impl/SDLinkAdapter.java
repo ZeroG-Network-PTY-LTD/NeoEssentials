@@ -355,11 +355,8 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public void onPlayerMute(ServerPlayer player, String reason, boolean isMuted, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String action = isMuted ? "muted" : "unmuted";
-            String safeReason = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(reason,
-                com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s has been %s%s", com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player), action,
-                safeReason != null && !safeReason.isEmpty() ? " (Reason: " + safeReason + ")" : "");
+            String text = com.zerog.neoessentials.integrations.DiscordTextSanitizer.formatMuteEvent(
+                com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player), isMuted, reason);
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 sendEventEmbedOrPlain("mute", discordChannelId, player, text, text);
             } else {
@@ -374,11 +371,8 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public void onAfkStatusChange(ServerPlayer player, boolean isAfk, String reason, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String status = isAfk ? "is now AFK" : "is no longer AFK";
-            String safeReason = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(reason,
-                com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
-            String text = String.format("%s %s%s", com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player), status,
-                (isAfk && safeReason != null && !safeReason.isEmpty()) ? " (" + safeReason + ")" : "");
+            String text = com.zerog.neoessentials.integrations.DiscordTextSanitizer.formatAfkEvent(
+                com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player), isAfk, reason);
             if (discordChannelId != null && !discordChannelId.isBlank()) {
                 sendEventEmbedOrPlain("afk", discordChannelId, player, text, text);
             } else {
@@ -426,7 +420,8 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     public void onPlayerAdvancement(ServerPlayer player, String advancementName, String discordChannelId) {
         if (!isReady()) return;
         try {
-            String safeAdvancementName = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(advancementName,
+            String safeAdvancementName = com.zerog.neoessentials.integrations.DiscordTextSanitizer.truncate(
+                com.zerog.neoessentials.integrations.DiscordTextSanitizer.sanitizeMentions(advancementName),
                 com.zerog.neoessentials.integrations.DiscordTextSanitizer.DISCORD_TEXT_LIMIT);
             String text = com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player) + " earned the advancement " + safeAdvancementName;
             if (discordChannelId != null && !discordChannelId.isBlank()) {
