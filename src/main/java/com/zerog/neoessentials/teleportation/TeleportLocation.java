@@ -383,19 +383,28 @@ public class TeleportLocation {
                            worldName, x, y, z, yaw, pitch);
     }
     
+    // Coordinates are compared/hashed on a 0.1-wide bucket rather than raw epsilon tolerance -
+    // a raw "abs(a-b) < 0.1" tolerance isn't transitive (A=0.0, B=0.09, C=0.18: A==B and B==C but
+    // A!=C) and isn't consistent with a hashCode() that hashes the exact doubles, violating the
+    // Object contract for any future HashSet/HashMap<TeleportLocation,...> use. Bucketing keeps
+    // the "close enough" equality semantics while making both methods agree.
+    private long bucket(double v) {
+        return Math.round(v * 10.0);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof TeleportLocation other)) return false;
 
         return worldName.equals(other.worldName) &&
-               Math.abs(x - other.x) < 0.1 &&
-               Math.abs(y - other.y) < 0.1 &&
-               Math.abs(z - other.z) < 0.1;
+               bucket(x) == bucket(other.x) &&
+               bucket(y) == bucket(other.y) &&
+               bucket(z) == bucket(other.z);
     }
-    
+
     @Override
     public int hashCode() {
-        return worldName.hashCode() ^ Double.hashCode(x) ^ Double.hashCode(y) ^ Double.hashCode(z);
+        return worldName.hashCode() ^ Long.hashCode(bucket(x)) ^ Long.hashCode(bucket(y)) ^ Long.hashCode(bucket(z));
     }
 }
