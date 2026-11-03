@@ -143,7 +143,9 @@ public class ScoreboardEndpoint implements HttpHandler {
         }
 
         ScoreboardManager.getInstance().addOrUpdateBoard(new ScoreboardBoard(name, priority, conditions, titleFrames, lines));
-        ScoreboardManager.getInstance().saveConfig();
+        if (!ScoreboardManager.getInstance().saveConfig()) {
+            return error("Board '" + name + "' was updated but failed to persist to scoreboard.json - check server logs; it will not survive a restart");
+        }
         pushUpdate();
 
         JsonObject obj = new JsonObject();
@@ -187,7 +189,9 @@ public class ScoreboardEndpoint implements HttpHandler {
                 if (body == null || !body.has("text")) return error("Request body must contain 'text'");
                 String text = body.get("text").getAsString();
                 board.getLines().set(index, new ScoreboardLine(List.of(text), board.getLines().get(index).getCondition()));
-                ScoreboardManager.getInstance().saveConfig();
+                if (!ScoreboardManager.getInstance().saveConfig()) {
+                    return error("Line " + index + " of '" + name + "' was updated but failed to persist to scoreboard.json - check server logs");
+                }
                 pushUpdate();
 
                 JsonObject obj = new JsonObject();
@@ -207,7 +211,9 @@ public class ScoreboardEndpoint implements HttpHandler {
             if (name.isEmpty()) return error("Board name is required");
             boolean removed = ScoreboardManager.getInstance().removeBoard(name);
             if (!removed) return error("No board named '" + name + "'");
-            ScoreboardManager.getInstance().saveConfig();
+            if (!ScoreboardManager.getInstance().saveConfig()) {
+                return error("Board '" + name + "' was removed but failed to persist to scoreboard.json - check server logs; it may reappear on restart");
+            }
             pushUpdate();
             JsonObject obj = new JsonObject();
             obj.addProperty("success", true);

@@ -41,20 +41,25 @@ public class CrateKeyManager {
         setKeys(playerUuid, crateId, getKeys(playerUuid, crateId) + amount);
     }
 
-    /** Removes up to {@code amount} keys, never going below 0. Returns {@code true} if the
-     *  player had enough keys and the full amount was removed. */
+    /** Removes up to {@code amount} keys, never going below 0. Returns {@code true} only if the
+     *  player had enough keys AND the decrement was actually persisted - previously this
+     *  returned true purely from the in-memory balance check, so a transient storage failure
+     *  right when a virtual key was spent let the player keep whatever the key unlocked while
+     *  the balance decrement itself was lost, effectively refunding the spent key on restart. */
     public boolean removeKeys(UUID playerUuid, String crateId, int amount) {
         int current = getKeys(playerUuid, crateId);
         if (current < amount) return false;
-        setKeys(playerUuid, crateId, current - amount);
-        return true;
+        return setKeys(playerUuid, crateId, current - amount);
     }
 
-    public void setKeys(UUID playerUuid, String crateId, int amount) {
+    /** @return true if the new balance was actually persisted. */
+    public boolean setKeys(UUID playerUuid, String crateId, int amount) {
         JsonObject record = new JsonObject();
         record.addProperty("count", Math.max(0, amount));
-        if (!StorageManager.getInstance().getStore().put(COLLECTION, key(playerUuid, crateId), record)) {
+        boolean saved = StorageManager.getInstance().getStore().put(COLLECTION, key(playerUuid, crateId), record);
+        if (!saved) {
             NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, key(playerUuid, crateId));
         }
+        return saved;
     }
 }
