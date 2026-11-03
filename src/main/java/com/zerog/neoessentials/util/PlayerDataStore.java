@@ -106,7 +106,13 @@ public class PlayerDataStore {
         }
 
         try {
-            store.put(collection, playerId.toString(), data);
+            if (!store.put(collection, playerId.toString(), data)) {
+                // Leave dirtyEntries alone — a failed write must stay flagged for retry on the
+                // next flush, not get silently marked clean (it previously did: this didn't
+                // throw, it just returned, so the removal below ran regardless of success).
+                LOGGER.error("Failed to save {} data for player {} - will retry on next flush.", dataType, playerId);
+                return;
+            }
             dirtyEntries.remove(playerId);
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "Saved {} data for player {}", dataType, playerId);
         } catch (Exception e) {
@@ -250,7 +256,10 @@ public class PlayerDataStore {
                 UUID playerId = UUID.fromString(uuidStr);
                 try (FileReader reader = new FileReader(file)) {
                     JsonObject data = JsonParser.parseReader(reader).getAsJsonObject();
-                    store.put(collection, playerId.toString(), data);
+                    if (!store.put(collection, playerId.toString(), data)) {
+                        LOGGER.error("Failed to migrate legacy {} file {} - it will stay on the old legacy file, not the new storage backend.", dataType, fileName);
+                        continue;
+                    }
                     migrated++;
                 }
             } catch (Exception e) {

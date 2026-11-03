@@ -342,7 +342,9 @@ public class ResourcePackManager {
     private void savePacks() {
         try {
             for (Map.Entry<String, ResourcePack> entry : resourcePacks.entrySet()) {
-                store.put(PACKS_COLLECTION, entry.getKey(), toJson(entry.getValue()));
+                if (!store.put(PACKS_COLLECTION, entry.getKey(), toJson(entry.getValue()))) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PACKS_COLLECTION, entry.getKey());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Failed to save resource packs", e);
@@ -456,7 +458,9 @@ public class ResourcePackManager {
 
             int count = 0;
             for (Map.Entry<String, ResourcePack> entry : loaded.entrySet()) {
-                store.put(PACKS_COLLECTION, entry.getKey(), toJson(entry.getValue()));
+                if (!store.put(PACKS_COLLECTION, entry.getKey(), toJson(entry.getValue()))) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PACKS_COLLECTION, entry.getKey());
+                }
                 count++;
             }
             NeoLog.info(LOGGER, LogCategory.GENERAL, "ResourcePackManager: migrated {} resource pack record(s) from legacy packs.json into the '{}' storage backend.",

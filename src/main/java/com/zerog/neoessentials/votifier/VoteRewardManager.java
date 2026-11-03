@@ -127,7 +127,9 @@ public class VoteRewardManager {
         v.addProperty("timestamp", vote.timestamp());
         votes.add(v);
 
-        store.put(PENDING_COLLECTION, key, record);
+        if (!store.put(PENDING_COLLECTION, key, record)) {
+            NeoLog.error(LOGGER, LogCategory.VOTIFIER, "Failed to persist {}/{} to storage - this change may be lost on restart.", PENDING_COLLECTION, key);
+        }
     }
 
     private static void recordStats(Vote vote) {
@@ -141,7 +143,9 @@ public class VoteRewardManager {
         long total = record.has("total") ? record.get("total").getAsLong() : 0L;
         record.addProperty("total", total + 1);
         record.addProperty("lastVote", System.currentTimeMillis());
-        store.put(STATS_COLLECTION, key, record);
+        if (!store.put(STATS_COLLECTION, key, record)) {
+            NeoLog.error(LOGGER, LogCategory.VOTIFIER, "Failed to persist {}/{} to storage - this change may be lost on restart.", STATS_COLLECTION, key);
+        }
     }
 
     private static void broadcast(MinecraftServer server, Vote vote) {

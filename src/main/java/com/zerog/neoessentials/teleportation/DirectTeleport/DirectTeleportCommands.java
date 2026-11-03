@@ -228,7 +228,7 @@ public class DirectTeleportCommands {
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(player), x, y, z, player.getYRot(), player.getXRot());
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.teleport.admin.teleported_player_coords",
-                player.getName().getString(), String.valueOf((int) x), String.valueOf((int) y), String.valueOf((int) z)), true);
+                player.getName().getString(), String.valueOf((int) Math.floor(x)), String.valueOf((int) Math.floor(y)), String.valueOf((int) Math.floor(z))), true);
             return 1;
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "teleportToCoordinates command failed", e);

@@ -87,7 +87,9 @@ public class CrateManager {
     public void setBlock(ServerLevel level, BlockPos pos, String crateId) {
         JsonObject record = new JsonObject();
         record.addProperty("crateId", crateId.toLowerCase());
-        StorageManager.getInstance().getStore().put(BLOCKS_COLLECTION, posKey(level, pos), record);
+        if (!StorageManager.getInstance().getStore().put(BLOCKS_COLLECTION, posKey(level, pos), record)) {
+            NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist {}/{} to storage - this change may be lost on restart.", BLOCKS_COLLECTION, posKey(level, pos));
+        }
     }
 
     public boolean removeBlock(ServerLevel level, BlockPos pos) {
@@ -223,7 +225,9 @@ public class CrateManager {
         record.addProperty("crate", crateId);
         record.addProperty("reward", rewardId);
         record.addProperty("timestamp", System.currentTimeMillis());
-        store.put(HISTORY_COLLECTION, key, record);
+        if (!store.put(HISTORY_COLLECTION, key, record)) {
+            NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist {}/{} to storage - this change may be lost on restart.", HISTORY_COLLECTION, key);
+        }
     }
 
     // ── Persistence (admin commands) ────────────────────────────────────────

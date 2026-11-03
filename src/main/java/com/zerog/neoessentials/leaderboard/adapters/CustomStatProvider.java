@@ -56,7 +56,9 @@ public class CustomStatProvider {
         cache.put(k, value);
         JsonObject obj = new JsonObject();
         obj.addProperty("value", value);
-        store.put(COLLECTION, k, obj);
+        if (!store.put(COLLECTION, k, obj)) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, k);
+        }
         NeoLog.debug(LOGGER, LogCategory.GENERAL, "CustomStatProvider: set {} = {}", k, value);
     }
 

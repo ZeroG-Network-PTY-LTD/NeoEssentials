@@ -101,7 +101,9 @@ public class PlayerChatFormatManager {
                     UUID uuid = UUID.fromString(key);
                     JsonObject record = new JsonObject();
                     record.addProperty("format", data.get(key).getAsString());
-                    store.put(COLLECTION, uuid.toString(), record);
+                    if (!store.put(COLLECTION, uuid.toString(), record)) {
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, uuid.toString());
+                    }
                     migrated++;
                 } catch (IllegalArgumentException e) {
                     NeoLog.warn(LOGGER, LogCategory.CHAT, "Skipping malformed UUID key '{}' in legacy player_chat_formats.json", key);
@@ -136,7 +138,9 @@ public class PlayerChatFormatManager {
         playerFormats.put(playerUUID, format);
         JsonObject record = new JsonObject();
         record.addProperty("format", format);
-        store.put(COLLECTION, playerUUID.toString(), record);
+        if (!store.put(COLLECTION, playerUUID.toString(), record)) {
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, playerUUID.toString());
+        }
         NeoLog.debug(LOGGER, LogCategory.CHAT, "Set per-player chat format override for {}: [{}]", playerUUID, format);
     }
 

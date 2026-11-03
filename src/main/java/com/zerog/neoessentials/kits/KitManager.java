@@ -140,7 +140,9 @@ public class KitManager {
      */
     private void saveKit(Kit kit) {
         try {
-            store.put(KIT_COLLECTION, kit.getName(), kit.toJson());
+            if (!store.put(KIT_COLLECTION, kit.getName(), kit.toJson())) {
+                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", KIT_COLLECTION, kit.getName());
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to save kit '{}': {}", kit.getName(), e.getMessage(), e);
         }
@@ -207,7 +209,9 @@ public class KitManager {
             }
             JsonObject record = new JsonObject();
             record.add("cooldowns", cooldownsJson);
-            store.put(COOLDOWN_COLLECTION, playerId.toString(), record);
+            if (!store.put(COOLDOWN_COLLECTION, playerId.toString(), record)) {
+                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", COOLDOWN_COLLECTION, playerId.toString());
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to save cooldown data for player {}: {}", playerId, e.getMessage(), e);
         }
@@ -230,7 +234,9 @@ public class KitManager {
             }
             JsonObject record = new JsonObject();
             record.add("usages", usagesJson);
-            store.put(USAGE_COLLECTION, playerId.toString(), record);
+            if (!store.put(USAGE_COLLECTION, playerId.toString(), record)) {
+                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", USAGE_COLLECTION, playerId.toString());
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to save usage data for player {}: {}", playerId, e.getMessage(), e);
         }
@@ -274,7 +280,9 @@ public class KitManager {
                             String name = obj.has("name")
                                 ? obj.get("name").getAsString().toLowerCase().replaceAll("[^a-z0-9_]", "")
                                 : UUID.randomUUID().toString();
-                            store.put(KIT_COLLECTION, name, obj);
+                            if (!store.put(KIT_COLLECTION, name, obj)) {
+                                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", KIT_COLLECTION, name);
+                            }
                             count++;
                         } catch (Exception e) {
                             LOGGER.warn("Failed to migrate legacy kit entry: {}", e.getMessage());
@@ -302,7 +310,9 @@ public class KitManager {
                         try {
                             JsonObject record = new JsonObject();
                             record.add("cooldowns", playerEntry.getValue().getAsJsonObject());
-                            store.put(COOLDOWN_COLLECTION, playerEntry.getKey(), record);
+                            if (!store.put(COOLDOWN_COLLECTION, playerEntry.getKey(), record)) {
+                                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", COOLDOWN_COLLECTION, playerEntry.getKey());
+                            }
                             count++;
                         } catch (Exception e) {
                             LOGGER.warn("Failed to migrate legacy cooldown entry: {}", e.getMessage());
@@ -315,7 +325,9 @@ public class KitManager {
                         try {
                             JsonObject record = new JsonObject();
                             record.add("usages", playerEntry.getValue().getAsJsonObject());
-                            store.put(USAGE_COLLECTION, playerEntry.getKey(), record);
+                            if (!store.put(USAGE_COLLECTION, playerEntry.getKey(), record)) {
+                                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to persist {}/{} to storage - this change may be lost on restart.", USAGE_COLLECTION, playerEntry.getKey());
+                            }
                             count++;
                         } catch (Exception e) {
                             LOGGER.warn("Failed to migrate legacy usage entry: {}", e.getMessage());

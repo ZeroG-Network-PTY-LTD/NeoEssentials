@@ -79,7 +79,9 @@ public class WorthManager {
     private void persistPrice(String id, BigDecimal price) {
         JsonObject obj = new JsonObject();
         obj.addProperty("price", price.toPlainString());
-        store.put(COLLECTION, id, obj);
+        if (!store.put(COLLECTION, id, obj)) {
+            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+        }
     }
 
     public void reload() {
@@ -303,7 +305,9 @@ public class WorthManager {
                     BigDecimal price = new BigDecimal(e.getValue().getAsString());
                     JsonObject obj = new JsonObject();
                     obj.addProperty("price", price.toPlainString());
-                    store.put(COLLECTION, id, obj);
+                    if (!store.put(COLLECTION, id, obj)) {
+                        NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                    }
                     migrated++;
                 } catch (Exception ex) {
                     LOGGER.warn("Invalid legacy worth entry '{}': {}", e.getKey(), ex.getMessage());

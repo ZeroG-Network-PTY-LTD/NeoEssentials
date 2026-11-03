@@ -67,7 +67,9 @@ public class ShopEntityManager {
     public void register(ShopEntityData data) {
         byShopId.put(data.shopId, data);
         if (data.entityUUID != null) byEntityId.put(data.entityUUID, data);
-        store.put(COLLECTION, data.shopId.toString(), toJson(data));
+        if (!store.put(COLLECTION, data.shopId.toString(), toJson(data))) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, data.shopId.toString());
+        }
     }
 
     public boolean remove(UUID shopId) {
@@ -106,7 +108,9 @@ public class ShopEntityManager {
         if (data.entityUUID != null) byEntityId.remove(data.entityUUID);
         data.entityUUID = newEntityUUID;
         byEntityId.put(newEntityUUID, data);
-        store.put(COLLECTION, data.shopId.toString(), toJson(data));
+        if (!store.put(COLLECTION, data.shopId.toString(), toJson(data))) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, data.shopId.toString());
+        }
     }
 
     // ── Persistence ───────────────────────────────────────────────────────────
@@ -139,7 +143,9 @@ public class ShopEntityManager {
             if (shops != null) {
                 for (ShopEntityData d : shops) {
                     if (d.shopId == null) d.shopId = UUID.randomUUID();
-                    store.put(COLLECTION, d.shopId.toString(), toJson(d));
+                    if (!store.put(COLLECTION, d.shopId.toString(), toJson(d))) {
+                        NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, d.shopId.toString());
+                    }
                     migrated++;
                 }
             }
