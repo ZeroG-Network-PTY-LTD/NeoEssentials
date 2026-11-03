@@ -3,6 +3,7 @@ import net.minecraft.core.BlockPos;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Persistent data for one hologram.
  */
@@ -12,15 +13,20 @@ public class HologramData {
     /** Dimension key, e.g. "minecraft:overworld". */
     public String world = "minecraft:overworld";
     public double x = 0, y = 64, z = 0;
-    /** Ordered list of text lines (top to bottom). */
-    public List<HologramLine> lines = new ArrayList<>();
+    /** Ordered list of text lines (top to bottom).
+     * {@code CopyOnWriteArrayList} for thread safety: mutated on the main server/command
+     * thread (editing a hologram's lines) but iterated on the background scheduler's
+     * animation-tick thread ({@code HologramScheduler}) concurrently. */
+    public List<HologramLine> lines = new CopyOnWriteArrayList<>();
     /**
      * Placeholder refresh interval in seconds.
      * 0 = static / never refresh.
      */
     public int refreshInterval = 5;
-    /** Whether this hologram is currently visible. */
-    public boolean visible = true;
+    /** Whether this hologram is currently visible.
+     * {@code volatile} for thread safety: toggled from the dashboard HTTP handler thread
+     * and read from two separate background scheduler threads (refresh + animation). */
+    public volatile boolean visible = true;
 
     /**
      * When {@code true} this hologram responds to player interactions (right-click / left-click).
