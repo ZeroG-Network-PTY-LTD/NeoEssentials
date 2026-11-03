@@ -393,10 +393,10 @@ public class MiscTeleportManager {
         // Save current location as back location
         saveBackLocation(player);
         
-        int currentX = (int) player.getX();
-        int currentZ = (int) player.getZ();
+        int currentX = (int) Math.floor(player.getX());
+        int currentZ = (int) Math.floor(player.getZ());
         int maxY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(player.level()) - 1;
-        
+
         // Find the highest solid block
         for (int y = maxY; y >= com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(player.level()); y--) {
             if (!player.level().getBlockState(new net.minecraft.core.BlockPos(currentX, y, currentZ)).isAir()) {
@@ -442,7 +442,7 @@ public class MiscTeleportManager {
             double newY = currentPos.y + lookDirection.y * distance;
             double newZ = currentPos.z + lookDirection.z * distance;
             
-            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos((int) newX, (int) newY, (int) newZ);
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos((int) Math.floor(newX), (int) Math.floor(newY), (int) Math.floor(newZ));
             net.minecraft.core.BlockPos posAbove = pos.above();
             
             // Check if there's enough space for player (2 blocks high)
@@ -528,8 +528,8 @@ public class MiscTeleportManager {
         
         for (int attempt = 0; attempt < attempts; attempt++) {
             // Generate random coordinates
-            int randomX = (int) player.getX() + random.nextInt(maxDistance * 2) - maxDistance;
-            int randomZ = (int) player.getZ() + random.nextInt(maxDistance * 2) - maxDistance;
+            int randomX = (int) Math.floor(player.getX()) + random.nextInt(maxDistance * 2) - maxDistance;
+            int randomZ = (int) Math.floor(player.getZ()) + random.nextInt(maxDistance * 2) - maxDistance;
             
             // Find safe Y coordinate (highest solid block + 1)
             int maxY = com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(player.level()) - 1;
