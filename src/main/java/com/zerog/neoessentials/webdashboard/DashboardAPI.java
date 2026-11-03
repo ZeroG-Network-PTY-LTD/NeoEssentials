@@ -334,9 +334,15 @@ public class DashboardAPI {
                                         reqPath.equals("/api/files/write") ||
                                         reqPath.equals("/api/files/create") ||
                                         reqPath.equals("/api/files/delete") ||
-                                        (reqPath.startsWith("/api/auth/users") && !"GET".equals(reqMethod)) ||
-                                        reqPath.startsWith("/api/auth/sessions") ||
-                                        (reqPath.startsWith("/api/files") && isWrite);
+                                        (reqPath.startsWith("/api/files") && isWrite) ||
+                                        // /api/users and /api/apikeys mint or alter privilege itself
+                                        // (account roles, standing API keys) rather than gating a
+                                        // domain feature, so a CUSTOM user can never be let through
+                                        // here no matter what tab grant they hold - unlike every
+                                        // other "isWrite -> authAdmin = true" promotion below, that
+                                        // would hand them a path to self-promote to full ADMIN.
+                                        reqPath.equals("/api/users") || reqPath.startsWith("/api/users/") ||
+                                        reqPath.equals("/api/apikeys") || reqPath.startsWith("/api/apikeys/");
 
                                     boolean tabAllowed = false;
                                     if (!trulyAdminOnly) {
