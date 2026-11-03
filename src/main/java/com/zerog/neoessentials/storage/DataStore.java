@@ -25,8 +25,10 @@ import java.util.Map;
  */
 public interface DataStore {
 
-    /** Inserts or overwrites a single record. */
-    void put(String collection, String id, JsonObject data);
+    /** Inserts or overwrites a single record. Returns {@code true} if it was actually
+     *  persisted; {@code false} on any failure (logged by the implementation), so callers
+     *  can surface a lost write instead of assuming it always succeeded. */
+    boolean put(String collection, String id, JsonObject data);
 
     /** Returns a record, or {@code null} if it doesn't exist. */
     JsonObject get(String collection, String id);

@@ -630,7 +630,9 @@ public class AfkManager {
                 JsonObject playerJson = new JsonObject();
                 // Don't save AFK status - it's session-based
                 playerJson.addProperty("lastActivity", entry.getValue().getLastActivity());
-                store.put(COLLECTION, entry.getKey().toString(), playerJson);
+                if (!store.put(COLLECTION, entry.getKey().toString(), playerJson)) {
+                    NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.getKey().toString());
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Failed to save AFK data", e);
@@ -656,7 +658,9 @@ public class AfkManager {
                     JsonObject playerJson = entry.getValue().getAsJsonObject();
                     JsonObject record = new JsonObject();
                     record.addProperty("lastActivity", playerJson.get("lastActivity").getAsLong());
-                    store.put(COLLECTION, uuid.toString(), record);
+                    if (!store.put(COLLECTION, uuid.toString(), record)) {
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, uuid.toString());
+                    }
                     migrated++;
                 } catch (Exception e) {
                     LOGGER.warn("Failed to migrate legacy AFK data for entry: {}", entry.getKey());

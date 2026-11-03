@@ -76,7 +76,9 @@ public class PayToggleManager {
         paytoggleCache.put(player, enabled);
         JsonObject obj = new JsonObject();
         obj.addProperty("enabled", enabled);
-        store.put(COLLECTION, player.toString(), obj);
+        if (!store.put(COLLECTION, player.toString(), obj)) {
+            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, player.toString());
+        }
         NeoLog.debug(LOGGER, LogCategory.ECONOMY, "setPayToggle: player={} enabled={}", player, enabled);
     }
 
@@ -128,7 +130,9 @@ public class PayToggleManager {
                     try {
                         JsonObject obj = new JsonObject();
                         obj.addProperty("enabled", entry.getValue());
-                        store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj);
+                        if (!store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj)) {
+                            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, UUID.fromString(entry.getKey()).toString());
+                        }
                         migrated++;
                     } catch (Exception ignored) {
                         NeoLog.debug(LOGGER, LogCategory.ECONOMY,

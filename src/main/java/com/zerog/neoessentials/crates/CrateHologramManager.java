@@ -175,7 +175,9 @@ public final class CrateHologramManager {
     private static void linkBlockToHologram(String blockKey, String hologramId) {
         JsonObject record = new JsonObject();
         record.addProperty("hologramId", hologramId);
-        StorageManager.getInstance().getStore().put(BLOCK_LINK_COLLECTION, blockKey, record);
+        if (!StorageManager.getInstance().getStore().put(BLOCK_LINK_COLLECTION, blockKey, record)) {
+            NeoLog.error(LOGGER, LogCategory.CRATES, "Failed to persist {}/{} to storage - this change may be lost on restart.", BLOCK_LINK_COLLECTION, blockKey);
+        }
     }
 
     /** {@code crate_<crateId>}, disambiguated with a numeric suffix if that crate already has

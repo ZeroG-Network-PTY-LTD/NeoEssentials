@@ -76,7 +76,9 @@ public class KickManager {
     public void recordKick(String playerName, UUID playerId, String reason, String kickedBy) {
         KickEntry entry = new KickEntry(playerName, playerId, reason, kickedBy);
         kicks.add(entry);
-        store.put(COLLECTION, entry.id, toJson(entry));
+        if (!store.put(COLLECTION, entry.id, toJson(entry))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.id);
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Recorded kick: player={} ({}) reason={} by={}",
             playerName, playerId, reason, kickedBy);
     }
@@ -161,7 +163,9 @@ public class KickManager {
             for (JsonElement element : root.getAsJsonArray("kicks")) {
                 JsonObject obj = element.getAsJsonObject();
                 String id = obj.has("id") ? obj.get("id").getAsString() : UUID.randomUUID().toString();
-                store.put(COLLECTION, id, obj);
+                if (!store.put(COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                }
                 migrated++;
             }
             if (migrated > 0) {

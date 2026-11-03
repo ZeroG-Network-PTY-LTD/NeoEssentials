@@ -785,7 +785,9 @@ public class JailManager {
      */
     private void saveJailedPlayers() {
         for (JailEntry jail : jailedPlayers.values()) {
-            store.put(JAIL_COLLECTION, jail.playerId.toString(), jailedPlayerToJson(jail));
+            if (!store.put(JAIL_COLLECTION, jail.playerId.toString(), jailedPlayerToJson(jail))) {
+                NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", JAIL_COLLECTION, jail.playerId.toString());
+            }
         }
         for (JsonObject existing : store.getAll(JAIL_COLLECTION).values()) {
             String id = existing.get("playerId").getAsString();
@@ -802,7 +804,9 @@ public class JailManager {
      */
     private void saveJailLocations() {
         for (JailLocation jail : jailLocations.values()) {
-            store.put(JAIL_LOCATION_COLLECTION, jail.name, jailLocationToJson(jail));
+            if (!store.put(JAIL_LOCATION_COLLECTION, jail.name, jailLocationToJson(jail))) {
+                NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", JAIL_LOCATION_COLLECTION, jail.name);
+            }
         }
         for (String existingName : store.getAll(JAIL_LOCATION_COLLECTION).keySet()) {
             if (!jailLocations.containsKey(existingName)) {
@@ -840,7 +844,9 @@ public class JailManager {
             for (JsonElement element : root.getAsJsonArray("jailed")) {
                 JsonObject obj = element.getAsJsonObject().deepCopy();
                 String id = obj.get("playerId").getAsString();
-                store.put(JAIL_COLLECTION, id, obj);
+                if (!store.put(JAIL_COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", JAIL_COLLECTION, id);
+                }
                 count++;
             }
         } catch (IOException e) {
@@ -860,7 +866,9 @@ public class JailManager {
             for (JsonElement element : root.getAsJsonArray("jails")) {
                 JsonObject obj = element.getAsJsonObject().deepCopy();
                 String id = obj.get("name").getAsString();
-                store.put(JAIL_LOCATION_COLLECTION, id, obj);
+                if (!store.put(JAIL_LOCATION_COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", JAIL_LOCATION_COLLECTION, id);
+                }
                 count++;
             }
         } catch (IOException e) {

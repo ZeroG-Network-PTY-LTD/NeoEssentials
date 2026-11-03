@@ -107,7 +107,9 @@ public class FreezeManager {
         }
 
         frozenPlayers.put(playerId, freeze);
-        store.put(COLLECTION, playerId.toString(), toJson(freeze));
+        if (!store.put(COLLECTION, playerId.toString(), toJson(freeze))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, playerId.toString());
+        }
 
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying freeze: player={} ({}) reason={} by={}",
             playerName, playerId, reason, frozenBy);
@@ -301,7 +303,9 @@ public class FreezeManager {
             // Update frozen position to current position if not set
             if (freeze.frozenPosition == null) {
                 freeze.frozenPosition = player.blockPosition();
-                store.put(COLLECTION, playerId.toString(), toJson(freeze));
+                if (!store.put(COLLECTION, playerId.toString(), toJson(freeze))) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, playerId.toString());
+                }
             }
             // Get freeze reminder from config, fallback to localization
             String template = com.zerog.neoessentials.config.ConfigManager.getFreezeReminder();
@@ -390,7 +394,9 @@ public class FreezeManager {
                 for (JsonElement element : root.getAsJsonArray("frozen")) {
                     JsonObject obj = element.getAsJsonObject();
                     String id = obj.get("playerId").getAsString();
-                    store.put(COLLECTION, id, obj.deepCopy());
+                    if (!store.put(COLLECTION, id, obj.deepCopy())) {
+                        NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                    }
                     migrated++;
                 }
             }
