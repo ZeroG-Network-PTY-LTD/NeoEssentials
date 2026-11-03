@@ -638,17 +638,32 @@ public class FileManagementHandler implements HttpHandler {
             net.minecraft.server.MinecraftServer srv =
                 net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
 
-            // TPS
+            // TPS / player-list state is mutated by the main thread on every tick, same as
+            // handlePlayerStatistics below - hop onto the main thread before reading it here.
             if (srv != null) {
-                double avgTickMs = srv.getAverageTickTimeNanos() / 1_000_000.0;
-                double tps = Math.min(20.0, 1000.0 / Math.max(avgTickMs, 1.0));
-                response.addProperty("tps", Math.round(tps * 10.0) / 10.0);
-                response.addProperty("avgTickMs", Math.round(avgTickMs * 10.0) / 10.0);
-                response.addProperty("onlinePlayers", srv.getPlayerCount());
-                response.addProperty("maxPlayers", srv.getMaxPlayers());
-                response.addProperty("motd", srv.getMotd());
-                // Uptime (ticks / 20 = seconds)
-                response.addProperty("uptimeSeconds", srv.getTickCount() / 20);
+                JsonObject tickStats;
+                try {
+                    tickStats = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                        JsonObject r = new JsonObject();
+                        double avgTickMs = srv.getAverageTickTimeNanos() / 1_000_000.0;
+                        double tps = Math.min(20.0, 1000.0 / Math.max(avgTickMs, 1.0));
+                        r.addProperty("tps", Math.round(tps * 10.0) / 10.0);
+                        r.addProperty("avgTickMs", Math.round(avgTickMs * 10.0) / 10.0);
+                        r.addProperty("onlinePlayers", srv.getPlayerCount());
+                        r.addProperty("maxPlayers", srv.getMaxPlayers());
+                        r.addProperty("motd", srv.getMotd());
+                        r.addProperty("uptimeSeconds", srv.getTickCount() / 20);
+                        return r;
+                    }, srv).get(5, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+                    response.addProperty("success", false);
+                    response.addProperty("error", "Internal error: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
+                    sendJsonResponse(exchange, 500, response);
+                    return;
+                }
+                for (String key : tickStats.keySet()) {
+                    response.add(key, tickStats.get(key));
+                }
             } else {
                 response.addProperty("tps", 0.0);
                 response.addProperty("avgTickMs", 0.0);

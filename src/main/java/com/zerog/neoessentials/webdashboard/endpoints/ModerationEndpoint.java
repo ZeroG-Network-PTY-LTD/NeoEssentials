@@ -847,15 +847,27 @@ public class ModerationEndpoint implements HttpHandler {
             sendJson(exchange, 404, json(false, "Player not found: " + targetName));
             return;
         }
-        boolean success = FreezeManager.getInstance().freezePlayer(targetName, targetId, reason, executorName(exchange));
+        // FreezeManager.freezePlayer() reads/writes live ServerPlayer state (blockPosition(),
+        // sendSystemMessage()) that the main thread also touches every tick. Marshal it onto
+        // the main thread, same as handleCreateVanish/handleCreateJail above.
+        String executor = executorName(exchange);
+        MinecraftServer srv = this.server;
+        boolean success = srv != null
+            ? srv.submit(() -> FreezeManager.getInstance().freezePlayer(targetName, targetId, reason, executor)).get()
+            : FreezeManager.getInstance().freezePlayer(targetName, targetId, reason, executor);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Freeze request for player '{}' success={}", targetName, success);
         sendJson(exchange, success ? 200 : 409, json(success, success ? targetName + " frozen" : "Player is already frozen"));
     }
 
-    private void handleRemoveFreeze(HttpExchange exchange, String playerName) throws IOException {
+    private void handleRemoveFreeze(HttpExchange exchange, String playerName) throws Exception {
         UUID uuid = resolvePlayerId(playerName);
         if (uuid == null) { sendJson(exchange, 404, json(false, "Player not found: " + playerName)); return; }
-        boolean removed = FreezeManager.getInstance().unfreezePlayer(uuid);
+        // Same hazard as handleCreateFreeze: unfreezePlayer() reads/writes live ServerPlayer
+        // state (sendSystemMessage()), so marshal it onto the main thread too.
+        MinecraftServer srv = this.server;
+        boolean removed = srv != null
+            ? srv.submit(() -> FreezeManager.getInstance().unfreezePlayer(uuid)).get()
+            : FreezeManager.getInstance().unfreezePlayer(uuid);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Unfreeze request for player '{}' removed={}", playerName, removed);
         sendJson(exchange, 200, json(removed, removed ? playerName + " unfrozen" : "Player was not frozen"));
     }
