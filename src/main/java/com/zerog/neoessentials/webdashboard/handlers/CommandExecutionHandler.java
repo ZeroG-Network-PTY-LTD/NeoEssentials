@@ -258,24 +258,35 @@ public class CommandExecutionHandler implements HttpHandler {
             sendJsonResponse(exchange, 503, createErrorResponse("Server not available"));
             return;
         }
-        
+
+        // The dispatcher's command-node tree is rebuilt on the main thread whenever
+        // permissions change or a mod (re)registers commands - iterating getChildren() here
+        // concurrently with that rebuild (this handler runs on a dashboard HTTP thread) risks
+        // a ConcurrentModificationException or a torn read, same hazard as handleExecute above.
+        JsonArray suggestions;
+        try {
+            suggestions = CompletableFuture.supplyAsync(() -> {
+                JsonArray arr = new JsonArray();
+                server.getCommands().getDispatcher().getRoot().getChildren().forEach(node -> {
+                    String commandName = node.getName();
+                    if (commandName.toLowerCase().startsWith(input)) {
+                        JsonObject suggestion = new JsonObject();
+                        suggestion.addProperty("command", commandName);
+                        suggestion.addProperty("restricted", RESTRICTED_COMMANDS.contains(commandName.toLowerCase()));
+                        arr.add(suggestion);
+                    }
+                });
+                return arr;
+            }, server).get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            sendJsonResponse(exchange, 500, createErrorResponse("Failed to fetch command suggestions: " + e.getMessage()));
+            return;
+        }
+
         JsonObject response = new JsonObject();
-        JsonArray suggestions = new JsonArray();
-        
-        // Get all available commands
-        server.getCommands().getDispatcher().getRoot().getChildren().forEach(node -> {
-            String commandName = node.getName();
-            if (commandName.toLowerCase().startsWith(input)) {
-                JsonObject suggestion = new JsonObject();
-                suggestion.addProperty("command", commandName);
-                suggestion.addProperty("restricted", RESTRICTED_COMMANDS.contains(commandName.toLowerCase()));
-                suggestions.add(suggestion);
-            }
-        });
-        
         response.add("suggestions", suggestions);
         response.addProperty("input", input);
-        
+
         sendJsonResponse(exchange, 200, response);
     }
     
