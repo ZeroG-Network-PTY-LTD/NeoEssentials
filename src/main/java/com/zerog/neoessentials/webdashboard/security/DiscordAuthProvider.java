@@ -101,8 +101,8 @@ public class DiscordAuthProvider {
         ServerPlayer player = server.getPlayerList().getPlayer(minecraftUuid);
         if (player != null) return player.getName().getString();
 
-        return server.getProfileCache().get(minecraftUuid)
-            .map(com.mojang.authlib.GameProfile::getName)
+        return server.services().nameToIdCache().get(minecraftUuid)
+            .map(net.minecraft.server.players.NameAndId::name)
             .orElse(minecraftUuid.toString());
     }
 
