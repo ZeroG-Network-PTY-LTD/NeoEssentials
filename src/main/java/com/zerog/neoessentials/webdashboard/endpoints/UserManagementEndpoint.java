@@ -115,7 +115,10 @@ public class UserManagementEndpoint implements HttpHandler {
             if (!first) sb.append(",");
             first = false;
             sb.append("{");
-            sb.append("\"sessionId\":\"").append(esc(s.getSessionId())).append("\",");
+            // Never echo the real sessionId here — it IS the live bearer credential, and this
+            // listing is reachable by any admin, not just the session's own owner. sessionRef
+            // is a one-way, non-secret derivative usable only to revoke-by-reference.
+            sb.append("\"sessionRef\":\"").append(esc(s.getSessionRef())).append("\",");
             sb.append("\"username\":\"").append(esc(s.getUsername())).append("\",");
             sb.append("\"role\":\"").append(esc(s.getRole().name())).append("\",");
             sb.append("\"ipAddress\":\"").append(esc(s.getIpAddress())).append("\",");
@@ -249,9 +252,10 @@ public class UserManagementEndpoint implements HttpHandler {
 
     // ── Revoke session ─────────────────────────────────────────────────────────
 
-    private void handleRevokeSession(HttpExchange exchange, String sessionId) throws IOException {
-        // Session IDs are secrets — never logged in raw form.
-        AuthenticationManager.getInstance().logout(sessionId);
+    private void handleRevokeSession(HttpExchange exchange, String sessionRef) throws IOException {
+        // Path param is now a sessionRef (see Session.getSessionRef()), not the raw sessionId —
+        // the listing this value came from never exposes the real bearer credential.
+        AuthenticationManager.getInstance().logoutByRef(sessionRef);
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Session revoked via dashboard");
         sendJson(exchange, 200, json(true, "Session revoked"));
     }

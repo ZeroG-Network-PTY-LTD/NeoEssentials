@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.webdashboard.security.AuthenticationManager;
+import com.zerog.neoessentials.webdashboard.security.DashboardLoginRequestManager;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthConfig;
 import com.zerog.neoessentials.webdashboard.security.DiscordAuthProvider;
 import com.zerog.neoessentials.webdashboard.security.DiscordUser;
@@ -55,8 +56,10 @@ public class AuthenticationHandler implements HttpHandler {
                 handleLogin(exchange);
             } else if ("GET".equals(method) && path.endsWith("/discord/status")) {
                 handleDiscordStatus(exchange);
-            } else if ("GET".equals(method) && path.endsWith("/discord")) {
-                handleDiscordAuth(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/login-request")) {
+                handleLoginRequestStart(exchange);
+            } else if ("GET".equals(method) && path.endsWith("/login-request/status")) {
+                handleLoginRequestStatus(exchange);
             } else if ("POST".equals(method) && path.endsWith("/logout")) {
                 handleLogout(exchange);
             } else if ("GET".equals(method) && path.endsWith("/validate")) {
@@ -325,34 +328,9 @@ public class AuthenticationHandler implements HttpHandler {
         
         String username = request.get("username").getAsString();
 
-        // LEGACY: Check if this is permission-based (Minecraft) authentication (DEPRECATED)
-        // This requires the player to be online, use registration-based auth instead
-        if (request.has("type") && "minecraft".equals(request.get("type").getAsString())) {
-            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Legacy Minecraft auth used by {}, this method is deprecated - use registration-based auth instead", username);
-            Session session = handleMinecraftAuth(username, ipAddress, userAgent);
-
-            if (session == null) {
-                sendJsonResponse(exchange, 403, createErrorResponse("You don't have permission to access the dashboard or are not online"));
-                return;
-            }
-
-            JsonObject response = new JsonObject();
-            response.addProperty("success", true);
-            response.addProperty("sessionId", session.getSessionId());
-            response.addProperty("authType", "minecraft");
-            response.add("session", session.toJson());
-
-            User user = authManager.getUser(session.getUserId());
-            if (user != null) {
-                response.add("user", user.toJson());
-            }
-
-            exchange.getResponseHeaders().add("Set-Cookie",
-                "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
-
-            sendJsonResponse(exchange, 200, response);
-            return;
-        }
+        // The old "type":"minecraft" branch minted a session straight from this unauthenticated
+        // username string with no proof the caller owned the account — see
+        // DashboardLoginRequestManager for the safe replacement (POST /api/auth/login-request).
 
         // Standard password-based authentication
         if (!request.has("password")) {
@@ -599,138 +577,214 @@ public class AuthenticationHandler implements HttpHandler {
     }
 
     /**
-     * GET /api/auth/discord?username=<minecraftUsername>
-     * Authenticate using Discord account linked via Simple Discord Link
+     * POST /api/auth/login-request
+     * Body: {"username": "<claimed>", "method": "discord"|"minecraft"}
+     * Starts a dashboard login attempt for a CLAIMED username — mints no session yet. The
+     * browser shows the returned code to the user, who must run /dashboardlogin <code>
+     * in-game to prove they actually control that account, then poll login-request/status.
+     * Replaces the old GET /api/auth/discord and POST /api/auth/login {"type":"minecraft"}
+     * flows, which minted a real session straight from this same unauthenticated username
+     * string with no proof of ownership — a full account-impersonation hole.
      */
-    private void handleDiscordAuth(HttpExchange exchange) throws IOException {
-        // Parse query parameters
-        String query = exchange.getRequestURI().getQuery();
-        if (query == null || !query.contains("username=")) {
-            sendJsonResponse(exchange, 400, createErrorResponse("Missing username parameter"));
+    private void handleLoginRequestStart(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
+
+        if (!request.has("username") || request.get("username").getAsString().isEmpty()) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing username"));
             return;
         }
-        
-        String minecraftUsername = null;
-        for (String param : query.split("&")) {
-            if (param.startsWith("username=")) {
-                minecraftUsername = param.substring("username=".length());
-                break;
-            }
-        }
-        
-        if (minecraftUsername == null || minecraftUsername.isEmpty()) {
-            sendJsonResponse(exchange, 400, createErrorResponse("Invalid username"));
-            return;
-        }
-        
-        // Load Discord auth config
-        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
-        
-        // Check if Discord auth is enabled
-        if (!discordConfig.isEnabled()) {
-            sendJsonResponse(exchange, 403, createErrorResponse("Discord authentication is disabled"));
-            return;
-        }
-        
-        // Get Discord auth provider
-        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
-        
-        // Check if SDLink is available
-        if (!discordProvider.isAvailable()) {
-            sendJsonResponse(exchange, 503, createErrorResponse(
-                "Discord authentication unavailable. Install Simple Discord Link, Mc2Discord, or DCIntegration and link your account in-game."));
-            return;
-        }
-        
-        // Get linked Discord account
-        DiscordUser discordUser = discordProvider.getLinkedAccount(minecraftUsername);
-        
-        if (discordUser == null || !discordUser.isLinked()) {
-            sendJsonResponse(exchange, 404, createErrorResponse(
-                "No Discord account linked. Please link your account using /discord link in-game."));
-            return;
-        }
-        
-        // Check if user is blacklisted
-        if (discordConfig.isBlacklisted(discordUser.getDiscordId())) {
-            sendJsonResponse(exchange, 403, createErrorResponse("Access denied"));
-            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Blacklisted Discord user attempted login: {} ({})",
-                discordUser.getDiscordUsername(), discordUser.getDiscordId());
+        String claimedUsername = request.get("username").getAsString();
+        String authMethod = request.has("method") ? request.get("method").getAsString() : "minecraft";
+        if (!"discord".equals(authMethod) && !"minecraft".equals(authMethod)) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Invalid method"));
             return;
         }
 
-        // Check whitelist (if configured)
-        if (!discordConfig.passesWhitelist(discordUser.getDiscordRoles())) {
-            sendJsonResponse(exchange, 403, createErrorResponse(
-                "You do not have the required Discord role to access the dashboard"));
-            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Discord user without required role attempted login: {} (roles: {})",
-                discordUser.getDiscordUsername(), discordUser.getDiscordRoles());
-            return;
-        }
-        
-        // Map Discord roles to Dashboard role
-        User.Role dashboardRole = discordConfig.getHighestRole(discordUser.getDiscordRoles());
-        
-        // Get or create dashboard user
-        AuthenticationManager authManager = AuthenticationManager.getInstance();
-        User user = authManager.getUserByUsername(minecraftUsername);
-        
-        if (user == null) {
-            // Auto-register if enabled
-            if (!discordConfig.allowsAutoRegistration()) {
-                sendJsonResponse(exchange, 403, createErrorResponse(
-                    "Account not found and auto-registration is disabled"));
-                return;
-            }
-            
-            // Create new user with Discord role
-            String email = discordUser.getDiscordId() + "@discord.link"; // Placeholder email
-            user = authManager.createUser(minecraftUsername, 
-                UUID.randomUUID().toString(), // Random password (won't be used)
-                email, dashboardRole);
-            
-            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Auto-created dashboard user from Discord: {} with role {}",
-                minecraftUsername, dashboardRole);
-        } else {
-            // Always update existing user's role to match Discord role
-            if (dashboardRole.ordinal() != user.getRole().ordinal()) {
-                user.setRole(dashboardRole);
-                NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Updated user {} role to {} based on Discord roles",
-                    minecraftUsername, dashboardRole);
-            }
-        }
-        
-        // Create session
-        String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
-        String userAgent = "Discord-" + discordUser.getDiscordUsername();
-        
-        Session session = authManager.createSession(user.getId(), ipAddress, userAgent);
-        
-        // Build response
+        DashboardLoginRequestManager.StartedRequest started =
+            DashboardLoginRequestManager.getInstance().startLoginRequest(claimedUsername, authMethod);
+
         JsonObject response = new JsonObject();
         response.addProperty("success", true);
-        response.addProperty("sessionId", session.getSessionId());
-        response.add("session", session.toJson());
-        
-        // Add user details
+        response.addProperty("code", started.code);
+        response.addProperty("requestId", started.requestId);
+        response.addProperty("expiresAt", started.expiresAt);
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /**
+     * GET /api/auth/login-request/status?requestId=<id>
+     * Polled by the browser after showing the code from login-request. Only mints and returns
+     * a real session once /dashboardlogin <code> has been redeemed in-game for THIS requestId —
+     * at which point the identity used below is the in-game-VERIFIED username, never the
+     * originally-claimed one from the start call.
+     */
+    private void handleLoginRequestStatus(HttpExchange exchange) throws IOException {
+        String query = exchange.getRequestURI().getQuery();
+        String requestId = null;
+        if (query != null) {
+            for (String param : query.split("&")) {
+                if (param.startsWith("requestId=")) {
+                    requestId = param.substring("requestId=".length());
+                    break;
+                }
+            }
+        }
+        if (requestId == null || requestId.isEmpty()) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing requestId"));
+            return;
+        }
+
+        DashboardLoginRequestManager.PollResult poll =
+            DashboardLoginRequestManager.getInstance().pollLoginRequest(requestId);
+
+        if (poll.status == DashboardLoginRequestManager.PollResult.Status.PENDING) {
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("status", "pending");
+            sendJsonResponse(exchange, 200, response);
+            return;
+        }
+        if (poll.status == DashboardLoginRequestManager.PollResult.Status.EXPIRED) {
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("status", "expired");
+            sendJsonResponse(exchange, 200, response);
+            return;
+        }
+
+        // COMPLETED — mint the session using the verified identity, not anything from the browser.
+        String ipAddress = exchange.getRemoteAddress().getAddress().getHostAddress();
+        String userAgent = exchange.getRequestHeaders().getFirst("User-Agent");
+
+        VerifiedLoginOutcome outcome = "discord".equals(poll.method)
+            ? completeDiscordLogin(poll.minecraftUsername, ipAddress, "Discord-" + poll.minecraftUsername)
+            : completeMinecraftLogin(poll.minecraftUsername, ipAddress, userAgent);
+
+        if (outcome.session == null) {
+            sendJsonResponse(exchange, outcome.httpStatus, createErrorResponse(outcome.errorMessage));
+            return;
+        }
+
+        JsonObject response = new JsonObject();
+        response.addProperty("success", true);
+        response.addProperty("status", "completed");
+        response.addProperty("sessionId", outcome.session.getSessionId());
+        response.add("session", outcome.session.toJson());
+        response.add("user", outcome.userJson);
+
+        exchange.getResponseHeaders().add("Set-Cookie",
+            "sessionId=" + outcome.session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
+        sendJsonResponse(exchange, 200, response);
+    }
+
+    /** Result of minting a session from an in-game-verified identity. */
+    private static class VerifiedLoginOutcome {
+        final Session session;
+        final JsonObject userJson;
+        final int httpStatus;
+        final String errorMessage;
+
+        private VerifiedLoginOutcome(Session session, JsonObject userJson, int httpStatus, String errorMessage) {
+            this.session = session;
+            this.userJson = userJson;
+            this.httpStatus = httpStatus;
+            this.errorMessage = errorMessage;
+        }
+
+        static VerifiedLoginOutcome success(Session session, JsonObject userJson) {
+            return new VerifiedLoginOutcome(session, userJson, 200, null);
+        }
+
+        static VerifiedLoginOutcome failure(int httpStatus, String errorMessage) {
+            return new VerifiedLoginOutcome(null, null, httpStatus, errorMessage);
+        }
+    }
+
+    /**
+     * Authenticate using a Discord account linked via Simple Discord Link — now only ever
+     * called with a {@code minecraftUsername} already verified in-game via /dashboardlogin,
+     * never a raw unauthenticated query/body param.
+     */
+    private VerifiedLoginOutcome completeDiscordLogin(String minecraftUsername, String ipAddress, String userAgent) {
+        DiscordAuthConfig discordConfig = DiscordAuthConfig.load();
+        if (!discordConfig.isEnabled()) {
+            return VerifiedLoginOutcome.failure(403, "Discord authentication is disabled");
+        }
+
+        DiscordAuthProvider discordProvider = DiscordAuthProvider.getInstance();
+        if (!discordProvider.isAvailable()) {
+            return VerifiedLoginOutcome.failure(503,
+                "Discord authentication unavailable. Install Simple Discord Link, Mc2Discord, or DCIntegration and link your account in-game.");
+        }
+
+        DiscordUser discordUser = discordProvider.getLinkedAccount(minecraftUsername);
+        if (discordUser == null || !discordUser.isLinked()) {
+            return VerifiedLoginOutcome.failure(404,
+                "No Discord account linked. Please link your account using /discord link in-game.");
+        }
+
+        if (discordConfig.isBlacklisted(discordUser.getDiscordId())) {
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Blacklisted Discord user attempted login: {} ({})",
+                discordUser.getDiscordUsername(), discordUser.getDiscordId());
+            return VerifiedLoginOutcome.failure(403, "Access denied");
+        }
+
+        if (!discordConfig.passesWhitelist(discordUser.getDiscordRoles())) {
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "Discord user without required role attempted login: {} (roles: {})",
+                discordUser.getDiscordUsername(), discordUser.getDiscordRoles());
+            return VerifiedLoginOutcome.failure(403, "You do not have the required Discord role to access the dashboard");
+        }
+
+        User.Role dashboardRole = discordConfig.getHighestRole(discordUser.getDiscordRoles());
+
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+        User user = authManager.getUserByUsername(minecraftUsername);
+
+        if (user == null) {
+            if (!discordConfig.allowsAutoRegistration()) {
+                return VerifiedLoginOutcome.failure(403, "Account not found and auto-registration is disabled");
+            }
+            String email = discordUser.getDiscordId() + "@discord.link"; // Placeholder email
+            user = authManager.createUser(minecraftUsername,
+                UUID.randomUUID().toString(), // Random password (won't be used)
+                email, dashboardRole);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Auto-created dashboard user from Discord: {} with role {}",
+                minecraftUsername, dashboardRole);
+        } else if (dashboardRole.ordinal() != user.getRole().ordinal()) {
+            user.setRole(dashboardRole);
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Updated user {} role to {} based on Discord roles",
+                minecraftUsername, dashboardRole);
+        }
+
+        Session session = authManager.createSession(user.getId(), ipAddress, userAgent);
+
         JsonObject userJson = user.toJson();
         userJson.addProperty("discordId", discordUser.getDiscordId());
         userJson.addProperty("discordUsername", discordUser.getDiscordUsername());
-        
         JsonArray discordRolesArray = new JsonArray();
         discordUser.getDiscordRoles().forEach(discordRolesArray::add);
         userJson.add("discordRoles", discordRolesArray);
-        
-        response.add("user", userJson);
-        
+
         NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Discord authentication successful: {} (Discord: {}, Role: {})",
             minecraftUsername, discordUser.getDiscordUsername(), dashboardRole);
-        
-        // Set session cookie
-        exchange.getResponseHeaders().add("Set-Cookie", 
-            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
-        
-        sendJsonResponse(exchange, 200, response);
+
+        return VerifiedLoginOutcome.success(session, userJson);
+    }
+
+    /**
+     * Legacy Minecraft-permission-based authentication — now only ever called with a
+     * {@code minecraftUsername} already verified in-game via /dashboardlogin, never a raw
+     * unauthenticated body param.
+     */
+    private VerifiedLoginOutcome completeMinecraftLogin(String minecraftUsername, String ipAddress, String userAgent) {
+        Session session = handleMinecraftAuth(minecraftUsername, ipAddress, userAgent);
+        if (session == null) {
+            return VerifiedLoginOutcome.failure(403, "You don't have permission to access the dashboard");
+        }
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+        User user = authManager.getUser(session.getUserId());
+        return VerifiedLoginOutcome.success(session, user != null ? user.toJson() : new JsonObject());
     }
     
     /**
@@ -789,7 +843,7 @@ public class AuthenticationHandler implements HttpHandler {
             // Only meaningful for User.Role.CUSTOM (see webDashboard.groupPermissions) — empty
             // for the 4 fixed roles, which both frontends still gate purely on isAdmin/role name
             // as before. Lets a CUSTOM-role frontend know which tabs to show without guessing
-            // from the role name, using the exact same per-tab check AuthenticationFilter itself
+            // from the role name, using the exact same per-tab check DashboardAPI.withAuth itself
             // enforces server-side (User.hasTabPermission), so this list can never drift from
             // what's actually allowed.
             response.add("tabs", buildCustomTabPermissions(user));

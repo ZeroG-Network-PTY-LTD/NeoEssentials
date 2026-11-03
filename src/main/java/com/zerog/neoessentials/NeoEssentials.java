@@ -1187,6 +1187,8 @@ public class NeoEssentials {
         com.zerog.neoessentials.commands.utility.DashboardRegisterCommand.register(dispatcher);
         registry.registerCommandWithPermission("linkaccount", "Link your Minecraft account to an existing dashboard account", "");
         com.zerog.neoessentials.commands.utility.LinkAccountCommand.register(dispatcher);
+        registry.registerCommandWithPermission("dashboardlogin", "Confirm a dashboard login attempt for this Minecraft account", "");
+        com.zerog.neoessentials.commands.utility.DashboardLoginCommand.register(dispatcher);
 
         // ========== CHEST SHOP COMMANDS ==========
         registry.registerCommandWithPermission("chestshop", "Sign-based chest shop system", "");

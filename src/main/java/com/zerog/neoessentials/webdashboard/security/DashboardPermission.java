@@ -3,12 +3,13 @@ package com.zerog.neoessentials.webdashboard.security;
 /**
  * Builds and checks the {@code "tab:<tabId>:<read|write>"} strings stored in a CUSTOM-role
  * {@link User}'s existing {@code permissions} set (see {@link User#hasPermission(String)}'s
- * CUSTOM branch) — centralizes the syntax so {@link AuthenticationFilter}, the
+ * CUSTOM branch) — centralizes the syntax so the auth gate in
+ * {@link com.zerog.neoessentials.webdashboard.DashboardAPI#withAuth}, the
  * {@code /api/auth/my-permissions} handler, and anything else that needs to grant/check one of
  * these strings doesn't each hand-roll the format.
  *
  * <p>{@code write} access implies {@code read} on the same tab (matches the existing GET-vs-
- * mutating-method convention {@link AuthenticationFilter}'s VIEWER branch already uses) — a
+ * mutating-method convention VIEWER's fixed role already uses) — a
  * permission string ending in {@code :write} satisfies a check for either access level on that
  * tab; one ending in {@code :read} only satisfies a read check.
  */

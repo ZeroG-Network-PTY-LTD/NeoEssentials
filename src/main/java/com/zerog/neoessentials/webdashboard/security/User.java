@@ -91,8 +91,7 @@ public class User {
      * CUSTOM-role tab/action check — see {@link DashboardPermission}. ADMIN always passes (same
      * as {@link #hasPermission(String)}); a non-CUSTOM, non-ADMIN role (OPERATOR/MODERATOR/VIEWER)
      * never has tab-string permissions stored, so this correctly returns false for them — those
-     * 3 roles are gated by {@link AuthenticationFilter}'s existing hardcoded branches instead,
-     * not by this method.
+     * 3 roles are gated by each endpoint's own existing role checks instead, not by this method.
      */
     public boolean hasTabPermission(String tabId, boolean requireWrite) {
         if (role == Role.ADMIN) return true;

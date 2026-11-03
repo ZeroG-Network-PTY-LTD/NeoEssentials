@@ -171,8 +171,11 @@ public class CommandExecutionHandler implements HttpHandler {
             response.addProperty("command", command);
             response.addProperty("error", e.getMessage());
             response.addProperty("executionId", executionId);
-            
-            sendJsonResponse(exchange, 200, response);
+
+            // A caller checking only HTTP status (not parsing the body for success:false) would
+            // otherwise treat a failed command as having succeeded, same class of bug as a
+            // non-2xx status being the real signal everywhere else in this codebase.
+            sendJsonResponse(exchange, 500, response);
         } finally {
             // Cleanup output after a delay
             new Timer().schedule(new TimerTask() {
@@ -190,7 +193,13 @@ public class CommandExecutionHandler implements HttpHandler {
      */
     private void handleHistory(HttpExchange exchange) throws IOException {
         Map<String, String> params = parseQueryParams(exchange.getRequestURI().getQuery());
-        int limit = Integer.parseInt(params.getOrDefault("limit", "50"));
+        int limit;
+        try {
+            limit = Integer.parseInt(params.getOrDefault("limit", "50"));
+        } catch (NumberFormatException e) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Invalid 'limit' parameter: must be a number"));
+            return;
+        }
         
         JsonObject response = new JsonObject();
         JsonArray history = new JsonArray();

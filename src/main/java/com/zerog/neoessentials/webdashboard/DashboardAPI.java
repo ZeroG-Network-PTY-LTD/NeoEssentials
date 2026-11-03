@@ -73,7 +73,7 @@ public class DashboardAPI {
     /**
      * Get singleton instance of the Dashboard API
      */
-    public static DashboardAPI getInstance() {
+    public static synchronized DashboardAPI getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new DashboardAPI();
         }
@@ -318,6 +318,48 @@ public class DashboardAPI {
                                 authenticated = true;
                                 authUsername = newSession.getUsername();
                                 authAdmin = newSession.getRole() == com.zerog.neoessentials.webdashboard.security.User.Role.ADMIN;
+
+                                // CUSTOM-role users are gated per-tab (webDashboard.groupPermissions),
+                                // not by the binary admin flag above — this was previously only
+                                // implemented in the unused AuthenticationFilter class (never wired
+                                // to this HttpServer), so a CUSTOM user's tab grants had no actual
+                                // effect on any real request. Checked here instead, in the one path
+                                // every request actually goes through.
+                                if (newSession.getRole() == com.zerog.neoessentials.webdashboard.security.User.Role.CUSTOM) {
+                                    String reqPath = exchange.getRequestURI().getPath();
+                                    String reqMethod = exchange.getRequestMethod();
+                                    boolean isWrite = !"GET".equals(reqMethod);
+                                    boolean trulyAdminOnly =
+                                        reqPath.equals("/api/commands/execute") ||
+                                        reqPath.equals("/api/files/write") ||
+                                        reqPath.equals("/api/files/create") ||
+                                        reqPath.equals("/api/files/delete") ||
+                                        (reqPath.startsWith("/api/auth/users") && !"GET".equals(reqMethod)) ||
+                                        reqPath.startsWith("/api/auth/sessions") ||
+                                        (reqPath.startsWith("/api/files") && isWrite);
+
+                                    boolean tabAllowed = false;
+                                    if (!trulyAdminOnly) {
+                                        String tabId = com.zerog.neoessentials.webdashboard.security.DashboardTab.tabForPath(reqPath);
+                                        com.zerog.neoessentials.webdashboard.security.User customUser =
+                                            com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance().getUser(newSession.getUserId());
+                                        tabAllowed = tabId != null && customUser != null && customUser.hasTabPermission(tabId, isWrite);
+                                    }
+
+                                    if (!tabAllowed) {
+                                        String response = "{\"success\":false,\"error\":\"Forbidden - missing tab permission\"}";
+                                        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                                        exchange.getResponseHeaders().set("Content-Type", "application/json");
+                                        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                                        exchange.sendResponseHeaders(403, bytes.length);
+                                        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+                                        return;
+                                    }
+                                    // Let this specific request through whatever admin-gated check
+                                    // the target endpoint itself applies, since this CUSTOM user does
+                                    // have write access to the tab this path resolves to.
+                                    if (isWrite) authAdmin = true;
+                                }
                             }
                         } catch (Exception e) {
                             NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "AuthenticationManager session check failed: {}", e.getMessage());

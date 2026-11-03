@@ -1,5 +1,9 @@
 package com.zerog.neoessentials.webdashboard.security;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.UUID;
 
 /**
@@ -70,6 +74,24 @@ public class Session {
         json.addProperty("requiresPasswordChange", requiresPasswordChange);
         json.addProperty("valid", valid);
         return json;
+    }
+
+    /**
+     * A non-secret, deterministic reference derived from the real session id — safe to show
+     * in an admin-facing sessions listing and to use for revoke-by-reference, unlike
+     * {@link #getSessionId()} itself, which IS the live bearer credential (accepted directly
+     * via the Authorization header / sessionId cookie) and must never be echoed back to
+     * anyone but the session's own owner.
+     */
+    public String getSessionRef() {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(sessionId.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash, 0, 8);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 is guaranteed available on every JVM; this is unreachable in practice.
+            throw new IllegalStateException(e);
+        }
     }
 
     // Getters
