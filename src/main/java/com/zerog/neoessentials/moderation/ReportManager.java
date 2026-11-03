@@ -47,7 +47,9 @@ public class ReportManager {
     public ReportEntry addReport(UUID reporterId, String reporterName, UUID targetId, String targetName, String reason) {
         ReportEntry entry = new ReportEntry(reporterId, reporterName, targetId, targetName, reason);
         reports.add(entry);
-        store.put(COLLECTION, entry.getId(), toJson(entry));
+        if (!store.put(COLLECTION, entry.getId(), toJson(entry))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.getId());
+        }
         NeoLog.info(LOGGER, LogCategory.MODERATION, "[Report] {} reported {}: {}", reporterName, targetName, reason);
         return entry;
     }
@@ -95,7 +97,9 @@ public class ReportManager {
         ReportEntry report = findById(reportId);
         if (report == null) return false;
         report.review(newStatus, reviewerId, reviewerName, notes);
-        store.put(COLLECTION, report.getId(), toJson(report));
+        if (!store.put(COLLECTION, report.getId(), toJson(report))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, report.getId());
+        }
         return true;
     }
 
@@ -167,7 +171,9 @@ public class ReportManager {
             for (JsonElement el : root) {
                 JsonObject obj = el.getAsJsonObject();
                 String id = obj.get("id").getAsString();
-                store.put(COLLECTION, id, obj);
+                if (!store.put(COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                }
                 migrated++;
             }
             if (migrated > 0) {

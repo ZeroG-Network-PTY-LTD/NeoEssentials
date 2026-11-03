@@ -401,7 +401,9 @@ public class WarpManager {
 
     private void savePlayerWarps() {
         for (Map.Entry<UUID, Map<String, TeleportLocation>> entry : playerWarps.entrySet()) {
-            store.put(PLAYER_WARPS_COLLECTION, entry.getKey().toString(), playerWarpsToJson(entry.getValue()));
+            if (!store.put(PLAYER_WARPS_COLLECTION, entry.getKey().toString(), playerWarpsToJson(entry.getValue()))) {
+                NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", PLAYER_WARPS_COLLECTION, entry.getKey().toString());
+            }
         }
     }
 
@@ -477,12 +479,16 @@ public class WarpManager {
             if (root.has("warps")) {
                 JsonObject warpsJson = root.getAsJsonObject("warps");
                 for (String warpName : warpsJson.keySet()) {
-                    store.put(WARPS_COLLECTION, warpName, warpsJson.getAsJsonObject(warpName));
+                    if (!store.put(WARPS_COLLECTION, warpName, warpsJson.getAsJsonObject(warpName))) {
+                        NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", WARPS_COLLECTION, warpName);
+                    }
                     count++;
                 }
             }
             if (root.has("config")) {
-                store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, root.getAsJsonObject("config"));
+                if (!store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, root.getAsJsonObject("config"))) {
+                    NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", WARPS_COLLECTION, CONFIG_RECORD_ID);
+                }
             }
             return count;
         } catch (Exception e) {
@@ -503,7 +509,9 @@ public class WarpManager {
             if (loaded == null) return 0;
             int count = 0;
             for (Map.Entry<String, Map<String, TeleportLocation>> entry : loaded.entrySet()) {
-                store.put(PLAYER_WARPS_COLLECTION, entry.getKey(), playerWarpsToJson(entry.getValue()));
+                if (!store.put(PLAYER_WARPS_COLLECTION, entry.getKey(), playerWarpsToJson(entry.getValue()))) {
+                    NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", PLAYER_WARPS_COLLECTION, entry.getKey());
+                }
                 count++;
             }
             return count;
@@ -995,7 +1003,9 @@ public class WarpManager {
     private void saveWarps() {
         try {
             for (Map.Entry<String, TeleportLocation> entry : warps.entrySet()) {
-                store.put(WARPS_COLLECTION, entry.getKey(), entry.getValue().toJson());
+                if (!store.put(WARPS_COLLECTION, entry.getKey(), entry.getValue().toJson())) {
+                    NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", WARPS_COLLECTION, entry.getKey());
+                }
             }
             for (String existingId : store.getAll(WARPS_COLLECTION).keySet()) {
                 if (!existingId.equals(CONFIG_RECORD_ID) && !warps.containsKey(existingId)) {
@@ -1009,7 +1019,9 @@ public class WarpManager {
             config.addProperty("allowOverworldOnly", allowOverworldOnly);
             config.addProperty("maxWarps", maxWarps);
             config.addProperty("caseSensitiveNames", caseSensitiveNames);
-            store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, config);
+            if (!store.put(WARPS_COLLECTION, CONFIG_RECORD_ID, config)) {
+                NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", WARPS_COLLECTION, CONFIG_RECORD_ID);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Failed to save warps to storage", e);

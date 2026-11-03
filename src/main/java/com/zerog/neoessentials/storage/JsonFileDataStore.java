@@ -42,10 +42,10 @@ public class JsonFileDataStore implements DataStore {
     }
 
     @Override
-    public void put(String collection, String id, JsonObject data) {
+    public boolean put(String collection, String id, JsonObject data) {
         Map<String, JsonObject> records = loadCollection(collection);
         records.put(id, data);
-        save(collection, records);
+        return save(collection, records);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class JsonFileDataStore implements DataStore {
         return records;
     }
 
-    private void save(String collection, Map<String, JsonObject> records) {
+    private boolean save(String collection, Map<String, JsonObject> records) {
         File file = fileFor(collection);
         // Write to a temp file first, then atomically replace the target — writing directly
         // into the target truncates it immediately, so a crash mid-write (process kill, OOM,
@@ -130,9 +130,11 @@ public class JsonFileDataStore implements DataStore {
                 GSON.toJson(root, writer);
             }
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            return true;
         } catch (IOException e) {
             LOGGER.error("Failed to save collection '{}' to {}", collection, file.getAbsolutePath(), e);
             try { Files.deleteIfExists(tmp.toPath()); } catch (IOException ignored) { /* best effort cleanup */ }
+            return false;
         }
     }
 

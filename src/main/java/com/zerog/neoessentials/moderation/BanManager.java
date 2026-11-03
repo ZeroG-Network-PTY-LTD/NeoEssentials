@@ -172,7 +172,9 @@ public class BanManager {
         ban.unbannedBy = null; // expired naturally, not reversed by staff
         ban.unbannedAt = ban.expireTime;
         banHistory.add(ban);
-        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
+        if (!store.put(PLAYER_COLLECTION, ban.id, banToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist expired-ban archive for {} - this change may be lost on restart.", ban.id);
+        }
     }
 
     private void archiveExpiredIPBan(IPBanEntry ban) {
@@ -180,7 +182,9 @@ public class BanManager {
         ban.unbannedBy = null;
         ban.unbannedAt = ban.expireTime;
         ipBanHistory.add(ban);
-        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
+        if (!store.put(IP_COLLECTION, ban.id, ipBanToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist expired-IP-ban archive for {} - this change may be lost on restart.", ban.id);
+        }
     }
 
     /**
@@ -257,7 +261,9 @@ public class BanManager {
         }
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
-        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
+        if (!store.put(PLAYER_COLLECTION, ban.id, banToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist ban for {} ({}) to storage - it is enforced now (vanilla ban list + kick still applied) but will be LOST on restart.", playerName, playerId);
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying permanent ban: player={} ({}) reason={} by={}",
             playerName, playerId, reason, bannedBy);
         // Build the fully-localized/formatted ban message once, and store THAT (not the
@@ -319,7 +325,9 @@ public class BanManager {
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
-        store.put(PLAYER_COLLECTION, ban.id, banToJson(ban));
+        if (!store.put(PLAYER_COLLECTION, ban.id, banToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist temp ban for {} ({}) to storage - it is enforced now (vanilla ban list + kick still applied) but will be LOST on restart.", playerName, playerId);
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying temp ban: player={} ({}) reason={} by={} duration={}ms",
             playerName, playerId, reason, bannedBy, durationMillis);
         // Build the fully-localized/formatted ban message once (see banPlayer() for why this,
@@ -377,7 +385,9 @@ public class BanManager {
 
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ipBans.put(ipAddress, ban);
-        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
+        if (!store.put(IP_COLLECTION, ban.id, ipBanToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist IP ban for {} to storage - it is enforced now (kick still applied) but will be LOST on restart.", ipAddress);
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying permanent IP ban: ip={} reason={} by={}",
             ipAddress, reason, bannedBy);
 
@@ -416,7 +426,9 @@ public class BanManager {
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         ipBans.put(ipAddress, ban);
-        store.put(IP_COLLECTION, ban.id, ipBanToJson(ban));
+        if (!store.put(IP_COLLECTION, ban.id, ipBanToJson(ban))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist temp IP ban for {} to storage - it is enforced now (kick still applied) but will be LOST on restart.", ipAddress);
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying temp IP ban: ip={} reason={} by={} duration={}ms",
             ipAddress, reason, bannedBy, durationMillis);
 
@@ -464,7 +476,9 @@ public class BanManager {
                 removed.unbannedBy = unbannedBy;
                 removed.unbannedAt = System.currentTimeMillis();
                 banHistory.add(removed);
-                store.put(PLAYER_COLLECTION, removed.id, banToJson(removed));
+                if (!store.put(PLAYER_COLLECTION, removed.id, banToJson(removed))) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist unban-history update for {} - the player is unbanned now, but a restart before the next write may show them as still banned.", removed.id);
+                }
             }
             // Broadcast to staff if enabled
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -587,7 +601,9 @@ public class BanManager {
             removed.unbannedBy = unbannedBy;
             removed.unbannedAt = System.currentTimeMillis();
             ipBanHistory.add(removed);
-            store.put(IP_COLLECTION, removed.id, ipBanToJson(removed));
+            if (!store.put(IP_COLLECTION, removed.id, ipBanToJson(removed))) {
+                NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist unban-history update for IP {} - the IP is unbanned now, but a restart before the next write may show it as still banned.", ipAddress);
+            }
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
                 NeoLog.info(LOGGER, LogCategory.MODERATION, "IP {} unbanned by {}", ipAddress, unbannedBy != null ? unbannedBy : "unknown");
             }
@@ -630,7 +646,9 @@ public class BanManager {
                                 imported.expireTime = entry.getExpires().getTime();
                             }
                             playerBans.put(playerId, imported);
-                            store.put(PLAYER_COLLECTION, imported.id, banToJson(imported));
+                            if (!store.put(PLAYER_COLLECTION, imported.id, banToJson(imported))) {
+                                NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist vanilla-ban import for {} - it is enforced in-memory for this session but will be LOST on restart.", profile.name());
+                            }
                             NeoLog.info(LOGGER, LogCategory.MODERATION, "Imported vanilla ban for {} into NeoEssentials ban list", profile.name());
                         }
                         return true;
@@ -1016,7 +1034,10 @@ public class BanManager {
                 JsonObject obj = element.getAsJsonObject().deepCopy();
                 if (!obj.has("active")) obj.addProperty("active", defaultActive);
                 String id = obj.has("id") ? obj.get("id").getAsString() : UUID.randomUUID().toString();
-                store.put(collection, id, obj);
+                if (!store.put(collection, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to migrate legacy ban/mute record {} from {} - it will stay on the old legacy file, not the new storage backend.", id, filename);
+                    continue;
+                }
                 count++;
             }
         } catch (IOException e) {

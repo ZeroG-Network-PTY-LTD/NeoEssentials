@@ -84,7 +84,9 @@ public class PermissionAliasManager {
      */
     public void save() throws IOException {
         for (Map.Entry<String, String> e : aliases.entrySet()) {
-            store.put(COLLECTION, e.getKey(), toJson(e.getKey(), e.getValue()));
+            if (!store.put(COLLECTION, e.getKey(), toJson(e.getKey(), e.getValue()))) {
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, e.getKey());
+            }
         }
     }
 
@@ -127,7 +129,9 @@ public class PermissionAliasManager {
         String key = alias.toLowerCase().trim();
         String target = canonical.toLowerCase().trim();
         aliases.put(key, target);
-        store.put(COLLECTION, key, toJson(key, target));
+        if (!store.put(COLLECTION, key, toJson(key, target))) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, key);
+        }
     }
 
     /**
@@ -173,7 +177,9 @@ public class PermissionAliasManager {
                 String alias     = entry.getKey().toLowerCase().trim();
                 String canonical = entry.getValue().getAsString().toLowerCase().trim();
                 if (alias.isEmpty() || canonical.isEmpty()) continue;
-                store.put(COLLECTION, alias, toJson(alias, canonical));
+                if (!store.put(COLLECTION, alias, toJson(alias, canonical))) {
+                    NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, alias);
+                }
                 migrated++;
             }
         } catch (Exception e) {

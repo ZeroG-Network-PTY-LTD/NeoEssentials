@@ -136,7 +136,9 @@ public class MuteManager {
     }
 
     private static void persist(String collection, MuteEntry entry) {
-        STORE.put(collection, entry.id, entryToJson(entry));
+        if (!STORE.put(collection, entry.id, entryToJson(entry))) {
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", collection, entry.id);
+        }
     }
 
     private static void archiveExpired(MuteEntry entry, List<MuteEntry> history, String collection) {
@@ -366,7 +368,9 @@ public class MuteManager {
                     JsonObject obj = element.getAsJsonObject().deepCopy();
                     if (!obj.has("active")) obj.addProperty("active", defaultActive);
                     String id = obj.has("id") ? obj.get("id").getAsString() : UUID.randomUUID().toString();
-                    STORE.put(collection, id, obj);
+                    if (!STORE.put(collection, id, obj)) {
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", collection, id);
+                    }
                     count++;
                 }
             } else {
@@ -376,7 +380,9 @@ public class MuteManager {
                 for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
                     MuteEntry migrated = new MuteEntry(entry.getKey(), null, null);
                     migrated.expireTime = entry.getValue().getAsLong();
-                    STORE.put(collection, migrated.id, entryToJson(migrated));
+                    if (!STORE.put(collection, migrated.id, entryToJson(migrated))) {
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", collection, migrated.id);
+                    }
                     count++;
                 }
             }

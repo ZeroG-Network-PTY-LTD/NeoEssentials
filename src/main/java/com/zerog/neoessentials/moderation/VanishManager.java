@@ -130,7 +130,9 @@ public class VanishManager {
         // Default priority for vanished player (can be customized)
         int vanishPriority = getPlayerPriority(playerId);
         vanishedPlayers.put(playerId, vanishPriority);
-        store.put(COLLECTION, playerId.toString(), toJson(playerId, vanishPriority));
+        if (!store.put(COLLECTION, playerId.toString(), toJson(playerId, vanishPriority))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, playerId.toString());
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying vanish: player={} ({}) by={} self={} priority={}",
             playerName, playerId, vanishedBy, selfVanish, vanishPriority);
 
@@ -576,7 +578,9 @@ public class VanishManager {
                 for (JsonElement element : root.getAsJsonArray("vanished")) {
                     JsonObject obj = element.getAsJsonObject();
                     String id = obj.get("uuid").getAsString();
-                    store.put(COLLECTION, id, obj.deepCopy());
+                    if (!store.put(COLLECTION, id, obj.deepCopy())) {
+                        NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                    }
                     migrated++;
                 }
             }

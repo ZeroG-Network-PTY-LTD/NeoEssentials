@@ -383,7 +383,9 @@ public class DashboardRegistrationManager {
      * Persist a single registration record, keyed by Minecraft UUID.
      */
     private void saveRegistration(DashboardAccountRegistration registration) {
-        store.put(COLLECTION, registration.getMinecraftUuid().toString(), registration.toJson());
+        if (!store.put(COLLECTION, registration.getMinecraftUuid().toString(), registration.toJson())) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, registration.getMinecraftUuid().toString());
+        }
     }
 
     /**
@@ -407,7 +409,9 @@ public class DashboardRegistrationManager {
                 for (JsonElement element : root.getAsJsonArray("registrations")) {
                     JsonObject regObj = element.getAsJsonObject().deepCopy();
                     if (!regObj.has("minecraftUuid")) continue;
-                    store.put(COLLECTION, regObj.get("minecraftUuid").getAsString(), regObj);
+                    if (!store.put(COLLECTION, regObj.get("minecraftUuid").getAsString(), regObj)) {
+                        NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, regObj.get("minecraftUuid").getAsString());
+                    }
                     migrated++;
                 }
             }

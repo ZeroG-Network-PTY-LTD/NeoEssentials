@@ -101,9 +101,9 @@ public class SqliteDataStore implements DataStore {
     }
 
     @Override
-    public synchronized void put(String collection, String id, JsonObject data) {
+    public synchronized boolean put(String collection, String id, JsonObject data) {
         Connection conn = connection();
-        if (conn == null) return;
+        if (conn == null) return false;
         ensureTable(collection);
         String sql = "INSERT INTO " + tableName(collection) + " (id, data) VALUES (?, ?) "
             + "ON CONFLICT(id) DO UPDATE SET data = excluded.data";
@@ -111,8 +111,10 @@ public class SqliteDataStore implements DataStore {
             stmt.setString(1, id);
             stmt.setString(2, GSON.toJson(data));
             stmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             LOGGER.error("SqliteDataStore: failed to put {}/{}", collection, id, e);
+            return false;
         }
     }
 

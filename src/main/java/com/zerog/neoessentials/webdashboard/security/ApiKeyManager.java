@@ -205,7 +205,9 @@ public class ApiKeyManager {
         json.addProperty("createdAt", record.createdAt);
         json.addProperty("lastUsedAt", record.lastUsedAt);
         json.addProperty("enabled", record.enabled);
-        store.put(COLLECTION, record.id, json);
+        if (!store.put(COLLECTION, record.id, json)) {
+            NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, record.id);
+        }
     }
 
     // ── Crypto (same PBKDF2 scheme as AuthenticationManager's password hashing) ────────────
