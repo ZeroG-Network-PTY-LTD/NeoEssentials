@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 /**
  * Auto-creates holographic displays above sign shops so that long item names
@@ -607,7 +608,10 @@ public class ShopHologramManager {
         }
     }
     private static java.util.List<HologramLine> buildShopLines(ShopData shop) {
-        java.util.List<HologramLine> lines = new ArrayList<>();
+        // CopyOnWriteArrayList: this list is assigned wholesale into HologramData#lines, which
+        // must stay thread-safe for concurrent iteration by HologramScheduler's background
+        // animation-tick thread (see HologramData#lines javadoc).
+        java.util.List<HologramLine> lines = new CopyOnWriteArrayList<>();
         // Line 1: Item name (solves the "too long for sign" problem)
         String ownerDisplay = shop.isAdminShop() ? "&6[Admin Shop]" : ("&e" + shop.ownerName);
         if (shop.isCommandShop()) {

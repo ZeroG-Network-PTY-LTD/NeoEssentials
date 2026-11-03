@@ -3,6 +3,7 @@ package com.zerog.neoessentials.hologram;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents one line of a hologram.
@@ -28,8 +29,12 @@ public class HologramLine {
     /**
      * Optional animation frames. When non-empty the line cycles through
      * these strings (instead of {@link #text}) at {@link #animFrameIntervalTicks}.
+     *
+     * <p>{@code CopyOnWriteArrayList} for thread safety: mutated on the main server/command
+     * thread (editing a line's frames) but read ({@link #currentText()}/{@link #tickAnimation()})
+     * on the background scheduler's animation-tick thread concurrently.
      */
-    public List<String> frames = new ArrayList<>();
+    public List<String> frames = new CopyOnWriteArrayList<>();
 
     /**
      * How many ticks between animation frame advances.
