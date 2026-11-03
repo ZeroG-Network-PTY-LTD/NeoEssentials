@@ -15,7 +15,7 @@ import { Database, Plus, Cloud, CloudUpload, Trash2, Download, RotateCcw, HardDr
  * approach, since a bare anchor can't attach this SPA's Bearer token. */
 
 export default function Backups() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, can } = useAuth();
   const { showToast } = useToast();
   const [status, setStatus] = useState<BackupStatus | null>(null);
   const [snapshots, setSnapshots] = useState<BackupSnapshot[]>([]);
@@ -43,8 +43,8 @@ export default function Backups() {
     const promises: [Promise<BackupStatus>, Promise<BackupSnapshot[]>, Promise<CloudStatus | null>, Promise<CloudConfig | null>] = [
       mcApi.backupStatus(),
       mcApi.backupList(),
-      isAdmin ? mcApi.cloudStatus() : Promise.resolve(null),
-      isAdmin ? mcApi.cloudConfig() : Promise.resolve(null),
+      isAdmin || can('backups', true) ? mcApi.cloudStatus() : Promise.resolve(null),
+      isAdmin || can('backups', true) ? mcApi.cloudConfig() : Promise.resolve(null),
     ];
     Promise.all(promises)
       .then(([s, snaps, cs, cc]) => {
@@ -58,9 +58,9 @@ export default function Backups() {
         // /api/cloud/files/{provider} before that always 400s (nothing to list), which
         // threw an unhandled rejection into the console on every Backups page load
         // regardless of whether the admin had configured anything at all.
-        if (isAdmin && cc?.dropbox.configured) mcApi.cloudDropboxFiles().then(setDropboxFiles).catch(() => setDropboxFiles([]));
-        if (isAdmin && cc?.googleDrive.configured) mcApi.cloudGoogleFiles().then(setGoogleFiles).catch(() => setGoogleFiles([]));
-        if (isAdmin && cc?.oneDrive.configured) mcApi.cloudOneDriveFiles().then(setOneDriveFiles).catch(() => setOneDriveFiles([]));
+        if ((isAdmin || can('backups', true)) && cc?.dropbox.configured) mcApi.cloudDropboxFiles().then(setDropboxFiles).catch(() => setDropboxFiles([]));
+        if ((isAdmin || can('backups', true)) && cc?.googleDrive.configured) mcApi.cloudGoogleFiles().then(setGoogleFiles).catch(() => setGoogleFiles([]));
+        if ((isAdmin || can('backups', true)) && cc?.oneDrive.configured) mcApi.cloudOneDriveFiles().then(setOneDriveFiles).catch(() => setOneDriveFiles([]));
       })
       .finally(() => setLoading(false));
   };
@@ -268,7 +268,7 @@ export default function Backups() {
                   <Download size={12} strokeWidth={2} />
                   Download
                 </button>
-                {isAdmin && (
+                {(isAdmin || can('backups', true)) && (
                   <>
                     {cloudStatusState?.providers.dropbox.configured && (
                       <button
@@ -318,7 +318,7 @@ export default function Backups() {
           ))}
         </Card>
 
-        {isAdmin && (
+        {(isAdmin || can('backups', true)) && (
           <Card title="Create backup" icon={Plus} accent="purple" padded className="h-fit">
             <form onSubmit={createBackup} className="flex flex-col gap-3">
               <label className="flex flex-col gap-1 text-[12px] text-[var(--mc-text-secondary)]">
@@ -350,7 +350,7 @@ export default function Backups() {
         )}
       </div>
 
-      {isAdmin && cloudConfigState && (
+      {(isAdmin || can('backups', true)) && cloudConfigState && (
         <div className="grid grid-cols-3 gap-5">
           <Card title="Dropbox" icon={Cloud} accent="cyan" padded>
             <div className="flex flex-col gap-3">

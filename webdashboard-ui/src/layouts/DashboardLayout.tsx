@@ -18,7 +18,7 @@ import * as mcApi from '../lib/mcApi';
 export default function DashboardLayout({ children }: PropsWithChildren) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, can } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [reachable, setReachable] = useState(true);
 
@@ -35,33 +35,37 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
     };
   }, [location.pathname]);
 
+  // CUSTOM-role users (see webDashboard.groupPermissions) only see a nav item if can() says
+  // their granted tab permissions cover it — isAdmin/the other 3 fixed roles are unaffected,
+  // can() returns false for them by design (see auth.tsx) so `||` below falls through to
+  // exactly the same boolean these items already used before CUSTOM existed.
   const nav = [
     { label: 'Overview', href: '/', icon: LayoutGrid },
-    { label: 'Players', href: '/players', icon: Users },
-    { label: 'Economy', href: '/economy', icon: Coins },
-    { label: 'Warps', href: '/warps', icon: MapPin },
-    { label: 'Kits', href: '/kits', icon: Package },
-    { label: 'Holograms', href: '/holograms', icon: Sparkles },
-    { label: 'Discord', href: '/discord', icon: MessageCircle },
-    { label: 'Permissions', href: '/permissions', icon: ShieldCheck },
-    { label: 'Backups', href: '/backups', icon: DatabaseBackup },
-    { label: 'Commands', href: '/commands', icon: Terminal },
-    { label: 'Logs', href: '/logs', icon: ScrollText },
+    ...(isAdmin || can('players') ? [{ label: 'Players', href: '/players', icon: Users }] : []),
+    ...(isAdmin || can('economy') ? [{ label: 'Economy', href: '/economy', icon: Coins }] : []),
+    ...(isAdmin || can('warps') ? [{ label: 'Warps', href: '/warps', icon: MapPin }] : []),
+    ...(isAdmin || can('kits') ? [{ label: 'Kits', href: '/kits', icon: Package }] : []),
+    ...(isAdmin || can('holograms') ? [{ label: 'Holograms', href: '/holograms', icon: Sparkles }] : []),
+    ...(isAdmin || can('discord') ? [{ label: 'Discord', href: '/discord', icon: MessageCircle }] : []),
+    ...(isAdmin || can('permissions') ? [{ label: 'Permissions', href: '/permissions', icon: ShieldCheck }] : []),
+    ...(isAdmin || can('backups') ? [{ label: 'Backups', href: '/backups', icon: DatabaseBackup }] : []),
+    ...(isAdmin || can('commands') ? [{ label: 'Commands', href: '/commands', icon: Terminal }] : []),
+    ...(isAdmin || can('logging') ? [{ label: 'Logs', href: '/logs', icon: ScrollText }] : []),
     // Filing a report is open to everyone (matches the in-game /report command, whose
     // permission node is granted to every player by default). Reviewing the queue is
     // staff-only, same as /reports and /reviewreport in-game — separate nav item below.
     { label: 'Report', href: '/report', icon: Send },
-    ...(isAdmin ? [{ label: 'Reports', href: '/reports', icon: Flag }] : []),
+    ...(isAdmin || can('moderation') ? [{ label: 'Reports', href: '/reports', icon: Flag }] : []),
     // IP-level bans/mutes are admin-only — a broader, more severe action than
     // per-player moderation (affects anyone sharing that IP), same gate as Reports.
-    ...(isAdmin ? [{ label: 'IP Bans', href: '/ip-bans', icon: Ban }] : []),
+    ...(isAdmin || can('moderation') ? [{ label: 'IP Bans', href: '/ip-bans', icon: Ban }] : []),
     // Jail cell management (create/remove by coordinates) — admin-only, matching the
     // in-game /setjail permission node. Jailing/unjailing a specific PLAYER into an
     // existing cell stays on the Players page, not here.
-    ...(isAdmin ? [{ label: 'Jails', href: '/jails', icon: Lock }] : []),
+    ...(isAdmin || can('moderation') ? [{ label: 'Jails', href: '/jails', icon: Lock }] : []),
     // Mod dashboard account management is admin-only, same gate as the external
     // dashboard's copy of this page.
-    ...(isAdmin ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),
+    ...(isAdmin || can('users') ? [{ label: 'Users', href: '/users', icon: UserCog }] : []),
   ];
 
   const handleLogout = () => {
