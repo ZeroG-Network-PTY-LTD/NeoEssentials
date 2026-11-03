@@ -235,7 +235,8 @@ public class DiscordEndpoint implements HttpHandler {
     // ── POST /api/discord/auth-config ────────────────────────────────────────
     // Saves changed discord_auth.json settings (ADMIN only).
     // Sends partial updates: only keys present in the body are changed.
-    // clientSecret is skipped if blank (keep the current value).
+    // No OAuth2 client secret here — this mod never performs Discord OAuth2 itself
+    // (that flow lives entirely in the paired external dashboard app).
 
     private void handlePostAuthConfig(HttpExchange exchange) throws IOException {
         Boolean isAdmin = (Boolean) exchange.getAttribute("auth-admin");
