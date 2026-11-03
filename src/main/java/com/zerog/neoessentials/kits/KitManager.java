@@ -625,7 +625,7 @@ public class KitManager {
                         if (inventory.add(armor.copy())) {
                             itemsGiven.add(armor.copy());
                         } else {
-                            player.drop(armor.copy(), false);
+                            player.drop(armor.copy(), false, net.minecraft.util.Prediction.SERVER_ONLY);
                             itemsDropped.add(armor.copy());
                         }
                     }
@@ -636,7 +636,7 @@ public class KitManager {
                     if (inventory.add(armor.copy())) {
                         itemsGiven.add(armor.copy());
                     } else {
-                        player.drop(armor.copy(), false);
+                        player.drop(armor.copy(), false, net.minecraft.util.Prediction.SERVER_ONLY);
                         itemsDropped.add(armor.copy());
                     }
                 }
@@ -655,7 +655,7 @@ public class KitManager {
                 if (inventory.add(item.copy())) {
                     itemsGiven.add(item.copy());
                 } else {
-                    player.drop(item.copy(), false);
+                    player.drop(item.copy(), false, net.minecraft.util.Prediction.SERVER_ONLY);
                     itemsDropped.add(item.copy());
                 }
             }

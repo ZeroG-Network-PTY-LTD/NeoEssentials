@@ -168,7 +168,7 @@ public class MiscItemCommands {
             ItemStack output = new ItemStack(outputItem, sets);
             if (!player.getInventory().add(output)) {
                 // Drop at player's feet if inventory full
-                player.drop(output, false);
+                player.drop(output, false, net.minecraft.util.Prediction.SERVER_ONLY);
             }
             convertCount++;
         }
@@ -522,7 +522,7 @@ public class MiscItemCommands {
         int qty = amount > 0 ? amount : item.getDefaultMaxStackSize();
         var stack = new net.minecraft.world.item.ItemStack(item, qty);
         if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+            player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
         }
         final String fname = item.getName(stack).getString();
         final int fqty = qty;

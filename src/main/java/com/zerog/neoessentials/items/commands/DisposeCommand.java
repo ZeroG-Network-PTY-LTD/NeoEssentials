@@ -67,7 +67,7 @@ public class DisposeCommand {
             int itemCount = 0;
             for (int i = 0; i < container.getContainerSize(); i++) {
                 if (!container.getItem(i).isEmpty()) {
-                    player.getInventory().placeItemBackInInventory(container.getItem(i));
+                    player.getInventory().placeItemBackInInventory(container.getItem(i), net.minecraft.util.Prediction.SERVER_ONLY);
                     itemCount++;
                 }
             }
@@ -132,7 +132,7 @@ public class DisposeCommand {
                             int itemCount = 0;
                             for (int i = 0; i < container.getContainerSize(); i++) {
                                 if (!container.getItem(i).isEmpty()) {
-                                    player.getInventory().placeItemBackInInventory(container.getItem(i));
+                                    player.getInventory().placeItemBackInInventory(container.getItem(i), net.minecraft.util.Prediction.SERVER_ONLY);
                                     itemCount++;
                                 }
                             }

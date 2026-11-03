@@ -561,7 +561,7 @@ public class JailCommand {
             }
             net.minecraft.world.item.ItemStack wandStack = new net.minecraft.world.item.ItemStack(item);
             if (!player.getInventory().add(wandStack)) {
-                player.drop(wandStack, false);
+                player.drop(wandStack, false, net.minecraft.util.Prediction.SERVER_ONLY);
             }
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.jail.wand.given"), false);
             return 1;

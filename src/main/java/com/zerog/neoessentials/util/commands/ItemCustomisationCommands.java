@@ -289,7 +289,7 @@ public class ItemCustomisationCommands {
                     new com.mojang.authlib.GameProfile(UUID.randomUUID(), ownerName)));
         }
 
-        if (!self.getInventory().add(skull)) self.drop(skull, false);
+        if (!self.getInventory().add(skull)) self.drop(skull, false, net.minecraft.util.Prediction.SERVER_ONLY);
         final String fn = ownerName;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.skull.success", fn), false);
         return 1;

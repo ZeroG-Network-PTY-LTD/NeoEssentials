@@ -482,7 +482,7 @@ public class PlayerStateCommands {
             int give = Math.min(remaining, maxStack);
             ItemStack toGive = stack.copyWithCount(give);
             if (!inv.add(toGive)) {
-                target.drop(toGive, false);
+                target.drop(toGive, false, net.minecraft.util.Prediction.SERVER_ONLY);
             }
             remaining -= give;
         }

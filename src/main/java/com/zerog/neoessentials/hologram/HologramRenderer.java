@@ -138,7 +138,7 @@ public final class HologramRenderer {
                 if (entity == null) continue;
                 entity.setPos(data.x, lineY, data.z);
                 entity.setNoGravity(true);
-                entity.setInvulnerable(true);
+                entity.setPermanentlyInvulnerable(true);
                 entity.setSilent(true);
                 entity.getPersistentData().putBoolean(TAG_MARKER, true);
                 entity.getPersistentData().putString(TAG_ID, data.id);
@@ -182,7 +182,7 @@ public final class HologramRenderer {
                 net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), dims));
 
             entity.setPos(data.x, bottomY - 0.2, data.z);
-            entity.setInvulnerable(true);
+            entity.setPermanentlyInvulnerable(true);
             entity.setSilent(true);
             entity.getPersistentData().putBoolean(TAG_MARKER, true);
             entity.getPersistentData().putString(TAG_ID, data.id);

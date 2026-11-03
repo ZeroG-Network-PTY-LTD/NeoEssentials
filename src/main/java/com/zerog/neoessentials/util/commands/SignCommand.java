@@ -64,7 +64,7 @@ public class SignCommand {
         context.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.sign.current_contents"), false);
         
         for (int i = 0; i < 4; i++) {
-            Component lineText = signBlockEntity.getFrontText().getMessage(i, false);
+            Component lineText = signBlockEntity.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).getMessages(false).get(i);
             String textContent = lineText.getString();
             if (textContent.isEmpty()) {
                 textContent = MessageUtil.localize("commands.neoessentials.sign.empty_line");
@@ -193,11 +193,14 @@ public class SignCommand {
     Component textComponent = com.zerog.neoessentials.util.MessageUtil.coloredText(text);
         
         // Get current front text and update the specific line
-        var currentText = signBlockEntity.getFrontText();
-        var newText = currentText.setMessage(line, textComponent);
-        
+        var currentText = signBlockEntity.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT);
+        var updatedMessages = new java.util.ArrayList<>(currentText.getMessages(false));
+        updatedMessages.set(line, textComponent);
+        var newText = new net.minecraft.world.level.block.entity.SignText(
+            updatedMessages, updatedMessages, currentText.getColor(), currentText.hasGlowingText());
+
         // Update the sign
-        signBlockEntity.updateText(signBlockEntity_ -> newText, true);
+        signBlockEntity.updateText(signBlockEntity_ -> newText, net.minecraft.world.level.block.entity.SignTextSlot.FRONT);
         
         // Mark the block entity as changed and sync to clients
         signBlockEntity.setChanged();

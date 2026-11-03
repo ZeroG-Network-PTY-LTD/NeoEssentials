@@ -115,7 +115,7 @@ public class PlayerJoinQuitHandler {
                             for (net.minecraft.world.item.ItemStack item : starterKit.getItems()) {
                                 if (item.isEmpty()) continue;
                                 if (!inv.add(item.copy())) {
-                                    player.drop(item.copy(), false);
+                                    player.drop(item.copy(), false, net.minecraft.util.Prediction.SERVER_ONLY);
                                 }
                             }
                         }

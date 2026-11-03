@@ -111,7 +111,7 @@ public class BookCommand {
         // Add book to player's inventory
         if (!player.getInventory().add(book)) {
             // If inventory is full, drop it at their feet
-            player.drop(book, false);
+            player.drop(book, false, net.minecraft.util.Prediction.SERVER_ONLY);
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.book.inventory_full"));
         } else {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.book.given"));

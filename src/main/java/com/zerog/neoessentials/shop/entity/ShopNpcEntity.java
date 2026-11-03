@@ -77,7 +77,7 @@ public final class ShopNpcEntity {
         }
 
         if (entity instanceof LivingEntity living) {
-            living.setInvulnerable(true);
+            living.setPermanentlyInvulnerable(true);
             living.setSilent(true);
             living.setCustomName(com.zerog.neoessentials.util.MessageUtil.component(
                 "commands.neoessentials.npcshop.entity_display_name", shopName));

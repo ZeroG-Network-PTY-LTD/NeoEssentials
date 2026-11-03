@@ -1,7 +1,12 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
+    // 2.0.141 fails to compile against MC 26.3: HolderSet.emptyNamed()'s anonymous
+    // HolderSet$1 doesn't inherit NeoForge's access-widening of Named.contents() (public ->
+    // narrower in the anonymous subclass), so createMinecraftArtifacts' recompile of vanilla
+    // itself fails with "attempting to assign weaker access privileges" before any mod code
+    // is even reached. Fixed upstream in 2.0.147+ (see ModDevGradle's own changelog).
+    id 'net.neoforged.moddev' version '2.0.148'
     id 'idea'
     // Relocates isolated runtime libraries (HikariCP, snakeyaml, Java-WebSocket) into private
     // packages at packaging time — see the shadowJar block below for why. Version pinned to

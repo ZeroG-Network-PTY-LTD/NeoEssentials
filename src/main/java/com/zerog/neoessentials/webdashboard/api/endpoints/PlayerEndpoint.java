@@ -741,7 +741,7 @@ public class PlayerEndpoint implements HttpHandler {
                     int give = Math.min(remaining, maxStack);
                     net.minecraft.world.item.ItemStack toGive = stack.copyWithCount(give);
                     if (!player.getInventory().add(toGive)) {
-                        player.drop(toGive, false);
+                        player.drop(toGive, false, net.minecraft.util.Prediction.SERVER_ONLY);
                     }
                     remaining -= give;
                 }

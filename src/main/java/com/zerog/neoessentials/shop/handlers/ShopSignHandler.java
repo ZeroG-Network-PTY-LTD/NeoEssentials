@@ -314,10 +314,10 @@ public class ShopSignHandler {
     /** Read raw plain text from all 4 front-face lines of a sign. */
     public static String[] readSignLines(SignBlockEntity sign) {
         String[] lines = new String[4];
-        var signText = sign.getFrontText();
+        var signText = sign.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT);
+        var messages = signText.getMessages(false);
         for (int i = 0; i < 4; i++) {
-            Component msg = signText.getMessage(i, false);
-            lines[i] = msg.getString();
+            lines[i] = messages.get(i).getString();
         }
         return lines;
     }
@@ -329,9 +329,12 @@ public class ShopSignHandler {
         for (int i = 0; i < 4 && i < lines.length; i++) {
             final String text = lines[i] != null ? lines[i] : "";
             Component component = net.minecraft.network.chat.Component.literal(text);
-            var currentText = sign.getFrontText();
-            var newText = currentText.setMessage(i, component);
-            sign.updateText(s -> newText, true);
+            var currentText = sign.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT);
+            var updatedMessages = new java.util.ArrayList<>(currentText.getMessages(false));
+            updatedMessages.set(i, component);
+            var newText = new net.minecraft.world.level.block.entity.SignText(
+                updatedMessages, updatedMessages, currentText.getColor(), currentText.hasGlowingText());
+            sign.updateText(s -> newText, net.minecraft.world.level.block.entity.SignTextSlot.FRONT);
         }
         sign.setChanged();
         BlockState state = level.getBlockState(pos);

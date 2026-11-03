@@ -253,7 +253,7 @@ public class WorldInteractionCommands {
 
     private static boolean tryPlaceTree(ServerLevel level, BlockPos pos, net.minecraft.resources.Identifier featureKey) {
         try {
-            var registry = level.registryAccess().lookup(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE);
+            var registry = level.registryAccess().lookup(net.minecraft.core.registries.Registries.FEATURE);
             if (registry.isEmpty()) return false;
             var holder = registry.get().get(featureKey);
             if (holder.isEmpty()) return false;

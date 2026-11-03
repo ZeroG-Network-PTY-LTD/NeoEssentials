@@ -149,7 +149,7 @@ public class CrateManager {
         while (remaining > 0) {
             int chunk = Math.min(max, remaining);
             ItemStack stack = buildKeyItem(crate, chunk);
-            if (!player.getInventory().add(stack)) player.drop(stack, false);
+            if (!player.getInventory().add(stack)) player.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
             remaining -= chunk;
         }
     }

@@ -199,8 +199,8 @@ public class PlayerDataCollector {
                     
                     JsonObject adv = new JsonObject();
                     adv.addProperty("id", advancement.id().toString());
-                    adv.addProperty("title", display.getTitle().getString());
-                    adv.addProperty("description", display.getDescription().getString());
+                    adv.addProperty("title", display.title().getString());
+                    adv.addProperty("description", display.description().getString());
                     adv.addProperty("isDone", progress.isDone());
                     
                     if (progress.isDone()) {
@@ -251,14 +251,14 @@ public class PlayerDataCollector {
                                 if (advProgress.has("done") && advProgress.get("done").getAsBoolean()) {
                                     JsonObject adv = new JsonObject();
                                     adv.addProperty("id", advId);
-                                    adv.addProperty("title", advancement.value().display().get().getTitle().getString());
+                                    adv.addProperty("title", advancement.value().display().get().title().getString());
                                     adv.addProperty("isDone", true);
                                     completed.add(adv);
                                 } else if (advProgress.has("criteria")) {
                                     // Has some progress but not complete
                                     JsonObject adv = new JsonObject();
                                     adv.addProperty("id", advId);
-                                    adv.addProperty("title", advancement.value().display().get().getTitle().getString());
+                                    adv.addProperty("title", advancement.value().display().get().title().getString());
                                     adv.addProperty("isDone", false);
                                     inProgress.add(adv);
                                 }
@@ -1115,9 +1115,9 @@ public class PlayerDataCollector {
         // Check item categories
         if (itemStack.is(net.minecraft.tags.ItemTags.SWORDS)) return "sword";
         if (itemStack.is(net.minecraft.tags.ItemTags.PICKAXES)) return "pickaxe";
-        if (item instanceof net.minecraft.world.item.AxeItem) return "axe";
-        if (item instanceof net.minecraft.world.item.ShovelItem) return "shovel";
-        if (item instanceof net.minecraft.world.item.HoeItem) return "hoe";
+        if (itemStack.is(net.minecraft.tags.ItemTags.AXES)) return "axe";
+        if (itemStack.is(net.minecraft.tags.ItemTags.SHOVELS)) return "shovel";
+        if (itemStack.is(net.minecraft.tags.ItemTags.HOES)) return "hoe";
         net.minecraft.world.item.equipment.Equippable equippable =
             itemStack.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
         if (equippable != null && equippable.slot().getType() == net.minecraft.world.entity.EquipmentSlot.Type.HUMANOID_ARMOR) {

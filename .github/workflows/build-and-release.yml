@@ -19,6 +19,7 @@ on:
       - 1.21.x
       - 26.1.x
       - 26.2.x
+      - 26.3.x
     # Doc-only edits (changelogs, wiki, README, API reference, any other markdown/docs asset)
     # have no effect on the built jar — don't burn a build number or spam a Discord release
     # notification for them. GitHub only skips the workflow when EVERY changed file in the

@@ -380,7 +380,7 @@ public final class ShopTransaction {
 
     public static void giveItems(ServerPlayer player, ItemStack item) {
         ItemStack copy = item.copy();
-        if (!player.getInventory().add(copy)) player.drop(copy, false);
+        if (!player.getInventory().add(copy)) player.drop(copy, false, net.minecraft.util.Prediction.SERVER_ONLY);
     }
 
     static void addItems(Container container, ItemStack target, int amount) {
