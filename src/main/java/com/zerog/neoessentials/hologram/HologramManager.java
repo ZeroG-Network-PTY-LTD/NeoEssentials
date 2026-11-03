@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Singleton manager for all {@link HologramData} entries.
@@ -35,7 +36,7 @@ public class HologramManager {
     // ── Singleton ─────────────────────────────────────────────────────────────
 
     private static HologramManager instance;
-    public static HologramManager getInstance() {
+    public static synchronized HologramManager getInstance() {
         if (instance == null) instance = new HologramManager();
         return instance;
     }
@@ -119,9 +120,9 @@ public class HologramManager {
             HologramData d = fromJson(obj);
             // Init transient / collection fields that JSON leaves null when absent.
             if (d.entityUUIDs == null) d.entityUUIDs = new ArrayList<>();
-            if (d.lines == null)       d.lines       = new ArrayList<>();
+            if (d.lines == null)       d.lines       = new CopyOnWriteArrayList<>();
             for (HologramLine line : d.lines) {
-                if (line.frames == null) line.frames = new ArrayList<>();
+                if (line.frames == null) line.frames = new CopyOnWriteArrayList<>();
             }
             holograms.put(d.id.toLowerCase(Locale.ROOT), d);
         }
@@ -129,7 +130,9 @@ public class HologramManager {
 
     private void trySave(String id, HologramData data) {
         try {
-            store.put(COLLECTION, id, toJson(data));
+            if (!store.put(COLLECTION, id, toJson(data))) {
+                NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+            }
         } catch (Exception e) {
             LOGGER.error("[Hologram] Failed to save hologram '{}'", id, e);
         }
@@ -193,14 +196,14 @@ public class HologramManager {
         d.y = obj.has("y") ? obj.get("y").getAsDouble() : 64;
         d.z = obj.has("z") ? obj.get("z").getAsDouble() : 0;
 
-        d.lines = new ArrayList<>();
+        d.lines = new CopyOnWriteArrayList<>();
         if (obj.has("lines")) {
             for (var el : obj.getAsJsonArray("lines")) {
                 JsonObject lineObj = el.getAsJsonObject();
                 HologramLine line = new HologramLine();
                 line.lineId = lineObj.has("lineId") ? lineObj.get("lineId").getAsString() : UUID.randomUUID().toString();
                 line.text = lineObj.has("text") ? lineObj.get("text").getAsString() : "";
-                line.frames = new ArrayList<>();
+                line.frames = new CopyOnWriteArrayList<>();
                 if (lineObj.has("frames")) {
                     for (var frame : lineObj.getAsJsonArray("frames")) {
                         line.frames.add(frame.getAsString());
@@ -260,7 +263,9 @@ public class HologramManager {
                 for (HologramData d : list) {
                     if (d.id == null || d.id.isEmpty()) continue;
                     String id = d.id.toLowerCase(Locale.ROOT);
-                    store.put(COLLECTION, id, toJson(d));
+                    if (!store.put(COLLECTION, id, toJson(d))) {
+                        NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                    }
                     migrated++;
                 }
             }
