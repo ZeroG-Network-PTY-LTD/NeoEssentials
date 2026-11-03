@@ -46,7 +46,7 @@ public class MotdManager {
     // ── Singleton ──────────────────────────────────────────────────────────────
     private static MotdManager INSTANCE;
 
-    public static MotdManager getInstance() {
+    public static synchronized MotdManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new MotdManager();
         }
@@ -171,10 +171,14 @@ public class MotdManager {
             meta.addProperty("rotationEnabled", rotationEnabled);
             meta.addProperty("rotationIntervalMinutes", rotationIntervalMinutes);
             meta.addProperty("rotationCurrentIndex", rotationCurrentIndex);
-            store.put(META_COLLECTION, META_ID, meta);
+            if (!store.put(META_COLLECTION, META_ID, meta)) {
+                NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", META_COLLECTION, META_ID);
+            }
 
             for (Map.Entry<String, MotdProfile> e : profiles.entrySet()) {
-                store.put(PROFILE_COLLECTION, e.getKey(), profileToJson(e.getValue()));
+                if (!store.put(PROFILE_COLLECTION, e.getKey(), profileToJson(e.getValue()))) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PROFILE_COLLECTION, e.getKey());
+                }
             }
 
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "MOTD data saved to storage backend '{}'", StorageManager.getInstance().getActiveType());
@@ -368,7 +372,9 @@ public class MotdManager {
                     rec.addProperty("motd",      p.has("motd")      ? p.get("motd").getAsString()      : "");
                     rec.addProperty("author",    p.has("author")    ? p.get("author").getAsString()    : "Server");
                     rec.addProperty("timestamp", p.has("timestamp") ? p.get("timestamp").getAsString() : "");
-                    store.put(PROFILE_COLLECTION, entry.getKey(), rec);
+                    if (!store.put(PROFILE_COLLECTION, entry.getKey(), rec)) {
+                        NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PROFILE_COLLECTION, entry.getKey());
+                    }
                     migrated++;
                 }
             } else if (root.has("motd")) {
@@ -377,7 +383,9 @@ public class MotdManager {
                 rec.addProperty("motd", root.get("motd").getAsString());
                 rec.addProperty("author", root.has("author") ? root.get("author").getAsString() : "Server");
                 rec.addProperty("timestamp", root.has("timestamp") ? root.get("timestamp").getAsString() : "");
-                store.put(PROFILE_COLLECTION, "default", rec);
+                if (!store.put(PROFILE_COLLECTION, "default", rec)) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PROFILE_COLLECTION, "default");
+                }
                 legacyActive = "default";
                 migrated++;
                 NeoLog.info(LOGGER, LogCategory.GENERAL, "Migrated legacy single-profile motd_data.json into multi-profile storage");
@@ -389,7 +397,9 @@ public class MotdManager {
                 meta.addProperty("rotationEnabled", legacyRotEnabled);
                 meta.addProperty("rotationIntervalMinutes", legacyRotInterval);
                 meta.addProperty("rotationCurrentIndex", legacyRotIndex);
-                store.put(META_COLLECTION, META_ID, meta);
+                if (!store.put(META_COLLECTION, META_ID, meta)) {
+                    NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", META_COLLECTION, META_ID);
+                }
                 NeoLog.info(LOGGER, LogCategory.GENERAL, "MotdManager: migrated {} MOTD profile(s) from legacy motd_data.json into the '{}' storage backend.",
                     migrated, StorageManager.getInstance().getActiveType());
             }

@@ -30,7 +30,7 @@ import java.lang.reflect.Type;
 public class TransactionHistoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionHistoryManager.class);
     private static TransactionHistoryManager instance;
-    public static TransactionHistoryManager getInstance() {
+    public static synchronized TransactionHistoryManager getInstance() {
         if (instance == null) instance = new TransactionHistoryManager();
         return instance;
     }
@@ -80,7 +80,9 @@ public class TransactionHistoryManager {
         JsonArray arr = new JsonArray();
         for (String entry : deque) arr.add(entry);
         obj.add("entries", arr);
-        store.put(COLLECTION, player.toString(), obj);
+        if (!store.put(COLLECTION, player.toString(), obj)) {
+            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, player.toString());
+        }
     }
 
     public void addTransaction(UUID player, String entry) {
@@ -146,7 +148,9 @@ public class TransactionHistoryManager {
                         JsonArray arr = new JsonArray();
                         for (String s : entry.getValue()) arr.add(s);
                         obj.add("entries", arr);
-                        store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj);
+                        if (!store.put(COLLECTION, UUID.fromString(entry.getKey()).toString(), obj)) {
+                            NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, UUID.fromString(entry.getKey()).toString());
+                        }
                         migrated++;
                     } catch (Exception ignored) {
                         NeoLog.debug(LOGGER, LogCategory.ECONOMY,

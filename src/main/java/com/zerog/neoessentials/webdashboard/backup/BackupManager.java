@@ -57,7 +57,7 @@ public class BackupManager {
 
     private BackupManager() {}
 
-    public static BackupManager getInstance() {
+    public static synchronized BackupManager getInstance() {
         if (INSTANCE == null) INSTANCE = new BackupManager();
         return INSTANCE;
     }

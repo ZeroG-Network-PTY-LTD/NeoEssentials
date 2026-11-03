@@ -51,7 +51,7 @@ public final class AuctionHouseManager {
 
     private AuctionHouseManager() {}
 
-    public static AuctionHouseManager getInstance() {
+    public static synchronized AuctionHouseManager getInstance() {
         if (instance == null) instance = new AuctionHouseManager();
         return instance;
     }

@@ -37,7 +37,7 @@ public class DataCollector {
         this.dataCache = new ConcurrentHashMap<>();
     }
     
-    public static DataCollector getInstance() {
+    public static synchronized DataCollector getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new DataCollector();
         }

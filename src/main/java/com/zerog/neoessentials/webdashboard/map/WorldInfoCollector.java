@@ -23,7 +23,7 @@ public class WorldInfoCollector {
     private WorldInfoCollector() {
     }
     
-    public static WorldInfoCollector getInstance() {
+    public static synchronized WorldInfoCollector getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new WorldInfoCollector();
         }
