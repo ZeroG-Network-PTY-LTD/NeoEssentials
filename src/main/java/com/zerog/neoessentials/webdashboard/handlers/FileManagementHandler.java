@@ -21,6 +21,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Handler for /api/files endpoint
@@ -714,25 +716,47 @@ public class FileManagementHandler implements HttpHandler {
                 return;
             }
 
-            // If no player specified, return stats for all online players
-            if (playerName == null || playerName.isEmpty()) {
-                JsonArray players = new JsonArray();
-                for (net.minecraft.server.level.ServerPlayer p : srv.getPlayerList().getPlayers()) {
-                    players.add(buildPlayerStatsObject(p));
-                }
-                response.addProperty("success", true);
-                response.add("players", players);
-            } else {
-                net.minecraft.server.level.ServerPlayer player = srv.getPlayerList().getPlayerByName(playerName);
-                if (player == null) {
-                    response.addProperty("success", false);
-                    response.addProperty("error", "Player not found or not online: " + playerName);
-                    sendJsonResponse(exchange, 404, response);
-                    return;
-                }
-                response.addProperty("success", true);
-                response.add("player", buildPlayerStatsObject(player));
+            // PlayerList/ServerPlayer state is mutated by the main thread on every tick/join/
+            // disconnect - reading it here (handle() runs on a dashboard HTTP thread) must hop
+            // onto the main thread, matching the pattern used elsewhere for the same server.
+            String finalPlayerName = playerName;
+            JsonObject result;
+            try {
+                result = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    JsonObject r = new JsonObject();
+                    if (finalPlayerName == null || finalPlayerName.isEmpty()) {
+                        JsonArray players = new JsonArray();
+                        for (net.minecraft.server.level.ServerPlayer p : srv.getPlayerList().getPlayers()) {
+                            players.add(buildPlayerStatsObject(p));
+                        }
+                        r.addProperty("success", true);
+                        r.add("players", players);
+                    } else {
+                        net.minecraft.server.level.ServerPlayer player = srv.getPlayerList().getPlayerByName(finalPlayerName);
+                        if (player == null) {
+                            r.addProperty("success", false);
+                            r.addProperty("error", "Player not found or not online: " + finalPlayerName);
+                        } else {
+                            r.addProperty("success", true);
+                            r.add("player", buildPlayerStatsObject(player));
+                        }
+                    }
+                    return r;
+                }, srv).get(8, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+                response.addProperty("success", false);
+                response.addProperty("error", "Internal error: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
+                sendJsonResponse(exchange, 500, response);
+                return;
             }
+
+            if (!result.get("success").getAsBoolean() && result.has("error")
+                    && result.get("error").getAsString().startsWith("Player not found")) {
+                sendJsonResponse(exchange, 404, result);
+                return;
+            }
+            sendJsonResponse(exchange, 200, result);
+            return;
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting player statistics: {}", e.getMessage(), e);
             response.addProperty("success", false);
@@ -866,13 +890,27 @@ public class FileManagementHandler implements HttpHandler {
         Path backupPath = backupDir.resolve(fileName + "." + timestamp + ".backup");
         
         if (Files.isDirectory(file)) {
-            // For directories, create a zip backup
-            // For simplicity, just return the backup directory path
-            return backupDir;
+            // Actually zip the directory tree - this used to just return backupDir with nothing
+            // written, so a directory delete reported "backup: <path>" while no backup existed:
+            // unrecoverable, irreversible data loss disguised as a backed-up delete.
+            Path zipPath = backupDir.resolve(fileName + "." + timestamp + ".zip.backup");
+            try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+                Files.walkFileTree(file, new SimpleFileVisitor<>() {
+                    @Override
+                    public @NotNull FileVisitResult visitFile(@NotNull Path path, @NotNull BasicFileAttributes attrs) throws IOException {
+                        String entryName = fileName + "/" + file.relativize(path).toString().replace('\\', '/');
+                        zos.putNextEntry(new ZipEntry(entryName));
+                        Files.copy(path, zos);
+                        zos.closeEntry();
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+            return zipPath;
         } else {
             Files.copy(file, backupPath);
         }
-        
+
         return backupPath;
     }
     
