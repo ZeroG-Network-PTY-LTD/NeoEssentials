@@ -224,7 +224,10 @@ public class CloudStorageEndpoint implements HttpHandler {
         CloudStorageManager csm = CloudStorageManager.getInstance();
         if (body.has("accessToken")) csm.setDropboxToken(body.get("accessToken").getAsString());
         if (body.has("uploadPath"))  csm.setDropboxPath(body.get("uploadPath").getAsString());
-        csm.saveConfig();
+        if (!csm.saveConfig()) {
+            sendJson(exchange, 500, json(false, "Failed to save Dropbox configuration - check server logs"));
+            return;
+        }
         sendJson(exchange, 200, json(true, "Dropbox configuration saved"));
     }
 
@@ -237,7 +240,10 @@ public class CloudStorageEndpoint implements HttpHandler {
             body.has("clientSecret")  ? body.get("clientSecret").getAsString()  : "",
             body.has("folderId")      ? body.get("folderId").getAsString()       : ""
         );
-        csm.saveConfig();
+        if (!csm.saveConfig()) {
+            sendJson(exchange, 500, json(false, "Failed to save Google Drive configuration - check server logs"));
+            return;
+        }
         sendJson(exchange, 200, json(true, "Google Drive configuration saved"));
     }
 
@@ -250,7 +256,10 @@ public class CloudStorageEndpoint implements HttpHandler {
             body.has("clientSecret")  ? body.get("clientSecret").getAsString()  : "",
             body.has("uploadPath")    ? body.get("uploadPath").getAsString()     : ""
         );
-        csm.saveConfig();
+        if (!csm.saveConfig()) {
+            sendJson(exchange, 500, json(false, "Failed to save OneDrive configuration - check server logs"));
+            return;
+        }
         sendJson(exchange, 200, json(true, "OneDrive configuration saved"));
     }
 

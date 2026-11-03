@@ -283,7 +283,10 @@ public class TeleportEndpoint implements HttpHandler {
             }
 
             // Save updated config
-            cfg.saveConfig(ConfigManager.MAIN_CONFIG, config);
+            if (!cfg.saveConfig(ConfigManager.MAIN_CONFIG, config)) {
+                sendResponse(exchange, 500, "{\"success\":false,\"error\":\"Failed to persist teleport settings to config.json - check server logs\"}");
+                return;
+            }
             NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "Teleport settings updated via dashboard");
 
             // Reload all teleport managers so changes take effect immediately

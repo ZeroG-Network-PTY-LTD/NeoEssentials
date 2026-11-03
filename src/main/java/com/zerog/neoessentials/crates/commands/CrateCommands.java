@@ -288,7 +288,10 @@ public class CrateCommands {
         CrateDefinition def = new CrateDefinition();
         def.id = id;
         def.displayName = displayName;
-        CrateManager.getInstance().saveCrate(def);
+        if (!CrateManager.getInstance().saveCrate(def)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", id));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.created", id), false);
         return 1;
     }
@@ -327,7 +330,10 @@ public class CrateCommands {
         reward.weight = weight;
         reward.item = held.copy();
         crate.rewards.add(reward);
-        CrateManager.getInstance().saveCrate(crate);
+        if (!CrateManager.getInstance().saveCrate(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", crateId));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.reward_added", crate.getChatDisplayName()), false);
         return 1;
     }
@@ -339,7 +345,10 @@ public class CrateCommands {
             return 0;
         }
         crate.animation = CrateAnimation.parse(animation);
-        CrateManager.getInstance().saveCrate(crate);
+        if (!CrateManager.getInstance().saveCrate(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", crateId));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.animation_set", crate.getChatDisplayName(), crate.animation.name().toLowerCase()), false);
         return 1;
     }
@@ -351,7 +360,10 @@ public class CrateCommands {
             return 0;
         }
         crate.chatDisplayName = name;
-        CrateManager.getInstance().saveCrate(crate);
+        if (!CrateManager.getInstance().saveCrate(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", crateId));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.chat_name_set", crate.getChatDisplayName()), false);
         return 1;
     }
@@ -363,7 +375,10 @@ public class CrateCommands {
             return 0;
         }
         crate.crateKeyDisplayName = name;
-        CrateManager.getInstance().saveCrate(crate);
+        if (!CrateManager.getInstance().saveCrate(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", crateId));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_name_set", crate.getCrateKeyDisplayName()), false);
         return 1;
     }
@@ -384,7 +399,10 @@ public class CrateCommands {
             return 0;
         }
         crate.keyItem = held.copy();
-        CrateManager.getInstance().saveCrate(crate);
+        if (!CrateManager.getInstance().saveCrate(crate)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.save_failed", crateId));
+            return 0;
+        }
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.crate.key_item_set", crate.getChatDisplayName()), false);
         return 1;
     }
