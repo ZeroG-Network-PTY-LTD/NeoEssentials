@@ -97,8 +97,13 @@ public class StatsEndpoint implements HttpHandler {
             // Player peak
             int online = server.getPlayerCount();
             if (online > peakOnline.get()) peakOnline.set(online);
-            // Track UUIDs seen today
-            server.getPlayerList().getPlayers().forEach(p -> uniqueToday.add(p.getUUID()));
+            // Track UUIDs seen today - getPlayerList().getPlayers() returns the live list the
+            // main thread mutates on every join/disconnect, so this (unlike the two reads above,
+            // which are simple volatile-backed counters) must hop onto the main thread rather
+            // than iterate it from this sampler's own daemon thread.
+            CompletableFuture.runAsync(
+                () -> server.getPlayerList().getPlayers().forEach(p -> uniqueToday.add(p.getUUID())), server
+            ).get(5, TimeUnit.SECONDS);
 
             // Store
             tpsHistory[historyHead]  = Math.round(tps * 10.0) / 10.0;

@@ -22,7 +22,11 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -138,13 +142,32 @@ public class CommandExecutionHandler implements HttpHandler {
         NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Executing dashboard command '{}' (by {}, executionId={})",
             command, authUsername != null ? authUsername : "unknown", executionId);
 
+        String finalCommand = command;
         try {
             // Create command source for dashboard
             CommandSourceStack source = createDashboardCommandSource(server, output);
-            
-            // Execute command on server thread
-            int result = server.getCommands().getDispatcher().execute(command, source);
-            
+
+            // Actually marshal onto the main server thread (handle() runs on the dashboard's
+            // own HTTP executor threads, not the main thread) - the dispatcher mutates live
+            // entity/chunk/world state the main tick loop is concurrently reading/writing, same
+            // pattern as PlayerEndpoint's server.submit/CompletableFuture.supplyAsync(..., server).
+            int result;
+            try {
+                result = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return server.getCommands().getDispatcher().execute(finalCommand, source);
+                    } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                }, server).get(10, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new RuntimeException("Command timed out after 10 seconds", e);
+            } catch (ExecutionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException re) throw re;
+                throw new RuntimeException(cause != null ? cause.getMessage() : e.getMessage(), cause);
+            }
+
             // Add to history
             addToHistory(command, result > 0, String.join("\n", output));
             
