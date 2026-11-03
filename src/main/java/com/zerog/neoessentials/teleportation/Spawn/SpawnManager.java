@@ -444,7 +444,9 @@ public class SpawnManager {
             config.addProperty("allowSetSpawnInEnd", allowSetSpawnInEnd);
             root.add("config", config);
 
-            store.put(SPAWN_COLLECTION, SPAWN_ID, root);
+            if (!store.put(SPAWN_COLLECTION, SPAWN_ID, root)) {
+                NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", SPAWN_COLLECTION, SPAWN_ID);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Failed to save spawn to storage", e);
@@ -467,7 +469,9 @@ public class SpawnManager {
             if (content.trim().isEmpty()) return;
 
             JsonObject root = JsonParser.parseString(content).getAsJsonObject();
-            store.put(SPAWN_COLLECTION, SPAWN_ID, root);
+            if (!store.put(SPAWN_COLLECTION, SPAWN_ID, root)) {
+                NeoLog.error(LOGGER, LogCategory.TELEPORTATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", SPAWN_COLLECTION, SPAWN_ID);
+            }
             NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "SpawnManager: migrated legacy spawn.json into the '{}' storage backend.",
                 com.zerog.neoessentials.storage.StorageManager.getInstance().getActiveType());
         } catch (Exception e) {

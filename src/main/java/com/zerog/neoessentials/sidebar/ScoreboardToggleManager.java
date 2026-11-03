@@ -51,7 +51,9 @@ public class ScoreboardToggleManager {
         cache.put(player, enabled);
         JsonObject obj = new JsonObject();
         obj.addProperty("enabled", enabled);
-        store.put(COLLECTION, player.toString(), obj);
+        if (!store.put(COLLECTION, player.toString(), obj)) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, player.toString());
+        }
         NeoLog.debug(LOGGER, LogCategory.GENERAL, "ScoreboardToggleManager: set {} enabled={}", player, enabled);
     }
 }

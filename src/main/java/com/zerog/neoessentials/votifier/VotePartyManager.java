@@ -44,7 +44,9 @@ public class VotePartyManager {
 
         JsonObject updated = new JsonObject();
         updated.addProperty("count", current);
-        store.put(COLLECTION, RECORD_ID, updated);
+        if (!store.put(COLLECTION, RECORD_ID, updated)) {
+            NeoLog.error(LOGGER, LogCategory.VOTIFIER, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, RECORD_ID);
+        }
     }
 
     public int getProgress() {
@@ -63,7 +65,9 @@ public class VotePartyManager {
         if (config != null && config.has("resetOnRestart") && config.get("resetOnRestart").getAsBoolean()) {
             JsonObject reset = new JsonObject();
             reset.addProperty("count", 0);
-            StorageManager.getInstance().getStore().put(COLLECTION, RECORD_ID, reset);
+            if (!StorageManager.getInstance().getStore().put(COLLECTION, RECORD_ID, reset)) {
+                NeoLog.error(LOGGER, LogCategory.VOTIFIER, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, RECORD_ID);
+            }
         }
     }
 

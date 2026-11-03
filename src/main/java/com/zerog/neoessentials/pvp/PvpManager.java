@@ -83,7 +83,9 @@ public class PvpManager {
     private void saveGlobalState() {
         JsonObject obj = new JsonObject();
         obj.addProperty("enabled", globalPvpEnabled);
-        store.put(GLOBAL_COLLECTION, GLOBAL_ID, obj);
+        if (!store.put(GLOBAL_COLLECTION, GLOBAL_ID, obj)) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", GLOBAL_COLLECTION, GLOBAL_ID);
+        }
     }
 
     // ── Per-player opt-out ───────────────────────────────────────────────────
@@ -213,7 +215,9 @@ public class PvpManager {
         o.addProperty("optedOut", optedOutCache.getOrDefault(uuid, false));
         Long firstSeen = firstSeenCache.get(uuid);
         if (firstSeen != null) o.addProperty("firstSeenMs", firstSeen);
-        store.put(PLAYER_COLLECTION, uuid.toString(), o);
+        if (!store.put(PLAYER_COLLECTION, uuid.toString(), o)) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist {}/{} to storage - this change may be lost on restart.", PLAYER_COLLECTION, uuid.toString());
+        }
     }
 
     /** Re-reads global/per-player state from storage (config-derived values are read live elsewhere). */

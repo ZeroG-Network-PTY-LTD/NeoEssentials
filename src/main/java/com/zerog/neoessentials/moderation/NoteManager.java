@@ -53,7 +53,9 @@ public class NoteManager {
     public NoteEntry addNote(UUID targetId, String targetName, UUID authorId, String authorName, String text) {
         NoteEntry entry = new NoteEntry(targetId, targetName, authorId, authorName, text);
         noteMap.computeIfAbsent(targetId, k -> new CopyOnWriteArrayList<>()).add(entry);
-        store.put(COLLECTION, entry.getId(), toJson(entry));
+        if (!store.put(COLLECTION, entry.getId(), toJson(entry))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.getId());
+        }
         NeoLog.info(LOGGER, LogCategory.MODERATION, "[Note] {} added a note on {}: {}", authorName, targetName, text);
         return entry;
     }
@@ -149,7 +151,9 @@ public class NoteManager {
             for (JsonElement el : root) {
                 JsonObject obj = el.getAsJsonObject();
                 String id = obj.get("id").getAsString();
-                store.put(COLLECTION, id, obj);
+                if (!store.put(COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                }
                 migrated++;
             }
             if (migrated > 0) {

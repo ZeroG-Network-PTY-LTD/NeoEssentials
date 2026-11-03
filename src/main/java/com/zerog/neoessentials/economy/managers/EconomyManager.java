@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.io.File;
 import java.io.FileReader;
 import com.google.gson.Gson;
@@ -69,6 +70,11 @@ public class EconomyManager {
      * Guards save/metrics methods so they are no-ops when the economy is disabled.
      */
     private volatile boolean initialized = false;
+    // Rate-limits the "economy still isn't persisting" warning below so a busy server in this
+    // degraded state doesn't flood the log once per save attempt — one warning per interval is
+    // plenty to get an admin's attention without drowning everything else out.
+    private final AtomicLong lastDegradedWarningAt = new AtomicLong(0);
+    private static final long DEGRADED_WARNING_INTERVAL_MS = 5 * 60 * 1000;
 
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
@@ -156,13 +162,28 @@ public class EconomyManager {
         obj.addProperty("balance", bal != null ? bal.toPlainString() : BigDecimal.ZERO.toPlainString());
         Long activity = lastActivityMap.get(player);
         obj.addProperty("lastActivity", activity != null ? activity : System.currentTimeMillis());
-        store.put(COLLECTION, player.toString(), obj);
+        if (!store.put(COLLECTION, player.toString(), obj)) {
+            NeoLog.error(LOGGER, LogCategory.ECONOMY,
+                "Failed to persist balance for {} to storage - this change may be lost on restart.", player);
+            return;
+        }
         NeoLog.debug(LOGGER, LogCategory.ECONOMY, "persistPlayer: committed balance={} for player={}",
             bal != null ? bal.toPlainString() : "0", player);
     }
 
     private void queueAsyncSave(UUID player) {
-        if (!initialized) return; // economy disabled — nothing was loaded, nothing to save
+        if (!initialized) {
+            // Not just "economy disabled" — see initializeIfEnabled()'s javadoc: this also
+            // covers the degraded case where init silently failed and balance changes have
+            // been happening in-memory-only ever since, with nothing else to flag it.
+            long now = System.currentTimeMillis();
+            long last = lastDegradedWarningAt.get();
+            if (now - last > DEGRADED_WARNING_INTERVAL_MS && lastDegradedWarningAt.compareAndSet(last, now)) {
+                NeoLog.warn(LOGGER, LogCategory.ECONOMY,
+                    "Economy persistence is not initialized - balance changes are NOT being saved to disk and will be lost on restart. Try /neoe reload.");
+            }
+            return;
+        }
         saveExecutor.execute(() -> persistPlayer(player));
     }
 
@@ -494,7 +515,10 @@ public class EconomyManager {
             obj.addProperty("balance", bal != null ? bal.toPlainString() : BigDecimal.ZERO.toPlainString());
             Long act = legacyActivity.get(uuid);
             obj.addProperty("lastActivity", act != null ? act : System.currentTimeMillis());
-            store.put(COLLECTION, uuid.toString(), obj);
+            if (!store.put(COLLECTION, uuid.toString(), obj)) {
+                NeoLog.error(LOGGER, LogCategory.ECONOMY, "Failed to migrate legacy balance for {} - it will stay on the old legacy file, not the new storage backend.", uuid);
+                continue;
+            }
             migrated++;
         }
 

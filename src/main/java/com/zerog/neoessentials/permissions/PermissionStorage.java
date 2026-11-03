@@ -65,13 +65,17 @@ public class PermissionStorage {
         // Meta (default group)
         JsonObject meta = new JsonObject();
         meta.addProperty("defaultGroup", manager.getDefaultGroup());
-        store.put(META_COLLECTION, "global", meta);
+        if (!store.put(META_COLLECTION, "global", meta)) {
+            NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", META_COLLECTION, "global");
+        }
 
         // Groups — write current groups, then delete any stored group no longer present.
         Set<String> currentGroupNames = new HashSet<>();
         for (PermissionGroup group : manager.getGroups()) {
             currentGroupNames.add(group.getName());
-            store.put(GROUP_COLLECTION, group.getName(), groupToJson(group));
+            if (!store.put(GROUP_COLLECTION, group.getName(), groupToJson(group))) {
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", GROUP_COLLECTION, group.getName());
+            }
         }
         for (String existingId : store.getAll(GROUP_COLLECTION).keySet()) {
             if (!currentGroupNames.contains(existingId)) {
@@ -84,7 +88,9 @@ public class PermissionStorage {
         for (PermissionUser user : manager.getUsers()) {
             String id = user.getUuid().toString();
             currentUserIds.add(id);
-            store.put(USER_COLLECTION, id, userToJson(user));
+            if (!store.put(USER_COLLECTION, id, userToJson(user))) {
+                NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", USER_COLLECTION, id);
+            }
         }
         for (String existingId : store.getAll(USER_COLLECTION).keySet()) {
             if (!currentUserIds.contains(existingId)) {
@@ -349,7 +355,9 @@ public class PermissionStorage {
                     if (root.has("users")) {
                         for (JsonElement ue : root.getAsJsonArray("users")) {
                             JsonObject u = ue.getAsJsonObject().deepCopy();
-                            store.put(USER_COLLECTION, u.get("uuid").getAsString(), u);
+                            if (!store.put(USER_COLLECTION, u.get("uuid").getAsString(), u)) {
+                                NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", USER_COLLECTION, u.get("uuid").getAsString());
+                            }
                             migratedUsers++;
                         }
                     }
@@ -361,7 +369,9 @@ public class PermissionStorage {
                     if (root.has("users")) {
                         for (JsonElement ue : root.getAsJsonArray("users")) {
                             JsonObject u = ue.getAsJsonObject().deepCopy();
-                            store.put(USER_COLLECTION, u.get("uuid").getAsString(), u);
+                            if (!store.put(USER_COLLECTION, u.get("uuid").getAsString(), u)) {
+                                NeoLog.error(LOGGER, LogCategory.PERMISSIONS, "Failed to persist {}/{} to storage - this change may be lost on restart.", USER_COLLECTION, u.get("uuid").getAsString());
+                            }
                             migratedUsers++;
                         }
                     }

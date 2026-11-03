@@ -154,8 +154,8 @@ public class MySqlDataStore implements DataStore {
     }
 
     @Override
-    public void put(String collection, String id, JsonObject data) {
-        if (dataSource == null) return;
+    public boolean put(String collection, String id, JsonObject data) {
+        if (dataSource == null) return false;
         ensureTable(collection);
         String sql = "INSERT INTO " + tableName(collection) + " (id, data) VALUES (?, ?) "
             + "ON DUPLICATE KEY UPDATE data = VALUES(data)";
@@ -164,8 +164,10 @@ public class MySqlDataStore implements DataStore {
             stmt.setString(1, id);
             stmt.setString(2, GSON.toJson(data));
             stmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             LOGGER.error("MySqlDataStore: failed to put {}/{}", collection, id, e);
+            return false;
         }
     }
 

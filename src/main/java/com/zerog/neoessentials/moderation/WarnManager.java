@@ -55,7 +55,9 @@ public class WarnManager {
         WarnEntry entry = new WarnEntry(targetId, targetName, warnedById, warnedBy, reason);
         warnMap.computeIfAbsent(targetId, k -> new java.util.concurrent.CopyOnWriteArrayList<>())
                .add(entry);
-        store.put(COLLECTION, entry.getId(), toJson(entry));
+        if (!store.put(COLLECTION, entry.getId(), toJson(entry))) {
+            NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.getId());
+        }
         NeoLog.debug(LOGGER, LogCategory.MODERATION, "Applying warn: player={} ({}) reason={} by={} ({})",
             targetName, targetId, reason, warnedBy, warnedById);
         // Always log to console so it appears in server logs
@@ -192,7 +194,9 @@ public class WarnManager {
             for (JsonElement el : root) {
                 JsonObject obj = el.getAsJsonObject();
                 String id = obj.get("id").getAsString();
-                store.put(COLLECTION, id, obj);
+                if (!store.put(COLLECTION, id, obj)) {
+                    NeoLog.error(LOGGER, LogCategory.MODERATION, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, id);
+                }
                 migrated++;
             }
             if (migrated > 0) {

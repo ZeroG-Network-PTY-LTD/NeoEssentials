@@ -69,7 +69,9 @@ public class IgnoreManager {
         JsonArray arr = new JsonArray();
         ignored.forEach(arr::add);
         obj.add("ignored", arr);
-        store.put(COLLECTION, playerName, obj);
+        if (!store.put(COLLECTION, playerName, obj)) {
+            NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, playerName);
+        }
     }
 
     /**
@@ -91,7 +93,9 @@ public class IgnoreManager {
                     if (arr.isEmpty()) continue;
                     JsonObject record = new JsonObject();
                     record.add("ignored", arr.deepCopy());
-                    store.put(COLLECTION, entry.getKey(), record);
+                    if (!store.put(COLLECTION, entry.getKey(), record)) {
+                        NeoLog.error(LOGGER, LogCategory.CHAT, "Failed to persist {}/{} to storage - this change may be lost on restart.", COLLECTION, entry.getKey());
+                    }
                     migrated++;
                 } catch (Exception e) {
                     NeoLog.warn(LOGGER, LogCategory.CHAT, "Failed to migrate legacy ignore entry {}: {}", entry.getKey(), e.getMessage());
