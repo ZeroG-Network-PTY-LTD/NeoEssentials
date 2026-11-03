@@ -1,11 +1,11 @@
 # Changelog — NeoEssentials
 
-> **This is the UNIVERSAL changelog** — one shared history covering all three dev
-> branches (`1.21.x`, `26.1.x`, `26.2.x`), since GitHub releases bundle every branch's
-> jar into a single shared release. Write entries here ONCE, describing the change
-> itself — not duplicated per branch, and not restated in branch-specific terms unless
-> a fix genuinely only applies to one version. This file should read identically across
-> all three branches at any given point in time.
+> **This is the UNIVERSAL changelog** — one shared history covering all four dev
+> branches (`1.21.x`, `26.1.x`, `26.2.x`, `26.3.x`), since GitHub releases bundle every
+> branch's jar into a single shared release. Write entries here ONCE, describing the
+> change itself — not duplicated per branch, and not restated in branch-specific terms
+> unless a fix genuinely only applies to one version. This file should read identically
+> across all four branches at any given point in time.
 >
 > `CHANGELOG_CURSEFORGE.md`/`CHANGELOG_MODRINTH.md` stay branch-specific (those platforms
 > require separate uploads per Minecraft version), so keep writing those per-branch.
@@ -13,7 +13,7 @@
 All notable changes to NeoEssentials are documented here, starting from
 **v1.0.6** — earlier history (v1.0.5.x and before) is not carried over.  
 Format: `[version+build] — date`  
-Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.1.2 (`26.1.x`) · Minecraft 26.2 (`26.2.x`)**
+Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.1.2 (`26.1.x`) · Minecraft 26.2 (`26.2.x`) · Minecraft 26.3 (`26.3.x`)**
 
 > The build counter was reset alongside the v1.0.7 bump (and again, before it, for
 > v1.0.6), so build numbers here start back at 0/1, and the shared CI build number was
@@ -39,6 +39,10 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 - **2026-11-02** — Build 16 ([`6dfe3743`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/6dfe374384b8ba7ddfe5b31d6984b0ef00604a19)) — `/rtp` and the misc teleport commands could still land you in an unloaded chunk right at a chunk border — the same raw `(int)` cast on destination coordinates already fixed in `/spawn`/`/home`/`/tpa` (issue #72) was still present at 6 call sites in `RandomTeleportManager`/`MiscTeleportManager`. Switched to `Math.floor()`, matching the existing fix.
 - **2026-11-02** — Build 16 ([`9d62fcfc`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/9d62fcfc9f01195173c09a1f11b68bbb3218bb57)) — Kit loading threw an error on every server start — `loadKits()` ran during command registration, before vanilla's own item-component system is ready to build an `ItemStack`, which is what actually threw (not any of NeoEssentials' own code, despite the error pointing that way). It now only loads after the server has fully started, which already existed for exactly this purpose but wasn't being used as the sole loader.
 - **2026-11-02** — Build 16 ([`77ea8b33`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/77ea8b33385f3232ab12cb3cfc2c40afa6bfb9ca)) — Mute/AFK/advancement messages sent to Discord could skip mention-sanitization and the character-limit truncation that chat messages already got, since each bridge adapter (SDLink/Mc2Discord/DCIntegration/Webhook) built its own message string independently and this kept getting missed when a new event type was added. These now go through shared, always-sanitized formatting helpers instead.
+- **2026-11-03** — Build 19 ([`37d00ec1`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/37d00ec14a83705a477f9621a9ab38aa2c505f57)) — **Security: dashboard account impersonation** — `GET /api/auth/discord?username=<name>` and the legacy `POST /api/auth/login {"type":"minecraft"}` flow both minted a real dashboard session from a bare, unauthenticated username string — anyone who knew (or guessed) a staff member's Minecraft username could log in *as* them, up to full Admin, with no password and no real Discord OAuth2 exchange despite the route's name. Both replaced with a challenge-response flow: the browser starts a login attempt for a claimed username, the real player confirms it in-game with the new `/dashboardlogin <code>` command, and only then does a session get minted — using the in-game-verified identity, never the originally-claimed one. Neither bundled dashboard frontend ever called the vulnerable routes directly, so nothing else needed updating.
+- **2026-11-03** — Build 19 ([`bf05c263`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bf05c263e91d4aea7cf17f5b9074a65f8c222788)) — Editing a hologram's lines/frames (`/hologram addframes`/`addline`/`removeline`/etc.) while it was visible could throw an `IndexOutOfBoundsException` or briefly show garbage text — the backing lists were plain `ArrayList`s, mutated from the command thread and iterated by the animation scheduler roughly every 50ms with no synchronization. Switched to `CopyOnWriteArrayList`.
+- **2026-11-03** — Build 19 ([`3af22576`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/3af22576189ba5eefc82e0dee6aa1b1365ece38a)) — ~16 manager singletons used an unsynchronized `if (instance == null) instance = new X();` pattern unsafe against the dashboard's own HTTP handler threads calling the same singleton concurrently with the main server thread — in the worst case, two separate instances could silently exist at once (e.g. an API key created via the dashboard not recognized by in-game commands). All now synchronize their `getInstance()`.
+- **2026-11-03** — Build 19 ([`fac57cdd`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/fac57cdd52ae2bd07b314b295e73a3eacb3a1d22)) — A failed database/file write (disk full, locked database, dropped connection) during a ban, mute, balance change, or permission edit was silently swallowed — the admin action still reported success, and the change existed only in memory until the next restart reverted it with no warning to anyone. Every persistence call across the mod now checks and surfaces the actual result instead of assuming it always succeeded.
 
 ---
 

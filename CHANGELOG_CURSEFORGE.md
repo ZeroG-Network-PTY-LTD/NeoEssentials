@@ -1,6 +1,6 @@
-# NeoEssentials — Changelog (26.2.x branch)
+# NeoEssentials — Changelog (26.3.x branch)
 
-**Minecraft 26.2 · NeoForge 26.2.0.63+**
+**Minecraft 26.3 · NeoForge 26.3.0.101+**
 
 All notable changes to this branch are documented here, starting from
 **v1.0.6** — earlier history (v1.0.5.x and before, including the port's own
@@ -26,6 +26,10 @@ migration history) is not carried over.
 - **2026-11-02** — Build 16 ([`c76b1dc2`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/c76b1dc2cf4fd07eb947c1e04de8109d5df89b70)) — Fixed the same unloaded-chunk-at-border teleport bug (issue #72) at 6 remaining call sites in `RandomTeleportManager`/`MiscTeleportManager` — switched a raw `(int)` cast to `Math.floor()`.
 - **2026-11-02** — Build 16 ([`48ea547f`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/48ea547f367b6e5b032ddad3162e2928dd20dd69)) — Fixed an error on every server start from kit loading running before vanilla's item-component system was ready — now only loads after the server has fully started.
 - **2026-11-02** — Build 16 ([`2299c881`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/2299c88127ab6b0aeee69ac3360c4df151cfc7dd)) — Mute/AFK/advancement messages to Discord could skip mention-sanitization and truncation that chat already got, since each bridge adapter built its own message string separately. These now go through shared, always-sanitized helpers.
+- **2026-11-03** — Build 19 ([`37d00ec1`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/37d00ec14a83705a477f9621a9ab38aa2c505f57)) — Security: `GET /api/auth/discord?username=` and the legacy minecraft-type login minted a real dashboard session from a bare username with no proof of ownership — up to full Admin impersonation. Replaced with an in-game confirm flow (`/dashboardlogin <code>`); no session mints until the real player confirms it.
+- **2026-11-03** — Build 19 ([`bf05c263`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bf05c263e91d4aea7cf17f5b9074a65f8c222788)) — Editing a hologram's lines/frames while visible could throw or briefly show garbage text — the backing lists had no synchronization between the command thread and the animation scheduler. Switched to `CopyOnWriteArrayList`.
+- **2026-11-03** — Build 19 ([`3af22576`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/3af22576189ba5eefc82e0dee6aa1b1365ece38a)) — ~16 manager singletons could silently construct two separate instances under concurrent dashboard/main-thread access. All now synchronize their `getInstance()`.
+- **2026-11-03** — Build 19 ([`fac57cdd`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/fac57cdd52ae2bd07b314b295e73a3eacb3a1d22)) — A failed storage write during a ban, mute, balance change, or permission edit was silently swallowed, reporting success while the change existed only in memory. Every persistence call now checks and surfaces the real result.
 
 ---
 
