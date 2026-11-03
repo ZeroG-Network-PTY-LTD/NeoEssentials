@@ -121,8 +121,9 @@ public final class LeaderboardConfigLoader {
     }
 
     // ── Persistence (dashboard/command-driven board create/delete) ──────────
-    /** Appends a new "custom" board definition to leaderboard.json and registers it live. */
-    public static void addCustomBoard(String id, String displayName) {
+    /** Appends a new "custom" board definition to leaderboard.json and registers it live.
+     *  @return true if the config write actually succeeded. */
+    public static boolean addCustomBoard(String id, String displayName) {
         JsonObject root = ConfigManager.getInstance().getConfig(ConfigManager.LEADERBOARD_CONFIG);
         JsonObject lb = root.has("leaderboard") ? root.getAsJsonObject("leaderboard") : new JsonObject();
         JsonArray boards = lb.has("boards") && lb.get("boards").isJsonArray() ? lb.getAsJsonArray("boards") : new JsonArray();
@@ -148,11 +149,15 @@ public final class LeaderboardConfigLoader {
 
         lb.add("boards", rebuilt);
         root.add("leaderboard", lb);
-        ConfigManager.getInstance().saveConfig(ConfigManager.LEADERBOARD_CONFIG, root);
+        boolean saved = ConfigManager.getInstance().saveConfig(ConfigManager.LEADERBOARD_CONFIG, root);
+        if (!saved) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist custom board '{}' to leaderboard.json - it will not survive a restart.", id);
+        }
 
         LeaderboardManager.getInstance().registerBoard(
             new LeaderboardDefinition(id, displayName, null, true), CUSTOM_STATS.forBoard(id), true);
         CUSTOM_BOARD_IDS.add(id.toLowerCase());
+        return saved;
     }
 
     /** Removes a "custom" board from leaderboard.json and live registration. Returns false
@@ -181,7 +186,9 @@ public final class LeaderboardConfigLoader {
 
         lb.add("boards", rebuilt);
         root.add("leaderboard", lb);
-        ConfigManager.getInstance().saveConfig(ConfigManager.LEADERBOARD_CONFIG, root);
+        if (!ConfigManager.getInstance().saveConfig(ConfigManager.LEADERBOARD_CONFIG, root)) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Failed to persist deletion of board '{}' to leaderboard.json - it may reappear on restart.", id);
+        }
 
         LeaderboardManager.getInstance().unregisterBoard(id);
         CUSTOM_STATS.clearBoard(id);

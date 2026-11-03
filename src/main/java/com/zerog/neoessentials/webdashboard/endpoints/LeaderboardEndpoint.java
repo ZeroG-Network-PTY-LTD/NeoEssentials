@@ -151,7 +151,9 @@ public class LeaderboardEndpoint implements HttpHandler {
             return error("A board named '" + id + "' already exists");
         }
         String displayName = body.get("displayName").getAsString();
-        LeaderboardConfigLoader.addCustomBoard(id, displayName);
+        if (!LeaderboardConfigLoader.addCustomBoard(id, displayName)) {
+            return error("Board '" + id + "' was registered but failed to persist to leaderboard.json - check server logs; it will not survive a restart");
+        }
 
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);

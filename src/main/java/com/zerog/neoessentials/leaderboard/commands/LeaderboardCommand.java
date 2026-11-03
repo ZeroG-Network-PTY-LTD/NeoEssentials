@@ -103,7 +103,10 @@ public class LeaderboardCommand {
                                         return 0;
                                     }
                                     String displayName = StringArgumentType.getString(ctx, "displayName");
-                                    LeaderboardConfigLoader.addCustomBoard(id, displayName);
+                                    if (!LeaderboardConfigLoader.addCustomBoard(id, displayName)) {
+                                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.leaderboard.save_failed", id));
+                                        return 0;
+                                    }
                                     ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.leaderboard.board_created", id), false);
                                     return 1;
                                 })))

@@ -596,8 +596,9 @@ public class ScoreboardManager {
         return o;
     }
 
-    /** Persists the current in-memory state to scoreboard.json (webdashboard writes). */
-    public void saveConfig() {
-        ConfigManager.getInstance().saveConfig(ConfigManager.SCOREBOARD_CONFIG, toConfigJson());
+    /** Persists the current in-memory state to scoreboard.json (webdashboard writes).
+     *  @return true if the write actually succeeded. */
+    public boolean saveConfig() {
+        return ConfigManager.getInstance().saveConfig(ConfigManager.SCOREBOARD_CONFIG, toConfigJson());
     }
 }

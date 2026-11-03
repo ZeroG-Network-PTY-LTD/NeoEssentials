@@ -83,6 +83,7 @@ public class BackupManager {
 
         long startMs = System.currentTimeMillis();
         long fileCount = 0;
+        skippedFiles = 0;
 
         // Build manifest
         JsonObject manifest = new JsonObject();
@@ -122,25 +123,42 @@ public class BackupManager {
         long elapsed = System.currentTimeMillis() - startMs;
         long sizeBytes = Files.size(zipFile);
         manifest.addProperty("fileCount", fileCount);
+        manifest.addProperty("skippedFiles", skippedFiles);
         manifest.addProperty("sizeBytes", sizeBytes);
         manifest.addProperty("elapsedMs", elapsed);
 
-        NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Snapshot '{}' created: {} files, {} KB in {}ms",
-            name, fileCount, sizeBytes / 1024, elapsed);
+        if (skippedFiles > 0) {
+            NeoLog.warn(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Snapshot '{}' created: {} files, {} KB in {}ms - {} file(s) could not be read and were skipped (see warnings above)",
+                name, fileCount, sizeBytes / 1024, elapsed, skippedFiles);
+        } else {
+            NeoLog.info(LOGGER, LogCategory.WEB_DASHBOARD, "[Backup] Snapshot '{}' created: {} files, {} KB in {}ms",
+                name, fileCount, sizeBytes / 1024, elapsed);
+        }
 
         // Prune old snapshots
         pruneOldSnapshots();
         return manifest;
     }
 
+    /** Files skipped (visitFileFailed) across the most recent createSnapshot() call - surfaced
+     *  in the manifest so a partial backup is visible instead of looking identical to a full one. */
+    private long skippedFiles = 0;
+
     /**
      * Recursively adds all files under {@code dir} to the ZIP, prefixed with {@code entryPrefix/}.
      * Skips the {@code neoessentials/backups} sub-directory to avoid infinite recursion.
+     *
+     * @return the number of files actually written into the ZIP - previously this re-walked the
+     *         directory on disk and returned that total regardless of whether every file was
+     *         actually written, so a single unreadable file during the walk (visitFileFailed)
+     *         made the reported fileCount silently wrong: the backup shipped with that file
+     *         missing while the manifest/dashboard still claimed the pre-failure total.
      */
     private long addDirToZip(ZipOutputStream zos, Path dir, String dirStr, String entryPrefix) throws IOException {
-        long count = 0;
         Path absDir = dir.toAbsolutePath().normalize();
         Path skipDir = BACKUP_DIR.toAbsolutePath().normalize();
+        java.util.concurrent.atomic.AtomicLong written = new java.util.concurrent.atomic.AtomicLong(0);
+        java.util.concurrent.atomic.AtomicLong skipped = new java.util.concurrent.atomic.AtomicLong(0);
 
         Files.walkFileTree(dir, new SimpleFileVisitor<>() {
             @Override
@@ -160,21 +178,22 @@ public class BackupManager {
                 zos.putNextEntry(new ZipEntry(entryName));
                 Files.copy(file, zos);
                 zos.closeEntry();
+                written.incrementAndGet();
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException exc) {
                 LOGGER.warn("[Backup] Could not read '{}': {}", file, exc.getMessage());
+                skipped.incrementAndGet();
                 return FileVisitResult.CONTINUE;
             }
         });
-        // count is tracked separately since lambdas can't modify outer `count`
-        // re-walk to count; acceptable for small config dirs
-        try (var stream = Files.walk(dir)) {
-            return stream.filter(p -> !Files.isDirectory(p) &&
-                !p.toAbsolutePath().normalize().startsWith(skipDir)).count();
+
+        if (skipped.get() > 0) {
+            skippedFiles += skipped.get();
         }
+        return written.get();
     }
 
     // ── Restore snapshot ──────────────────────────────────────────────────────
