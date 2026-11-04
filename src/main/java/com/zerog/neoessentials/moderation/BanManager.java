@@ -159,7 +159,7 @@ public class BanManager {
         }
     }
     
-    public static BanManager getInstance() {
+    public static synchronized BanManager getInstance() {
         if (instance == null) {
             instance = new BanManager();
         }

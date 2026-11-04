@@ -65,7 +65,7 @@ public class KickManager {
         load();
     }
 
-    public static KickManager getInstance() {
+    public static synchronized KickManager getInstance() {
         if (instance == null) {
             instance = new KickManager();
         }

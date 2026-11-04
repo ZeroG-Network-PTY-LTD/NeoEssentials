@@ -33,7 +33,7 @@ public class LogManager {
         }
     }
     
-    public static LogManager getInstance() {
+    public static synchronized LogManager getInstance() {
         if (instance == null) {
             instance = new LogManager();
         }

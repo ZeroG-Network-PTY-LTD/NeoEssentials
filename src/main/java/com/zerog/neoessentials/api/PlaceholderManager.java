@@ -40,7 +40,7 @@ public class PlaceholderManager {
      * 
      * @return The PlaceholderManager instance
      */
-    public static PlaceholderManager getInstance() {
+    public static synchronized PlaceholderManager getInstance() {
         if (instance == null) {
             synchronized (PlaceholderManager.class) {
                 if (instance == null) {

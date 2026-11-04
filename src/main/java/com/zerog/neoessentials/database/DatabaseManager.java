@@ -28,7 +28,7 @@ public class DatabaseManager {
         discoverDatabases();
     }
     
-    public static DatabaseManager getInstance() {
+    public static synchronized DatabaseManager getInstance() {
         if (instance == null) {
             instance = new DatabaseManager();
         }

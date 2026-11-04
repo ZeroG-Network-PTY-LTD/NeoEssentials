@@ -70,7 +70,7 @@ public class StorageManager {
         NeoLog.info(LOGGER, LogCategory.GENERAL, "StorageManager: active backend is '{}'", resolvedType);
     }
 
-    public static StorageManager getInstance() {
+    public static synchronized StorageManager getInstance() {
         if (instance == null) {
             instance = new StorageManager();
         }

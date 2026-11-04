@@ -32,7 +32,7 @@ public class BadgeManager {
 
     private BadgeManager() {}
 
-    public static BadgeManager getInstance() {
+    public static synchronized BadgeManager getInstance() {
         if (instance == null) {
             synchronized (BadgeManager.class) {
                 if (instance == null) {

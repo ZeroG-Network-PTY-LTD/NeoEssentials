@@ -63,7 +63,7 @@ public class ResourcePackManager {
         }
     }
     
-    public static ResourcePackManager getInstance() {
+    public static synchronized ResourcePackManager getInstance() {
         if (instance == null) {
             instance = new ResourcePackManager();
         }
