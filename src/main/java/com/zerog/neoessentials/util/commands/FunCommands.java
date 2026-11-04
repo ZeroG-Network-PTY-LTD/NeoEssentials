@@ -482,6 +482,8 @@ public class FunCommands {
             return 0;
         }
 
+        // effectHolder is already the registry's own Holder on this MC version, so unlike
+        // 1.21.x this never builds an unregistered Holder.direct(...) (see fcf4f24b).
         var instance = new net.minecraft.world.effect.MobEffectInstance(
             effectHolder, durationSecs * 20, amplifier, false, true);
 
