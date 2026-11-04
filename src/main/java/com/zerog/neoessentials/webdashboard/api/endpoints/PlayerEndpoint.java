@@ -718,6 +718,15 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("error", "Unknown item: " + finalItemId);
                     return resp;
                 }
+                // Same blacklist/permission-based-item-spawn enforcement /item and /give respect -
+                // this dashboard endpoint was a second, separate give-item code path that bypassed
+                // it entirely, same as /give before that fix.
+                var spawnCheck = com.zerog.neoessentials.items.ItemSpawnHelper.canSpawnItem(player, stack);
+                if (!spawnCheck.isSuccess()) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", spawnCheck.getErrorMessage());
+                    return resp;
+                }
                 int remaining = finalAmount;
                 int maxStack = stack.getMaxStackSize();
                 while (remaining > 0) {
