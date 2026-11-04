@@ -47,7 +47,10 @@ public class UtilityCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerPtime(dispatcher);
         registerPweather(dispatcher);
-        registerEffectCmd(dispatcher);
+        // registerEffectCmd always registered the command regardless of config - see issue #76.
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("effect")) {
+            registerEffectCmd(dispatcher);
+        }
         registerSpawnMob(dispatcher);
         registerUnlimited(dispatcher);
         // /condense is registered by MiscItemCommands — this file used to duplicate that
@@ -324,8 +327,12 @@ public class UtilityCommands {
         }
 
         int durationTicks = durationSeconds * 20;
+        // Holder.direct(...) builds an unregistered holder; MobEffectInstance.save() encodes the
+        // holder through the registry codec, which rejects anything not backed by a registry
+        // entry and aborts the WHOLE player NBT save (not just this effect) - see issue #76.
+        // wrapAsHolder(...) returns the real registered Holder.Reference for this effect.
         target.addEffect(new MobEffectInstance(
-            net.minecraft.core.Holder.direct(effectHolder), durationTicks, amplifier, false, true));
+            BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effectHolder), durationTicks, amplifier, false, true));
         final String eid = effectId; final int fa = amplifier; final int fd = durationSeconds;
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.effect.applied",
             targetName, eid, fa, fd), true);
