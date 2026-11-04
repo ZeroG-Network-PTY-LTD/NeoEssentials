@@ -2345,6 +2345,7 @@
     "commands.neoessentials.suicide.player_only": "§cThis command can only be used by players.",
     "commands.neoessentials.pay.exceeds_limit": "§cAmount exceeds the maximum transfer limit of {0}{1}.",
     "commands.neoessentials.enchant.incompatible": "§cEnchantment {0} is not compatible with {1}.",
+    "commands.neoessentials.enchant.no_permission_specific": "§cYou don't have permission to apply {0}.",
     "commands.neoessentials.teleport.home.unsafe_location": "§cNo safe location found for this home.",
     "commands.neoessentials.teleport.home.updated": "§aHome '{0}' updated to {1}.",
     "commands.neoessentials.teleport.home.teleport_cooldown": "§cYou must wait {0} more second(s) before teleporting to a home again.",
