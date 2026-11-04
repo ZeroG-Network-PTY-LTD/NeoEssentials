@@ -36,7 +36,7 @@ public class ManagerRegistry {
      * 
      * @return The ManagerRegistry instance
      */
-    public static ManagerRegistry getInstance() {
+    public static synchronized ManagerRegistry getInstance() {
         if (instance == null) {
             synchronized (ManagerRegistry.class) {
                 if (instance == null) {

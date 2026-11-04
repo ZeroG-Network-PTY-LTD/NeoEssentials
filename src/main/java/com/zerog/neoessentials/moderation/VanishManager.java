@@ -113,7 +113,7 @@ public class VanishManager {
         loadData();
     }
     
-    public static VanishManager getInstance() {
+    public static synchronized VanishManager getInstance() {
         if (instance == null) {
             instance = new VanishManager();
         }
