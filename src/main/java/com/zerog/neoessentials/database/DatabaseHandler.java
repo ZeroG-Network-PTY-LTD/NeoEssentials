@@ -29,9 +29,19 @@ public class DatabaseHandler implements HttpHandler {
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // This browses every plugin database (economy balances, auction house, permissions,
+        // etc.) and /query runs arbitrary admin-supplied SQL - gate it the same way every
+        // other admin-only dashboard endpoint does (AdminEndpoint, PlayerEndpoint, ...), and
+        // do it here rather than only trusting the withAuth(...) wrapper at registration time,
+        // since a resource this sensitive should defend itself even if it's ever re-wired.
+        if (!isAdmin(exchange)) {
+            sendForbidden(exchange);
+            return;
+        }
+
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
-        
+
         try {
             // Remove /api/database prefix
             String endpoint = path.replace("/api/database", "");
@@ -516,5 +526,19 @@ public class DatabaseHandler implements HttpHandler {
         response.addProperty("error", message);
         response.addProperty("timestamp", Instant.now().toString());
         sendJsonResponse(exchange, 500, response);
+    }
+
+    private void sendForbidden(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("error", "Admin permission required");
+        response.addProperty("timestamp", Instant.now().toString());
+        sendJsonResponse(exchange, 403, response);
+    }
+
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAdmin(HttpExchange exchange) {
+        Object adminAttr = exchange.getAttribute("auth-admin");
+        return Boolean.TRUE.equals(adminAttr);
     }
 }
