@@ -513,11 +513,14 @@ of permissions.
 
 ### Per-item (spawnitem) nodes
 Pattern: `neoessentials.item.spawn.<namespace>.<item>` (or `<namespace>.*` for a wildcard
-namespace) — grants permission to spawn that specific item via `/item`/`/i` **or** `/give`.  
+namespace) — grants permission to spawn that specific item via `/item`/`/i`, `/give`, a kit
+reward, or a crate reward.  
 Only enforced when `items.permission-based-item-spawn` is enabled (default: off). Items listed
-in `items.item-spawn-blacklist` are blocked outright regardless of permissions, for either
-command. (`/give` only started respecting this blacklist/permission check recently - before
-that it was a second, separate code path that bypassed it entirely.)
+in `items.item-spawn-blacklist` are blocked outright regardless of permissions, for all of the
+above. (`/give` and crate rewards only started respecting this blacklist/permission check
+recently - before that they were separate code paths that bypassed it entirely. A blocked
+crate reward item is withheld with a chat notice to the player; any reward commands or
+broadcast message still run as normal.)
 
 ### Per-enchantment (enchant) nodes
 Pattern: `neoessentials.item.enchant.with.<namespace>.<enchantment>` (or `<namespace>.*` for a

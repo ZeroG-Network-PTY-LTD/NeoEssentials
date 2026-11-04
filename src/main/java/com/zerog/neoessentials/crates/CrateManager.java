@@ -198,7 +198,16 @@ public class CrateManager {
         if (server == null) return;
 
         if (!reward.item.isEmpty()) {
-            ShopTransaction.giveItems(player, reward.item);
+            // Same blacklist/permission-based-item-spawn enforcement /item and /give respect -
+            // a crate reward is still an item handed out by a command, so it must honor the
+            // same opt-in per-item permission gate as everything else that spawns items.
+            var spawnCheck = com.zerog.neoessentials.items.ItemSpawnHelper.canSpawnItem(player, reward.item);
+            if (!spawnCheck.isSuccess()) {
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.crate.reward_item_denied", spawnCheck.getErrorMessage()));
+                NeoLog.warn(LOGGER, LogCategory.CRATES, "Denied reward item from crate '{}' reward '{}' for player '{}': {}", crate.id, reward.id, player.getName().getString(), spawnCheck.getErrorMessage());
+            } else {
+                ShopTransaction.giveItems(player, reward.item);
+            }
         }
         for (String cmd : reward.commands) {
             String finalCmd = (cmd.startsWith("/") ? cmd.substring(1) : cmd).replace("{player}", player.getName().getString());
