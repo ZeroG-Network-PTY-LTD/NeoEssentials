@@ -513,9 +513,11 @@ of permissions.
 
 ### Per-item (spawnitem) nodes
 Pattern: `neoessentials.item.spawn.<namespace>.<item>` (or `<namespace>.*` for a wildcard
-namespace) — grants permission to spawn that specific item via `/item`/`/i`.  
+namespace) — grants permission to spawn that specific item via `/item`/`/i` **or** `/give`.  
 Only enforced when `items.permission-based-item-spawn` is enabled (default: off). Items listed
-in `items.item-spawn-blacklist` are blocked outright regardless of permissions.
+in `items.item-spawn-blacklist` are blocked outright regardless of permissions, for either
+command. (`/give` only started respecting this blacklist/permission check recently - before
+that it was a second, separate code path that bypassed it entirely.)
 
 ### Per-enchantment (enchant) nodes
 Pattern: `neoessentials.item.enchant.with.<namespace>.<enchantment>` (or `<namespace>.*` for a
@@ -679,7 +681,8 @@ Only enforced when `items.permission-based-enchant-type` is enabled (default: of
 | `neoessentials.ext` | ✅ default | Extinguish own fire | `/ext` |
 | `neoessentials.ext.others` |  op-only | Extinguish another player | `/ext <player>` |
 | `neoessentials.burn` |  op-only | Set a player on fire | `/burn <player> [seconds]` |
-| `neoessentials.give` |  op-only | Give items to players | `/give <player> <item> [amount]` |
+| `neoessentials.give` |  op-only | Give items to yourself | `/give <player> <item> [amount]` |
+| `neoessentials.give.others` |  op-only | Give items to another player | `/give <player> <item> [amount]` |
 | `neoessentials.more` |  op-only | Fill held stack to max | `/more [amount]` |
 | `neoessentials.hat` |  op-only | Wear held item as helmet | `/hat` |
 | `neoessentials.exp` | ✅ default | View own XP info | `/exp [show]` |
@@ -829,7 +832,9 @@ Only enforced when `items.permission-based-enchant-type` is enabled (default: of
 | `neoessentials.item.dispose` | ✅ default | Use the item disposal chest | `/dispose` |
 | `neoessentials.item.clearinventory` |  op-only | Clear own inventory | `/clearinv` |
 | `neoessentials.item.clearinventory.others` |  op-only | Clear another player's inventory | `/clearinv <player>` |
-| `neoessentials.item.spawn` |  op-only | Spawn items | `/spawnitem` |
+| `neoessentials.item` |  op-only | Use `/item`/`/i` to spawn items | `/item <item> [amount]` |
+| `neoessentials.item.spawn` |  op-only | General item-spawn gate, only checked when `items.permission-based-item-spawn` is enabled | `/item`, `/give` |
+| `neoessentials.item.spawn.<namespace>.<item>` | — | **Dynamic** — per-item-type permission (e.g. `neoessentials.item.spawn.minecraft.bedrock`), or `<namespace>.*` for a wildcard — only checked when `permission-based-item-spawn` is enabled. Enforced by both `/item` and `/give` | |
 | `neoessentials.invsee` |  op-only | View another player's inventory | `/invsee` |
 | `neoessentials.invsee.edit` |  op-only | Edit another player's inventory | `/invsee` |
 | `neoessentials.enderchest` |  op-only | View another player's ender chest | `/ec <player>` |

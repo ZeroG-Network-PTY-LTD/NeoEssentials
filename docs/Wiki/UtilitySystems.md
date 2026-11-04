@@ -292,8 +292,12 @@ Shows Y-coordinate information including depth below sea level and height above 
 | `/ext` | `/ext [player]` | `neoessentials.ext` | Extinguish fire |
 | `/extinguish` | alias | same | Alias |
 | `/burn` | `/burn <player> [seconds]` | `neoessentials.burn` | Set fire ticks on a player |
-| `/give` | `/give <player> <item> [amount]` | `neoessentials.give` | Give items to a player |
+| `/give` | `/give <player> <item> [amount]` | `neoessentials.give` (+ `.others` to target another player) | Give items to a player |
 | `/more` | `/more [amount]` | `neoessentials.more` | Fill held stack to max |
+
+`/give` respects `items.item-spawn-blacklist` and the opt-in `items.permission-based-item-spawn`
+mode (per-item `neoessentials.item.spawn.<namespace>.<item>` permission) the same way `/item`
+does — see [Permission System](PermissionSystem#dynamic-nodes).
 | `/hat` | `/hat` | `neoessentials.hat` | Wear held item as helmet |
 | `/exp` | `/exp [show\|set\|give] [amount] [player]` | `neoessentials.exp` | Show, set, or give XP |
 | `/xp` | alias | same | Alias for `/exp` |
