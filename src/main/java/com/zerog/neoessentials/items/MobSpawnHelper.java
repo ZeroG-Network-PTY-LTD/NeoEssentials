@@ -3,7 +3,7 @@ package com.zerog.neoessentials.items;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class MobSpawnHelper {
      * @return SpawnResult with success status and error message if failed
      */
     public static SpawnResult canSpawnMob(UUID player, EntityType<?> entityType) {
-        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
         String entityIdString = entityId.toString();
 
         List<String> blacklist = ConfigManager.getMobSpawnBlacklist();
