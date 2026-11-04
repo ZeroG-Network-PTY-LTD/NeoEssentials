@@ -3428,6 +3428,23 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if permission-based crate opening is enabled (crateSettings.permission-based-crate-open).
+     * Defaults to false if not set. Same shape as isPermissionBasedItemSpawn()/isPermissionBasedMobSpawn() -
+     * a crate key alone is normally enough to open any crate; this opts into additionally requiring
+     * a per-crate "neoessentials.crate.open.<crateId>" permission even if the player holds a key.
+     */
+    public static boolean isPermissionBasedCrateOpen() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("crateSettings")) {
+            JsonObject crateSettings = config.getAsJsonObject("crateSettings");
+            if (crateSettings.has("permission-based-crate-open")) {
+                return crateSettings.get("permission-based-crate-open").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns true if kits module is enabled (modules.kitsEnabled).
      * Defaults to true if not set.
      */

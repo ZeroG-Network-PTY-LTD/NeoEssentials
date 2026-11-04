@@ -165,6 +165,14 @@ public class CrateCommands {
             source.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
             return 0;
         }
+        // Opt-in per-crate restriction (same shape as /item's permission-based-item-spawn) -
+        // disabled by default, so a key alone still opens any crate unless an admin enables
+        // crateSettings.permission-based-crate-open and grants "neoessentials.crate.open.<id>".
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedCrateOpen()
+                && !PermissionAPI.hasPermission(player.getUUID(), "neoessentials.crate.open." + crate.id)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_permission_specific", crate.getChatDisplayName()));
+            return 0;
+        }
         if (!CrateManager.getInstance().hasAnyReward(crate)) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.crate.no_rewards", crate.getChatDisplayName()));
             return 0;

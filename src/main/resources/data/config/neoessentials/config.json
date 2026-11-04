@@ -570,6 +570,13 @@
     "mob-spawn-blacklist": []
   },
 
+  "crateSettings": {
+    // A crate key alone is normally enough to open any crate. Enabling this additionally
+    // requires 'neoessentials.crate.open.<crateId>' even if the player holds a key - lets
+    // an admin restrict specific crates (e.g. a "legendary" crate) to specific roles.
+    "permission-based-crate-open": false
+  },
+
   /* ----------------------------------------------------------------
      Shop  —  dynamic pricing for ChestShop / NPC shops (off by default;
      shops otherwise just use their fixed configured buy/sell price)

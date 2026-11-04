@@ -320,6 +320,9 @@ public class PermissionRegistry {
         register("neoessentials.spawnmob", "Spawn entities at a player", PermissionCategory.ADMIN, false);
         register("neoessentials.spawnmob.others", "Spawn entities at another player", PermissionCategory.ADMIN, false);
         register("neoessentials.spawnmob.spawn", "Spawn mobs when permission-based-mob-spawn is enabled", PermissionCategory.ADMIN, false);
+        register("neoessentials.crate.open", "Open a crate with a key", PermissionCategory.MISC, false);
+        register("neoessentials.crate.preview", "Preview a crate's possible rewards", PermissionCategory.MISC, false);
+        register("neoessentials.crate.admin", "Crate administration (create/edit/give keys/reload)", PermissionCategory.MISC, false);
         register("neoessentials.unlimited", "Toggle unlimited item use", PermissionCategory.ADMIN, false);
         register("neoessentials.unlimited.others", "Toggle unlimited items for another player", PermissionCategory.ADMIN, false);
         register("neoessentials.condense", "Condense items to storage blocks", PermissionCategory.PLAYER, false);
