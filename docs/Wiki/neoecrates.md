@@ -148,6 +148,15 @@ crate no longer exists.
 | `/crate admin setblock` / `removeblock` | `neoessentials.crate.admin` | Physical block placement (see above) |
 | `/crate admin reload` | `neoessentials.crate.admin` | Reload `crates.json` |
 
+### Restricting specific crates to specific ranks
+
+A key alone is normally enough to open any crate — `neoessentials.crate.open` doesn't
+distinguish *which* crate. To additionally gate individual crates (e.g. keep a "legendary"
+crate VIP-only even if a lower rank somehow gets a key for it), set
+`crateSettings.permission-based-crate-open: true` in `config.json`, then grant
+`neoessentials.crate.open.<crateId>` per rank (e.g. `neoessentials.crate.open.legendary`).
+This is off by default, so turning it on is required before any per-crate node has any effect.
+
 ## Placeholders
 
 `{crate_keys:<crateId>}` — the viewing player's own key balance for that crate.

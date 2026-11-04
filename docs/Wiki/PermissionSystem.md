@@ -24,6 +24,7 @@
     - [Economy](#economy)
     - [Teleportation](#teleportation)
     - [Kits](#kits)
+    - [Crates](#crates)
     - [Items](#items)
     - [Chat & Messaging](#chat--messaging)
     - [Moderation](#moderation)
@@ -492,6 +493,30 @@ Pattern: `neoessentials.kits.<kitname>` — grants access to that specific kit.
 Pattern: `neoessentials.kits.<kitname>.nocooldown` — bypasses the cooldown for that kit.  
 These are **registered automatically** when a kit is created via `/createkit`.
 
+### Per-warp nodes
+Pattern: `neoessentials.warps.<warpname>` — grants access to that specific warp.  
+Only enforced when `teleportation.warpSettings.perWarpPermission` is enabled (default: off) —
+otherwise the base `neoessentials.teleport.warp` permission grants every warp.
+
+### Per-crate nodes
+Pattern: `neoessentials.crate.open.<crateId>` — grants access to open that specific crate.  
+Only enforced when `crateSettings.permission-based-crate-open` is enabled (default: off) — a
+crate key alone is normally enough to open any crate; this lets an admin additionally require
+the permission for specific crates (e.g. a "legendary" crate) even if a player holds a key.
+
+### Per-entity (spawnmob) nodes
+Pattern: `neoessentials.spawnmob.spawn.<namespace>.<entity>` (or `<namespace>.*` for a wildcard
+namespace) — grants permission to spawn that specific entity type via `/spawnmob`.  
+Only enforced when `spawnmobSettings.permission-based-mob-spawn` is enabled (default: off).
+Entity types listed in `spawnmobSettings.mob-spawn-blacklist` are blocked outright regardless
+of permissions.
+
+### Per-item (spawnitem) nodes
+Pattern: `neoessentials.item.spawn.<namespace>.<item>` (or `<namespace>.*` for a wildcard
+namespace) — grants permission to spawn that specific item via `/item`/`/i`.  
+Only enforced when `items.permission-based-item-spawn` is enabled (default: off). Items listed
+in `items.item-spawn-blacklist` are blocked outright regardless of permissions.
+
 ---
 
 ## Permission Nodes — Full Reference
@@ -620,6 +645,17 @@ These are **registered automatically** when a kit is created via `/createkit`.
 
 ---
 
+### Crates
+
+| Node | Default | Description | Command |
+|---|---|---|---|
+| `neoessentials.crate.open` |  op-only | Open a crate with a key | `/crate open <id>` |
+| `neoessentials.crate.preview` |  op-only | Preview a crate's possible rewards | `/crate preview <id>` |
+| `neoessentials.crate.admin` |  op-only | Crate administration (create/edit/give keys/reload) | `/crate admin ...` |
+| `neoessentials.crate.open.<crateId>` | — | **Dynamic** — per-crate open permission, only checked when `crateSettings.permission-based-crate-open` is enabled | |
+
+---
+
 ### Player State & Admin Tools
 
 | Node | Default | Description | Command |
@@ -681,9 +717,12 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.ptime.others` |  op-only | Set another player's time override | `/ptime <value> <player>` |
 | `neoessentials.pweather` |  op-only | Set own per-player weather override | `/pweather [reset\|sun\|storm]` |
 | `neoessentials.pweather.others` |  op-only | Set another player's weather override | `/pweather <type> <player>` |
-| `neoessentials.effect` |  op-only | Apply potion effects to players | `/effect <player> <effect\|clear> [dur] [amp]` |
+| `neoessentials.effect` |  op-only | Apply potion effects to yourself | `/effect <player> <effect\|clear> [dur] [amp]` |
+| `neoessentials.effect.others` |  op-only | Apply potion effects to another player | `/effect <player> <effect\|clear> [dur] [amp]` |
 | `neoessentials.spawnmob` |  op-only | Spawn entities at own location | `/spawnmob <mob> [amount]`, `/mob` |
 | `neoessentials.spawnmob.others` |  op-only | Spawn entities at another player | `/spawnmob <mob> [amount] <player>` |
+| `neoessentials.spawnmob.spawn` |  op-only | General mob-spawn gate, only checked when `spawnmobSettings.permission-based-mob-spawn` is enabled | `/spawnmob <mob>` |
+| `neoessentials.spawnmob.spawn.<namespace>.<entity>` |  op-only | Per-entity-type permission (e.g. `neoessentials.spawnmob.spawn.minecraft.wither`), or `<namespace>.*` for a wildcard — only checked when `permission-based-mob-spawn` is enabled | `/spawnmob <mob>` |
 | `neoessentials.unlimited` |  op-only | Toggle unlimited item use | `/unlimited [list\|clear\|<item>]` |
 | `neoessentials.unlimited.others` |  op-only | Toggle unlimited items for another player | `/unlimited <item> <player>` |
 | `neoessentials.condense` |  op-only | Condense items to storage blocks | `/condense [item]` |
@@ -1041,6 +1080,18 @@ These are **registered automatically** when a kit is created via `/createkit`.
 | `neoessentials.dashboard.manage` |  op-only | Manage dashboard settings | |
 | `neoessentials.dashboard.moderator` |  op-only | Moderator-level dashboard access | |
 | `neoessentials.dashboard.admin` |  op-only | Full admin dashboard access | |
+
+#### CUSTOM-role tab grants
+
+A dashboard account with role `CUSTOM` is instead gated per-feature by `webDashboard.groupPermissions[].tabs[]`,
+each entry naming a tab id and whether it grants read-only or read/write access to that feature. Tab ids:
+`admin`, `apikeys`, `backups`, `cloud`, `commands`, `discord`, `economy`, `files`, `game`, `holograms`,
+`kits`, `leaderboard`, `logging`, `moderation`, `motd`, `permissions`, `placeholders`, `players`,
+`resourcepacks`, `rules`, `scoreboard`, `server`, `serverlogs`, `shops`, `stats`, `tasks`, `teleport`,
+`users`, `warps`, `whitelist`. Two tabs never appear here: the database browser and the raw player-data
+dump are intentionally unmappable to any tab, so they stay full-Admin-only no matter what a CUSTOM
+role is granted — the same way `users` and `apikeys` can't be handed to a CUSTOM role either, since all
+four mint or inspect privilege/data sensitive enough that only a real Admin should reach them.
 
 ---
 
