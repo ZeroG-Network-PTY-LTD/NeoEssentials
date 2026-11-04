@@ -471,6 +471,12 @@ public class DashboardAPI {
         apiServer.createContext("/api/commands",    withAuth(new com.zerog.neoessentials.webdashboard.handlers.CommandExecutionHandler()));
         apiServer.createContext("/api/economy",     withAuth(new com.zerog.neoessentials.webdashboard.endpoints.EconomyEndpoint(server)));
         apiServer.createContext("/api/database",    withAuth(new com.zerog.neoessentials.database.DatabaseHandler()));
+        apiServer.createContext("/api/i18n",        withAuth(new com.zerog.neoessentials.i18n.TranslationHandler()));
+        apiServer.createContext("/api/logs",        withAuth(new com.zerog.neoessentials.logs.LogHandler()));
+        apiServer.createContext("/api/resourcepacks", withAuth(new com.zerog.neoessentials.resourcepacks.ResourcePackHandler()));
+        apiServer.createContext("/api/tasks",       withAuth(new com.zerog.neoessentials.scheduler.TaskHandler()));
+        apiServer.createContext("/api/playerdata",  withAuth(new com.zerog.neoessentials.webdashboard.handlers.PlayerDataHandler()));
+        apiServer.createContext("/api/whitelist",   withAuth(new com.zerog.neoessentials.moderation.WhitelistHandler()));
         statsEndpoint = new StatsEndpoint(server);
         apiServer.createContext("/api/stats", withAuth(statsEndpoint));
         apiServer.createContext("/api/docs", new DocumentationHandler());

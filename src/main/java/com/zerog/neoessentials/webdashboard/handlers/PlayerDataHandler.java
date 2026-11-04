@@ -37,6 +37,15 @@ public class PlayerDataHandler implements HttpHandler {
             exchange.sendResponseHeaders(204, -1);
             return;
         }
+
+        // Returns every player's full raw NBT data (inventory, position, health, ender chest,
+        // everything) - gate it the same way every other admin-only dashboard endpoint does,
+        // checked here rather than only trusting the withAuth(...) wrapper at registration time.
+        if (!isAdmin(exchange)) {
+            sendJsonResponse(exchange, 403, createErrorResponse("Admin permission required"));
+            return;
+        }
+
         if (!"GET".equals(exchange.getRequestMethod())) {
             sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
             return;
@@ -269,6 +278,11 @@ public class PlayerDataHandler implements HttpHandler {
             }
         }
         return obj;
+    }
+
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAdmin(HttpExchange exchange) {
+        return Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
     }
 
     private void sendJsonResponse(HttpExchange exchange, int statusCode, JsonObject json) throws IOException {

@@ -23,9 +23,17 @@ public class ResourcePackHandler implements HttpHandler {
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // Upload/delete/assign of resource packs served to every player - gate it the same way
+        // every other admin-only dashboard endpoint does, checked here rather than only
+        // trusting the withAuth(...) wrapper at registration time.
+        if (!isAdmin(exchange)) {
+            sendErrorResponse(exchange, 403, "Admin permission required");
+            return;
+        }
+
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
-        
+
         try {
             switch (method) {
                 case "GET" -> handleGet(exchange, path);
@@ -441,19 +449,24 @@ public class ResourcePackHandler implements HttpHandler {
         return "unknown";
     }
     
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAdmin(HttpExchange exchange) {
+        return Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
+    }
+
     private void sendJsonResponse(HttpExchange exchange, int statusCode, JsonObject data) throws IOException {
         String response = gson.toJson(data);
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        
+
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(statusCode, bytes.length);
-        
+
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
         }
     }
-    
+
     private void sendErrorResponse(HttpExchange exchange, int statusCode, String message) throws IOException {
         JsonObject error = new JsonObject();
         error.addProperty("error", message);
