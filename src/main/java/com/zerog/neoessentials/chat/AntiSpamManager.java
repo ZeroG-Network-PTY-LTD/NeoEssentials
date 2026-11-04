@@ -40,7 +40,7 @@ public class AntiSpamManager {
 
     private AntiSpamManager() {}
 
-    public static AntiSpamManager getInstance() {
+    public static synchronized AntiSpamManager getInstance() {
         if (instance == null) {
             synchronized (AntiSpamManager.class) {
                 if (instance == null) {

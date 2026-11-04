@@ -69,7 +69,7 @@ public class FreezeManager {
         loadData();
     }
     
-    public static FreezeManager getInstance() {
+    public static synchronized FreezeManager getInstance() {
         if (instance == null) {
             instance = new FreezeManager();
         }

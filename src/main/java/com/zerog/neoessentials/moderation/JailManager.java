@@ -195,7 +195,7 @@ public class JailManager {
         return jailSystemEnabledCache;
     }
     
-    public static JailManager getInstance() {
+    public static synchronized JailManager getInstance() {
         if (instance == null) {
             instance = new JailManager();
         }

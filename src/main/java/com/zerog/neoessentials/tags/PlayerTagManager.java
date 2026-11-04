@@ -29,7 +29,7 @@ public class PlayerTagManager {
 
     private PlayerTagManager() {}
 
-    public static PlayerTagManager getInstance() {
+    public static synchronized PlayerTagManager getInstance() {
         if (instance == null) {
             synchronized (PlayerTagManager.class) {
                 if (instance == null) {
