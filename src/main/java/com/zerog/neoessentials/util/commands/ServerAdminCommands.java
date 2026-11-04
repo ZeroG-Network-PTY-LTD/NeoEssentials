@@ -504,9 +504,18 @@ public class ServerAdminCommands {
 
     // ── Called from NeoEssentials to register world/spawner/recipe ────────────
     public static void registerWorldCommands(CommandDispatcher<CommandSourceStack> d) {
-        registerWorld(d);
-        registerSpawner(d);
-        registerRecipe(d);
+        // Same bug class as #76's /effect: each has its own config.json toggle
+        // but was registered unconditionally.
+        var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (config.isCommandEnabled("world")) {
+            registerWorld(d);
+        }
+        if (config.isCommandEnabled("spawner")) {
+            registerSpawner(d);
+        }
+        if (config.isCommandEnabled("recipe")) {
+            registerRecipe(d);
+        }
     }
 
     // ── /world [name] [player] ────────────────────────────────────────────────

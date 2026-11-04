@@ -300,6 +300,12 @@ public class WarpCommands {
     // ── /warpinfo <name> ──────────────────────────────────────────────────────
     // Essentials: Commandwarpinfo — shows coordinates and world for a warp.
     public static void registerWarpInfoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Called directly from NeoEssentials.java instead of going through register()
+        // above, so it bypassed both the teleportation module gate and its own
+        // "warpinfo" config.json toggle - same bug class as #76's /effect.
+        ConfigManager config = ConfigManager.getInstance();
+        if (!config.isTeleportationEnabled() || !config.isCommandEnabled("warpinfo")) return;
+
         dispatcher.register(Commands.literal("warpinfo")
             .requires(src -> src.getPlayer() == null
                 || PermissionAPI.hasPermission(src.getPlayer().getUUID(), PERMISSION_WARPINFO))
