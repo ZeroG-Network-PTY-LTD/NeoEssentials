@@ -46,6 +46,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`a0df2fc5`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/a0df2fc5)): Added dashboard tab permissions for resource packs, server logs, scheduled tasks, and whitelist management, so admins can grant staff access to them without making them full Admin. The database browser and raw player-data dump stay admin-only.
 - **2026-11-04** ([`b5b42feb`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b5b42feb)): Added an opt-in blacklist and per-entity permission system for `/spawnmob`, mirroring `/item`'s existing permission-based item spawning. Both off by default, so nothing changes unless a server enables them.
 - **2026-11-04** ([`17b53a7f`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/17b53a7f)): Added an opt-in per-crate permission for `/crate open`, letting admins restrict specific crates to specific ranks even if a player holds a key. Off by default. Also registered and documented the previously-unregistered base crate permissions.
+- **2026-11-04** ([`e5d4c52e`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e5d4c52e)): Added an opt-in per-enchantment-type permission for `/enchant`, letting admins reserve enchantments like Mending for VIP ranks. Off by default.
 
 ---
 

@@ -67,6 +67,8 @@ Item management commands for repair, disposal, enchanting, inventory management,
 
 `neoessentials.item.enchant.unsafe` allows enchant levels/combinations beyond vanilla limits; `neoessentials.item.enchant.any` allows enchanting item types the enchantment wouldn't normally apply to. Both are checked internally by `/enchant` — they aren't separate commands.
 
+Set `items.permission-based-enchant-type: true` in `config.json` to additionally require a per-enchantment `neoessentials.item.enchant.with.<namespace>.<enchantment>` permission (or a `<namespace>.*` wildcard) — e.g. reserve `neoessentials.item.enchant.with.minecraft.mending` for a VIP rank while everyone keeps the base permission for ordinary enchants. Off by default.
+
 ### Powertool
 
 | Command | Syntax | Permission | Description |
