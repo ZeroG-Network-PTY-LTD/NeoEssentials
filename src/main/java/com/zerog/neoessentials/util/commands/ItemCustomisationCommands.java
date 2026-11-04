@@ -57,16 +57,39 @@ public class ItemCustomisationCommands {
     private static final Map<UUID, Boolean> tpToggleState = new ConcurrentHashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerMe(dispatcher);
-        registerTpToggle(dispatcher);
-        registerGc(dispatcher);
-        registerLightning(dispatcher);
-        registerSkull(dispatcher);
-        registerItemName(dispatcher);
-        registerItemLore(dispatcher);
-        registerRemove(dispatcher);
-        registerLoom(dispatcher);
-        registerCartography(dispatcher);
+        // Every command here has its own config.json toggle but was registered
+        // unconditionally - same bug class as #76's /effect.
+        var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (config.isCommandEnabled("me")) {
+            registerMe(dispatcher);
+        }
+        if (config.isCommandEnabled("tptoggle")) {
+            registerTpToggle(dispatcher);
+        }
+        if (config.isCommandEnabled("gc")) {
+            registerGc(dispatcher);
+        }
+        if (config.isCommandEnabled("lightning")) {
+            registerLightning(dispatcher);
+        }
+        if (config.isCommandEnabled("skull")) {
+            registerSkull(dispatcher);
+        }
+        if (config.isCommandEnabled("itemname")) {
+            registerItemName(dispatcher);
+        }
+        if (config.isCommandEnabled("itemlore")) {
+            registerItemLore(dispatcher);
+        }
+        if (config.isCommandEnabled("remove")) {
+            registerRemove(dispatcher);
+        }
+        if (config.isCommandEnabled("loom")) {
+            registerLoom(dispatcher);
+        }
+        if (config.isCommandEnabled("cartography")) {
+            registerCartography(dispatcher);
+        }
     }
 
     // ── /me <action> ──────────────────────────────────────────────────────────
