@@ -579,6 +579,8 @@ neoessentials.spawnmob.spawn - General mob-spawn gate, only checked when
 # When permission-based-mob-spawn is false (the default), only the base
 # neoessentials.spawnmob / .others permissions apply, and any entity type is allowed
 # unless listed in spawnmobSettings.mob-spawn-blacklist.
+# Enforced by both /spawnmob and the dashboard's "Spawn mob" player action - the dashboard
+# endpoint was a separate spawn-mob code path that bypassed this entirely until fixed.
 
 # /crate - Crate opening, previewing, admin management
 neoessentials.crate.open - Open a crate with a key (default: false)
