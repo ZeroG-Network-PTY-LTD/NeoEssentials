@@ -48,14 +48,33 @@ public class MiscItemCommands {
     private static final Set<UUID> ciConfirmDisabled  = ConcurrentHashMap.newKeySet();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerCondense(dispatcher);
-        registerShowKit(dispatcher);
-        registerPowertoolList(dispatcher);
-        registerCustomText(dispatcher);
-        registerPayConfirmToggle(dispatcher);
-        registerCiConfirmToggle(dispatcher);
-        registerItem(dispatcher);
-        registerRToggle(dispatcher);
+        // Every command here has its own config.json toggle but was registered
+        // unconditionally - same bug class as #76's /effect.
+        var config = ConfigManager.getInstance();
+        if (config.isCommandEnabled("condense")) {
+            registerCondense(dispatcher);
+        }
+        if (config.isCommandEnabled("showkit")) {
+            registerShowKit(dispatcher);
+        }
+        if (config.isCommandEnabled("powertoollist")) {
+            registerPowertoolList(dispatcher);
+        }
+        if (config.isCommandEnabled("customtext")) {
+            registerCustomText(dispatcher);
+        }
+        if (config.isCommandEnabled("payconfirmtoggle")) {
+            registerPayConfirmToggle(dispatcher);
+        }
+        if (config.isCommandEnabled("ciconfirmtoggle")) {
+            registerCiConfirmToggle(dispatcher);
+        }
+        if (config.isCommandEnabled("item")) {
+            registerItem(dispatcher);
+        }
+        if (config.isCommandEnabled("rtoggle")) {
+            registerRToggle(dispatcher);
+        }
     }
 
     // ── /condense [item] ──────────────────────────────────────────────────────
