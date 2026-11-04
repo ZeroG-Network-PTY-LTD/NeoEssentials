@@ -891,6 +891,8 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("error", "Unknown effect: " + effectId);
                     return resp;
                 }
+                // effectHolder is already the registry's own Holder on this MC version, so unlike
+                // 1.21.x this never builds an unregistered Holder.direct(...) (see fcf4f24b).
                 player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                     effectHolder, duration * 20, amplifier, false, true));
                 resp.addProperty("success", true);
