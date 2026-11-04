@@ -553,6 +553,17 @@ neoessentials.spawnmob.spawn - General mob-spawn gate, only checked when
 # neoessentials.spawnmob / .others permissions apply, and any entity type is allowed
 # unless listed in spawnmobSettings.mob-spawn-blacklist.
 
+# /crate - Crate opening, previewing, admin management
+neoessentials.crate.open - Open a crate with a key (default: false)
+neoessentials.crate.preview - Preview a crate's possible rewards (default: false)
+neoessentials.crate.admin - Crate administration (create/edit/give keys/reload) (default: false)
+# Pattern: neoessentials.crate.open.<crateId>
+# Per-crate permission, only checked when crateSettings.permission-based-crate-open is
+# enabled. A key alone is normally enough to open any crate; enabling this additionally
+# requires this permission even if the player holds a key - e.g. to restrict a
+# "legendary" crate to a VIP rank while a "common" crate stays open to everyone.
+#   neoessentials.crate.open.legendary - Allows opening the "legendary" crate
+
 # /unlimited - Toggle infinite item use
 neoessentials.unlimited - Toggle unlimited items for yourself (default: false)
 neoessentials.unlimited.others - Toggle unlimited items for other players (default: false)
