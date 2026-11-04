@@ -871,8 +871,12 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("error", "Unknown effect: " + effectId);
                     return resp;
                 }
+                // Holder.direct(...) builds an unregistered holder that MobEffectInstance.save()
+                // rejects, silently aborting the whole player NBT save - same bug as #76's
+                // /effect command. wrapAsHolder(...) returns the real registered holder.
                 player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                    net.minecraft.core.Holder.direct(effectHolder), duration * 20, amplifier, false, true));
+                    net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effectHolder),
+                    duration * 20, amplifier, false, true));
                 resp.addProperty("success", true);
                 resp.addProperty("message", "Applied " + effectId + " (amp " + amplifier + ", " + duration + "s) to " + username);
             } catch (Exception e) {

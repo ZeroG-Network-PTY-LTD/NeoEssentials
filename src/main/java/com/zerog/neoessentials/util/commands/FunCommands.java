@@ -480,8 +480,11 @@ public class FunCommands {
             return 0;
         }
 
+        // Holder.direct(...) builds an unregistered holder that MobEffectInstance.save()
+        // rejects, silently aborting the whole item NBT save - same bug class as #76's
+        // /effect command, here corrupting the held item instead of player data.
         var instance = new net.minecraft.world.effect.MobEffectInstance(
-            net.minecraft.core.Holder.direct(effectHolder),
+            BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effectHolder),
             durationSecs * 20, amplifier, false, true);
 
         // Get or create PotionContents
