@@ -517,6 +517,12 @@ namespace) — grants permission to spawn that specific item via `/item`/`/i`.
 Only enforced when `items.permission-based-item-spawn` is enabled (default: off). Items listed
 in `items.item-spawn-blacklist` are blocked outright regardless of permissions.
 
+### Per-enchantment (enchant) nodes
+Pattern: `neoessentials.item.enchant.with.<namespace>.<enchantment>` (or `<namespace>.*` for a
+wildcard namespace) — grants permission to apply that specific enchantment via `/enchant`.  
+Only enforced when `items.permission-based-enchant-type` is enabled (default: off) — the base
+`neoessentials.item.enchant` permission otherwise allows any enchantment.
+
 ---
 
 ## Permission Nodes — Full Reference
@@ -817,6 +823,7 @@ in `items.item-spawn-blacklist` are blocked outright regardless of permissions.
 | `neoessentials.item.enchant.unsafe` |  op-only | Apply enchants beyond vanilla limits | `/enchant` |
 | `neoessentials.item.enchant.others` |  op-only | Enchant another player's item | `/enchant <player>` |
 | `neoessentials.item.enchant.any` |  op-only | Enchant any item (ignore type restrictions) | `/enchant` |
+| `neoessentials.item.enchant.with.<namespace>.<enchantment>` | — | **Dynamic** — per-enchantment-type permission (e.g. `neoessentials.item.enchant.with.minecraft.mending`), or `<namespace>.*` for a wildcard — only checked when `items.permission-based-enchant-type` is enabled | |
 | `neoessentials.item.powertool` |  op-only | Use the powertool system | `/powertool` |
 | `neoessentials.item.powertool.toggle` |  op-only | Toggle powertool on/off | `/pttoggle` |
 | `neoessentials.item.dispose` | ✅ default | Use the item disposal chest | `/dispose` |
