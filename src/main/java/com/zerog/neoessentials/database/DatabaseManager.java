@@ -270,24 +270,44 @@ public class DatabaseManager {
      */
     public List<ColumnInfo> getTableSchema(String databaseId, String tableName) throws SQLException {
         List<ColumnInfo> columns = new ArrayList<>();
-        
-        try (Connection conn = getConnection(databaseId);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("PRAGMA table_info(\"" + tableName + "\")")) {
-            
-            while (rs.next()) {
-                int cid = rs.getInt("cid");
-                String name = rs.getString("name");
-                String type = rs.getString("type");
-                boolean notNull = rs.getInt("notnull") == 1;
-                String defaultValue = rs.getString("dflt_value");
-                boolean pk = rs.getInt("pk") > 0;
-                
-                columns.add(new ColumnInfo(cid, name, type, notNull, defaultValue, pk));
+
+        try (Connection conn = getConnection(databaseId)) {
+            requireRealTable(conn, tableName);
+
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("PRAGMA table_info(\"" + tableName + "\")")) {
+
+                while (rs.next()) {
+                    int cid = rs.getInt("cid");
+                    String name = rs.getString("name");
+                    String type = rs.getString("type");
+                    boolean notNull = rs.getInt("notnull") == 1;
+                    String defaultValue = rs.getString("dflt_value");
+                    boolean pk = rs.getInt("pk") > 0;
+
+                    columns.add(new ColumnInfo(cid, name, type, notNull, defaultValue, pk));
+                }
             }
         }
-        
+
         return columns;
+    }
+
+    /**
+     * tableName reaching these methods is attacker-controlled (a raw HTTP query parameter) and
+     * JDBC has no parameterized-identifier support, so it can never go straight into a PRAGMA/
+     * SELECT string. Validate it against the database's own real table list first (whitelist) -
+     * the same way the countRs query in getTables() only ever sees names it just read from
+     * metadata - before any caller interpolates it.
+     */
+    private void requireRealTable(Connection conn, String tableName) throws SQLException {
+        boolean exists;
+        try (ResultSet tableRs = conn.getMetaData().getTables(null, null, tableName, new String[]{"TABLE", "VIEW"})) {
+            exists = tableRs.next();
+        }
+        if (!exists) {
+            throw new SQLException("Table not found: " + tableName);
+        }
     }
     
     /**
@@ -301,7 +321,14 @@ public class DatabaseManager {
         if (!trimmedQuery.startsWith("SELECT")) {
             throw new SQLException("Only SELECT queries are allowed");
         }
-        
+
+        // Reject stacked statements (e.g. "SELECT 1; DROP TABLE x") - the read-only connection
+        // blocks any actual write, but there's no reason to let a second statement through at
+        // all. A trailing semicolon on the single statement is still fine.
+        if (query.trim().replaceAll(";\\s*$", "").contains(";")) {
+            throw new SQLException("Only a single statement is allowed");
+        }
+
         // Prevent dangerous operations
         if (trimmedQuery.contains("ATTACH") || trimmedQuery.contains("PRAGMA")) {
             throw new SQLException("Query contains forbidden operations");
@@ -361,35 +388,38 @@ public class DatabaseManager {
      */
     public String exportTableAsCSV(String databaseId, String tableName) throws SQLException {
         StringBuilder csv = new StringBuilder();
-        
-        try (Connection conn = getConnection(databaseId);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM \"" + tableName + "\"")) {
-            
-            ResultSetMetaData meta = rs.getMetaData();
-            int columnCount = meta.getColumnCount();
-            
-            // Header row
-            for (int i = 1; i <= columnCount; i++) {
-                if (i > 1) csv.append(",");
-                csv.append(escapeCSV(meta.getColumnName(i)));
-            }
-            csv.append("\n");
-            
-            // Data rows
-            while (rs.next()) {
+
+        try (Connection conn = getConnection(databaseId)) {
+            requireRealTable(conn, tableName);
+
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT * FROM \"" + tableName + "\"")) {
+
+                ResultSetMetaData meta = rs.getMetaData();
+                int columnCount = meta.getColumnCount();
+
+                // Header row
                 for (int i = 1; i <= columnCount; i++) {
                     if (i > 1) csv.append(",");
-                    Object value = rs.getObject(i);
-                    csv.append(escapeCSV(value != null ? value.toString() : ""));
+                    csv.append(escapeCSV(meta.getColumnName(i)));
                 }
                 csv.append("\n");
+
+                // Data rows
+                while (rs.next()) {
+                    for (int i = 1; i <= columnCount; i++) {
+                        if (i > 1) csv.append(",");
+                        Object value = rs.getObject(i);
+                        csv.append(escapeCSV(value != null ? value.toString() : ""));
+                    }
+                    csv.append("\n");
+                }
             }
         }
-        
+
         return csv.toString();
     }
-    
+
     /**
      * Escape CSV value
      */

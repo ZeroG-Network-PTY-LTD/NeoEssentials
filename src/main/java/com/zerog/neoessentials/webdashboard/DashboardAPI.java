@@ -470,6 +470,7 @@ public class DashboardAPI {
         apiServer.createContext("/api/warps",       withAuth(new com.zerog.neoessentials.webdashboard.endpoints.WarpsEndpoint(server)));
         apiServer.createContext("/api/commands",    withAuth(new com.zerog.neoessentials.webdashboard.handlers.CommandExecutionHandler()));
         apiServer.createContext("/api/economy",     withAuth(new com.zerog.neoessentials.webdashboard.endpoints.EconomyEndpoint(server)));
+        apiServer.createContext("/api/database",    withAuth(new com.zerog.neoessentials.database.DatabaseHandler()));
         statsEndpoint = new StatsEndpoint(server);
         apiServer.createContext("/api/stats", withAuth(statsEndpoint));
         apiServer.createContext("/api/docs", new DocumentationHandler());
