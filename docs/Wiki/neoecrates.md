@@ -157,6 +157,15 @@ crate VIP-only even if a lower rank somehow gets a key for it), set
 `neoessentials.crate.open.<crateId>` per rank (e.g. `neoessentials.crate.open.legendary`).
 This is off by default, so turning it on is required before any per-crate node has any effect.
 
+### Reward items respect the item-spawn blacklist
+
+A crate reward's item is still subject to `items.item-spawn-blacklist` and
+`items.permission-based-item-spawn` (see [Permission Nodes - Per-item (spawnitem)
+nodes](PermissionSystem.md#per-item-spawnitem-nodes)), the same gate `/item` and `/give`
+respect. If a player wins a blacklisted/permission-gated item, that item is withheld with a
+chat notice and the attempt is logged; any reward commands or the rare-reward broadcast still
+run normally.
+
 ## Placeholders
 
 `{crate_keys:<crateId>}` — the viewing player's own key balance for that crate.
