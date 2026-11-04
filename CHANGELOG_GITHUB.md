@@ -570,5 +570,6 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
   clock kept advancing correctly the entire time, tablist/scoreboard never had this bug (they
   don't do this comparison at all), only holograms' extra "did it actually change" check did.
   Fixed to compare the pre-color-stripped resolved text instead.
+- **2026-11-04** ([`0c2913be`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/0c2913be)): Crate rewards had the same item-spawn-blacklist bypass just fixed for `/item` and `/give` above — `CrateManager.grantReward()` handed out a reward's item unconditionally, never checking `items.item-spawn-blacklist`/`permission-based-item-spawn`. A blocked reward item is now withheld (chat notice + log warning) instead of handed out; reward commands and the rare-reward broadcast are unaffected.
 
 ---
