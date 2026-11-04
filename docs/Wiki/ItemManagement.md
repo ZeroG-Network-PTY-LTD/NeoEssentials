@@ -55,6 +55,12 @@ Item management commands for repair, disposal, enchanting, inventory management,
 | `/i` | alias | same | Alias |
 | `/skull` | `/skull [player]` | `neoessentials.skull` | Get a player head item |
 
+`/item` respects `items.item-spawn-blacklist` (items that can never be spawned this way, even
+with permission — defaults to `bedrock`, `barrier`, `command_block`, and similar) and the
+opt-in `items.permission-based-item-spawn` mode, which additionally requires a per-item
+`neoessentials.item.spawn.<namespace>.<item>` permission (or a `<namespace>.*` wildcard).
+`/give` enforces the same two checks. See [Permission System](PermissionSystem#dynamic-nodes).
+
 ### Enchanting
 
 | Command | Syntax | Permission | Description |

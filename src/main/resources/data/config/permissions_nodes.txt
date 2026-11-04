@@ -163,6 +163,18 @@ neoessentials.kits.cooldown - View kit cooldowns (default: true)
 ## ═══════════════════════════════════════════════════════════
 ## ITEM MANAGEMENT PERMISSIONS
 ## ═══════════════════════════════════════════════════════════
+neoessentials.item - Use /item (spawn items) (default: false)
+neoessentials.item.spawn - General item-spawn gate, only checked when
+  items.permission-based-item-spawn is enabled (default: false)
+# Pattern: neoessentials.item.spawn.<namespace>.<item>
+# Per-item-type permission, only checked when permission-based-item-spawn is enabled.
+# A <namespace>.* wildcard is also supported.
+# Enforced by BOTH /item and /give as of this fix - previously only KitManager (validating
+# kit definitions) ever called into this check, so /item and /give silently never respected
+# items.item-spawn-blacklist or permission-based-item-spawn despite the config comments
+# describing them as blocking "items... via commands".
+neoessentials.give - Give items to players (default: false)
+neoessentials.give.others - Give items to a player other than yourself (default: false)
 neoessentials.item.repair - Repair items (default: false)
 neoessentials.item.enchant - Enchant items (default: false)
 neoessentials.item.enchant.unsafe - Unsafe enchanting (bypasses max level) (default: false)

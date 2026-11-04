@@ -538,6 +538,16 @@ public class MiscItemCommands {
             return 0;
         }
 
+        // items.item-spawn-blacklist and permission-based-item-spawn were never actually
+        // enforced here - only KitManager (validating kit definitions) called into
+        // ItemSpawnHelper, so this command silently never respected the feature its own
+        // config comment describes ("Items that cannot be spawned via commands... ").
+        var spawnCheck = com.zerog.neoessentials.items.ItemSpawnHelper.canSpawnItem(player, item);
+        if (!spawnCheck.isSuccess()) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.item.spawn_denied", spawnCheck.getErrorMessage()));
+            return 0;
+        }
+
         int qty = amount > 0 ? amount : item.getDefaultMaxStackSize();
         var stack = new net.minecraft.world.item.ItemStack(item, qty);
         if (!player.getInventory().add(stack)) {
