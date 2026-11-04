@@ -423,6 +423,19 @@ public class UtilityCommands {
             return 0;
         }
         EntityType<?> entityType = typeOpt.get();
+
+        // Opt-in per-mob-type restriction (same shape as /item's permission-based-item-spawn) -
+        // disabled by default, so existing servers relying on the base "neoessentials.spawnmob"
+        // permission alone see no behavior change. Console is exempt, matching every other
+        // permission check in this file.
+        if (src.getPlayer() != null) {
+            var spawnResult = com.zerog.neoessentials.items.MobSpawnHelper.canSpawnMob(src.getPlayer().getUUID(), entityType);
+            if (!spawnResult.isSuccess()) {
+                src.sendFailure(MessageUtil.error("commands.neoessentials.spawnmob.denied", spawnResult.getErrorMessage()));
+                return 0;
+            }
+        }
+
         var level = com.zerog.neoessentials.util.LevelCompat.of(spawnAt);
         int spawned = 0;
         for (int i = 0; i < amount; i++) {

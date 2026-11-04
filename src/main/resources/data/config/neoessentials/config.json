@@ -562,6 +562,14 @@
     "inventoryAuditLog": true
   },
 
+  "spawnmobSettings": {
+    // Require 'neoessentials.spawnmob.spawn' (and per-entity nodes) to spawn specific
+    // mobs via /spawnmob - same pattern as items.permission-based-item-spawn.
+    "permission-based-mob-spawn": false,
+    // Entity types that cannot be spawned via /spawnmob even with permissions
+    "mob-spawn-blacklist": []
+  },
+
   /* ----------------------------------------------------------------
      Shop  —  dynamic pricing for ChestShop / NPC shops (off by default;
      shops otherwise just use their fixed configured buy/sell price)
