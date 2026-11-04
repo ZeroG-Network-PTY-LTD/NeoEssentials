@@ -198,9 +198,17 @@ public class VotifierServer {
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(v2Token.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         byte[] expectedSig = mac.doFinal(payloadStr.getBytes(StandardCharsets.UTF_8));
-        String expectedSigB64 = Base64.getEncoder().encodeToString(expectedSig);
 
-        if (!expectedSigB64.equals(signature)) {
+        // String.equals() short-circuits on the first mismatched character, which leaks a
+        // byte-by-byte timing oracle for brute-forcing the signature. MessageDigest.isEqual()
+        // always compares every byte, in constant time, regardless of where they first differ.
+        byte[] providedSig;
+        try {
+            providedSig = Base64.getDecoder().decode(signature);
+        } catch (IllegalArgumentException e) {
+            providedSig = new byte[0];
+        }
+        if (!java.security.MessageDigest.isEqual(expectedSig, providedSig)) {
             NeoLog.debug(LOGGER, LogCategory.VOTIFIER, "Invalid V2 vote signature");
             sendV2Response(out, "error", "signature verification failed");
             return;
