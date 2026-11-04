@@ -155,9 +155,24 @@ jobs:
             return r.ok ? r.json() : null;
           }
 
+          // A failed/flaky GET here must NOT be treated as "no matching release exists" -
+          // that silently caused 2 of 4 branches sharing one wave (build 21) to mint their
+          // own new build numbers (23/24) instead of joining the other branches' shared one,
+          // confirmed live 2026-11-03. Retry a few times, and if it still can't be confirmed,
+          // fail the job instead of guessing.
+          async function listReleasesOrThrow() {
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              const r = await fetch(api + '/releases?limit=30', { headers });
+              log('GET /releases?limit=30 (attempt ' + attempt + ') -> HTTP ' + r.status);
+              if (r.ok) return r.json();
+              if (attempt < 3) await new Promise(res => setTimeout(res, 3000));
+            }
+            throw new Error('Could not list releases after 3 attempts - refusing to mint a build number blind, since this branch might actually share a wave with one already claimed by another branch');
+          }
+
           (async () => {
             let wave = process.env.WAVE;
-            const recent = (await getJson('/releases?limit=30')) || [];
+            const recent = await listReleasesOrThrow();
             const mine = recent.find(r => r.tag_name.startsWith(prefix) && hasWave(r, wave));
             if (mine) {
               if (!(mine.assets || []).some(a => a.name.includes(process.env.MARKER))) {
