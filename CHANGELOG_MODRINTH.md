@@ -44,6 +44,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - **2026-11-04** ([`3bd89034`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/3bd89034)): `/effect` never got the self-vs-others permission split every other admin-targetable command has, so any player with the base permission could apply or clear effects on anyone. Added `neoessentials.effect.others`. Also documented `ptime`/`pweather`/`spawnmob`/`unlimited`'s existing `.others` tiers, previously missing from the permission reference.
 - **2026-11-04** ([`b3b490f1`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b3b490f1)): Added dashboard tab permissions for resource packs, server logs, scheduled tasks, and whitelist management, so admins can grant staff access to them without making them full Admin. The database browser and raw player-data dump stay admin-only.
 - **2026-11-04** ([`a99a19bd`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/a99a19bd)): Added an opt-in blacklist and per-entity permission system for `/spawnmob`, mirroring `/item`'s existing permission-based item spawning. Both off by default, so nothing changes unless a server enables them.
+- **2026-11-04** ([`ff33e702`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/ff33e702)): Added an opt-in per-crate permission for `/crate open`, letting admins restrict specific crates to specific ranks even if a player holds a key. Off by default. Also registered and documented the previously-unregistered base crate permissions.
 
 ---
 
