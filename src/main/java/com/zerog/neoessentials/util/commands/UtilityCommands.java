@@ -305,6 +305,7 @@ public class UtilityCommands {
         var src = ctx.getSource();
         ServerPlayer target = resolveTarget(src, targetName);
         if (target == null) return 0;
+        if (!canTarget(src, target)) return 0;
         target.removeAllEffects();
         src.sendSuccess(() -> MessageUtil.success("commands.neoessentials.effect.cleared", targetName), true);
         return 1;
@@ -315,6 +316,7 @@ public class UtilityCommands {
         var src = ctx.getSource();
         ServerPlayer target = resolveTarget(src, targetName);
         if (target == null) return 0;
+        if (!canTarget(src, target)) return 0;
 
         // Resolve effect — try with and without minecraft: prefix
         String id = effectId.contains(":") ? effectId : "minecraft:" + effectId;
@@ -533,6 +535,22 @@ public class UtilityCommands {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * /effect's target is always mandatory (unlike /ptime's optional-target branch), so the
+     * self-vs-others split has to happen here instead of in the command tree: the base
+     * "neoessentials.effect" permission (already required to reach this point) only covers
+     * affecting yourself - affecting anyone else additionally needs "neoessentials.effect.others".
+     * Console (src.getPlayer() == null) is exempt, matching every other .others check in this file.
+     */
+    private static boolean canTarget(CommandSourceStack src, ServerPlayer target) {
+        ServerPlayer sender = src.getPlayer();
+        if (sender == null || target.getUUID().equals(sender.getUUID())) return true;
+        if (PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.effect.others")) return true;
+        src.sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+        return false;
+    }
+
     private static ServerPlayer resolveTarget(CommandSourceStack src, String targetName) {
         if (targetName != null) {
             ServerPlayer p = src.getServer().getPlayerList().getPlayerByName(targetName);
