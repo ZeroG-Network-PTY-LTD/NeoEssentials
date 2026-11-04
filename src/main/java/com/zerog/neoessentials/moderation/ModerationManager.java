@@ -66,7 +66,7 @@ public class ModerationManager {
         }
     }
     
-    public static ModerationManager getInstance() {
+    public static synchronized ModerationManager getInstance() {
         if (instance == null) {
             instance = new ModerationManager();
         }

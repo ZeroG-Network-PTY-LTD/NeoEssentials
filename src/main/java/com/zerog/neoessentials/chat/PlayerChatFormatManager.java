@@ -42,7 +42,7 @@ public class PlayerChatFormatManager {
 
     // ── Singleton ─────────────────────────────────────────────────────────────
 
-    public static PlayerChatFormatManager getInstance() {
+    public static synchronized PlayerChatFormatManager getInstance() {
         if (instance == null) {
             synchronized (PlayerChatFormatManager.class) {
                 if (instance == null) {

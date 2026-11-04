@@ -28,7 +28,7 @@ public class AuctionConfig {
     // ── Singleton access ───────────────────────────────────────────────────────
 
     /** Returns the current config (loads from disk on first call). */
-    public static AuctionConfig get() {
+    public static synchronized AuctionConfig get() {
         if (instance == null) load();
         return instance;
     }
