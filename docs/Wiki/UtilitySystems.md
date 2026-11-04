@@ -329,11 +329,16 @@ Shows Y-coordinate information including depth below sea level and height above 
 | `/backup` | `/backup` | `neoessentials.backup` | Trigger a server backup |
 | `/kill` | `/kill <player>` | `neoessentials.kill` | Kill a player |
 | `/spawner` | `/spawner <mob>` | `neoessentials.spawner` | Set spawner type at looked block |
-| `/spawnmob` | `/spawnmob <mob> [amount] [player]` | `neoessentials.spawnmob` | Spawn entities at a player |
+| `/spawnmob` | `/spawnmob <mob> [amount] [player]` | `neoessentials.spawnmob` (+ `.others` for `[player]`) | Spawn entities at a player |
 | `/mob` | alias | same | Alias |
-| `/effect` | `/effect <player> <effect\|clear> [dur] [amp]` | `neoessentials.effect` | Apply/clear potion effects |
-| `/unlimited` | `/unlimited [list\|clear\|<item\|hand>] [player]` | `neoessentials.unlimited` | Unlimited item mode (never depleted) |
+| `/effect` | `/effect <player> <effect\|clear> [dur] [amp]` | `neoessentials.effect` (+ `.others` to target another player) | Apply/clear potion effects |
+| `/unlimited` | `/unlimited [list\|clear\|<item\|hand>] [player]` | `neoessentials.unlimited` (+ `.others` for `[player]`) | Unlimited item mode (never depleted) |
 | `/recipe` | `/recipe [item]` | `neoessentials.recipe` | Unlock crafting recipes for an item |
+
+`/spawnmob` also supports an opt-in per-entity-type restriction
+(`spawnmobSettings.permission-based-mob-spawn` + `neoessentials.spawnmob.spawn.<namespace>.<entity>`)
+and a blacklist (`spawnmobSettings.mob-spawn-blacklist`) — see [Permission System](PermissionSystem#dynamic-nodes).
+Both are off by default.
 
 ---
 
