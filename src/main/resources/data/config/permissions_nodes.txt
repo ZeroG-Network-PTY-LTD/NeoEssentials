@@ -526,6 +526,26 @@ neoessentials.unmute - Use /unmute
 # /socialspy - Social spy
 neoessentials.socialspy - Use /socialspy
 
+# /effect - Apply/clear potion effects (default: false)
+neoessentials.effect - Apply/clear effects on yourself
+neoessentials.effect.others - Apply/clear effects on other players
+
+# /ptime - Per-player client-side time override
+neoessentials.ptime - Use /ptime on yourself (default: true)
+neoessentials.ptime.others - Use /ptime on other players (default: false)
+
+# /pweather - Per-player client-side weather override
+neoessentials.pweather - Use /pweather on yourself (default: true)
+neoessentials.pweather.others - Use /pweather on other players (default: false)
+
+# /spawnmob - Spawn entities
+neoessentials.spawnmob - Spawn mobs at your own location (default: false)
+neoessentials.spawnmob.others - Spawn mobs at another player's location (default: false)
+
+# /unlimited - Toggle infinite item use
+neoessentials.unlimited - Toggle unlimited items for yourself (default: false)
+neoessentials.unlimited.others - Toggle unlimited items for other players (default: false)
+
 # /dashboard - Web dashboard
 neoessentials.dashboard.access - Dashboard access
 neoessentials.dashboard.admin - Dashboard admin
