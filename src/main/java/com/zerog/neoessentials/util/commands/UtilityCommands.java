@@ -47,7 +47,10 @@ public class UtilityCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerPtime(dispatcher);
         registerPweather(dispatcher);
-        registerEffectCmd(dispatcher);
+        // registerEffectCmd always registered the command regardless of config - see issue #76.
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("effect")) {
+            registerEffectCmd(dispatcher);
+        }
         registerSpawnMob(dispatcher);
         registerUnlimited(dispatcher);
         // /condense is registered by MiscItemCommands — this file used to duplicate that
@@ -329,6 +332,9 @@ public class UtilityCommands {
         }
 
         int durationTicks = durationSeconds * 20;
+        // effectHolder is already the registry's own Holder (BuiltInRegistries.MOB_EFFECT.get()
+        // returns Optional<Holder<MobEffect>> on this MC version), so unlike 1.21.x this never
+        // builds an unregistered Holder.direct(...) - see issue #76 for what that bug looked like.
         target.addEffect(new MobEffectInstance(
             effectHolder, durationTicks, amplifier, false, true));
         final String eid = effectId; final int fa = amplifier; final int fd = durationSeconds;
