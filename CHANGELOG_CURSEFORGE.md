@@ -48,6 +48,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`b8dc18bb`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b8dc18bb)): Added an opt-in per-crate permission for `/crate open`, letting admins restrict specific crates to specific ranks even if a player holds a key. Off by default. Also registered and documented the previously-unregistered base crate permissions.
 - **2026-11-04** ([`03b08ff4`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/03b08ff4)): Added an opt-in per-enchantment-type permission for `/enchant`, letting admins reserve enchantments like Mending for VIP ranks. Off by default.
 - **2026-11-04** ([`d210dff3`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d210dff3)): `/item` and `/give` silently never enforced the item-spawn blacklist/permission system, despite it being documented as blocking dangerous items from any command. Both now enforce it. `/give` also gained `neoessentials.give.others`.
+- **2026-11-04** ([`8f5c45b9`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/8f5c45b9)): Crate rewards had the exact same blacklist-bypass bug as `/item`/`/give` above - a blocked reward item is now withheld with a chat notice and a server-log warning instead of being handed out unconditionally.
 
 ---
 
