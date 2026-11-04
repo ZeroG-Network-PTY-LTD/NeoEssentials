@@ -45,14 +45,24 @@ public class UtilityCommands {
     private static final Map<UUID, Set<String>> unlimitedItems = new ConcurrentHashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerPtime(dispatcher);
-        registerPweather(dispatcher);
-        // registerEffectCmd always registered the command regardless of config - see issue #76.
-        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("effect")) {
+        var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        // ptime/pweather/effect/spawnmob/unlimited all have their own config.json toggle but
+        // were registered unconditionally - same bug class as the "effect" one fixed in #76.
+        if (config.isCommandEnabled("ptime")) {
+            registerPtime(dispatcher);
+        }
+        if (config.isCommandEnabled("pweather")) {
+            registerPweather(dispatcher);
+        }
+        if (config.isCommandEnabled("effect")) {
             registerEffectCmd(dispatcher);
         }
-        registerSpawnMob(dispatcher);
-        registerUnlimited(dispatcher);
+        if (config.isCommandEnabled("spawnmob")) {
+            registerSpawnMob(dispatcher);
+        }
+        if (config.isCommandEnabled("unlimited")) {
+            registerUnlimited(dispatcher);
+        }
         // /condense is registered by MiscItemCommands — this file used to duplicate that
         // registration (dead weight that could only ever end up shadowed behind it, since
         // Brigadier merges same-named nodes but keeps the first-registered suggestions
