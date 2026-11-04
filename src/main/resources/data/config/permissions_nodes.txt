@@ -169,13 +169,14 @@ neoessentials.item.spawn - General item-spawn gate, only checked when
 # Pattern: neoessentials.item.spawn.<namespace>.<item>
 # Per-item-type permission, only checked when permission-based-item-spawn is enabled.
 # A <namespace>.* wildcard is also supported.
-# Enforced by /item, /give, kit rewards (KitManager), and crate rewards (CrateManager) -
-# previously only KitManager (validating kit definitions) ever called into this check, so
-# /item and /give silently never respected items.item-spawn-blacklist or
-# permission-based-item-spawn despite the config comments describing them as blocking
-# "items... via commands". Crate rewards had the exact same gap and were fixed the same way:
-# a blacklisted/permission-gated item reward is now withheld (with a chat notice to the
-# player and a server-log warning) instead of being handed out unconditionally.
+# Enforced by /item, /give, kit rewards (KitManager), crate rewards (CrateManager), and the
+# dashboard's "Give item" player action (PlayerEndpoint) - previously only KitManager
+# (validating kit definitions) ever called into this check, so /item and /give silently never
+# respected items.item-spawn-blacklist or permission-based-item-spawn despite the config
+# comments describing them as blocking "items... via commands". Crate rewards and the
+# dashboard give action had the exact same gap and were fixed the same way: a
+# blacklisted/permission-gated item is now withheld (crate: chat notice + server-log warning;
+# dashboard: an error response) instead of being handed out unconditionally.
 neoessentials.give - Give items to players (default: false)
 neoessentials.give.others - Give items to a player other than yourself (default: false)
 neoessentials.item.repair - Repair items (default: false)
