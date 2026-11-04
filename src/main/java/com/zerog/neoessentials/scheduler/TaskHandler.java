@@ -28,9 +28,17 @@ public class TaskHandler implements HttpHandler {
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // CRUD + manual execution of scheduled tasks - gate it the same way every other
+        // admin-only dashboard endpoint does, checked here rather than only trusting the
+        // withAuth(...) wrapper at registration time.
+        if (!isAdmin(exchange)) {
+            sendErrorResponse(exchange, 403, "Admin permission required");
+            return;
+        }
+
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod();
-        
+
         try {
             if ("GET".equals(method)) {
                 handleGet(exchange, path);
@@ -456,7 +464,12 @@ public class TaskHandler implements HttpHandler {
         Object username = exchange.getAttribute("username");
         return username != null ? username.toString() : "unknown";
     }
-    
+
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAdmin(HttpExchange exchange) {
+        return Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
+    }
+
     /**
      * Send JSON response
      */

@@ -27,9 +27,17 @@ public class LogHandler implements HttpHandler {
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // Server logs can contain sensitive data (IPs, tokens, stack traces) - gate this the
+        // same way every other admin-only dashboard endpoint does, checked here rather than
+        // only trusting the withAuth(...) wrapper at registration time.
+        if (!isAdmin(exchange)) {
+            sendForbidden(exchange);
+            return;
+        }
+
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
-        
+
         try {
             // Remove /api/logs prefix
             String endpoint = path.replace("/api/logs", "");
@@ -281,13 +289,26 @@ public class LogHandler implements HttpHandler {
         return params;
     }
     
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAdmin(HttpExchange exchange) {
+        return Boolean.TRUE.equals(exchange.getAttribute("auth-admin"));
+    }
+
+    private void sendForbidden(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("error", "Admin permission required");
+        response.addProperty("timestamp", Instant.now().toString());
+        sendJsonResponse(exchange, 403, response);
+    }
+
     private void sendJsonResponse(HttpExchange exchange, int statusCode, JsonObject response) throws IOException {
         String jsonResponse = gson.toJson(response);
         byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
-        
+
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(statusCode, bytes.length);
-        
+
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
         }
