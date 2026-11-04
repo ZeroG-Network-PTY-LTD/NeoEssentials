@@ -53,13 +53,30 @@ public class WorldInteractionCommands {
     );
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerFireball(dispatcher);
-        registerTree(dispatcher);
-        registerBreak(dispatcher);
-        registerIce(dispatcher);
-        registerBottom(dispatcher);
-        registerTpaAll(dispatcher);
-        registerBroadcastWorld(dispatcher);
+        // Every command here has its own config.json toggle but was registered
+        // unconditionally - same bug class as #76's /effect.
+        var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (config.isCommandEnabled("fireball")) {
+            registerFireball(dispatcher);
+        }
+        if (config.isCommandEnabled("tree")) {
+            registerTree(dispatcher);
+        }
+        if (config.isCommandEnabled("break")) {
+            registerBreak(dispatcher);
+        }
+        if (config.isCommandEnabled("ice")) {
+            registerIce(dispatcher);
+        }
+        if (config.isCommandEnabled("bottom")) {
+            registerBottom(dispatcher);
+        }
+        if (config.isCommandEnabled("tpaall")) {
+            registerTpaAll(dispatcher);
+        }
+        if (config.isCommandEnabled("broadcastworld")) {
+            registerBroadcastWorld(dispatcher);
+        }
     }
 
     // ── /fireball [type] [speed] [ride] ───────────────────────────────────────

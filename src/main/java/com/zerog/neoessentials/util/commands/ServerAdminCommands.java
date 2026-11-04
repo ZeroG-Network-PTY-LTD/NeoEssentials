@@ -49,13 +49,30 @@ public class ServerAdminCommands {
     );
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerBroadcast(dispatcher);
-        registerTime(dispatcher);
-        registerWeather(dispatcher);
-        registerKill(dispatcher);
-        registerGamemode(dispatcher);
-        registerTpo(dispatcher);
-        registerTpoffline(dispatcher);
+        // Every command here has its own config.json toggle but was registered
+        // unconditionally - same bug class as #76's /effect.
+        var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (config.isCommandEnabled("broadcast")) {
+            registerBroadcast(dispatcher);
+        }
+        if (config.isCommandEnabled("time")) {
+            registerTime(dispatcher);
+        }
+        if (config.isCommandEnabled("weather")) {
+            registerWeather(dispatcher);
+        }
+        if (config.isCommandEnabled("kill")) {
+            registerKill(dispatcher);
+        }
+        if (config.isCommandEnabled("gamemode")) {
+            registerGamemode(dispatcher);
+        }
+        if (config.isCommandEnabled("tpo")) {
+            registerTpo(dispatcher);
+        }
+        if (config.isCommandEnabled("tpoffline")) {
+            registerTpoffline(dispatcher);
+        }
     }
 
     // ── /broadcast <message> ─────────────────────────────────────────────────

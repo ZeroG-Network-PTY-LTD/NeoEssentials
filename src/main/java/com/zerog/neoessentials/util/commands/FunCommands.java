@@ -48,16 +48,39 @@ public class FunCommands {
     private static final Logger LOGGER = LoggerFactory.getLogger(FunCommands.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerFirework(dispatcher);
-        registerNuke(dispatcher);
-        registerAntioch(dispatcher);
-        registerKittyCannon(dispatcher);
-        registerBeezooka(dispatcher);
-        registerItemDb(dispatcher);
-        registerPotion(dispatcher);
-        registerInfo(dispatcher);
-        registerRest(dispatcher);
-        registerBackup(dispatcher);
+        // Every command here has its own config.json toggle but was registered
+        // unconditionally - same bug class as #76's /effect.
+        var config = ConfigManager.getInstance();
+        if (config.isCommandEnabled("firework")) {
+            registerFirework(dispatcher);
+        }
+        if (config.isCommandEnabled("nuke")) {
+            registerNuke(dispatcher);
+        }
+        if (config.isCommandEnabled("antioch")) {
+            registerAntioch(dispatcher);
+        }
+        if (config.isCommandEnabled("kittycannon")) {
+            registerKittyCannon(dispatcher);
+        }
+        if (config.isCommandEnabled("beezooka")) {
+            registerBeezooka(dispatcher);
+        }
+        if (config.isCommandEnabled("itemdb")) {
+            registerItemDb(dispatcher);
+        }
+        if (config.isCommandEnabled("potion")) {
+            registerPotion(dispatcher);
+        }
+        if (config.isCommandEnabled("info")) {
+            registerInfo(dispatcher);
+        }
+        if (config.isCommandEnabled("rest")) {
+            registerRest(dispatcher);
+        }
+        if (config.isCommandEnabled("backup")) {
+            registerBackup(dispatcher);
+        }
     }
 
     // ── /firework ─────────────────────────────────────────────────────────────
