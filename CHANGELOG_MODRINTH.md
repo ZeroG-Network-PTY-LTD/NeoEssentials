@@ -35,6 +35,7 @@ migration history) is not carried over.
 - **2026-11-03** — Build 20 ([`e1c44450`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e1c444504e82f07b5c76dbba82700b79c279f3cc)) — Config saves (crates, leaderboard, scoreboard, teleport/warps, cloud storage) silently swallowed write failures the same way storage writes did before Build 19 — "saved" responses now check the actual result.
 - **2026-11-03** (Build 21, [`76bf0d34`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/76bf0d34)): Freeze/unfreeze, command autocomplete, and server statistics were the last dashboard handlers still touching live server/player state off the dashboard's own HTTP threads, the same hazard already fixed for their sibling handlers in Build 20. They now correctly marshal onto the main thread.
 - **2026-11-04** (Build 25, [`a8f8f5b9`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/a8f8f5b9)): `/effect` built its potion effect with an unregistered holder, which silently broke that player's data saves (every autosave/logout) until the effect was cleared, rolling back progress made in between. Now uses the registered holder for the effect instead. Also fixed `/effect` ignoring its own config toggle.
+- **2026-11-04** ([`debb9c8d`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/debb9c8d)): `/ptime`, `/pweather`, `/spawnmob`, and `/unlimited` each had their own config toggle but ignored it, same bug as `/effect` above. All four now respect their config toggle.
 
 ---
 
