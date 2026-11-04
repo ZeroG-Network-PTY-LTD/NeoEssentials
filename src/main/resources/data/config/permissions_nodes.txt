@@ -165,8 +165,19 @@ neoessentials.kits.cooldown - View kit cooldowns (default: true)
 ## ═══════════════════════════════════════════════════════════
 neoessentials.item.repair - Repair items (default: false)
 neoessentials.item.enchant - Enchant items (default: false)
-neoessentials.item.enchant.unsafe - Unsafe enchanting (default: false)
+neoessentials.item.enchant.unsafe - Unsafe enchanting (bypasses max level) (default: false)
 neoessentials.item.enchant.others - Enchant others' items (default: false)
+neoessentials.item.enchant.any - Apply an enchantment to any item regardless of normal
+  item/enchantment compatibility (default: false)
+# Pattern: neoessentials.item.enchant.with.<namespace>.<enchantment>
+# Per-enchantment-type permission, only checked when items.permission-based-enchant-type
+# is enabled. A <namespace>.* wildcard is also supported.
+# Examples:
+#   neoessentials.item.enchant.with.minecraft.mending     - Allows applying Mending
+#   neoessentials.item.enchant.with.minecraft.unbreaking  - Allows applying Unbreaking
+#   neoessentials.item.enchant.with.minecraft.*           - Allows any vanilla enchantment
+# When permission-based-enchant-type is false (the default), only the base
+# neoessentials.item.enchant permission applies, and any enchantment is allowed.
 neoessentials.item.powertool - Use powertools (default: false)
 neoessentials.item.powertool.toggle - Toggle powertools (default: false)
 neoessentials.item.dispose - Use disposal system (default: true)

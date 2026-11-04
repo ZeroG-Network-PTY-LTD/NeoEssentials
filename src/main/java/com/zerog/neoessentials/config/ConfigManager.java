@@ -3326,6 +3326,25 @@ public class ConfigManager {
     }
 
     /**
+     * Returns true if permission-based enchantment-type restriction is enabled
+     * (items.permission-based-enchant-type). Defaults to false if not set. Same shape as
+     * isPermissionBasedItemSpawn()/isPermissionBasedMobSpawn() - the base
+     * "neoessentials.item.enchant" permission normally lets a player apply any enchantment;
+     * this opts into additionally requiring a per-enchantment
+     * "neoessentials.item.enchant.with.<namespace>.<enchantment>" node.
+     */
+    public static boolean isPermissionBasedEnchantType() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("permission-based-enchant-type")) {
+                return items.get("permission-based-enchant-type").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the default stack size from items.default-stack-size.
      * Returns -1 (use vanilla) if not set.
      */
