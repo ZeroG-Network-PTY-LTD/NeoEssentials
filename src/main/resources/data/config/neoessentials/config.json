@@ -544,6 +544,9 @@
     "default-stack-size": -1,
     // Allow enchantments beyond vanilla limits (e.g. Sharpness X)
     "unsafe-enchantments": true,
+    // Require 'neoessentials.item.enchant.with.<namespace>.<enchantment>' (or a
+    // <namespace>.* wildcard) to apply that specific enchantment via /enchant
+    "permission-based-enchant-type": false,
     // Maximum level allowed when unsafe-enchantments is true
     "max-unsafe-enchantment-level": 32767,
     // Items that cannot be spawned via commands even with permissions

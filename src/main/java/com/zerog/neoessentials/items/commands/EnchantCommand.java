@@ -246,7 +246,23 @@ public class EnchantCommand {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.unknown", enchantId.toString()));
             return 0;
         }
-        
+
+        // Opt-in per-enchantment-type restriction (same shape as /item's permission-based-item-
+        // spawn) - disabled by default, so the base neoessentials.item.enchant permission alone
+        // still allows every enchantment unless an admin enables permission-based-enchant-type.
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEnchantType()) {
+            String specificPerm = "neoessentials.item.enchant.with." + enchantId.toString().replace(":", ".");
+            boolean hasSpecific = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(executor.getUUID(), specificPerm);
+            if (!hasSpecific) {
+                String namespacePerm = "neoessentials.item.enchant.with." + enchantId.getNamespace() + ".*";
+                boolean hasNamespace = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(executor.getUUID(), namespacePerm);
+                if (!hasNamespace) {
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.no_permission_specific", enchantId.toString()));
+                    return 0;
+                }
+            }
+        }
+
         // Get item to enchant
         ItemStack stack = targetPlayer.getMainHandItem();
         if (stack.isEmpty()) {
