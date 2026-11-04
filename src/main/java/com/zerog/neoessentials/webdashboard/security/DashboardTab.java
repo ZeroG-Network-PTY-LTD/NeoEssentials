@@ -44,14 +44,22 @@ public final class DashboardTab {
         TAB_TO_PREFIX.put("permissions", "/api/permissions");
         TAB_TO_PREFIX.put("placeholders", "/api/placeholders");
         TAB_TO_PREFIX.put("players", "/api/player");
+        TAB_TO_PREFIX.put("resourcepacks", "/api/resourcepacks");
         TAB_TO_PREFIX.put("rules", "/api/rules");
         TAB_TO_PREFIX.put("scoreboard", "/api/scoreboard");
         TAB_TO_PREFIX.put("server", "/api/server");
+        TAB_TO_PREFIX.put("serverlogs", "/api/logs");
         TAB_TO_PREFIX.put("shops", "/api/shops");
         TAB_TO_PREFIX.put("stats", "/api/stats");
+        TAB_TO_PREFIX.put("tasks", "/api/tasks");
         TAB_TO_PREFIX.put("teleport", "/api/teleport");
         TAB_TO_PREFIX.put("users", "/api/users");
         TAB_TO_PREFIX.put("warps", "/api/warps");
+        TAB_TO_PREFIX.put("whitelist", "/api/whitelist");
+        // /api/database and /api/playerdata are deliberately NOT mapped here - raw SQL access
+        // and a full raw NBT dump of every player are as sensitive as /api/users/apikeys
+        // (which mint privilege itself), so like those two they stay full-admin-only
+        // regardless of any CUSTOM-role tab grant, never gated by a tab id a role could hold.
     }
 
     /** @return the tab id whose prefix the given request path falls under, or null if none
