@@ -737,6 +737,7 @@
     "commands.neoessentials.effect.cleared":  "§aCleared all effects from §f{0}§a.",
     "commands.neoessentials.spawnmob.success":  "§aSpawned §f{0}x {1}§a at §f{2}§a.",
     "commands.neoessentials.spawnmob.unknown":  "§cUnknown entity: §f{0}§c.",
+    "commands.neoessentials.spawnmob.denied":  "§c{0}",
     "commands.neoessentials.unlimited.list":  "§e{0}§e unlimited items: §f{1}§e.",
     "commands.neoessentials.unlimited.added":  "§aAdded §f{0}§a to unlimited items for §f{1}§a.",
     "commands.neoessentials.unlimited.removed":  "§aRemoved §f{0}§a from unlimited items for §f{1}§a.",
