@@ -469,10 +469,30 @@ public class PlayerStateCommands {
         var src = ctx.getSource();
         ServerPlayer target = resolveTarget(src, targetName);
         if (target == null) return 0;
+
+        // /give's target is mandatory (same shape as /effect before it got the same fix), so
+        // the self-vs-others split has to happen here instead of in the command tree.
+        ServerPlayer sender = src.getPlayer();
+        if (sender != null && isOtherTarget(src, target)
+                && !PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.give.others")) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+            return 0;
+        }
+
         ItemStack stack = com.zerog.neoessentials.economy.worth.WorthManager.resolveItem(itemId);
         if (stack == null) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.give.unknown_item", itemId));
             return 0;
+        }
+
+        // Same blacklist/permission-based-item-spawn enforcement /item now has - /give was a
+        // second, completely separate code path that bypassed it entirely.
+        if (sender != null) {
+            var spawnCheck = com.zerog.neoessentials.items.ItemSpawnHelper.canSpawnItem(sender, stack);
+            if (!spawnCheck.isSuccess()) {
+                src.sendFailure(MessageUtil.error("commands.neoessentials.give.spawn_denied", spawnCheck.getErrorMessage()));
+                return 0;
+            }
         }
         // Distribute across multiple stacks if amount > maxStackSize
         int remaining = amount;

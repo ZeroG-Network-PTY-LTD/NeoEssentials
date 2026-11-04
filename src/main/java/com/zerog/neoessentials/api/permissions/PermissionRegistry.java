@@ -287,6 +287,7 @@ public class PermissionRegistry {
         register("neoessentials.ext.others", "Extinguish another player", PermissionCategory.PLAYER, false);
         register("neoessentials.burn", "Set a player on fire", PermissionCategory.PLAYER, false);
         register("neoessentials.give", "Give items to players", PermissionCategory.PLAYER, false);
+        register("neoessentials.give.others", "Give items to a player other than yourself", PermissionCategory.PLAYER, false);
         register("neoessentials.more", "Fill held stack to max", PermissionCategory.PLAYER, false);
         register("neoessentials.hat", "Wear held item as helmet", PermissionCategory.PLAYER, false);
         register("neoessentials.exp", "View XP info", PermissionCategory.PLAYER, true);
