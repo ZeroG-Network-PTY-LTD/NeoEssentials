@@ -50,6 +50,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`d210dff3`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d210dff3)): `/item` and `/give` silently never enforced the item-spawn blacklist/permission system, despite it being documented as blocking dangerous items from any command. Both now enforce it. `/give` also gained `neoessentials.give.others`.
 - **2026-11-04** ([`8f5c45b9`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/8f5c45b9)): Crate rewards had the exact same blacklist-bypass bug as `/item`/`/give` above - a blocked reward item is now withheld with a chat notice and a server-log warning instead of being handed out unconditionally.
 - **2026-11-04** ([`7e4463d2`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/7e4463d2)): The dashboard's "Give item" player action had the same blacklist-bypass bug as `/item`/`/give` above - it now returns an error instead of silently handing out a blocked item.
+- **2026-11-04** ([`6f94d1e4`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/6f94d1e4)): The dashboard's "Spawn mob" player action had the same blacklist-bypass bug, this time against `spawnmobSettings.mob-spawn-blacklist`/`permission-based-mob-spawn` - it now returns an error instead of silently spawning a blocked entity type.
 
 ---
 
