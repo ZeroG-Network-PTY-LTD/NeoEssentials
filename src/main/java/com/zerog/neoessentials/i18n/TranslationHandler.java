@@ -33,9 +33,18 @@ public class TranslationHandler implements HttpHandler {
     
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // Every other dashboard endpoint is gated on auth via its own check inside handle()
+        // (not just the withAuth(...) wrapper at registration time) - this one had neither.
+        // Any logged-in dashboard user needs translations for the UI itself, so this only
+        // requires authentication, not full admin, unlike the admin-only endpoints.
+        if (!isAuthenticated(exchange)) {
+            sendUnauthorized(exchange);
+            return;
+        }
+
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
-        
+
         try {
             // Remove /api/i18n prefix
             String endpoint = path.replace("/api/i18n", "");
@@ -400,6 +409,19 @@ public class TranslationHandler implements HttpHandler {
         return params;
     }
     
+    /** Set by the dashboard's auth middleware (withAuth(...)) when registered - see DashboardAPI. */
+    private boolean isAuthenticated(HttpExchange exchange) {
+        return exchange.getAttribute("auth-username") != null;
+    }
+
+    private void sendUnauthorized(HttpExchange exchange) throws IOException {
+        JsonObject response = new JsonObject();
+        response.addProperty("success", false);
+        response.addProperty("error", "Authentication required");
+        response.addProperty("timestamp", Instant.now().toString());
+        sendJsonResponse(exchange, 401, response);
+    }
+
     private void sendJsonResponse(HttpExchange exchange, int statusCode, JsonObject response) throws IOException {
         String jsonResponse = gson.toJson(response);
         byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
