@@ -47,6 +47,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`8491e984`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/8491e984)): Added an opt-in blacklist and per-entity permission system for `/spawnmob`, mirroring `/item`'s existing permission-based item spawning. Both off by default, so nothing changes unless a server enables them.
 - **2026-11-04** ([`9fc13058`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/9fc13058)): Added an opt-in per-crate permission for `/crate open`, letting admins restrict specific crates to specific ranks even if a player holds a key. Off by default. Also registered and documented the previously-unregistered base crate permissions.
 - **2026-11-04** ([`e32b156a`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e32b156a)): Added an opt-in per-enchantment-type permission for `/enchant`, letting admins reserve enchantments like Mending for VIP ranks. Off by default.
+- **2026-11-04** ([`f1072ba5`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/f1072ba5)): `/item` and `/give` silently never enforced the item-spawn blacklist/permission system, despite it being documented as blocking dangerous items from any command. Both now enforce it. `/give` also gained `neoessentials.give.others`.
 
 ---
 
