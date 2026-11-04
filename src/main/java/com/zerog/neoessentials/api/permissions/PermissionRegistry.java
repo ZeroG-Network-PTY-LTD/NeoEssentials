@@ -319,6 +319,7 @@ public class PermissionRegistry {
         register("neoessentials.effect", "Apply potion effects to players", PermissionCategory.ADMIN, false);
         register("neoessentials.spawnmob", "Spawn entities at a player", PermissionCategory.ADMIN, false);
         register("neoessentials.spawnmob.others", "Spawn entities at another player", PermissionCategory.ADMIN, false);
+        register("neoessentials.spawnmob.spawn", "Spawn mobs when permission-based-mob-spawn is enabled", PermissionCategory.ADMIN, false);
         register("neoessentials.unlimited", "Toggle unlimited item use", PermissionCategory.ADMIN, false);
         register("neoessentials.unlimited.others", "Toggle unlimited items for another player", PermissionCategory.ADMIN, false);
         register("neoessentials.condense", "Condense items to storage blocks", PermissionCategory.PLAYER, false);

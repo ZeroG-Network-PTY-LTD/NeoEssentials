@@ -541,6 +541,17 @@ neoessentials.pweather.others - Use /pweather on other players (default: false)
 # /spawnmob - Spawn entities
 neoessentials.spawnmob - Spawn mobs at your own location (default: false)
 neoessentials.spawnmob.others - Spawn mobs at another player's location (default: false)
+neoessentials.spawnmob.spawn - General mob-spawn gate, only checked when
+  spawnmobSettings.permission-based-mob-spawn is enabled (default: false)
+# Pattern: neoessentials.spawnmob.spawn.<namespace>.<entity>
+# Per-entity-type permission, only checked when permission-based-mob-spawn is enabled.
+# Examples:
+#   neoessentials.spawnmob.spawn.minecraft.wither       - Allows spawning the Wither
+#   neoessentials.spawnmob.spawn.minecraft.ender_dragon - Allows spawning the Ender Dragon
+#   neoessentials.spawnmob.spawn.minecraft.*            - Allows spawning any vanilla entity
+# When permission-based-mob-spawn is false (the default), only the base
+# neoessentials.spawnmob / .others permissions apply, and any entity type is allowed
+# unless listed in spawnmobSettings.mob-spawn-blacklist.
 
 # /unlimited - Toggle infinite item use
 neoessentials.unlimited - Toggle unlimited items for yourself (default: false)
