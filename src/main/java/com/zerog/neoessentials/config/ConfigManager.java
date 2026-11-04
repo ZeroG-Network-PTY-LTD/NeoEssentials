@@ -3396,6 +3396,38 @@ public class ConfigManager {
     }
 
     /**
+     * Returns the mob spawn blacklist from spawnmobSettings.mob-spawn-blacklist.
+     * Defaults to empty list if not set. Same shape as getItemSpawnBlacklist().
+     */
+    public static java.util.List<String> getMobSpawnBlacklist() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("spawnmobSettings")) {
+            JsonObject spawnmob = config.getAsJsonObject("spawnmobSettings");
+            if (spawnmob.has("mob-spawn-blacklist") && spawnmob.get("mob-spawn-blacklist").isJsonArray()) {
+                java.util.List<String> list = new java.util.ArrayList<>();
+                spawnmob.getAsJsonArray("mob-spawn-blacklist").forEach(e -> list.add(e.getAsString()));
+                return list;
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    /**
+     * Returns true if permission-based mob spawn is enabled (spawnmobSettings.permission-based-mob-spawn).
+     * Defaults to false if not set. Same shape as isPermissionBasedItemSpawn().
+     */
+    public static boolean isPermissionBasedMobSpawn() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("spawnmobSettings")) {
+            JsonObject spawnmob = config.getAsJsonObject("spawnmobSettings");
+            if (spawnmob.has("permission-based-mob-spawn")) {
+                return spawnmob.get("permission-based-mob-spawn").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns true if kits module is enabled (modules.kitsEnabled).
      * Defaults to true if not set.
      */
