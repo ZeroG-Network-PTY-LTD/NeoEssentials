@@ -506,10 +506,12 @@ the permission for specific crates (e.g. a "legendary" crate) even if a player h
 
 ### Per-entity (spawnmob) nodes
 Pattern: `neoessentials.spawnmob.spawn.<namespace>.<entity>` (or `<namespace>.*` for a wildcard
-namespace) — grants permission to spawn that specific entity type via `/spawnmob`.  
+namespace) — grants permission to spawn that specific entity type via `/spawnmob` or the
+dashboard's "Spawn mob" player action.  
 Only enforced when `spawnmobSettings.permission-based-mob-spawn` is enabled (default: off).
 Entity types listed in `spawnmobSettings.mob-spawn-blacklist` are blocked outright regardless
-of permissions.
+of permissions, for both. (The dashboard action only started respecting this recently - before
+that it was a separate code path that bypassed it entirely.)
 
 ### Per-item (spawnitem) nodes
 Pattern: `neoessentials.item.spawn.<namespace>.<item>` (or `<namespace>.*` for a wildcard

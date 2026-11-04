@@ -1009,6 +1009,14 @@ public class PlayerEndpoint implements HttpHandler {
                     return resp;
                 }
                 var entityType = typeOpt.get();
+                // Same blacklist/permission-based-mob-spawn enforcement /spawnmob respects - this
+                // dashboard endpoint was a separate spawn-mob code path that bypassed it entirely.
+                var spawnCheck = com.zerog.neoessentials.items.MobSpawnHelper.canSpawnMob(player.getUUID(), entityType);
+                if (!spawnCheck.isSuccess()) {
+                    resp.addProperty("success", false);
+                    resp.addProperty("error", spawnCheck.getErrorMessage());
+                    return resp;
+                }
                 var level = com.zerog.neoessentials.util.LevelCompat.of(player);
                 int spawned = 0;
                 for (int i = 0; i < finalAmount; i++) {
