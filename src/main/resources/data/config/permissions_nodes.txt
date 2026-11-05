@@ -53,6 +53,18 @@ neoessentials.teleport.admin.tpall - Teleport all players (default: false)
 neoessentials.teleport.admin.tppos - Teleport to coordinates (default: false)
 neoessentials.teleport.admin.tpo - Teleport other players to locations (default: false)
 
+# /tp, /tphere, /tppos, /top, /tpr - these were missing from this reference file entirely
+# despite the header claiming it lists every node in the mod.
+neoessentials.teleport.tp - Use /tp (teleport self to a player, or to coordinates)
+  (default: false)
+neoessentials.teleport.tp.others - Forcibly move another player with /tp <player> <target>,
+  a stronger capability than self-teleporting that was previously covered by the same base
+  permission with no separate tier (default: false)
+neoessentials.teleport.tphere - Use /tphere to bring another player to you (default: false)
+neoessentials.teleport.tppos - Use /tppos to teleport to exact coordinates (default: false)
+neoessentials.teleport.top - Use /top to teleport to the highest block (default: true)
+neoessentials.teleport.tpr - Use /tpr for random teleportation (default: true)
+
 ### Teleport Requests
 neoessentials.teleport.request.tpa - Send teleport requests (default: true)
 neoessentials.teleport.request.tpahere - Request players teleport to you (default: true)

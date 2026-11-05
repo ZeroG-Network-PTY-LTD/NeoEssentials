@@ -209,6 +209,15 @@ public class DirectTeleportCommands {
                 ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.admin.self"));
                 return 0;
             }
+            // /tp <target> moves yourself; /tp <player> <target> forcibly moves someone else -
+            // the latter is a stronger capability and needs its own permission tier, same as
+            // /give and /effect already split self-use from acting on another player.
+            ServerPlayer sender = ctx.getSource().getPlayer();
+            if (sender != null && !player.getUUID().equals(sender.getUUID())
+                    && !PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.teleport.tp.others")) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.no_permission"));
+                return 0;
+            }
             // Save back location BEFORE teleporting so /back works
             com.zerog.neoessentials.teleportation.Misc.MiscTeleportManager.getInstance().saveBackLocation(player);
             player.teleportTo(com.zerog.neoessentials.util.LevelCompat.of(target), target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot());
