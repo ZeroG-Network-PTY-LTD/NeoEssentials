@@ -150,8 +150,10 @@ public class RealnameCommand {
             for (ServerPlayer player : partialMatches.subList(0, Math.min(10, partialMatches.size()))) {
                 String nickname = NickCommand.getNickname(player.getUUID());
                 if (nickname != null) {
-                    String formattedNick = nickname.replace("&", "§");
-                    source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.match_entry", 
+                    // Raw &-codes - MessageUtil.info needs literal '&' to recognize
+                    // &#RRGGBB hex (issue #77).
+                    String formattedNick = nickname;
+                    source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.match_entry",
                         formattedNick, player.getName().getString()), false);
                 } else {
                     source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.no_nick_entry", 
@@ -180,7 +182,9 @@ public class RealnameCommand {
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.no_nickname", realName), false);
         } else {
             // Player has a nickname
-            String formattedNick = nickname.replace("&", "§");
+            // Raw &-codes - MessageUtil.success/info need literal '&' to recognize
+            // &#RRGGBB hex (issue #77).
+            String formattedNick = nickname;
             
             if (searchedByRealName) {
                 source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.realname.by_realname", 

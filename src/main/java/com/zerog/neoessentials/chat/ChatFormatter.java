@@ -109,9 +109,17 @@ public class ChatFormatter {
                 // formatting) already has the group prefix/suffix baked in, doubling up with the
                 // template's own {neoessentials_prefix}/{neoessentials_suffix} placeholders. See
                 // DefaultPlaceholderExpansion.getNickOrDisplayName() for the same fix.
+                // Keep raw & codes intact here, including &#RRGGBB hex - the pipeline this
+                // feeds into (RichTextFormatter.processRichText -> ChatComponentUtil
+                // .parseColorCodes, below) expects & syntax end-to-end and only converts
+                // &#RRGGBB when it still has the literal '&'. Pre-converting to § (as this
+                // used to) turned "&#RRGGBB" into "§#RRGGBB", which that hex matcher never
+                // recognizes, silently dropping the entire colored nickname from chat - it
+                // still worked in the tab list, which renders through a different path
+                // (RichTextFormatter.processTablistText) that never did this conversion.
                 String nickRaw = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
                 String dname = (nickRaw != null && !nickRaw.isEmpty())
-                    ? nickRaw.replace("&", "§")
+                    ? nickRaw
                     : uname;
                 normalizedTemplate = normalizedTemplate
                     .replace("{neoessentials_username}", "§HNAME§" + uname + "§/HNAME§")

@@ -838,8 +838,11 @@ public class TablistManager {
     private String getDisplayName(ServerPlayer player) {
         // Priority: NickCommand nickname → internal customNames override → real name
         try {
+            // Raw &-codes - this feeds applyPlaceholders()'s {displayname} substitution,
+            // later converted by processTablistText(), which only recognizes &#RRGGBB hex
+            // while the '&' is still literal (issue #77).
             String nick = com.zerog.neoessentials.util.commands.NickCommand.getNickname(player.getUUID());
-            if (nick != null && !nick.isEmpty()) return nick.replace("&", "§");
+            if (nick != null && !nick.isEmpty()) return nick;
         } catch (Exception e) {
             NeoLog.debug(LOGGER, com.zerog.neoessentials.logging.LogCategory.GENERAL,
                 "Failed to resolve nickname for {} tablist entry", player.getName().getString(), e);
