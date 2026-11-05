@@ -744,6 +744,7 @@
     "commands.neoessentials.unlimited.added":  "§aAdded §f{0}§a to unlimited items for §f{1}§a.",
     "commands.neoessentials.unlimited.removed":  "§aRemoved §f{0}§a from unlimited items for §f{1}§a.",
     "commands.neoessentials.unlimited.cleared":  "§aCleared unlimited items for §f{0}§a.",
+    "commands.neoessentials.unlimited.blacklisted":  "§cItem '§f{0}§c' is blacklisted and cannot be made unlimited.",
     "commands.neoessentials.condense.success":  "§aCondensed §f{0}§a item type(s).",
     "commands.neoessentials.condense.nothing":  "§cNo items could be condensed.",
     "_comment_item_custom":  "=== Item Customisation \u0026 Misc Commands ===",
