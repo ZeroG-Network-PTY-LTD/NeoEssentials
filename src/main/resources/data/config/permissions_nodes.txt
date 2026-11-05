@@ -206,6 +206,19 @@ neoessentials.item.enchant.any - Apply an enchantment to any item regardless of 
 #   neoessentials.item.enchant.with.minecraft.*           - Allows any vanilla enchantment
 # When permission-based-enchant-type is false (the default), only the base
 # neoessentials.item.enchant permission applies, and any enchantment is allowed.
+
+# /potion - Edit potion effects on a held potion item (was missing from this reference file)
+neoessentials.potion - Use /potion clear and /potion add (default: false)
+# Pattern: neoessentials.potion.with.<namespace>.<effect>
+# Per-effect-type permission, only checked when items.permission-based-potion-effect is
+# enabled. A <namespace>.* wildcard is also supported.
+# Examples:
+#   neoessentials.potion.with.minecraft.strength       - Allows adding Strength
+#   neoessentials.potion.with.minecraft.instant_damage  - Allows adding Instant Damage
+#   neoessentials.potion.with.minecraft.*               - Allows any vanilla effect
+# When permission-based-potion-effect is false (the default), only the base
+# neoessentials.potion permission applies, and any effect is allowed.
+
 neoessentials.item.powertool - Use powertools (default: false)
 neoessentials.item.powertool.toggle - Toggle powertools (default: false)
 neoessentials.item.dispose - Use disposal system (default: true)

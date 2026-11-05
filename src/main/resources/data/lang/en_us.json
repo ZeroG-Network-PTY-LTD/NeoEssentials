@@ -825,6 +825,7 @@
     "commands.neoessentials.potion.not_potion":  "§cYou must be holding a potion, splash potion, lingering potion, or tipped arrow.",
     "commands.neoessentials.potion.cleared":  "§aPotion effects cleared.",
     "commands.neoessentials.potion.added":  "§aAdded §f{0}§a (level §f{1}§a, §f{2}s§a) to potion.",
+    "commands.neoessentials.potion.no_permission_specific": "§cYou don't have permission to apply {0}.",
     "commands.neoessentials.effect.unknown":  "§cUnknown effect: §f{0}§c.",
     "commands.neoessentials.antioch.success":  "§a*BOOM*",
     "commands.neoessentials.kittycannon.fired":  "§a KITTY CANNON FIRED! ",

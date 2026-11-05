@@ -75,6 +75,8 @@ opt-in `items.permission-based-item-spawn` mode, which additionally requires a p
 
 Set `items.permission-based-enchant-type: true` in `config.json` to additionally require a per-enchantment `neoessentials.item.enchant.with.<namespace>.<enchantment>` permission (or a `<namespace>.*` wildcard) — e.g. reserve `neoessentials.item.enchant.with.minecraft.mending` for a VIP rank while everyone keeps the base permission for ordinary enchants. Off by default.
 
+Set `items.permission-based-potion-effect: true` in `config.json` for the same customization on `/potion add` — a per-effect `neoessentials.potion.with.<namespace>.<effect>` permission (or a `<namespace>.*` wildcard) gates which mob effects a rank can bottle, e.g. reserving `neoessentials.potion.with.minecraft.instant_damage` for staff. Off by default.
+
 ### Powertool
 
 | Command | Syntax | Permission | Description |
