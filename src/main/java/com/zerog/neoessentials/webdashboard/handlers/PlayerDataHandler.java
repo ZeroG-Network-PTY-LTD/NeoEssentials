@@ -57,6 +57,16 @@ public class PlayerDataHandler implements HttpHandler {
         String[] parts = path.replaceAll("^/+|/+$", "").split("/");
         if (parts.length >= 3 && parts[0].equals("api") && parts[1].equals("playerdata")) {
             String uuid = parts[2];
+            // uuid comes straight from the URL path and was concatenated into a file path
+            // (uuid + ".dat") with no validation - a path-traversal payload like
+            // "../../../some/file" would escape the playerdata directory entirely. Reject
+            // anything that isn't a real UUID before it ever reaches a File constructor.
+            try {
+                java.util.UUID.fromString(uuid);
+            } catch (IllegalArgumentException e) {
+                sendJsonResponse(exchange, 400, createErrorResponse("Invalid uuid: " + uuid));
+                return;
+            }
             // Search all world folders under the current working directory for playerdata/{uuid}.dat
             File cwd = new File(System.getProperty("user.dir"));
             File foundFile = null;
