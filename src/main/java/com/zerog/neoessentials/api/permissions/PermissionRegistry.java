@@ -653,6 +653,7 @@ public class PermissionRegistry {
         // ── Teleport additions ────────────────────────────────────────────────
         register("neoessentials.teleport.settpr", "Set random teleport centre", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.tp", "Teleport self (alias)", PermissionCategory.TELEPORT, false);
+        register("neoessentials.teleport.tp.others", "Forcibly teleport another player (via /tp <player> <target>)", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.tphere", "Teleport others to self (alias)", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.tppos", "Teleport to coordinates (alias)", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.pwarp", "Use player warps", PermissionCategory.TELEPORT, true);

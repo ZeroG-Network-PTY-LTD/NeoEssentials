@@ -65,7 +65,8 @@
 ### Player Teleport
 | Command | Syntax | Permission | Default | Description |
 |---|---|---|---|---|
-| `/tp` | `/tp <player>` or `/tp <x> <y> <z>` | `neoessentials.teleport.tp` | 🔒 | Teleport to a player or coordinates |
+| `/tp` | `/tp <player>` or `/tp <x> <y> <z>` | `neoessentials.teleport.tp` | 🔒 | Teleport self to a player or coordinates |
+| `/tp` (others) | `/tp <player> <target>` | `neoessentials.teleport.tp` + `.others` | 🔒 | Forcibly move another player - needs both nodes |
 | `/tphere` | `/tphere <player>` | `neoessentials.teleport.tphere` | 🔒 | Teleport a player to you |
 | `/tpall` | `/tpall` | `neoessentials.teleport.admin.tpall` | 🔒 | Teleport all players to you |
 | `/tppos` | `/tppos <x> <y> <z>` | `neoessentials.teleport.tppos` | 🔒 | Teleport to exact coordinates |
