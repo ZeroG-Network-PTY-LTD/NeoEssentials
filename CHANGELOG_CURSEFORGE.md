@@ -57,6 +57,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - **2026-11-05** ([`d26cae1b`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d26cae1b)): `/unlimited` could make any blacklisted item (bedrock, TNT, etc.) permanently infinite with no check at all - the helper meant for this existed but was dead code. Now wired in.
 - **2026-11-05** ([`590246fa`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/590246fa)): **Security** - the dashboard's per-player NBT dump endpoint built a file path from a raw URL segment with no UUID validation, allowing path traversal to read arbitrary `.dat` files outside the playerdata directory. Now validated before use.
 - **2026-11-05** ([`13c33bd6`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/13c33bd6)): `/nick` rejected valid nicknames using `&#RRGGBB` hex color codes with "Invalid nickname format" - the length check counted raw markup instead of visible characters. Fixes #77.
+- **2026-11-05** ([`c21cf049`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/c21cf049)): Follow-up to #77 - a hex-colored nickname set successfully but rendered as nothing in chat (worked fine in tab list). A premature `&`-to-`§` conversion in several places broke the hex-color parser downstream. Fixed everywhere it occurred.
 
 ---
 
