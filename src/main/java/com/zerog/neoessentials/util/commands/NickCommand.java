@@ -214,8 +214,10 @@ public class NickCommand {
         
         // Apply nickname to player's display name
         updatePlayerDisplayName(player);
-        
-        String formattedNick = nickname.replace("&", "§");
+
+        // Pass raw &-codes through - MessageUtil.success ultimately calls parseColorCodes,
+        // which only recognizes &#RRGGBB hex while the '&' is still literal (see issue #77).
+        String formattedNick = nickname;
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.nick.set", formattedNick));
         
         return 1;
@@ -249,7 +251,8 @@ public class NickCommand {
         if (nickname == null) {
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.nick.no_nickname"));
         } else {
-            String formattedNick = nickname.replace("&", "§");
+            // Raw &-codes, same reason as setNickname() above (issue #77).
+            String formattedNick = nickname;
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.nick.current", formattedNick));
         }
         
@@ -297,7 +300,8 @@ public class NickCommand {
         // Apply nickname
         updatePlayerDisplayName(target);
         
-        String formattedNick = nickname.replace("&", "§");
+        // Raw &-codes, same reason as setNickname() above (issue #77).
+        String formattedNick = nickname;
         source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.nick.set_other", target.getName().getString(), formattedNick), false);
         target.sendSystemMessage(MessageUtil.info("commands.neoessentials.nick.set_by_admin", formattedNick));
         
@@ -356,9 +360,11 @@ public class NickCommand {
         if (nickname != null) {
             String composed = com.zerog.neoessentials.tablist.TablistManager.getInstance()
                 .resolveNicknameOverrideRaw(player, server);
+            // Raw &-codes - MessageUtil.coloredText calls parseColorCodes, same hex
+            // requirement as everywhere else in this file (issue #77).
             tabDisplayName = composed != null
                 ? com.zerog.neoessentials.chat.RichTextFormatter.processTablistText(composed)
-                : MessageUtil.coloredText(nickname.replace("&", "§"));
+                : MessageUtil.coloredText(nickname);
         }
 
         // Broadcast UPDATE_DISPLAY_NAME to every connected player (including the nick owner)
@@ -509,7 +515,9 @@ public class NickCommand {
     public static String getDisplayName(ServerPlayer player) {
         String nickname = NICKNAMES.get(player.getUUID());
         if (nickname != null) {
-            return nickname.replace("&", "§");
+            // Raw &-codes - callers pass this through MessageUtil/parseColorCodes, which
+            // only recognizes &#RRGGBB hex while the '&' is still literal (issue #77).
+            return nickname;
         }
         return player.getName().getString();
     }
