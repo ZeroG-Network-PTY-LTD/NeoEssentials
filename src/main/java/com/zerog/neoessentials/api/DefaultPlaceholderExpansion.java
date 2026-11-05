@@ -211,7 +211,13 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         try {
             String nick = NickCommand.getNickname(player.getUUID());
             if (nick != null && !nick.isEmpty()) {
-                return nick.replace("&", "§");
+                // Keep raw & codes (including &#RRGGBB hex) intact - whatever renders this
+                // placeholder's value (ChatComponentUtil.parseColorCodes, reached via
+                // RichTextFormatter) expects literal & syntax and only recognizes &#RRGGBB
+                // while the '&' is still there. Pre-converting to § breaks hex specifically -
+                // see the identical fix in ChatFormatter.java for issue #77's chat-display
+                // follow-up.
+                return nick;
             }
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.GENERAL, "getNickOrDisplayName: error reading nickname for {}: {}",
