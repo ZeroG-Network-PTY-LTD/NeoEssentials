@@ -343,6 +343,22 @@ public class UtilityCommands {
             return 0;
         }
 
+        // Opt-in per-effect-type permission, mirroring /potion add's permission-based-potion-effect.
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEffectType()) {
+            ServerPlayer sender = src.getPlayer();
+            if (sender != null) {
+                ResourceLocation effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder);
+                String specificPerm = "neoessentials.effect.with." + effectKey.toString().replace(":", ".");
+                if (!PermissionAPI.hasPermission(sender.getUUID(), specificPerm)) {
+                    String namespacePerm = "neoessentials.effect.with." + effectKey.getNamespace() + ".*";
+                    if (!PermissionAPI.hasPermission(sender.getUUID(), namespacePerm)) {
+                        src.sendFailure(MessageUtil.error("commands.neoessentials.effect.no_permission_specific", effectKey.toString()));
+                        return 0;
+                    }
+                }
+            }
+        }
+
         int durationTicks = durationSeconds * 20;
         // effectHolder is already the registry's own Holder (BuiltInRegistries.MOB_EFFECT.get()
         // returns Optional<Holder<MobEffect>> on this MC version), so unlike 1.21.x this never

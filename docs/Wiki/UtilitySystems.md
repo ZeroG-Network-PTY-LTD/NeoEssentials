@@ -344,6 +344,11 @@ does — see [Permission System](PermissionSystem#dynamic-nodes).
 and a blacklist (`spawnmobSettings.mob-spawn-blacklist`) — see [Permission System](PermissionSystem#dynamic-nodes).
 Both are off by default.
 
+`/effect` similarly supports an opt-in per-effect-type restriction
+(`items.permission-based-effect-type` + `neoessentials.effect.with.<namespace>.<effect>`) —
+off by default, letting admins reserve specific status effects for a rank even if everyone
+has the base `/effect` permission.
+
 ---
 
 ## World Interaction
