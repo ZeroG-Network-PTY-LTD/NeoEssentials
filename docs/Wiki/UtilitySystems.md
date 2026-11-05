@@ -349,6 +349,10 @@ Both are off by default.
 off by default, letting admins reserve specific status effects for a rank even if everyone
 has the base `/effect` permission.
 
+`/unlimited` rejects any item listed in `items.item-spawn-blacklist` outright, regardless of
+permissions — the same blacklist `/item`/`/give`/crate rewards respect, since making a
+blacklisted item (bedrock, TNT, etc.) infinite is just as much a bypass as spawning one.
+
 ---
 
 ## World Interaction

@@ -632,6 +632,9 @@ neoessentials.crate.admin - Crate administration (create/edit/give keys/reload) 
 # /unlimited - Toggle infinite item use
 neoessentials.unlimited - Toggle unlimited items for yourself (default: false)
 neoessentials.unlimited.others - Toggle unlimited items for other players (default: false)
+# Items listed in items.item-spawn-blacklist cannot be made unlimited regardless of
+# permissions - ItemSpawnHelper.isBlacklisted() existed for this but was dead code (never
+# called anywhere in the mod) before this check was wired in.
 
 # /dashboard - Web dashboard
 neoessentials.dashboard.access - Dashboard access
