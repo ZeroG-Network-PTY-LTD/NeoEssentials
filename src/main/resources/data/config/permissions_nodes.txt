@@ -581,6 +581,15 @@ neoessentials.socialspy - Use /socialspy
 # /effect - Apply/clear potion effects (default: false)
 neoessentials.effect - Apply/clear effects on yourself
 neoessentials.effect.others - Apply/clear effects on other players
+# Pattern: neoessentials.effect.with.<namespace>.<effect>
+# Per-effect-type permission, only checked when items.permission-based-effect-type is
+# enabled. A <namespace>.* wildcard is also supported.
+# Examples:
+#   neoessentials.effect.with.minecraft.strength       - Allows applying Strength
+#   neoessentials.effect.with.minecraft.instant_damage  - Allows applying Instant Damage
+#   neoessentials.effect.with.minecraft.*               - Allows any vanilla effect
+# When permission-based-effect-type is false (the default), only the base
+# neoessentials.effect/.others permissions apply, and any effect is allowed.
 
 # /ptime - Per-player client-side time override
 neoessentials.ptime - Use /ptime on yourself (default: true)

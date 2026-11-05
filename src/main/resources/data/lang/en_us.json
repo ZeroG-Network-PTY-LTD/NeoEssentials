@@ -735,6 +735,7 @@
     "commands.neoessentials.pweather.set":  "§aSet §f{0}§a\u0027\u0027s weather to §f{1}§a.",
     "commands.neoessentials.pweather.reset":  "§aReset §f{0}§a\u0027\u0027s weather to server default.",
     "commands.neoessentials.effect.applied":  "§aApplied §f{1}§a (amp §f{2}§a, §f{3}§as) to §f{0}§a.",
+    "commands.neoessentials.effect.no_permission_specific": "§cYou don't have permission to apply {0}.",
     "commands.neoessentials.effect.cleared":  "§aCleared all effects from §f{0}§a.",
     "commands.neoessentials.spawnmob.success":  "§aSpawned §f{0}x {1}§a at §f{2}§a.",
     "commands.neoessentials.spawnmob.unknown":  "§cUnknown entity: §f{0}§c.",
