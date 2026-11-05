@@ -347,7 +347,7 @@ public class UtilityCommands {
         if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEffectType()) {
             ServerPlayer sender = src.getPlayer();
             if (sender != null) {
-                ResourceLocation effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder);
+                Identifier effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder.value());
                 String specificPerm = "neoessentials.effect.with." + effectKey.toString().replace(":", ".");
                 if (!PermissionAPI.hasPermission(sender.getUUID(), specificPerm)) {
                     String namespacePerm = "neoessentials.effect.with." + effectKey.getNamespace() + ".*";
