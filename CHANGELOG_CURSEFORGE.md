@@ -53,6 +53,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`0bb2075f`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/0bb2075f)): The dashboard's "Spawn mob" player action had the same blacklist-bypass bug, this time against `spawnmobSettings.mob-spawn-blacklist`/`permission-based-mob-spawn` - it now returns an error instead of silently spawning a blocked entity type.
 - **2026-11-04** ([`3b020cb8`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/3b020cb8)): `/tp <player> <target>` (forcibly teleporting another player) had the same self-vs-others permission gap already fixed for `/effect`/`/give` - added `neoessentials.teleport.tp.others`.
 - **2026-11-04** ([`432555f5`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/432555f5)): Added an opt-in per-effect-type permission for `/potion add`, mirroring `/enchant`'s existing per-enchantment permission - letting admins reserve effects like Instant Damage for staff. Off by default.
+- **2026-11-05** ([`8a5422cf`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/8a5422cf)): Added the same opt-in per-effect-type permission for `/effect`, on top of its existing self-vs-others split. Off by default.
 
 ---
 
