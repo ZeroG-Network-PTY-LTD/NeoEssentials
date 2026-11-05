@@ -55,6 +55,7 @@ migration history) is not carried over.
 - **2026-11-04** ([`9bdfc414`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/9bdfc414)): Added an opt-in per-effect-type permission for `/potion add`, mirroring `/enchant`'s existing per-enchantment permission - letting admins reserve effects like Instant Damage for staff. Off by default.
 - **2026-11-05** ([`d94dac58`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d94dac58)): Added the same opt-in per-effect-type permission for `/effect`, on top of its existing self-vs-others split. Off by default.
 - **2026-11-05** ([`7ef331c6`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/7ef331c6)): The dashboard's "Apply effect" player action had the same blacklist-bypass bug as the dashboard give/spawn-mob actions above - checked against the target player since the dashboard has no in-game sender.
+- **2026-11-05** ([`12cd9120`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/12cd9120)): `/unlimited` could make any blacklisted item (bedrock, TNT, etc.) permanently infinite with no check at all - the helper meant for this existed but was dead code. Now wired in.
 
 ---
 
