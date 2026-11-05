@@ -3362,6 +3362,23 @@ public class ConfigManager {
     }
 
     /**
+     * Opt-in per-mob-effect-type permission for /effect, mirroring
+     * isPermissionBasedPotionEffect() - the base "neoessentials.effect" permission normally
+     * lets a player apply any status effect; this opts into additionally requiring a
+     * per-effect "neoessentials.effect.with.<namespace>.<effect>" node.
+     */
+    public static boolean isPermissionBasedEffectType() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("permission-based-effect-type")) {
+                return items.get("permission-based-effect-type").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the default stack size from items.default-stack-size.
      * Returns -1 (use vanilla) if not set.
      */

@@ -538,6 +538,13 @@ namespace) — grants permission to apply that specific mob effect to a held pot
 Only enforced when `items.permission-based-potion-effect` is enabled (default: off) — the base
 `neoessentials.potion` permission otherwise allows adding any effect.
 
+### Per-effect (status effect) nodes
+Pattern: `neoessentials.effect.with.<namespace>.<effect>` (or `<namespace>.*` for a wildcard
+namespace) — grants permission to apply that specific status effect via `/effect`, on top of
+the existing `neoessentials.effect`/`.others` self-vs-target split.  
+Only enforced when `items.permission-based-effect-type` is enabled (default: off) — the base
+`neoessentials.effect` permission otherwise allows applying any effect.
+
 ---
 
 ## Permission Nodes — Full Reference
