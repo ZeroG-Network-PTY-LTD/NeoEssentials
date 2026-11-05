@@ -540,8 +540,9 @@ Only enforced when `items.permission-based-potion-effect` is enabled (default: o
 
 ### Per-effect (status effect) nodes
 Pattern: `neoessentials.effect.with.<namespace>.<effect>` (or `<namespace>.*` for a wildcard
-namespace) — grants permission to apply that specific status effect via `/effect`, on top of
-the existing `neoessentials.effect`/`.others` self-vs-target split.  
+namespace) — grants permission to apply that specific status effect via `/effect` or the
+dashboard's "Apply effect" player action (checked against the *target* player for the
+dashboard action, since there's no in-game sender to check there).  
 Only enforced when `items.permission-based-effect-type` is enabled (default: off) — the base
 `neoessentials.effect` permission otherwise allows applying any effect.
 
