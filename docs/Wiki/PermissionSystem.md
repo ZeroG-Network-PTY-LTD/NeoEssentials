@@ -531,6 +531,13 @@ wildcard namespace) — grants permission to apply that specific enchantment via
 Only enforced when `items.permission-based-enchant-type` is enabled (default: off) — the base
 `neoessentials.item.enchant` permission otherwise allows any enchantment.
 
+### Per-effect (potion) nodes
+Pattern: `neoessentials.potion.with.<namespace>.<effect>` (or `<namespace>.*` for a wildcard
+namespace) — grants permission to apply that specific mob effect to a held potion via
+`/potion add`.  
+Only enforced when `items.permission-based-potion-effect` is enabled (default: off) — the base
+`neoessentials.potion` permission otherwise allows adding any effect.
+
 ---
 
 ## Permission Nodes — Full Reference

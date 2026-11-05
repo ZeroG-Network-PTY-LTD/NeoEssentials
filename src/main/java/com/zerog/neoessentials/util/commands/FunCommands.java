@@ -485,6 +485,19 @@ public class FunCommands {
 
         // effectHolder is already the registry's own Holder on this MC version, so unlike
         // 1.21.x this never builds an unregistered Holder.direct(...) (see fcf4f24b).
+
+        // Opt-in per-effect-type permission, mirroring /enchant's permission-based-enchant-type.
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedPotionEffect()) {
+            Identifier effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder.value());
+            String specificPerm = "neoessentials.potion.with." + effectKey.toString().replace(":", ".");
+            if (!PermissionAPI.hasPermission(player.getUUID(), specificPerm)) {
+                String namespacePerm = "neoessentials.potion.with." + effectKey.getNamespace() + ".*";
+                if (!PermissionAPI.hasPermission(player.getUUID(), namespacePerm)) {
+                    src.sendFailure(MessageUtil.error("commands.neoessentials.potion.no_permission_specific", effectKey.toString()));
+                    return 0;
+                }
+            }
+        }
         var instance = new net.minecraft.world.effect.MobEffectInstance(
             effectHolder, durationSecs * 20, amplifier, false, true);
 

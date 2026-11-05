@@ -3345,6 +3345,23 @@ public class ConfigManager {
     }
 
     /**
+     * Opt-in per-mob-effect-type permission for /potion add, mirroring
+     * isPermissionBasedEnchantType() - the base "neoessentials.potion" permission normally
+     * lets a player apply any effect to a held potion; this opts into additionally requiring
+     * a per-effect "neoessentials.potion.with.<namespace>.<effect>" node.
+     */
+    public static boolean isPermissionBasedPotionEffect() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("permission-based-potion-effect")) {
+                return items.get("permission-based-potion-effect").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the default stack size from items.default-stack-size.
      * Returns -1 (use vanilla) if not set.
      */
