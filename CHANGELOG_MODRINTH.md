@@ -57,6 +57,7 @@ migration history) is not carried over.
 - **2026-11-05** ([`ebf240a8`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/ebf240a8)): The dashboard's "Apply effect" player action had the same blacklist-bypass bug as the dashboard give/spawn-mob actions above - checked against the target player since the dashboard has no in-game sender.
 - **2026-11-05** ([`d7f030d6`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d7f030d6)): `/unlimited` could make any blacklisted item (bedrock, TNT, etc.) permanently infinite with no check at all - the helper meant for this existed but was dead code. Now wired in.
 - **2026-11-05** ([`b3b22167`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b3b22167)): **Security** - the dashboard's per-player NBT dump endpoint built a file path from a raw URL segment with no UUID validation, allowing path traversal to read arbitrary `.dat` files outside the playerdata directory. Now validated before use.
+- **2026-11-05** ([`40d612c5`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/40d612c5)): `/nick` rejected valid nicknames using `&#RRGGBB` hex color codes with "Invalid nickname format" - the length check counted raw markup instead of visible characters. Fixes #77.
 
 ---
 
