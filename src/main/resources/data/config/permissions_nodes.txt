@@ -590,6 +590,8 @@ neoessentials.effect.others - Apply/clear effects on other players
 #   neoessentials.effect.with.minecraft.*               - Allows any vanilla effect
 # When permission-based-effect-type is false (the default), only the base
 # neoessentials.effect/.others permissions apply, and any effect is allowed.
+# Also enforced by the dashboard's "Apply effect" player action, checked against the target
+# player (the dashboard has no in-game sender to check against).
 
 # /ptime - Per-player client-side time override
 neoessentials.ptime - Use /ptime on yourself (default: true)
