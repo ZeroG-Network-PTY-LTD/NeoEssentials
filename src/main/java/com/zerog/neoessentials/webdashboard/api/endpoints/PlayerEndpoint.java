@@ -902,6 +902,22 @@ public class PlayerEndpoint implements HttpHandler {
                 }
                 // effectHolder is already the registry's own Holder on this MC version, so unlike
                 // 1.21.x this never builds an unregistered Holder.direct(...) (see fcf4f24b).
+
+                // Same per-effect-type permission /effect respects - this dashboard endpoint
+                // was a separate apply-effect code path that bypassed it entirely.
+                if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEffectType()) {
+                    net.minecraft.resources.Identifier effectKey =
+                        net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(effectHolder.value());
+                    String specificPerm = "neoessentials.effect.with." + effectKey.toString().replace(":", ".");
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), specificPerm)) {
+                        String namespacePerm = "neoessentials.effect.with." + effectKey.getNamespace() + ".*";
+                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), namespacePerm)) {
+                            resp.addProperty("success", false);
+                            resp.addProperty("error", "Player does not have permission to receive effect: " + effectKey);
+                            return resp;
+                        }
+                    }
+                }
                 player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                     effectHolder, duration * 20, amplifier, false, true));
                 resp.addProperty("success", true);
