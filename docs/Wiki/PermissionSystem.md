@@ -575,8 +575,9 @@ Only enforced when `items.permission-based-enchant-type` is enabled (default: of
 | Node | Default | Description | Command |
 |---|---|---|---|
 | `neoessentials.teleport.admin` |  op-only | Admin teleport (parent node) | |
-| `neoessentials.teleport.admin.tp` |  op-only | Teleport a player to another | `/tp <player> <target>` |
-| `neoessentials.teleport.tp` |  op-only | Teleport self (alias) | `/tp <player>` |
+| `neoessentials.teleport.admin.tp` |  op-only | Internal check used by `/helpop`'s teleport-to-request action - **not** checked by `/tp` itself | |
+| `neoessentials.teleport.tp` |  op-only | Teleport self to a player or to coordinates | `/tp <target>` |
+| `neoessentials.teleport.tp.others` |  op-only | Forcibly teleport another player - `/tp <player> <target>` used to be gated by the base `neoessentials.teleport.tp` alone, the same gap already fixed for `/give`/`/effect` | `/tp <player> <target>` |
 | `neoessentials.teleport.admin.tphere` |  op-only | Bring a player to you | `/tphere` |
 | `neoessentials.teleport.tphere` |  op-only | Bring a player to you (alias) | `/tphere` |
 | `neoessentials.teleport.admin.tpall` |  op-only | Teleport all players to a target | `/tpall` |
