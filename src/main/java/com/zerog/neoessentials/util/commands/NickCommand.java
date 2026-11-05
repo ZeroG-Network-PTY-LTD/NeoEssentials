@@ -36,8 +36,16 @@ public class NickCommand {
     private static final Map<UUID, String> NICKNAMES = new ConcurrentHashMap<>();
     private static final Path NICK_DATA_FILE = ResourceUtil.getConfigPath("nickname_data.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    // Updated to allow hex color codes like &#5d6a2c
-    private static final Pattern VALID_NICK_PATTERN = Pattern.compile("^[a-zA-Z0-9_&§#]{1,32}$");
+    // The {1,32} bound here caps the RAW string (markup included), not the visible nickname -
+    // that's already enforced separately below via withoutColors.length() against 3-16. Each
+    // hex color code (&#RRGGBB) is 9 raw characters for just ONE visible character, so a
+    // legitimately-sized 16-char nickname with every character individually hex-colored needs
+    // up to 16*9 = 144 raw characters. The old {1,32} bound rejected far shorter real nicknames
+    // (e.g. a 4-character nickname with each letter hex-colored is already 36 raw characters) -
+    // see issue #77. 256 is a generous ceiling that still can't realistically be hit by a
+    // legitimate 16-visible-character nickname, while CommandLengthEnforcer's maxCommandLength
+    // already bounds the overall command length.
+    private static final Pattern VALID_NICK_PATTERN = Pattern.compile("^[a-zA-Z0-9_&§#]{1,256}$");
     private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&[0-9a-fk-or]|&#[0-9a-fA-F]{6}");
     
     /**
