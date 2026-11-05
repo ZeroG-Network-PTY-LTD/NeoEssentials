@@ -480,6 +480,19 @@ public class FunCommands {
             return 0;
         }
 
+        // Opt-in per-effect-type permission, mirroring /enchant's permission-based-enchant-type.
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedPotionEffect()) {
+            ResourceLocation effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder);
+            String specificPerm = "neoessentials.potion.with." + effectKey.toString().replace(":", ".");
+            if (!PermissionAPI.hasPermission(player.getUUID(), specificPerm)) {
+                String namespacePerm = "neoessentials.potion.with." + effectKey.getNamespace() + ".*";
+                if (!PermissionAPI.hasPermission(player.getUUID(), namespacePerm)) {
+                    src.sendFailure(MessageUtil.error("commands.neoessentials.potion.no_permission_specific", effectKey.toString()));
+                    return 0;
+                }
+            }
+        }
+
         // Holder.direct(...) builds an unregistered holder that MobEffectInstance.save()
         // rejects, silently aborting the whole item NBT save - same bug class as #76's
         // /effect command, here corrupting the held item instead of player data.
