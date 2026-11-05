@@ -880,6 +880,21 @@ public class PlayerEndpoint implements HttpHandler {
                     resp.addProperty("error", "Unknown effect: " + effectId);
                     return resp;
                 }
+                // Same per-effect-type permission /effect respects - this dashboard endpoint
+                // was a separate apply-effect code path that bypassed it entirely.
+                if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEffectType()) {
+                    net.minecraft.resources.ResourceLocation effectKey =
+                        net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(effectHolder);
+                    String specificPerm = "neoessentials.effect.with." + effectKey.toString().replace(":", ".");
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), specificPerm)) {
+                        String namespacePerm = "neoessentials.effect.with." + effectKey.getNamespace() + ".*";
+                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), namespacePerm)) {
+                            resp.addProperty("success", false);
+                            resp.addProperty("error", "Player does not have permission to receive effect: " + effectKey);
+                            return resp;
+                        }
+                    }
+                }
                 // Holder.direct(...) builds an unregistered holder that MobEffectInstance.save()
                 // rejects, silently aborting the whole player NBT save - same bug as #76's
                 // /effect command. wrapAsHolder(...) returns the real registered holder.
