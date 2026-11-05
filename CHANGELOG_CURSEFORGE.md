@@ -50,6 +50,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - **2026-11-04** ([`0c2913be`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/0c2913be)): Crate rewards had the exact same blacklist-bypass bug as `/item`/`/give` above - a blocked reward item is now withheld with a chat notice and a server-log warning instead of being handed out unconditionally.
 - **2026-11-04** ([`6dcb7eab`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/6dcb7eab)): The dashboard's "Give item" player action had the same blacklist-bypass bug as `/item`/`/give` above - it now returns an error instead of silently handing out a blocked item.
 - **2026-11-04** ([`77a81816`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/77a81816)): The dashboard's "Spawn mob" player action had the same blacklist-bypass bug, this time against `spawnmobSettings.mob-spawn-blacklist`/`permission-based-mob-spawn` - it now returns an error instead of silently spawning a blocked entity type.
+- **2026-11-04** ([`8dae3a68`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/8dae3a68)): `/tp <player> <target>` (forcibly teleporting another player) had the same self-vs-others permission gap already fixed for `/effect`/`/give` - added `neoessentials.teleport.tp.others`.
 
 ---
 
