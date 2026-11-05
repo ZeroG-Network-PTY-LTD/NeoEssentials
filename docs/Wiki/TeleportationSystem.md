@@ -311,7 +311,8 @@ of a higher "no safe location found" retry rate.
 
 | Command | Syntax | Permission | Description |
 |---|---|---|---|
-| `/tp` | `/tp <player>` or `/tp <x y z>` | `neoessentials.teleport.tp` | Teleport to player or coords |
+| `/tp` | `/tp <player>` or `/tp <x y z>` | `neoessentials.teleport.tp` | Teleport self to player or coords |
+| `/tp` (forcing another player) | `/tp <player> <target>` | `neoessentials.teleport.tp` + `neoessentials.teleport.tp.others` | Forcibly move another player to a target - needs both nodes |
 | `/tphere` | `/tphere <player>` | `neoessentials.teleport.tphere` | Bring player to you |
 | `/tpall` | `/tpall` | `neoessentials.teleport.admin.tpall` | Bring all players to you |
 | `/tppos` | `/tppos <x> <y> <z>` | `neoessentials.teleport.tppos` | Teleport to exact coordinates |
