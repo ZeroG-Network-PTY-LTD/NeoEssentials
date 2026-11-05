@@ -338,6 +338,22 @@ public class UtilityCommands {
             return 0;
         }
 
+        // Opt-in per-effect-type permission, mirroring /potion add's permission-based-potion-effect.
+        if (com.zerog.neoessentials.config.ConfigManager.isPermissionBasedEffectType()) {
+            ServerPlayer sender = src.getPlayer();
+            if (sender != null) {
+                ResourceLocation effectKey = BuiltInRegistries.MOB_EFFECT.getKey(effectHolder);
+                String specificPerm = "neoessentials.effect.with." + effectKey.toString().replace(":", ".");
+                if (!PermissionAPI.hasPermission(sender.getUUID(), specificPerm)) {
+                    String namespacePerm = "neoessentials.effect.with." + effectKey.getNamespace() + ".*";
+                    if (!PermissionAPI.hasPermission(sender.getUUID(), namespacePerm)) {
+                        src.sendFailure(MessageUtil.error("commands.neoessentials.effect.no_permission_specific", effectKey.toString()));
+                        return 0;
+                    }
+                }
+            }
+        }
+
         int durationTicks = durationSeconds * 20;
         // Holder.direct(...) builds an unregistered holder; MobEffectInstance.save() encodes the
         // holder through the registry codec, which rejects anything not backed by a registry

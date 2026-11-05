@@ -550,6 +550,9 @@
     // Require 'neoessentials.potion.with.<namespace>.<effect>' (or a <namespace>.*
     // wildcard) to apply that specific mob effect via /potion add
     "permission-based-potion-effect": false,
+    // Require 'neoessentials.effect.with.<namespace>.<effect>' (or a <namespace>.*
+    // wildcard) to apply that specific status effect via /effect
+    "permission-based-effect-type": false,
     // Maximum level allowed when unsafe-enchantments is true
     "max-unsafe-enchantment-level": 32767,
     // Items that cannot be spawned via commands even with permissions
