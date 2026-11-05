@@ -546,6 +546,16 @@ public class UtilityCommands {
             }
         }
 
+        // items.item-spawn-blacklist is meant to block an item from any command "regardless
+        // of permissions" - /unlimited making a blacklisted item infinite (bedrock, TNT, etc.)
+        // circumvents that intent just as much as spawning one would, so it needs the same
+        // unconditional check. ItemSpawnHelper.isBlacklisted() existed for this but was never
+        // actually called anywhere in the mod before this fix.
+        if (com.zerog.neoessentials.items.ItemSpawnHelper.isBlacklisted(id)) {
+            src.sendFailure(MessageUtil.error("commands.neoessentials.unlimited.blacklisted", id));
+            return 0;
+        }
+
         Set<String> items = unlimitedItems.computeIfAbsent(target.getUUID(), k -> new HashSet<>());
         final String fid = id;
         if (items.contains(id)) {
