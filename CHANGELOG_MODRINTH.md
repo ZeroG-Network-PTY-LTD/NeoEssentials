@@ -55,6 +55,7 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 - **2026-11-05** ([`926b97c1`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/926b97c1)): Added the same opt-in per-effect-type permission for `/effect`, on top of its existing self-vs-others split. Off by default.
 - **2026-11-05** ([`c704200a`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/c704200a)): The dashboard's "Apply effect" player action had the same blacklist-bypass bug as the dashboard give/spawn-mob actions above - checked against the target player since the dashboard has no in-game sender.
 - **2026-11-05** ([`d26cae1b`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/d26cae1b)): `/unlimited` could make any blacklisted item (bedrock, TNT, etc.) permanently infinite with no check at all - the helper meant for this existed but was dead code. Now wired in.
+- **2026-11-05** ([`590246fa`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/590246fa)): **Security** - the dashboard's per-player NBT dump endpoint built a file path from a raw URL segment with no UUID validation, allowing path traversal to read arbitrary `.dat` files outside the playerdata directory. Now validated before use.
 
 ---
 
