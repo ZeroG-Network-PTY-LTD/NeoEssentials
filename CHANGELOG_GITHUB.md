@@ -25,6 +25,9 @@ Compatibility: **Minecraft 1.21.1 – 1.21.11 (`1.21.x`) · Minecraft 26.1–26.
 
 ### Added
 
+### Fixed
+- **2026-11-17** ([`e38e90ed`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e38e90ed)) — **Chat → Discord relay could go completely silent, with no error or warning anywhere** — two independent causes. First, disabling the chat channels system (`chat.channels.enabled: false`) left nothing for the per-channel `discord.enabled` check to read, so the relay silently stayed off; it now defaults to on when there's no per-channel config to say otherwise. Second, Mc2Discord's and Simple Discord Link's own native chat relay (`chat.playerMessages` et al.) was being trusted to cover the message instead of NeoEssentials sending it — but by the time that check ran, NeoEssentials had already canceled the underlying chat event for its own formatting (the default), which also prevents the bridge mod's native relay from ever seeing that same message. NeoEssentials now always sends chat itself in that case, since there was never a real risk of double-posting there to begin with. Fixes #78.
+
 ---
 
 ## [1.0.7] — 2026-10-16
