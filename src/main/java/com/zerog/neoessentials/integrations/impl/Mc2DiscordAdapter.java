@@ -38,7 +38,12 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
     // SDLinkAdapter's equivalent fields/detectNativeRelayConflicts() for the identical pattern —
     // this is the same fix, adapted to Mc2Discord's very different (per-channel subscription-list,
     // not flat boolean) config shape.
-    private boolean nativeChatEnabled = false;
+    //
+    // NOTE: chat has no equivalent flag (issue #78) — onPlayerChat() is only ever reached from
+    // ChatHandler's already-canceled-ServerChatEvent branch, which bypasses vanilla's chat
+    // broadcast entirely, so Mc2Discord's native "chat" subscription can never fire for the same
+    // message in the first place. There's no double-post risk to guard against for chat
+    // specifically, unlike join/leave/advancement below (none of which get canceled/bypassed).
     private boolean nativeJoinEnabled = false;
     private boolean nativeLeaveEnabled = false;
     private boolean nativeAdvancementEnabled = false;
@@ -109,12 +114,6 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
             String allSubscriptions = String.join("\n", channelBlocks);
             record ConflictingKey(String subscriptionKey, String description, Runnable onDetected) {}
             List<ConflictingKey> checks = List.of(
-                new ConflictingKey("\"chat\"",
-                    "relays EVERY Minecraft chat message to its own subscribed Discord channel(s), " +
-                    "entirely independent of NeoEssentials' chat.channels.*.discord relay — NeoEssentials' " +
-                    "own DEFAULT-route chat relay (no explicit per-channel Discord ID) is now suppressed to " +
-                    "avoid a duplicate; per-channel overrides to a specific Discord ID still send normally",
-                    () -> nativeChatEnabled = true),
                 new ConflictingKey("\"player_connect\"",
                     "posts its own player-join message natively — NeoEssentials' own join relay through " +
                     "this adapter is now suppressed to avoid a duplicate",
@@ -172,7 +171,13 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
                 NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord: relaying chat from '{}' directly to Discord channel '{}'",
                     player.getName().getString(), discordChannelId);
                 sendToChannel(discordChannelId, DiscordIdentityFormatter.resolveNameWithRank(player) + ": " + cleanMessage);
-            } else if (!nativeChatEnabled) {
+            } else {
+                // nativeChatEnabled is NOT checked here (issue #78): this method is only ever
+                // reached from ChatHandler's already-canceled-ServerChatEvent branch (NeoEssentials'
+                // own chat formatting is on, the overwhelming default), which bypasses vanilla's
+                // broadcast pipeline entirely via per-player sendSystemMessage. Mc2Discord's native
+                // "chat" subscription relay — which depends on seeing that event/broadcast — can
+                // never fire in that case, so deferring to it here left chat completely unrelayed.
                 NeoLog.debug(LOGGER, LogCategory.DISCORD, "Mc2Discord: relaying chat from '{}' via default chat route",
                     player.getName().getString());
                 MessageManager.sendChatMessage(cleanMessage, DiscordIdentityFormatter.resolveNameWithRank(player), avatarFor(player)).subscribe();
