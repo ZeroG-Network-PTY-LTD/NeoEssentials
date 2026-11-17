@@ -10,6 +10,9 @@ Starting from **v1.0.6** — earlier history (v1.0.5.x and before) is not carrie
 
 ### Added
 
+### Fixed
+- **2026-11-17** ([`e38e90ed`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e38e90ed)) — Chat → Discord relay could go completely silent with no error or warning — disabling chat channels left nothing for the per-channel Discord toggle to read (now defaults to on instead), and Mc2Discord/SDLink's own native chat relay was being wrongly trusted to cover the message after NeoEssentials had already canceled the underlying chat event for its own formatting, which also blocks the bridge mod's native relay from seeing it. NeoEssentials now always sends chat itself in that case.
+
 ---
 
 ## [1.0.7] — 2026-10-16
