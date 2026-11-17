@@ -9,14 +9,14 @@ permissions, moderation, backups, Discord bridge status, server control, etc.) g
 > interop instead?** See [`docs/VaultAPI.md`](VaultAPI.md) — a separate, much smaller
 > standalone Java API for that, unrelated to the HTTP surface documented below.
 
-- Base URL: `http://<server-host>:<dashboardPort>/api/...` (default port `8090`, configurable —
+- Base URL: `http://<server-host>:<dashboardPort>/api/...` (default port `8080`, configurable —
   see `webDashboard.port` in `config.json`).
 - All responses are JSON. Almost every response includes a top-level `"success": true/false`
   field; treat its absence as `true` for legacy 200 responses that predate this convention, and
   always check HTTP status first.
 - **Transport security is out of scope for the mod.** It speaks plain HTTP. If this API needs to
   be reachable over the public internet, put a reverse proxy (nginx, Caddy, Cloudflare Tunnel,
-  etc.) in front of it to terminate TLS — do not expose port 8090 directly.
+  etc.) in front of it to terminate TLS — do not expose port 8080 directly.
 
 ## Authentication
 
@@ -118,8 +118,8 @@ The operator (not the external dashboard) controls these:
 "webDashboard": {
   "enabled": true,
   "autoStart": true,
-  "port": 8090,
-  "websocketPort": 8091,
+  "port": 8080,
+  "websocketPort": 8081,
   "bindAddress": "0.0.0.0",
   "securitySettings": {
     "requireAuthentication": true,
@@ -142,10 +142,10 @@ The operator (not the external dashboard) controls these:
   terminating TLS runs on the same machine, consider binding to `127.0.0.1` instead and letting
   only the proxy reach it.
 
-## WebSocket (`websocketPort`, default 8091)
+## WebSocket (`websocketPort`, default 8081)
 
 A live event stream runs alongside the REST API on a separate port
-(`ws://<server-host>:8091`) — useful for a live dashboard feed instead of polling REST
+(`ws://<server-host>:8081`) — useful for a live dashboard feed instead of polling REST
 endpoints. Text-frame JSON messages both ways.
 
 **Auth (send first, before subscribing):**
