@@ -412,7 +412,12 @@ public class ChatHandler {
                         // Debug: Log Discord relay config for this channel
                         NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' Discord relay config: enabled={}, channelId={}", channel, discordEnabled, discordChannelId);
                     } else {
-                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' has no Discord relay config.", channel);
+                        // No per-channel discord block to read (most commonly: chat.channels.enabled
+                        // is false, so the whole channel system — and its per-channel discord gate —
+                        // never applies at all). There's nothing here telling us NOT to relay, so
+                        // default to on instead of silently going dark with zero log output (issue #78).
+                        discordEnabled = true;
+                        NeoLog.debug(LOGGER, LogCategory.CHAT, "Channel '{}' has no Discord relay config; defaulting to enabled.", channel);
                     }
 
                     // Permission check for Discord relay
