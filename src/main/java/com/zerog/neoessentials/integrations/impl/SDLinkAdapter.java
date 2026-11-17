@@ -34,7 +34,12 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
     // Whether SDLink's OWN native broadcaster is enabled for each event type — detected once at
     // startup by detectNativeRelayConflicts() and used to SKIP NeoEssentials' own default-route
     // send for that event, instead of just warning about it. See that method's Javadoc for why.
-    private boolean nativeChatEnabled = false;
+    //
+    // NOTE: chat has no equivalent flag (issue #78) — onPlayerChat() is only ever reached from
+    // ChatHandler's already-canceled-ServerChatEvent branch, which bypasses vanilla's chat
+    // broadcast entirely, so SDLink's native chat.playerMessages relay can never fire for the same
+    // message in the first place. There's no double-post risk to guard against for chat
+    // specifically, unlike join/leave/advancement below (none of which get canceled/bypassed).
     private boolean nativeJoinEnabled = false;
     private boolean nativeLeaveEnabled = false;
     private boolean nativeAdvancementEnabled = false;
@@ -74,10 +79,11 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
      * Rather than just warning and leaving the duplicate in place, the detected flags here make
      * NeoEssentials the passive side by default: {@link #onPlayerJoin}/{@link #onPlayerQuit}/
      * {@link #onPlayerAdvancement} skip their SDLink send entirely when SDLink's native equivalent
-     * is on, and {@link #onPlayerChat}'s DEFAULT route (no explicit per-channel Discord ID) does
-     * the same for {@code playerMessages} — a channel-specific override still always sends, since
-     * that targets a different channel than SDLink's native relay ever touches, so it's not a
-     * duplicate.
+     * is on. Chat does NOT get the same treatment (issue #78): {@link #onPlayerChat} is only ever
+     * reached from {@code ChatHandler}'s already-canceled-{@code ServerChatEvent} branch, which
+     * bypasses vanilla's chat broadcast entirely — SDLink's native {@code playerMessages} relay
+     * can never fire for that same message, so there's no duplicate to guard against for chat,
+     * and skipping our own send there left chat completely unrelayed instead.
      * <p>
      * Reads the file through a real TOML parse ({@link TomlConflictReader}, isolated the same way
      * as {@link JdaBridge} below), not a line/regex scan — a regex scan is fragile to anything
@@ -97,12 +103,6 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
 
             record ConflictingKey(String key, boolean detected, String description, Runnable onDetected) {}
             List<ConflictingKey> checks = List.of(
-                new ConflictingKey("playerMessages", flags.playerMessages(),
-                    "relays EVERY Minecraft chat message to its own configured Discord channel, " +
-                    "entirely independent of NeoEssentials' chat.channels.*.discord relay — NeoEssentials' " +
-                    "own DEFAULT-route chat relay (no explicit per-channel Discord ID) is now suppressed to " +
-                    "avoid a duplicate; per-channel overrides to a specific Discord ID still send normally",
-                    () -> nativeChatEnabled = true),
                 new ConflictingKey("playerJoin", flags.playerJoin(),
                     "posts its own player-join message natively — NeoEssentials' own join relay through " +
                     "this adapter is now suppressed to avoid a duplicate",
@@ -200,13 +200,11 @@ public class SDLinkAdapter implements ChatIntegrationAdapter {
                 } else {
                     JdaBridge.sendPlain(discordChannelId, com.zerog.neoessentials.integrations.DiscordIdentityFormatter.resolveNameWithRank(player) + ": " + cleanMessage);
                 }
-            } else if (!nativeChatEnabled) {
+            } else {
+                // nativeChatEnabled is NOT checked here (issue #78) — see the field's Javadoc.
                 NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: relaying chat from '{}' via default chat route",
                     player.getName().getString());
                 send(MessageType.CHAT, authorFor(player), cleanMessage);
-            } else {
-                NeoLog.debug(LOGGER, LogCategory.DISCORD, "SDLink: skipping default-route relay for '{}' — " +
-                    "SDLink's own native chat.playerMessages is already relaying it", player.getName().getString());
             }
         } catch (Throwable e) {
             // Catches Errors too — see JdaBridge's Javadoc for why a missing/incompatible JDA
