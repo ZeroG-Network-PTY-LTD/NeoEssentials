@@ -203,14 +203,22 @@ match SDLink's own chat-message look — SDLink's `DiscordMessageBuilder` has no
 capability, so this recreates that same visual style rather than settling for a plain text line.
 
 **Mc2Discord** has the same class of channel-routing fix applied (a configured `discord.channelId`
-is now honored instead of silently ignored). Unlike SDLink's channel-routed messages, Mc2Discord's
-are sent as a plain `PlayerName: message` text line rather than a styled embed — no rich-embed
-send path currently exists for it. Mc2Discord's own core purpose is also "relay chat to Discord
-automatically," so the same double-post risk for a channel using a blank `channelId` almost
-certainly applies — check Mc2Discord's own config for a way to disable its automatic relay for
-channels NeoEssentials already handles explicitly, the same way `playerMessages = false` does for
-SDLink. NeoEssentials does not currently ship a startup diagnostic for Mc2Discord's config the way
-it does for SDLink's.
+is now honored instead of silently ignored, sent directly and bypassing Mc2Discord's own routing
+entirely). Unlike SDLink's channel-routed messages, Mc2Discord's are sent as a plain
+`PlayerName: message` text line rather than a styled embed — no rich-embed send path currently
+exists for it.
+
+> **A channel left with a blank `channelId` (the default) requires one extra step with
+> Mc2Discord specifically.** NeoEssentials' default-route chat relay calls Mc2Discord's own
+> `sendChatMessage` API rather than posting directly — and that API only delivers to a channel in
+> `config/mc2discord.toml` whose own `subscriptions` list contains `"chat"` or `"minecraft"`. If no
+> channel has that subscription, the call silently succeeds while sending to nobody — chat typed
+> in-game never reaches Discord, with no error anywhere (issue #78). NeoEssentials detects this at
+> startup and logs a warning (also surfaced on the dashboard's Discord status panel) when no
+> configured channel has either subscription. Fix it either by adding `"chat"` to a channel's
+> `subscriptions` in `mc2discord.toml` and restarting, or — the more precise option, since it skips
+> Mc2Discord's own routing/subscriptions altogether — setting that channel's
+> `discord.channelId` explicitly in NeoEssentials' own config.
 
 **DCIntegration** works differently: it relays chat entirely through its own vanilla-level mixins,
 with no supported hook for NeoEssentials to intercept or suppress. Because of that,
