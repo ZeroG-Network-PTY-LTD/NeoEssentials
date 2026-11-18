@@ -111,6 +111,7 @@
     "commands.neoessentials.teleport.warp.already_exists":  "§cВарп с именем §f{0}§c уже существует.",
     "commands.neoessentials.teleport.warp.invalid_name":  "§cНедопустимое имя варпа: §f{0}§c.",
     "commands.neoessentials.teleport.warp.limit_reached":  "§cДостигнут лимит варпов ({0}). Удалите варп перед созданием нового.",
+    "commands.neoessentials.teleport.warp.personal_limit_reached":  "§cВы достигли своего личного лимита варпов ({0}). Удалите один из своих варпов перед созданием нового.",
     "commands.neoessentials.teleport.warp.set_cooldown":  "§cВам нужно подождать §f{0}§c секунд перед созданием следующего варпа.",
     "commands.neoessentials.teleport.warp.unsafe_location":  "§cПозиция варпа небезопасна.",
     "commands.neoessentials.teleport.warp.unsafe":  "§cМесто назначения варпа §f{0}§c небезопасно.",

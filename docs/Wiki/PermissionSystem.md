@@ -488,6 +488,23 @@ Pattern: `neoessentials.warp.limit.<number>` (1–100)
 Example: `neoessentials.warp.limit.10` → player can create 10 player-warps.  
 Special: `neoessentials.warp.limit.unlimited` → no limit.
 
+### Global warp limit (per-player cap on /setwarp)
+Pattern: `neoessentials.warp.limit.global.<number>` (1–100)  
+Example: `neoessentials.warp.limit.global.10` → that group can personally create 10 global warps.  
+Special: `neoessentials.warp.limit.global.unlimited` → no personal limit.
+
+Unlike the player-warp limit above, the config default (`warpSettings.maxGlobalWarpsPerPlayer`
+in `config.json`, `-1` = unlimited) applies to **everyone**, including players with no
+override permission at all. To restrict a specific group (e.g. the default/member rank)
+while leaving staff or VIP unrestricted:
+1. Set `maxGlobalWarpsPerPlayer` to the restrictive value (e.g. `2`) — this becomes the
+   default cap for every group.
+2. Grant `neoessentials.warp.limit.global.unlimited` (or a higher `.global.<number>`) to the
+   groups that should not be restricted.
+
+A permission node only ever raises this cap for the group that has it, never lowers it below
+the config default.
+
 ### Per-kit nodes
 Pattern: `neoessentials.kits.<kitname>` — grants access to that specific kit.  
 Pattern: `neoessentials.kits.<kitname>.nocooldown` — bypasses the cooldown for that kit.  
@@ -635,6 +652,8 @@ Only enforced when `items.permission-based-effect-type` is enabled (default: off
 | `neoessentials.teleport.pwarp.list` | ✅ default | List player warps | `/pwarp list` |
 | `neoessentials.warp.limit.<number>` | — | **Dynamic** — sets player-warp limit | |
 | `neoessentials.warp.limit.unlimited` |  op-only | Unlimited player warps | |
+| `neoessentials.warp.limit.global.<number>` | — | **Dynamic** — raises this group's personal cap on `/setwarp` warps | |
+| `neoessentials.warp.limit.global.unlimited` |  op-only | No personal cap on `/setwarp` warps for this group | |
 
 #### Spawn System
 | Node | Default | Description | Command |
