@@ -158,6 +158,13 @@ Set `perWarpPermission: true` in config to require `neoessentials.warps.<name>` 
 > data store's own internal record. The dashboard's Teleportation settings page shows/edits a
 > `warpSettings.maxWarps` value in `config.json`, but changing it there has no effect on the
 > actual enforced limit.
+>
+> **Per-player global warp limit** (separate from the server-wide total above) is configured
+> via `teleportation.warpSettings.maxGlobalWarpsPerPlayer` in `config.json` (`-1` = unlimited,
+> the default). This caps how many of the total warps any single player may personally create
+> with `/setwarp`, and applies to every group unless overridden — see
+> [Global warp limit](PermissionSystem.md#global-warp-limit-per-player-cap-on-setwarp) for how
+> to exempt specific groups with a permission node.
 
 ---
 

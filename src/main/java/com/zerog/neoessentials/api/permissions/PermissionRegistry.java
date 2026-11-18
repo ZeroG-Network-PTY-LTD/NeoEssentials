@@ -440,7 +440,13 @@ public class PermissionRegistry {
         // Example: neoessentials.warp.limit.10 allows 10 player warps
         // Special: neoessentials.warp.limit.unlimited allows unlimited player warps
         register("neoessentials.warp.limit.unlimited", "Unlimited player warps", PermissionCategory.TELEPORT, false);
-        
+
+        // Dynamic global (/setwarp) warp limit permissions - raises warpSettings.maxGlobalWarpsPerPlayer
+        // Pattern: neoessentials.warp.limit.global.<amount> where <amount> is 1-100
+        // Example: neoessentials.warp.limit.global.10 allows that group to create 10 global warps
+        // Special: neoessentials.warp.limit.global.unlimited allows unlimited global warps
+        register("neoessentials.warp.limit.global.unlimited", "Unlimited global (/setwarp) warps", PermissionCategory.TELEPORT, false);
+
         // Spawn system
         register("neoessentials.teleport.spawn", "Use spawn teleportation", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.spawn.set", "Set spawn location", PermissionCategory.TELEPORT, false);

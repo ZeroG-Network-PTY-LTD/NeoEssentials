@@ -1160,6 +1160,7 @@
     "commands.neoessentials.teleport.warp.already_exists":  "§cA warp named §f{0}§c already exists.",
     "commands.neoessentials.teleport.warp.invalid_name":  "§cInvalid warp name: §f{0}§c. Use letters, numbers, hyphens and underscores only.",
     "commands.neoessentials.teleport.warp.limit_reached":  "§cWarp limit reached ({0}). Delete a warp before creating another.",
+    "commands.neoessentials.teleport.warp.personal_limit_reached":  "§cYou have reached your personal warp limit ({0}). Delete one of your warps before creating another.",
     "commands.neoessentials.teleport.warp.set_cooldown":  "§cYou must wait §f{0}§c second(s) before creating another warp.",
     "commands.neoessentials.teleport.warp.unsafe_location":  "§cThe warp location is unsafe and no safe spot could be found.",
     "commands.neoessentials.teleport.warp.unsafe":  "§cThe destination of warp §f{0}§c is unsafe and could not be resolved.",

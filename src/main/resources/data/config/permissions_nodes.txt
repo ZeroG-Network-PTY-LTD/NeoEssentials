@@ -110,6 +110,19 @@ neoessentials.teleport.warp.list - List warps (default: true)
 # These are checked dynamically (1-100 range)
 neoessentials.warp.limit.unlimited - Unlimited player warps (default: false)
 
+### Dynamic Global Warp Limits (Permission-based)
+# Pattern: neoessentials.warp.limit.global.<amount>
+# The player can personally create up to <amount> global (/setwarp) warps
+# The highest matching permission wins; it can only raise the warpSettings.maxGlobalWarpsPerPlayer
+# config default for that group, never lower it
+# Examples:
+#   neoessentials.warp.limit.global.5   - Allows that group to create 5 global warps
+#   neoessentials.warp.limit.global.20  - Allows that group to create 20 global warps
+#   neoessentials.warp.limit.global.unlimited - Unlimited global warps for that group
+# If no permission is set, the warpSettings.maxGlobalWarpsPerPlayer config default is used
+# These are checked dynamically (1-100 range)
+neoessentials.warp.limit.global.unlimited - Unlimited global (/setwarp) warps (default: false)
+
 ### Spawn System
 neoessentials.teleport.spawn - Use spawn teleportation (default: true)
 neoessentials.teleport.spawn.set - Set spawn location (default: false)
