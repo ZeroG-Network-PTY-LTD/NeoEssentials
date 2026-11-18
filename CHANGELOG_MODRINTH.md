@@ -11,6 +11,7 @@ migration history) is not carried over.
 ## [1.0.8] — 2026-11-05
 
 ### Added
+- **2026-11-18** ([`b29ea684`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b29ea684)) — Global (`/setwarp`) warps can now be capped per-player via `warpSettings.maxGlobalWarpsPerPlayer` (`-1` = unlimited, default), with `neoessentials.warp.limit.global.<amount>`/`.unlimited` permissions to exempt specific groups from a restrictive default.
 
 ### Fixed
 - **2026-11-17** ([`e38e90ed`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e38e90ed)) — Chat → Discord relay could go completely silent with no error or warning — disabling chat channels left nothing for the per-channel Discord toggle to read (now defaults to on instead), and Mc2Discord/SDLink's own native chat relay was being wrongly trusted to cover the message after NeoEssentials had already canceled the underlying chat event for its own formatting, which also blocks the bridge mod's native relay from seeing it. NeoEssentials now always sends chat itself in that case.
