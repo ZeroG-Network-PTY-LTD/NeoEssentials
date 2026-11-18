@@ -76,6 +76,12 @@ public class WarpManager {
     private int maxWarps = 50;
     private boolean caseSensitiveNames = false;
     private boolean allowCrossDimensionWarps = true;
+    // Per-player cap on global (/setwarp) warps, counted against warps that player
+    // personally created. -1 = unlimited (default - non-breaking, matches pre-existing
+    // behavior where only the server-wide maxWarps pool applied). Set this to restrict a
+    // default/member group, then grant neoessentials.warp.limit.global.<amount> (or
+    // .unlimited) to specific groups to lift it, same pattern as maxPlayerWarps.
+    private int maxGlobalWarpsPerPlayer = -1;
 
     private WarpManager() {
         loadConfig();
@@ -137,6 +143,14 @@ public class WarpManager {
                                     "Failed to parse warpSettings.allowCrossDimensionWarps, using default", e);
                             }
                         }
+                        if (warpSettings.has("maxGlobalWarpsPerPlayer")) {
+                            try {
+                                maxGlobalWarpsPerPlayer = warpSettings.get("maxGlobalWarpsPerPlayer").getAsInt();
+                            } catch (Exception e) {
+                                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION,
+                                    "Failed to parse warpSettings.maxGlobalWarpsPerPlayer, using default", e);
+                            }
+                        }
                     }
 
                     // Load general teleportation settings that apply to warps
@@ -153,8 +167,8 @@ public class WarpManager {
                     }
                 }
             }
-            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[WarpManager] Config loaded — safetyCheck={}, maxWarps={}, allowPlayerWarps={}, maxPlayerWarps={}, warmup={}s, useCooldown={}s, setCooldown={}s, crossDimension={}",
-                requireSafeLocations, maxWarps, allowPlayerWarps, maxPlayerWarps, teleportDelay, warpUseCooldown, warpSetCooldown, allowCrossDimensionWarps);
+            NeoLog.info(LOGGER, LogCategory.TELEPORTATION, "[WarpManager] Config loaded — safetyCheck={}, maxWarps={}, maxGlobalWarpsPerPlayer={}, allowPlayerWarps={}, maxPlayerWarps={}, warmup={}s, useCooldown={}s, setCooldown={}s, crossDimension={}",
+                requireSafeLocations, maxWarps, maxGlobalWarpsPerPlayer, allowPlayerWarps, maxPlayerWarps, teleportDelay, warpUseCooldown, warpSetCooldown, allowCrossDimensionWarps);
         } catch (Exception e) {
             LOGGER.warn("Failed to load warp config, using defaults: {}", e.getMessage());
         }
@@ -205,6 +219,60 @@ public class WarpManager {
         // Return the higher value between config and permission
         // Return the higher value between permission-based and config-based limits
         return Math.max(permMax, configMax);
+    }
+
+    // --- Per-player global warp limits ---
+
+    /**
+     * Returns the maximum number of global ({@code /setwarp}) warps a given player may
+     * personally create, or -1 for unlimited.
+     *
+     * <p>Mirrors {@link #getMaxPlayerWarpsForPlayer(ServerPlayer)}: the config default
+     * ({@code warpSettings.maxGlobalWarpsPerPlayer}) applies to everyone, and a permission
+     * node can raise (never lower) that cap for a specific group.</p>
+     *
+     * <ul>
+     *   <li>{@code neoessentials.warp.limit.global.unlimited} - no personal cap</li>
+     *   <li>{@code neoessentials.warp.limit.global.<amount>} - personal cap of {@code amount}, checked 100 down to 1</li>
+     * </ul>
+     *
+     * @param player The player to check
+     * @return Maximum number of global warps this player may create (or -1 for unlimited)
+     */
+    public int getMaxGlobalWarpsForPlayer(ServerPlayer player) {
+        if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                player.getUUID(), "neoessentials.warp.limit.global.unlimited")) {
+            return -1; // Unlimited
+        }
+
+        int configMax = this.maxGlobalWarpsPerPlayer;
+        int permMax = -1;
+
+        for (int i = 100; i >= 1; i--) {
+            String perm = "neoessentials.warp.limit.global." + i;
+            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), perm)) {
+                permMax = i;
+                break;
+            }
+        }
+
+        if (configMax < 0) {
+            // No server-wide personal cap configured — only an explicit permission grant applies.
+            return permMax;
+        }
+        return Math.max(permMax, configMax);
+    }
+
+    /**
+     * Counts how many existing global warps were created by the given player. Older warps
+     * created before this feature existed (or by console/admin/dashboard, which have no
+     * {@link ServerPlayer} to attribute to) have no stored creator UUID and are never
+     * counted against anyone.
+     */
+    private long getGlobalWarpCountForPlayer(UUID playerId) {
+        return warps.values().stream()
+            .filter(loc -> playerId.equals(loc.getCreatedByUuid()))
+            .count();
     }
 
     public boolean createPlayerWarp(ServerPlayer player, String warpName, TeleportLocation location) {
@@ -603,6 +671,13 @@ public class WarpManager {
                 creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.limit_reached", maxWarps));
                 return false;
             }
+
+            int maxForPlayer = getMaxGlobalWarpsForPlayer(creator);
+            if (maxForPlayer >= 0 && getGlobalWarpCountForPlayer(playerId) >= maxForPlayer) {
+                creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.personal_limit_reached", maxForPlayer));
+                return false;
+            }
+
             TeleportLocation existing = warps.putIfAbsent(normalizedName, location);
             if (existing != null) {
                 creator.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.already_exists", warpName));
@@ -635,7 +710,7 @@ public class WarpManager {
      * Create warp at specific coordinates
      */
     public boolean createWarp(ServerPlayer creator, String warpName, ServerLevel level, BlockPos pos) {
-        TeleportLocation location = new TeleportLocation(level, pos, 0.0f, 0.0f, creator.getName().getString());
+        TeleportLocation location = new TeleportLocation(level, pos, 0.0f, 0.0f, creator.getName().getString(), creator.getUUID());
         return createWarp(creator, warpName, location);
     }
     
