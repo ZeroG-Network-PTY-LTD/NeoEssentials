@@ -138,6 +138,32 @@ public class Mc2DiscordAdapter implements ChatIntegrationAdapter {
                         " — " + check.description());
                 }
             }
+
+            // issue #78 (continued): sendChatMessage()/sendInfoMessage() — the default-route calls
+            // this adapter makes when a channel has no explicit discord.channelId — are NOT a
+            // direct, unconditional "post this text" API despite appearances. Confirmed by reading
+            // Mc2Discord's own compiled MessageManager: sendChatMessage() resolves its target
+            // channel(s) via getMatchingChannels(List.of("chat", "minecraft"), NIL_SNOWFLAKE), which
+            // filters config/mc2discord.toml's channels down to ones whose OWN "subscriptions" list
+            // contains "chat" or "minecraft". If none do, that Flux is empty and the whole call
+            // silently completes with zero messages sent and zero errors — exactly the "bridge works
+            // one way, chat into Discord just does nothing, no error anywhere" symptom reported in
+            // #78 even after the first round of fixes here. This is true regardless of whether
+            // NeoEssentials' own chat formatting is on or off, and regardless of the nativeChatEnabled
+            // non-check above — it's a property of Mc2Discord's own API, not something either side's
+            // event-cancellation logic controls.
+            if (!channelBlocks.isEmpty() && !allSubscriptions.contains("\"chat\"") && !allSubscriptions.contains("\"minecraft\"")) {
+                NeoLog.warn(LOGGER, LogCategory.DISCORD, "No channel in config/mc2discord.toml is subscribed to " +
+                    "\"chat\" or \"minecraft\". Mc2Discord's own message-sending API only delivers to channels " +
+                    "subscribed to one of those, so chat sent in-game will silently never reach Discord until " +
+                    "either: (1) you add \"chat\" to a channel's subscriptions list in mc2discord.toml and " +
+                    "restart, or (2) you set an explicit chat.channels.<channel>.discord.channelId in " +
+                    "NeoEssentials' own config, which sends directly and ignores Mc2Discord's subscriptions " +
+                    "entirely.");
+                nativeRelayWarnings.add("No Mc2Discord channel is subscribed to \"chat\"/\"minecraft\" — chat " +
+                    "sent in-game will not reach Discord until you add that subscription or set an explicit " +
+                    "discord.channelId in NeoEssentials' own channel config");
+            }
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.DISCORD, "Could not check Mc2Discord's config for a conflicting native chat relay: {}", e.getMessage());
         }
