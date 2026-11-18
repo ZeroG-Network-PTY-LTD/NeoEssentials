@@ -12,6 +12,8 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 /**
  * Represents a teleportation location with world, position, and rotation data
  */
@@ -25,8 +27,13 @@ public class TeleportLocation {
     private final float pitch;
     private final long timestamp;
     private final String createdBy;
-    
-    public TeleportLocation(String worldName, double x, double y, double z, float yaw, float pitch, String createdBy) {
+    // Nullable: unset for locations created before this field existed, or created by
+    // console/admin/dashboard paths that have no ServerPlayer to attribute to. Used to
+    // enforce per-player global-warp limits (WarpManager.getMaxGlobalWarpsForPlayer) -
+    // the display-name-only createdBy can't be matched reliably since players can rename.
+    private final UUID createdByUuid;
+
+    public TeleportLocation(String worldName, double x, double y, double z, float yaw, float pitch, String createdBy, UUID createdByUuid) {
         this.worldName = worldName;
         this.x = x;
         this.y = y;
@@ -36,8 +43,13 @@ public class TeleportLocation {
         this.pitch = Float.isNaN(pitch) || Float.isInfinite(pitch) ? 0.0f : pitch;
         this.timestamp = System.currentTimeMillis();
         this.createdBy = createdBy;
+        this.createdByUuid = createdByUuid;
     }
-    
+
+    public TeleportLocation(String worldName, double x, double y, double z, float yaw, float pitch, String createdBy) {
+        this(worldName, x, y, z, yaw, pitch, createdBy, null);
+    }
+
     @SuppressWarnings("resource") // Level is managed by Minecraft, not closeable by us
     public TeleportLocation(ServerPlayer player) {
         this(player.level().dimension().identifier().toString(),
@@ -47,19 +59,25 @@ public class TeleportLocation {
              // Sanitize rotation inline - NaN from player edge cases (respawn, dimension change, etc.)
              (Float.isNaN(player.getYRot()) || Float.isInfinite(player.getYRot())) ? 0.0f : player.getYRot(),
              (Float.isNaN(player.getXRot()) || Float.isInfinite(player.getXRot())) ? 0.0f : player.getXRot(),
-             player.getName().getString());
+             player.getName().getString(),
+             player.getUUID());
     }
-    
-    public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy) {
+
+    public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy, UUID createdByUuid) {
         this(level.dimension().identifier().toString(),
              pos.getX() + 0.5,
              pos.getY(),
              pos.getZ() + 0.5,
              yaw,
              pitch,
-             createdBy);
+             createdBy,
+             createdByUuid);
     }
-    
+
+    public TeleportLocation(ServerLevel level, BlockPos pos, float yaw, float pitch, String createdBy) {
+        this(level, pos, yaw, pitch, createdBy, null);
+    }
+
     // Getters
     public String getWorldName() { return worldName; }
     public double getX() { return x; }
@@ -69,6 +87,7 @@ public class TeleportLocation {
     public float getPitch() { return pitch; }
     public long getTimestamp() { return timestamp; }
     public String getCreatedBy() { return createdBy; }
+    public UUID getCreatedByUuid() { return createdByUuid; }
     
     /**
      * Get the ServerLevel for this location
@@ -188,7 +207,7 @@ public class TeleportLocation {
                 BlockPos candidate = new BlockPos(ix, iy + sign * dy, iz);
                 if (candidate.getY() < com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level) + 1 ||
                     candidate.getY() > com.zerog.neoessentials.util.LevelHeightCompat.maxBuildHeight(level) - 2) continue;
-                TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);
+                TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy, createdByUuid);
                 if (loc.isSafe()) return loc;
             }
         }
@@ -207,7 +226,7 @@ public class TeleportLocation {
                     int startY = (int) Math.floor(y);
                     for (int dy = -8; dy <= 8; dy++) {
                         BlockPos testPos = new BlockPos(bx, startY + dy, bz);
-                        TeleportLocation testLoc = new TeleportLocation(level, testPos, yaw, pitch, createdBy);
+                        TeleportLocation testLoc = new TeleportLocation(level, testPos, yaw, pitch, createdBy, createdByUuid);
                         if (testLoc.isSafe()) return testLoc;
                     }
                 }
@@ -235,7 +254,7 @@ public class TeleportLocation {
         int minY = com.zerog.neoessentials.util.LevelHeightCompat.minBuildHeight(level) + 1;
         for (int by = maxY; by >= minY; by--) {
             BlockPos candidate = new BlockPos(bx, by, bz);
-            TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy);
+            TeleportLocation loc = new TeleportLocation(level, candidate, yaw, pitch, createdBy, createdByUuid);
             if (loc.isSafe()) return loc;
         }
         return null;
@@ -291,6 +310,9 @@ public class TeleportLocation {
         json.addProperty("pitch", pitch);
         json.addProperty("timestamp", timestamp);
         json.addProperty("createdBy", createdBy);
+        if (createdByUuid != null) {
+            json.addProperty("createdByUuid", createdByUuid.toString());
+        }
         return json;
     }
     
@@ -333,9 +355,19 @@ public class TeleportLocation {
             }
 
             String createdBy = json.has("createdBy") ? json.get("createdBy").getAsString() : "Unknown";
-            
+
+            UUID createdByUuid = null;
+            if (json.has("createdByUuid")) {
+                try {
+                    createdByUuid = UUID.fromString(json.get("createdByUuid").getAsString());
+                } catch (Exception e) {
+                    // Expected for malformed/legacy data - leave unattributed rather than failing the whole load.
+                    NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "fromJson: invalid createdByUuid, leaving unattributed: {}", e.getMessage());
+                }
+            }
+
             // Timestamp is set in constructor, but we can preserve the original if present
-            return new TeleportLocation(world, x, y, z, yaw, pitch, createdBy);
+            return new TeleportLocation(world, x, y, z, yaw, pitch, createdBy, createdByUuid);
         } catch (Exception e) {
             NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "fromJson: failed to parse TeleportLocation from JSON: {}", e.getMessage());
             return null;

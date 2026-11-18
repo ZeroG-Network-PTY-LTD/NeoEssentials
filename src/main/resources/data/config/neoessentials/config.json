@@ -788,6 +788,11 @@
       "warpSetCooldown": 60,
       // Allow warps across dimensions
       "allowCrossDimensionWarps": true,
+      // Per-player cap on global (/setwarp) warps, counted against warps that player
+      // personally created (-1 = unlimited). Applies to everyone by default; grant
+      // 'neoessentials.warp.limit.global.<amount>' or '.unlimited' to a specific group
+      // to raise or remove the cap for that group only.
+      "maxGlobalWarpsPerPlayer": -1,
       // Block warps to unsafe locations
       "enableWarpSafety": true,
       // Log warp creation / deletion / usage
