@@ -16,6 +16,7 @@ migration history) is not carried over.
 ### Fixed
 - **2026-11-17** ([`e38e90ed`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e38e90ed)) — Chat → Discord relay could go completely silent with no error or warning — disabling chat channels left nothing for the per-channel Discord toggle to read (now defaults to on instead), and Mc2Discord/SDLink's own native chat relay was being wrongly trusted to cover the message after NeoEssentials had already canceled the underlying chat event for its own formatting, which also blocks the bridge mod's native relay from seeing it. NeoEssentials now always sends chat itself in that case.
 - **2026-11-17** ([`5ca173c2`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/5ca173c2)) — `docs/API.md` wrongly documented the dashboard API's default ports as 8090/8091 — the mod's actual shipped `config.json` default is 8080/8081. Docs now match.
+- **2026-11-19** ([`bf515e4b`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bf515e4b)) — Chat → Discord relay could still go silent via Mc2Discord even after the previous fix — its own `sendChatMessage` API only delivers to a channel subscribed to `"chat"`/`"minecraft"` in `mc2discord.toml`, sending to nobody if none are. Now detected at startup with a warning telling you to add that subscription, or set an explicit `discord.channelId` in NeoEssentials' own config to skip Mc2Discord's routing entirely.
 
 ---
 
