@@ -12,11 +12,13 @@ migration history) is not carried over.
 
 ### Added
 - **2026-11-18** ([`b29ea684`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/b29ea684)) — Global (`/setwarp`) warps can now be capped per-player via `warpSettings.maxGlobalWarpsPerPlayer` (`-1` = unlimited, default), with `neoessentials.warp.limit.global.<amount>`/`.unlimited` permissions to exempt specific groups from a restrictive default.
+- **2026-11-19** ([`1b4a8357`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/1b4a8357)) — `customJoinMessage`/`customQuitMessage` in `chat.json` can now be a per-group object (`{"default": "...", "group:vip": "...", ...}`) instead of a single string, falling back to `default` for any group with no override.
 
 ### Fixed
 - **2026-11-17** ([`e38e90ed`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/e38e90ed)) — Chat → Discord relay could go completely silent with no error or warning — disabling chat channels left nothing for the per-channel Discord toggle to read (now defaults to on instead), and Mc2Discord/SDLink's own native chat relay was being wrongly trusted to cover the message after NeoEssentials had already canceled the underlying chat event for its own formatting, which also blocks the bridge mod's native relay from seeing it. NeoEssentials now always sends chat itself in that case.
 - **2026-11-17** ([`5ca173c2`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/5ca173c2)) — `docs/API.md` wrongly documented the dashboard API's default ports as 8090/8091 — the mod's actual shipped `config.json` default is 8080/8081. Docs now match.
 - **2026-11-19** ([`bf515e4b`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/bf515e4b)) — Chat → Discord relay could still go silent via Mc2Discord even after the previous fix — its own `sendChatMessage` API only delivers to a channel subscribed to `"chat"`/`"minecraft"` in `mc2discord.toml`, sending to nobody if none are. Now detected at startup with a warning telling you to add that subscription, or set an explicit `discord.channelId` in NeoEssentials' own config to skip Mc2Discord's routing entirely.
+- **2026-11-19** ([`1b4a8357`](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/commit/1b4a8357)) — `/vanish` only hid the player themselves; vanilla's join/leave broadcast, NeoEssentials' own custom join/quit message, and its Discord relay call all still fired regardless. All three are now suppressed for a vanished player (a mc2discord channel subscribed to `player_connect`/`player_disconnect` still relays natively on its own, independent of this fix).
 
 ---
 
