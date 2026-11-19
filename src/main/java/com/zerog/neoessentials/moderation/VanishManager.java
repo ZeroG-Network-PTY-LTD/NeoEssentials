@@ -289,7 +289,36 @@ public class VanishManager {
     public boolean isPlayerVanished(UUID playerId) {
     return vanishedPlayers.containsKey(playerId);
     }
-    
+
+    /**
+     * Whether {@code playerId} is about to be auto-vanished purely by joining — same predicate
+     * PlayerJoinQuitHandler's vanish-on-join block uses to actually call {@link #vanishPlayer},
+     * factored out here so the join/quit-message mixin can check it too, in order to suppress
+     * vanilla's "X joined the game" broadcast for a player who is vanishing as a *result* of
+     * this very join (not just one already vanished from a previous session). Deliberately
+     * config/permission-only (no dependency on vanishPlayer() having already run) since
+     * NeoForge's PlayerLoggedInEvent — and therefore this mod's own vanish-on-join logic —
+     * fires after vanilla's own join broadcast, too late to retroactively cancel it.
+     */
+    public boolean willAutoVanishOnJoin(UUID playerId) {
+        try {
+            var config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            return config.isVanishSystemEnabled() && config.isVanishOnJoinEnabled()
+                && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerId, "neoessentials.moderation.vanish");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Whether a join/quit message for {@code playerId} should be suppressed entirely right
+     * now: already vanished, or (join-specific) about to auto-vanish as a result of this join.
+     */
+    public boolean isVanishedOrWillVanishOnJoin(UUID playerId) {
+        return isPlayerVanished(playerId) || willAutoVanishOnJoin(playerId);
+    }
+
+
     /**
      * Check if a player can see vanished players (in general — ignores rank).
      * Prefer {@link #canViewerSeeVanishedPlayer(UUID, UUID)} when checking visibility of a
