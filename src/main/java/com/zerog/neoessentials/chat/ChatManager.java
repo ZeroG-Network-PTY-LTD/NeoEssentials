@@ -36,9 +36,39 @@ public class ChatManager {
     public Set<String> getPlayerChatPermissions() {
         return playerChatPermissions;
     }
-    // Config toggles and options
-    private final String customJoinMessage;
-    private final String customQuitMessage;
+    // Config toggles and options. customJoinMessage/customQuitMessage support the same
+    // string-or-per-group-object shape as chat-format below: a plain string applies to
+    // everyone, or an object with "default" plus "group:<name>" keys lets each permission
+    // group have its own join/quit text (falls back to "default" when a group has none).
+    private final String defaultCustomJoinMessage;
+    private final String defaultCustomQuitMessage;
+    private final java.util.Map<String, String> customJoinMessageMap;
+    private final java.util.Map<String, String> customQuitMessageMap;
+
+    private record GroupedMessages(String defaultValue, java.util.Map<String, String> map) {}
+
+    private static GroupedMessages loadGroupedMessages(JsonObject chatConfig, String key, String fallback) {
+        if (!chatConfig.has(key)) {
+            return new GroupedMessages(fallback, Collections.emptyMap());
+        }
+        com.google.gson.JsonElement el = chatConfig.get(key);
+        if (!el.isJsonObject()) {
+            return new GroupedMessages(el.getAsString(), Collections.emptyMap());
+        }
+        JsonObject obj = el.getAsJsonObject();
+        java.util.Map<String, String> map = new ConcurrentHashMap<>();
+        String def = fallback;
+        for (String k : obj.keySet()) {
+            if (k.equalsIgnoreCase("default")) {
+                def = obj.get(k).getAsString();
+            } else {
+                // Lowercased for the same reason as chatFormatMap's keys below — lookups
+                // normalize the group name to lowercase before checking the map.
+                map.put(k.toLowerCase(), obj.get(k).getAsString());
+            }
+        }
+        return new GroupedMessages(def, map);
+    }
     // Chat format: can be a string (default) or a map for per-group/world - thread-safe
     private final String defaultChatFormat;
     private final java.util.Map<String, String> chatFormatMap;
@@ -54,8 +84,12 @@ public class ChatManager {
     public ChatManager(JsonObject chatConfig, JsonObject commandsConfig) {
         this.mutedCommands = toSet(chatConfig, "muteCommands");
         this.playerChatPermissions = toSet(chatConfig, "playerChatPermissions");
-        this.customJoinMessage = chatConfig.has("customJoinMessage") ? chatConfig.get("customJoinMessage").getAsString() : "none";
-        this.customQuitMessage = chatConfig.has("customQuitMessage") ? chatConfig.get("customQuitMessage").getAsString() : "none";
+        GroupedMessages joinMessages = loadGroupedMessages(chatConfig, "customJoinMessage", "none");
+        this.defaultCustomJoinMessage = joinMessages.defaultValue();
+        this.customJoinMessageMap = joinMessages.map();
+        GroupedMessages quitMessages = loadGroupedMessages(chatConfig, "customQuitMessage", "none");
+        this.defaultCustomQuitMessage = quitMessages.defaultValue();
+        this.customQuitMessageMap = quitMessages.map();
         // Support chat-format as string or object
         if (chatConfig.has("chat-format")) {
             if (chatConfig.get("chat-format").isJsonObject()) {
@@ -117,8 +151,29 @@ public class ChatManager {
     }
 
     // Accessors for chat config options
-    public String getCustomJoinMessage() { return customJoinMessage; }
-    public String getCustomQuitMessage() { return customQuitMessage; }
+    public String getCustomJoinMessage() { return defaultCustomJoinMessage; }
+    public String getCustomQuitMessage() { return defaultCustomQuitMessage; }
+
+    /**
+     * Group-aware join/quit message lookup: a {@code group:<name>} entry (case-insensitive)
+     * beats the default/global message, which is used when the group has no override or
+     * {@code group} is null (e.g. the player's primary group couldn't be resolved).
+     */
+    public String getCustomJoinMessage(String group) {
+        if (group != null) {
+            String override = customJoinMessageMap.get("group:" + group.toLowerCase());
+            if (override != null) return override;
+        }
+        return defaultCustomJoinMessage;
+    }
+
+    public String getCustomQuitMessage(String group) {
+        if (group != null) {
+            String override = customQuitMessageMap.get("group:" + group.toLowerCase());
+            if (override != null) return override;
+        }
+        return defaultCustomQuitMessage;
+    }
 
     /**
      * Returns the chat format for a given group and/or world.
