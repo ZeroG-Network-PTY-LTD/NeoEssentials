@@ -1323,8 +1323,12 @@
         "prefix": "",
         "default": true,
         "discord": {
-          // Usually disabled: local chat is proximity-based, discord bridge is global
-          "enabled": false,
+          // Enabled by default: once NeoEssentials is installed it cancels the vanilla chat
+          // event to apply formatting, which also blocks a Discord bridge mod's own native
+          // relay for every message, not just global/staff. Without this on, plain unprefixed
+          // chat (the default channel) would never reach Discord at all, even with a fully
+          // correct bridge-mod setup. Set to false if you want local chat kept out of Discord.
+          "enabled": true,
           // Discord channel ID. Leave empty to use the default 'chat' channel.
           "channelId": "",
           "webhookUrl": ""

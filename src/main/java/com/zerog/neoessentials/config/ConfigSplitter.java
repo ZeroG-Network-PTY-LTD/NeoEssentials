@@ -123,7 +123,20 @@ public class ConfigSplitter {
                                         //       per-subsystem toggles (see
                                         //       ConfigManager.migrateLoggingCategories)
         put("commands.json",      1);
-        put("chat.json",          3);  // v3 — added "webhookUrl" alongside "channelId" in every
+        put("chat.json",          4);  // v4 — flipped chat.channels.local.discord.enabled's
+                                        //       shipped default from false to true. Once NeoEssentials
+                                        //       is installed, its own chat cancellation (ChatHandler
+                                        //       cancels ServerChatEvent whenever formatting is on)
+                                        //       structurally blocks a Discord bridge mod's native
+                                        //       chat relay for EVERY message, not just global/staff -
+                                        //       so with local.discord.enabled false, plain unprefixed
+                                        //       chat (the "local" channel, default:true) silently
+                                        //       never reached Discord at all, even with a fully correct
+                                        //       bridge-mod setup. Reported repeatedly on issue #78 as
+                                        //       "mc2discord incompatible" by users who had the right
+                                        //       build/config but were just typing normal chat (see
+                                        //       ConfigManager.patchLocalChannelDiscordRelayDefault).
+                                        // v3 — added "webhookUrl" alongside "channelId" in every
                                         //       chat.channels.*.discord block — read by the new
                                         //       no-bot-required generic webhook relay adapter.
         // v2 — chat-format/formatTemplates defaults patched to use
@@ -721,6 +734,9 @@ public class ConfigSplitter {
         // merges only add missing keys, they never overwrite an existing value).
         if ("chat.json".equals(fileName) && ConfigManager.patchLegacyNicknameChatDefaults(onDisk)) {
             NeoLog.info(LOGGER, LogCategory.CONFIG, "Split config 'chat.json': upgraded untouched chat-format defaults to show nicknames.");
+        }
+        if ("chat.json".equals(fileName) && ConfigManager.patchLocalChannelDiscordRelayDefault(onDisk)) {
+            NeoLog.info(LOGGER, LogCategory.CONFIG, "Split config 'chat.json': enabled Discord relay for the 'local' channel by default (issue #78).");
         }
 
         onDisk.addProperty("_configVersion", expectedVersion);
