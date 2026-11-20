@@ -2640,6 +2640,50 @@ public class ConfigManager {
     }
 
     /**
+     * Boolean counterpart of {@link #patchIfUnchanged(com.google.gson.JsonObject, String, String, String)}.
+     */
+    private static boolean patchIfUnchanged(com.google.gson.JsonObject object, String key, boolean oldValue, boolean newValue) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()) return false;
+        if (object.get(key).getAsBoolean() != oldValue) return false;
+        object.addProperty(key, newValue);
+        return true;
+    }
+
+    /**
+     * Flips {@code chat.channels.local.discord.enabled} from its old shipped default of
+     * {@code false} to the new default of {@code true} (issue #78).
+     * <p>
+     * Once NeoEssentials is installed and chat formatting is on (the default), {@code ChatHandler}
+     * cancels {@code ServerChatEvent} for every chat message to apply its own formatting — a
+     * Discord bridge mod's own native chat listener (which does not receive canceled events)
+     * can therefore never relay any chat on its own anymore, regardless of its own config. That
+     * made NeoEssentials' own per-channel {@code discord.enabled} flag the ONLY path left for
+     * chat to reach Discord. With {@code local} (the {@code default: true} channel that plain,
+     * unprefixed chat lands in) shipping as {@code discord.enabled: false}, admins who had a
+     * fully correct bridge-mod setup still saw no chat reach Discord at all unless players used
+     * the {@code !} (global) prefix — repeatedly reported as "mc2discord incompatible" even after
+     * the build-mismatch and missing-subscription causes were fixed.
+     * <p>
+     * Only replaces the value when it is still the exact old default — an admin who explicitly
+     * set it to {@code false} themselves is not distinguishable from one who never touched it,
+     * same tradeoff as {@link #patchLegacyNicknameChatDefaults}.
+     *
+     * @return {@code true} if the value was patched
+     */
+    static boolean patchLocalChannelDiscordRelayDefault(com.google.gson.JsonObject onDisk) {
+        if (!onDisk.has("chat") || !onDisk.get("chat").isJsonObject()) return false;
+        com.google.gson.JsonObject chat = onDisk.getAsJsonObject("chat");
+        if (!chat.has("channels") || !chat.get("channels").isJsonObject()) return false;
+        com.google.gson.JsonObject channels = chat.getAsJsonObject("channels");
+        if (!channels.has("local") || !channels.get("local").isJsonObject()) return false;
+        com.google.gson.JsonObject local = channels.getAsJsonObject("local");
+        if (!local.has("discord") || !local.get("discord").isJsonObject()) return false;
+        com.google.gson.JsonObject localDiscord = local.getAsJsonObject("discord");
+
+        return patchIfUnchanged(localDiscord, "enabled", false, true);
+    }
+
+    /**
      * One-time migration from the old global {@code logging.enableDebugLogging} boolean to
      * the new per-category {@code logging.categories.<name>.{normal,debug}} structure. Must
      * run BEFORE {@link #mergeNewKeys} — it detects "not yet migrated" by the absence of

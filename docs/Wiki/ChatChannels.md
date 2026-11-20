@@ -135,7 +135,7 @@ This is (trimmed from) the actual shipped default in `config.json`:
     "aliases": ["local", "lc"],
     "prefix": "",
     "default": true,
-    "discord": { "enabled": false, "channelId": "" }
+    "discord": { "enabled": true, "channelId": "" }
   },
   "global": {
     "enabled": true,
@@ -167,6 +167,18 @@ With this config, typing `@hi` sends `hi` to the staff channel for that message 
 ---
 
 ## Discord Interoperability (Avoiding Duplicate / Leaked Messages)
+
+> **Why `local` relays to Discord by default.** Once NeoEssentials is installed and chat
+> formatting is on (the default), `ChatHandler` cancels the vanilla `ServerChatEvent` for every
+> chat message to apply its own formatting. A Discord bridge mod's own native chat listener does
+> not receive canceled events, so once NeoEssentials is present, a bridge mod's native relay can
+> no longer fire for **any** chat message, regardless of its own config — NeoEssentials' own
+> per-channel `discord.enabled` relay becomes the only path chat has to reach Discord at all. With
+> `local` (the `default: true` channel plain, unprefixed chat lands in) shipping `discord.enabled`
+> as `false`, admins with a fully correct bridge-mod setup still saw no chat reach Discord unless
+> players used the `!` (global) prefix — repeatedly reported on issue #78 as "mc2discord
+> incompatible." As of `chat.json` config v4, `local.discord.enabled` defaults to `true`; set it
+> back to `false` if you'd rather keep local/proximity chat out of Discord.
 
 If you're seeing chat messages posted to Discord **twice**, or a channel you configured as
 private (e.g. `staff`) still showing up in your server's default/public Discord channel, this is
