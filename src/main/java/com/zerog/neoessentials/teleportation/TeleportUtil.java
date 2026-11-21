@@ -279,6 +279,20 @@ public class TeleportUtil {
                 future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.player_disconnected")));
                 return;
             }
+            // Freeze/jail were only checked in teleportPlayer() before the warmup started. A
+            // moderator freezing or jailing the player DURING the warmup would otherwise let the
+            // pending teleport still fire and carry them out of the freeze spot / jail cell.
+            if (!com.zerog.neoessentials.moderation.FreezeManager.getInstance().canPlayerMove(player)) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Delayed teleport cancelled for {} - player was frozen during warmup", player.getName().getString());
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.frozen")));
+                return;
+            }
+            if (com.zerog.neoessentials.moderation.JailManager.isJailSystemEnabled()
+                    && com.zerog.neoessentials.moderation.JailManager.getInstance().isPlayerJailed(player.getUUID())) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Delayed teleport cancelled for {} - player was jailed during warmup", player.getName().getString());
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.jail.prevent_escape")));
+                return;
+            }
             // Re-ensure the target chunk is still loaded at execution time.
             // The PORTAL ticket we added earlier lasts 300 ticks, but for very long
             // warmup delays we reload proactively to prevent "no safe location" errors.
@@ -286,6 +300,16 @@ public class TeleportUtil {
             if (execLevel != null) {
                 preloadChunksForTeleport(execLevel, new BlockPos(
                     (int) Math.floor(location.getX()), (int) Math.floor(location.getY()), (int) Math.floor(location.getZ())), findSafe);
+            }
+            // Safety was resolved once in teleportPlayer() BEFORE the warmup; the destination
+            // can change during the delay (lava flow, a block placed/broken, terrain edited),
+            // so re-run the same isSafe() check against the destination's current state
+            // (chunks are loaded again just above) instead of landing the player blindly.
+            if (findSafe && !location.isSafe()) {
+                NeoLog.debug(LOGGER, LogCategory.TELEPORTATION, "Delayed teleport cancelled for {} - destination {} became unsafe during warmup",
+                    player.getName().getString(), location.getLocationString());
+                future.complete(TeleportResult.failure(MessageUtil.localize("commands.neoessentials.teleport.util.destination_no_longer_safe")));
+                return;
             }
             executeTeleport(player, location, future);
         });

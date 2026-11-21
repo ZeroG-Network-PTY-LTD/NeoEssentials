@@ -770,6 +770,17 @@ public class HomeManager {
     }
 
     /**
+     * Evict a disconnecting player's cached homes (both this manager's map and the backing
+     * PlayerDataStore cache, which flushes any dirty entry first). Called from
+     * PlayerJoinQuitHandler.onPlayerQuit; homes reload on demand from storage next time.
+     * Without this both caches grew with every player who ever joined.
+     */
+    public void onPlayerQuit(UUID playerId) {
+        playerHomes.remove(playerId);
+        playerDataStore.unload(playerId);
+    }
+
+    /**
      * Reload home data from disk
      */
     public void reload() {

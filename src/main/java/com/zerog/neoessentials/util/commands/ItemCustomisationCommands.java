@@ -166,6 +166,11 @@ public class ItemCustomisationCommands {
         return tpToggleState.getOrDefault(uuid, true);
     }
 
+    /** Called on player quit (GodModeEventHandler) so the map doesn't grow with every player who ever toggled. */
+    public static void onPlayerQuit(UUID uuid) {
+        tpToggleState.remove(uuid);
+    }
+
     // ── /gc — server info (memory, TPS, uptime) ───────────────────────────────
     private static void registerGc(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("gc")
