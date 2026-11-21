@@ -247,17 +247,16 @@ public class NpcShopMenu extends AbstractContainerMenu {
         int units = listing.quantity() * times;
         BigDecimal price = listing.sellPrice().multiply(BigDecimal.valueOf(times)).setScale(2, RoundingMode.HALF_UP);
 
-        if (!eco.credit(player.getUUID(), price)) {
-            player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.payment_failed"));
-            return;
-        }
-
+        // Take the items FIRST, then pay (same order as ShopTransaction.executeSell). Crediting
+        // first and debiting back on failure let a rejected rollback debit keep both the money
+        // and the items.
         if (!ShopTransaction.removeItems(player.getInventory(), template, units)) {
-            // Shouldn't happen since we just counted, but don't leave the player paid-but-not-charged.
-            eco.debit(player.getUUID(), price);
             player.sendSystemMessage(MessageUtil.component("commands.neoessentials.shop.npc_not_enough_items"));
             return;
         }
+
+        // Items are already gone, so the payout must not be silently rejected.
+        ShopTransaction.guaranteedCredit(eco, player.getUUID(), price, "NPC-SELL", shopData.toKey());
 
         player.sendSystemMessage(MessageUtil.component(
                 "commands.neoessentials.shop.npc_sold", units, listingLabel(listing), eco.format(price)));
