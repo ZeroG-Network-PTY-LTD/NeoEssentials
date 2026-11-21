@@ -184,7 +184,37 @@ jobs:
             }
 
             const v = await getJson('/actions/variables/BUILD_NUMBER');
-            let n = (parseInt(v && v.data, 10) || 0) + 1;
+            const cur = parseInt(v && v.data, 10) || 0;
+
+            // Closes a gap the retry above doesn't: on a limited-concurrency runner, this
+            // push's branches can run in staggered batches rather than all at once. A sibling
+            // branch sharing this exact wave can claim a number AND bump BUILD_NUMBER to it
+            // entirely before this branch ever reads the counter - so starting from cur+1
+            // skips straight past the sibling's number without ever attempting it, meaning
+            // the create-loop below never collides with it and never discovers it should have
+            // joined instead. Confirmed live 2026-11-21: two branches of the same push claimed
+            // 9, the other two (reading BUILD_NUMBER after the first pair's PUT) cleanly claimed
+            // 10 with no collision at all. Check whether the CURRENT number already belongs to
+            // this wave before assuming it's unrelated and moving past it.
+            if (cur > 0) {
+              let curExisting = null;
+              for (let getAttempt = 1; getAttempt <= 3; getAttempt++) {
+                curExisting = await getJson('/releases/tags/' + prefix + cur);
+                if (curExisting) break;
+                if (getAttempt < 3) await new Promise(res => setTimeout(res, 3000));
+              }
+              if (curExisting && hasWave(curExisting, wave)) {
+                if (!(curExisting.assets || []).some(a => a.name.includes(process.env.MARKER))) {
+                  log('Joining ' + prefix + cur + ' - BUILD_NUMBER was already bumped to it by this same wave\'s sibling branch');
+                  console.log(cur);
+                  return;
+                }
+                log(prefix + cur + ' already has a ' + process.env.MARKER + ' jar (re-run) - claiming a fresh number');
+                wave += '-run' + process.env.RUN_ID;
+              }
+            }
+
+            let n = cur + 1;
             for (let tries = 0; tries < 20; tries++, n++) {
               const tag = prefix + n;
               const created = await fetch(api + '/releases', {
