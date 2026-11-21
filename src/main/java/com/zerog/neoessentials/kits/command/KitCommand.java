@@ -154,11 +154,22 @@ public class KitCommand {
             }
         }
 
-        // Economy cost check
+        // canUseKit checks cooldown, max uses, enabled flag on RECIPIENT. Runs BEFORE any
+        // charge so an ineligible claim never costs the sender anything.
+        var canUse = KitManager.getInstance().canUseKit(recipient, kitName);
+        if (!canUse.isAllowed()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.cannot_use",
+                canUse.getMessage()));
+            return 0;
+        }
+
+        // Economy cost (paid by the sender). Charged only after eligibility passes; refunded
+        // below if giveKit() still fails (it re-checks eligibility and can lose a
+        // claim-in-progress race).
         int cost = (int) com.zerog.neoessentials.config.ConfigManager.getKitCommandCost("kit");
-        if (cost > 0 && sender != null
-                && com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().isEnabled()) {
-            var eco = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+        boolean charged = false;
+        var eco = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+        if (cost > 0 && sender != null && eco.isEnabled()) {
             if (eco.getBalance(sender.getUUID()).doubleValue() < cost) {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.kits.not_enough_money", cost));
                 return 0;
@@ -167,18 +178,15 @@ public class KitCommand {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.kits.charge_failed"));
                 return 0;
             }
-        }
-
-        // canUseKit checks cooldown, max uses, enabled flag on RECIPIENT
-        var canUse = KitManager.getInstance().canUseKit(recipient, kitName);
-        if (!canUse.isAllowed()) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.kits.cannot_use",
-                canUse.getMessage()));
-            return 0;
+            charged = true;
         }
 
         var giveResult = KitManager.getInstance().giveKit(recipient, kitName);
         if (!giveResult.isAllowed()) {
+            if (charged && !eco.addBalance(sender.getUUID(), java.math.BigDecimal.valueOf(cost))) {
+                NeoLog.error(LOGGER, LogCategory.KITS, "Failed to refund {} to {} after kit '{}' could not be given",
+                    cost, sender.getName().getString(), kitName);
+            }
             source.sendFailure(MessageUtil.error("commands.neoessentials.kits.give_failed",
                 giveResult.getMessage()));
             return 0;
