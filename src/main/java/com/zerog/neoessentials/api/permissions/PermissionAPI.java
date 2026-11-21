@@ -55,9 +55,33 @@ public class PermissionAPI {
     }
 
     /**
+     * Set once NeoEssentials' own {@link com.zerog.neoessentials.permissions.PermissionSystem}
+     * has installed a backend. After that, only PermissionSystem may change it (it legitimately
+     * re-calls the setters from {@code reinitialize()} / emergency-mode reload); calls from any
+     * other class are logged and ignored instead of silently replacing the backend.
+     */
+    private static volatile boolean backendOwnedByNeoEssentials = false;
+    private static final StackWalker CALLER_WALKER =
+            StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+
+    private static boolean acceptBackendChange(Class<?> caller, String method) {
+        if (caller == com.zerog.neoessentials.permissions.PermissionSystem.class) {
+            backendOwnedByNeoEssentials = true;
+            return true;
+        }
+        if (backendOwnedByNeoEssentials) {
+            LOGGER.warn("Ignoring PermissionAPI.{}() call from {}: the permission backend is managed by "
+                    + "NeoEssentials and has already been initialised", method, caller.getName());
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Set the built-in permission manager (default system).
      */
     public static void setManager(PermissionManager m) {
+        if (!acceptBackendChange(CALLER_WALKER.getCallerClass(), "setManager")) return;
         manager = m;
     }
 
@@ -66,6 +90,7 @@ public class PermissionAPI {
      * If set, all permission checks will be delegated to this adapter.
      */
     public static void setExternalAdapter(ExternalPermissionAdapter adapter) {
+        if (!acceptBackendChange(CALLER_WALKER.getCallerClass(), "setExternalAdapter")) return;
         externalAdapter = adapter;
         NeoLog.info(LOGGER, LogCategory.PERMISSIONS, "External permission adapter set: " + (adapter != null ? adapter.getName() : "none"));
     }
