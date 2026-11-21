@@ -131,12 +131,24 @@ public class PlayerEndpoint implements HttpHandler {
                 sendResponse(exchange, 405, "{\"error\":\"Method not allowed\"}");
                 return;
             }
-            
+
+            // These GET routes expose live player state (exact position, inventory, health,
+            // gamemode) and previously had no role check at all (only DashboardAPI.withAuth
+            // ran, which merely verifies a valid session exists, not its role), so any
+            // dashboard account, including a self-registered default VIEWER via
+            // /dashboardregister, could read every player's live data, vanished staff included.
+            // Same admin bar every write handler in this file already uses.
+            final boolean requesterIsAdmin = isAdmin(exchange);
+            if (!requesterIsAdmin && isAdminOnlyGetRoute(path)) {
+                sendResponse(exchange, 403, "{\"success\":false,\"error\":\"Admin permission required\"}");
+                return;
+            }
+
             // Execute data collection on server thread for thread safety
             CompletableFuture<JsonObject> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Collecting player data for endpoint: {}", path);
-                    return getResponse(path);
+                    return getResponse(path, requesterIsAdmin);
                 } catch (Exception e) {
                     NeoLog.error(LOGGER, LogCategory.WEB_DASHBOARD, "Error collecting player data for path: {}", path, e);
                     JsonObject error = new JsonObject();
@@ -1250,14 +1262,33 @@ public class PlayerEndpoint implements HttpHandler {
         return Boolean.TRUE.equals(adminAttr);
     }
 
-    private JsonObject getResponse(String path) {
+    /**
+     * GET routes serving live per-player state (position, inventory, health, gamemode),
+     * gated to admins in {@link #handle}.
+     */
+    private boolean isAdminOnlyGetRoute(String path) {
+        return path.equals("/api/player/online")
+            || path.startsWith("/api/player/location/")
+            || path.startsWith("/api/player/profile/")
+            || path.startsWith("/api/player/inventory/")
+            || path.startsWith("/api/player/status/")
+            || path.startsWith("/api/player/xp/")
+            || path.startsWith("/api/player/achievements/");
+    }
+
+    /**
+     * @param includeVanished true only for an admin requester; otherwise vanished players are
+     *                        left out of /online and every per-player lookup of one is answered
+     *                        as if the player did not exist / were offline.
+     */
+    private JsonObject getResponse(String path, boolean includeVanished) {
         JsonObject response;
             
             // Parse path to determine which endpoint
             if (path.matches("/api/player/profile/.*")) {
                 String username = path.substring("/api/player/profile/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1266,7 +1297,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/stats/.*")) {
                 String username = path.substring("/api/player/stats/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1275,7 +1306,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/achievements/.*")) {
                 String username = path.substring("/api/player/achievements/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1284,7 +1315,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/inventory/.*")) {
                 String username = path.substring("/api/player/inventory/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1293,7 +1324,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/status/.*")) {
                 String username = path.substring("/api/player/status/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1302,7 +1333,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/health/.*")) {
                 String username = path.substring("/api/player/health/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1311,7 +1342,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/xp/.*")) {
                 String username = path.substring("/api/player/xp/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1320,7 +1351,7 @@ public class PlayerEndpoint implements HttpHandler {
             } else if (path.matches("/api/player/location/.*")) {
                 String username = path.substring("/api/player/location/".length());
                 UUID uuid = usernameToUuid(username);
-                if (uuid == null) {
+                if (uuid == null || playerCollector.isHiddenByVanish(uuid, includeVanished)) {
                     response = new JsonObject();
                     response.addProperty("error", "Player not found");
                     return response;
@@ -1328,11 +1359,24 @@ public class PlayerEndpoint implements HttpHandler {
                 response = playerCollector.getPlayerLocation(uuid);
             } else if (path.matches("/api/player/homes/.*")) {
                 String username = path.substring("/api/player/homes/".length());
+                if (playerCollector.isHiddenByVanish(usernameToUuid(username), includeVanished)) {
+                    // Same shape getPlayerHomes returns for an offline player.
+                    response = new JsonObject();
+                    response.addProperty("error", "Player not found or offline");
+                    response.add("homes", new com.google.gson.JsonArray());
+                    response.addProperty("count", 0);
+                    return response;
+                }
                 response = playerCollector.getPlayerHomes(username);
             } else if (path.equals("/api/player/online")) {
-                response = playerCollector.getOnlinePlayers();
+                response = playerCollector.getOnlinePlayers(includeVanished);
             } else if (path.matches("/api/player/lookup/.*")) {
                 String username = path.substring("/api/player/lookup/".length());
+                if (playerCollector.isHiddenByVanish(usernameToUuid(username), includeVanished)) {
+                    response = new JsonObject();
+                    response.addProperty("error", "Player not found");
+                    return response;
+                }
                 response = playerCollector.lookupPlayer(username);
             } else if (path.matches("/api/player/ptime/.*")) {
                 String username = path.substring("/api/player/ptime/".length());
