@@ -280,6 +280,15 @@ public class PlayerJoinQuitHandler {
 
         com.zerog.neoessentials.inventory.InventoryViewCommands.releaseEditLocks(player.getUUID());
 
+        // Evict per-player caches that otherwise grow for the whole server uptime. Done before
+        // the chat-message logic below, which can return early when ChatManager is unavailable.
+        try {
+            com.zerog.neoessentials.chat.LastMessageManager.cleanupPlayer(player);
+            com.zerog.neoessentials.teleportation.HomeManager.getInstance().onPlayerQuit(player.getUUID());
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.CHAT, "Error evicting cached data for quitting player " + player.getName().getString(), e);
+        }
+
         try {
             // Get the ChatManager instance
             ChatManager chatManager = ChatAPI.getChatManager();
