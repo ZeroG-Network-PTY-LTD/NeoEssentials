@@ -132,7 +132,11 @@ public class SpawnCommands {
      * Execute /spawn
      */
     private static int executeSpawn(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
         SpawnManager spawnManager = SpawnManager.getInstance();
         ConfigManager config = ConfigManager.getInstance();
         // Jail escape prevention
@@ -179,7 +183,11 @@ public class SpawnCommands {
      * Execute /setspawn (at current location)
      */
     private static int executeSetSpawnHere(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
         SpawnManager spawnManager = SpawnManager.getInstance();
         
         // Check permission
@@ -198,7 +206,11 @@ public class SpawnCommands {
      * Execute /setspawn <coordinates>
      */
     private static int executeSetSpawnAt(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
         SpawnManager spawnManager = SpawnManager.getInstance();
         
         // Check permission
@@ -226,7 +238,11 @@ public class SpawnCommands {
      * Execute /spawninfo
      */
     private static int executeSpawnInfo(CommandContext<CommandSourceStack> context) {
-        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
+            return 0;
+        }
         SpawnManager spawnManager = SpawnManager.getInstance();
         
         String info = spawnManager.getSpawnInfo();

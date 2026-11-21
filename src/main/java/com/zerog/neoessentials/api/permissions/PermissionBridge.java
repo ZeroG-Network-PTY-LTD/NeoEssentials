@@ -7,6 +7,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class PermissionBridge {
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register command to list all NeoEssentials permissions
         dispatcher.register(Commands.literal("neoessentials-permissions")
-            .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4)) // Op level 4 required
+            .requires(PermissionBridge::canListPermissions)
             .executes(ctx -> {
                 listAllPermissions(ctx.getSource());
                 return 1;
@@ -118,12 +119,23 @@ public class PermissionBridge {
         
         // Register a helper command that external plugins can use
         dispatcher.register(Commands.literal("neoe-perms")
-            .requires(source -> com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4))
+            .requires(PermissionBridge::canListPermissions)
             .executes(ctx -> {
                 listAllPermissions(ctx.getSource());
                 return 1;
             })
         );
+    }
+
+    /**
+     * Players go through the permission API (LuckPerms/internal/etc.) like every other
+     * permission-admin command; console and command blocks keep the op-level-4 fallback.
+     */
+    private static boolean canListPermissions(CommandSourceStack source) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.permissions.list");
+        }
+        return com.zerog.neoessentials.util.PermissionLevelCompat.hasPermission(source, 4);
     }
     
     /**
