@@ -30,6 +30,8 @@ public class InputValidator {
     // in Minecraft command syntax.
     private static final Pattern SAFE_COMMAND = Pattern.compile("^[^\\x00-\\x1F`]+$");
     private static final Pattern SAFE_FILENAME = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
+    // A percent-encoded byte (e.g. %3C), used by containsUnsafeContent to catch URL-encoded evasion.
+    private static final Pattern URL_ENCODED_BYTE = Pattern.compile("%[0-9a-fA-F]{2}");
     
     // Config-based limits - loaded from ConfigManager
     private static int getMaxCommandLength() {
@@ -275,16 +277,20 @@ public class InputValidator {
         String lower = text.toLowerCase();
         String[] unsafePatterns = {
             "<script", "javascript:", "vbscript:", "data:",
-            "\\x", "\\u", "%", "&lt;", "&gt;",
+            "\\x", "\\u", "&lt;", "&gt;",
             "eval(", "alert(", "confirm(", "prompt("
         };
-        
+
         for (String pattern : unsafePatterns) {
             if (lower.contains(pattern)) {
                 return true;
             }
         }
-        return false;
+        // Like the backslash-x / backslash-u / &lt; entries above, '%' was here to catch encoded evasion of the XSS patterns
+        // (e.g. %3Cscript). A bare "%" entry rejected ANY percent sign, so ordinary moderator
+        // reasons like "100% sure this is a griefer" failed as "unsafe content". Only flag an
+        // actual percent-encoded byte (%XX, two hex digits) instead.
+        return URL_ENCODED_BYTE.matcher(text).find();
     }
     
     /**

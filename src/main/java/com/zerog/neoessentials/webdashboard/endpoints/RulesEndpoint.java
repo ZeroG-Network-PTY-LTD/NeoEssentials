@@ -15,6 +15,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Dashboard API endpoint for server-rules management.
@@ -83,8 +86,10 @@ public class RulesEndpoint implements HttpHandler {
     // ── GET ────────────────────────────────────────────────────────────────────
 
     @SuppressWarnings("unused") // path kept for interface consistency with other endpoints
-    private JsonObject handleGet(String path) {
-        List<String> rules = RulesCommand.getRules();
+    private JsonObject handleGet(String path) throws Exception {
+        // Snapshot on the main thread: in-game /rules add/edit/remove mutate the list in place
+        // there, so copying it from this HTTP thread could read a stale or mid-mutation list.
+        List<String> rules = onServerThread(RulesCommand::getRules);
         JsonObject obj = new JsonObject();
         obj.addProperty("success", true);
         obj.addProperty("count", rules.size());
@@ -101,11 +106,14 @@ public class RulesEndpoint implements HttpHandler {
 
     // ── POST ───────────────────────────────────────────────────────────────────
 
-    private JsonObject handlePost(String path, HttpExchange exchange) throws IOException {
+    private JsonObject handlePost(String path, HttpExchange exchange) throws Exception {
         // POST /api/rules/reload – reload from disk
         if (path.equals("/reload") || path.equals("/reload/")) {
-            RulesCommand.reload();
-            List<String> rules = RulesCommand.getRules();
+            // reload() clears/refills the same static list in-game /rules mutates — main thread only.
+            List<String> rules = onServerThread(() -> {
+                RulesCommand.reload();
+                return RulesCommand.getRules();
+            });
             JsonObject obj = new JsonObject();
             obj.addProperty("success", true);
             obj.addProperty("message", "Rules reloaded from disk");
@@ -123,16 +131,20 @@ public class RulesEndpoint implements HttpHandler {
             if (ruleText.isEmpty())  return error("Rule text must not be empty");
             if (ruleText.length() > 200) return error("Rule text exceeds 200 characters");
 
-            List<String> rules = new ArrayList<>(RulesCommand.getRules());
-            rules.add(ruleText);
-            RulesCommand.setRules(rules);
-            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule added, now {} rules", rules.size());
+            // Read-modify-write on the main thread so it can't interleave with in-game /rules
+            // edits (which mutate the same static list there) and silently drop one of them.
+            return onServerThread(() -> {
+                List<String> rules = new ArrayList<>(RulesCommand.getRules());
+                rules.add(ruleText);
+                RulesCommand.setRules(rules);
+                NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule added, now {} rules", rules.size());
 
-            JsonObject obj = new JsonObject();
-            obj.addProperty("success", true);
-            obj.addProperty("number", rules.size());
-            obj.addProperty("message", "Rule #" + rules.size() + " added");
-            return obj;
+                JsonObject obj = new JsonObject();
+                obj.addProperty("success", true);
+                obj.addProperty("number", rules.size());
+                obj.addProperty("message", "Rule #" + rules.size() + " added");
+                return obj;
+            });
         }
 
         // POST /api/rules – replace all rules
@@ -146,7 +158,10 @@ public class RulesEndpoint implements HttpHandler {
                 String t = el.getAsString().trim();
                 if (!t.isEmpty()) newRules.add(t);
             }
-            RulesCommand.setRules(newRules);
+            onServerThread(() -> {
+                RulesCommand.setRules(newRules);
+                return null;
+            });
             NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rules replaced, now {} rules", newRules.size());
 
             JsonObject obj = new JsonObject();
@@ -161,55 +176,76 @@ public class RulesEndpoint implements HttpHandler {
 
     // ── PUT ────────────────────────────────────────────────────────────────────
 
-    private JsonObject handlePut(String path, HttpExchange exchange) throws IOException {
+    private JsonObject handlePut(String path, HttpExchange exchange) throws Exception {
         // PUT /api/rules/{number} – edit a rule by 1-based index
         int number = parseTrailingInt(path);
         if (number < 1) return error("Path must be /api/rules/{number} where number >= 1");
 
-        List<String> rules = new ArrayList<>(RulesCommand.getRules());
-        if (number > rules.size()) {
-            return error("Rule #" + number + " does not exist (there are " + rules.size() + " rules)");
-        }
-
+        // Body is read here on the HTTP thread (blocking I/O); its validation result is applied
+        // inside the main-thread task below, after the bounds check, preserving error order.
         JsonObject body = readBody(exchange);
-        if (body == null || !body.has("rule")) return error("Request body must contain 'rule'");
-        String newText = body.get("rule").getAsString().trim();
-        if (newText.isEmpty())      return error("Rule text must not be empty");
-        if (newText.length() > 200) return error("Rule text exceeds 200 characters");
+        String newText = (body == null || !body.has("rule")) ? null : body.get("rule").getAsString().trim();
 
-        rules.set(number - 1, newText);
-        RulesCommand.setRules(rules);
+        // Bounds check + read-modify-write on the main thread, atomically with in-game /rules edits.
+        return onServerThread(() -> {
+            List<String> rules = new ArrayList<>(RulesCommand.getRules());
+            if (number > rules.size()) {
+                return error("Rule #" + number + " does not exist (there are " + rules.size() + " rules)");
+            }
 
-        JsonObject obj = new JsonObject();
-        obj.addProperty("success", true);
-        obj.addProperty("number", number);
-        obj.addProperty("message", "Rule #" + number + " updated");
-        return obj;
+            if (newText == null)        return error("Request body must contain 'rule'");
+            if (newText.isEmpty())      return error("Rule text must not be empty");
+            if (newText.length() > 200) return error("Rule text exceeds 200 characters");
+
+            rules.set(number - 1, newText);
+            RulesCommand.setRules(rules);
+
+            JsonObject obj = new JsonObject();
+            obj.addProperty("success", true);
+            obj.addProperty("number", number);
+            obj.addProperty("message", "Rule #" + number + " updated");
+            return obj;
+        });
     }
 
     // ── DELETE ─────────────────────────────────────────────────────────────────
 
-    private JsonObject handleDelete(String path) {
+    private JsonObject handleDelete(String path) throws Exception {
         // DELETE /api/rules/{number}
         int number = parseTrailingInt(path);
         if (number < 1) return error("Path must be /api/rules/{number} where number >= 1");
 
-        List<String> rules = new ArrayList<>(RulesCommand.getRules());
-        if (number > rules.size()) {
-            return error("Rule #" + number + " does not exist (there are " + rules.size() + " rules)");
-        }
+        // Bounds check + read-modify-write on the main thread, atomically with in-game /rules edits.
+        return onServerThread(() -> {
+            List<String> rules = new ArrayList<>(RulesCommand.getRules());
+            if (number > rules.size()) {
+                return error("Rule #" + number + " does not exist (there are " + rules.size() + " rules)");
+            }
 
-        rules.remove(number - 1);
-        RulesCommand.setRules(rules);
-        NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule #{} deleted, {} remaining", number, rules.size());
+            rules.remove(number - 1);
+            RulesCommand.setRules(rules);
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Rule #{} deleted, {} remaining", number, rules.size());
 
-        JsonObject obj = new JsonObject();
-        obj.addProperty("success", true);
-        obj.addProperty("message", "Rule #" + number + " deleted (" + rules.size() + " remaining)");
-        return obj;
+            JsonObject obj = new JsonObject();
+            obj.addProperty("success", true);
+            obj.addProperty("message", "Rule #" + number + " deleted (" + rules.size() + " remaining)");
+            return obj;
+        });
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    /**
+     * Run {@code action} on the main server thread and wait for its result, same pattern as
+     * AdminEndpoint's reload path. RulesCommand's static rules list is mutated in place by the
+     * in-game /rules command on the main thread; touching it from this HTTP-handler thread
+     * raced with those edits (lost updates / stale reads).
+     */
+    private static <T> T onServerThread(Supplier<T> action) throws Exception {
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) throw new IllegalStateException("Server not ready");
+        return CompletableFuture.supplyAsync(action, server).get(10, TimeUnit.SECONDS);
+    }
 
     /** Parse a trailing integer from a path like {@code "/42"} or {@code "/42/"}. Returns -1 on failure. */
     private int parseTrailingInt(String path) {

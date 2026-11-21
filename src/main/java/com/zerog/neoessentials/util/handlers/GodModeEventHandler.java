@@ -49,6 +49,8 @@ public class GodModeEventHandler {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerStateCommands.onPlayerQuit(player.getUUID());
             com.zerog.neoessentials.util.commands.UtilityCommands.onPlayerQuit(player.getUUID());
+            com.zerog.neoessentials.util.commands.ItemCustomisationCommands.onPlayerQuit(player.getUUID());
+            com.zerog.neoessentials.util.commands.PlayerInfoCommands.onPlayerQuit(player.getUUID());
         }
     }
 }

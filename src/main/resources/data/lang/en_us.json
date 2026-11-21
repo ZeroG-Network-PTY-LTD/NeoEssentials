@@ -1443,6 +1443,7 @@
     "commands.neoessentials.teleport.util.already_in_progress": "You already have a teleport in progress!",
     "commands.neoessentials.teleport.util.cancelled_moved_or_damaged": "Teleport cancelled - you moved/took damage!",
     "commands.neoessentials.teleport.util.cancelled_moved": "Teleport cancelled - you moved!",
+    "commands.neoessentials.teleport.util.destination_no_longer_safe": "Teleport cancelled - the destination is no longer safe!",
     "commands.neoessentials.teleport.util.player_disconnected": "Player disconnected",
     "commands.neoessentials.teleport.util.world_no_longer_available": "Target world no longer available",
     "commands.neoessentials.teleport.util.teleported_to": "Teleported to {0}",

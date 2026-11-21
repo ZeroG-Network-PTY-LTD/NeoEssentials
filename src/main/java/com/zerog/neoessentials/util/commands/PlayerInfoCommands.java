@@ -40,6 +40,11 @@ public class PlayerInfoCommands {
         return msgToggleBlocked.getOrDefault(uuid, false);
     }
 
+    /** Called on player quit (GodModeEventHandler) so the shadow map doesn't grow with every player who ever toggled. */
+    public static void onPlayerQuit(UUID uuid) {
+        msgToggleBlocked.remove(uuid);
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /msgtoggle owns on/off subcommands and admin targeting.
         // MsgToggleCommand in chat.command still provides the /togglemsg and /mt aliases.
@@ -76,7 +81,11 @@ public class PlayerInfoCommands {
             else src.sendFailure(MessageUtil.error("commands.neoessentials.general.player_only"));
             return 0;
         }
-        boolean cur = msgToggleBlocked.getOrDefault(target.getUUID(), false);
+        // Current state comes from MsgToggleManager (the state MsgCommand actually enforces),
+        // not the shadow map: the shadow entry is evicted on quit (onPlayerQuit below), so
+        // reading it after a relog would say "not blocked" while MsgToggleManager still blocks,
+        // turning the next plain /msgtoggle into a silent no-op.
+        boolean cur = com.zerog.neoessentials.chat.MsgToggleManager.isMsgToggled(target);
         boolean newBlocked = block != null ? block : !cur;
         msgToggleBlocked.put(target.getUUID(), newBlocked);
         // Also sync with the existing MsgToggleManager (name-based, used by MsgCommand)
