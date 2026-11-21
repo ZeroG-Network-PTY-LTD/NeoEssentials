@@ -120,6 +120,15 @@ public class FreezeCommand {
                 return 0;
             }
 
+            if (source.getEntity() instanceof ServerPlayer executor) {
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(executor, targetPlayer, "neoessentials.moderation.freeze");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
+            }
+
             String targetName = targetPlayer.getName().getString();
             UUID targetId = targetPlayer.getUUID();
 

@@ -134,10 +134,17 @@ public class PermissionValidator {
      * Prevents lower-privilege players from targeting higher-privilege players.
      */
     public static PermissionResult validateTargetPermission(ServerPlayer executor, ServerPlayer target, String basePermission) {
+        return validateTargetPermission(executor, target.getUUID(), basePermission);
+    }
+
+    /**
+     * UUID overload of {@link #validateTargetPermission(ServerPlayer, ServerPlayer, String)} for
+     * commands that can target offline players (ban, tempban, jail).
+     */
+    public static PermissionResult validateTargetPermission(ServerPlayer executor, UUID targetUuid, String basePermission) {
         try {
             UUID executorUuid = executor.getUUID();
-            UUID targetUuid = target.getUUID();
-            
+
             // Self-targeting is usually not allowed for admin commands
             if (executorUuid.equals(targetUuid)) {
                 return PermissionResult.failure("You cannot target yourself with this command");

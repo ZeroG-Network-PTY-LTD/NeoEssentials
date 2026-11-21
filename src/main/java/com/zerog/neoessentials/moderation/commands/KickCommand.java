@@ -93,6 +93,12 @@ public class KickCommand {
                     source.sendFailure(MessageUtil.error("neoessentials.moderation.cannot_kick_self"));
                     return 0;
                 }
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(sourcePlayer, targetPlayer, "neoessentials.moderation.kick");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
             }
 
             String playerDisplayName = targetPlayer.getName().getString();
