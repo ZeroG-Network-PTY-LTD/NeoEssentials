@@ -1,26 +1,29 @@
 name: Build & Release Jar (Forgejo)
 
-# Forgejo Actions stand-in for GitHub's own .github/workflows/build-and-release.yml, while
-# that one is blocked repo-wide by an org Actions policy (see NeoEssentials' project memory
-# for that issue). Same shape: one shared GitHub-style release PER BUILD NUMBER, with all
-# three branches' jars attached as separate assets on that same release rather than one
-# release each — one number per push (see "Bump shared build number" for how the three
-# branches' cherry-picks of one change find each other).
+# Builds the mod jar for THIS branch and publishes it as its OWN Forgejo release, tagged
+# <mod_version>-<branch>-build-<run_number>. Each branch's release stands alone - no shared
+# counter, no cross-branch coordination, no "which release does my jar join" logic at all.
 #
-# Build numbering is tracked independently HERE, via this repo's own "BUILD_NUMBER" Forgejo
-# Actions variable — Forgejo has no way to reach GitHub's own Actions variable, so this one
-# was seeded to 70 (GitHub's NEXT number, not its last-used 69 — Forgejo has never actually
-# published anything, so seeding it to 69 would make the "reuse if not already used" check
-# below reuse 69 forever, since Forgejo itself never marks 69 as used) the day this workflow
-# was added, specifically so numbers don't collide once GitHub's CI is unblocked again. If
-# GitHub CI and this one both publish for a while, keep them in sync by hand (or just let this
-# workflow fall out of use again once GitHub is fixed).
+# github.run_number is assigned atomically by Forgejo itself per run of this workflow file
+# (globally unique across every branch that triggers it, confirmed live from this repo's own
+# task history: consecutive runs across different branches land on consecutive run_numbers
+# with zero collisions, no API calls needed). That replaces an earlier design where all
+# branches shared ONE build number per push via a hand-rolled "wave"-matching scheme against
+# a custom BUILD_NUMBER Actions variable - see this file's git history for two separate
+# post-mortems (2026-11-03 and 2026-11-21) where that scheme split one push's build number
+# across two numbers because of timing races between branches. Dropping the cross-branch
+# sharing requirement entirely removes the race at the root instead of patching it again.
 #
-# Requires a repo secret CI_RELEASE_TOKEN — a Forgejo access token with read/write access to
-# this repo (Actions variables + repo contents/releases) — add it manually via this repo's
-# Settings > Actions > Secrets. Forgejo's own built-in Actions token isn't used for this, for
-# the same reason GitHub's workflow uses a dedicated CI_BUILD_NUMBER_PAT instead of the
-# default GITHUB_TOKEN: the default token doesn't reliably have variable-write permission.
+# Trade-off from the old design: a single logical change now produces one release PER BRANCH
+# instead of one shared release with every branch's jar attached. Each is clearly labeled by
+# branch in its tag/title, so this is a naming/organization difference, not a loss of
+# information - the Discord notification below says which branch each post is for.
+#
+# Requires a repo secret CI_RELEASE_TOKEN - a Forgejo access token with read/write access to
+# this repo (contents + releases) - add it manually via this repo's Settings > Actions > Secrets.
+# Forgejo's own built-in Actions token isn't used for this, for the same reason GitHub's
+# workflow uses a dedicated CI_BUILD_NUMBER_PAT instead of the default GITHUB_TOKEN: the
+# default token doesn't reliably have the needed permissions.
 
 on:
   push:
@@ -36,12 +39,12 @@ on:
 jobs:
   build-and-release:
     runs-on: docker
-    # NOT a JDK-only image — the runner here executes Actions via Node.js (actions/checkout,
+    # NOT a JDK-only image - the runner here executes Actions via Node.js (actions/checkout,
     # actions/upload-artifact are JS actions run with `node dist/index.js` directly), so the
     # container needs node + git too, not just a JDK. eclipse-temurin:21-jdk has neither,
     # which made even the checkout step fail with "node: executable file not found in $PATH"
     # before the build ever ran. catthehacker/ubuntu:act-* is the standard image for
-    # self-hosted Forgejo/Gitea Actions runners for exactly this reason — it still needs a
+    # self-hosted Forgejo/Gitea Actions runners for exactly this reason - it still needs a
     # JDK added explicitly below for gradlew itself to run at all.
     container:
       image: catthehacker/ubuntu:act-22.04
@@ -50,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
 
       # Fails in seconds instead of discovering a bad/missing secret only after a ~20min
-      # build, at the Bump/Publish steps' own API calls (confirmed live: those steps treat a
+      # build, at the Publish step's own API calls (confirmed live: those steps treat a
       # failed auth check as "no data" and silently continue instead of stopping, wasting a
       # full build cycle before the real error surfaces).
       - name: Verify CI_RELEASE_TOKEN
@@ -61,7 +64,7 @@ jobs:
         run: |
           echo "TOKEN length: ${#TOKEN} (expect 40 for a Forgejo access token; 0 means the secret isn't reaching this job)"
           code=$(curl -s -o /tmp/whoami.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/actions/variables/BUILD_NUMBER")
+            "$FORGEJO_API/repos/$REPO/releases?limit=1")
           echo "Auth check -> HTTP $code"; cat /tmp/whoami.json; echo
           if [ "$code" != "200" ]; then
             echo "::error::CI_RELEASE_TOKEN failed to authenticate (HTTP $code) - check the secret's value in Settings > Actions > Secrets"
@@ -73,17 +76,17 @@ jobs:
         # gradlew fails immediately with "JAVA_HOME is not set and no 'java' command could be
         # found"); the actual per-branch compile JDK (21 for 1.21.x/26.1.x, 25 for 26.2.x) is
         # auto-provisioned separately by Gradle's own toolchain resolver, same as GitHub's
-        # workflow — so ANY java on PATH here is sufficient, not specifically JDK 21.
+        # workflow - so ANY java on PATH here is sufficient, not specifically JDK 21.
         #
         # Checks for an already-installed java first (free if the runner image ships one) before
         # doing any network install. If not found, skips apt entirely and goes straight to
-        # Adoptium's Temurin tarball — apt was tried first historically (since this instance's
+        # Adoptium's Temurin tarball - apt was tried first historically (since this instance's
         # action mirror, code.forgejo.org, doesn't carry actions/setup-java@v4, confirmed 404),
         # but `apt-get update` against archive.ubuntu.com on a cold container with no local
         # package cache was the slowest, flakiest option: confirmed live (runs 48-50) that a
         # transient mirror outage makes `apt-get update` "succeed" with stale/no indexes, so the
         # install then fails with "Unable to locate package" / "held broken packages" after
-        # burning the full retry budget (~8 min/attempt on connect timeouts) — slower AND less
+        # burning the full retry budget (~8 min/attempt on connect timeouts) - slower AND less
         # reliable than just downloading a known-good tarball directly.
         run: |
           if command -v java >/dev/null 2>&1; then
@@ -107,161 +110,15 @@ jobs:
         id: mod_version
         run: echo "value=$(sed -n 's/^mod_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
 
-      # One build number PER PUSH, shared by all three branches. The old "reuse the current
-      # number unless this branch already has a jar on it" logic raced: each branch read the
-      # counter whenever its (variable-length) JDK setup finished, so one push got split across
-      # two numbers — confirmed live with runs 54-56, where 1.21.x landed on 78 but 26.1.x and
-      # 26.2.x on 79.
-      #
-      # A push is identified by its "wave": a hash of the commit's author timestamp + subject.
-      # Cherry-picks keep both (only the committer/SHA differ per branch), so all three
-      # branches' copies of one change hash the same. The first branch to get here claims the
-      # next number by creating that release up front, with the wave in its body; siblings find
-      # it by wave and join it instead of bumping. Release creation doubles as the lock: if two
-      # branches race to create the same tag, the loser re-reads it and joins when the wave
-      # matches, or moves on to the next number when another push owns it.
-      # A re-run of a commit whose jar is already on its wave's release claims a fresh number.
-      # Uses node's built-in fetch (node is already in the image for actions/checkout) rather
-      # than assuming jq is installed. Forgejo's variable API returns the value under "data",
-      # not "value" like GitHub's (confirmed live: {"name":"BUILD_NUMBER","data":"70"}).
-      - name: Bump shared build number
-        id: build_number
-        env:
-          FORGEJO_API: ${{ github.server_url }}/api/v1
-          TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
-          REPO: ${{ github.repository }}
-          MOD_VERSION: ${{ steps.mod_version.outputs.value }}
-          MARKER: ${{ github.ref_name }}
-          SHA: ${{ github.sha }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          set -e
-          echo "TOKEN length: ${#TOKEN} (expect 40 for a Forgejo access token; 0 means the secret isn't reaching this job)"
-          export WAVE="$(git log -1 --format='%at %s' | sha1sum | cut -c1-12)"
-          export SUBJECT="$(git log -1 --format='%s')"
-          echo "wave=$WAVE ($SUBJECT)"
-
-          next=$(node <<'JS'
-          const api = process.env.FORGEJO_API + '/repos/' + process.env.REPO;
-          const headers = { Authorization: 'token ' + process.env.TOKEN, 'Content-Type': 'application/json' };
-          const prefix = process.env.MOD_VERSION + '-build-';
-          const log = (...a) => console.error(...a);
-          const hasWave = (rel, wave) => (rel.body || '').includes('wave: ' + wave);
-
-          async function getJson(path) {
-            const r = await fetch(api + path, { headers });
-            log('GET ' + path + ' -> HTTP ' + r.status);
-            return r.ok ? r.json() : null;
-          }
-
-          // A failed/flaky GET here must NOT be treated as "no matching release exists" -
-          // that silently caused 2 of 4 branches sharing one wave (build 21) to mint their
-          // own new build numbers (23/24) instead of joining the other branches' shared one,
-          // confirmed live 2026-11-03. Retry a few times, and if it still can't be confirmed,
-          // fail the job instead of guessing.
-          async function listReleasesOrThrow() {
-            for (let attempt = 1; attempt <= 3; attempt++) {
-              const r = await fetch(api + '/releases?limit=30', { headers });
-              log('GET /releases?limit=30 (attempt ' + attempt + ') -> HTTP ' + r.status);
-              if (r.ok) return r.json();
-              if (attempt < 3) await new Promise(res => setTimeout(res, 3000));
-            }
-            throw new Error('Could not list releases after 3 attempts - refusing to mint a build number blind, since this branch might actually share a wave with one already claimed by another branch');
-          }
-
-          (async () => {
-            let wave = process.env.WAVE;
-            const recent = await listReleasesOrThrow();
-            const mine = recent.find(r => r.tag_name.startsWith(prefix) && hasWave(r, wave));
-            if (mine) {
-              if (!(mine.assets || []).some(a => a.name.includes(process.env.MARKER))) {
-                log('Joining ' + mine.tag_name + ', already claimed for this push by another branch');
-                console.log(mine.tag_name.slice(prefix.length));
-                return;
-              }
-              log(mine.tag_name + ' already has a ' + process.env.MARKER + ' jar (re-run) - claiming a fresh number');
-              wave += '-run' + process.env.RUN_ID;
-            }
-
-            const v = await getJson('/actions/variables/BUILD_NUMBER');
-            const cur = parseInt(v && v.data, 10) || 0;
-
-            // Closes a gap the retry above doesn't: on a limited-concurrency runner, this
-            // push's branches can run in staggered batches rather than all at once. A sibling
-            // branch sharing this exact wave can claim a number AND bump BUILD_NUMBER to it
-            // entirely before this branch ever reads the counter - so starting from cur+1
-            // skips straight past the sibling's number without ever attempting it, meaning
-            // the create-loop below never collides with it and never discovers it should have
-            // joined instead. Confirmed live 2026-11-21: two branches of the same push claimed
-            // 9, the other two (reading BUILD_NUMBER after the first pair's PUT) cleanly claimed
-            // 10 with no collision at all. Check whether the CURRENT number already belongs to
-            // this wave before assuming it's unrelated and moving past it.
-            if (cur > 0) {
-              let curExisting = null;
-              for (let getAttempt = 1; getAttempt <= 3; getAttempt++) {
-                curExisting = await getJson('/releases/tags/' + prefix + cur);
-                if (curExisting) break;
-                if (getAttempt < 3) await new Promise(res => setTimeout(res, 3000));
-              }
-              if (curExisting && hasWave(curExisting, wave)) {
-                if (!(curExisting.assets || []).some(a => a.name.includes(process.env.MARKER))) {
-                  log('Joining ' + prefix + cur + ' - BUILD_NUMBER was already bumped to it by this same wave\'s sibling branch');
-                  console.log(cur);
-                  return;
-                }
-                log(prefix + cur + ' already has a ' + process.env.MARKER + ' jar (re-run) - claiming a fresh number');
-                wave += '-run' + process.env.RUN_ID;
-              }
-            }
-
-            let n = cur + 1;
-            for (let tries = 0; tries < 20; tries++, n++) {
-              const tag = prefix + n;
-              const created = await fetch(api + '/releases', {
-                method: 'POST', headers,
-                body: JSON.stringify({
-                  tag_name: tag, name: tag, target_commitish: process.env.SHA, prerelease: true,
-                  body: 'Build ' + n + ': ' + process.env.SUBJECT + '\n\nwave: ' + wave,
-                }),
-              });
-              log('POST create release ' + tag + ' -> HTTP ' + created.status);
-              if (created.status === 201) {
-                log('Claimed ' + tag + ' for this push');
-              } else {
-                // Same flakiness risk listReleasesOrThrow() guards against: the branch that
-                // just won this tag may not be immediately visible to a GET from a different
-                // concurrent request yet (read-after-write lag), and a bare 404/miss here used
-                // to be treated as "someone else's unrelated build owns this number" and moved
-                // on to claim a NEW number instead - confirmed live 2026-11-21, where 3 of 4
-                // branches correctly joined one release and the 4th split off into its own
-                // because this GET missed on the first try. Retry before giving up on this tag.
-                let existing = null;
-                for (let getAttempt = 1; getAttempt <= 3; getAttempt++) {
-                  existing = await getJson('/releases/tags/' + tag);
-                  if (existing) break;
-                  if (getAttempt < 3) await new Promise(res => setTimeout(res, 3000));
-                }
-                if (!existing || !hasWave(existing, wave)) continue; // another push owns it
-                log('Joining ' + tag + ', claimed for this push by another branch a moment ago');
-              }
-              const put = await fetch(api + '/actions/variables/BUILD_NUMBER', {
-                method: 'PUT', headers, body: JSON.stringify({ value: String(n) }),
-              });
-              log('PUT BUILD_NUMBER=' + n + ' -> HTTP ' + put.status);
-              console.log(n);
-              return;
-            }
-            throw new Error('Could not claim a build number after 20 attempts');
-          })().catch(e => { log(e); process.exit(1); });
-          JS
-          )
-
-          echo "build number: $next"
-          echo "$next" > build_number.txt
-          echo "value=$next" >> "$GITHUB_OUTPUT"
+      # build.gradle embeds this file's contents into the jar's own filename/version
+      # (+build.N) and skips its own local auto-increment when CI=true, expecting CI to have
+      # written the real number in first. Not committed back - this only exists in the
+      # CI workspace for this one run.
+      - name: Write build number for Gradle
+        run: echo "${{ github.run_number }}" > build_number.txt
 
       # Retried because createMinecraftArtifacts downloads the Minecraft client/server jars from
-      # Mojang mid-build, and this runner's network drops out intermittently — confirmed live
+      # Mojang mid-build, and this runner's network drops out intermittently - confirmed live
       # (runs 51/52): "java.net.ConnectException: Network is unreachable" partway through those
       # downloads, while other downloads in the same run succeeded. A retry in the same job
       # reuses everything already downloaded, so it only re-fetches what failed.
@@ -288,15 +145,17 @@ jobs:
           echo "path=${jar_path}" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "${jar_path}")" >> "$GITHUB_OUTPUT"
 
-      # One release per build number, shared by all three branches — mirrors the GitHub
-      # workflow's own softprops/action-gh-release step, done here via Forgejo's REST API
-      # directly since that action is GitHub-specific.
+      # One release per run, own tag per branch - run_number is already unique, so there is no
+      # existing-tag case to check for and no retry/join logic needed. If this exact tag somehow
+      # already exists (a workflow_dispatch re-run of the same run_number, which Forgejo does not
+      # reissue, so this should not happen in practice), fail loudly rather than silently reusing
+      # whatever is there.
       - name: Publish build release
         env:
           FORGEJO_API: ${{ github.server_url }}/api/v1
           TOKEN: ${{ secrets.CI_RELEASE_TOKEN }}
           REPO: ${{ github.repository }}
-          TAG: ${{ steps.mod_version.outputs.value }}-build-${{ steps.build_number.outputs.value }}
+          TAG: ${{ steps.mod_version.outputs.value }}-${{ github.ref_name }}-build-${{ github.run_number }}
           BRANCH: ${{ github.ref_name }}
           SHA: ${{ github.sha }}
           JAR_PATH: ${{ steps.jar.outputs.path }}
@@ -304,35 +163,15 @@ jobs:
         run: |
           set -e
 
-          existing_code=$(curl -s -o /tmp/existing.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
-            "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
-          echo "GET release tag $TAG -> HTTP $existing_code"; cat /tmp/existing.json; echo
-
-          if [ "$existing_code" = "200" ]; then
-            release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/existing.json','utf8')).id)")
-          else
-            create_code=$(curl -s -o /tmp/created.json -w "%{http_code}" -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
-              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"\`$BRANCH\`: commit $SHA.\",\"target_commitish\":\"$SHA\",\"prerelease\":true}" \
-              "$FORGEJO_API/repos/$REPO/releases")
-            echo "POST create release -> HTTP $create_code"; cat /tmp/created.json; echo
-            if [ "$create_code" = "201" ]; then
-              release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/created.json','utf8')).id)")
-            else
-              # All three branches push together and finish within seconds of each other, so
-              # another branch can create this release between our GET and POST — confirmed
-              # live (run 47): Forgejo answers that with HTTP 500 "tag ... already exists".
-              # Re-read the release the other run just made and attach our jar to it instead.
-              sleep 5
-              retry_code=$(curl -s -o /tmp/existing.json -w "%{http_code}" -H "Authorization: token $TOKEN" \
-                "$FORGEJO_API/repos/$REPO/releases/tags/$TAG")
-              echo "Re-GET release tag $TAG -> HTTP $retry_code"; cat /tmp/existing.json; echo
-              if [ "$retry_code" != "200" ]; then
-                echo "::error::Failed to create release (HTTP $create_code) and none exists for $TAG"
-                exit 1
-              fi
-              release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/existing.json','utf8')).id)")
-            fi
+          create_code=$(curl -s -o /tmp/created.json -w "%{http_code}" -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"\`$BRANCH\`: commit $SHA.\",\"target_commitish\":\"$SHA\",\"prerelease\":true}" \
+            "$FORGEJO_API/repos/$REPO/releases")
+          echo "POST create release -> HTTP $create_code"; cat /tmp/created.json; echo
+          if [ "$create_code" != "201" ]; then
+            echo "::error::Failed to create release $TAG (HTTP $create_code)"
+            exit 1
           fi
+          release_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/created.json','utf8')).id)")
           echo "release_id=$release_id"
 
           # The jar filename contains a literal "+" (e.g. "...+build.70-all.jar") - confirmed
@@ -350,9 +189,7 @@ jobs:
           fi
 
       # Posts a rich embed to a Discord channel via webhook, linking straight to the Forgejo
-      # release asset above — same pattern as the GitHub workflow's own "Post build to
-      # Discord" step, adapted to Forgejo's API (browser_download_url straight from the asset
-      # upload response, rather than reconstructing the URL by hand).
+      # release asset above.
       # Requires a repo secret DISCORD_BUILDS_WEBHOOK_URL (Discord channel -> Edit Channel ->
       # Integrations -> Webhooks -> Copy URL). Skipped (not failed) if unset, so this workflow
       # doesn't break for anyone who hasn't configured it.
@@ -363,7 +200,7 @@ jobs:
           DISCORD_BUILDS_WEBHOOK_URL: ${{ secrets.DISCORD_BUILDS_WEBHOOK_URL }}
           BRANCH: ${{ github.ref_name }}
           MOD_VERSION: ${{ steps.mod_version.outputs.value }}
-          BUILD_NUMBER: ${{ steps.build_number.outputs.value }}
+          BUILD_NUMBER: ${{ github.run_number }}
           JAR_NAME: ${{ steps.jar.outputs.name }}
           JAR_PATH: ${{ steps.jar.outputs.path }}
         run: |
