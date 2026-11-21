@@ -93,9 +93,10 @@ public final class ShopTransaction {
 
         if (!shop.isAdminShop()) {
             Container chest = getChest(shop, level);
-            if (chest == null) { eco.credit(buyer.getUUID(), price); return fail(ResultType.NO_CHEST); }
+            // The buyer has already been debited: the refund must not be silently rejected.
+            if (chest == null) { guaranteedCredit(eco, buyer.getUUID(), price, "BUY-REFUND", shop); return fail(ResultType.NO_CHEST); }
             if (!removeItems(chest, template, shop.quantity)) {
-                eco.credit(buyer.getUUID(), price);
+                guaranteedCredit(eco, buyer.getUUID(), price, "BUY-REFUND", shop);
                 return fail(ResultType.NOT_ENOUGH_STOCK);
             }
         }
@@ -219,18 +220,24 @@ public final class ShopTransaction {
      * already used by {@code AuctionHouseManager.buyItem()} for the same failure mode.
      */
     private static void guaranteedCredit(ShopEconomyAdapter eco, java.util.UUID recipient, BigDecimal amount, String direction, ShopData shop) {
+        guaranteedCredit(eco, recipient, amount, direction, shop.toKey());
+    }
+
+    /** {@link #guaranteedCredit(ShopEconomyAdapter, java.util.UUID, BigDecimal, String, ShopData)} keyed by a plain
+     *  shop key, so NPC shops ({@code ShopEntityData}, not {@link ShopData}) can settle the same way. */
+    public static void guaranteedCredit(ShopEconomyAdapter eco, java.util.UUID recipient, BigDecimal amount, String direction, String shopKey) {
         try {
             boolean paid = eco.credit(recipient, amount);
             if (!paid) {
                 NeoLog.error(LOGGER, LogCategory.GENERAL,
                         "[ChestShop] {} credit rejected via {} for {} on shop '{}' — forcing settlement to avoid losing the payment",
-                        direction, eco.getProviderName(), recipient, shop.toKey());
+                        direction, eco.getProviderName(), recipient, shopKey);
                 var em = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
                 em.setBalance(recipient, em.getBalance(recipient).add(amount));
             }
         } catch (Exception e) {
             NeoLog.error(LOGGER, LogCategory.GENERAL,
-                    "[ChestShop] Could not credit " + recipient + " for shop '" + shop.toKey() + "'", e);
+                    "[ChestShop] Could not credit " + recipient + " for shop '" + shopKey + "'", e);
         }
     }
 
