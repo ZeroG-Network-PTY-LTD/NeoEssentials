@@ -780,10 +780,34 @@ public class PlayerDataCollector {
     }
     
     /**
+     * Whether {@code playerUuid}'s data must be hidden from a requester who may not see
+     * vanished players. Same {@code VanishManager.isPlayerVanished} check ModerationEndpoint's
+     * /vanish routes use. Fails closed (hidden) if the vanish lookup itself throws.
+     */
+    public boolean isHiddenByVanish(UUID playerUuid, boolean includeVanished) {
+        if (includeVanished || playerUuid == null) return false;
+        try {
+            return com.zerog.neoessentials.moderation.VanishManager.getInstance().isPlayerVanished(playerUuid);
+        } catch (Exception e) {
+            NeoLog.debug(LOGGER, LogCategory.WEB_DASHBOARD, "Vanish check failed for {}, hiding: {}", playerUuid, e.getMessage());
+            return true;
+        }
+    }
+
+    /** Vanish-masked roster; see {@link #getOnlinePlayers(boolean)}. */
+    public JsonObject getOnlinePlayers() {
+        return getOnlinePlayers(false);
+    }
+
+    /**
      * Get list of all online players and offline players
      * Endpoint: GET /api/players/online
+     *
+     * @param includeVanished if false, vanished players are left out of the online list
+     *                        entirely (they previously leaked exact position/health/gamemode
+     *                        to every dashboard session); only admin requesters pass true.
      */
-    public JsonObject getOnlinePlayers() {
+    public JsonObject getOnlinePlayers(boolean includeVanished) {
         JsonObject response = new JsonObject();
         JsonArray onlinePlayers = new JsonArray();
         JsonArray offlinePlayers = new JsonArray();
@@ -795,6 +819,7 @@ public class PlayerDataCollector {
         java.util.Set<String> onlineUsernames = new java.util.HashSet<>();
         
         online.forEach(player -> {
+            if (isHiddenByVanish(player.getUUID(), includeVanished)) return;
             JsonObject playerObj = new JsonObject();
             playerObj.addProperty("uuid", player.getUUID().toString());
             playerObj.addProperty("username", player.getName().getString());
