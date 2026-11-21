@@ -1483,7 +1483,10 @@ public class ConfigManager {
 
     // Expected versions for each config file (must match the version in JAR resources)
     private static final java.util.Map<String, Integer> EXPECTED_CONFIG_VERSIONS = new java.util.HashMap<>() {{
-        put(MAIN_CONFIG, 60);          // v60 — added shop.confirmAbove (second-click confirmation
+        put(MAIN_CONFIG, 61);          // v61 — added pvp.toggleCombatTagSeconds (blocks
+                                        //       /pvp toggle opt-out for N seconds after a
+                                        //       player last dealt/took PvP damage)
+                                        // v60 — added shop.confirmAbove (second-click confirmation
                                         //       for expensive shop purchases, see ShopConfirm)
                                         // v59 — added general.messagePrefix: the "[NE]" tag in
                                         //       front of command feedback and admin notices is
@@ -3674,6 +3677,23 @@ public class ConfigManager {
             if (np.has("durationSeconds")) return np.get("durationSeconds").getAsInt();
         }
         return 60;
+    }
+
+    /**
+     * Seconds after a player last dealt or took PvP damage during which they cannot opt out
+     * via /pvp toggle (pvp.toggleCombatTagSeconds), so the toggle can't be used to escape a
+     * fight mid-combat. 0 disables the check. Defaults to 15.
+     */
+    public static int getPvpToggleCombatTagSeconds() {
+        JsonObject pvp = getPvpSection();
+        if (pvp.has("toggleCombatTagSeconds")) {
+            try {
+                return Math.max(0, pvp.get("toggleCombatTagSeconds").getAsInt());
+            } catch (Exception e) {
+                NeoLog.debug(LOGGER, LogCategory.CONFIG, "Invalid value for pvp.toggleCombatTagSeconds, using default 15", e);
+            }
+        }
+        return 15;
     }
 
     /**
