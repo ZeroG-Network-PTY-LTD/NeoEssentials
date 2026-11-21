@@ -1,6 +1,6 @@
 # NeoEssentials
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-orange.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/) [![NeoForge](https://img.shields.io/badge/NeoForge-orange.svg)](https://neoforged.net/) [![License](https://img.shields.io/badge/License-GPL--3.0-lightgrey.svg)](https://www.gnu.org/licenses/gpl-3.0.html) [![Version](https://img.shields.io/github/v/release/ZeroG-Network-PTY-LTD/NeoEssentials?label=Version)](https://github.com/ZeroG-Network-PTY-LTD/NeoEssentials/releases) [![Discord](https://img.shields.io/discord/709351422088708196?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/mrwhiteflamesyt)
 
 > NeoEssentials is a comprehensive, config-driven essentials mod for Minecraft NeoForge 1.21.1 - 1.21.11 servers. It provides 50+ commands, GUI tools, advanced administration, and a real-time web dashboard—all managed by modular JSON config files and standardized documentation.
@@ -130,7 +130,7 @@ IDE/Gradle setup and build instructions.
 
 ## 📄 License
 
-NeoEssentials is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+NeoEssentials is licensed under the GNU General Public License v3.0 (or later). See the [LICENSE](LICENSE) file for details.
 
 ---
 
