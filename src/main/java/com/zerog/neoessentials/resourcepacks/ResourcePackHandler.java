@@ -203,7 +203,19 @@ public class ResourcePackHandler implements HttpHandler {
         String url = data.get("url").getAsString();
         String hash = data.get("hash").getAsString();
         String username = getUsernameFromSession(exchange);
-        
+
+        // These get pushed verbatim to every assigned player's client via
+        // ClientboundResourcePackPushPacket - validate before that happens, since a bad
+        // hash/scheme here would otherwise reach players with no server-side check at all.
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            sendErrorResponse(exchange, 400, "Invalid url: must be an http:// or https:// URL");
+            return;
+        }
+        if (!hash.matches("[0-9a-fA-F]{40}")) {
+            sendErrorResponse(exchange, 400, "Invalid hash: must be a 40-character SHA-1 hex digest");
+            return;
+        }
+
         ResourcePack pack = ResourcePackManager.getInstance().registerExternalPack(name, url, hash, username);
         JsonObject response = packToJson(pack, false);
         sendJsonResponse(exchange, 201, response);
