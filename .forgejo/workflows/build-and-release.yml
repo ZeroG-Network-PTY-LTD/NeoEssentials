@@ -198,7 +198,19 @@ jobs:
               if (created.status === 201) {
                 log('Claimed ' + tag + ' for this push');
               } else {
-                const existing = await getJson('/releases/tags/' + tag);
+                // Same flakiness risk listReleasesOrThrow() guards against: the branch that
+                // just won this tag may not be immediately visible to a GET from a different
+                // concurrent request yet (read-after-write lag), and a bare 404/miss here used
+                // to be treated as "someone else's unrelated build owns this number" and moved
+                // on to claim a NEW number instead - confirmed live 2026-11-21, where 3 of 4
+                // branches correctly joined one release and the 4th split off into its own
+                // because this GET missed on the first try. Retry before giving up on this tag.
+                let existing = null;
+                for (let getAttempt = 1; getAttempt <= 3; getAttempt++) {
+                  existing = await getJson('/releases/tags/' + tag);
+                  if (existing) break;
+                  if (getAttempt < 3) await new Promise(res => setTimeout(res, 3000));
+                }
                 if (!existing || !hasWave(existing, wave)) continue; // another push owns it
                 log('Joining ' + tag + ', claimed for this push by another branch a moment ago');
               }
