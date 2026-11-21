@@ -1,7 +1,7 @@
 {
   // DO NOT MODIFY: Used by NeoEssentials for automatic config updates.
   // Changing this may cause config corruption.
-  "_configVersion": 60,
+  "_configVersion": 61,
 
   /* ================================================================
      NeoEssentials — Main Configuration  (config.json)
@@ -966,6 +966,10 @@
     // neither be hit by nor deal damage to another player, so it can't be used to attack
     // risk-free.
     "allowPerPlayerToggle": true,
+    // Combat tag: a player who dealt or took PvP damage within this many seconds cannot
+    // opt out via /pvp toggle, so the toggle can't be used to escape a losing fight.
+    // 0 disables the check.
+    "toggleCombatTagSeconds": 15,
     // Send a "PvP is disabled" style message to both the attacker and the target whenever
     // a hit is blocked, instead of silently negating the damage.
     "notifyOnBlockedHit": true,

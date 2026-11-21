@@ -99,6 +99,15 @@ public class PvpCommand {
 
         PvpManager manager = PvpManager.getInstance();
         boolean newOptedOut = !manager.isOptedOut(player.getUUID());
+        // Combat tag: opting OUT mid-fight would make a losing player instantly untouchable.
+        // Opting back IN is never an escape, so it isn't blocked.
+        if (newOptedOut) {
+            int combatSeconds = manager.getCombatTagRemainingSeconds(player.getUUID());
+            if (combatSeconds > 0) {
+                src.sendFailure(MessageUtil.error("commands.neoessentials.pvp.toggle_in_combat", combatSeconds));
+                return 0;
+            }
+        }
         if (!manager.setOptedOut(player.getUUID(), newOptedOut)) {
             src.sendFailure(MessageUtil.error("commands.neoessentials.pvp.per_player_toggle_disabled"));
             return 0;

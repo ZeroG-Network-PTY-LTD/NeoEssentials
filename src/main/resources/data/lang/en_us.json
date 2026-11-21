@@ -2371,6 +2371,7 @@
     "commands.neoessentials.pvp.self_enabled": "§aYou have opted back into PvP.",
     "commands.neoessentials.pvp.self_disabled": "§cYou have opted out of PvP. You can no longer hit or be hit by other players.",
     "commands.neoessentials.pvp.per_player_toggle_disabled": "§cSelf-toggling PvP is disabled on this server.",
+    "commands.neoessentials.pvp.toggle_in_combat": "§cYou are in combat. Wait {0} more second(s) before opting out of PvP.",
     "commands.neoessentials.pvp.hit_blocked_attacker": "§cYou cannot attack §f{0}§c right now — PvP is disabled.",
     "commands.neoessentials.pvp.hit_blocked_target": "§7{0}§7's attack was blocked — PvP is disabled."
 }

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Resolves the voter and applies the configured reward for that vote site: console commands
@@ -33,11 +34,34 @@ public class VoteRewardManager {
     private static final String PENDING_COLLECTION = "votifier_pending";
     private static final String STATS_COLLECTION = "votifier_stats";
 
+    /**
+     * How long a vote's dedupe key is remembered. V1 votes carry no per-connection challenge,
+     * so a captured packet can be replayed byte-for-byte; within this window an identical
+     * serviceName+username+timestamp is rejected instead of re-granting the reward.
+     */
+    private static final long DEDUPE_TTL_MS = 6L * 60 * 60 * 1000;
+    /** Dedupe key -> first-seen time (ms). In-memory only; evicted lazily on each vote. */
+    private static final ConcurrentHashMap<String, Long> SEEN_VOTES = new ConcurrentHashMap<>();
+
+    /** Returns true if this exact vote was already processed within {@link #DEDUPE_TTL_MS}. */
+    private static boolean isDuplicate(Vote vote) {
+        long now = System.currentTimeMillis();
+        SEEN_VOTES.entrySet().removeIf(e -> now - e.getValue() > DEDUPE_TTL_MS);
+        String key = vote.serviceName().toLowerCase() + '\n' + vote.username().toLowerCase() + '\n' + vote.timestamp();
+        return SEEN_VOTES.putIfAbsent(key, now) != null;
+    }
+
     @SubscribeEvent
     public static void onVote(PlayerVoteEvent event) {
         Vote vote = event.getVote();
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
+
+        if (isDuplicate(vote)) {
+            NeoLog.warn(LOGGER, LogCategory.VOTIFIER, "Ignoring duplicate vote from {} for {} (timestamp {}), possible replay",
+                vote.serviceName(), vote.username(), vote.timestamp());
+            return;
+        }
 
         server.execute(() -> {
             ServerPlayer online = server.getPlayerList().getPlayerByName(vote.username());
