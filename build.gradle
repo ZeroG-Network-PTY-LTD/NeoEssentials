@@ -27,12 +27,15 @@ tasks.named('wrapper', Wrapper).configure {
 
 // Build number management
 //
-// build_number.txt IS tracked in git — one copy per branch (Dev-Builds and mc-26.1-port each
-// have their own committed value) — but it's LOCAL-DEV-ONLY now, not the source of truth for
-// real shipped builds. The real, shared-across-both-branches counter lives in a repository
-// Actions variable (BUILD_NUMBER), read/bumped by .github/workflows/build-and-release.yml's
-// "Bump shared build number" step, which writes the bumped value into this file in the CI
-// workspace (uncommitted) before running the build — it's NOT committed back to the branch.
+// build_number.txt IS tracked in git — one copy per branch — but it's LOCAL-DEV-ONLY now,
+// not the source of truth for real shipped builds. GitHub Actions is permanently blocked
+// for this repo (org policy), so real CI runs on Forgejo instead: .forgejo/workflows/
+// build-and-release.yml's "Write build number for Gradle" step writes that run's own
+// github.run_number (a number Forgejo assigns per run, unique per branch, no coordination
+// needed) into this file in the CI workspace before running the build — it's NOT committed
+// back to the branch. (Earlier this was a single counter manually shared across branches via
+// a repository Actions variable, bumped by a hand-rolled wave-matching scheme — dropped after
+// it raced under concurrent branch pushes; see that workflow file's own git history.)
 //
 // Why not just commit it back like everything else in this repo does: tried it three different
 // ways (plain `git push`, a fresh throwaway branch, GitHub's Contents API + an auto-merged PR)
