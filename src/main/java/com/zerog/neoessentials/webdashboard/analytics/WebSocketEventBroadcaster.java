@@ -76,6 +76,14 @@ public class WebSocketEventBroadcaster {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         try {
+            // Same vanish predicate PlayerJoinQuitHandler uses to suppress the in-game join
+            // message (covers vanish-on-join, which may not have been applied yet since
+            // subscriber order on this event is unspecified). This dashboard feed was missed
+            // by that fix and leaked vanished staff joins to every WS client.
+            if (com.zerog.neoessentials.moderation.VanishManager.getInstance()
+                    .isVanishedOrWillVanishOnJoin(event.getEntity().getUUID())) {
+                return;
+            }
             String name = event.getEntity().getGameProfile().name();
             JsonObject msg = new JsonObject();
             msg.addProperty("type",    "event");
@@ -94,6 +102,11 @@ public class WebSocketEventBroadcaster {
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         try {
+            // Mirrors PlayerJoinQuitHandler's quit-message vanish check (see onPlayerJoin).
+            if (com.zerog.neoessentials.moderation.VanishManager.getInstance()
+                    .isPlayerVanished(event.getEntity().getUUID())) {
+                return;
+            }
             String name = event.getEntity().getGameProfile().name();
             JsonObject msg = new JsonObject();
             msg.addProperty("type",    "event");
