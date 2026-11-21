@@ -255,6 +255,14 @@ public class JailCommand {
                 return 1;
             }
         } else {
+            if (source.getEntity() instanceof ServerPlayer executor) {
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(executor, playerId, "neoessentials.moderation.jail");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
+            }
             List<JailManager.JailLocation> locations = jailManager.getAllJailLocations();
             if (locations.isEmpty()) {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.jail.no_locations"));
@@ -325,6 +333,15 @@ public class JailCommand {
             if (playerId == null) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
                 return 0;
+            }
+
+            if (source.getEntity() instanceof ServerPlayer executor) {
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(executor, playerId, "neoessentials.moderation.jail");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
             }
 
             // Jail the player

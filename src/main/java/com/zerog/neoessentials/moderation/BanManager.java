@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
+import com.zerog.neoessentials.util.InputValidator;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -259,6 +260,12 @@ public class BanManager {
             LOGGER.warn("Ban reason too long ({} > {}). Cannot ban player {}.", reason.length(), maxReason, playerName);
             return false;
         }
+        InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            LOGGER.warn("Ban failed for {}: invalid reason: {}", playerName, reasonResult.getErrorMessage());
+            return false;
+        }
+        reason = (String) reasonResult.getValue();
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
         if (!store.put(PLAYER_COLLECTION, ban.id, banToJson(ban))) {
@@ -321,6 +328,12 @@ public class BanManager {
             LOGGER.warn("Temp ban reason too long ({} > {}). Cannot temp-ban player {}.", reason.length(), maxReason, playerName);
             return false;
         }
+        InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            LOGGER.warn("Temp ban failed for {}: invalid reason: {}", playerName, reasonResult.getErrorMessage());
+            return false;
+        }
+        reason = (String) reasonResult.getValue();
 
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
@@ -382,6 +395,12 @@ public class BanManager {
             LOGGER.warn("IP bans are disabled in config. Cannot ban IP {}.", ipAddress);
             return false;
         }
+        InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            LOGGER.warn("IP ban failed for {}: invalid reason: {}", ipAddress, reasonResult.getErrorMessage());
+            return false;
+        }
+        reason = (String) reasonResult.getValue();
 
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ipBans.put(ipAddress, ban);
@@ -423,6 +442,12 @@ public class BanManager {
             LOGGER.warn("IP bans are disabled. Cannot temp-ban IP {}.", ipAddress);
             return false;
         }
+        InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            LOGGER.warn("Temp IP ban failed for {}: invalid reason: {}", ipAddress, reasonResult.getErrorMessage());
+            return false;
+        }
+        reason = (String) reasonResult.getValue();
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         ipBans.put(ipAddress, ban);

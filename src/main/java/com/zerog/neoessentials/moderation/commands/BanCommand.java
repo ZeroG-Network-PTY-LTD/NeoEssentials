@@ -8,6 +8,7 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.logging.LogCategory;
 import com.zerog.neoessentials.logging.NeoLog;
 import com.zerog.neoessentials.moderation.BanManager;
+import com.zerog.neoessentials.util.InputValidator;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.commands.CommandSourceStack;
@@ -157,10 +158,18 @@ public class BanCommand {
     private static int executeBan(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);
-        
+
         try {
+            // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+            if (!reasonResult.isValid()) {
+                source.sendFailure(MessageUtil.error("Invalid reason: " + reasonResult.getErrorMessage()));
+                return 0;
+            }
+            reason = (String) reasonResult.getValue();
+
             BanManager banManager = BanManager.getInstance();
-            
+
             // Resolve player UUID
             MinecraftServer server = source.getServer();
             UUID playerId = null;
@@ -189,6 +198,15 @@ public class BanCommand {
                 return 0;
             }
             
+            if (source.getEntity() instanceof ServerPlayer executor) {
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(executor, playerId, "neoessentials.moderation.ban");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
+            }
+
             // Ban the player
             boolean success = banManager.banPlayer(resolvedName, playerId, reason, bannedBy);
             
@@ -219,8 +237,16 @@ public class BanCommand {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);
         String durationStr = duration;
-        
+
         try {
+            // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+            if (!reasonResult.isValid()) {
+                source.sendFailure(MessageUtil.error("Invalid reason: " + reasonResult.getErrorMessage()));
+                return 0;
+            }
+            reason = (String) reasonResult.getValue();
+
             BanManager banManager = BanManager.getInstance();
             
             // Parse duration
@@ -258,6 +284,15 @@ public class BanCommand {
                 return 0;
             }
             
+            if (source.getEntity() instanceof ServerPlayer executor) {
+                PermissionValidator.PermissionResult targetResult =
+                    PermissionValidator.validateTargetPermission(executor, playerId, "neoessentials.moderation.tempban");
+                if (!targetResult.hasPermission()) {
+                    source.sendFailure(MessageUtil.error(targetResult.getErrorMessage()));
+                    return 0;
+                }
+            }
+
             // Temp ban the player
             boolean success = banManager.tempBanPlayer(resolvedName, playerId, reason, bannedBy, durationMillis);
             
@@ -288,6 +323,14 @@ public class BanCommand {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);
         try {
+            // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+            if (!reasonResult.isValid()) {
+                source.sendFailure(MessageUtil.error("Invalid reason: " + reasonResult.getErrorMessage()));
+                return 0;
+            }
+            reason = (String) reasonResult.getValue();
+
             BanManager banManager = BanManager.getInstance();
             MinecraftServer server = source.getServer();
 
@@ -327,11 +370,19 @@ public class BanCommand {
     private static int executeBanIP(CommandContext<CommandSourceStack> ctx, String ipAddress, String reason) {
         CommandSourceStack source = ctx.getSource();
         String bannedBy = getCommandSender(source);
-        
+
         try {
+            // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+            if (!reasonResult.isValid()) {
+                source.sendFailure(MessageUtil.error("Invalid reason: " + reasonResult.getErrorMessage()));
+                return 0;
+            }
+            reason = (String) reasonResult.getValue();
+
             BanManager banManager = BanManager.getInstance();
             MinecraftServer server = source.getServer();
-            
+
             // Validate IP format (basic validation)
             if (!isValidIP(ipAddress)) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.invalid_ip", ipAddress));

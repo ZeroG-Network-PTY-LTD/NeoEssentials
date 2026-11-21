@@ -244,6 +244,13 @@ public class ChatHandler {
                     if (chObj.has("enabled") && !chObj.get("enabled").getAsBoolean()) continue;
                     String prefix = chObj.has("prefix") ? chObj.get("prefix").getAsString() : "";
                     if (!prefix.isEmpty() && message.startsWith(prefix)) {
+                        // Same gate ChannelCommands.switchChannel applies; without it, typing the
+                        // prefix (e.g. "@hi") bypassed a permission-restricted channel entirely.
+                        String chPermission = chObj.has("permission") ? chObj.get("permission").getAsString() : null;
+                        if (chPermission != null && !chPermission.isBlank()
+                                && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), chPermission)) {
+                            continue;
+                        }
                         channel = ch;
                         message = message.substring(prefix.length()).stripLeading();
                         break;
