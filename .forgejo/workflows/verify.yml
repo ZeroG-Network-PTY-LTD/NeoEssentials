@@ -1,0 +1,71 @@
+name: Verify Build
+
+# Lightweight build-check for pull requests - just confirms ./gradlew build still succeeds
+# before a PR merges into one of the dev branches. Deliberately has NO release/versioning
+# logic (no CI_RELEASE_TOKEN, no release creation, no Discord notification) and touches no
+# shared state at all, so it can never race with build-and-release.yml or with itself across
+# concurrent PRs - every run is fully independent.
+#
+# There is currently no test suite under src/test, so "build" (compile + resource processing)
+# is the extent of what this can verify. Add `./gradlew test` here once tests exist - it's
+# intentionally separate from the build step below so a test failure is reported distinctly
+# from a compile/resource failure.
+
+on:
+  pull_request:
+    branches:
+      - 1.21.x
+      - 26.1.x
+      - 26.2.x
+      - 26.3.x
+  workflow_dispatch:
+
+jobs:
+  verify-build:
+    runs-on: docker
+    # Same runner image as build-and-release.yml, for the same reason (needs node + git for
+    # actions/checkout to run at all, plus a JDK for gradlew) - see that workflow's own comment
+    # on this image choice for the full history of why a JDK-only image doesn't work here.
+    container:
+      image: catthehacker/ubuntu:act-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        # Only launches the Gradle wrapper itself - the actual per-branch compile JDK is
+        # auto-provisioned separately by Gradle's own toolchain resolver. See
+        # build-and-release.yml's own "Set up JDK" step for the full rationale (same logic,
+        # kept in sync with that file).
+        run: |
+          if command -v java >/dev/null 2>&1; then
+            echo "Using pre-installed java: $(java -version 2>&1 | head -n1)"
+            java_bin="$(readlink -f "$(command -v java)")"
+            echo "JAVA_HOME=$(dirname "$(dirname "$java_bin")")" >> "$GITHUB_ENV"
+          else
+            echo "No pre-installed java found - fetching Temurin 21 from Adoptium"
+            mkdir -p /opt/jdk
+            curl -fsSL --retry 5 --retry-delay 10 \
+              "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+              | tar -xz -C /opt/jdk --strip-components=1
+            echo "JAVA_HOME=/opt/jdk" >> "$GITHUB_ENV"
+            echo "/opt/jdk/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Same retry rationale as build-and-release.yml's "Build jar" step: Mojang artifact
+      # downloads mid-build intermittently drop on this runner's network.
+      - name: Build
+        env:
+          JAVA_TOOL_OPTIONS: -Djava.net.preferIPv4Stack=true
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew build -x test --console=plain; then
+              exit 0
+            fi
+            echo "Build attempt $attempt failed"
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          exit 1
