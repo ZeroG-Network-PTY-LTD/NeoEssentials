@@ -9,6 +9,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,14 @@ import org.slf4j.LoggerFactory;
 public class PvpEventHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PvpEventHandler.class);
 
+    /**
+     * Cancels blocked PvP hits at {@link LivingIncomingDamageEvent} (cancellable, fired at the
+     * top of {@code LivingEntity#hurt}) rather than zeroing damage at the non-cancellable
+     * {@link LivingDamageEvent.Pre}: a zero-damage hit still makes {@code hurt()} return true,
+     * so knockback, Fire Aspect/Thorns and other on-hit effects would still apply.
+     */
     @SubscribeEvent
-    public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+    public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         if (!ConfigManager.isPvpModuleEnabled()) return;
         if (!(event.getEntity() instanceof ServerPlayer target)) return;
 
@@ -33,7 +40,7 @@ public class PvpEventHandler {
 
         if (PvpManager.getInstance().canFight(attacker, target)) return;
 
-        event.setNewDamage(0f);
+        event.setCanceled(true);
         NeoLog.debug(LOGGER, LogCategory.GENERAL, "[PvP] Blocked hit: {} -> {}",
             attacker.getName().getString(), target.getName().getString());
 
@@ -43,6 +50,23 @@ public class PvpEventHandler {
             target.sendSystemMessage(MessageUtil.info("commands.neoessentials.pvp.hit_blocked_target",
                 attacker.getName().getString()));
         }
+    }
+
+    /**
+     * Combat-tags both players when an allowed PvP hit actually lands (blocked hits were
+     * already cancelled above and never reach this event), so /pvp toggle can't be used to
+     * opt out mid-fight.
+     */
+    @SubscribeEvent
+    public static void onLivingDamagePre(LivingDamageEvent.Pre event) {
+        if (!ConfigManager.isPvpModuleEnabled()) return;
+        if (!(event.getEntity() instanceof ServerPlayer target)) return;
+
+        DamageSource source = event.getContainer().getSource();
+        if (!(source.getEntity() instanceof ServerPlayer attacker)) return;
+        if (attacker.equals(target)) return;
+
+        PvpManager.getInstance().markCombat(attacker.getUUID(), target.getUUID());
     }
 
     /** Starts a new player's newbie-protection window the first time they're ever seen. */

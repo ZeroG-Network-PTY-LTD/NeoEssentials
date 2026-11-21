@@ -55,6 +55,8 @@ public class PvpManager {
     private final ConcurrentHashMap<UUID, Boolean> optedOutCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> firstSeenCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> lastNotifyCache = new ConcurrentHashMap<>();
+    /** Last time (ms) each player dealt or took an allowed PvP hit — in-memory only. */
+    private final ConcurrentHashMap<UUID, Long> lastCombatCache = new ConcurrentHashMap<>();
 
     private PvpManager() {
         loadGlobalState();
@@ -104,6 +106,27 @@ public class PvpManager {
         optedOutCache.put(uuid, optedOut);
         savePlayerState(uuid);
         return true;
+    }
+
+    // ── Combat tag (blocks /pvp toggle opt-out mid-fight) ────────────────────
+
+    /** Records that {@code attacker} and {@code target} just exchanged an allowed PvP hit. */
+    public void markCombat(UUID attacker, UUID target) {
+        long now = System.currentTimeMillis();
+        lastCombatCache.put(attacker, now);
+        lastCombatCache.put(target, now);
+    }
+
+    /** Seconds left on {@code uuid}'s combat tag ({@code pvp.toggleCombatTagSeconds}), or 0 if none. */
+    public int getCombatTagRemainingSeconds(UUID uuid) {
+        Long last = lastCombatCache.get(uuid);
+        if (last == null) return 0;
+        long remaining = (last + ConfigManager.getPvpToggleCombatTagSeconds() * 1000L) - System.currentTimeMillis();
+        if (remaining <= 0) {
+            lastCombatCache.remove(uuid, last);
+            return 0;
+        }
+        return (int) Math.ceil(remaining / 1000.0);
     }
 
     // ── Newbie protection ────────────────────────────────────────────────────
