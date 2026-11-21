@@ -165,7 +165,23 @@ public class ShopEndpoint implements HttpHandler {
     private void handleCsvImport(HttpExchange exchange) throws IOException {
         String body       = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         var    rows       = ShopCsvSerializer.importRows(body);
-        var    result     = ShopCsvImporter.apply(rows, false);
+
+        // ShopCsvImporter.apply() mutates live ShopData prices and calls registerShop() (holograms),
+        // which ShopTransaction reads/writes on the main game thread. Run it there instead of on
+        // this HTTP-server thread, same reason as handleSetPrice below; wait for the result since
+        // the response reports the import summary (same supplyAsync(..., server) pattern as AdminEndpoint).
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) { respond(exchange, 503, "{\"error\":\"Server not ready\"}"); return; }
+        ShopCsvImporter.ImportSummary result;
+        try {
+            result = java.util.concurrent.CompletableFuture
+                    .supplyAsync(() -> ShopCsvImporter.apply(rows, false), server)
+                    .get(30, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            NeoLog.error(LOGGER, LogCategory.GENERAL, "Shop CSV import failed or timed out on the main thread", e);
+            respond(exchange, 500, "{\"error\":\"CSV import failed or timed out\"}");
+            return;
+        }
         JsonObject resp   = new JsonObject();
         resp.addProperty("updated", result.updated());
         resp.addProperty("created", result.created());
