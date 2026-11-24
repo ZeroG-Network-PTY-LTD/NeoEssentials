@@ -293,9 +293,9 @@ public class PermissionAPI {
             return allowOpBypass && checkVanillaOpFallback(uuid, permission, "no-manager");
         }
 
-        boolean hasInternalPerm = manager.hasPermission(uuid, permission, context);
-        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Internal system returned: {}", hasInternalPerm);
-        if (hasInternalPerm) {
+        Boolean internalResult = manager.resolvePermission(uuid, permission, context);
+        NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Internal system returned: {}", internalResult);
+        if (Boolean.TRUE.equals(internalResult)) {
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (internal)");
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
             return true;
@@ -303,9 +303,13 @@ public class PermissionAPI {
 
         // ── Registry-default fallback (internal-only path) ────────────────────
         // No external adapter is active; check whether the permission has
-        // defaultValue=true in the registry and grant it if so.
-        boolean registryDefault = checkRegistryDefaultNoAdapterCall(permission);
-        if (registryDefault) {
+        // defaultValue=true in the registry and grant it if so. Only when the internal
+        // system had NO entry: an explicit deny ("-node" on the user or a group) must win
+        // over the registry default, same as the external path's explicitDeny check above
+        // (issue #79: "-neoessentials.anvil" on a group was overridden by anvil's default=true).
+        if (Boolean.FALSE.equals(internalResult)) {
+            NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Registry default suppressed: internal system explicitly denied '{}'", permission);
+        } else if (checkRegistryDefaultNoAdapterCall(permission)) {
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "Result: TRUE (registry default — internal had no entry)");
             NeoLog.debug(LOGGER, LogCategory.PERMISSIONS, "═══════════════════════");
             return true;
