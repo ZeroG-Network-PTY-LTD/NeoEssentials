@@ -28,10 +28,10 @@ public class PermissionManager {
     }
     
     private static class CachedPermission {
-        final boolean result;
+        final Boolean result; // TRUE/FALSE = explicit answer, null = no opinion (see resolvePermission)
         final long timestamp;
 
-        CachedPermission(boolean result) {
+        CachedPermission(Boolean result) {
             this.result = result;
             this.timestamp = System.currentTimeMillis();
         }
@@ -165,6 +165,17 @@ public class PermissionManager {
      * contextual overrides are evaluated (deny wins; then grant; then fall through to regular check).
      */
     public boolean hasPermission(UUID uuid, String permission, PermissionContext context) {
+        return Boolean.TRUE.equals(resolvePermission(uuid, permission, context));
+    }
+
+    /**
+     * Tristate form of {@link #hasPermission(UUID, String, PermissionContext)}: {@code TRUE} if
+     * granted, {@code FALSE} if explicitly denied (e.g. a {@code -node} on the user or a group in
+     * their chain), {@code null} if nothing in the user/group chain mentions the node at all.
+     * Callers that apply a fallback default (PermissionAPI's registry default) must only do so on
+     * {@code null}, never on {@code FALSE}, or a configured deny is silently overridden.
+     */
+    public Boolean resolvePermission(UUID uuid, String permission, PermissionContext context) {
         permission = permission.toLowerCase();
         // Context-aware checks bypass the cache to ensure fresh evaluation
         boolean noContext = (context == null || context == PermissionContext.EMPTY);
@@ -178,7 +189,7 @@ public class PermissionManager {
                 return cached.result;
             }
         }
-        boolean result = computePermission(uuid, permission, context);
+        Boolean result = computePermission(uuid, permission, context);
         if (cacheEnabled) {
             permissionCache.put(cacheKey, new CachedPermission(result));
             if (permissionCache.size() % 100 == 0) {
@@ -216,7 +227,7 @@ public class PermissionManager {
         return null;
     }
 
-    private boolean computePermission(UUID uuid, String permission, PermissionContext context) {
+    private Boolean computePermission(UUID uuid, String permission, PermissionContext context) {
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"Computing permission '{}' for UUID {} (context={})", permission, uuid,
                 context == PermissionContext.EMPTY ? "NONE" : context.worldId);
         PermissionUser user = getUser(uuid);
@@ -286,7 +297,7 @@ public class PermissionManager {
         // the precedence essentially every other permission system (LuckPerms included) uses.
         Boolean result = resolveGroupPermissionLevel(groupName, permission, context, new HashSet<>());
         NeoLog.debug(LOGGER, LogCategory.PERMISSIONS,"  -> Group permission check result: {}", result);
-        return Boolean.TRUE.equals(result);
+        return result; // null = no group in the chain mentions the node
     }
 
     /**
